@@ -13,4 +13,9 @@ set -x
 aclocal
 libtoolize --force --copy
 automake --foreign --copy --add-missing
+if [ $? -ne 0 ]; 
+then
+	echo "automake failed" 
+	exit -3 
+fi
 autoconf
