@@ -162,8 +162,6 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
         ypbeg = 0;
     }
     
-    ValueType val;
-
     int qf_idx = code_block.QIndex();
 
     if ( m_node.UsingMultiQuants() )
@@ -238,8 +236,6 @@ void BandCodec::CodeVal( PicArray& in_data , const int xpos , const int ypos , c
 
 void BandCodec::DoWorkDecode( PicArray& out_data )
 {
-    bool skip;
-
     if (m_node.Parent() != 0)
     {
         m_pxp = m_pnode.Xp();
@@ -493,7 +489,6 @@ void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_dat
     const int yend = code_block.Yend();
 
     m_parent_notzero = false; //set parent to always be zero
-    ValueType val;
 
     int qf_idx = code_block.QIndex();
 
@@ -527,8 +522,6 @@ void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_dat
 
 void LFBandCodec::DoWorkDecode(PicArray& out_data )
 {
-    bool skip;
-
     m_pxp = 0;
     m_pyp = 0;
 

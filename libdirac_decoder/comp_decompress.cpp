@@ -66,7 +66,6 @@ void CompDecompressor::Decompress( PicArray& pic_data )
     const size_t CONTEXTS_REQUIRED( 24 );
 
 	unsigned int num_band_bytes;
-	int qf_idx;
 
 	WaveletTransform wtransform( depth );
 	SubbandList& bands=wtransform.BandList();
