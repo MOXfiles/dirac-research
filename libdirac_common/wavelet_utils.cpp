@@ -38,8 +38,17 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -57,9 +66,10 @@
 void SubbandList::init(const int depth,const int xlen,const int ylen){
 	int xl=xlen;
 	int yl=ylen;
+	int L;
 	clear();
 	Subband* tmp;
-	for (int L=1;L<=depth;++L){
+	for (L=1;L<=depth;++L){
 		xl/=2;
 		yl/=2;
 		tmp=new Subband(xl,0,xl,yl,L);
@@ -87,7 +97,7 @@ void SubbandList::init(const int depth,const int xlen,const int ylen){
 	(*this)(len).add_child(len-1);
 	(*this)(len-1).set_parent(len);
 
-	for (int L=1;L<depth;++L){
+	for (L=1;L<depth;++L){
  		//do parent-child relationship for other bands
 		(*this)(3*L+1).add_child(3*(L-1)+1);
 		(*this)(3*(L-1)+1).set_parent(3*L+1);
@@ -236,7 +246,7 @@ void WaveletTransform::vhsplit(const int xp, const int yp, const int xl, const i
 
 	}
 	delete[] col_data;	
-	for (int J=0;J<yl;++J)
+	for (J=0;J<yl;++J)
 		delete[] tmp_data[J];
 
 }
@@ -348,7 +358,7 @@ void WaveletTransform::vhsynth(const int xp, const int yp, const int xl, const i
 		}
 	}
 	delete[] line_data;
-	for (int I=0;I<xl;++I)
+	for (I=0;I<xl;++I)
 		delete[] tmp_data[I];
 
 }
@@ -357,7 +367,7 @@ void WaveletTransform::vhsynth(const int xp, const int yp, const int xl, const i
 ////////////////////////////
 
 float WaveletTransform::Twodto1d (float f,float g){
-	return (sqrt(2.0*(f*f+g*g)) -0.736*std::abs(f-g));
+	return (sqrt(2.0*(f*f+g*g)) -0.736*DIRAC_ABS(f-g));
 }
 
 float WaveletTransform::Threshold(float xf,float yf,CompSort cs){
@@ -391,12 +401,13 @@ void WaveletTransform::SetBandWeights (EncoderParams& encparams,FrameParams& fpa
 	float xfreq,yfreq;
 	SeqParams& sparams=encparams.sparams;	
 	FrameSort& fsort=fparams.fsort;	
+	int I;
 
 	xlen=2*band_list(1).xl();
 	ylen=2*band_list(1).yl();
 
 	if (encparams.CPD!=0.0){
-		for(int I=1;I<=band_list.length();I++){
+		for(I=1;I<=band_list.length();I++){
 			xp=band_list(I).xp();
 			yp=band_list(I).yp();
 			xl=band_list(I).xl();
@@ -431,18 +442,18 @@ void WaveletTransform::SetBandWeights (EncoderParams& encparams,FrameParams& fpa
 		}
 		//make sure dc is always the lowest weight
 		float min_weight=band_list(band_list.length()).wt();
-		for(int I=1;I<=band_list.length()-1;I++ ){
+		for(I=1;I<=band_list.length()-1;I++ ){
 			min_weight=((min_weight>band_list(I).wt()) ? band_list(I).wt() : min_weight);
 		}
 
 		band_list(band_list.length()).set_wt(min_weight);
  		//normalize weights wrt dc subband
-		for(int I=1;I<=band_list.length();I++ ){
+		for(I=1;I<=band_list.length();I++ ){
 			band_list(I).set_wt(band_list(I).wt()/band_list(band_list.length()).wt());		
 		}
 	}
 	else{//CPD=0 so set all weights to 1
-		for(int I=1;I<=band_list.length();I++ ){
+		for(I=1;I<=band_list.length();I++ ){
 			band_list(I).set_wt(1.0);		
 		}	
 	}

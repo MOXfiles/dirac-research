@@ -38,8 +38,17 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -49,6 +58,17 @@
 
 #include "upconvert.h"
 #include <iostream>
+
+#if defined(_MSC_VER)
+const int UpConverter::Stage_I_Size = 6;
+const int UpConverter::StageI_I = 167;
+const int UpConverter::StageI_II = -56; 
+const int UpConverter::StageI_III = 25;
+const int UpConverter::StageI_IV = -11; 
+const int UpConverter::StageI_V = 4;
+const int UpConverter::StageI_VI = -1;	
+const int UpConverter::Stage_I_Shift = 8;
+#endif
 
 //Up-convert by a factor of two.
 void UpConverter::DoUpConverter(PicArray &OldImage, PicArray &NewImage){
@@ -63,17 +83,18 @@ void UpConverter::DoUpConverter(PicArray &OldImage, PicArray &NewImage){
 	int sum;
 	int LinePos;
 	int ColPos;
+	int x, y;
 
 	//There are three y loops to cope with the leading edge, middle 
 	//and trailing edge of each column.
 	ColPos = 0;
-	for(int y = 0; y < Stage_I_Size; ++y){
+	for(y = 0; y < Stage_I_Size; ++y){
 		LinePos = 0;
 		//We are filtering each column but doing it bit by bit.
 		//This means our main loop is in the x direction and
 		//there is a much greater chance the data we need will
 		//be in the cache.
-		for(int x = 0; x < xOld; x++){
+		for(x = 0; x < xOld; x++){
 
 			//Copy a Pixel from the original image.
 			NewImage[ColPos][LinePos] = OldImage[y][x];
@@ -101,9 +122,9 @@ void UpConverter::DoUpConverter(PicArray &OldImage, PicArray &NewImage){
 	//This loop is like the last one but it deals with the center
 	//section of the image and so the ternary operations are dropped
 	//from the filter section.
-	for(int y = Stage_I_Size; y < yOld - Stage_I_Size; ++y){
+	for(y = Stage_I_Size; y < yOld - Stage_I_Size; ++y){
 		LinePos = 0;
-		for(int x = 0; x < xOld; x++){
+		for(x = 0; x < xOld; x++){
 
 			NewImage[ColPos][LinePos]=OldImage[y][x];
 			++ColPos;
@@ -123,9 +144,9 @@ void UpConverter::DoUpConverter(PicArray &OldImage, PicArray &NewImage){
 	//Another similar loop! - this time we are dealing with
 	//the trailing edge so the ternary stuff is back in the
 	//filter calcs but in the second parameter.	
-	for(int y = yOld - Stage_I_Size; y < yOld; ++y){
+	for(y = yOld - Stage_I_Size; y < yOld; ++y){
 		LinePos = 0;
-		for(int x = 0; x < xOld; x++){
+		for(x = 0; x < xOld; x++){
 
 			NewImage[ColPos][LinePos]=OldImage[y][x];
 			++ColPos;
@@ -149,14 +170,14 @@ void UpConverter::DoUpConverter(PicArray &OldImage, PicArray &NewImage){
 //as an individual function.
 void UpConverter::rowLoop(PicArray &NewImage, int &ColPos){
 	//Calculation variable
-	int sum;
+	int sum, i, x;
 	short CP;
 
 	//Leading row Edge
 	//Note the factor of two difference as we only want to fill in every other
 	//line as the others have already been created
-	for(int i = 0; i < 2; ++i){
-		for(int x = 0; x < (2*Stage_I_Size); x+=2){
+	for(i = 0; i < 2; ++i){
+		for(x = 0; x < (2*Stage_I_Size); x+=2){
 			CP = ColPos+i;
 			sum =  (NewImage[CP][((x)>=0)?(x):0]     + NewImage[CP][x+2])*StageI_I;
 			sum += (NewImage[CP][((x-2)>=0)?(x-2):0] + NewImage[CP][x+4])*StageI_II;
@@ -167,7 +188,7 @@ void UpConverter::rowLoop(PicArray &NewImage, int &ColPos){
 			NewImage[CP][x+1] = sum >> Stage_I_Shift;
 		}
 		//Middle of column
-		for(int x = (2*Stage_I_Size); x < xNew - (2*Stage_I_Size); x+=2){
+		for(x = (2*Stage_I_Size); x < xNew - (2*Stage_I_Size); x+=2){
 			sum =  (NewImage[CP][x]   + NewImage[CP][x+2])*StageI_I;
 			sum += (NewImage[CP][x-2] + NewImage[CP][x+4])*StageI_II;
 			sum += (NewImage[CP][x-4] + NewImage[CP][x+6])*StageI_III;
@@ -178,7 +199,7 @@ void UpConverter::rowLoop(PicArray &NewImage, int &ColPos){
 			NewImage[ColPos+i][x+1] = sum >> Stage_I_Shift;
 		}
 		//Trailing column edge
-		for(int x = xNew - (2*Stage_I_Size); x < xNew; x+=2){
+		for(x = xNew - (2*Stage_I_Size); x < xNew; x+=2){
 			sum =  (NewImage[CP][x]   + NewImage[CP][(((x+2)<xNew)?(x+2):(xNew-2))])*StageI_I;
 			sum += (NewImage[CP][x-2] + NewImage[CP][(((x+4)<xNew)?(x+4):(xNew-2))])*StageI_II;
 			sum += (NewImage[CP][x-4] + NewImage[CP][(((x+6)<xNew)?(x+6):(xNew-2))])*StageI_III;

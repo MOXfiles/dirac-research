@@ -38,8 +38,17 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -138,9 +147,10 @@ void MvDataCodec::CodePredmode(MvData& in_data){
 void MvDataCodec::CodeMv1(MvData& in_data){
 	MVector pred=Mv1Prediction(in_data.mv1,in_data.mode);
 
+	int bin;
 	int val=in_data.mv1[b_yp][b_xp].x-pred.x;
 	int abs_val=abs(val);
-	for (int bin=1;bin<=abs_val;++bin){
+	for (bin=1;bin<=abs_val;++bin){
 		EncodeSymbol(0,ChooseREF1xContext(in_data,bin));
 	}
 	EncodeSymbol(1,ChooseREF1xContext(in_data,abs_val+1));
@@ -150,7 +160,7 @@ void MvDataCodec::CodeMv1(MvData& in_data){
 
 	val=in_data.mv1[b_yp][b_xp].y-pred.y;		
 	abs_val=abs(val);	
-	for (int bin=1;bin<=abs_val;++bin){		
+	for (bin=1;bin<=abs_val;++bin){		
 		EncodeSymbol(0,ChooseREF1yContext(in_data,bin));		
 	}
 	EncodeSymbol(1,ChooseREF1yContext(in_data,abs_val+1));
@@ -161,9 +171,10 @@ void MvDataCodec::CodeMv1(MvData& in_data){
 void MvDataCodec::CodeMv2(MvData& in_data){
 	MVector pred=Mv2Prediction(in_data.mv2,in_data.mode);	
 
+	int bin;
 	int val=in_data.mv2[b_yp][b_xp].x-pred.x;
 	int abs_val=abs(val);
-	for (int bin=1;bin<=abs_val;++bin){
+	for (bin=1;bin<=abs_val;++bin){
 		EncodeSymbol(0,ChooseREF2xContext(in_data,bin));
 	}
 	EncodeSymbol(1,ChooseREF2xContext(in_data,abs_val+1));
@@ -173,7 +184,7 @@ void MvDataCodec::CodeMv2(MvData& in_data){
 
 	val=in_data.mv2[b_yp][b_xp].y-pred.y;
 	abs_val=abs(val);	
-	for (int bin=1;bin<=abs_val;++bin){
+	for (bin=1;bin<=abs_val;++bin){
 		EncodeSymbol(0,ChooseREF2yContext(in_data,bin));
 	}
 	EncodeSymbol(1,ChooseREF2yContext(in_data,abs_val+1));
@@ -184,10 +195,11 @@ void MvDataCodec::CodeMv2(MvData& in_data){
 void MvDataCodec::CodeDC(MvData& in_data){
 
 	//begin with Y DC value	
+	ValueType bin;
 	ValueType val=in_data.dcY[b_yp][b_xp]-DCPrediction(in_data.dcY,in_data.mode);
 	ValueType abs_val=abs(val);
 
-	for (ValueType bin=1;bin<=abs_val;++bin){
+	for (bin=1;bin<=abs_val;++bin){
 		EncodeSymbol(0,ChooseYDCContext(in_data,bin));
 	}
 	EncodeSymbol(1,ChooseYDCContext(in_data,abs_val+1));
@@ -200,7 +212,7 @@ void MvDataCodec::CodeDC(MvData& in_data){
 		val=in_data.dcU[b_yp][b_xp]-DCPrediction(in_data.dcU,in_data.mode);
 		abs_val=abs(val);
 
-		for (ValueType bin=1;bin<=abs_val;++bin){
+		for (bin=1;bin<=abs_val;++bin){
 			EncodeSymbol(0,ChooseUDCContext(in_data,bin));
 		}
 		EncodeSymbol(1,ChooseUDCContext(in_data,abs_val+1));
@@ -210,7 +222,7 @@ void MvDataCodec::CodeDC(MvData& in_data){
 		val=in_data.dcV[b_yp][b_xp]-DCPrediction(in_data.dcV,in_data.mode);
 		abs_val=abs(val);
 
-		for (ValueType bin=1;bin<=abs_val;++bin){
+		for (bin=1;bin<=abs_val;++bin){
 			EncodeSymbol(0,ChooseVDCContext(in_data,bin));
 		}
 		EncodeSymbol(1,ChooseVDCContext(in_data,abs_val+1));

@@ -38,8 +38,17 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -196,7 +205,8 @@ void PicInput::ReadComponent(PicArray& pic_data){
 	//initially set up for 8-bit file input expanded to 10 bits for array output
 
 	//	unsigned char temp[pic_data.length(0)*pic_data.length(1)];//array big enough for the whole component
-	unsigned char temp[pic_data.length(0)];//array big enough for one line
+	// unsigned char temp[pic_data.length(0)];//array big enough for one line
+	unsigned char * temp = new unsigned char[pic_data.length(0)];//array big enough for one line
 	if (*ip_pic_ptr){
 
 		for (int J=pic_data.first(1);J<=pic_data.last(1);++J){
@@ -209,4 +219,6 @@ void PicInput::ReadComponent(PicArray& pic_data){
 	}
 	else
 		std::cerr<<std::endl<<"Can't open picture data file for reading";
+
+	delete [] temp;
 }

@@ -38,8 +38,17 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -88,7 +97,8 @@ void MotionEstimator::DoME(Gop& my_gop, int frame_num, MvData& mv_data){
 void MotionEstimator::DoHierarchicalSearch(Gop& my_gop, int frame_num, MvData& mv_data){
  	//does an initial search using hierarchical matching to get guide vectors	
 	int ref1,ref2;
-	depth=4;
+	int depth=4;
+	int I;
 	int scale_factor;//factor by which pics have been downconverted
 	OLBParams& bparams=encparams.LumaBParams(2);
 
@@ -117,7 +127,7 @@ void MotionEstimator::DoHierarchicalSearch(Gop& my_gop, int frame_num, MvData& m
 	//allocate
 	scale_factor=1;	
 	int xnumblocks,ynumblocks;
-	for (int I=1;I<=depth;++I){
+	for (I=1;I<=depth;++I){
    		//dimensions of pic_down[I] will be shrunk by a factor 2**I		
 		scale_factor*=2;
 		pic_down[I]=new PicArray(pic_data.length(0)/scale_factor,pic_data.length(1)/scale_factor);
@@ -134,7 +144,7 @@ void MotionEstimator::DoHierarchicalSearch(Gop& my_gop, int frame_num, MvData& m
 	}
 
 	//do all the downconversions
-	for (int I=0;I<=depth-1;++I){
+	for (I=0;I<=depth-1;++I){
 		mydcon.dodownconvert(*(pic_down[I]),*(pic_down[I+1]));
 		mydcon.dodownconvert(*(ref1_down[I]),*(ref1_down[I+1]));				
 		if (refs.size()>1){
@@ -155,7 +165,7 @@ void MotionEstimator::DoHierarchicalSearch(Gop& my_gop, int frame_num, MvData& m
 		}
 	}
 
-	for (int I=1; I<=depth;++I){
+	for (I=1; I<=depth;++I){
 		delete pic_down[I];
 		delete ref1_down[I];
 		delete mv_data_set[I];
@@ -337,12 +347,12 @@ void MotionEstimator::SetChromaDC(PicArray& pic_data, MvData& mv_data,CompSort c
 			ysubMBbr=ysubMBtl+2;
 
 			if (xmb_loc==mv_data.mb.last(0)){
-				xbr=std::min(mv_data.mv1.length(0),xbr);
-				xsubMBbr=std::min(mv_data.mv1.length(0)>>1,xsubMBbr);
+				xbr=DIRAC_MIN(mv_data.mv1.length(0),xbr);
+				xsubMBbr=DIRAC_MIN(mv_data.mv1.length(0)>>1,xsubMBbr);
 			}
 			if (ymb_loc==mv_data.mb.last(1)){
-				ybr=std::min(mv_data.mv1.length(1),ybr);
-				ysubMBbr=std::min(mv_data.mv1.length(1)>>1,ysubMBbr);
+				ybr=DIRAC_MIN(mv_data.mv1.length(1),ybr);
+				ysubMBbr=DIRAC_MIN(mv_data.mv1.length(1)>>1,ysubMBbr);
 			}
 
 			if (mv_data.mb[ymb_loc][xmb_loc].split_mode==2){

@@ -38,8 +38,17 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -120,10 +129,10 @@ void CodecParams::SetBlockSizes(OLBParams& olbparams){
 	//as the equivalent parameters for sub-MBs and MBs
 
 	lbparams[2]=olbparams;
-	lbparams[2].XBSEP=std::max(lbparams[2].XBSEP,4);
-	lbparams[2].XBLEN=std::max(lbparams[2].XBSEP+2,lbparams[2].XBLEN);
-	lbparams[2].YBSEP=std::max(lbparams[2].YBSEP,4);
-	lbparams[2].YBLEN=std::max(lbparams[2].YBSEP+2,lbparams[2].YBLEN);	
+	lbparams[2].XBSEP=DIRAC_MAX(lbparams[2].XBSEP,4);
+	lbparams[2].XBLEN=DIRAC_MAX(lbparams[2].XBSEP+2,lbparams[2].XBLEN);
+	lbparams[2].YBSEP=DIRAC_MAX(lbparams[2].YBSEP,4);
+	lbparams[2].YBLEN=DIRAC_MAX(lbparams[2].YBSEP+2,lbparams[2].YBLEN);	
 	lbparams[2].XOFFSET=(lbparams[2].XBLEN-lbparams[2].XBSEP)/2;	
 	lbparams[2].YOFFSET=(lbparams[2].YBLEN-lbparams[2].YBSEP)/2;	
 	if ((lbparams[2].XBLEN-lbparams[2].XBSEP)%2!=0)
@@ -148,26 +157,26 @@ void CodecParams::SetBlockSizes(OLBParams& olbparams){
 	if (sparams.cformat==format420){
 		cbparams[2].XBSEP=lbparams[2].XBSEP/2;
 		cbparams[2].YBSEP=lbparams[2].YBSEP/2;	
-		cbparams[2].XBLEN=std::max(lbparams[2].XBLEN/2,cbparams[2].XBSEP+2);
-		cbparams[2].YBLEN=std::max(lbparams[2].YBLEN/2,cbparams[2].YBSEP+2);
+		cbparams[2].XBLEN=DIRAC_MAX(lbparams[2].XBLEN/2,cbparams[2].XBSEP+2);
+		cbparams[2].YBLEN=DIRAC_MAX(lbparams[2].YBLEN/2,cbparams[2].YBSEP+2);
 	}
 	else if (sparams.cformat==format422){
 		cbparams[2].XBSEP=lbparams[2].XBSEP/2;
 		cbparams[2].YBSEP=lbparams[2].YBSEP;	
-		cbparams[2].XBLEN=std::max(lbparams[2].XBLEN/2,cbparams[2].XBSEP+2);
-		cbparams[2].YBLEN=std::max(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
+		cbparams[2].XBLEN=DIRAC_MAX(lbparams[2].XBLEN/2,cbparams[2].XBSEP+2);
+		cbparams[2].YBLEN=DIRAC_MAX(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
 	}
 	else if (sparams.cformat==format411){
 		cbparams[2].XBSEP=lbparams[2].XBSEP/4;
 		cbparams[2].YBSEP=lbparams[2].YBSEP;	
-		cbparams[2].XBLEN=std::max(lbparams[2].XBLEN/4,cbparams[2].XBSEP+2);
-		cbparams[2].YBLEN=std::max(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
+		cbparams[2].XBLEN=DIRAC_MAX(lbparams[2].XBLEN/4,cbparams[2].XBSEP+2);
+		cbparams[2].YBLEN=DIRAC_MAX(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
 	}
 	else{
 		cbparams[2].XBSEP=lbparams[2].XBSEP;
 		cbparams[2].YBSEP=lbparams[2].YBSEP;	
-		cbparams[2].XBLEN=std::max(lbparams[2].XBLEN,cbparams[2].XBSEP+2);
-		cbparams[2].YBLEN=std::max(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
+		cbparams[2].XBLEN=DIRAC_MAX(lbparams[2].XBLEN,cbparams[2].XBSEP+2);
+		cbparams[2].YBLEN=DIRAC_MAX(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
 	}
 
 	if ((cbparams[2].XBLEN-cbparams[2].XBSEP)%2!=0)

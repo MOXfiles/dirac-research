@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Revision 1.3  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
 * Boilerplate for Doxygen comments; testing ability to commit into SF CVS
 *
 * Revision 1.1.1.1  2004/03/11 17:45:43  timborer
@@ -342,15 +351,15 @@ inline MVector MvMedian(MVector& mv1,MVector& mv2,MVector& mv3) {
 	tmp_mv.x+=mv2.x;
 	tmp_mv.x+=mv3.x;
 
-	tmp_mv.x-=std::max(std::max(mv1.x,mv2.x),mv3.x);
-	tmp_mv.x-=std::min(std::min(mv1.x,mv2.x),mv3.x);
+	tmp_mv.x-=DIRAC_MAX(DIRAC_MAX(mv1.x,mv2.x),mv3.x);
+	tmp_mv.x-=DIRAC_MIN(DIRAC_MIN(mv1.x,mv2.x),mv3.x);
 
 	tmp_mv.y=mv1.y;
 	tmp_mv.y+=mv2.y;
 	tmp_mv.y+=mv3.y;
 
-	tmp_mv.y-=std::max(std::max(mv1.y,mv2.y),mv3.y);
-	tmp_mv.y-=std::min(std::min(mv1.y,mv2.y),mv3.y);
+	tmp_mv.y-=DIRAC_MAX(DIRAC_MAX(mv1.y,mv2.y),mv3.y);
+	tmp_mv.y-=DIRAC_MIN(DIRAC_MIN(mv1.y,mv2.y),mv3.y);
 
 	return tmp_mv;
 }
@@ -358,7 +367,7 @@ inline MVector MvMedian(MVector& mv1,MVector& mv2,MVector& mv3) {
        
 inline MVector MvMedian(std::vector<MVector>& vect_list){
 	//more general median. Takes the median of each vector component	
-
+	int I, K;
 	MVector median;
 	int num_vals=int(vect_list.size());
 	if (num_vals>0)	{
@@ -366,8 +375,8 @@ inline MVector MvMedian(std::vector<MVector>& vect_list){
 		std::vector<int> ordered_vals(vect_list.size());
 		//do x first
 		ordered_vals[0]=vect_list[0].x;		
-		for (int I=1;I<num_vals;++I){
-			for (int K=0;K<I;++K){
+		for (I=1;I<num_vals;++I){
+			for (K=0;K<I;++K){
 				if (vect_list[I].x<ordered_vals[K]){
 					pos=K;
 					break;
@@ -378,7 +387,7 @@ inline MVector MvMedian(std::vector<MVector>& vect_list){
 			if (pos==I)
 				ordered_vals[I]=vect_list[I].x;
 			else{
-				for (int K=pos;K>=I-1;--K){
+				for (K=pos;K>=I-1;--K){
 					ordered_vals[K+1]=ordered_vals[K];
 				}
 				ordered_vals[pos]=vect_list[I].x;
@@ -391,8 +400,8 @@ inline MVector MvMedian(std::vector<MVector>& vect_list){
 
 		//now do y
 		ordered_vals[0]=vect_list[0].y;		
-		for (int I=1;I<num_vals;++I){
-			for (int K=0;K<I;++K){
+		for (I=1;I<num_vals;++I){
+			for (K=0;K<I;++K){
 				if (vect_list[I].y<ordered_vals[K]){
 					pos=K;
 					break;
@@ -403,7 +412,7 @@ inline MVector MvMedian(std::vector<MVector>& vect_list){
 			if (pos==I)
 				ordered_vals[I]=vect_list[I].y;
 			else{
-				for (int K=pos;K>=I-1;--K){
+				for (K=pos;K>=I-1;--K){
 					ordered_vals[K+1]=ordered_vals[K];
 				}
 				ordered_vals[pos]=vect_list[I].y;

@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-03-22 01:04:28  chaoticcoyote
+* Revision 1.3  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.2  2004/03/22 01:04:28  chaoticcoyote
 * Added API documentation to encoder library
 * Moved large constructors so they are no longer inlined
 *
@@ -249,6 +258,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
 	int xl=node.xl();
 	int yl=node.yl();
 	float vol;
+	int Q, J;
 
 	if (bandmax==0){
 		node.set_qf(0,-1);//indicates that the subband is skipped
@@ -258,7 +268,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
 		return 0;		
 	}
 	else{
-		for (int Q=0;Q<costs.length(0);Q++){
+		for (Q=0;Q<costs.length(0);Q++){
 			error_total[Q]=0.0;			
 			count0[Q]=0;
 			countPOS[Q]=0;
@@ -283,7 +293,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
 				}				
 				//now do real quantisation
 				quant_val=abs_val;				
-				for (int Q=4;Q<costs.length(0);Q+=4){
+				for (Q=4;Q<costs.length(0);Q+=4){
 					quant_val>>=(Q/4);								
 					if (quant_val){
 						count0[Q]+=quant_val;
@@ -305,7 +315,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
 		}//I
 
  		//do entropy calculation etc		
-		for (int Q=0;Q<costs.length(0);Q+=4){
+		for (Q=0;Q<costs.length(0);Q+=4){
 			costs[Q].MSE=error_total[Q]/(vol*node.wt()*node.wt());
  		 	//calculate probabilities and entropy
 			p0=float(count0[Q])/float(count0[Q]+count1);
@@ -341,7 +351,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
 		}
 		//find the qf with the lowest cost
 		min_idx=0;
-		for (int Q=0;Q<costs.length(0);Q+=4) {
+		for (Q=0;Q<costs.length(0);Q+=4) {
 			if (costs[Q].TOTAL<costs[min_idx].TOTAL)
 				min_idx=Q;
 		}
@@ -352,7 +362,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
 
 		//now repeat to get to 1/2 bit accuracy
 		///////////////////////////////////////
-		for (int Q=std::max(0,min_idx-2);Q<=std::min(costs.ubound(0),min_idx+2);Q+=2){
+		for (Q=DIRAC_MAX(0,min_idx-2);Q<=DIRAC_MIN(costs.ubound(0),min_idx+2);Q+=2){
 			if (Q!=min_idx){
 				error_total[Q]=0.0;			
 				count0[Q]=0;
@@ -362,15 +372,15 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
 		}
 		vol=float((yl/2)*(xl/2));
 		count1=int(vol);
-		int top_idx=std::min(costs.ubound(0),min_idx+2);
-		int bottom_idx=std::max(0,min_idx-2);
+		int top_idx=DIRAC_MIN(costs.ubound(0),min_idx+2);
+		int bottom_idx=DIRAC_MAX(0,min_idx-2);
 
-		for (int J=yp+1;J<yp+yl;J+=2){
+		for (J=yp+1;J<yp+yl;J+=2){
 			for (int I=xp+1;I<xp+xl;I+=2){
 				val=pic_data[J][I];
 				abs_val=abs(val);
 
-				for (int Q=bottom_idx;Q<=top_idx;Q+=2){
+				for (Q=bottom_idx;Q<=top_idx;Q+=2){
 					if (Q!=min_idx){
 						quant_val=int(abs_val);					
 						quant_val*=qfinvlist[Q];
@@ -396,7 +406,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
 		}//I
 
  		//do entropy calculation		
-		for (int Q=bottom_idx;Q<=top_idx;Q+=2){
+		for (Q=bottom_idx;Q<=top_idx;Q+=2){
 			if (Q!=min_idx){
 				costs[Q].MSE=error_total[Q]/(vol*node.wt()*node.wt());
 	 		 	//calculate probabilities and entropy
@@ -434,7 +444,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
 		}//Q
 
  		//find the qf with the lowest cost
-		for (int Q=bottom_idx;Q<=top_idx;Q+=2){
+		for (Q=bottom_idx;Q<=top_idx;Q+=2){
 			if (costs[Q].TOTAL<costs[min_idx].TOTAL)
 				min_idx=Q;
 		}
@@ -442,9 +452,9 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
  		//finally use 1/2 the values to get 1/4 bit accuracy
 		////////////////////////////////////////////////////		
 
-		bottom_idx=std::max(0,min_idx-1);
-		top_idx=std::min(costs.length(0)-1,min_idx+1);
-		for (int Q=bottom_idx;Q<=top_idx;Q++){
+		bottom_idx=DIRAC_MAX(0,min_idx-1);
+		top_idx=DIRAC_MIN(costs.length(0)-1,min_idx+1);
+		for (Q=bottom_idx;Q<=top_idx;Q++){
 			error_total[Q]=0.0;			
 			count0[Q]=0;
 			countPOS[Q]=0;
@@ -452,11 +462,11 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
 		}
 		vol=float((yl/2)*xl);
 		count1=int(vol);		
-		for (int J=yp;J<yp+yl;++J){				
+		for (J=yp;J<yp+yl;++J){				
 			for (int I=xp+1;I<xp+xl;I+=2){				
 				val=pic_data[J][I];
 				abs_val=abs(val);
-				for (int Q=bottom_idx;Q<=top_idx;Q++){
+				for (Q=bottom_idx;Q<=top_idx;Q++){
 					quant_val=int(abs_val);					
 					quant_val*=qfinvlist[Q];
 					quant_val>>=17;
@@ -480,7 +490,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
 		}//I
 
  		//do entropy calculation		
-		for (int Q=bottom_idx;Q<=top_idx;Q++){
+		for (Q=bottom_idx;Q<=top_idx;Q++){
 			costs[Q].MSE=error_total[Q]/(vol*node.wt()*node.wt());
 
 		 	//calculate probabilities and entropy
@@ -516,7 +526,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,int band_n
 		}//Q
 
  		//find the qf with the lowest cost
-		for (int Q=bottom_idx;Q<=top_idx;Q++){
+		for (Q=bottom_idx;Q<=top_idx;Q++){
 			if (costs[Q].TOTAL<costs[min_idx].TOTAL)
 				min_idx=Q;
 		}
@@ -544,15 +554,15 @@ ValueType CompCompressor::PicAbsMax(PicArray& pic_data){
 }
 
 ValueType CompCompressor::PicAbsMax(PicArray& pic_data,int xp, int yp ,int xl ,int yl){
-	int lbound0=std::max(pic_data.lbound(0),xp);	
-	int lbound1=std::max(pic_data.lbound(1),yp);	
-	int ubound0=std::min(pic_data.ubound(0),xp+xl-1);	
-	int ubound1=std::min(pic_data.ubound(1),yp+yl-1);		
+	int lbound0=DIRAC_MAX(pic_data.lbound(0),xp);	
+	int lbound1=DIRAC_MAX(pic_data.lbound(1),yp);	
+	int ubound0=DIRAC_MIN(pic_data.ubound(0),xp+xl-1);	
+	int ubound1=DIRAC_MIN(pic_data.ubound(1),yp+yl-1);		
 	ValueType val=0;
 
 	for (int J=lbound1;J<=ubound1;++J){
 		for (int I=lbound0;I<=ubound0;++I){	
-			val=std::max(val,pic_data[J][I]);	
+			val=DIRAC_MAX(val,pic_data[J][I]);	
 		}
 	}
 	return val;

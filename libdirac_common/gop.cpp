@@ -38,8 +38,17 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -74,15 +83,17 @@ void Gop::Init(){
 	SetGopStructure();
 }
 
-void Gop::SetFrameSorts() {	
-	for (int I=0;I<=gop_len;++I) {
+void Gop::SetFrameSorts() {
+	int I;
+
+	for (I=0;I<=gop_len;++I) {
 		if (ref_list[I]->size()>0)
 			frame_buffer[I]->SetFrameSort(L2_frame);
 		else
 			frame_buffer[I]->SetFrameSort(I_frame);
 	}
-	for (int I=0;I<=gop_len;++I) {
-		for (vector<int>::iterator it=ref_list[I]->begin();it!=ref_list[I]->end();++it){
+	for (I=0;I<=gop_len;++I) {
+		for (std::vector<int>::iterator it=ref_list[I]->begin();it!=ref_list[I]->end();++it){
 			if (ref_list[*it]->size()!=0){//if the reference itself has references, then our frame is an L1 frame
 				frame_buffer[*it]->SetFrameSort(L1_frame);
 			}
@@ -97,7 +108,7 @@ void Gop::SetGopStructure(){
 	///////////////////////////////////////////
 
 	//first calculate the number of L1 frames
-	int ratio;
+	int ratio, I, L, J;
 	if (cparams.L1_SEP>0){//we have a proper GOP
 		ratio=gop_len/cparams.L1_SEP;
 		if (ratio*cparams.L1_SEP==gop_len)
@@ -108,13 +119,13 @@ void Gop::SetGopStructure(){
 		coded2display[0]=0;
 		int display_pos;
 		int coded_pos=1;
-		for (int L=1;L<=cparams.NUM_L1;++L) {
+		for (L=1;L<=cparams.NUM_L1;++L) {
 		//do the L1 frames first
 			display_pos=L*cparams.L1_SEP;
 			coded2display[coded_pos]=display_pos;
 			coded_pos++;
 		//now code the prior L2 frames
-			for (int J=1; J<cparams.L1_SEP;++J){
+			for (J=1; J<cparams.L1_SEP;++J){
 				display_pos=(L-1)*cparams.L1_SEP+J;
 				coded2display[coded_pos]=display_pos;
 				coded_pos++;
@@ -123,7 +134,7 @@ void Gop::SetGopStructure(){
 	//finally code the final I frame and the preceding L2 frames
 		coded2display[coded_pos]=gop_len;
 		coded_pos++;
-		for (int J=1;J<gop_len-cparams.NUM_L1*cparams.L1_SEP;++J){
+		for (J=1;J<gop_len-cparams.NUM_L1*cparams.L1_SEP;++J){
 			display_pos=cparams.NUM_L1*cparams.L1_SEP+J;
 			coded2display[coded_pos]=display_pos;
 			coded_pos++;
@@ -133,12 +144,12 @@ void Gop::SetGopStructure(){
 	/////////////////////////////////
 
 	//First, start with the L1 frames and their preceding L2 frames
-		for (int L=1;L<=cparams.NUM_L1;++L) {
+		for (L=1;L<=cparams.NUM_L1;++L) {
 			int pos=L*cparams.L1_SEP;
 			ref_list[pos]->push_back((L-1)*cparams.L1_SEP);
 			if (L>1)
 				ref_list[pos]->push_back((L-2)*cparams.L1_SEP);
-			for (int J=1; J<cparams.L1_SEP;++J) {
+			for (J=1; J<cparams.L1_SEP;++J) {
 				pos=(L-1)*cparams.L1_SEP+J;
 				ref_list[pos]->push_back((L-1)*cparams.L1_SEP);
 				ref_list[pos]->push_back(L*cparams.L1_SEP);
@@ -147,7 +158,7 @@ void Gop::SetGopStructure(){
 
 
 	//Now do the last frame and the preceding L2 frames
-		for (int J=1; J<gop_len-cparams.NUM_L1*cparams.L1_SEP;++J) {
+		for (J=1; J<gop_len-cparams.NUM_L1*cparams.L1_SEP;++J) {
 			int pos=cparams.NUM_L1*cparams.L1_SEP+J;
 			ref_list[pos]->push_back(gop_len);
 			ref_list[pos]->push_back(cparams.NUM_L1*cparams.L1_SEP);
@@ -155,7 +166,7 @@ void Gop::SetGopStructure(){
 	}
 	else{
 		//we just have I frames
-		for (int I=0;I<=gop_len;++I)
+		for (I=0;I<=gop_len;++I)
 			coded2display[I]=I;
 	}
 

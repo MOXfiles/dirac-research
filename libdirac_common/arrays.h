@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Revision 1.3  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
 * Boilerplate for Doxygen comments; testing ability to commit into SF CVS
 *
 * Revision 1.1.1.1  2004/03/11 17:45:43  timborer
@@ -263,7 +272,7 @@ void OneDArray<T>::init(int len){
 	lst=l-1;
 	if (l>0){
 		//ptr=new T[l];
-		ptr=alloc.allocate(l);
+		ptr=alloc.allocate(l,0);
 	}
 	else {
 		l=0;
@@ -280,7 +289,7 @@ void OneDArray<T>::init(range r){
 	l=lst-fst+1; 
 	if (l>0){
 		//ptr=new T[l];
-		ptr=alloc.allocate(l);
+		ptr=alloc.allocate(l,0);
 		std::uninitialized_fill(ptr,ptr+l,tmp_val);
 	}
 	else {
@@ -479,7 +488,7 @@ void TwoDArray<T>::init(int len0,int len1){
 	last0=l0-1;last1=l1-1;
 	if (l1>0){
 		//		array_of_rows=new element_type[l1];
-		array_of_rows=alloc.allocate(l1);
+		array_of_rows=alloc.allocate(l1,0);
 		if (l0>0){
 			for (int J=0;J<l1;++J){
 				array_of_rows[J]=new T[l0];

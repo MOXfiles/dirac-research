@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Revision 1.3  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
 * Boilerplate for Doxygen comments; testing ability to commit into SF CVS
 *
 * Revision 1.1.1.1  2004/03/11 17:45:43  timborer
@@ -73,7 +82,7 @@ public:
      */
 	BandCodec(BasicOutputManager* bits_out, std::vector<Context>& ctxs,SubbandList& band_list,int band_num): 
 	ArithCodec<PicArray >(bits_out,ctxs),bnum(band_num),node(band_list(band_num)),xp(node.xp()),yp(node.yp()),xl(node.xl()),
-	yl(node.yl()),vol(node.xl()*node.yl()),reset_coeff_num(std::max(vol/32,50)),cut_off_point(node.scale()>>1)
+	yl(node.yl()),vol(node.xl()*node.yl()),reset_coeff_num(DIRAC_MAX(vol/32,50)),cut_off_point(node.scale()>>1)
 	{if (node.parent()!=0) pnode=band_list(node.parent());}		
 
 
@@ -83,7 +92,7 @@ public:
      */
 	BandCodec(BitInputManager* bits_in, std::vector<Context>& ctxs,SubbandList& band_list,int band_num): 
 	ArithCodec<PicArray >(bits_in,ctxs),bnum(band_num),node(band_list(band_num)),xp(node.xp()),yp(node.yp()),xl(node.xl()),
-	yl(node.yl()),vol(node.xl()*node.yl()),reset_coeff_num(std::max(vol/32,50)),cut_off_point(node.scale()>>1)
+	yl(node.yl()),vol(node.xl()*node.yl()),reset_coeff_num(DIRAC_MAX(vol/32,50)),cut_off_point(node.scale()>>1)
 	{if (node.parent()!=0) pnode=band_list(node.parent());}
 
 

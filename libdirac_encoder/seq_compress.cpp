@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-03-22 01:04:28  chaoticcoyote
+* Revision 1.3  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.2  2004/03/22 01:04:28  chaoticcoyote
 * Added API documentation to encoder library
 * Moved large constructors so they are no longer inlined
 *
@@ -140,7 +149,7 @@ Frame& SequenceCompressor::CompressNextFrame(){
 		}
 	}
 	else{//we have coded everything, but we may not have displayed everything
-		current_display_fnum=std::min(current_code_fnum-delay,my_gop.GetLength());
+		current_display_fnum=DIRAC_MIN(current_code_fnum-delay,my_gop.GetLength());
 		current_code_fnum++;
 	}
 

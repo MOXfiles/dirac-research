@@ -38,8 +38,17 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -105,10 +114,10 @@ void ModeDecider::DoModeDecn(Gop& my_gop, int frame_num, MvData& mvdata){
 					ysubMBbr=ysubMBtl+2;
 				}
 				else{
-					xbr=std::min(xtl+4,encparams.X_NUMBLOCKS);
-					ybr=std::min(ytl+4,encparams.Y_NUMBLOCKS);
-					xsubMBbr=std::min(xsubMBtl+2,encparams.X_NUMBLOCKS>>1);
-					ysubMBbr=std::min(ysubMBtl+2,encparams.Y_NUMBLOCKS>>1);
+					xbr=DIRAC_MIN(xtl+4,encparams.X_NUMBLOCKS);
+					ybr=DIRAC_MIN(ytl+4,encparams.Y_NUMBLOCKS);
+					xsubMBbr=DIRAC_MIN(xsubMBtl+2,encparams.X_NUMBLOCKS>>1);
+					ysubMBbr=DIRAC_MIN(ysubMBtl+2,encparams.Y_NUMBLOCKS>>1);
 				}
 				DoMBDecn();				
 			}//xmb_loc		
@@ -205,8 +214,8 @@ void ModeDecider::Do2x2Decn(){
 		for (int J=ytl,Q=0;J<ybr;J+=2,++Q){
 			for (int I=xtl,P=0; I<xbr;I+=2,++P){
   				//copy data across				
-				for (int L=J;L<std::min(ybr,J+2);++L){
-					for (int K=I;K<std::min(xbr,I+2);++K){
+				for (int L=J;L<DIRAC_MIN(ybr,J+2);++L){
+					for (int K=I;K<DIRAC_MIN(xbr,I+2);++K){
 						(mv_data->mv1)[L][K]=(split1_mv_data->mv1)[Q][P];
 						(mv_data->mv2)[L][K]=(split1_mv_data->mv2)[Q][P];
 						(mv_data->mode)[L][K]=(split1_mv_data->mode)[Q][P];
@@ -228,8 +237,8 @@ void ModeDecider::Do2x2Decn(){
 		for (int J=ytl,Q=0;J<ybr;J+=2,++Q){
 			for (int I=xtl,P=0; I<xbr;I+=2,++P){
            				//copy data across				
-				for (int L=J;L<std::min(ybr,J+2);++L){
-					for (int K=I;K<std::min(xbr,I+2);++K){
+				for (int L=J;L<DIRAC_MIN(ybr,J+2);++L){
+					for (int K=I;K<DIRAC_MIN(xbr,I+2);++K){
 						(mv_data->mv1)[L][K]=(split1_mv_data->mv1)[Q][P];
 						(mv_data->mv2)[L][K]=(split1_mv_data->mv2)[Q][P];
 						(mv_data->dcY)[L][K]=(split1_mv_data->dcY)[Q][P];
@@ -459,12 +468,13 @@ float ModeDecider::DoBlockDecn4x4(int xblock, int yblock){
 
 float ModeDecider::DoCommonMode4x4(PredMode& predmode){
 
+	int I, J;
 	float MB_cost;
 	float best_4x4_cost;
 	//start with the intra cost
 	MB_cost=0.0;	
-	for (int J=ytl;J<ybr;++J){
-		for (int I=xtl;I<xbr;++I){
+	for (J=ytl;J<ybr;++J){
+		for (I=xtl;I<xbr;++I){
 			MB_cost+=(mv_data->block_intra_costs)[J][I];
 		}//I
 	}//J
@@ -474,8 +484,8 @@ float ModeDecider::DoCommonMode4x4(PredMode& predmode){
 
 	//next do ref1	
 	MB_cost=0.0;	
-	for (int J=ytl;J<ybr;++J){
-		for (int I=xtl;I<xbr;++I){
+	for (J=ytl;J<ybr;++J){
+		for (I=xtl;I<xbr;++I){
 			MB_cost+=(mv_data->block_costs1)[J][I].total;
 		}//I
 	}//J
@@ -489,8 +499,8 @@ float ModeDecider::DoCommonMode4x4(PredMode& predmode){
 	if (num_refs>1){
   		//next do ref2	
 		MB_cost=0.0;	
-		for (int J=ytl;J<ybr;++J){
-			for (int I=xtl;I<xbr;++I){
+		for (J=ytl;J<ybr;++J){
+			for (I=xtl;I<xbr;++I){
 				MB_cost+=(mv_data->block_costs2)[J][I].total;
 			}//I
 		}//J
@@ -501,8 +511,8 @@ float ModeDecider::DoCommonMode4x4(PredMode& predmode){
 		}
   		//finally do ref 1 and 2	
 		MB_cost=0.0;	
-		for (int J=ytl;J<ybr;++J){
-			for (int I=xtl;I<xbr;++I){
+		for (J=ytl;J<ybr;++J){
+			for (I=xtl;I<xbr;++I){
 				MB_cost+=(mv_data->block_bipred_costs)[J][I].total;
 			}//I
 		}//J
@@ -649,13 +659,14 @@ float ModeDecider::DoBlockDecn2x2(int xsubMB, int ysubMB){
 }
 
 float ModeDecider::DoCommonMode2x2(PredMode& predmode){
+	int I, J;
 	float MB_cost;
 	float best_2x2_cost;
 
   	//start with the intra cost
 	MB_cost=ModeCost(xtl,ytl,INTRA)*0.13;//multiple determined experimentally----TBD-------------------------------	
-	for (int J=0;J<2;++J){
-		for (int I=0;I<2;++I){
+	for (J=0;J<2;++J){
+		for (I=0;I<2;++I){
 			MB_cost+=(split1_mv_data->block_intra_costs)[J][I];			
 		}//I
 	}//J
@@ -665,8 +676,8 @@ float ModeDecider::DoCommonMode2x2(PredMode& predmode){
 
   	//next do ref1	
 	MB_cost=ModeCost(xtl,ytl,REF1_ONLY)*0.13;//multiple determined experimentally----TBD-------------------------------	
-	for (int J=0;J<2;++J){
-		for (int I=0;I<2;++I){
+	for (J=0;J<2;++J){
+		for (I=0;I<2;++I){
 			MB_cost+=(split1_mv_data->block_costs1)[J][I].total;
 		}//I
 	}//J
@@ -680,8 +691,8 @@ float ModeDecider::DoCommonMode2x2(PredMode& predmode){
 	if (num_refs>1){
   		//next do ref2	
 		MB_cost=ModeCost(xtl,ytl,REF2_ONLY)*0.13;//multiple determined experimentally----TBD-------------------------------	
-		for (int J=0;J<2;++J){
-			for (int I=0;I<2;++I){
+		for (J=0;J<2;++J){
+			for (I=0;I<2;++I){
 				MB_cost+=(split1_mv_data->block_costs2)[J][I].total;
 			}//I
 		}//J
@@ -693,8 +704,8 @@ float ModeDecider::DoCommonMode2x2(PredMode& predmode){
 		}
   		//finally do ref 1 and 2	
 		MB_cost=ModeCost(xtl,ytl,REF1AND2)*0.13;//multiple determined experimentally----TBD-------------------------------	
-		for (int J=0;J<2;++J){
-			for (int I=0;I<2;++I){
+		for (J=0;J<2;++J){
+			for (I=0;I<2;++I){
 				MB_cost+=(split1_mv_data->block_bipred_costs)[J][I].total;
 			}//I
 		}//J

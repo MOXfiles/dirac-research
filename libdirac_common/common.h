@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Revision 1.3  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
 * Boilerplate for Doxygen comments; testing ability to commit into SF CVS
 *
 * Revision 1.1.1.1  2004/03/11 17:45:43  timborer
@@ -56,6 +65,21 @@
 #include "bit_manager.h"
 #include "arrays.h"
 #include "context.h"
+
+// work around for problems with min and max in different compilers
+#if defined(_MSC_VER) || defined(__INTEL_COMPILER)
+#include <stdlib.h>
+#define DIRAC_MAX(a,b) (a > b ? a : b)
+#define DIRAC_MIN(a,b) (a < b ? a : b)
+#define DIRAC_ABS(a)   abs(a)
+#define DIRAC_COS(a)   cos(a)
+typedef unsigned int   uint;
+#else
+#define DIRAC_MAX(a,b) std::max(a,b)
+#define DIRAC_MIN(a,b) std::min(a,b)
+#define DIRAC_ABS(a)   std::abs(a)
+#define DIRAC_COS(a)   std::cos(a)
+#endif
 
 //common header for the encoder and decoder
 //basic types used throughout the codec

@@ -38,8 +38,17 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -67,8 +76,8 @@ void BMParams::Init(int M, int N){
 	int xpos=M*bp.XBSEP-bp.XOFFSET;
 	int ypos=N*bp.YBSEP-bp.YOFFSET;
 
-	xp=std::max(xpos,0);//TL corner of 
-	yp=std::max(ypos,0);//block to be matched
+	xp=DIRAC_MAX(xpos,0);//TL corner of 
+	yp=DIRAC_MAX(ypos,0);//block to be matched
 	xl=bp.XBLEN-xp+xpos;
 	yl=bp.YBLEN-yp+ypos;
 
@@ -164,38 +173,39 @@ void BChkBlockDiff::Diff(BlockDiffParams& dparams, MVector& mv){
 void IntraBlockDiff::Diff(BlockDiffParams& dparams,ValueType dc_pred,float loc_lambda){
 
  	//computes the cost if block is predicted by its dc component
-
+	int J, I;
 	int dc=0;
 
-	for (int J=dparams.yp;J!=dparams.yp+dparams.yl;++J)
-		for(int I=dparams.xp;I!=dparams.xp+dparams.xl;++I)
+	for (J=dparams.yp;J!=dparams.yp+dparams.yl;++J)
+		for(I=dparams.xp;I!=dparams.xp+dparams.xl;++I)
 			dc+=int((*pic_data)[J][I]);
 
 	dparams.dc=ValueType(dc/(dparams.xl*dparams.yl));	
 	dparams.dc=(dparams.dc+2)>>2;	//just give dc to 8-bit accuracy
 
 	dparams.intra_cost=float(abs(dparams.dc-dc_pred))*loc_lambda;
-	for (int J=dparams.yp;J!=dparams.yp+dparams.yl;++J)
-		for(int I=dparams.xp;I!=dparams.xp+dparams.xl;++I)
+	for (J=dparams.yp;J!=dparams.yp+dparams.yl;++J)
+		for(I=dparams.xp;I!=dparams.xp+dparams.xl;++I)
 			dparams.intra_cost+=float(abs((*pic_data)[J][I]-(dparams.dc<<2)));
 };
 
 void BiSimpleBlockDiff::Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2){
 
+	int I, J, K, L;
 	TwoDArray<ValueType> diff(dparams.xl,dparams.yl);
 
 	dparams.cost.mvcost=dparams.start_val;
 	dparams.cost.SAD=0.0;
 
-	for (int J=dparams.yp,L=0;J!=dparams.yp+dparams.yl;++J,++L){
-		for(int I=dparams.xp,K=0;I!=dparams.xp+dparams.xl;++I,++K){
+	for (J=dparams.yp,L=0;J!=dparams.yp+dparams.yl;++J,++L){
+		for(I=dparams.xp,K=0;I!=dparams.xp+dparams.xl;++I,++K){
 			diff[L][K]=(*pic_data)[J][I]-(((*ref_data)[J+mv1.y][I+mv1.x]+1)>>1);
 			diff[L][K]-=(((*ref_data2)[J+mv2.y][I+mv2.x]+1)>>1);
 		}//I
 	}//J
 
-	for (int J=0;J!=dparams.yl;++J)
-		for(int I=0;I!=dparams.xl;++I)
+	for (J=0;J!=dparams.yl;++J)
+		for(I=0;I!=dparams.xl;++I)
 			dparams.cost.SAD+=float(abs(diff[J][I]));
 
 	dparams.cost.total=dparams.cost.mvcost+dparams.cost.SAD;
@@ -203,6 +213,7 @@ void BiSimpleBlockDiff::Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2
 
 void BiBChkBlockDiff::Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2){
 
+	int I, J, K, L;
 	TwoDArray<ValueType> diff(dparams.xl,dparams.yl);
 	int xmax1=ref_data->length(0); int ymax1=ref_data->length(1);
 	int xmax2=ref_data2->length(0);	int ymax2=ref_data2->length(1);
@@ -210,16 +221,16 @@ void BiBChkBlockDiff::Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2){
 	dparams.cost.mvcost=dparams.start_val;
 	dparams.cost.SAD=0.0;
 
-	for (int J=dparams.yp,L=0;J!=dparams.yp+dparams.yl;++J,++L){
-		for(int I=dparams.xp,K=0;I!=dparams.xp+dparams.xl;++I,++K){
+	for (J=dparams.yp,L=0;J!=dparams.yp+dparams.yl;++J,++L){
+		for(I=dparams.xp,K=0;I!=dparams.xp+dparams.xl;++I,++K){
 			diff[L][K]=(*pic_data)[J][I]-(((*ref_data)[BChk(J+mv1.y,ymax1)][BChk(I+mv1.x,xmax1)]+1)>>1);
 			diff[L][K]-=(((*ref_data2)[BChk(J+mv2.y,ymax2)][BChk(I+mv2.x,xmax2)]+1)>>1);
 		}//I
 	}//J
 
 
-	for (int J=0;J!=dparams.yl;++J){
-		for(int I=0;I!=dparams.xl;++I){
+	for (J=0;J!=dparams.yl;++J){
+		for(I=0;I!=dparams.xl;++I){
 			dparams.cost.SAD+=float(abs(diff[J][I]));
 		}//I
 	}//J

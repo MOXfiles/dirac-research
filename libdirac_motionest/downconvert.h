@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-05 03:05:02  chaoticcoyote
+* Revision 1.3  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.2  2004/04/05 03:05:02  chaoticcoyote
 * Updated Doxygen API documentation comments
 * Test to see if Scott's CVS is now working correctly
 *
@@ -97,6 +106,16 @@ private:
 	ValueType* row_buffer;
 
 	//Define filter parameters
+#if defined(_MSC_VER)
+	static const int Stage_I_Size;
+	static const int StageI_I;
+	static const int StageI_II;
+	static const int StageI_III;
+	static const int StageI_IV; 
+	static const int StageI_V;
+	static const int StageI_VI;
+	static const int StageI_Shift;
+#else
 	static const int Stage_I_Size = 6;
 	static const int StageI_I = 86;
 	static const int StageI_II = 46;
@@ -105,6 +124,7 @@ private:
 	static const int StageI_V = -4;
 	static const int StageI_VI = 4;
 	static const int StageI_Shift = 8;
+#endif
 };
 
 #endif

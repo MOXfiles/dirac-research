@@ -38,8 +38,17 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Modifications to allow compilation by Visual C++ 6.0
+* Changed local for loop declarations into function-wide definitions
+* Replaced variable array declarations with new/delete of dynamic array
+* Added second argument to allocator::alloc calls, since MS has no default
+* Fixed missing and namespace problems with min, max, cos, and abs
+* Added typedef unsigned int uint (MS does not have this)
+* Added a few missing std:: qualifiers that GCC didn't require
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -54,6 +63,7 @@ using std::vector;
 
 MvCostData FindBestMatch(BMParams& matchparams){
 
+	uint I, L;
 	BlockDiffParams dparams(matchparams);
 	BlockDiff* mydiff;
 	BlockDiff* simplediff;
@@ -84,7 +94,7 @@ MvCostData FindBestMatch(BMParams& matchparams){
    	//first test the first in each of the lists to choose which lists to pursue
 	dparams.cost.total=100000000.0f;//initialise so that we choose a valid vector to start with!
 	dparams.best_mv=vect_list[0][0];
-	for (uint L=0;L<vect_list.size();++L){
+	for (L=0;L<vect_list.size();++L){
 		temp_mv=vect_list[L][0];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 		if (matchparams.up_conv){
@@ -111,11 +121,11 @@ MvCostData FindBestMatch(BMParams& matchparams){
 
 	//select which lists we're going to use
 	min_cost=list_costs[0];
-	for (int L=1;L<list_costs.length();++L){
+	for (L=1;L<list_costs.length();++L){
 		if (list_costs[L]<min_cost)
 			min_cost=list_costs[L];
 	}//L
-	for (int L=0;L<list_costs.length();++L){
+	for (L=0;L<list_costs.length();++L){
 		if (list_costs[L]<1.5*min_cost){//value of 1.5 tbd. Only do lists whose 1st element isn't too far off best
 			list_nums.push_back(L);
 		}
@@ -126,7 +136,7 @@ MvCostData FindBestMatch(BMParams& matchparams){
 
 	for (uint N=0;N<list_nums.size();++N){
 		lnum=list_nums[N];
-		for (uint I=1;I<vect_list[lnum].size();++I){//start at 1 since did 0 above
+		for (I=1;I<vect_list[lnum].size();++I){//start at 1 since did 0 above
 			temp_mv=vect_list[lnum][I];
 			dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 			if (matchparams.up_conv){
@@ -162,6 +172,7 @@ void FindBestMatchSubp(BMParams& matchparams,MVector& pel_mv,MvCostData& block_c
 	//The reference is upconverted by a factor 2 in each dim, and vectors are computed to 1/8 pel
 	//accuracy by extension with linear interpolation
 
+	uint I;
 	int list_idx=0;//index of the current list we're working on	
 	BlockDiffParams dparams(matchparams);
 	dparams.bailout=true;
@@ -192,7 +203,7 @@ void FindBestMatchSubp(BMParams& matchparams,MVector& pel_mv,MvCostData& block_c
 	AddNewVlist(vect_list,dparams.best_mv,1,1,4);	//creates a list of all 1/2-pel vectors neighbouring
   													//pel_mv but not pel_mv itself. Will search this.	
  	//Next, go through list 1, which is 1/2-pel offsets
-	for (uint I=0;I<vect_list[list_idx].size();++I){
+	for (I=0;I<vect_list[list_idx].size();++I){
 		temp_mv=vect_list[list_idx][I];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 		if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
@@ -208,7 +219,7 @@ void FindBestMatchSubp(BMParams& matchparams,MVector& pel_mv,MvCostData& block_c
  	//next, the 1/4-pel offsets
 	AddNewVlist(vect_list,dparams.best_mv,1,1,2);
 	list_idx++;
-	for (uint I=0;I<vect_list[list_idx].size();++I){
+	for (I=0;I<vect_list[list_idx].size();++I){
 		temp_mv=vect_list[list_idx][I];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 		if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
@@ -225,7 +236,7 @@ void FindBestMatchSubp(BMParams& matchparams,MVector& pel_mv,MvCostData& block_c
 	AddNewVlist(vect_list,dparams.best_mv,1,1,1);
 
 	list_idx++;
-	for (uint I=0;I<vect_list[list_idx].size();++I){
+	for (I=0;I<vect_list[list_idx].size();++I){
 		temp_mv=vect_list[list_idx][I];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 		if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
@@ -242,7 +253,7 @@ void FindBestMatchSubp(BMParams& matchparams,MVector& pel_mv,MvCostData& block_c
 	AddNewVlist(vect_list,matchparams.mv_pred,1,1,1);
 	if (vect_list.size()>4){//we might not have successfully added anything
 		list_idx++;
-		for (uint I=0;I<vect_list[list_idx].size();++I){
+		for (I=0;I<vect_list[list_idx].size();++I){
 			temp_mv=vect_list[list_idx][I];
 			dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 			if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
@@ -293,19 +304,19 @@ float GetModeVar(MvData* mv_data,int xindex,int yindex, PredMode predmode,float 
 	I=xindex-1;J=yindex;
 	if (I>=0){
 		diff=float((mv_data->mode)[J][I]-predmode);
-		var=std::abs(diff);
+		var=DIRAC_ABS(diff);
 	}
 
 	I=xindex-1;J=yindex-1;
 	if (I>=0 && J>=0){
 		diff=float((mv_data->mode)[J][I]-predmode);
-		var+=std::abs(diff);
+		var+=DIRAC_ABS(diff);
 	}
 
 	I=xindex;J=yindex-1;
 	if (J>=0){
 		diff=float((mv_data->mode)[J][I]-predmode);
-		var+=std::abs(diff);
+		var+=DIRAC_ABS(diff);
 	}
 
 	return 2.0*var*loc_lambda;//multiple determined experimentally
@@ -390,7 +401,7 @@ void AddNewVlistD(vector<vector<MVector> >& vect_list, MVector& mv, int xr, int 
 		AddVect(vect_list,tmp_mv,list_num);	
 	}
 	for (int J=1;J<=yr;++J){
-		xlim=xr*(yr-std::abs(J))/yr;		
+		xlim=xr*(yr-DIRAC_ABS(J))/yr;		
 		for (int I=-xlim;I<=xlim;++I){
 			tmp_mv.x=mv.x+I;
 			tmp_mv.y=mv.y+J;
