@@ -4,6 +4,9 @@ TESTSUITE = $(srcdir)/testsuite
 EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4 colourbars_420.yuv
 
 DISTCLEANFILES = atconfig
+
+CLEANFILES = *enc.imt *enc.drc *enc.hdr *enc.yuv *dec.yuv *dec.hdr
+
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
 
 $(srcdir)/package.m4: $(top_srcdir)/configure.ac
@@ -27,13 +30,6 @@ atconfig: $(top_builddir)/config.status
 clean-local:
 	if test -f $(TESTSUITE); then \
 		$(SHELL) $(TESTSUITE) --clean; \
-		rm $(TESTSUITE); \
-		rm -f $(top_builddir)/tests/*enc.drc; \
-		rm -f $(top_builddir)/tests/*enc.yuv; \
-		rm -f $(top_builddir)/tests/*enc.hdr; \
-		rm -f $(top_builddir)/tests/*enc.imt; \
-		rm -f $(top_builddir)/tests/*dec.yuv; \
-		rm -f $(top_builddir)/tests/*dec.hdr; \
 	fi
 
 check-local: atconfig $(TESTSUITE)
