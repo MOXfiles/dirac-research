@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author), 
+*                 Scott R Ladd,
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -48,135 +50,170 @@
 #include <libdirac_common/frame_buffer.h>
 #include <libdirac_common/pic_io.h>
 #include <libdirac_encoder/quality_monitor.h>
+#include <libdirac_encoder/frame_compress.h>
 #include <fstream>
 
-//! Compresses a sequence of frames from a stream.
-/*!
-    This class compresses a sequence of frames, frame by frame. It currently uses GOP parameters set
-	in the encoder parameters in order to define the temporal prediction structure. A version to 
-	incorporate non-GOP structures is TBC.
-*/
-class SequenceCompressor{
-public:
-    //! Constructor
+namespace dirac
+{
+    //! Compresses a sequence of frames from a stream.
     /*!
-        Creates a sequence compressor, and prepares to begin compressing with
-        the first frame.Sets up frame padding in the picture input if necesary
-        /param      pin     an input stream containing a sequence of frames
-        /param		outfile	an output stream for the compressed output
-        /param      encp    parameters for the encoding process
+        This class compresses a sequence of frames, frame by frame. It
+        currently uses GOP parameters set in the encoder parameters in order
+        to define the temporal prediction structure. A version to incorporate
+        non-GOP structures is TBC.
     */
-	SequenceCompressor(PicInput* pin, std::ofstream* outfile, EncoderParams& encp);	
+    class SequenceCompressor{
+    public:
+        //! Constructor
+        /*!
+            Creates a sequence compressor, and prepares to begin compressing
+            with the first frame.Sets up frame padding in the picture input if
+            necesary
+            /param      pin     an input stream containing a sequence of frames
+            /param        outfile    an output stream for the compressed output
+            /param      encp    parameters for the encoding process
+        */
+        SequenceCompressor(StreamPicInput* pin, std::ostream* outfile, EncoderParams& encp);
 
-	//! Destructor
-	/*!
-		Destructor. Must delete IO objects created by constructor.
-	*/
-	~SequenceCompressor();
+        //! Destructor
+        /*!
+            Destructor. Must delete IO objects created by constructor.
+        */
+        ~SequenceCompressor();
 
-    //! Compress the next frame in sequence
-    /*!
-	    This function codes the next frame in coding order and returns the next frame in display
-        order. In general these will differ, and because of re-ordering there is a delay which
-        needs to be imposed. This creates problems at the start and at the end of the sequence
-        which must be dealt with. At the start we just keep outputting frame 0. At the end you
-        will need to loop for longer to get all the frames out. It's up to the calling function
-        to do something with the decoded frames as they come out -- write them to screen or to
-        file, for example.
+        //! Load data
+        /*!
+            Load one frame of data into the Sequence Compressor. Sets
+            m_all_done to true if no more data is available to be loaded.
+            /return             true - if frame load succeeded.
+                                false - otherwise
+        */
+        bool LoadNextFrame();
 
-        If coding is fast enough the compressed version could be watched
-        real-time (with suitable buffering in the calling function to account for
-        encode-time variations).
+        //! Compress the next frame in sequence
+        /*!
+            This function codes the next frame in coding order and returns the
+            next frame in display order. In general these will differ, and
+            because of re-ordering there is a delay which needs to be imposed.
+            This creates problems at the start and at the end of the sequence
+            which must be dealt with. At the start we just keep outputting
+            frame 0. At the end you will need to loop for longer to get all
+            the frames out. It's up to the calling function to do something
+            with the decoded frames as they come out -- write them to screen
+            or to file, for example.  .
+            If coding is fast enough the compressed version could be watched
+            real-time (with suitable buffering in the calling function to
+            account for encode-time variations).
 
-        \return     reference to the next locally decoded frame available for display
-    */
-	Frame & CompressNextFrame();
+            NOTE: LoadNextFrame must be called atleast once before invoking this
+            method.
 
-    //! Determine if compression is complete.
-    /*!
-        Indicates whether or not the last frame in the sequence has been compressed.
-        \return     true if last frame has been compressed; false if not
-    */
-	bool Finished(){return m_all_done;}
+            \return           reference to the next locally decoded frame available for display
+        */
+        Frame &CompressNextFrame();
+
+        //! Return a pointer to the most recent frame encoded
+        const Frame *GetFrameEncoded();
+
+        //! Return Motion estimation info related to the most recent frame encoded
+        const MEData *GetMEData();
+
+        void EndSequence();
+
+        //! Determine if compression is complete.
+        /*!
+            Indicates whether or not the last frame in the sequence has been
+            compressed.
+            \return     true if last frame has been compressed; false if not
+        */
+        bool Finished(){return m_all_done;}
 
 
-private:
-	//! Copy constructor is private and body-less
-	/*!
-		Copy constructor is private and body-less. This class should not be copied.
+    private:
+        //! Copy constructor is private and body-less
+        /*!
+            Copy constructor is private and body-less. This class should not
+            be copied.
+        */
+        SequenceCompressor(const SequenceCompressor& cpy);
 
-	*/
-	SequenceCompressor(const SequenceCompressor& cpy);
+        //! Assignment = is private and body-less
+        /*!
+            Assignment = is private and body-less. This class should not be
+            assigned..
+        */
+        SequenceCompressor& operator=(const SequenceCompressor& rhs);
 
-	//! Assignment = is private and body-less
-	/*!
-		Assignment = is private and body-less. This class should not be assigned.
+        //! Writes the sequence header data to the bitstream.
+        /*!
+            This contains all the block information used for motion
+            compensation. However, temporal prediction structures are defined
+            via the frame headers, and so a simple GOP need not be used or, if
+            so, can be altered on the fly.
+        */
+        void WriteStreamHeader();    
 
-	*/
-	SequenceCompressor& operator=(const SequenceCompressor& rhs);
+        //! Uses the GOP parameters to convert frame numbers in coded order to display order.
+        /*!
+             Uses the GOP parameters to convert frame numbers in coded order
+             to display order
+            \param  fnum  the frame number in coded order
+        */
+        int CodedToDisplay(const int fnum);
 
-	//! Writes the sequence header data to the bitstream.
-	/*!
-		This contains all the block information used for motion compensation. However, temporal prediction 
-		structures are defined via the frame headers, and so a simple GOP need not be used or, if so, can
-		be altered on the fly.
-	*/
-	void WriteStreamHeader();	
+        //! Make a report to screen on the coding results for the whole sequence
+        void MakeSequenceReport(); 
 
-	//! Uses the GOP parameters to convert frame numbers in coded order to display order.
-    /*!
-         Uses the GOP parameters to convert frame numbers in coded order to display order
-        \param  fnum  the frame number in coded order
-    */
-	int CodedToDisplay(const int fnum);
+        //! Make a report to screen on the coding results for a single frame
+        void MakeFrameReport();
 
-    //! Make a report to screen on the coding results for the whole sequence
-    void MakeSequenceReport(); 
+        //! Completion flag, returned via the Finished method.
+        bool m_all_done;
 
-    //! Make a report to screen on the coding results for a single frame
-    void MakeFrameReport();
+        //! Flag indicating whether we've just finished.
+        /*!
+            Flag which is false if we've been all-done for more than one
+            frame, true otherwise (so that we can take actions on finishing
+            once only).
+        */
+        bool m_just_finished;
 
-	//! Completion flag, returned via the Finished method.
-	bool m_all_done;
+        //! The parameters used for encoding.
+        EncoderParams& m_encparams;
 
-	//! Flag indicating whether we've just finished.
-	/*!
-		Flag which is false if we've been all-done for more than one frame, true otherwise 
-		(so that we can take actions on finishing once only).
-	*/
-	bool m_just_finished;
+        //! Pointer pointing at the picture input.
+        StreamPicInput* m_pic_in;
 
-	//! The parameters used for encoding.
-	EncoderParams& m_encparams;
+        //! A picture buffer used for local storage of frames whilst pending re-ordering or being used for reference.
+        FrameBuffer* m_fbuffer;
 
-	//! Pointer pointing at the picture input.
-	PicInput* m_pic_in;
+        //! A picture buffer of original frames
+        FrameBuffer* m_origbuffer;
 
-	//! A picture buffer used for local storage of frames whilst pending re-ordering or being used for reference.
-	FrameBuffer* m_fbuffer;
+        //state variables for CompressNextFrame
 
-	//! A picture buffer of original frames
-	FrameBuffer* m_origbuffer;
+        //! The number of the current frame to be coded, in display order
+        int m_current_display_fnum;
 
-	//state variables for CompressNextFrame
+        //! The number of the current frame to be coded, in coded order
+        int m_current_code_fnum;
 
-	//! The number of the current frame to be coded, in display order
-	int m_current_display_fnum;
+        //! The number of the frame which should be output for concurrent display or storage
+        int m_show_fnum;
 
-	//! The number of the current frame to be coded, in coded order
-	int m_current_code_fnum;
+        //! The index, in display order, of the last frame read
+        int m_last_frame_read;        
 
-	//! The number of the frame which should be output for concurrent display or storage
-	int m_show_fnum;
+        //! A delay so that we don't display what we haven't coded
+        int m_delay;
 
-	//! The index, in display order, of the last frame read
-	int m_last_frame_read;		
+        //! A class for monitoring the quality of pictures and adjusting parameters appropriately
+        QualityMonitor m_qmonitor;
 
-	//! A delay so that we don't display what we haven't coded
-	int m_delay;
+        //! A class to hold the frame compressor object
+        FrameCompressor m_fcoder;
+    };
 
-    //! A class for monitoring the quality of pictures and adjusting parameters appropriately
-    QualityMonitor m_qmonitor;
-};
+} // namespace dirac
 
 #endif

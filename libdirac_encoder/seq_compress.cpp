@@ -39,20 +39,24 @@
 
 
 #include <libdirac_encoder/seq_compress.h>
-#include <libdirac_encoder/frame_compress.h>
+#include <libdirac_common/dirac_assertions.h>
 #include <libdirac_common/golomb.h>
+using namespace dirac;
 
-SequenceCompressor::SequenceCompressor( PicInput* pin , 
-                                        std::ofstream* outfile ,
-                                        EncoderParams& encp ): 
+SequenceCompressor::SequenceCompressor( StreamPicInput* pin , 
+                                        std::ostream* outfile ,
+                                        EncoderParams& encp
+                                        ): 
     m_all_done(false),
     m_just_finished(true),
     m_encparams(encp),
     m_pic_in(pin),
+    m_current_display_fnum(-1),
     m_current_code_fnum(0),
-    m_show_fnum(-1),m_last_frame_read(-1),
+    m_show_fnum(-1),m_last_frame_read(-1), 
     m_delay(1),
-    m_qmonitor( m_encparams , m_pic_in->GetSeqParams() )
+    m_qmonitor( m_encparams , m_pic_in->GetSeqParams() ),
+    m_fcoder( m_encparams )
 {
     // Set up the compression of the sequence
 
@@ -167,6 +171,20 @@ SequenceCompressor::~SequenceCompressor()
     delete m_origbuffer;
 }
 
+bool SequenceCompressor::LoadNextFrame()
+{
+    m_fbuffer->PushFrame( m_pic_in , m_last_frame_read+1 );
+
+    if ( m_pic_in->End() )
+    {
+        m_all_done = true;
+        return false;
+    }
+    m_last_frame_read++;
+    m_origbuffer->PushFrame( m_fbuffer->GetFrame( m_last_frame_read ) );
+    return true;
+}
+
 Frame& SequenceCompressor::CompressNextFrame()
 {
 
@@ -183,6 +201,7 @@ Frame& SequenceCompressor::CompressNextFrame()
     // m_show_fnum is the index of the frame number that can be shown when current_fnum has been coded.
     // Var m_delay is the m_delay caused by reordering (as distinct from buffering)
 
+    TESTM (m_last_frame_read >= 0, "Data loaded before calling CompressNextFrame");
     m_current_display_fnum = CodedToDisplay( m_current_code_fnum );
 
     // If we're not at the beginning, clean the buffer
@@ -194,24 +213,12 @@ Frame& SequenceCompressor::CompressNextFrame()
 
     m_show_fnum = std::max( m_current_code_fnum - m_delay , 0 );
 
-    // Read in the data if necessary and if we can
-    for ( int i=m_last_frame_read + 1 ; i<=int( m_current_display_fnum ); ++i )
-    {
-        // Read from the last frame read to date to the current frame to be coded
-        // (which may NOT be the next frame in display order)
-        m_fbuffer->PushFrame( m_pic_in , i );
-        m_origbuffer->PushFrame( m_fbuffer->GetFrame( i ) );
+    bool can_encode = false;
 
-        // If we've read past the end, then should stop
-        if ( m_pic_in->End() )
-        {
-            m_all_done=true;
-        }
-     m_last_frame_read = i;
+    if (m_last_frame_read >= m_current_display_fnum )
+        can_encode = true;
 
-    }// i
-
-    if ( !m_all_done )
+    if ( can_encode )
     {   // We haven't coded everything, so compress the next frame
 
         // True if we need to recode
@@ -227,8 +234,6 @@ Frame& SequenceCompressor::CompressNextFrame()
         int count = 0;
         int max_count = 3;
 
-        // Set up the frame compression
-        FrameCompressor my_fcoder( m_encparams );
 
         do
         {
@@ -236,7 +241,7 @@ Frame& SequenceCompressor::CompressNextFrame()
             // Compress the frame//
             ///////////////////////
 
-            my_fcoder.Compress( *m_fbuffer , *m_origbuffer , m_current_display_fnum );
+            m_fcoder.Compress( *m_fbuffer , *m_origbuffer , m_current_display_fnum );
 
             // Adjust the Lagrangian parameters and check if we need to re-do the frame
             recode = m_qmonitor.UpdateModel( m_fbuffer->GetFrame( m_current_display_fnum ) , 
@@ -266,30 +271,49 @@ Frame& SequenceCompressor::CompressNextFrame()
        {
            MakeFrameReport();
        }
+    
+        // Increment our position
+        m_current_code_fnum++;
 
     }
-    else
-    {
-        if (m_just_finished)
-        {
-            //Write end of sequence
-            unsigned char seq_end[5] = { START_CODE_PREFIX_BYTE0, 
-                                         START_CODE_PREFIX_BYTE1, 
-                                         START_CODE_PREFIX_BYTE2, 
-                                         START_CODE_PREFIX_BYTE3, 
-                                         SEQ_END_CODE };
-            m_encparams.BitsOut().TrailerOutput().OutputBytes((char *)seq_end, 5);
-            m_encparams.BitsOut().WriteSeqTrailerToFile();
-        }
-        m_just_finished = false;
-    }
-
-    // Increment our position
-    m_current_code_fnum++;
 
     // Return the latest frame that can be shown
     return m_fbuffer->GetFrame(m_show_fnum);
 }
+
+const Frame *SequenceCompressor::GetFrameEncoded()
+{
+    if (m_current_display_fnum >= 0)
+        return &m_fbuffer->GetFrame( m_current_display_fnum );
+
+    return 0;
+}
+
+const MEData *SequenceCompressor::GetMEData()
+{
+    if ( m_fcoder.IsMEDataAvail())
+        return m_fcoder.GetMEData();
+
+    return 0;
+}
+void SequenceCompressor::EndSequence()
+{
+    if (m_just_finished)
+    {
+        //Write end of sequence
+        unsigned char seq_end[5] = { START_CODE_PREFIX_BYTE0, 
+                                     START_CODE_PREFIX_BYTE1, 
+                                     START_CODE_PREFIX_BYTE2, 
+                                     START_CODE_PREFIX_BYTE3, 
+                                     SEQ_END_CODE };
+        m_encparams.BitsOut().TrailerOutput().OutputBytes((char *)seq_end, 5);
+        m_encparams.BitsOut().WriteSeqTrailerToFile();
+        m_just_finished = false;
+        m_all_done = true;
+    }
+}
+
+
 
 void SequenceCompressor::MakeSequenceReport()
 {
@@ -308,7 +332,6 @@ void SequenceCompressor::MakeSequenceReport()
     std::cerr<<m_encparams.BitsOut().SequenceBytes() * 8 * ( m_pic_in->GetSeqParams().FrameRate() )
                                                          /  m_current_code_fnum <<" bits/sec.";
     std::cerr<<std::endl;
-
 
 }
 
@@ -372,7 +395,6 @@ void SequenceCompressor::WriteStreamHeader()
         // Picture dimensions
      UnsignedGolombCode( stream_header ,(unsigned int) m_pic_in->GetSeqParams().Xl() );
      UnsignedGolombCode( stream_header ,(unsigned int) m_pic_in->GetSeqParams().Yl() );
-     UnsignedGolombCode( stream_header ,(unsigned int) m_pic_in->GetSeqParams().Zl() );
 
      // Picture rate
      UnsignedGolombCode( stream_header , (unsigned int) m_pic_in->GetSeqParams().FrameRate());
