@@ -100,6 +100,6 @@ void DrawSplitMode::DrawLegend()
     // draw '2 1 0' label
     DrawCharacter(m_symbols.Number2(), m_draw_params.PicY()-48, 8);
     DrawCharacter(m_symbols.Number1(), m_draw_params.PicY()-32, 8);
-    DrawCharacter(m_symbols.Number0(), m_draw_params.PicY()-15, 8);
+    DrawCharacter(m_symbols.Number0(), m_draw_params.PicY()-16, 8);
 }
 
