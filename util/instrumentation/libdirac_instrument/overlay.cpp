@@ -108,7 +108,7 @@ void Overlay::ProcessFrame(const MEData & me_data, const OLBParams & block_param
     // set up references
     if (m_oparams.Reference() == 2 && (m_frame.GetFparams().Refs().size() < 2 || m_frame.GetFparams().Refs()[0] == m_frame.GetFparams().Refs()[1]))
     {
-        m_ref = -1;
+        m_ref = NO_REF;
         m_mv_scale = 1;
     }
     else

@@ -146,11 +146,18 @@ void ProcessSequence::AddFrameEntry()
         // read reference frame information from top of file
         m_data_in >> total_refs;
 
+        // clear reference vector
+        m_data_array[new_index].frame_params.Refs().clear();
+        
         for (int i=0; i<total_refs; ++i)
         {
             m_data_in >> ref;
             m_data_array[new_index].frame_params.Refs().push_back(ref);
         }
+
+        // add NO_REF reference if there is no reference 2
+        if (total_refs == 1)
+            m_data_array[new_index].frame_params.Refs().push_back(NO_REF);
 
         // read luma motion block dimensions
         m_data_in >> m_data_array[new_index].block_params;

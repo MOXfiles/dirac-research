@@ -38,6 +38,8 @@
 #ifndef _BLOCK_OVERLAY_H_
 #define _BLOCK_OVERLAY_H_
 
+#define NO_REF -1
+
 #include <libdirac_common/motion.h>
 #include <libdirac_common/frame.h>
 #include <util/instrumentation/libdirac_instrument/overlay_symbols.h>

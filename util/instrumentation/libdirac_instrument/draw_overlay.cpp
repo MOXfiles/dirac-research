@@ -243,11 +243,11 @@ void DrawOverlay::DrawReferenceNumbers(int ref1, int ref2)
     DrawCharacter(m_symbols.SymbolColon(), 16, 16);
     DrawCharacter(m_symbols.SymbolColon(), 32, 16);
 
-    if (ref1==-1)
+    if (ref1==NO_REF)
         DrawCharacter(m_symbols.SymbolMinus(), 16, 24);
     else
         DrawValue(ref1, 16, 24);
-    if (ref2==-1)
+    if (ref2==NO_REF)
         DrawCharacter(m_symbols.SymbolMinus(), 32, 24);
     else
         DrawValue(ref2, 32, 24);

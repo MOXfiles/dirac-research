@@ -38,6 +38,8 @@
 #ifndef __OVERLAY_H__
 #define __OVERLAY_H__
 
+#define NO_REF -1
+
 #include <libdirac_common/common.h>
 #include <libdirac_common/motion.h>
 #include <libdirac_common/frame.h>
