@@ -42,6 +42,7 @@
 #include "libdirac_common/cmd_line.h"
 #include "libdirac_common/common.h"
 #include "libdirac_common/pic_io.h"
+using namespace dirac;
 
 //This program writes a header file given command-line parameters, for use
 //with raw planar YUV data for input to the Dirac encoder.
@@ -63,7 +64,6 @@ static void display_help()
     cout << "\ncformat       string  I  format420     Chroma format";
     cout << "\nxl            ulong   I  352           Width in pixels";
     cout << "\nyl            ulong   I  288           Height in pixels";
-    cout << "\nzl            ulong   I  37            Length in frames";
     cout << "\nframerate     ulong   I  12            Frame rate in Hz";
     cout << "\ninterlace     bool    I  false         Interlace";
     cout << "\ntopfieldfirst bool    I  true          Top Field First (set if interlaced)";
@@ -109,7 +109,6 @@ int main( int argc, char *argv[] )
     sparams.SetCFormat(format420);
     sparams.SetXl(352);
     sparams.SetYl(288);
-    sparams.SetZl(37);
     sparams.SetInterlace(false);
     sparams.SetTopFieldFirst(true);
     sparams.SetFrameRate(13);
@@ -135,8 +134,6 @@ int main( int argc, char *argv[] )
             sparams.SetXl( strtoul(opt->m_value.c_str(),NULL,10) );
         else if (opt->m_name == "yl")
             sparams.SetYl( strtoul(opt->m_value.c_str(),NULL,10) );    
-        else if (opt->m_name == "zl")
-            sparams.SetZl( strtoul(opt->m_value.c_str(),NULL,10) );    
         else if (opt->m_name == "interlace" && opt->m_value=="true")
             sparams.SetInterlace( true );    
         else if (opt->m_name == "topfieldfirst" && opt->m_value=="false")
@@ -147,7 +144,7 @@ int main( int argc, char *argv[] )
     }//opt
 
     // Open just the header file for output
-    PicOutput header(output.c_str(), sparams, true);
+    FileStreamOutput header(output.c_str(), sparams, true);
     header.WritePicHeader();
 
     return 0;
