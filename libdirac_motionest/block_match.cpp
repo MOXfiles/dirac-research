@@ -285,7 +285,7 @@ void BlockMatcher::FindBestMatch(int xpos , int ypos ,
 
         }
 
-        list_costs[lnum] = best_costs.total;
+        list_costs[lnum] = cand_costs.total;
 
     }// lnum
 
