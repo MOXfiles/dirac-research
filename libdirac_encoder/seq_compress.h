@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-03-22 01:04:28  chaoticcoyote
+* Revision 1.3  2004-03-30 15:52:40  chaoticcoyote
+* New Doxygen comments
+*
+* Revision 1.2  2004/03/22 01:04:28  chaoticcoyote
 * Added API documentation to encoder library
 * Moved large constructors so they are no longer inlined
 *
@@ -72,7 +75,7 @@ class SequenceCompressor{
 public:
     //! Constructor
     /*!
-        Creates and sequence compressor, and prepares to begin compressing with
+        Creates and initializes a sequence compressor, and prepares to begin compressing with
         the first frame.
         /param      pin     an input stream containing a sequence of frames
         /param      encp    parameters for the encoding process
@@ -93,7 +96,7 @@ public:
         real-time (with suitable buffering in the calling function to account for
         encode-time variations).
         
-        \return     reference to the next locally decoded frame available for display
+        \return     reference to the next locally encoded frame available for display
     */
     Frame & CompressNextFrame();
 

@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-03-22 01:04:28  chaoticcoyote
+* Revision 1.3  2004-03-30 15:52:40  chaoticcoyote
+* New Doxygen comments
+*
+* Revision 1.2  2004/03/22 01:04:28  chaoticcoyote
 * Added API documentation to encoder library
 * Moved large constructors so they are no longer inlined
 *
@@ -68,7 +71,7 @@ class FrameCompressor{
 public:
     //! Constructor
     /*!
-        Creates a FrameEncoder with specific set of parameters the control
+        Creates a FrameCompressor with specific set of parameters the control
         the compression process. It encodes motion data before encoding each
         component of the frame. 
         \param encp encoder parameters
