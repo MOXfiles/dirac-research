@@ -4,10 +4,10 @@
 INCLUDES = -I$(top_srcdir) -I$(srcdir)
 
 h_sources = comp_compress.h frame_compress.h quality_monitor.h \
-            seq_compress.h dirac_encoder.h
+            quant_chooser.h seq_compress.h dirac_encoder.h
 
 cpp_sources = comp_compress.cpp frame_compress.cpp quality_monitor.cpp \
-              seq_compress.cpp dirac_encoder.cpp
+              quant_chooser.cpp seq_compress.cpp dirac_encoder.cpp
 
 
 if USE_MSVC
@@ -66,4 +66,3 @@ endif
 if USE_MSVC
 CLEANFILES = *.pdb *.ilk *.dll *.lib *.exp *.a
 endif
-
