@@ -309,6 +309,7 @@ static void DecodeDirac (const char *iname, const char *oname)
     fclose(ifp);
 
     /* free all resources */
+    FreeFrameBuffer(decoder);
     dirac_decoder_close(decoder);
 }
 
