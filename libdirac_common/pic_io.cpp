@@ -71,11 +71,11 @@ bool PicOutput::OpenHeader(const char* output_name)
             "Can't open output header file for output: " << 
              output_name_hdr << std::endl;
 
-        return EXIT_FAILURE;    
+        return false;    
 
     }
 
-    return EXIT_SUCCESS;
+    return true;
 }
 
 bool PicOutput::OpenYUV(const char* output_name)
@@ -95,11 +95,11 @@ bool PicOutput::OpenYUV(const char* output_name)
             "Can't open output picture data file for output: " << 
             output_name_yuv<<std::endl;
 
-        return EXIT_FAILURE;    
+        return false;    
 
     }
 
-    return EXIT_SUCCESS;
+    return true;
 }
 
 PicOutput::~PicOutput()
@@ -120,7 +120,7 @@ PicOutput::~PicOutput()
 bool PicOutput::WritePicHeader()
 {
     if (!m_op_head_ptr || !*m_op_head_ptr)
-        return EXIT_FAILURE;
+        return false;
 
     *m_op_head_ptr << m_sparams.CFormat() << std::endl;
     *m_op_head_ptr << m_sparams.Xl() << std::endl;
@@ -130,31 +130,32 @@ bool PicOutput::WritePicHeader()
     *m_op_head_ptr << m_sparams.TopFieldFirst() << std::endl;
     *m_op_head_ptr << m_sparams.FrameRate() << std::endl;
 
-    return EXIT_SUCCESS;
+    return true;
 
 }
 
-bool PicOutput::WriteNextFrame(const Frame& myframe)
+bool PicOutput::WriteNextFrame( const Frame& myframe )
 {
     bool ret_val;
 
-    ret_val=WriteComponent(myframe.Ydata(),Y);
+    ret_val=WriteComponent( myframe.Ydata() , Y_COMP );
 
-    if (m_sparams.CFormat()!=Yonly){
-        ret_val|=WriteComponent(myframe.Udata(),U);
-        ret_val|=WriteComponent(myframe.Vdata(),V);
+    if ( m_sparams.CFormat() != Yonly )
+    {
+        ret_val|=WriteComponent( myframe.Udata() , U_COMP);
+        ret_val|=WriteComponent( myframe.Vdata() , V_COMP);
     }
 
     return ret_val;
 }
 
-bool PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs)
+bool PicOutput::WriteComponent( const PicArray& pic_data , const CompSort& cs )
 {
     //initially set up for 10-bit data input, rounded to 8 bits on file output
     //This will throw out any padding to the right and bottom of a frame
 
     int xl,yl;
-    if (cs == Y)
+    if (cs == Y_COMP)
     {
         xl = m_sparams.Xl();
         yl = m_sparams.Yl();
@@ -188,13 +189,13 @@ bool PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs)
 
     if (*m_op_pic_ptr)
     {
-        for (int J=0;J<yl;++J)
+        for (int j=0 ; j<yl ;++j)
         {
-            for (int I=0;I<xl;++I)
+            for (int i=0 ; i<xl ; ++i)
             {                
-                tempv=pic_data[J][I]+2;
+                tempv=pic_data[j][i]+2;
                 tempv>>=2;
-                tempc[I]=(unsigned char) tempv;                
+                tempc[i]=(unsigned char) tempv;                
             }//I
 
             m_op_pic_ptr->write((char*) tempc,xl);
@@ -209,13 +210,13 @@ bool PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs)
         delete[] tempc;
 
         //exit failure
-        return EXIT_SUCCESS;
+        return false;
     }
 
     delete[] tempc;
 
     //exit success
-    return EXIT_FAILURE;
+    return true;
 }
 
 /**************************************Input***********************************/
@@ -269,12 +270,12 @@ bool PicInput::ReadNextFrame(Frame& myframe)
     //success otherwise/.
 
     bool ret_val;
-    ret_val=ReadComponent(myframe.Ydata(),Y);
+    ret_val=ReadComponent( myframe.Ydata() , Y_COMP);
 
     if (m_sparams.CFormat() != Yonly)
     {
-        ret_val|=ReadComponent(myframe.Udata(),U);
-        ret_val|=ReadComponent(myframe.Vdata(),V);
+        ret_val|=ReadComponent(myframe.Udata() , U_COMP);
+        ret_val|=ReadComponent(myframe.Vdata() , V_COMP);
     }
 
     return ret_val;
@@ -284,7 +285,7 @@ bool PicInput::ReadNextFrame(Frame& myframe)
 bool PicInput::ReadPicHeader()
 {
     if (! *m_ip_head_ptr)
-        return EXIT_FAILURE;
+        return false;
 
     int temp_int;
     bool temp_bool;
@@ -311,7 +312,7 @@ bool PicInput::ReadPicHeader()
     *m_ip_head_ptr >> temp_int;    
     m_sparams.SetFrameRate( temp_int );
 
-    return EXIT_SUCCESS;
+    return true;
 }
 
 bool PicInput::End() const
@@ -324,13 +325,13 @@ bool PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
     if (! *m_ip_pic_ptr)
     {
         std::cerr << "Can't read component from picture data" << std::endl;
-        return EXIT_FAILURE;
+        return false;
     }
 
     //initially set up for 8-bit file input expanded to 10 bits for array output
 
     int xl,yl;
-    if (cs == Y){
+    if (cs == Y_COMP){
         xl = m_sparams.Xl();
         yl = m_sparams.Yl();
     }
@@ -358,19 +359,19 @@ bool PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
 
     unsigned char * temp = new unsigned char[xl];//array big enough for one line
 
-    for (int J=0 ; J<yl ; ++J)
+    for (int j=0 ; j<yl ; ++j)
     {        
         m_ip_pic_ptr->read((char*) temp, xl);        
 
-        for (int I=0 ; I<xl ; ++I)
+        for (int i=0 ; i<xl ; ++i)
         {            
-            pic_data[J][I] = (ValueType) temp[I];
-            pic_data[J][I] <<= 2;
+            pic_data[j][i] = (ValueType) temp[i];
+            pic_data[j][i] <<= 2;
         }//I
 
         //pad the columns on the rhs using the edge value        
-        for (int I=xl ; I<pic_data.length(0) ; ++I ){
-            pic_data[J][I] = pic_data[J][xl-1];
+        for (int i=xl ; i<pic_data.length(0) ; ++i ){
+            pic_data[j][i] = pic_data[j][xl-1];
         }//I
 
     }//J
@@ -378,13 +379,13 @@ bool PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
     delete [] temp;
 
     //now do the padded lines, using the last true line
-    for (int J=yl ; J<pic_data.length(1) ; ++J )
+    for (int j=yl ; j<pic_data.length(1) ; ++j )
     {
-        for (int I=0 ; I<pic_data.length(0) ; ++I )
+        for (int i=0 ; i<pic_data.length(0) ; ++i )
         {
-            pic_data[J][I] = pic_data[yl-1][I];
+            pic_data[j][i] = pic_data[yl-1][i];
         }//I
     }//J
 
-    return EXIT_SUCCESS;
+    return true;
 }

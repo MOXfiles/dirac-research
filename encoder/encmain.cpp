@@ -40,9 +40,9 @@
 #include <cmath>
 #include <ctime>
 #include <string>
-#include "libdirac_encoder/seq_compress.h"
-#include "libdirac_common/pic_io.h"
-#include "libdirac_common/cmd_line.h"
+#include <libdirac_encoder/seq_compress.h>
+#include <libdirac_common/pic_io.h>
+#include <libdirac_common/cmd_line.h>
 
 using namespace std;
 
@@ -69,10 +69,7 @@ static void display_help()
 	cout << "\nxbsep   ulong   I  0UL           Overlapping block horizontal separation";
 	cout << "\nybsep   ulong   I  0UL           Overlapping block vertical separation";
 	cout << "\ncpd     ulong   I  0UL           Perceptual weighting - vertical cycles per degree";
-	cout << "\nqf      float   I  0.0F          Overall quality factor (sets other quality factors)";
-	cout << "\nIqf     float   I  20.0F         I-frame quality factor (overrides -qf)";
-	cout << "\nL1qf    float   I  22.0F         L1-frame quality factor (overrides -qf)";
-	cout << "\nL2qf    float   I  24.0F         L2-frame quality factor (overrides -qf)";
+	cout << "\nqf      float   I  0.0F          Overall quality factor (0.0 - 10.0)";
 	cout << "\nverbose bool    I  false         Verbose mode";
 	cout << endl;
 }
@@ -96,37 +93,20 @@ int main (int argc, char* argv[]){
 
 	//the variables we'll read parameters into
 	EncoderParams encparams;
-	OLBParams bparams;
+	OLBParams bparams(12, 12, 8, 8);
 	char input_name[84];//input name for pictures
 	char output_name[84];//output name for pictures
 	char bit_name[84];	//output name for the bitstream
 	string input,output;
 
-	float qf(30);		//quality/quatisation factors. The higher the factor, the lower the quality
-	float Iqf(30);		//and the lower the bitrate
-	float L1qf(32);
-	float L2qf(34);
-
-	//factors for setting motion estimation parameters
-	float factor1 = 0.0F;
-	float factor2 = 0.0F;
-	float factor3 = 0.0F;
-
 	//Set default values. To do: these should really be set in the constructor for the encoder parameters
 	//These default values assume a streaming preset.
+    encparams.SetQf(5.0);
 	encparams.SetL1Sep(3);
 	encparams.SetNumL1(11);
-	bparams.XBLEN=12;
-	bparams.YBLEN=12;
-	bparams.XBSEP=8;
-	bparams.YBSEP=8;
 	encparams.SetUFactor(3.0f);
 	encparams.SetVFactor(1.75f);
 	encparams.SetCPD(20.0f);
-	encparams.SetILambda( pow(10.0,(Iqf/12.0)-0.3) );
-	encparams.SetL1Lambda( pow(10.0,((L1qf/9.0)-0.81)) );
-	encparams.SetL2Lambda( pow(10.0,((L2qf/9.0)-0.81)) );
-	factor3 = 250.0;
 
 	encparams.SetVerbose( false );
 
@@ -169,33 +149,12 @@ int main (int argc, char* argv[]){
 			opt != args.GetOptions().end(); ++opt){
 			if (opt->m_name == "qf")
 			{
-				qf = atof(opt->m_value.c_str());
-
-				Iqf  = qf;
-				L1qf = Iqf + 2.0f;
-				L2qf = Iqf + 5.0f;
+				encparams.SetQf( atof(opt->m_value.c_str()) );
 			}
 		}//opt
 
-		//go over and override quantisation factors if they've been specifically defined for
-	   	//each frame type
-		for (vector<CommandLine::option>::const_iterator opt = args.GetOptions().begin();
-			opt != args.GetOptions().end(); ++opt)	{
-			if (opt->m_name == "Iqf")
-			{
-				Iqf = atof(opt->m_value.c_str());
-			}
-			else if (opt->m_name == "L1qf")
-			{
-				L1qf = atof(opt->m_value.c_str());
-			}
-			else if (opt->m_name == "L2qf")
-			{
-				L2qf = atof(opt->m_value.c_str());
-			}
-		}//opt
 
-			//Now do checking for presets
+		//Now do checking for presets
 		for (vector<CommandLine::option>::const_iterator opt = args.GetOptions().begin();
 			opt != args.GetOptions().end(); ++opt)
 		{
@@ -203,73 +162,50 @@ int main (int argc, char* argv[]){
 			{
 				encparams.SetL1Sep(3);
 				encparams.SetNumL1(11);
-				bparams.XBLEN=12;
-				bparams.YBLEN=12;
-				bparams.XBSEP=8;
-				bparams.YBSEP=8;
+				bparams.SetXblen( 12 );
+				bparams.SetYblen( 12 );
+				bparams.SetXbsep( 8 );
+				bparams.SetXbsep( 8 );
 				encparams.SetUFactor(3.0f);
 				encparams.SetVFactor(1.75f);
 				encparams.SetCPD(20.0f);
-				encparams.SetILambda( pow(10.0,(Iqf/12.0)-0.3) );
-				encparams.SetL1Lambda( pow(10.0,((L1qf/9.0)-0.81)) );
-				encparams.SetL2Lambda( pow(10.0,((L2qf/9.0)-0.81)) );
 
-				factor3=250.0;
 			}
 			else if (opt->m_name == "HD720p")
 			{
 				encparams.SetL1Sep(6);
 				encparams.SetNumL1(3);
-				bparams.XBLEN=16;
-				bparams.YBLEN=16;
-				bparams.XBSEP=10;
-				bparams.YBSEP=12;
+				bparams.SetXblen( 16 );
+				bparams.SetYblen( 16 );
+				bparams.SetXbsep( 10 );
+				bparams.SetXbsep( 12 );
 				encparams.SetUFactor(3.0f);
 				encparams.SetVFactor(1.75f);
 				encparams.SetCPD(20.0f);
-
-				encparams.SetILambda( pow(10.0,((Iqf/13.34)+0.12)) );
-				encparams.SetL1Lambda( pow(10.0,((L1qf/11.11)+0.14)) );
-				encparams.SetL2Lambda( pow(10.0,((L2qf/11.11)+0.14)) );
-
-				factor3 = 2000.0;
-			}
+            }
 			else if (opt->m_name == "HD1080")
 			{
 				encparams.SetL1Sep(3);
 				encparams.SetNumL1(3);
-				bparams.XBLEN=20;
-				bparams.YBLEN=20;
-				bparams.XBSEP=16;
-				bparams.YBSEP=16;
+				bparams.SetXblen( 20 );
+				bparams.SetYblen( 20 );
+				bparams.SetXbsep( 16 );
+				bparams.SetXbsep( 16 );
 				encparams.SetUFactor(3.0f);
 				encparams.SetVFactor(1.75f);
 				encparams.SetCPD(32.0f);
-
-				//TBC - not yet tuned
-				encparams.SetILambda( pow(10.0,((Iqf/8.9)-0.58)) );
-				encparams.SetL1Lambda( pow(10.0,((L1qf/9.7)+0.05)) );
-				encparams.SetL2Lambda( pow(10.0,((L2qf/9.7)+0.05)) );
-
-				factor3 = 100.0;
 			}
 			else if (opt->m_name == "SD576")
 			{
 				encparams.SetL1Sep(3);
 				encparams.SetNumL1(3);
-				bparams.XBLEN=12;
-				bparams.YBLEN=12;
-				bparams.XBSEP=8;
-				bparams.YBSEP=8;
+                bparams.SetXblen( 12 );
+				bparams.SetYblen( 12 );
+				bparams.SetXbsep( 8 );
+				bparams.SetXbsep( 8 );
 				encparams.SetUFactor(3.0f);
 				encparams.SetVFactor(1.75f);
 				encparams.SetCPD(32.0f);
-
-				encparams.SetILambda( pow(10.0,((Iqf/8.9)-0.58)) );
-				encparams.SetL1Lambda( pow(10.0,((L1qf/9.7)+0.05)) );
-				encparams.SetL2Lambda( pow(10.0,((L2qf/9.7)+0.05)) );
-
-				factor3 = 100.0;
 			}
 		}//opt
 
@@ -287,19 +223,19 @@ int main (int argc, char* argv[]){
 			}
 			else if (opt->m_name == "xblen")
 			{
-				bparams.XBLEN = strtoul(opt->m_value.c_str(),NULL,10);
+				bparams.SetXblen( strtoul(opt->m_value.c_str(),NULL,10) );
 			}
 			else if (opt->m_name == "yblen")
 			{
-				bparams.YBLEN = strtoul(opt->m_value.c_str(),NULL,10);
+				bparams.SetYblen( strtoul(opt->m_value.c_str(),NULL,10) );
 			}
 			else if (opt->m_name == "xbsep")
 			{
-				bparams.XBSEP = strtoul(opt->m_value.c_str(),NULL,10);
+				bparams.SetXbsep( strtoul(opt->m_value.c_str(),NULL,10) );
 			}
 			else if (opt->m_name == "ybsep")
 			{
-				bparams.YBSEP = strtoul(opt->m_value.c_str(),NULL,10);
+				bparams.SetYbsep( strtoul(opt->m_value.c_str(),NULL,10) );
 			}
 			else if (opt->m_name == "cpd")
 			{
@@ -338,27 +274,8 @@ int main (int argc, char* argv[]){
 
 
    		//set up all the block parameters so we have a self-consistent set
+
 		encparams.SetBlockSizes( bparams , myinputpic.GetSeqParams().CFormat() );
-
-		//Finally, do the motion estimation Lagrangian parameters
-  		//factor1 normalises the Lagrangian ME factors to take into account different overlaps
-		const OLBParams& bparams2=encparams.LumaBParams(2);//in case we've changed them
-		factor1=float(bparams2.XBLEN*bparams2.YBLEN)/
-			float(bparams2.XBSEP*bparams2.YBSEP);
-
-	  	//factor2 normalises the Lagrangian ME factors to take into account the number of
-     	//blocks in the picture. The more blocks there are, the more the MV field must be
-     	//smoothed and hence the higher the ME lambda must be
-		int xnumblocks=myinputpic.GetSeqParams().Xl()/bparams2.XBSEP;
-		int ynumblocks=myinputpic.GetSeqParams().Yl()/bparams2.YBSEP;
-		factor2=sqrt(float(xnumblocks*ynumblocks));
-
-	    //factor3 is an heuristic factor taking into account the different CPD values and picture sizes, since residues
-    	//after motion compensation will have a different impact depending upon the perceptual weighting
-	    //in the subsequent wavelet transform. This has to be tuned by hand. Probably varies with bit-rate too.
-		float ratio=factor1*factor2/factor3;
-		encparams.SetL1MELambda( encparams.L1Lambda() * ratio );
-		encparams.SetL2MELambda( encparams.L2Lambda() * ratio );
 
    /********************************************************************/
       //open the bitstream file
@@ -379,7 +296,7 @@ int main (int argc, char* argv[]){
 		outfile.close();
 
 		if ( encparams.Verbose() )
-			std::cerr<<std::endl<<"Finished encoding";
+			std::cerr<<std::endl<<"Finished encoding\n";
 		return EXIT_SUCCESS;
 
 

@@ -47,19 +47,18 @@
 #include <vector>
 #include <iostream>
 
-CompCompressor::CompCompressor( EncoderParams& encp,const FrameParams& fp): 
-m_encparams(encp),
-m_fparams(fp),
-m_fsort( m_fparams.FSort() ),
-m_cformat( m_fparams.CFormat() ),
-m_qflist(60),
-m_qfinvlist(60),
-m_offset(60)
+CompCompressor::CompCompressor( EncoderParams& encp,const FrameParams& fp)
+: m_encparams(encp),
+  m_fparams(fp),
+  m_fsort( m_fparams.FSort() ),
+  m_cformat( m_fparams.CFormat() ),
+  m_qflist(60),
+  m_qfinvlist(60),
+  m_offset(60)
+{}
+
+void CompCompressor::Compress(PicArray& pic_data)
 {
-}
-
-
-void CompCompressor::Compress(PicArray& pic_data){
     //need to transform, select quantisers for each band, and then compress each component in turn
     m_csort=pic_data.CSort();	
     const int depth=4;
@@ -78,15 +77,15 @@ void CompCompressor::Compress(PicArray& pic_data){
 	else 
 		m_lambda= m_encparams.L2Lambda();
 
-	if (m_csort == U) 
+	if (m_csort == U_COMP) 
 		m_lambda*= m_encparams.UFactor();
-	if (m_csort == V) 
+	if (m_csort == V_COMP) 
 		m_lambda*= m_encparams.VFactor();
 
 	WaveletTransform wtransform(depth);
 
 	wtransform.Transform( FORWARD , pic_data );
-	wtransform.SetBandWeights( m_encparams.CPD() , m_fparams , m_csort);
+	wtransform.SetBandWeights( m_encparams.CPD() , m_fparams.FSort() , m_fparams.CFormat(), m_csort);
 
 	SubbandList& bands=wtransform.BandList();
 
@@ -95,32 +94,34 @@ void CompCompressor::Compress(PicArray& pic_data){
 	unsigned int total_bytes;
 	unsigned int total_head;
 
-	GenQuantList();//generate all the quantisation data
-	for (int I=bands.Length() ; I>=1 ; --I )
+    //generate all the quantisation data
+	GenQuantList();
+	for (int b=bands.Length() ; b>=1 ; --b )
 	{
 
-		est_band_bits=SelectQuant(pic_data , bands , I);
+		est_band_bits=SelectQuant(pic_data , bands , b);
+		GolombCode( m_encparams.BitsOut().Header() , bands(b).Qf(0) );
 
-		GolombCode( m_encparams.BitsOut().Header() , bands(I).Qf(0) );
-		if (bands(I).Qf(0)!=-1)
+		if (bands(b).Qf(0) != -1)
 		{//if not skipped			
 
-			bands(I).SetQf(0,m_qflist[bands(I).Qf(0)]);
+			bands(b).SetQf(0,m_qflist[bands(b).Qf(0)]);
 
  			//pick the right codec according to the frame type and subband
-			if (I>=bands.Length()){
-				if ( m_fsort==I_frame && I==bands.Length() )
+			if (b >= bands.Length())
+            {
+				if ( m_fsort == I_frame && b == bands.Length() )
 					bcoder=new IntraDCBandCodec( &(m_encparams.BitsOut().Data() ) , CONTEXTS_REQUIRED , bands);
 				else
-					bcoder=new LFBandCodec( &(m_encparams.BitsOut().Data() ) ,CONTEXTS_REQUIRED, bands , I);
+					bcoder=new LFBandCodec( &(m_encparams.BitsOut().Data() ) ,CONTEXTS_REQUIRED, bands , b);
 			}
 			else
-				bcoder=new BandCodec( &(m_encparams.BitsOut().Data() ) , CONTEXTS_REQUIRED , bands , I);
+				bcoder=new BandCodec( &(m_encparams.BitsOut().Data() ) , CONTEXTS_REQUIRED , bands , b);
 
 			num_band_bits=bcoder->Compress(pic_data);
 
  			//update the entropy correction factors
-			m_encparams.EntropyFactors().Update(I,m_fsort , m_csort , est_band_bits , num_band_bits);
+			m_encparams.EntropyFactors().Update(b , m_fsort , m_csort , est_band_bits , num_band_bits);
 
 			//Write the length of the data chunk into the header, and flush everything out to file
 			UnsignedGolombCode( m_encparams.BitsOut().Header() , num_band_bits);
@@ -131,12 +132,12 @@ void CompCompressor::Compress(PicArray& pic_data){
 		else
 		{
 			m_encparams.BitsOut().WriteToFile();
-			if (I == bands.Length() && m_fsort == I_frame)
-				SetToVal(pic_data,bands(I),2692);
+			if (b == bands.Length() && m_fsort == I_frame)
+				SetToVal(pic_data,bands(b),2692);
 			else
-				SetToVal(pic_data,bands(I),0);
+				SetToVal(pic_data,bands(b),0);
 		}		
-	}
+	}//b
 
 	total_bytes=m_encparams.BitsOut().GetTotalBytes();
 	total_head=m_encparams.BitsOut().GetTotalHeadBytes();

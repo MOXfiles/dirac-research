@@ -189,14 +189,17 @@ SD576	: for standard definition video
 HD720p	: for 1280x720 High Definition progressive video
 HD1080	: for 1920/1440x1080 High Definition progressive video [not yet supported]
 
-The other useful parameter is the quality factor qf. This reduces quality the larger
-the value, and qf=30 gives moderate quality video.
+The other useful parameter is the quality factor qf. This is a number from 0 to 10.
+The higher the number, the better the quality. The encoder attempts to adapt the
+encoding process to produce constant quality across the sequence. (Due to variations
+in the content, it may not exactly achieve this, particularly at first where it
+is guessing the right parameters to use, and may get them very wrong.)
 
 Simple coding example. Code an SD sequence to high quality.
 
 Solution.
 
-  dirac_encoder -SD576 -qf 20 test test_out
+  dirac_encoder -SD576 -qf 9 test test_out
 
 will read test.yuv and test.hdr as input, and output a compressed bitstream test_out.drc
 as well as locally-decoded files test_out.yuv and test_out.hdr.
@@ -212,9 +215,6 @@ yblen		: the height of blocks used for motion compensation
 xbsep		: the horizontal separation between blocks. Always <xblen
 ybsep		: the vertical separation between blocks. Always <yblen
 cpd		: normalised viewing distance parameter, in cycles per degree.
-Iqf		: quality factor for Intra frames
-L1qf		: ditto for L1 frames
-L2qf		: ditto for remaining frames
 
 Modifying L1_sep and num_L1 allows for new GOP structures to be used, and should be
 entirely safe. There are two non-GOP modes that can also be used for encoding: 
@@ -224,13 +224,9 @@ beginning of the sequence.
 
 Modifying the block parameters is strongly deprecated: it's likely
 to break the encoder as there are many constraints. Modifying cpd will not break
-anything, but will change the meaning of the various quality factors and will need
-each of Iqf, L1qf and L2qf set experimentally. Setting Iqf, L1qf and L2qf directly
-is very possible, and may be suitable for some sequences.
-
-NB: qf, Iqf etc are not really a quality factor, but rate-distortion trade-off
-parameters, and so setting them to particular values doesn't guarantee a given
-quality.
+anything, but will change the way noise is distributed which may be more (or less)
+suitable for your application. Setting cpd equal zero turns off perceptual weighting
+altogether.
 
 Block separations must currently be set so that an integral number of macroblocks fits
 into the frame horizontally and vertically. A macroblock is a 4x4 set of blocks,

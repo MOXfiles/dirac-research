@@ -41,29 +41,30 @@
 //-------------------------------//
 ///////////////////////////////////
 
-#include "libdirac_motionest/me_utils.h"
-#include "libdirac_common/common.h"
+#include <libdirac_motionest/me_utils.h>
+#include <libdirac_common/common.h>
 #include <algorithm>
 
-void BMParams::Init(const OLBParams& bparams,int M, int N){
-
+void BMParams::Init(const OLBParams& bparams,int M, int N)
+{
 	bp=bparams;
 	Init(M,N);
 }
-void BMParams::Init(int M, int N){
+void BMParams::Init(int M, int N)
+{
 
-	const int xpos=M*bp.XBSEP-bp.XOFFSET;
-	const int ypos=N*bp.YBSEP-bp.YOFFSET;
+	const int xpos=M*bp.Xbsep()-bp.Xoffset();
+	const int ypos=N*bp.Ybsep()-bp.Yoffset();
 
 	xp=std::max(xpos,0);//TL corner of 
 	yp=std::max(ypos,0);//block to be matched
-	xl=bp.XBLEN-xp+xpos;
-	yl=bp.YBLEN-yp+ypos;
+	xl=bp.Xblen()-xp+xpos;
+	yl=bp.Yblen()-yp+ypos;
 
  	//constrain block lengths to fall within the picture
 	xl=((xp+xl-1)>(pic_data->ubound(0)))?(pic_data->ubound(0)+1-xp):xl;
 	yl=((yp+yl-1)>(pic_data->ubound(1)))?(pic_data->ubound(1)+1-yp):yl;
-	me_lambda/=(bp.XBLEN*bp.YBLEN);
+	me_lambda/=(bp.Xblen()*bp.Yblen());
 	me_lambda*=(xl*yl);//if I've shrunk the block I need to shrink the weight I apply to the entropy measure	
 }
 

@@ -36,9 +36,9 @@
 * ***** END LICENSE BLOCK ***** */
 
 
-#include "libdirac_common/mot_comp.h"
-#include "libdirac_common/motion.h"
-#include "libdirac_common/frame_buffer.h"
+#include <libdirac_common/mot_comp.h>
+#include <libdirac_common/motion.h>
+#include <libdirac_common/frame_buffer.h>
 
 using std::vector;
 
@@ -93,12 +93,13 @@ void MotionCompensator::CompensateFrame(FrameBuffer& my_buffer,int fnum,const Mv
 			const Frame& ref2frame=my_buffer.GetFrame(ref2_idx);
 
 			//now do all the components
-			CompensateComponent(my_frame,ref1frame,ref2frame,mv_data,Y);
-			if (cformat!=Yonly)
+			CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , Y_COMP);
+
+			if (cformat != Yonly)
 			{
 				luma_or_chroma=false;				
-				CompensateComponent(my_frame,ref1frame,ref2frame,mv_data,U);
-				CompensateComponent(my_frame,ref1frame,ref2frame,mv_data,V);
+				CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , U_COMP);
+				CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , V_COMP);
 			}
 		}
 	}
@@ -126,7 +127,7 @@ void MotionCompensator::ReConfig()
 	BlockWeights = new TwoDArray<CalcValueType>[9];
 	for(int i = 0; i < 9; i++)
 	{
-		BlockWeights[i] = *(new TwoDArray<CalcValueType>(bparams.XBLEN,bparams.YBLEN));
+		BlockWeights[i] = *(new TwoDArray<CalcValueType>( bparams.Xblen() , bparams.Yblen() ));
 	}//i
 
 	//We can create all nine weighting blocks by calculating values
@@ -144,8 +145,8 @@ void MotionCompensator::ReConfig()
 	FlipY(BlockWeights[1], bparams, BlockWeights[7]);
 
 	//Record the blocksize locally.
-	xBlockSize = bparams.XBLEN;
-	yBlockSize = bparams.YBLEN;
+	xBlockSize = bparams.Xblen();
+	yBlockSize = bparams.Yblen();
 
 }
 
@@ -182,10 +183,10 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 
 	//Loop over all the block rows
 
-	Pos.y=-bparams.YOFFSET;
+	Pos.y=-bparams.Yoffset();
 	for(int yBlock = 0; yBlock < cparams.YNumBlocks(); ++yBlock)
 	{
-		Pos.x=-bparams.XOFFSET;
+		Pos.x=-bparams.Xoffset();
 		//loop over all the blocks in a row
 		for(int xBlock = 0 ; xBlock < cparams.XNumBlocks(); ++xBlock)
 		{
@@ -226,21 +227,21 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 
 			if(block_mode == REF1_ONLY)
 			{
-				if(add_or_sub==ADD) 
+				if(add_or_sub == ADD) 
 					CompensateBlock(pic_data, ref1up, mv1, Pos, BlockWeights[wgt_idx],add);
 				else
 					CompensateBlock(pic_data, ref1up, mv1, Pos, BlockWeights[wgt_idx],subtract);
 			}
 			else if (block_mode == REF2_ONLY)
 			{				
-				if(add_or_sub==ADD)
+				if(add_or_sub == ADD)
 					CompensateBlock(pic_data, ref2up, mv2, Pos, BlockWeights[wgt_idx],add);
 				else 
 					CompensateBlock(pic_data, ref2up, mv2, Pos, BlockWeights[wgt_idx],subtract);
 			}
 			else if(block_mode == REF1AND2)
 			{
-				if(add_or_sub==ADD){
+				if(add_or_sub == ADD){
 					CompensateBlock(pic_data, ref1up, mv1, Pos, BlockWeights[wgt_idx],addhalf);
 					CompensateBlock(pic_data, ref2up, mv2, Pos, BlockWeights[wgt_idx],addhalf);					
 				}
@@ -252,14 +253,14 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 			}
 			else
 			{//we have a DC block.
-				if(add_or_sub==ADD)
+				if(add_or_sub == ADD)
 					DCBlock(pic_data, dc,Pos, BlockWeights[wgt_idx],add);
 				else
 					DCBlock(pic_data, dc,Pos, BlockWeights[wgt_idx],subtract);
 			}
 
 			//Increment the block horizontal position
-			Pos.x+=bparams.XBSEP;
+			Pos.x+=bparams.Xbsep();
 
 		}//xBlock
 
@@ -268,26 +269,28 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 		//for all the picture lines in the block row.
 		if (add_or_sub==SUBTRACT)
 		{//only need to do this when we're subtracting
-			for (int y=yBlock*bparams.YBSEP;y<(yBlock+1)*bparams.YBSEP;++y){
-				for (int x=(cparams.XNumBlocks()*bparams.XBSEP);x<pic_data.length(0);++x){
-					pic_data[y][x]=0;
+			for ( int y=yBlock*bparams.Ybsep() ; y<(yBlock+1)*bparams.Ybsep() ; ++y )
+            {
+				for (int x=( cparams.XNumBlocks()*bparams.Xbsep() ); x<pic_data.length(0) ; ++x )
+                {
+					pic_data[y][x] = 0;
 				}//x
 			}//y
 		}//?add_or_sub
 
 		//Increment the block vertical position
-		Pos.y+=bparams.YBSEP;
+		Pos.y += bparams.Ybsep();
 	}//yBlock
 
 	//Finally, now we've done all the blocks, we must set all padded lines below the last row equal to 0
-	if (add_or_sub==SUBTRACT)
+	if (add_or_sub == SUBTRACT)
 
 	{//only need to do this when we're subtracting
-		for (int y=cparams.YNumBlocks()*bparams.YBSEP;y<pic_data.length(1);++y)
+		for ( int y=cparams.YNumBlocks()*bparams.Ybsep() ; y<pic_data.length(1) ; ++y )
 		{
-			for (int x=0;x<pic_data.length(0);++x)
+			for ( int x=0 ; x<pic_data.length(0) ; ++x )
 			{
-				pic_data[y][x]=0;
+				pic_data[y][x] = 0;
 			}//x
 		}//y
 

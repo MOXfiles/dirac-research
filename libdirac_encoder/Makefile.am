@@ -1,8 +1,8 @@
 INCLUDES = -I$(top_srcdir)
 
-h_sources = comp_compress.h frame_compress.h seq_compress.h
+h_sources = comp_compress.h frame_compress.h quality_monitor.h seq_compress.h
 
-cpp_sources = comp_compress.cpp frame_compress.cpp seq_compress.cpp
+cpp_sources = comp_compress.cpp frame_compress.cpp quality_monitor.cpp seq_compress.cpp 
 
 lib_LIBRARIES = libdirac_encoder.a
 

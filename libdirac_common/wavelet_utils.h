@@ -223,11 +223,13 @@ public:
 		wavelet transform. 
 
 		\param	cpd	perctual factor - the number of cycles per degree
-		\param	fparams	the frame parameters, such as the frame sort (I, L1 or L2)
+		\param	fsort	the frame sort (I, L1 or L2)
+		\param	cformat	the chroma format
 		\param	csort	the component type (Y, U or V)  
 	*/
-	void SetBandWeights (const float cpd,
-                         const FrameParams & fparams,
+    void SetBandWeights (const float cpd, 
+                         const FrameSort& fsort,
+                         const ChromaFormat& cformat,
                          const CompSort csort);
 
 private:
@@ -249,9 +251,8 @@ private:
 	//! Private, bodyless copy operator=: class should not be assigned
 	WaveletTransform& operator=(const WaveletTransform& rhs);
 
-	float Twodto1d (float f,float g);//used for perceptual weighting
-	float Threshold(float xf,float yf,CompSort cs);//ditto
-
+    //! Given x and y spatial frequencies in cycles per degree, returns a weighting value
+	float PerceptualWeight(float xf,float yf,CompSort cs);
 	void VHSplit(int xp, int yp, int xl, int yl, PicArray&pic_data);
 	void VHSynth(int xp, int yp, int xl, int yl, PicArray& pic_data);	
 

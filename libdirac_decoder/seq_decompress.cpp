@@ -42,11 +42,11 @@
 //---------------------------------------//
 ///////////////////////////////////////////
 
-#include "libdirac_decoder/seq_decompress.h"
-#include "libdirac_common/common.h"
-#include "libdirac_common/golomb.h"
-#include "libdirac_common/frame_buffer.h"
-#include "libdirac_decoder/frame_decompress.h"
+#include <libdirac_decoder/seq_decompress.h>
+#include <libdirac_common/common.h>
+#include <libdirac_common/golomb.h>
+#include <libdirac_common/frame_buffer.h>
+#include <libdirac_decoder/frame_decompress.h>
 
 SequenceDecompressor::SequenceDecompressor(std::ifstream* ip,bool verbosity)
 : 
@@ -57,7 +57,6 @@ m_delay(1),
 m_last_frame_read(-1),
 m_show_fnum(-1)
 {
-
 	m_decparams.SetBitsIn( new BitInputManager(m_infile) );
 	m_decparams.SetVerbose( verbosity );
 	ReadStreamHeader();
@@ -99,20 +98,20 @@ m_show_fnum(-1)
 	int yl_chroma=m_sparams.Yl() / y_chroma_fac;
 
 	//make sure we have enough macroblocks to cover the pictures 
-	m_decparams.SetXNumMB( m_sparams.Xl() / m_decparams.LumaBParams(0).XBSEP );
-	m_decparams.SetYNumMB( m_sparams.Yl() / m_decparams.LumaBParams(0).YBSEP );
-	if ( m_decparams.XNumMB() * m_decparams.ChromaBParams(0).XBSEP < xl_chroma )
+	m_decparams.SetXNumMB( m_sparams.Xl() / m_decparams.LumaBParams(0).Xbsep() );
+	m_decparams.SetYNumMB( m_sparams.Yl() / m_decparams.LumaBParams(0).Ybsep() );
+	if ( m_decparams.XNumMB() * m_decparams.ChromaBParams(0).Xbsep() < xl_chroma )
 	{
 		m_decparams.SetXNumMB( m_decparams.XNumMB() + 1 );
-		xpad_chroma = m_decparams.XNumMB() * m_decparams.ChromaBParams(0).XBSEP - xl_chroma;
+		xpad_chroma = m_decparams.XNumMB() * m_decparams.ChromaBParams(0).Xbsep() - xl_chroma;
 	}
 	else
 		xpad_chroma=0;
 
-	if (m_decparams.YNumMB()*m_decparams.ChromaBParams(0).YBSEP<yl_chroma)
+	if (m_decparams.YNumMB()*m_decparams.ChromaBParams(0).Ybsep()<yl_chroma)
 	{
 		m_decparams.SetYNumMB( m_decparams.YNumMB() + 1 );
-		ypad_chroma=m_decparams.YNumMB()*m_decparams.ChromaBParams(0).YBSEP-yl_chroma;
+		ypad_chroma=m_decparams.YNumMB()*m_decparams.ChromaBParams(0).Ybsep()-yl_chroma;
 	}
 	else
 		ypad_chroma=0;	
@@ -139,6 +138,7 @@ m_show_fnum(-1)
 
 	//set up padded picture sizes, based on original picture sizes, the block parameters and the wavelet transform depth
 	m_fbuffer= new FrameBuffer( m_sparams.CFormat() , m_sparams.Xl() + xpad_luma , m_sparams.Yl() + ypad_luma );
+
 }
 
 SequenceDecompressor::~SequenceDecompressor()
@@ -164,12 +164,12 @@ Frame& SequenceDecompressor::DecompressNextFrame()
 		m_fbuffer->Clean(m_show_fnum);
 	}
 
-	int end_of_data=my_fdecoder.Decompress(*m_fbuffer);
+	bool new_frame_to_display=my_fdecoder.Decompress(*m_fbuffer);
 
 	//if we've exited with success, there's a new frame to display, so increment
 	//the counters. Otherwise, freeze on the last frame shown
 	m_show_fnum=std::min( std::max( m_current_code_fnum-m_delay,0) , m_sparams.Zl()-1 );
-	if (!end_of_data)
+	if (new_frame_to_display)
 	{
 		m_current_code_fnum++;
 	}
@@ -200,10 +200,10 @@ void SequenceDecompressor::ReadStreamHeader()
 	m_sparams.SetFrameRate( int(UnsignedGolombDecode( m_decparams.BitsIn() )) );
 
  	//block parameters
-	bparams.XBLEN=int(UnsignedGolombDecode( m_decparams.BitsIn()));
-	bparams.YBLEN=int(UnsignedGolombDecode( m_decparams.BitsIn()));	
-	bparams.XBSEP=int(UnsignedGolombDecode( m_decparams.BitsIn()));
-	bparams.YBSEP=int(UnsignedGolombDecode( m_decparams.BitsIn()));
+	bparams.SetXblen( int(UnsignedGolombDecode( m_decparams.BitsIn() )) );
+	bparams.SetYblen( int(UnsignedGolombDecode( m_decparams.BitsIn() )) );	
+	bparams.SetXbsep( int(UnsignedGolombDecode( m_decparams.BitsIn() )) );
+	bparams.SetYbsep( int(UnsignedGolombDecode( m_decparams.BitsIn() )) );
 
 	//dimensions of block arrays (remember there may need to be padding for some block and picture sizes)
 	m_decparams.SetXNumBlocks( int(UnsignedGolombDecode( m_decparams.BitsIn())) );

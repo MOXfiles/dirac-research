@@ -62,9 +62,9 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 	FrameParams fparams( m_cformat , my_buffer.GetFParams().Xl() , my_buffer.GetFParams().Yl() );
 
  	//Get the frame header (which includes the frame number)
-	bool header_failure=ReadFrameHeader(fparams);
+	bool header_success=ReadFrameHeader(fparams);
 
-	if ( !(m_decparams.BitsIn().End()) && !header_failure )
+	if ( !(m_decparams.BitsIn().End()) && header_success )
 	{//if we've not finished the data, can proceed
 
 		if ( !m_skipped )
@@ -99,11 +99,11 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 			}
 
  	 	 	//decode components
-			CompDecompress( my_buffer,fparams.FrameNum() , Y );
+			CompDecompress( my_buffer,fparams.FrameNum() , Y_COMP );
 			if ( fparams.CFormat() != Yonly )
 			{
-				CompDecompress( my_buffer , fparams.FrameNum() , U );		
-				CompDecompress( my_buffer , fparams.FrameNum() , V );
+				CompDecompress( my_buffer , fparams.FrameNum() , U_COMP );		
+				CompDecompress( my_buffer , fparams.FrameNum() , V_COMP );
 			}
 
 			if ( fsort != I_frame )
@@ -125,10 +125,10 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 		}
 
  		//exit success
-		return EXIT_SUCCESS;
+		return true;
 	}
  	//exit failure
-	return EXIT_FAILURE;
+	return false;
 }
 
 void FrameDecompressor::CompDecompress(FrameBuffer& my_buffer, int fnum,CompSort cs)
@@ -192,11 +192,11 @@ bool FrameDecompressor::ReadFrameHeader( FrameParams& fparams )
 		m_decparams.BitsIn().FlushInput();
 
  		//exit success
-		return EXIT_SUCCESS;
+		return true;
 	}//?m_decparams.BitsIn().End()
 	else
 	{
  		//exit failure	
-		return EXIT_FAILURE;
+		return false;
 	}
 }

@@ -126,7 +126,7 @@ public:
 	const PicArray& GetUpComponent(unsigned int frame_num, CompSort c) const;
 
 	//! Return the number of frames in the buffer
-	unsigned int Size() const {return frame_data.size();}
+	size_t Size() const {return m_frame_data.size();}
 
 	//! Put a new frame into the top of the buffer
 	/*! 
@@ -171,14 +171,28 @@ public:
 	void Clean(int fnum);
 
 	//! Return the default frame parameters
-	const FrameParams& GetFParams() const{return fparams;}
+	const FrameParams& GetFParams() const{return m_fparams;}
 
 private:
-	std::vector<Frame*> frame_data;	//the buffer storing all the values
-	std::map<unsigned int,unsigned int> fnum_map;//the map from frame numbers to position in the buffer
+    //! the buffer storing all the values
+	std::vector<Frame*> m_frame_data;
+
+    //!the map from frame numbers to position in the buffer
+	std::map<unsigned int,unsigned int> m_fnum_map;
 
 	//! The frame parameters to use as a default if none are supplied with the frame
-	FrameParams fparams;
+	FrameParams m_fparams;
+
+	//! The number of L1 frames before next I frame
+	unsigned int m_num_L1;
+
+	//! The distance, in frames, between L1 frames
+	unsigned int m_L1_sep;
+
+	//! The length of the group of pictures (GOP)
+	unsigned int m_gop_len;
+
+
 
 	//! Set the frame parameters based on the frame number in display order and internal GOP parameters
 	void SetFrameParams(unsigned int fnum);
@@ -190,14 +204,7 @@ private:
 	*/
 	void Remove(unsigned int fnum);
 
-	//! The number of L1 frames before next I frame
-	unsigned int num_L1;
 
-	//! The distance, in frames, between L1 frames
-	unsigned int L1_sep;
-
-	//! The length of the group of pictures (GOP)
-	unsigned int gop_len;
 };
 
 #endif

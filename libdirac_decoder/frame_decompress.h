@@ -64,7 +64,7 @@ public:
     //! Decompress the next frame into the buffer
     /*!
         Decompresses the next frame from the stream and place at the end of a frame buffer.
-		Returns 0 if able to decode successfully, 1 otherwise
+		Returns true if able to decode successfully, false otherwise
 
         \param my_buffer   picture buffer into which the frame is placed
     */

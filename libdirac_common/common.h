@@ -64,7 +64,7 @@ enum FrameSort{ I_frame, L1_frame, L2_frame};
 enum PredMode{ INTRA , REF1_ONLY , REF2_ONLY , REF1AND2 };
 
 //! Types of picture component
-enum CompSort{ Y , U , V , R , G , B };
+enum CompSort{ Y_COMP , U_COMP , V_COMP , R_COMP , G_COMP , B_COMP };
 
 //! Addition or subtraction
 enum AddOrSub{ ADD , SUBTRACT };
@@ -186,7 +186,7 @@ public:
         /*!
         Contructor creates a two-D array, with specified size and colour format.
         */
-	PicArray(int xl, int yl, CompSort cs=Y);
+	PicArray(int xl, int yl, CompSort cs=Y_COMP);
 
         //copy constructor and assignment= derived by inheritance
 
@@ -259,26 +259,68 @@ private:
 };
 
 //! Parameters for overlapped block motion compensation
-struct OLBParams
+class OLBParams
 {//params for overlapped blocks
 
-    //! The horizontal block length
-    int XBLEN;
+public:
 
-    //! The vertical block length
-    int YBLEN;
+    //! Default constructor does nothing
+    OLBParams(){}
 
-    //! The horizontal block separation
-    int XBSEP;
+    //! Constructor
+    /*
+        Constructor rationalises proposed parameters to allow suitable overlap and fit in with
+        chroma format
+        \param    xblen    the horizontal block length    
+        \param    yblen    the vertical block length
+        \param    xblen    the horizontal block separation
+        \param    yblen    the vertical block separation
 
-    //! The vertical block separation
-    int YBSEP;
+    */
+    OLBParams(const int xblen, int const yblen, int const xbsep, int const ybsep);
+
+    // Gets ...
+
+    //! Returns the horizontal block length
+    const int Xblen() const {return m_xblen;}
+
+    //! Returns the vertical block length
+    const int Yblen() const {return m_yblen;}
+
+    //! Returns the horizontal block separation
+    const int Xbsep() const {return m_xbsep;}
+
+    //! Returns the vertical block separation
+    const int Ybsep() const {return m_ybsep;}
 
     //! The offset in the horizontal start of the block caused by overlap,=(XBLEN-XBSEP)/2
-    int XOFFSET;
+    const int Xoffset() const {return m_xoffset;}
 
     //! The offset in the vertical start of the block caused by overlap,=(YBLEN-YBSEP)/2
-    int YOFFSET;
+    const int Yoffset() const {return m_yoffset;}
+
+    // ... and sets
+
+    //! Sets the block width
+    void SetXblen( int xblen ){ m_xblen = xblen; m_xoffset = (m_xblen-m_xbsep)/2;}
+
+    //! Sets the block height
+    void SetYblen( int yblen ){ m_yblen = yblen; m_yoffset = (m_yblen-m_ybsep)/2;}
+
+    //! Sets the block horizontal separation
+    void SetXbsep( int xbsep ){ m_xbsep = xbsep; m_xoffset = (m_xblen-m_xbsep)/2;}
+
+    //! Sets the block vertical separation
+    void SetYbsep( int ybsep ){ m_ybsep = ybsep; m_yoffset = (m_yblen-m_ybsep)/2;}
+
+private:
+
+    int m_xblen;
+    int m_yblen;
+    int m_xbsep;
+    int m_ybsep;
+    int m_xoffset;
+    int m_yoffset;
 };
 
 //! Parameters relating to the video sequence being encoded/decoded
@@ -579,7 +621,7 @@ public:
         ////////////////////////////////////////////////////////////////////
 
      // Gets ...
-
+    const float Qf() const {return m_qf;}
     const int NumL1() const {return m_num_L1;}
     const int L1Sep() const {return m_L1_sep;}
     const float UFactor() const {return m_ufactor;}
@@ -588,6 +630,7 @@ public:
     const float ILambda() const {return m_I_lambda;}
     const float L1Lambda() const {return m_L1_lambda;}
     const float L2Lambda() const {return m_L2_lambda;}
+    const float Lambda(const FrameSort& fsort) const;
     const float L1MELambda() const {return m_L1_me_lambda;}
     const float L2MELambda() const {return m_L2_me_lambda;}
 
@@ -603,6 +646,7 @@ public:
     BitOutputManager& BitsOut() {return *m_bit_out;}
 
     // ... and Sets
+    void SetQf(const float qfac){m_qf=qfac;}
     void SetNumL1(const int nl){m_num_L1=nl;}
     void SetL1Sep(const int lsep){m_L1_sep=lsep;}
     void SetUFactor(const float uf){m_ufactor=uf;}
@@ -611,6 +655,7 @@ public:
     void SetILambda(const float l){m_I_lambda=l;}
     void SetL1Lambda(const float l){m_L1_lambda=l;}
     void SetL2Lambda(const float l){m_L2_lambda=l;}
+    void SetLambda(const FrameSort& fsort, const float l);
     void SetL1MELambda(const float l){m_L1_me_lambda=l;}
     void SetL2MELambda(const float l){m_L2_me_lambda=l;}
 
@@ -621,6 +666,9 @@ public:
     void SetBitsOut(BitOutputManager* bo){m_bit_out=bo;}
 
 private:
+    //! Quality factor (between 0 and 10)
+    float m_qf; 
+
     //! Number of L1 frames before next I frame
     int m_num_L1;
 

@@ -152,15 +152,16 @@ public:
 	block_bipred_costs(xnumBlock,ynumBlock){}
 
 	//! Return the array of DC values for blocks for each component
-	TwoDArray<ValueType>& dc(CompSort cs){
-		if (cs==U) return dcU;
-		else if (cs==V) return dcV;
+	TwoDArray<ValueType>& dc(CompSort cs)
+    {
+		if (cs == U_COMP) return dcU;
+		else if (cs == V_COMP) return dcV;
 		else return dcY;}
 
 	//! Return the array of DC values for blocks for each component
 	const TwoDArray<ValueType>& dc(CompSort cs) const {
-		if (cs==U) return dcU;
-		else if (cs==V) return dcV;
+		if (cs == U_COMP) return dcU;
+		else if (cs == V_COMP) return dcV;
 		else return dcY;}
 
 	    //! The MB data array

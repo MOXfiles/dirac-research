@@ -128,12 +128,12 @@ void FrameCompressor::Compress(FrameBuffer& my_buffer, int fnum)
 		}//?fsort
 
  		//code component data
-		my_compcoder.Compress(my_buffer.GetComponent(fnum,Y));
-		if (cformat != Yonly)
-        {
-			my_compcoder.Compress(my_buffer.GetComponent(fnum,U));
-			my_compcoder.Compress(my_buffer.GetComponent(fnum,V));
-		}
+		my_compcoder.Compress(my_buffer.GetComponent( fnum , Y_COMP));
+ 		if (cformat != Yonly)
+         {
+ 			my_compcoder.Compress(my_buffer.GetComponent( fnum , U_COMP));
+ 			my_compcoder.Compress(my_buffer.GetComponent( fnum , V_COMP));
+ 		}
 
  		//motion compensate again if necessary
 		if ( fsort != I_frame )

@@ -36,8 +36,8 @@
 * ***** END LICENSE BLOCK ***** */
 
 
-#include "libdirac_common/wavelet_utils.h"
-#include "libdirac_common/common.h"
+#include <libdirac_common/wavelet_utils.h>
+#include <libdirac_common/common.h>
 #include <cstdlib>
 
 // Default constructor
@@ -87,27 +87,27 @@ void SubbandList::Init(const int depth,const int xlen,const int ylen)
 	Clear(); 
 	Subband* tmp;
      
-	for (int l = 1; l <= depth; ++l)
+	for (int level = 1; level <= depth; ++level)
     {
 		xl/=2; 
 		yl/=2; 
         
-		tmp=new Subband(xl,0,xl,yl,l); 
-		AddBand(*tmp); 
+		tmp=new Subband(xl , 0 , xl , yl , level); 
+		AddBand( *tmp ); 
 		delete tmp; 
         
-		tmp=new Subband(0,yl,xl,yl,l); 
-		AddBand(*tmp); 
+		tmp=new Subband( 0 , yl , xl , yl , level); 
+		AddBand( *tmp ); 
 		delete tmp; 
         
-		tmp=new Subband(xl,yl,xl,yl,l); 
-		AddBand(*tmp); 
+		tmp=new Subband( xl , yl , xl , yl , level); 
+		AddBand( *tmp ); 
 		delete tmp; 
         
-		if (l == depth)
+		if (level == depth)
         {
-			tmp=new Subband(0,0,xl,yl,l); 
-			AddBand(*tmp); 
+			tmp=new Subband( 0 , 0 , xl , yl , level); 
+			AddBand( *tmp ); 
 			delete tmp; 
 		}		
 	}
@@ -121,16 +121,18 @@ void SubbandList::Init(const int depth,const int xlen,const int ylen)
 	(*this)(len).AddChild(len-1); 
 	(*this)(len-1).SetParent(len); 
 
-	for (int l = 1; l < depth; ++l)
+	for (int level = 1; level < depth; ++level)
     {
  		//do parent-child relationship for other bands
-		(*this)(3*l+1).AddChild(3*(l-1)+1); 
-		(*this)(3*(l-1)+1).SetParent(3*l+1); 
-		(*this)(3*l+2).AddChild(3*(l-1)+2); 
-		(*this)(3*(l-1)+2).SetParent(3*l+2); 
-		(*this)(3*l+3).AddChild(3*(l-1)+3); 
-		(*this)(3*(l-1)+3).SetParent(3*l+3); 
-	}
+		(*this)(3*level + 1).AddChild( 3*(level-1) + 1); 
+		(*this)(3*(level-1) + 1).SetParent(3*level + 1); 
+
+		(*this)(3*level + 2).AddChild(3*(level-1) + 2); 
+		(*this)(3*(level-1) + 2).SetParent(3*level + 2); 
+
+		(*this)(3*level + 3).AddChild(3*(level-1) + 3); 
+		(*this)(3*(level-1) + 3).SetParent(3*level + 3); 
+	}// level
 }
 
 //wavelet transform methods
@@ -412,122 +414,137 @@ void WaveletTransform::VHSynth(const int xp, const int yp, const int xl, const i
 //perceptual weighting stuff
 ////////////////////////////
 
-inline float WaveletTransform::Twodto1d (float f,float g)
+// Returns a perceptual noise weighting based on extending CCIR 959 values
+// assuming a two-d isotropic response. Also has a fudge factor of 20% for chroma
+float WaveletTransform::PerceptualWeight(float xf,float yf,CompSort cs)
 {
-	return (sqrt(2.0*(f*f+g*g)) -0.736*std::abs(f-g)); 
+    double temp_val( xf*xf + yf*yf );
+
+    if (cs != Y_COMP)
+        temp_val *= 1.2;
+
+    return 0.255 * std::pow( 1.0 + 0.2561*temp_val , 0.75) ;
+
 }
 
-float WaveletTransform::Threshold(float xf,float yf,CompSort cs)
+void WaveletTransform::SetBandWeights (const float cpd, 
+                                       const FrameSort& fsort,
+                                       const ChromaFormat& cformat,
+                                       const CompSort csort)
 {
-	float freq,a,k,f0,g0; 
-    
-	if(cs == Y)
-    {
-		a=0.495; 
-		k=0.466; 
-		f0=0.401; 
-		g0=1.501; 
-	}
-	else if(cs == U)
-    {
-		a=2.032; 
-		k=0.437; 
-		f0=0.239; 
-		g0=1.613; 
+	//NB - only designed for progressive to date	
+
+	int xlen, ylen, xl, yl, xp, yp, depth;
+	float xfreq, yfreq;
+	float temp;
+
+	xlen=2*band_list(1).Xl();
+	ylen=2*band_list(1).Yl();
+
+	if (cpd != 0.0)
+	{
+		for( int i = 1; i<=band_list.Length() ; i++ )
+		{
+			xp = band_list(i).Xp();
+			yp = band_list(i).Yp();
+			xl = band_list(i).Xl();
+			yl = band_list(i).Yl();
+
+
+			xfreq = cpd * ( float(xp) + (float(xl)/2.0) ) / float(xlen);
+			yfreq = cpd * ( float(yp) + (float(yl)/2.0) ) / float(ylen);
+
+			if ( fsort != I_frame )
+			{
+				xfreq /= 4.0;
+				yfreq /= 4.0;
+			}
+
+ 			if( csort != Y_COMP){
+ 				if( cformat == format422)
+ 				{
+ 					xfreq /= 2.0;
+ 				}
+ 				else if( cformat == format411 )
+ 				{
+ 					xfreq /= 4.0;
+ 				}
+ 				else if( cformat == format420 )
+ 				{
+ 					xfreq /= 2.0;
+ 					yfreq /= 2.0;
+ 				}
+ 			}
+
+            temp = PerceptualWeight(xfreq,yfreq,csort);
+
+			band_list(i).SetWt(temp);
+
+		}//I
+
+        // Give more welly to DC in a completely unscientific manner ...
+        // (should really relate this to the frame rate)
+        band_list( band_list.Length() ).SetWt(band_list(13).Wt()/6.0);
+
+ 		//make sure dc is always the lowest weight
+ 		float min_weight=band_list(band_list.Length()).Wt();
+ 		for(int I=1;I<=band_list.Length()-1;I++ )
+ 		{
+ 			min_weight = ((min_weight>band_list(I).Wt()) ? band_list(I).Wt() : min_weight);
+ 		}		
+ 		band_list(band_list.Length()).SetWt(min_weight);
+
+ 		//now normalize weights so that white noise is always weighted the same
+
+  		//overall factor to ensure that white noise ends up with the same RMS, whatever the weight
+  		double overall_factor=0.0;
+  		//fraction of the total number of samples belonging to each subband
+  		double subband_fraction;	
+
+  		for( int i=1 ; i<=band_list.Length() ; i++ )
+  		{
+  			subband_fraction = 1.0/((double) band_list(i).Scale() * band_list(i).Scale());
+  			overall_factor += subband_fraction/( band_list(i).Wt() * band_list(i).Wt() );
+  		}
+  		overall_factor = std::sqrt( overall_factor );
+
+		//go through and normalise
+
+		for( int i=13 ; i>0 ; i-- )
+		{
+			band_list(i).SetWt( band_list(i).Wt() * overall_factor);
+		}	
+
 	}
 	else
-    {
-		a=0.873; 
-		k=0.53; 
-		f0=0.366; 
-		g0=1.942; 
-	} 
-
-	freq=Twodto1d(xf,yf); 
-
-	return pow((double)10.0,(double)(log10(a)+k*(log10(freq)-log10((g0*f0))*(log10(freq)-log10(g0*f0))))); 
-}
-
-void WaveletTransform::SetBandWeights (const float cpd, const FrameParams& fparams, const CompSort csort)
-{
-	int xlen,ylen,xl,yl,xp,yp,depth; 
-	float xfreq,yfreq; 
-	const FrameSort& fsort = fparams.FSort(); 
-    const ChromaFormat& cformat = fparams.CFormat(); 
-	float temp; 
-
-	//factor used to compensate for the absence of scaling in the wavelet transform	
-	const double alpha(1.149658203); 
-
-	xlen=2*band_list(1).Xl(); 
-	ylen=2*band_list(1).Yl(); 
-
-	if (cpd != 0.0){
-		for(int i = 1; i <= band_list.Length(); i++){
-			xp=band_list(i).Xp(); 
-			yp=band_list(i).Yp(); 
-			xl=band_list(i).Xl(); 
-			yl=band_list(i).Yl(); 
-
-			if(fsort == I_frame){ 
-				xfreq=cpd * (float(xp)+float(xl)/2.0)/float(xlen); 
-				yfreq=cpd * (float(yp)+float(yl)/2.0)/float(ylen); 
-			}
-			else{
-				xfreq=(cpd * (float(xp)+float(xl)/2.0)/float(xlen))/4.0; 
-				yfreq=(cpd * (float(yp)+float(yl)/2.0)/float(ylen))/4.0; 
-			}
-
-			if( csort!=Y){
-				if( cformat == format422){
-					xfreq/=2.0; 
-				}
-				else if( cformat == format411 ){
-					xfreq/=4.0; 
-				}
-				else if( cformat == format420 ){
-					xfreq/=2.0; 
-					yfreq/=2.0; 
-				}
-			}
-			temp=2.0*Threshold(xfreq,yfreq,csort); 
-			band_list(i).SetWt(temp); 
-
-		}
-		//make sure dc is always the lowest weight
-		float min_weight=band_list(band_list.Length()).Wt(); 
-		for(int i = 1; i <= band_list.Length()-1; i++ ){
-			min_weight=((min_weight>band_list(i).Wt()) ? band_list(i).Wt() : min_weight); 
-		}		
-		band_list(band_list.Length()).SetWt(min_weight); 
-
-		//normalize weights wrt dc subband
-		for(int i = 1; i <= band_list.Length(); i++ ){
-			band_list(i).SetWt(band_list(i).Wt()/band_list(band_list.Length()).Wt()); 		
-		}
-	}
-	else{//CPD=0 so set all weights to 1
-		for(int i = 1; i <= band_list.Length(); i++ ){
-			band_list(i).SetWt(1.0); 		
+	{//cpd=0 so set all weights to 1
+		for( int i=1 ; i<=band_list.Length() ; i++ )
+        {
+			band_list(i).SetWt(1.0);		
 		}	
 	}
 
-	//Finally, compensate for the absence of scaling in the transform
-	for (int i = 1; i<band_list.Length(); ++i){
+	//Finally, adjust to compensate for the absence of scaling in the transform
+	//Factor used to compensate:
+	const double alpha(1.149658203);	
+	for ( int i=1 ; i<band_list.Length() ; ++i )
+	{
+		depth=band_list(i).Depth();
 
-		depth=band_list(i).Depth(); 
-		if (band_list(i).Xp() == 0 && band_list(i).Yp() == 0){
-			temp=std::pow(alpha,2*depth); 
+		if ( band_list(i).Xp() == 0 && band_list(i).Yp() == 0)
+		{
+			temp=std::pow(alpha,2*depth);
 		} 
-		else if (band_list(i).Xp()!=0 && band_list(i).Yp()!=0){
-			temp=std::pow(alpha,2*(depth-2)); 
+		else if ( band_list(i).Xp() != 0 && band_list(i).Yp() != 0)
+		{
+			temp=std::pow(alpha,2*(depth-2));
 		}
 		else {
-			temp=std::pow(alpha,2*(depth-1)); 
+			temp=std::pow(alpha,2*(depth-1));
 		}
 
-		band_list(i).SetWt(band_list(i).Wt()/temp); 
+		band_list(i).SetWt(band_list(i).Wt()/temp);
 
-	}//i		
+	}//I		
 
 }	

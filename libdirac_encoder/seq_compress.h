@@ -44,9 +44,10 @@
 //-------------------------------------//
 /////////////////////////////////////////
 
-#include "libdirac_common/common.h"
-#include "libdirac_common/frame_buffer.h"
-#include "libdirac_common/pic_io.h"
+#include <libdirac_common/common.h>
+#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/pic_io.h>
+#include <libdirac_encoder/quality_monitor.h>
 #include <fstream>
 
 //! Compresses a sequence of frames from a stream.
@@ -144,16 +145,24 @@ private:
 	FrameBuffer* m_fbuffer;
 
 	//state variables for CompressNextFrame
+
 	//! The number of the current frame to be coded, in display order
 	int m_current_display_fnum;
+
 	//! The number of the current frame to be coded, in coded order
 	int m_current_code_fnum;
+
 	//! The number of the frame which should be output for concurrent display or storage
 	int m_show_fnum;
+
 	//! The index, in display order, of the last frame read
 	int m_last_frame_read;		
+
 	//! A delay so that we don't display what we haven't coded
 	int m_delay;
+
+    //! A class for monitoring the quality of pictures and adjusting parameters appropriately
+    QualityMonitor m_qmonitor;
 };
 
 #endif
