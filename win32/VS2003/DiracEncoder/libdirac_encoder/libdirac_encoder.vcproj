@@ -205,6 +205,9 @@
 				RelativePath="..\..\..\..\libdirac_encoder\quality_monitor.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\libdirac_encoder\quant_chooser.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\libdirac_encoder\seq_compress.cpp">
 			</File>
 		</Filter>
@@ -220,6 +223,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\libdirac_encoder\quality_monitor.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\libdirac_encoder\quant_chooser.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\libdirac_encoder\seq_compress.h">
