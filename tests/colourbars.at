@@ -2,7 +2,7 @@ AT_BANNER([[Checking encode and decode of colourbars]])
 
 AT_SETUP([colourbars])
 
-AT_CHECK([make_header -xl 720 -yl 576 -zl 50 -cformat format420 -framerate 25 ../../colourbars_420])
+AT_CHECK([make_header -xl 720 -yl 576 -zl 1 -cformat format420 -framerate 25 ../../colourbars_420])
 
 # FIXME: Once the encoder stops reporting "Can't read component picture data"
 # FIXME: remove the [ignore] for stdout and stderr.
