@@ -39,10 +39,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <libdirac_common/dirac_assertions.h>
+#include <cassert>
 #include <libdirac_decoder/dirac_parser.h>
-
-using namespace dirac;
 
 int verbose = 0;
 int skip = 0;
@@ -94,28 +92,28 @@ const char *ftype2string (dirac_frame_type_t ftype)
 
 static void WritePicData (dirac_decoder_t *decoder, FILE *fp)
 {
-    ASSERT (decoder != NULL);
-    ASSERT (fp);
+    assert (decoder != NULL);
+    assert (fp);
     
-    ASSERT(decoder->fbuf);
+    assert(decoder->fbuf);
 
-    ASSERT(decoder->fbuf->buf[0]);
+    assert(decoder->fbuf->buf[0]);
     fwrite (decoder->fbuf->buf[0], decoder->seq_params.width*decoder->seq_params.height, 1, fp);
 
     if (decoder->seq_params.chroma != Yonly)
     {
-        ASSERT(decoder->fbuf->buf[1]);
+        assert(decoder->fbuf->buf[1]);
         fwrite (decoder->fbuf->buf[1], decoder->seq_params.chroma_width*decoder->seq_params.chroma_height, 1, fp);
 
-        ASSERT(decoder->fbuf->buf[2]);
+        assert(decoder->fbuf->buf[2]);
         fwrite (decoder->fbuf->buf[2], decoder->seq_params.chroma_width*decoder->seq_params.chroma_height, 1, fp);
     }
 }
 
 static void WritePicHeader (dirac_decoder_t *decoder, FILE *fp)
 {
-    ASSERT (decoder != NULL);
-    ASSERT (fp);
+    assert (decoder != NULL);
+    assert (fp);
 
     fprintf (fp, "%d\n", decoder->seq_params.chroma);
     fprintf (fp, "%d\n", decoder->seq_params.width);
@@ -127,7 +125,7 @@ static void WritePicHeader (dirac_decoder_t *decoder, FILE *fp)
 
 static void FreeFrameBuffer (dirac_decoder_t *decoder)
 {
-    ASSERT (decoder != NULL);
+    assert (decoder != NULL);
     if (decoder->fbuf)
     {
         for (int i = 0; i < 3; i++)
@@ -186,7 +184,7 @@ static void DecodeDirac (const char *iname, const char *oname)
     /* initialise the decoder */
     decoder = dirac_decoder_init(verbose);
 
-    ASSERT (decoder != NULL);
+    assert (decoder != NULL);
 
 
     start_t=clock();

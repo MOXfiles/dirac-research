@@ -43,11 +43,9 @@
 #include <set>
 #include <cmath>
 #include <ctime>
+#include <cassert>
 #include <string>
 #include <libdirac_encoder/dirac_encoder.h>
-#include <libdirac_common/cmd_line.h>
-#include <libdirac_common/dirac_assertions.h>
-using namespace dirac;
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -165,16 +163,16 @@ bool WritePicData (std::ofstream &fdata, dirac_encoder_t *encoder)
         fdata.exceptions (ios::failbit | ios::badbit);
         try
         {
-            TEST (fbuf.buf[0]);
-               fdata.write ((char *)fbuf.buf[0], sparams.width*sparams.height);
+            assert (fbuf.buf[0] != 0);
+            fdata.write ((char *)fbuf.buf[0], sparams.width*sparams.height);
             if (sparams.chroma !=Yonly)
             {
-                TEST (fbuf.buf[1]);
-                TEST (fbuf.buf[2]);
-                   fdata.write ((char *)fbuf.buf[1], 
-                    sparams.chroma_width*sparams.chroma_height);
-                   fdata.write ((char *)fbuf.buf[2], 
-                    sparams.chroma_width*sparams.chroma_height);
+                assert (fbuf.buf[1] != 0);
+                assert (fbuf.buf[2] != 0);
+                fdata.write ((char *)fbuf.buf[1], 
+                sparams.chroma_width*sparams.chroma_height);
+                fdata.write ((char *)fbuf.buf[2], 
+                sparams.chroma_width*sparams.chroma_height);
             }
         }
         catch (...)
@@ -408,17 +406,6 @@ int main (int argc, char* argv[])
          /********** create params object to handle command line parameter parsing*********/
     //To do: put parsing in a different function/constructor.
 
-    // create a list of boolean options
-    set<string> bool_opts;
-    bool_opts.insert("verbose");
-    bool_opts.insert("CIF");
-    bool_opts.insert("HD720");
-    bool_opts.insert("HD1080");
-    bool_opts.insert("SD576");
-    bool_opts.insert("nolocal");
-
-    CommandLine args(argc,argv,bool_opts);
-
     // the variables we'll read parameters into
     dirac_encoder_context_t enc_ctx;
 
@@ -439,291 +426,292 @@ int main (int argc, char* argv[])
                //an output
     {
         display_help();
+		return (EXIT_SUCCESS);
     }
-    else//carry on!
+
+   //Now do the options
+   // Checking for presets. Assume CIF by default
+    dirac_encoder_presets_t preset = CIF;
+    for (int i = 1; i < argc; i++)
     {
-        // parse command-line arguments
-        //Do required inputs
-        if (args.GetInputs().size()==2){
-            input=args.GetInputs()[0];
-            output=args.GetInputs()[1];
-        }
-
-        //check we have real inputs
-        if ((input.length() == 0) || (output.length() ==0))
+        if ( strcmp (argv[i], "-CIF") == 0 )
         {
-            display_help();
-            exit(1);
+            preset = CIF;
         }
+        else if ( strcmp (argv[i], "-HD720") == 0 )
+        {
+            preset = HD720;
+        }
+        else if ( strcmp (argv[i], "-HD1080") == 0 )
+        {
+            preset = HD1080;
+        }
+        else if ( strcmp (argv[i], "-SD576") == 0 )
+        {
+            preset = SD576;
+        }
+    }
 
-        bit_name = output + ".drc";
+    // initialise the encoder context
+    dirac_encoder_context_init (&enc_ctx, preset);
+
+    //now go over again and override presets with other values
+    for (int i = 1; i < argc; )
+    {
+        if ( strcmp(argv[i], "-qf") == 0 )
+        {
+            i++;
+            enc_ctx.enc_params.qf =  atof(argv[i]);
+        }
+        else if ( strcmp(argv[i], "-L1_sep") == 0 )
+        {
+            i++;
+            enc_ctx.enc_params.L1_sep =  
+                strtoul(argv[i],NULL,10);
+        }
+        else if ( strcmp(argv[i], "-num_L1") == 0 )
+        {
+            i++;
+            enc_ctx.enc_params.num_L1 = 
+                strtoul(argv[i],NULL,10);
+        }
+        else if ( strcmp(argv[i], "-xblen") == 0 )
+        {
+            i++;
+            enc_ctx.enc_params.xblen = 
+                strtoul(argv[i],NULL,10);
+        }
+        else if ( strcmp(argv[i], "-yblen") == 0 )
+        {
+            i++;
+             enc_ctx.enc_params.yblen = 
+                 strtoul(argv[i],NULL,10);
+        }
+        else if ( strcmp(argv[i], "-xbsep") == 0 )
+        {
+            i++;
+             enc_ctx.enc_params.xbsep = 
+                 strtoul(argv[i],NULL,10);
+        }
+        else if ( strcmp(argv[i], "-ybsep") == 0 )
+        {
+            i++;
+             enc_ctx.enc_params.ybsep = 
+                 strtoul(argv[i],NULL,10);
+        }
+        else if ( strcmp(argv[i], "-cpd") == 0 )
+        {
+            i++;
+             enc_ctx.enc_params.cpd = 
+                 strtoul(argv[i],NULL,10);
+        }
+        else if ( strcmp(argv[i], "-verbose") == 0 )
+        {
+            verbose = true;
+        }
+        else if ( strcmp(argv[i], "-nolocal") == 0 )
+        {
+            nolocal = true;
+        }
+        else if ( strcmp(argv[i], "-start") == 0 )
+        {
+            i++;
+            start_pos = strtoul(argv[i],NULL,10);
+        }
+        else if ( strcmp(argv[i], "-stop") == 0 )
+        {
+            i++;
+            end_pos = strtoul(argv[i],NULL,10);
+        }
+        i++;
+    }//opt
+
+    // last two arguments must be file names
+    if (argv[argc-2][0] == '-' || argv[argc-1][0] == '-')
+    {
+        display_help();
+        exit(1);
+    }
+
+    input=argv[argc-2];
+    output=argv[argc-1];
+
+    //check we have real inputs
+    if ((input.length() == 0) || (output.length() ==0))
+    {
+        display_help();
+        exit(1);
+    }
+
+    bit_name = output + ".drc";
         
-        //Now do the options
-        // Checking for presets. Assume CIF by default
-        dirac_encoder_presets_t preset = CIF;
-        for (vector<CommandLine::option>::const_iterator 
-            opt = args.GetOptions().begin();
-            opt != args.GetOptions().end(); ++opt)
-        {
-            if (opt->m_name == "CIF")
-            {
-                preset = CIF;
-            }
-            else if (opt->m_name == "HD720")
-            {
-                preset = HD720;
-            }
-            else if (opt->m_name == "HD1080")
-            {
-                preset = HD1080;
-            }
-            else if (opt->m_name == "SD576")
-            {
-                preset = SD576;
-            }
-        }//opt
-
-        // initialise the encoder context
-        dirac_encoder_context_init (&enc_ctx, preset);
-
-        // Do other options
-        // Start with quantisation factors
-        for (vector<CommandLine::option>::const_iterator 
-            opt = args.GetOptions().begin();
-            opt != args.GetOptions().end(); ++opt){
-            if (opt->m_name == "qf")
-            {
-                enc_ctx.enc_params.qf =  atof(opt->m_value.c_str());
-            }
-        }//opt
-
-
-        //now go over again and override presets with other values
-        for (vector<CommandLine::option>::const_iterator
-            opt = args.GetOptions().begin();
-            opt != args.GetOptions().end(); ++opt)
-        {
-            if (opt->m_name == "L1_sep")
-            {
-                enc_ctx.enc_params.L1_sep =  
-                    strtoul(opt->m_value.c_str(),NULL,10);
-            }
-            else if (opt->m_name == "num_L1")
-            {
-                enc_ctx.enc_params.num_L1 = 
-                    strtoul(opt->m_value.c_str(),NULL,10);
-            }
-            else if (opt->m_name == "xblen")
-            {
-                enc_ctx.enc_params.xblen = 
-                    strtoul(opt->m_value.c_str(),NULL,10);
-            }
-            else if (opt->m_name == "yblen")
-            {
-                 enc_ctx.enc_params.yblen = 
-                     strtoul(opt->m_value.c_str(),NULL,10);
-            }
-            else if (opt->m_name == "xbsep")
-            {
-                 enc_ctx.enc_params.xbsep = 
-                     strtoul(opt->m_value.c_str(),NULL,10);
-            }
-            else if (opt->m_name == "ybsep")
-            {
-                 enc_ctx.enc_params.ybsep = 
-                     strtoul(opt->m_value.c_str(),NULL,10);
-            }
-            else if (opt->m_name == "cpd")
-            {
-                 enc_ctx.enc_params.cpd = 
-                     strtoul(opt->m_value.c_str(),NULL,10);
-            }
-            else if (opt->m_name == "verbose")
-            {
-                verbose = true;
-            }
-            else if (opt->m_name == "nolocal")
-            {
-                nolocal = true;
-            }
-            else if (opt->m_name == "start")
-            {
-                start_pos = strtoul(opt->m_value.c_str(),NULL,10);
-            }
-            else if (opt->m_name == "stop")
-            {
-                end_pos = strtoul(opt->m_value.c_str(),NULL,10);
-            }
-        }//opt
 
 
   /********************************************************************/
-         //next do picture file stuff
+    //next do picture file stuff
 
-           /* ------ open input files & get params -------- */
-        // Open header
-        std::string input_name_hdr = input + ".hdr";
-        std::ifstream 
-          ip_head_ptr (input_name_hdr.c_str(), std::ios::in | std::ios::binary);
-        if (!ip_head_ptr)
-        {
-            std::cerr << std::endl <<
-                "Can't open input header file: " << input_name_hdr << std::endl;
-            return EXIT_FAILURE;
-        }
+    /* ------ open input files & get params -------- */
+    // Open header
+    std::string input_name_hdr = input + ".hdr";
+    std::ifstream 
+    ip_head_ptr (input_name_hdr.c_str(), std::ios::in | std::ios::binary);
+    if (!ip_head_ptr)
+    {
+        std::cerr << std::endl <<
+            "Can't open input header file: " << input_name_hdr << std::endl;
+        return EXIT_FAILURE;
+    }
 
-        // Open uncompressed data file
-        std::string input_name_yuv = input + ".yuv";
-        std::ifstream 
-           ip_pic_ptr (input_name_yuv.c_str(), std::ios::in | std::ios::binary);
-        if (!ip_pic_ptr)
-        {
-            std::cerr << std::endl <<
-                "Can't open input data file: " << input_name_yuv << std::endl;
-            return EXIT_FAILURE;
-        }
+    // Open uncompressed data file
+    std::string input_name_yuv = input + ".yuv";
+    std::ifstream 
+       ip_pic_ptr (input_name_yuv.c_str(), std::ios::in | std::ios::binary);
+    if (!ip_pic_ptr)
+    {
+        std::cerr << std::endl <<
+            "Can't open input data file: " << input_name_yuv << std::endl;
+        return EXIT_FAILURE;
+    }
 
-        // Read the picture header details from file
-        if (!ReadPicHeader(ip_head_ptr,enc_ctx))
-        {
-            return EXIT_FAILURE;
-        }
+    // Read the picture header details from file
+    if (!ReadPicHeader(ip_head_ptr,enc_ctx))
+    {
+        return EXIT_FAILURE;
+    }
    
    /********************************************************************/
-      //open the bitstream file
-        std::ofstream outfile(bit_name.c_str(),std::ios::out | std::ios::binary);    //bitstream output
+    //open the bitstream file
+     std::ofstream outfile(bit_name.c_str(),std::ios::out | std::ios::binary);    //bitstream output
 
-      // open the decoded ouput file
-        std::string output_name_yuv = output + ".yuv";
-        std::ofstream outyuv(output_name_yuv.c_str(),std::ios::out | std::ios::binary);
+    // open the decoded ouput file
+    std::string output_name_yuv = output + ".yuv";
+    std::ofstream outyuv(output_name_yuv.c_str(),std::ios::out | std::ios::binary);
 
       // open the decoded ouput file header
-        std::string output_name_hdr = output + ".hdr";
-        std::ofstream outhdr(output_name_hdr.c_str(),std::ios::out | std::ios::binary); 
+    std::string output_name_hdr = output + ".hdr";
+    std::ofstream outhdr(output_name_hdr.c_str(),std::ios::out | std::ios::binary); 
 
       // open the diagnostics ouput file
-        std::string output_name_imt = output + ".imt";
-        std::ofstream outimt(output_name_imt.c_str(),std::ios::out | std::ios::binary);
+    std::string output_name_imt = output + ".imt";
+    std::ofstream outimt(output_name_imt.c_str(),std::ios::out | std::ios::binary);
 
    /********************************************************************/
-        //do the work!!
+    //do the work!!
 
-        // Determine buffer size
-        int frame_size = GetFrameBufferSize (enc_ctx);
-        unsigned char *frame_buf = new unsigned char [frame_size];
+    // Determine buffer size
+    int frame_size = GetFrameBufferSize (enc_ctx);
+    unsigned char *frame_buf = new unsigned char [frame_size];
 
-        if ( end_pos == -1 )
-            end_pos = INT_MAX;
+    if ( end_pos == -1 )
+        end_pos = INT_MAX;
 
-        if (!Skip( ip_pic_ptr, start_pos, frame_size ))
+    if (!Skip( ip_pic_ptr, start_pos, frame_size ))
+    {
+        return EXIT_FAILURE;
+    };
+
+    dirac_encoder_t  *encoder;
+
+    if (nolocal)
+    {
+        enc_ctx.decode_flag = 0;
+        enc_ctx.instr_flag = 0;
+    }
+    else
+    {
+        enc_ctx.decode_flag = 1;
+        enc_ctx.instr_flag = 1;
+    }
+        
+    encoder = dirac_encoder_init( &enc_ctx, verbose );
+
+    if (!encoder)
+    {
+        std::cerr << "Unrecoverable Error: dirac_encoder_init failed. "
+                  << std::endl;
+        return EXIT_FAILURE;
+    }
+
+    int frames_written = 0;
+    dirac_encoder_state_t state;
+    do 
+    {
+        if (ReadPicData( ip_pic_ptr, frame_buf, frame_size ) == true)
         {
-            return EXIT_FAILURE;
-        };
-
-        dirac_encoder_t  *encoder;
-
-        if (nolocal)
-        {
-            enc_ctx.decode_flag = 0;
-            enc_ctx.instr_flag = 0;
+            if (dirac_encoder_load( encoder, frame_buf, frame_size ) < 0)
+            {
+                std::cerr << "Unrecoverable Encoder Error. Quitting..." 
+                          << std::endl;
+                return EXIT_FAILURE;
+            }
         }
         else
-        {
-            enc_ctx.decode_flag = 1;
-            enc_ctx.instr_flag = 1;
-        }
-        
-        encoder = dirac_encoder_init( &enc_ctx, verbose );
+           break; //eof
 
-        if (!encoder)
+        do
         {
-            std::cerr << "Unrecoverable Error: dirac_encoder_init failed. "
-                      << std::endl;
-            return EXIT_FAILURE;
-        }
-
-        int frames_written = 0;
-        dirac_encoder_state_t state;
-        do 
-        {
-            if (ReadPicData( ip_pic_ptr, frame_buf, frame_size ) == true)
+            encoder->enc_buf.buffer = video_buf;
+            encoder->enc_buf.size = VIDEO_BUFFER_SIZE;
+            state = dirac_encoder_output ( encoder );
+            switch (state)
             {
-                if (dirac_encoder_load( encoder, frame_buf, frame_size ) < 0)
-                {
-                    std::cerr << "Unrecoverable Encoder Error. Quitting..." 
-                              << std::endl;
-                    return EXIT_FAILURE;
-                }
+            case ENC_STATE_AVAIL:
+                assert (encoder->enc_buf.size > 0);
+               
+                outfile.write((char *)encoder->enc_buf.buffer, 
+                              encoder->enc_buf.size);
+                              frames_written++;
+                break;
+
+            case ENC_STATE_BUFFER:
+                break;
+
+            case ENC_STATE_INVALID:
+                std::cerr << "Unrecoverable Encoder Error. Quitting..." 
+                          << std::endl;
+                return EXIT_FAILURE;
+            default:
+                std::cerr << "Unknown Encoder state" << endl;
+                break;
             }
-            else
-               break; //eof
 
-            do
-            {
-                encoder->enc_buf.buffer = video_buf;
-                encoder->enc_buf.size = VIDEO_BUFFER_SIZE;
-                state = dirac_encoder_output ( encoder );
-                switch (state)
-                {
-                case ENC_STATE_AVAIL:
-                    REPORTM(encoder->enc_buf.size > 0, 
-                    "Encoded data available");
-                   
-                      outfile.write((char *)encoder->enc_buf.buffer, 
-                                    encoder->enc_buf.size);
-                                    frames_written++;
-                    break;
-    
-                case ENC_STATE_BUFFER:
-                    break;
+            WritePicData (outyuv, encoder);
+            WriteDiagnosticsData (outimt, encoder);
 
-                case ENC_STATE_INVALID:
-                    std::cerr << "Unrecoverable Encoder Error. Quitting..." 
-                              << std::endl;
-                    return EXIT_FAILURE;
-                default:
-                    REPORTM(false, "Known Encoder state");
-                    break;
-                }
+        } while (state == ENC_STATE_AVAIL);
 
-                WritePicData (outyuv, encoder);
-                WriteDiagnosticsData (outimt, encoder);
+    } while (frames_written <= (end_pos - start_pos));
 
-            } while (state == ENC_STATE_AVAIL);
-
-        } while (frames_written <= (end_pos - start_pos));
-
-        encoder->enc_buf.buffer = video_buf;
-        encoder->enc_buf.size = VIDEO_BUFFER_SIZE;
-        if (dirac_encoder_end_sequence( encoder ) > 0)
-        {
-            outfile.write((char *)encoder->enc_buf.buffer, 
-                          encoder->enc_buf.size);
-        }
+    encoder->enc_buf.buffer = video_buf;
+    encoder->enc_buf.size = VIDEO_BUFFER_SIZE;
+    if (dirac_encoder_end_sequence( encoder ) > 0)
+    {
+        outfile.write((char *)encoder->enc_buf.buffer, 
+                      encoder->enc_buf.size);
+    }
 
    WritePicHeader(outhdr, encoder);
    /********************************************************************/
 
      // close the encoder
-        dirac_encoder_close( encoder );
+    dirac_encoder_close( encoder );
      // close the bitstream file
-        outfile.close();
+    outfile.close();
      // close the decoded output file
-        outyuv.close();
+    outyuv.close();
      // close the decoded output header file
-        outhdr.close();
+    outhdr.close();
      // close the decoded output header file
-        outimt.close();
+    outimt.close();
 
     // close the pic data file
-        ip_pic_ptr.close();
+    ip_pic_ptr.close();
 
     // close the pic header file
-        ip_head_ptr.close();
+    ip_head_ptr.close();
 
     // delete frame buffer
     delete [] frame_buf;
         return EXIT_SUCCESS;
 
-    }//?sufficient args?
 }
