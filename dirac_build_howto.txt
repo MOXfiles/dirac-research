@@ -1,0 +1,56 @@
+Dirac Build HOW-TO
+
+by Scott Robert Ladd (scott.ladd@coyotyegulch.com)
+
+
+This document explains the build process for Dirac, based on extracting
+the original Dirac source codes from CVS.
+
+Linux
+-----
+Dirac uses the GNU autotools to generate a configuration script, which
+in turn builds system-specific makefiles for generating the Dirac
+software.
+
+The reconf script produces the necessary build files from the
+configure.ac and Makefile.am sources. The process requires the GNU
+utilities aclocal, autoconf, automake, and libtoolize; these tools should
+be automatically installed by any Linux distribution, given that most
+Linux software requires these utilities.
+
+The Dirac CVS does *not* contain a copy of the configure script, nor
+does it contain any of the ancillary files such as ltmain.sh or
+aclocal.m4. Use the reconf script to build those files for your
+particular development environment:
+
+    # ./reconf
+    
+The reconf script is designed for Dirac developers as a way of creating
+the necessary symbolic links, configuration scripts, and Makefile.ins.
+
+After running reconf (or extracting files from a distribution tarball),
+use the standard GNU configuration sequence to generate Makefiles and
+build the Dirac programs:
+
+    # ./configure
+    # ./make
+    # ./make install
+    
+To create a distribution tarball, use the command:
+
+    # ./make distcheck
+    
+This will create a Dirac-n.n.n.tar.gz file (where "n.n.n" is the version
+number) containing all the files necessary for building Dirac on a
+GNU-based system (Linux, FreeBSD, Mac OS X).
+
+The version number is changed by modifying configure.ac, which also
+explains the meaning of the version digits.
+
+
+Windows
+-------
+The Dirac distribution includes files for contructing the software using
+Microsoft's Developer Studio.NET.
+
+[Pending]
