@@ -4,8 +4,11 @@
 #
 # 11th March 2004 Copyright BBC
 
+# remove generated files (avoids clashes between versions of autotools)
+rm -f depcomp missing install-sh mkinstalldirs
+rm -f aclocal.m4 configure Makefile.in config.guess ltmain.sh config.sub
+
+set -x
 aclocal
-libtoolize --force --copy
-aclocal
-automake -a --copy
+automake --foreign --copy --add-missing
 autoconf

@@ -13,11 +13,11 @@ GENERIC_LIBRARY_NAME=Dirac
 
 #release versioning
 GENERIC_MAJOR_VERSION=0
-GENERIC_MINOR_VERSION=3
+GENERIC_MINOR_VERSION=2
 GENERIC_MICRO_VERSION=0
 
 #shared library versioning
-GENERIC_LIBRARY_VERSION=0:3:0
+GENERIC_LIBRARY_VERSION=0:2:0
 #                       | | |
 #                +------+ | +---+
 #                |        |     |
@@ -50,13 +50,12 @@ VERSION=$GENERIC_VERSION
 AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 
 dnl -----------------------------------------------
-dnl Checks for programs.
+dnl Checks for required programs.
 dnl -----------------------------------------------
 
 AC_PROG_CXX
-AM_PROG_LIBTOOL
+AC_PROG_RANLIB
 AM_SANITY_CHECK
-AC_PROGRAM_CHECK(doxygen, latex)
 
 dnl -----------------------------------------------
 dnl Checks for required headers
@@ -72,8 +71,20 @@ dnl -----------------------------------------------
 dnl Checks for libraries.
 dnl -----------------------------------------------
 
-dnl ** Broken in some versions of autoconf
-dnl AC_CHECK_LIB(xparam, xParam::Val)
+dnl -----------------------------------------------
+dnl Checks for optional programs.
+dnl -----------------------------------------------
+AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, true, false)
+	if test $HAVE_DOXYGEN = "false"; then
+		AC_MSG_WARN([*** doxygen not found, code documentation will not be built])
+	fi
+AM_CONDITIONAL(HAVE_DOXYGEN, $HAVE_DOXYGEN)
+AC_CHECK_PROG(HAVE_LATEX, latex, true, false)
+	if test $HAVE_LATEX = "false"; then
+		AC_MSG_WARN([*** latex not found, algorithm documentation will not be built])
+	fi
+AM_CONDITIONAL(HAVE_LATEX, $HAVE_LATEX)
+
 
 dnl -----------------------------------------------
 dnl Generates Makefile's, configuration files and scripts

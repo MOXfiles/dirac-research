@@ -11,13 +11,11 @@ cpp_sources = band_codec.cpp bit_manager.cpp common.cpp frame.cpp \
               mv_codec.cpp pic_io.cpp upconvert.cpp wavelet_utils.cpp \
               cmd_line.cpp
 
-lib_LTLIBRARIES = libdirac_common.la
+lib_LIBRARIES = libdirac_common.a
 
-libdirac_common_la_SOURCES = $(h_sources) $(cpp_sources)
-libdirac_common_la_LDFLAGS= -version-info $(GENERIC_LIBRARY_VERSION) -release $(GENERIC_RELEASE)
+libdirac_common_a_SOURCES = $(h_sources) $(cpp_sources)
 
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
 
-CFLAGS = -O3
 DEFS = -I. -I$(srcdir)

@@ -3,6 +3,5 @@ bin_PROGRAMS = dirac_decoder
 
 dirac_decoder_SOURCES = decmain.cpp
 
-CFLAGS = -O3
-LIBS = -L../libdirac_decoder -L../libdirac_common -ldirac_decoder -ldirac_common
+LIBS = ../libdirac_decoder/libdirac_decoder.a ../libdirac_common/libdirac_common.a
 DEFS = -I. -I.. -I../.. -I$(srcdir)
