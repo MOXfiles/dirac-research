@@ -39,7 +39,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.6  2004-05-19 17:39:34  chaoticcoyote
+* Revision 1.7  2004-05-20 12:38:29  tjdwave
+* Fixed minor bug with -verbose option to make it true boolean.
+*
+* Revision 1.6  2004/05/19 17:39:34  chaoticcoyote
+* Restored make_debug.sh to it's proper function
 * Modified command line parser to correctly handle boolean options
 *
 * Revision 1.5  2004/05/14 17:27:13  stuart_hc
@@ -83,7 +87,7 @@ static void display_help()
 {
 	cout << "\nDIRAC wavelet video decoder.";
 	cout << "\n";
-	cout << "\nUsage: progname -<flag1> <flag_val> ... <input1> <intput2> ...";
+	cout << "\nUsage: progname -<flag1> [<flag_val>] ... <input1> <intput2> ...";
 	cout << "\nIn case of multiple assignment to the same parameter, the last holds.";
 	cout << "\n";
 	cout << "\nName    Type   I/O Default Value Description";
@@ -102,9 +106,9 @@ int main(int argc, char* argv[]) {
     // create a list of boolean options
 	set<string> bool_opts;
 	bool_opts.insert("verbose");
-    
+
 	command_line args(argc,argv,bool_opts);
-    
+
 	char input_name[84];							// char arrays used for file names
 	char output_name[84];
 	char bit_name[84];								//output name for the bitstream
@@ -142,7 +146,7 @@ int main(int argc, char* argv[]) {
 		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
 			opt != args.get_options().end(); ++opt)
 		{
-			if (opt->m_name == "verbose" && opt->m_value=="true")
+			if (opt->m_name == "verbose")
 			{
 				verbose=true;
 			}
