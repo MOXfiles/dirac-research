@@ -42,7 +42,9 @@
 ///////////////////////////////////
 
 #include <libdirac_motionest/me_utils.h>
+#include <libdirac_motionest/me_utils_mmx.h>
 #include <libdirac_common/common.h>
+
 using namespace dirac;
 
 #include <algorithm>
@@ -135,6 +137,11 @@ BiBChkBlockDiffUp::BiBChkBlockDiffUp( const PicArray& ref1 , const PicArray& ref
 
 float SimpleBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv )
 {
+#if HAVE_MMX
+    if (dparams.Xl() % 2 == 0) {
+       return static_cast<float>(simple_block_diff_mmx_4(dparams, mv, pic_data, ref_data));
+    }
+#endif /* HAVE_MMX */
 
     ValueType diff;    
 
@@ -146,8 +153,10 @@ float SimpleBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv )
         {
             diff = pic_data[j][i]-ref_data[j+mv.y][i+mv.x];
             sum += std::abs( diff );
-        }// i, k
-    }// j, l
+        }// i
+    }// j
+
+	
 
     return static_cast<float>( sum );
 }
@@ -247,6 +256,7 @@ float BiBChkBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv1,
     return static_cast<float>( sum );
 }
 
+
 float SimpleBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& mv )
 {
 
@@ -272,6 +282,14 @@ float SimpleBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& mv
     const ValueType BLweight((4-rmdr.x)*rmdr.y);
     const ValueType BRweight(rmdr.x*rmdr.y);    
 
+#if HAVE_MMX
+    if ((EndPos.x - StartPos.x) % 2 == 0) {
+		ValueType weights[4] = {TRweight, TLweight, BRweight, BLweight};
+
+         return static_cast<float>(simple_block_diff_up_mmx_4(pic_data, ref_data, StartPos, EndPos, RefStart, weights));
+    }
+#endif /* HAVE_MMX */
+
     CalcValueType sum( 0 );
 
     ValueType temp;    
@@ -289,8 +307,7 @@ float SimpleBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& mv
             sum += std::abs( pic_data[c][l] - temp );
         }//l
     }//c
-
-    return static_cast<float>( sum );    
+    return static_cast<float>( sum ); 
 }
 
 float BChkBlockDiffUp::Diff(  const BlockDiffParams& dparams, const MVector& mv )
@@ -314,16 +331,21 @@ float BChkBlockDiffUp::Diff(  const BlockDiffParams& dparams, const MVector& mv 
     //Set up the start point in the reference image.    
     const ImageCoords RefStart((StartPos.x<<1) + roundvec.x,(StartPos.y<<1) + roundvec.y);
 
-
     //weights for doing linear interpolation, calculated from the remainder values
-
     const ValueType    TLweight((4-rmdr.x)*(4-rmdr.y));
     const ValueType    TRweight(rmdr.x*(4-rmdr.y));
     const ValueType    BLweight((4-rmdr.x)*rmdr.y);
     const ValueType    BRweight(rmdr.x*rmdr.y);    
 
-    CalcValueType sum( 0 );
+#if HAVE_MMX
+    if ((EndPos.x - StartPos.x) % 2 == 0) {
+		ValueType weights[4] = {TRweight, TLweight, BRweight, BLweight};
 
+         return static_cast<float>(bchk_block_diff_up_mmx_2(pic_data, ref_data, StartPos, EndPos, RefStart, weights));
+    }
+#endif /* HAVE_MMX */
+
+    CalcValueType sum( 0 );
     ValueType temp;
 
     for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2)
@@ -406,7 +428,6 @@ float BiSimpleBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& 
 
 float BiBChkBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& mv1, const MVector& mv2)
 {
-
     //as above, but with bounds checking
     const int xmax1 = ref_data1.LengthX(); 
     const int ymax1 = ref_data1.LengthY();
@@ -440,8 +461,16 @@ float BiBChkBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& mv
     const ValueType BLweight2((4-rmdr2.x)*rmdr2.y);
     const ValueType BRweight2(rmdr2.x*rmdr2.y);        
 
-    CalcValueType temp;
+#if HAVE_MMX
+    if ((EndPos.x - StartPos.x) % 2 == 0) {
+		ValueType weights[2][4] = 
+			{{TRweight1, TLweight1, TRweight2, TLweight2},
+			 {BRweight1, BLweight1, BRweight2, BLweight2}};
+         return static_cast<float>(bibchk_block_diff_up_mmx_2(pic_data, ref_data1, ref_data2, StartPos, EndPos, RefStart1, RefStart2, weights));
+    }
+#endif /* HAVE_MMX */
 
+    CalcValueType temp;
     CalcValueType sum( 0 );
 
     for(int c = StartPos.y, uY1 = RefStart1.y,uY2=RefStart2.y; c < EndPos.y; ++c, uY1 += 2,uY2 += 2)
@@ -464,7 +493,7 @@ float BiBChkBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& mv
 
             sum += std::abs( pic_data[c][l] - temp );
         }//l
-    }//c    
+    }//c
 
     return static_cast<float>( sum );
 }
