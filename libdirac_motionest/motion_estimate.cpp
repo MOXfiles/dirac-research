@@ -91,13 +91,16 @@ ValueType MotionEstimator::GetChromaBlockDC(const PicArray& pic_data,
                                             int xunit , int yunit , int split)
 {
     BlockDiffParams dparams;
-    dparams.SetBlockLimits( m_encparams.ChromaBParams( split ) , pic_data, xunit , yunit );
+    dparams.SetBlockLimits( m_encparams.ChromaBParams( split ) , 
+                            pic_data, xunit , yunit);
+
+    ValueType dc;
 
     IntraBlockDiff intradiff( pic_data );
 
-    intradiff.Diff( dparams , 0 , 0.0f );
+    intradiff.Diff( dparams , dc );
 
-    return dparams.DC();
+    return dc;
 }
 
 void MotionEstimator::SetChromaDC( const PicArray& pic_data , MvData& mv_data , CompSort csort )

@@ -155,6 +155,9 @@ private:
 	//! A picture buffer used for local storage of frames whilst pending re-ordering or being used for reference.
 	FrameBuffer* m_fbuffer;
 
+	//! A picture buffer of original frames
+	FrameBuffer* m_origbuffer;
+
 	//state variables for CompressNextFrame
 
 	//! The number of the current frame to be coded, in display order

@@ -120,6 +120,9 @@ private:
     //! Get a prediction for the dc value of a block
     ValueType GetDCPred( int xblock , int yblock );
 
+    //! Get a measure of DC value variance
+    float GetDCVar( const ValueType dc_val , const ValueType dc_pred);
+
      // Member data
     FrameSort fsort;
 

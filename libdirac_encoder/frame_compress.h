@@ -66,52 +66,53 @@ public:
     /*!
         Compresses a specified frame within a group of pictures. 
         \param fbuffer picture buffer in which the frame resides
+        \param orig_buffer the corresponding picture buffer of uncoded originals
         \param fnum      frame number to compress
     */
-	void Compress( FrameBuffer& fbuffer , int fnum );
+    void Compress( FrameBuffer& fbuffer , const FrameBuffer& orig_buffer , int fnum );
 
-	//! Returns true if the frame has been skipped rather than coded normally
-	bool IsSkipped(){ return m_skipped; }
+    //! Returns true if the frame has been skipped rather than coded normally
+    bool IsSkipped(){ return m_skipped; }
 
 
 
 private:
-	//! Copy constructor is private and body-less
-	/*!
-		Copy constructor is private and body-less. This class should not be copied.
+    //! Copy constructor is private and body-less
+    /*!
+        Copy constructor is private and body-less. This class should not be copied.
 
-	*/
-	FrameCompressor( const FrameCompressor& cpy );
+    */
+    FrameCompressor( const FrameCompressor& cpy );
 
-	//! Assignment = is private and body-less
-	/*!
-		Assignment = is private and body-less. This class should not be assigned.
+    //! Assignment = is private and body-less
+    /*!
+        Assignment = is private and body-less. This class should not be assigned.
 
-	*/
-	FrameCompressor& operator=(const FrameCompressor& rhs);
+    */
+    FrameCompressor& operator=(const FrameCompressor& rhs);
 
-	//! Write the frame compression header
-	void WriteFrameHeader(const FrameParams& fparams);
+    //! Write the frame compression header
+    void WriteFrameHeader(const FrameParams& fparams);
 
     //! Write frame motion data
     void WriteMotionData( const FrameBuffer& fbuffer , const int fnum );
 
-	//member variables
+    //member variables
     // a local copy of the encoder params
-	EncoderParams& m_encparams;
+    EncoderParams& m_encparams;
  
     // Pointer to the motion vector data
     MEData* m_me_data;
 
     // True if the frame has been skipped, false otherwise
-	bool m_skipped;				
+    bool m_skipped;                
 
     // True if we use global motion vectors, false otherwise
-	bool m_use_global;
+    bool m_use_global;
 
     // True if we use block motion vectors, false otherwise
-	bool m_use_block_mv;
-	
+    bool m_use_block_mv;
+    
     // Prediction mode to use if we only have global motion vectors
     PredMode m_global_pred_mode;
 

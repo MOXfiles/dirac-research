@@ -147,6 +147,12 @@ public:
     */
     void PushFrame(const FrameParams& fp);
 
+    //! Put a copy of a new frame into the top of the buffer
+    /*! 
+        Put a copy of a new frame into the top of the buffer. 
+    */
+    void PushFrame( const Frame& frame );
+
     //! Read a new frame into the buffer.
     /*! 
         Read a new frame into the buffer. Frame parameters associated with the frame

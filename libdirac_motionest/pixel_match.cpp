@@ -81,7 +81,6 @@ void PixelMatcher::DoSearch(const FrameBuffer& my_buffer, int frame_num, MEData&
     // Set the number of downconversion levels - not too many or we run out of picture!    
     m_depth = ( int) std::min( log(((double) pic_data.LengthX())/12.0)/log(2.0) , 
                              log(((double) pic_data.LengthY())/12.0)/log(2.0) );
-//    m_depth = std::min( 4, m_depth );
 
     // These arrays will contain the downconverted picture and MvData hierarchy
     OneDArray<PicArray*> ref1_down( Range( 1 , m_depth ) );
@@ -215,13 +214,13 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
     // Set the search ranges according to the level
     if ( m_level == m_depth )
     {
-        m_xr = 4;
-        m_yr = 4;
+        m_xr = 5;
+        m_yr = 5;
     }
     else if ( m_level == m_depth-1 )
     {
-        m_xr = 3;
-        m_yr = 3;
+        m_xr = 4;
+        m_yr = 4;
     }
     else
     {
@@ -238,7 +237,7 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
     // Provide a block matching object to do the work
     BlockMatcher my_bmatch( pic_data , ref_data , m_encparams.LumaBParams(2) , mv_array , pred_costs );
 
-    float loc_lambda = 0.0;
+    float loc_lambda( 0.0 );
 
     // Do the work - loop over all the blocks, finding the best match //
     ////////////////////////////////////////////////////////////////////
@@ -325,10 +324,9 @@ void PixelMatcher::DoBlock(int xpos, int ypos ,
     // use the spatial prediction, also, as a guide
     AddNewVlistD( m_cand_list , m_mv_prediction , m_xr , m_yr );
 
-    // Set the costs and find the best motion vector //
-    ///////////////////////////////////////////////////
+    // Find the best motion vector //
+    /////////////////////////////////
 
-    // Set initial cost very high so we'll overwrite
     block_match.FindBestMatch( xpos , ypos , m_cand_list, m_mv_prediction, m_lambda );
 
     // Reset the lists ready for the next block (don't erase the first sublist as

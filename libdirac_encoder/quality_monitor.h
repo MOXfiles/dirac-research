@@ -65,8 +65,9 @@ public:
         Update the quality factors, returning true if we need to recode
         \param ld_frame the locally-decoded frame
         \param orig_frame the original frame
+        \param count the number of times we've tried to code this frame before
     */
-    bool UpdateModel(const Frame& ld_frame, const Frame& orig_frame);
+    bool UpdateModel(const Frame& ld_frame, const Frame& orig_frame ,const int count);
 
     //! Reset the quality factors (say if there's been a cut)
     void ResetAll();

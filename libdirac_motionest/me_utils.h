@@ -60,8 +60,7 @@ public:
         m_xp(x_p),
         m_yp(y_p),
         m_xl(x_l),
-        m_yl(y_l),
-        m_start_val(0.0f)
+        m_yl(y_l)
     {}
 
     ////////////////////////////////////////////////////////////////////
@@ -76,14 +75,6 @@ public:
     void SetBlockLimits( const OLBParams& bparams ,
                          const PicArray& pic_data , 
                          const int xbpos , const int ybpos);
-   
-    void SetDC(const int dc){m_dc=dc;}
-
-    void SetStartValue(const float sv){m_start_val=sv;}
-
-    void SetBestMv( const MVector& mv){m_best_mv=mv;}
-
-    void SetIntraCost(const float icost){m_intra_cost=icost;}
 
     // ... and gets
 
@@ -99,23 +90,6 @@ public:
     //! Return the block height
     const int Yl() const {return m_yl;}
 
-    //! Return the best motion vector found
-    const MVector& BestMv() const {return m_best_mv;}
-
-    //! Return the stored average value of the block 
-    const int DC() const {return m_dc;}
-
-    //! Return the cost data
-    const MvCostData& Costs() const {return m_cost;}
-
-    //! Return the cost data
-    MvCostData& Costs() {return m_cost;}
-
-    //! Return the cost of coding the block intra
-    const float IntraCost() const {return m_intra_cost;}
-
-    //! Return the start value
-    const float StartValue() const {return m_start_val;}
 private: 
 
     int m_xp;
@@ -123,15 +97,6 @@ private:
     int m_xl;
     int m_yl;
 
-    MVector m_best_mv;        
-
-    ValueType m_dc;
-    //! The cost data associated with the match
-    MvCostData m_cost;
-    //! The intra cost for the block
-    float m_intra_cost;
-    //! The value to start adding the SAD values to - will be the weighted motion vector cost
-    float m_start_val;
 };
 
 //////////////////////////////////////////////////
@@ -160,7 +125,7 @@ public:
         \param    dparams    the parameters in which costs, block parameters etc are stored
         \param    mv    the motion vector being used 
     */
-    virtual void Diff( BlockDiffParams& dparams , const MVector& mv )=0;
+    virtual float Diff(  const BlockDiffParams& dparams , const MVector& mv )=0;
 
 protected:
 
@@ -193,7 +158,7 @@ public:
         \param    dparams    the parameters in which costs, block parameters etc are stored
         \param    mv    the motion vector being used 
     */
-    void Diff( BlockDiffParams& dparams , const MVector& mv);
+    float Diff(  const BlockDiffParams& dparams , const MVector& mv );
 
 private:
     //! Private, bodyless copy-constructor: class should not be copied
@@ -221,7 +186,7 @@ public:
         \param    dparams    the parameters in which costs, block parameters etc are stored
         \param    mv    the motion vector being used 
     */    
-    void Diff(BlockDiffParams& dparams, const MVector& mv);
+    float Diff(  const BlockDiffParams& dparams , const MVector& mv );
 
 private:
     //! Private, bodyless copy-constructor: class should not be copied
@@ -246,10 +211,9 @@ public:
     /*!
         Do the actual difference
         \param    dparams    the parameters in which costs, block parameters etc are stored
-        \param    dc_pred    a prediction for the DC value from neighbouring blocks
-        \param    loc_lambda    a weighting parameter for the DC value coding cost
+        \param    dc_val     DC value
     */        
-    void Diff( BlockDiffParams& dparams , ValueType dc_pred , float loc_lambda );
+    float Diff( const BlockDiffParams& dparams , ValueType& dc_val );
 
 private:
     //! Private, bodyless copy-constructor: class should not be copied
@@ -281,7 +245,7 @@ public:
         \param    mv1    the motion vector being used for reference 1
         \param    mv2    the motion vector being used for reference 2
     */        
-    virtual void Diff( BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 )=0;
+    virtual float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 )=0;
 
 protected:
     const PicArray& pic_data;
@@ -318,7 +282,7 @@ public:
         \param    mv1    the motion vector being used for reference 1
         \param    mv2    the motion vector being used for reference 2
     */        
-    void Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2);
+    float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 );
 
 private:
     //! Private, bodyless copy-constructor: class should not be copied
@@ -343,7 +307,7 @@ public:
         \param    mv1    the motion vector being used for reference 1
         \param    mv2    the motion vector being used for reference 2
     */        
-    void Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2);
+    float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 );
 
 private:
     //! Private, bodyless copy-constructor: class should not be copied
@@ -370,6 +334,14 @@ public:
 
     //! Destructor
     virtual ~BlockDiffUp(){}
+
+    //! Do the actual difference
+    /*!
+        Do the actual difference
+        \param    dparams    the parameters in which costs, block parameters etc are stored
+        \param    mv    the motion vector being used 
+    */     
+    virtual float Diff(  const BlockDiffParams& dparams , const MVector& mv )=0;
 
 protected:
      //! A lookup table to simplify the 1/8 pixel accuracy code
@@ -405,7 +377,7 @@ public:
         \param    dparams    the parameters in which costs, block parameters etc are stored
         \param    mv    the motion vector being used 
     */        
-    void Diff(BlockDiffParams& dparams, const MVector& mv);
+    float Diff(  const BlockDiffParams& dparams , const MVector& mv );
 
 private:
     //! Private, bodyless copy-constructor: class should not be copied
@@ -436,7 +408,7 @@ public:
         \param    dparams    the parameters in which costs, block parameters etc are stored
         \param    mv    the motion vector being used 
     */        
-    void Diff(BlockDiffParams& dparams, const MVector& mv);
+    float Diff(  const BlockDiffParams& dparams , const MVector& mv );
 private:
     //! Private, bodyless copy-constructor: class should not be copied
     BChkBlockDiffUp(const BChkBlockDiffUp& cpy);
@@ -461,6 +433,14 @@ public:
     //! Destructor
     virtual ~BiBlockDiffUp(){}
 
+    //! Do the actual difference
+    /*!
+        Do the actual difference
+        \param    dparams    the block parameters
+        \param    mv1    the motion vector being used for reference 1
+        \param    mv2    the motion vector being used for reference 2
+    */ 
+    virtual float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 )=0;
 protected:
      //! A lookup table to simplify the 1/8 pixel accuracy code
     int InterpLookup[9][4];
@@ -494,7 +474,7 @@ public:
         \param    mv1    the motion vector being used for reference 1
         \param    mv2    the motion vector being used for reference 2
     */        
-    void Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2);
+    float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 );
 private:
     //! Private, bodyless copy-constructor: class should not be copied
     BiSimpleBlockDiffUp(const BiSimpleBlockDiffUp& cpy);
@@ -523,7 +503,7 @@ public:
         \param    mv1    the motion vector being used for reference 1
         \param    mv2    the motion vector being used for reference 2
     */    
-    void Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2);
+    float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 );
 private:
     //! Private, bodyless copy-constructor: class should not be copied
     BiBChkBlockDiffUp(const BiBChkBlockDiffUp& cpy);

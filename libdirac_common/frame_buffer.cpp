@@ -126,12 +126,12 @@ FrameBuffer& FrameBuffer::operator=(const FrameBuffer& rhs){
 //Destructor
 FrameBuffer::~FrameBuffer()
 {
-    for (size_t i=0 ; i<m_frame_data.size() ;++i){
+    for (size_t i=0 ; i<m_frame_data.size() ;++i)
         delete m_frame_data[i];
-    }//i
+
 }
 
-Frame& FrameBuffer::GetFrame(unsigned int fnum)
+Frame& FrameBuffer::GetFrame( unsigned int fnum )
 {//get frame with a given frame number, NOT with a given position in the buffer.
  //If the frame number does not occur, the first frame in the buffer is returned.
 
@@ -144,7 +144,7 @@ Frame& FrameBuffer::GetFrame(unsigned int fnum)
     return *(m_frame_data[pos]);
 }
 
-const Frame& FrameBuffer::GetFrame(unsigned int fnum) const
+const Frame& FrameBuffer::GetFrame( unsigned int fnum ) const
 {    //as above, but const version
 
     std::map<unsigned int,unsigned int>::const_iterator it = m_fnum_map.find(fnum);
@@ -156,7 +156,7 @@ const Frame& FrameBuffer::GetFrame(unsigned int fnum) const
     return *(m_frame_data[pos]);
 }
 
-PicArray& FrameBuffer::GetComponent(unsigned int fnum, CompSort c)
+PicArray& FrameBuffer::GetComponent( unsigned int fnum , CompSort c)
 {//as GetFrame, but returns corresponding component
 
     std::map<unsigned int,unsigned int>::iterator it = m_fnum_map.find(fnum);
@@ -173,7 +173,7 @@ PicArray& FrameBuffer::GetComponent(unsigned int fnum, CompSort c)
         return m_frame_data[pos]->Ydata();
 }
 
-const PicArray& FrameBuffer::GetComponent(unsigned int fnum, CompSort c) const 
+const PicArray& FrameBuffer::GetComponent( unsigned int fnum , CompSort c ) const 
 {//as above, but const version
  
     std::map<unsigned int,unsigned int>::const_iterator it = m_fnum_map.find(fnum);
@@ -190,7 +190,8 @@ const PicArray& FrameBuffer::GetComponent(unsigned int fnum, CompSort c) const
         return m_frame_data[pos]->Ydata();
 }
 
-PicArray& FrameBuffer::GetUpComponent(unsigned int fnum, CompSort c){//as GetFrame, but returns corresponding upconverted component
+// as GetFrame, but returns corresponding upconverted component
+PicArray& FrameBuffer::GetUpComponent(unsigned int fnum, CompSort c){
     std::map<unsigned int,unsigned int>::iterator it = m_fnum_map.find(fnum);
 
     unsigned int pos = 0;
@@ -236,7 +237,7 @@ void FrameBuffer::PushFrame(unsigned int frame_num)
     m_fnum_map.insert(temp_pair);
 }
 
-void FrameBuffer::PushFrame(const FrameParams& fp)
+void FrameBuffer::PushFrame( const FrameParams& fp )
 {// Put a new frame onto the top of the stack
 
     Frame* fptr = new Frame(fp);
@@ -249,17 +250,34 @@ void FrameBuffer::PushFrame(const FrameParams& fp)
     m_fnum_map.insert(temp_pair);
 }
 
+void FrameBuffer::PushFrame( const Frame& frame )
+{
+    // Put a copy of a new frame onto the top of the stack
 
-void FrameBuffer::PushFrame(PicInput* picin,const FrameParams& fp){
+    Frame* fptr = new Frame( frame );
+
+    // Add the frame to the buffer
+    m_frame_data.push_back(fptr);
+
+    // Put the frame number into the index table
+    std::pair<unsigned int,unsigned int> tmp_pair(frame.GetFparams().FrameNum() ,
+                                                   m_frame_data.size()-1);
+    m_fnum_map.insert(tmp_pair);
+}
+
+void FrameBuffer::PushFrame(PicInput* picin,const FrameParams& fp)
+{
     //Read a frame onto the top of the stack
 
     PushFrame(fp);
     picin->ReadNextFrame( *(m_frame_data[m_frame_data.size()-1]) );
 }
 
-void FrameBuffer::PushFrame(PicInput* picin, unsigned int fnum){    //Read a frame onto the top of the stack    
-    SetFrameParams(fnum);
-    PushFrame(picin,m_fparams);
+void FrameBuffer::PushFrame(PicInput* picin, unsigned int fnum)
+{
+   //Read a frame onto the top of the stack    
+    SetFrameParams( fnum );
+    PushFrame( picin , m_fparams );
 }
 
 void FrameBuffer::Remove(unsigned int pos)
@@ -296,7 +314,7 @@ void FrameBuffer::Clean(int fnum)
     }//i
 }
 
-void FrameBuffer::SetFrameParams(unsigned int fnum)
+void FrameBuffer::SetFrameParams( unsigned int fnum )
 {    
     // Set the frame parameters, given the GOP set-up and the frame number in display order
     // This function can be ignored by setting the frame parameters directly if required

@@ -97,7 +97,7 @@ void QualityMonitor::ResetAll()
     m_encparams.SetL2MELambda( m_encparams.L2Lambda()*m_me_ratio );
 }
 
-bool QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame)
+bool QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame , const int count)
 {
     // The return value - true if we need to recode, false otherwise
     bool recode = false;
@@ -146,10 +146,20 @@ bool QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame)
   		// Calculate the resulting offset
 		offset = current_wpsnr - ( log10(current_lambda) * slope );
 
-        // Update the default values using a simple recursive filter
-        m_slope[fsort] = (3.0*m_slope[fsort] + slope)/4.0;
-        m_offset[fsort] = (3.0*m_offset[fsort] + offset)/4.0;
-        m_slope[fsort] = std::min( std::max( -10.0 , m_slope[fsort] ), -0.1);
+        if ( count != 1 )
+        {
+            // Update the default values using a simple recursive filter ...
+            m_slope[fsort] = (3.0*m_slope[fsort] + slope)/4.0;
+            m_offset[fsort] = (3.0*m_offset[fsort] + offset)/4.0;
+            m_slope[fsort] = std::min( std::max( -10.0 , m_slope[fsort] ), -0.1);
+        }
+        else
+        {
+            // .. unless we're recoding a frame for the first time            
+            m_slope[fsort] = slope;
+            m_offset[fsort] = offset;
+            m_slope[fsort] = std::min( std::max( -10.0 , m_slope[fsort] ), -0.1);
+        }
 
     }
 
@@ -200,7 +210,7 @@ double QualityMonitor::WeightedPSNRDiff(const PicArray& pic1_data, const PicArra
 		}//i
 	}//j
 
-	mean_square_diff /= pic1_data.LengthX()*pic1_data.LengthY();
+	mean_square_diff /= m_true_xl * m_true_yl;
 
     // now compensate for the fact that we've got two extra bits
     mean_square_diff /= 16.0;

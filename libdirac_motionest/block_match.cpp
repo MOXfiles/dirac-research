@@ -247,27 +247,40 @@ void BlockMatcher::FindBestMatch(int xpos , int ypos ,
     // The minimum cost so far
     float min_cost;    
 
-       //first test the first in each of the lists to choose which lists to pursue
-    dparams.Costs().total=100000000.0f;//initialise so that we choose a valid vector to start with!
+    // First test the first in each of the lists to choose which lists to pursue
 
-    MVector temp_mv;
+    MvCostData best_costs;
+    // Initialise so that we choose a valid vector to start with!
+    best_costs.total=100000000.0f;
+    MVector best_mv( cand_list[0][0] );
 
-    dparams.SetBestMv( cand_list[0][0] );
+    MVector cand_mv;
+    MvCostData cand_costs;
+
     for (size_t lnum=0 ; lnum<cand_list.size() ; ++lnum )
     {
 
-        temp_mv = cand_list[lnum][0];
-        dparams.SetStartValue( lambda * GetVar( mv_prediction , temp_mv ) );
+        cand_mv = cand_list[lnum][0];
+        cand_costs.mvcost = GetVar( mv_prediction , cand_mv );
 
         // See whether we need to do bounds checking or not
-        if (( dparams.Xp()+temp_mv.x )<0 || ( dparams.Xp()+dparams.Xl()+temp_mv.x) >= m_ref_data.LengthX() ||
-            (dparams.Yp()+temp_mv.y)<0 || (dparams.Yp()+dparams.Yl()+temp_mv.y) >= m_ref_data.LengthY() )
+        if (( dparams.Xp()+cand_mv.x )<0 || ( dparams.Xp()+dparams.Xl()+cand_mv.x) >= m_ref_data.LengthX() ||
+            (dparams.Yp()+cand_mv.y)<0 || (dparams.Yp()+dparams.Yl()+cand_mv.y) >= m_ref_data.LengthY() )
             mydiff = &m_checkdiff;
         else
             mydiff = &m_simplediff;    
 
-        mydiff->Diff( dparams , temp_mv);
-        list_costs[lnum] = dparams.Costs().total;
+        cand_costs.SAD = mydiff->Diff( dparams , cand_mv );
+        cand_costs.SetTotal( lambda );
+
+        if ( cand_costs.total < best_costs.total)
+        {
+            best_costs = cand_costs;
+            best_mv = cand_mv ;
+
+        }
+
+        list_costs[lnum] = best_costs.total;
 
     }// lnum
 
@@ -302,26 +315,36 @@ void BlockMatcher::FindBestMatch(int xpos , int ypos ,
         for (size_t i=1 ; i<cand_list[list_num].size() ; ++i)
         {//start at 1 since did 0 above
 
-            temp_mv = cand_list[list_num][i];
-            dparams.SetStartValue( lambda * GetVar( mv_prediction , temp_mv) );
+            cand_mv = cand_list[list_num][i];
+            cand_costs.mvcost =  GetVar( mv_prediction , cand_mv);
             
-            if ((dparams.Xp()+temp_mv.x)<0 || (dparams.Xp()+dparams.Xl()+temp_mv.x) > m_ref_data.LengthX() ||
-                (dparams.Yp()+temp_mv.y)<0 || (dparams.Yp()+dparams.Yl()+temp_mv.y) > m_ref_data.LengthY() )
+            if ((dparams.Xp()+cand_mv.x)<0 || (dparams.Xp()+dparams.Xl()+cand_mv.x) > m_ref_data.LengthX() ||
+                (dparams.Yp()+cand_mv.y)<0 || (dparams.Yp()+dparams.Yl()+cand_mv.y) > m_ref_data.LengthY() )
                 mydiff = &m_checkdiff;
             else
                 mydiff = &m_simplediff;
 
-            mydiff->Diff( dparams , temp_mv );
+            cand_costs.SAD = mydiff->Diff( dparams , cand_mv );
+            cand_costs.SetTotal( lambda );
+            
+            if ( cand_costs.total < best_costs.total)
+            {
+                best_costs = cand_costs;
+                best_mv = cand_mv;
 
+            }
         }// i
     }// num
 
     // Write the results in the arrays //
     /////////////////////////////////////
 
-    m_mv_array[ypos][xpos] = dparams.BestMv();
-    m_cost_array[ypos][xpos] = dparams.Costs();
+    m_mv_array[ypos][xpos] = best_mv;
+    m_cost_array[ypos][xpos] = best_costs;
 }
+
+
+
 
 void BlockMatcher::FindBestMatchSubp(int xpos, int ypos,
                                       const CandidateList& cand_list,
@@ -348,30 +371,37 @@ void BlockMatcher::FindBestMatchSubp(int xpos, int ypos,
     float min_cost;    
 
     // First test the first in each of the lists to choose which lists to pursue
-    dparams.Costs() = m_cost_array[ypos][xpos];
+    MvCostData best_costs( m_cost_array[ypos][xpos] );
+    MVector best_mv( m_mv_array[ypos][xpos] );
 
-    MVector temp_mv;
-
-    dparams.SetBestMv( m_mv_array[ypos][xpos] );
+    MvCostData cand_costs;
+    MVector cand_mv;
 
     for (size_t list_num=0 ; list_num<cand_list.size() ; ++list_num )
     {
 
-        temp_mv = cand_list[list_num][0];
-
-        dparams.SetStartValue( lambda * GetVar( mv_prediction , temp_mv ) );
+        cand_mv = cand_list[list_num][0];
+        cand_costs.mvcost = GetVar( mv_prediction , cand_mv );
 
         // See whether we need to do bounds checking or not
-        if (   (( dparams.Xp()<<1 )+(temp_mv.x>>2))<0 
-            || ((( dparams.Xp()+dparams.Xl() )<<1)+(temp_mv.x>>2)) >= m_ref_data.LengthX()
-            || (( dparams.Yp()<<1)+(temp_mv.y>>2))<0 
-            || (((dparams.Yp()+dparams.Yl())<<1)+(temp_mv.y>>2)) >= m_ref_data.LengthY() )
+        if (   (( dparams.Xp()<<1 )+(cand_mv.x>>2))<0 
+            || ((( dparams.Xp()+dparams.Xl() )<<1)+(cand_mv.x>>2)) >= m_ref_data.LengthX()
+            || (( dparams.Yp()<<1)+(cand_mv.y>>2))<0 
+            || (((dparams.Yp()+dparams.Yl())<<1)+(cand_mv.y>>2)) >= m_ref_data.LengthY() )
             mydiff = &m_checkdiffup;
         else
             mydiff = &m_simplediffup;    
 
-        mydiff->Diff( dparams , temp_mv);
-        list_costs[list_num] = dparams.Costs().total;
+        cand_costs.SAD = mydiff->Diff( dparams , cand_mv );
+        cand_costs.SetTotal( lambda );
+ 
+       if (cand_costs.total< best_costs.total)
+        {
+            best_costs = cand_costs;
+            best_mv = cand_mv;
+        }
+        
+        list_costs[list_num] = cand_costs.total;
     }// list_num
 
 
@@ -404,25 +434,33 @@ void BlockMatcher::FindBestMatchSubp(int xpos, int ypos,
         for (size_t i=1 ; i<cand_list[list_num].size() ; ++i)
         {//start at 1 since did 0 above
 
-            temp_mv = cand_list[list_num][i];
-            dparams.SetStartValue( lambda * GetVar( mv_prediction , temp_mv) );
+            cand_mv = cand_list[list_num][i];
+            cand_costs.mvcost = GetVar( mv_prediction , cand_mv );
 
-            if (   (( dparams.Xp()<<1 )+( temp_mv.x>>2 ))<0 
-                || ((( dparams.Xp()+dparams.Xl() )<<1)+( temp_mv.x>>2 )) >= m_ref_data.LengthX()
-                || (( dparams.Yp()<<1 )+( temp_mv.y>>2 ))<0 
-                || ((( dparams.Yp()+dparams.Yl() )<<1)+(temp_mv.y>>2)) >= m_ref_data.LengthY() )
+            if (   (( dparams.Xp()<<1 )+( cand_mv.x>>2 ))<0 
+                || ((( dparams.Xp()+dparams.Xl() )<<1)+( cand_mv.x>>2 )) >= m_ref_data.LengthX()
+                || (( dparams.Yp()<<1 )+( cand_mv.y>>2 ))<0 
+                || ((( dparams.Yp()+dparams.Yl() )<<1)+(cand_mv.y>>2)) >= m_ref_data.LengthY() )
                  mydiff = &m_checkdiffup;
             else
                 mydiff = &m_simplediffup;
 
-            mydiff->Diff( dparams , temp_mv );
+            cand_costs.SAD = mydiff->Diff( dparams , cand_mv );
+            cand_costs.SetTotal( lambda );
+
+            if (cand_costs.total< best_costs.total)
+            {
+                best_costs = cand_costs;
+                best_mv = cand_mv;
+            }
+
         }// i
     }// num
 
     // Write the results in the arrays //
     /////////////////////////////////////
 
-     m_mv_array[ypos][xpos] = dparams.BestMv();
-     m_cost_array[ypos][xpos] = dparams.Costs();   
+     m_mv_array[ypos][xpos] = best_mv;
+     m_cost_array[ypos][xpos] = best_costs;   
 
 }

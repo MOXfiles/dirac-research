@@ -182,6 +182,8 @@ public:
     mvcost(0.0),
     total(0.0){}
 
+    void SetTotal( const float lambda ){total = SAD + lambda*mvcost;}
+
     //! The Sum of Absolute Differences - easier to compute than Sum-Squared Differences
     float SAD;
 

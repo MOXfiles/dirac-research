@@ -148,8 +148,8 @@ void SubpelRefine::DoBlock(const int xblock , const int yblock ,
     mv_array[yblock][xblock] = mv_array[yblock][xblock]<<3;
 
     // Re-calculate at pixel accuracy, with correct predictor
-    pred_costs[yblock][xblock].mvcost = m_lambda * GetVar(mv_pred , mv_array[yblock][xblock]);
-    pred_costs[yblock][xblock].total = pred_costs[yblock][xblock].SAD+pred_costs[yblock][xblock].mvcost;
+    pred_costs[yblock][xblock].mvcost = GetVar(mv_pred , mv_array[yblock][xblock]);
+    pred_costs[yblock][xblock].SetTotal( m_lambda );
 
     AddNewVlist( cand_list , mv_array[yblock][xblock] , 0 , 0 , 1 );// (creates a singleton list)
 

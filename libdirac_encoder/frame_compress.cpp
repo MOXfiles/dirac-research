@@ -60,7 +60,7 @@ FrameCompressor::FrameCompressor( EncoderParams& encp ) :
     m_global_pred_mode(REF1_ONLY)
 {}
 
-void FrameCompressor::Compress( FrameBuffer& my_buffer, int fnum )
+void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_buffer , int fnum )
 {
     FrameOutputManager& foutput = m_encparams.BitsOut().FrameOutput();
 
@@ -81,7 +81,7 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, int fnum )
 
         // Motion estimate first
         MotionEstimator my_motEst( m_encparams );
-        bool is_a_cut = my_motEst.DoME( my_buffer , fnum , *m_me_data );
+        bool is_a_cut = my_motEst.DoME( orig_buffer , fnum , *m_me_data );
 
         // If we have a cut, and an L1 frame, then turn into an I-frame
         if ( fsort == L1_frame && is_a_cut )
@@ -147,7 +147,7 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, int fnum )
             my_compcoder.Compress( my_buffer.GetComponent( fnum , V_COMP) );
         }
 
-        //motion compensate again if necessary
+        // Motion compensate again if necessary
         if ( fsort != I_frame )
         {
             MotionCompensator mycomp( m_encparams );
@@ -157,11 +157,8 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, int fnum )
             delete m_me_data;    
         }//?fsort
 
-         //finally clip the data to keep it in range
+        // Finally clip the data to keep it in range
         my_buffer.GetFrame(fnum).Clip();
-
-
-
 
     }//?m_skipped
 }
@@ -171,9 +168,11 @@ void FrameCompressor::WriteFrameHeader( const FrameParams& fparams )
     BasicOutputManager& frame_header_op = m_encparams.BitsOut().FrameOutput().HeaderOutput();
 
     // Write the frame start code
-    // FIXME: This code will change once bitstream changes take effect
-    unsigned char frame_start[5] = { START_CODE_PREFIX_BYTE0, START_CODE_PREFIX_BYTE1, START_CODE_PREFIX_BYTE2, START_CODE_PREFIX_BYTE3, IFRAME_START_CODE };
-
+    unsigned char frame_start[5] = { START_CODE_PREFIX_BYTE0, 
+                                     START_CODE_PREFIX_BYTE1, 
+                                     START_CODE_PREFIX_BYTE2, 
+                                     START_CODE_PREFIX_BYTE3, 
+                                     IFRAME_START_CODE };
     switch(fparams.FSort())
     {
     case I_frame:
@@ -243,7 +242,7 @@ void FrameCompressor::WriteMotionData( const FrameBuffer& fbuffer , const int fn
     const FrameSort fsort = fparams.FSort();
 
     if (m_encparams.Verbose())
-        std::cerr<<std::endl<<"Writing motion data to file: ";
+        std::cerr<<std::endl<<"Writing motion data to diagnostics file. ";
 
     char file[150];
     std::strcpy(file, m_encparams.OutputPath());
@@ -266,9 +265,6 @@ void FrameCompressor::WriteMotionData( const FrameBuffer& fbuffer , const int fn
 
         OLBParams block_params = m_encparams.LumaBParams(2);
         out << block_params << " ";
-        // output macroblock and motion vector array dimensions
-        out << m_me_data->MBSplit().LengthY() << " " << m_me_data->MBSplit().LengthX() << " ";
-        out << m_me_data->Vectors(1).LengthY() << " " << m_me_data->Vectors(1).LengthX();
         out << *m_me_data;
     }
     

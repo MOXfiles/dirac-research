@@ -56,17 +56,13 @@ ModeDecider::ModeDecider( const EncoderParams& encp):
     // all SAD costs are normalised to the area corresponding to non-overlapping
     // 16 blocks of size XBLEN*YBLEN.    
 
-//     m_level_factor[0] = float( 16 * m_encparams.LumaBParams(2).Xblen() * m_encparams.LumaBParams(2).Yblen() )/
-//         float( m_encparams.LumaBParams(0).Xblen() * m_encparams.LumaBParams(0).Yblen() );
+   m_level_factor[0] = float( 16 * m_encparams.LumaBParams(2).Xblen() * m_encparams.LumaBParams(2).Yblen() )/
+       float( m_encparams.LumaBParams(0).Xblen() * m_encparams.LumaBParams(0).Yblen() );
 
-//     m_level_factor[1] = float( 4 * m_encparams.LumaBParams(2).Xblen() * m_encparams.LumaBParams(2).Yblen() )/
-//         float( m_encparams.LumaBParams(1).Xblen() * m_encparams.LumaBParams(1).Yblen() );
+   m_level_factor[1] = float( 4 * m_encparams.LumaBParams(2).Xblen() * m_encparams.LumaBParams(2).Yblen() )/
+       float( m_encparams.LumaBParams(1).Xblen() * m_encparams.LumaBParams(1).Yblen() );
 
-//     m_level_factor[2] = 1.0f;
-
-    m_level_factor[0] = 1.0;
-    m_level_factor[1] = 1.0;
-    m_level_factor[2] = 1.0;
+   m_level_factor[2] = 1.0f;
 
     for (int i=0 ; i<=2 ; ++i)
         m_mode_factor[i] = 160.0*std::pow(0.8 , 2-i);
@@ -358,7 +354,6 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
     me_data.PredCosts(1)[ypos][xpos].total = 100000000.0f;
     my_bmatch1.FindBestMatchSubp( xpos , ypos , cand_list, mv_pred, lambda );
 
-    me_data.PredCosts(1)[ypos][xpos].total *= m_level_factor[level];
     if (num_refs>1)
     {//do the same for the other reference
 
@@ -392,7 +387,6 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
         me_data.PredCosts(2)[ypos][xpos].total = 100000000.0f;
         my_bmatch2.FindBestMatchSubp( xpos , ypos , cand_list, mv_pred, lambda );
 
-        me_data.PredCosts(2)[ypos][xpos].total *= m_level_factor[level];
      }
 }
 
@@ -425,22 +419,23 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
 
     mode_cost = ModeCost( xblock , yblock , REF1_ONLY)*m_mode_factor[level];
     me_data.Mode()[ypos][xpos] = REF1_ONLY;
+    me_data.PredCosts(1)[ypos][xpos].total *= m_level_factor[level];
     min_unit_cost = me_data.PredCosts(1)[ypos][xpos].total + mode_cost;
 
     // Calculate the cost if we were to code the block as intra //
     /************************************************************/
 
     mode_cost = ModeCost( xblock , yblock , INTRA) * m_mode_factor[level];
-    m_intradiff->Diff( dparams , GetDCPred( xblock , yblock ) , loc_lambda);
-    me_data.DC( Y_COMP )[ypos][xpos] = dparams.DC();
-
-    me_data.IntraCosts()[ypos][xpos] = dparams.IntraCost()*m_level_factor[level];
-    unit_cost = me_data.IntraCosts()[ypos][xpos] + mode_cost;
+    me_data.IntraCosts()[ypos][xpos] = m_intradiff->Diff( dparams , me_data.DC( Y_COMP )[ypos][xpos] );
+    me_data.IntraCosts()[ypos][xpos] += loc_lambda * 
+                                       GetDCVar( me_data.DC( Y_COMP )[ypos][xpos] , GetDCPred( xblock , yblock ) );
+    me_data.IntraCosts()[ypos][xpos] *= m_level_factor[level];
+    unit_cost = me_data.IntraCosts()[ypos][xpos] +  mode_cost;
 
     if ( unit_cost<min_unit_cost )
     {
         me_data.Mode()[ypos][xpos] = INTRA;
-        min_unit_cost = dparams.IntraCost();
+        min_unit_cost = unit_cost;
     }
 
     if (num_refs>1)
@@ -449,6 +444,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
        /*************************/
 
         mode_cost = ModeCost( xblock , yblock , REF2_ONLY)*m_mode_factor[level];
+        me_data.PredCosts(2)[ypos][xpos].total *= m_level_factor[level];
         unit_cost = me_data.PredCosts(2)[ypos][xpos].total + mode_cost;
         if ( unit_cost<min_unit_cost )
         {
@@ -464,17 +460,20 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
         me_data.BiPredCosts()[ypos][xpos].mvcost =
                                        me_data.PredCosts(1)[ypos][xpos].mvcost+
                                        me_data.PredCosts(2)[ypos][xpos].mvcost;
+        
+        me_data.BiPredCosts()[ypos][xpos].SAD = m_bicheckdiff->Diff(dparams , 
+                                                  me_data.Vectors(1)[ypos][xpos] , 
+                                                  me_data.Vectors(2)[ypos][xpos] );
 
-        dparams.SetStartValue( me_data.BiPredCosts()[ypos][xpos].mvcost );
-        m_bicheckdiff->Diff(dparams , me_data.Vectors(1)[ypos][xpos] , me_data.Vectors(2)[ypos][xpos] );
-        me_data.BiPredCosts()[ypos][xpos] = dparams.Costs();
+        me_data.BiPredCosts()[ypos][xpos].SetTotal( loc_lambda );
+
         me_data.BiPredCosts()[ypos][xpos].total *= m_level_factor[level];
         unit_cost = me_data.BiPredCosts()[ypos][xpos].total + mode_cost;
 
         if ( unit_cost<min_unit_cost )
         {
             me_data.Mode()[ypos][xpos] = REF1AND2;
-            min_unit_cost = dparams.Costs().total;
+            min_unit_cost = unit_cost;
         }
     }
 
@@ -536,17 +535,16 @@ ValueType ModeDecider::GetDCPred( int xblock , int yblock )
 {
     ValueType dc_pred = 128;
 
-//     if (xblock>0 && yblock>0)
-//     {
-//         dc_pred = ( (m_me_data_set[2]->DC( Y_COMP ))[yblock][xblock-1]+
-//                     (m_me_data_set[2]->DC( Y_COMP ))[yblock-1][xblock]+
-//                     (m_me_data_set[2]->DC( Y_COMP ))[yblock-1][xblock-1] )/3;
-//     }
-//     else if (xblock==0 && yblock>0)
-//         dc_pred = (m_me_data_set[2]->DC( Y_COMP ))[yblock-1][xblock];
-//     else if (xblock>0 && yblock==0)
-//         dc_pred = (m_me_data_set[2]->DC( Y_COMP ))[yblock][xblock-1];
-
+    if ( xblock>0 && m_me_data_set[2]->Mode()[yblock][xblock-1] == INTRA )
+    {
+        dc_pred = m_me_data_set[2]->DC( Y_COMP )[yblock][xblock-1];
+        if ( yblock>0 && m_me_data_set[2]->Mode()[yblock-1][xblock] == INTRA )
+        {
+            dc_pred += m_me_data_set[2]->DC( Y_COMP )[yblock-1][xblock];
+            dc_pred >>= 1;
+        }
+    }
+     
     return dc_pred;
 }
 
@@ -584,4 +582,9 @@ float ModeDecider::ModeCost(const int xindex , const int yindex ,
     }
 
     return var*m_lambda;
+}
+
+float ModeDecider::GetDCVar( const ValueType dc_val , const ValueType dc_pred)
+{
+    return 8.0*std::abs( static_cast<float>( dc_val - dc_pred ) );
 }
