@@ -1,7 +1,7 @@
 TO DO
 ~~~~~
 
-Last updated 11 March 2004
+Last updated 19 May 2004
 
 The list covers both software and algorithmic issues, and is in no particular
 order. See also the website at www.bbc.co.uk/rd/projects/dirac/. If you'd like
@@ -10,14 +10,11 @@ to help us fix these, contact us through dirac@rd.bbc.co.uk.
 -- [Ongoing]. Documentation bitstream structure and format.
 
 -- [Ongoing]. Documentation of encoder and decoder algorithms and software.
+[The algorithm documentation is now available on www.bbc.co.uk/rd/projects/dirac/.]
 
 -- Interlace coding tools, for motion estimation and compensation in particular.
 
 -- Input picture padding to meet wavelet transform and block size constraints. 
-
--- Remove Gop class and replace with a general FrameBuffer class with frame
- header giving frame time and prediction parameters. Specify and document frame
- header structure and supported tools.
 
 -- Support for constant-quality encoding - adaptation of frame Lagrangian
  parameters to hit a quality target. Collation of perceptually-weighted noise.
@@ -28,6 +25,8 @@ to help us fix these, contact us through dirac@rd.bbc.co.uk.
 
 -- Introduce support for frame skipping - bit stream flag + algorithms, decoder
  frame repetition, frame numbers and frame expiry times.
+[Flags are now in place, but functionality and encoder-side algorithms need
+definition.]
 
 -- Speed-up improvements to motion estimation.
 
@@ -52,8 +51,7 @@ to help us fix these, contact us through dirac@rd.bbc.co.uk.
 -- DirectShow filter for compressed file format. Require pull pin, buffering and
  multitheading.Integrate with MPlayer also.DirectShow filter for uncompressed
  file format.
+[Pending definition of wrapper format and defining of mux/demux classes and functions.]
 
 -- Subclass picture IO classes to support uncompressed video as multiple
  numbered files, supporting common image formats (dpx, tiff etc)
-
--- make executables give help info when invoked with no parameters
