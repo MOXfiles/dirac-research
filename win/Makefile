@@ -81,8 +81,8 @@ dirac_cppparser.obj : ..\libdirac_decoder\dirac_cppparser.cpp
 dirac_parser.obj : ..\libdirac_decoder\dirac_parser.cpp
 	$(CPP) $(CPPFLAGS) /c $**
 	
-DiracMotionEst.lib : block_match.obj downconvert.obj me_mode_decn.obj me_subpel.obj \
-                        me_utils.obj motion_estimate.obj pixel_match.obj
+DiracMotionEst.lib : block_match.obj downconvert.obj me_mode_decn.obj \
+           me_subpel.obj  me_utils.obj motion_estimate.obj pixel_match.obj
 	lib /out:$@ /nologo $**
 
 block_match.obj : ..\libdirac_motionest\block_match.cpp
@@ -258,14 +258,15 @@ sad.obj : ..\util\instrumentation\libdirac_instrument\sad.cpp
 
 split_mode.obj : ..\util\instrumentation\libdirac_instrument\split_mode.cpp
 	$(CPP) $(CPPFLAGS) /c $**
-	
+
 process_sequence.obj : ..\util\instrumentation\process_sequence.cpp
 	$(CPP) $(CPPFLAGS) /c $**
 
 instrmain.obj : ..\util\instrumentation\instrmain.cpp
 	$(CPP) $(CPPFLAGS) /c $**
 
-DiracInstrumentation.exe : instrmain.obj process_sequence.obj DiracInstrument.lib DiracMotionEst.lib DiracCommon.lib
+DiracInstrumentation.exe : process_sequence.obj instrmain.obj \
+                           DiracInstrument.lib DiracMotionEst.lib DiracCommon.lib
 	link /out:DiracInstrumentation.exe /nologo $**
 
 headmain.obj : ..\picheader\headmain.cpp
