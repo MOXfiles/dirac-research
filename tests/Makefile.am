@@ -15,6 +15,9 @@ MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
 # scripts needed only when running make check
 check_SCRIPTS = at_wrap
 
+# scripts that have to be instlalled
+bin_SCRIPTS =  create_dirac_testfile.pl
+
 $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	{					\
 	  echo '# Signature of the current package.'; \
