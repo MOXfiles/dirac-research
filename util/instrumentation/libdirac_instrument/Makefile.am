@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)
+INCLUDES = -I$(top_srcdir) -I$(srcdir)
 
 h_sources = overlay.h draw_overlay.h motion_colour.h motion_arrows.h motion_colour_arrows.h sad.h pred_mode.h split_mode.h overlay_symbols.h
 
@@ -11,4 +11,3 @@ libdirac_instrument_a_SOURCES = $(h_sources) $(cpp_sources)
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
 
-DEFS = -I. -I$(srcdir)

@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)
+INCLUDES = -I$(top_srcdir) -I$(srcdir)
 
 h_sources = arith_codec.h arrays.h band_codec.h bit_manager.h \
             common_types.h common.h frame.h golomb.h frame_buffer.h \
@@ -16,9 +16,3 @@ libdirac_common_a_SOURCES = $(h_sources) $(cpp_sources)
 
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)/libdirac_common
 library_include_HEADERS = $(h_sources)
-
-DEFS = -I. -I$(srcdir)
-
-if OVERLAY
-DEFS += -DOVERLAY=1
-endif

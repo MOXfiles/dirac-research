@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)
+INCLUDES = -I$(top_srcdir) -I$(srcdir)
 
 h_sources = block_match.h downconvert.h me_mode_decn.h me_subpel.h me_utils.h motion_estimate.h pixel_match.h
 
@@ -11,4 +11,3 @@ libdirac_motionest_a_SOURCES = $(h_sources) $(cpp_sources)
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)/libdirac_motionest
 library_include_HEADERS = $(h_sources)
 
-DEFS = -I. -I$(srcdir)

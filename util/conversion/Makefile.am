@@ -1,3 +1,5 @@
+INCLUDES = -I$(top_srcdir) -I$(srcdir) -I$(srcdir)/common
+
 bin_PROGRAMS = RGBtoYUV411 RGBtoYUV420 RGBtoYUV422 RGBtoYUV444 RGBtoUYVY RGBtoBMP \
 BMPtoRGB YUV411toRGB YUV420toRGB YUV422toRGB YUV444toRGB UYVYtoRGB
 
@@ -16,6 +18,5 @@ UYVYtoRGB_SOURCES=UYVYtoRGB.cpp
 BMPtoRGB_SOURCES=BMPtoRGB.cpp
 
 LDADD = common/libconv_common.a
-DEFS = -I.. -I. -I../.. -Icommon/ -I$(srcdir)
 
 SUBDIRS=common

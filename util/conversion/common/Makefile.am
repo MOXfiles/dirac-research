@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)
+INCLUDES = -I$(top_srcdir) -I$(srcdir)
 
 h_sources = setstdiomode.h bitmap.h
 
@@ -11,4 +11,3 @@ libconv_common_a_SOURCES = $(h_sources) $(cpp_sources)
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
 
-DEFS = -I. -I$(srcdir)

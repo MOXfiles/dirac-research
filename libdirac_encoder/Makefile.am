@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)
+INCLUDES = -I$(top_srcdir) -I$(srcdir)
 
 h_sources = comp_compress.h frame_compress.h quality_monitor.h seq_compress.h
 
@@ -10,6 +10,3 @@ libdirac_encoder_a_SOURCES = $(h_sources) $(cpp_sources)
 
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)/libdirac_encoder
 library_include_HEADERS = $(h_sources)
-
-DEFS = -I. -I$(srcdir)
-

@@ -1,4 +1,4 @@
-INCLUDES = -I$(top_srcdir)
+INCLUDES = -I$(top_srcdir) -I$(srcdir)
 
 h_sources = comp_decompress.h frame_decompress.h seq_decompress.h \
             decoder_types.h dirac_cppparser.h dirac_parser.h
@@ -12,5 +12,3 @@ libdirac_decoder_a_SOURCES = $(h_sources) $(cpp_sources)
 
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)/libdirac_decoder
 library_include_HEADERS = $(h_sources)
-
-DEFS = -I. -I$(srcdir)
