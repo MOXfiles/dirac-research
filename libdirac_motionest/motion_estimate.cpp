@@ -49,17 +49,14 @@ MotionEstimator::MotionEstimator( const EncoderParams& encp ):
     m_encparams( encp )
 {}
 
-void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& me_data)
+bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& me_data)
 {
 
     const FrameParams& fparams = my_buffer.GetFrame(frame_num).GetFparams();
-
+//std::cout<<std::endl<<"Frame number "<<fparams.FrameNum();
 
    // Step 1. 
    //Initial search gives vectors for each reference accurate to 1 pixel
-
-    if ( m_encparams.Verbose() )        
-        std::cerr<<std::endl<<"Doing initial pixel-accurate search ...";
 
     PixelMatcher pix_match( m_encparams );
     pix_match.DoSearch( my_buffer , frame_num , me_data);
@@ -67,9 +64,6 @@ void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 
     // Step 2. 
     // Pixel accurate vectors are then refined to 1/8 of a pixel
-
-    if ( m_encparams.Verbose() )
-        std::cerr<<std::endl<<"Doing sub-pixel refinement ...";
 
     SubpelRefine pelrefine( m_encparams );
     pelrefine.DoSubpel( my_buffer , frame_num , me_data );
@@ -79,9 +73,6 @@ void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
     // We now have to decide how each macroblock should be split 
     // and which references should be used, and so on.
 
-    if ( m_encparams.Verbose() )
-        std::cerr<<std::endl<<"Doing mode decision ...";
-
     ModeDecider my_mode_dec( m_encparams );
     my_mode_dec.DoModeDecn( my_buffer , frame_num , me_data );
 
@@ -90,11 +81,9 @@ void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
     // blocks we're decided are intra. [TBD: part of mode decision?]
 
     if (fparams.CFormat() != Yonly)
-    {
-        if ( m_encparams.Verbose() )
-            std::cerr<<std::endl<<"Setting chroma DC values ... ";
-        SetChromaDC( my_buffer , frame_num , me_data );    
-    }
+        SetChromaDC( my_buffer , frame_num , me_data );
+
+    return IsACut( me_data );
 
 }
 
@@ -185,4 +174,64 @@ void MotionEstimator::SetChromaDC( const FrameBuffer& my_buffer , int frame_num 
     SetChromaDC( my_buffer.GetComponent( frame_num , U_COMP) , mv_data , U_COMP );
     SetChromaDC( my_buffer.GetComponent( frame_num , V_COMP) , mv_data , V_COMP );
 
+}
+
+bool MotionEstimator::IsACut( const MEData& me_data ) const
+{
+    // Count the number of intra blocks
+    const TwoDArray<PredMode>& modes = me_data.Mode();
+
+    int count_intra = 0;
+    for ( int j=0 ; j<modes.LengthY() ; ++j )
+    {
+        for ( int i=0 ; i<modes.LengthX() ; ++i )
+        {
+            if ( modes[j][i] == INTRA )
+                count_intra++;
+        }
+    }// j
+    
+    double intra_percent = 100.0*static_cast<double>( count_intra ) / 
+                           static_cast<double>( modes.LengthX() * modes.LengthY() );
+
+    std::cerr<<std::endl<<intra_percent<<"% of blocks are intra   ";
+
+    // Check the size of SAD errors across reference 1    
+    const TwoDArray<MvCostData>& pcosts = me_data.PredCosts( 1 );
+
+    // averege SAD across all relevant blocks
+    long double sad_average = 0.0;
+    // average SAD in a given block
+    long double block_average; 
+    // the block parameters
+    const OLBParams& bparams = m_encparams.LumaBParams( 2 ); 
+    //the count of the relevant blocks
+    int block_count = 0;
+
+    for ( int j=0 ; j<pcosts.LengthY() ; ++j )
+    {
+        for ( int i=0 ; i<pcosts.LengthX() ; ++i )
+        {
+
+            if ( modes[j][i] == REF1_ONLY || modes[j][i] == REF1AND2 )
+            {
+                block_average = pcosts[j][i].SAD /
+                                static_cast<long double>( bparams.Xblen() * bparams.Yblen() * 4 );
+                sad_average += block_average;
+                block_count++;
+            }
+
+        }// i
+    }// j
+
+    if ( block_count != 0)
+        sad_average /= static_cast<long double>( block_count );
+
+    std::cerr<<", Mean SAD="<<sad_average;
+   
+    if ( (sad_average > 30.0) || (intra_percent > 70.0) )
+        return true;
+    else
+        return false;
+  
 }

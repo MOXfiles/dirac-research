@@ -156,14 +156,14 @@ void ModeDecider::DoMBDecn()
     float old_best_MB_cost = m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc];
 
     // Next do 2x2 modes
-      DoLevelDecn(1);
+    DoLevelDecn(1);
 
     // Do 1x1 mode if merging worked before
-       if ( m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] <= old_best_MB_cost)
-      {
-           old_best_MB_cost = m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc];        
-           DoLevelDecn(0);
-       }
+    if ( m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] <= old_best_MB_cost)
+    {
+        old_best_MB_cost = m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc];        
+        DoLevelDecn(0);
+    }
 
 }
 
@@ -177,13 +177,13 @@ void ModeDecider::DoLevelDecn( int level )
     // for each constituent is different.
 
     if (fsort==L1_frame)
-         m_lambda=m_encparams.L1MELambda();
-     else
-         m_lambda=m_encparams.L2MELambda();
+        m_lambda=m_encparams.L1MELambda();
+    else
+        m_lambda=m_encparams.L2MELambda();
 
      // We have reduced lambda at the picture edges
-      if (m_xmb_loc==0 || m_ymb_loc==0 || m_xmb_loc==m_encparams.XNumMB()-1 || m_ymb_loc==m_encparams.YNumMB()-1)
-          m_lambda/=5.0;
+    if (m_xmb_loc==0 || m_ymb_loc==0 || m_xmb_loc==m_encparams.XNumMB()-1 || m_ymb_loc==m_encparams.YNumMB()-1)
+        m_lambda/=5.0;
 
     // The limits of the prediction units
     const int xstart = m_xmb_loc <<level;
@@ -194,17 +194,17 @@ void ModeDecider::DoLevelDecn( int level )
 
     //    Case 1: prediction modes are all different
 
-     float MB_cost = 0.0;    
-     for ( int j=ystart ; j<yend ; ++j)
-     {
-         for (int i=xstart ; i<xend ; ++i)
-        {
-            if ( level<2 )
-                DoME( i , j , level);
-             MB_cost += DoUnitDecn( i , j ,level );
+    float MB_cost = 0.0;    
+    for ( int j=ystart ; j<yend ; ++j)
+    {
+        for (int i=xstart ; i<xend ; ++i)
+       {
+           if ( level<2 )
+               DoME( i , j , level);
+            MB_cost += DoUnitDecn( i , j ,level );
 
-         }// i
-     }// j
+        }// i
+    }// j
 
     // if we've improved on the best cost, we should propagate data in 
     // the base level motion vector set

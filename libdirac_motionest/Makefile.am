@@ -8,7 +8,7 @@ lib_LIBRARIES = libdirac_motionest.a
 
 libdirac_motionest_a_SOURCES = $(h_sources) $(cpp_sources)
 
-library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)
+library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)/libdirac_motionest
 library_include_HEADERS = $(h_sources)
 
 DEFS = -I. -I$(srcdir)

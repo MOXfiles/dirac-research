@@ -167,12 +167,6 @@ void SubpelRefine::DoBlock(const int xblock , const int yblock ,
     AddNewVlist(cand_list , mv_array[yblock][xblock] , 1 , 1 , 1);
     cand_list.erase( cand_list.begin() );
     my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, m_lambda );
-
-    // Also, look in the nhood of the prediction
-    AddNewVlist(cand_list , mv_pred , 1 , 1 , 1);
-    cand_list.erase( cand_list.begin() );
-    if ( cand_list.size()>0 )
-        my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, m_lambda );
 }
 
 
