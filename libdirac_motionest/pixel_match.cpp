@@ -81,7 +81,7 @@ void PixelMatcher::DoSearch(const FrameBuffer& my_buffer, int frame_num, MEData&
     // Set the number of downconversion levels - not too many or we run out of picture!    
     m_depth = ( int) std::min( log(((double) pic_data.LengthX())/12.0)/log(2.0) , 
                              log(((double) pic_data.LengthY())/12.0)/log(2.0) );
-    m_depth = std::min( 4, m_depth );
+//    m_depth = std::min( 4, m_depth );
 
     // These arrays will contain the downconverted picture and MvData hierarchy
     OneDArray<PicArray*> ref1_down( Range( 1 , m_depth ) );
@@ -238,15 +238,7 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
     // Provide a block matching object to do the work
     BlockMatcher my_bmatch( pic_data , ref_data , m_encparams.LumaBParams(2) , mv_array , pred_costs );
 
-     // Set Lagrangian lambda parameters according to the frame type
-    // Scale the smoothing effect down according to the level of downconversion
-    // because the blocks are the same size as at the top level and so represent
-    // larger picture areas. 
-    float loc_lambda;
-    if (m_fsort == L1_frame)
-        loc_lambda = m_encparams.L1MELambda() / std::pow(2.0 , m_level);
-    else//must have an L2 frame
-        loc_lambda = m_encparams.L2MELambda() / std::pow(2.0 , m_level);
+    float loc_lambda = 0.0;
 
     // Do the work - loop over all the blocks, finding the best match //
     ////////////////////////////////////////////////////////////////////

@@ -78,7 +78,7 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 
     // Finally, although not strictly part of motion estimation,
     // we have to assign DC values for chroma components for
-    // blocks we're decided are intra. [TBD: part of mode decision?]
+    // blocks we're decided are intra.
 
     if (fparams.CFormat() != Yonly)
         SetChromaDC( my_buffer , frame_num , me_data );
@@ -88,10 +88,10 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 }
 
 ValueType MotionEstimator::GetChromaBlockDC(const PicArray& pic_data,
-                                            int xblock , int yblock , int split)
+                                            int xunit , int yunit , int split)
 {
     BlockDiffParams dparams;
-    dparams.SetBlockLimits( m_encparams.ChromaBParams( split ) , pic_data, xblock , yblock);
+    dparams.SetBlockLimits( m_encparams.ChromaBParams( split ) , pic_data, xunit , yunit );
 
     IntraBlockDiff intradiff( pic_data );
 
@@ -103,9 +103,13 @@ ValueType MotionEstimator::GetChromaBlockDC(const PicArray& pic_data,
 void MotionEstimator::SetChromaDC( const PicArray& pic_data , MvData& mv_data , CompSort csort )
 {
 
-    int xtl,ytl;//lower limit of block coords in MB
-    int xbr,ybr;//upper limit of block coords in MB
-    int xsubMBtl,ysubMBtl;//ditto, for subMBs    
+    // Lower limit of block coords in MB
+    int xtl,ytl;
+    // Upper limit of block coords in MB
+    int xbr,ybr;
+
+    // Ditto, for subMBs    
+    int xsubMBtl,ysubMBtl;
     int xsubMBbr,ysubMBbr;
 
     TwoDArray<ValueType>& dcarray = mv_data.DC( csort );
@@ -143,14 +147,14 @@ void MotionEstimator::SetChromaDC( const PicArray& pic_data , MvData& mv_data , 
             {
                  for (int i = 0 ; i<(1<<level) ;++i)
                  {
-                     xunit = (xmb<<level) + i;
-                     yunit = (ymb<<level) + j;
+                     xunit = ( xmb<<level ) + i;
+                     yunit = ( ymb<<level ) + j;
 
-                     xstart = xunit<<(2-level);
-                     ystart = yunit<<(2-level);
+                     xstart = xunit<<( 2-level );
+                     ystart = yunit<<( 2-level );
 
-                     xend = xstart + ( 1<<(2-level) );
-                     yend = ystart + ( 1<<(2-level) );
+                     xend = xstart + ( 1<<( 2-level ) );
+                     yend = ystart + ( 1<<( 2-level ) );
 
                      if ( mv_data.Mode()[ystart][xstart] == INTRA )
                          // Get the DC value for the unit
@@ -194,7 +198,8 @@ bool MotionEstimator::IsACut( const MEData& me_data ) const
     double intra_percent = 100.0*static_cast<double>( count_intra ) / 
                            static_cast<double>( modes.LengthX() * modes.LengthY() );
 
-    std::cerr<<std::endl<<intra_percent<<"% of blocks are intra   ";
+    if ( m_encparams.Verbose() )
+        std::cerr<<std::endl<<intra_percent<<"% of blocks are intra   ";
 
     // Check the size of SAD errors across reference 1    
     const TwoDArray<MvCostData>& pcosts = me_data.PredCosts( 1 );
@@ -226,8 +231,6 @@ bool MotionEstimator::IsACut( const MEData& me_data ) const
 
     if ( block_count != 0)
         sad_average /= static_cast<long double>( block_count );
-
-    std::cerr<<", Mean SAD="<<sad_average;
    
     if ( (sad_average > 30.0) || (intra_percent > 70.0) )
         return true;

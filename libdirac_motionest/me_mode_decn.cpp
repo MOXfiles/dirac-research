@@ -56,16 +56,20 @@ ModeDecider::ModeDecider( const EncoderParams& encp):
     // all SAD costs are normalised to the area corresponding to non-overlapping
     // 16 blocks of size XBLEN*YBLEN.    
 
-    m_level_factor[0] = float( 16 * m_encparams.LumaBParams(2).Xblen() * m_encparams.LumaBParams(2).Yblen() )/
-        float( m_encparams.LumaBParams(0).Xblen() * m_encparams.LumaBParams(0).Yblen() );
+//     m_level_factor[0] = float( 16 * m_encparams.LumaBParams(2).Xblen() * m_encparams.LumaBParams(2).Yblen() )/
+//         float( m_encparams.LumaBParams(0).Xblen() * m_encparams.LumaBParams(0).Yblen() );
 
-    m_level_factor[1] = float( 4 * m_encparams.LumaBParams(2).Xblen() * m_encparams.LumaBParams(2).Yblen() )/
-        float( m_encparams.LumaBParams(1).Xblen() * m_encparams.LumaBParams(1).Yblen() );
+//     m_level_factor[1] = float( 4 * m_encparams.LumaBParams(2).Xblen() * m_encparams.LumaBParams(2).Yblen() )/
+//         float( m_encparams.LumaBParams(1).Xblen() * m_encparams.LumaBParams(1).Yblen() );
 
-    m_level_factor[2] = 1.0f;
+//     m_level_factor[2] = 1.0f;
+
+    m_level_factor[0] = 1.0;
+    m_level_factor[1] = 1.0;
+    m_level_factor[2] = 1.0;
 
     for (int i=0 ; i<=2 ; ++i)
-        m_mode_factor[i] = 80.0*std::pow(0.8 , 2-i);
+        m_mode_factor[i] = 160.0*std::pow(0.8 , 2-i);
 }
 
 
@@ -560,7 +564,7 @@ float ModeDecider::ModeCost(const int xindex , const int yindex ,
     if ( i>=0)
     {
         diff = static_cast<float>( m_me_data_set[2]->Mode()[j][i] - predmode );
-        var = std::abs(diff);
+        var = std::abs( diff );
     }
 
     i = xindex-1;
@@ -568,7 +572,7 @@ float ModeDecider::ModeCost(const int xindex , const int yindex ,
     if ( i>=0 && j>=0)
     {
         diff = static_cast<float>( m_me_data_set[2]->Mode()[j][i] - predmode);
-        var += std::abs(diff);
+        var += std::abs( diff );
     }
 
     i = xindex;
@@ -576,7 +580,7 @@ float ModeDecider::ModeCost(const int xindex , const int yindex ,
     if ( j>=0 )
     {
         diff = static_cast<float>( m_me_data_set[2]->Mode()[j][i] - predmode );
-        var += std::abs(diff);
+        var += std::abs( diff );
     }
 
     return var*m_lambda;

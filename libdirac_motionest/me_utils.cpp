@@ -206,7 +206,7 @@ void IntraBlockDiff::Diff( BlockDiffParams& dparams , const ValueType dc_pred , 
     dparams.SetDC( ValueType(dc/(dparams.Xl()*dparams.Yl())) );    
     dparams.SetDC( (dparams.DC()+2)>>2 );    //just give dc to 8-bit accuracy
 
-    float intra_cost = static_cast<float>( std::abs( dparams.DC() - dc_pred ) ) * loc_lambda * 2.0;
+    float intra_cost = static_cast<float>( std::abs( dparams.DC() - dc_pred ) ) * loc_lambda * 8.0;
 
     for (int j=dparams.Yp(); j!=dparams.Yp()+dparams.Yl() ; ++j)
         for( int i=dparams.Xp() ; i!=dparams.Xp()+dparams.Xl() ;++i )
