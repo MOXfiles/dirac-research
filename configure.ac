@@ -9,7 +9,7 @@ dnl -----------------------------------------------
 dnl Package name and version number (user defined)
 dnl -----------------------------------------------
 
-GENERIC_LIBRARY_NAME=Dirac
+GENERIC_LIBRARY_NAME=dirac
 
 #release versioning
 GENERIC_MAJOR_VERSION=0
@@ -84,6 +84,14 @@ AC_CHECK_PROG(HAVE_LATEX, latex, true, false)
 		AC_MSG_WARN([*** latex not found, algorithm documentation will not be built])
 	fi
 AM_CONDITIONAL(HAVE_LATEX, $HAVE_LATEX)
+
+dnl -----------------------------------------------
+dnl Checks for optional files in doc directory.
+dnl algorithm documentation is not distributed in
+dnl the release. It is available only from CVS
+dnl -----------------------------------------------
+AC_CHECK_FILE(doc/algorithm/algorithm.htm,[HAVE_ALGO="true"], [HAVE_ALGO="false"])
+AM_CONDITIONAL(HAVE_ALGO, $HAVE_ALGO)
 
 
 dnl -----------------------------------------------
