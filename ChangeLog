@@ -1,3 +1,159 @@
+2004-08-19 13:23  asuraparaju
+
+	* decoder/Makefile.am, encoder/Makefile.am,
+	  libdirac_common/Makefile.am, libdirac_decoder/Makefile.am,
+	  libdirac_encoder/Makefile.am, libdirac_motionest/Makefile.am,
+	  picheader/Makefile.am, tests/Makefile.am, unit_tests/Makefile.am,
+	  util/conversion/Makefile.am, util/conversion/common/Makefile.am,
+	  util/instrumentation/Makefile.am,
+	  util/instrumentation/libdirac_instrument/Makefile.am: Fixed build
+	  errors when compiling out of source tree. Out-of-source-tree
+	  builds are now successful.
+
+2004-08-19 13:21  asuraparaju
+
+	* NEWS: Included Alpha 0.4.0 release notes
+
+2004-08-19 13:20  asuraparaju
+
+	* decoder/decmain.cpp: Handling STATE_INVALID returned by parser.
+
+2004-08-19 13:20  asuraparaju
+
+	* encoder/encmain.cpp: Fixed bug with setting block sizes.
+
+2004-08-19 13:19  asuraparaju
+
+	* picheader/headmain.cpp:  Replace tabs with spaces. Fixed a
+	  character array overrun error.
+
+2004-08-19 13:17  asuraparaju
+
+	* util/instrumentation/README: Updated this document
+
+2004-08-19 13:16  asuraparaju
+
+	* win/Makefile: Updated Makefile to build correctly
+
+2004-08-19 13:14  asuraparaju
+
+	* TODO: Update todo list
+
+2004-08-19 13:13  asuraparaju
+
+	* README.release: Include tagging of files with release id in the
+	  checklist
+
+2004-08-19 13:13  asuraparaju
+
+	* README: Updated for 0.4.0 release
+
+2004-08-19 13:12  asuraparaju
+
+	* AUTHORS: Updated list of contributors
+
+2004-08-19 13:11  asuraparaju
+
+	* dirac.pc.in: Setting include and libs vars to correct values so
+	  that pkg-config shows the correct dependencies for Dirac.
+
+2004-08-19 13:10  asuraparaju
+
+	* configure.ac: Included additional condtional vars to check if
+	  documentation can be built successfully. Included
+	  -Wno-long-double flag on platforms where it is supported to
+	  prevent compile time warnings.
+
+2004-08-19 13:08  asuraparaju
+
+	* doc/: Makefile.am, api/Makefile.am, api/dirac_api.doxygen,
+	  api/dirac_api_foot.html, programmers/Makefile.am: Included
+	  additional condtional vars to check if documentation can be built
+	  successfully. Included dirac_bitstream.txt in distribution.
+
+2004-08-19 13:06  asuraparaju
+
+	* doc/algorithm/: algorithm.htm, rdo.htm, toc.htm,
+	  transform_coding.htm: Added links to constant quality encoding
+	  pages.
+
+2004-08-19 13:04  asuraparaju
+
+	* doc/algorithm/const_qual.htm: Added documentation on constant
+	  quality encoding.
+
+2004-08-19 13:03  asuraparaju
+
+	* doc/faq.htm: Added details on patent position. Fixed broken
+	  links. Minor text changes
+
+2004-08-19 13:02  asuraparaju
+
+	* doc/dirac_bitstream.txt: Initial bitstream syntax document for
+	  Dirac bitstream v0.1
+
+2004-08-19 12:55  asuraparaju
+
+	* util/instrumentation/: instrmain.cpp, process_sequence.cpp,
+	  process_sequence.h, libdirac_instrument/draw_overlay.cpp,
+	  libdirac_instrument/draw_overlay.h,
+	  libdirac_instrument/motion_arrows.cpp,
+	  libdirac_instrument/motion_arrows.h,
+	  libdirac_instrument/motion_colour.cpp,
+	  libdirac_instrument/motion_colour_arrows.cpp,
+	  libdirac_instrument/overlay.cpp,
+	  libdirac_instrument/pred_mode.cpp, libdirac_instrument/sad.cpp,
+	  libdirac_instrument/split_mode.cpp: Output all MEData members and
+	  cope with monochrome sequences Fixed block dimensions bug.  Fixed
+	  padded pictures bug.
+
+2004-08-19 12:50  asuraparaju
+
+	* libdirac_common/bit_manager.h, libdirac_common/common.h,
+	  libdirac_decoder/dirac_cppparser.cpp,
+	  libdirac_decoder/dirac_cppparser.h,
+	  libdirac_decoder/dirac_parser.cpp,
+	  libdirac_decoder/dirac_parser.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/seq_decompress.cpp: Bitstream v0.1 related
+	  changes - Handling new start codes and bitstream version
+
+2004-08-19 12:46  asuraparaju
+
+	* libdirac_motionest/: me_mode_decn.cpp, me_utils.cpp,
+	  motion_estimate.cpp, pixel_match.cpp: Tiffled motion estimation
+	  parameters to improve performance.
+
+2004-08-19 12:45  asuraparaju
+
+	* libdirac_common/arith_codec.h: Minor mods to fix compile time
+	  errors
+
+2004-08-19 12:45  asuraparaju
+
+	* libdirac_common/dirac_assertions.h: New debug test macros TEST,
+	  TESTM, REPORT and REPORTM
+
+2004-08-19 12:44  asuraparaju
+
+	* libdirac_common/: motion.cpp, motion.h: Instrumentation update:
+	  outputs all MEData members and copes with monochrome sequences
+
+2004-08-19 12:43  asuraparaju
+
+	* libdirac_common/: mot_comp.cpp, pic_io.cpp, wavelet_utils.cpp:
+	  Cleansed code
+
+2004-08-19 12:40  asuraparaju
+
+	* libdirac_encoder/: frame_compress.cpp, quality_monitor.cpp,
+	  quality_monitor.h, seq_compress.cpp: Handling new start codes and
+	  bitstream version.  Fixed bug in quality monitor code where
+	  padding area was taken into account in calculating PSNR. Removed
+	  unused code for calculating weighted PSNR.  Removed commented
+	  output from quality monitor. Instrumentation update: outputs all
+	  MEData members and copes with monochrome sequences.
+
 2004-08-11 16:23  asuraparaju
 
 	* tests/Makefile.am: Deleting data files created by encode and
