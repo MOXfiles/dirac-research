@@ -134,68 +134,58 @@ namespace dirac
         //! A class for encapsulating interval fractions for use in arithmetic coding.
         /*!
              A class for encapsulating a subinterval of the unit interval [0,1) 
-             (0<=x<1) as a start value, a stop value (numerators) and a weight 
-             value (the denominator). The interval is the to be interpreted as
-             [m_start/m_weight,m_stop/m_weight).
+             (0<=x<1) as a start value and a stop value (numerators) considered
+             as numbers between 0 and 1024 inclusive.
          */
-        class Triple
+        class ProbInterval
         {
         public:
             //! Constructor.
-            Triple()
+            ProbInterval()
               : m_start(0),
-                m_stop(0),
-                m_weight(0) {}
+                m_stop(1024)
+              {}
 
             //! Value constructor
-            Triple(code_t start, code_t stop, code_t weight)
+            ProbInterval( calc_t start , calc_t stop)
             {
                 m_start  = start;
                 m_stop   = stop;
-                m_weight = weight;
             }
 
             //! Copy constructor
-            Triple(const Triple& rhs)
+            ProbInterval(const ProbInterval& rhs)
               : m_start(rhs.m_start),
-                m_stop(rhs.m_stop),
-                m_weight(rhs.m_weight) { }
+                m_stop(rhs.m_stop){ }
 
             //! Assignment 
-            Triple & operator = (const Triple& rhs)
+            ProbInterval & operator = (const ProbInterval& rhs)
             {
                 m_start  = rhs.m_start;
                 m_stop   = rhs.m_stop;
-                m_weight = rhs.m_weight;
                 return *this;
             }
 
             //! Get the start value    
-            code_t Start() const { return m_start; }
+            calc_t Start() const { return m_start; }
 
             //! Get the stop value    
-            code_t Stop() const  { return m_stop; }
-
-            //! Get the weight value    
-            code_t Weight() const { return m_weight; }
+            calc_t Stop() const  { return m_stop; }
 
             //! Sets the values    
-            void SetValues(const code_t start , const code_t stop , const code_t wt)
+            void SetValues(const calc_t start , const calc_t stop)
             { 
                 m_start = start;
                 m_stop = stop; 
-                m_weight = wt;
             }
 
         private:
             //! The m_start value. 
-            code_t m_start;    
+            calc_t m_start;    
 
             //! The m_stop value.Should be >=m_start. 
-            code_t m_stop;
+            calc_t m_stop;
 
-            //! The denominator for interpreting m_start, m_stop. Should be >= m_start,m_stop. 
-            code_t m_weight;    
         };
 
         //! A class for binary contexts.
@@ -213,7 +203,7 @@ namespace dirac
              */    
             Context()
             {
-                SetCounts(1,1);
+                SetCounts( 1 , 1 );
             }
 
             //! Constructor.
@@ -222,24 +212,26 @@ namespace dirac
              */    
             Context(int cnt0,int cnt1)
             {
-                SetCounts(cnt0,cnt1);
+                SetCounts( cnt0 , cnt1 );
             }
 
             //! Copy constructor
             Context(const Context & cpy)
-              : count0( cpy.count0 ),
-                count1( cpy.count1 ),
-                trip0( cpy.trip0 ),
-                trip1( cpy.trip1 )
+              : m_num0( cpy.m_num0 ),
+                m_num1( cpy.m_num1 ),
+                m_weight( cpy.m_weight ),
+                m_r0( cpy.m_r0 ),
+                m_r1( cpy.m_r1 )
             {}
 
             //! Assignment=
             Context & operator=(const Context& rhs)
             {
-                count0 = rhs.count0;
-                count1 = rhs.count1;
-                trip0  = rhs.trip0;
-                trip1  = rhs.trip1;
+                m_num0 = rhs.m_num0;
+                m_num1 = rhs.m_num1;
+                m_weight = rhs.m_weight;
+                m_r0  = rhs.m_r0;
+                m_r1  = rhs.m_r1;
                 return *this;
             }
 
@@ -250,104 +242,96 @@ namespace dirac
             /*!
                 Sets the counts, and then the triples to reflect the counts.
              */    
-            void SetCounts(int cnt0, int cnt1)
+            void SetCounts(const int cnt0, const int cnt1)
             {
-                count0 = cnt0;
-                count1 = cnt1;
-                SetTriples();
+                m_num0 = cnt0;
+                m_num1 = cnt1;
+                m_weight = cnt0 + cnt1;
+                SetRanges();
             }
 
             //! Returns the count of zeroes.
-            code_t GetCount0() const { return count0; }    
+            calc_t GetCount0() const { return m_num0; }    
 
             //! Returns the count of ones.
-            code_t GetCount1() const { return count1; }    
+            calc_t GetCount1() const { return m_num1; }    
 
-            //! Increment the count.
-            /*!
-                Increment the count of Symbol by amnt.
-                \param    symbol    the symbol whose count is to be incremented (false=0, true=1)
-                \param    amnt    the amount to increment by
-             */    
-            void IncrCount( const bool symbol , const int amnt )
-            {
-                if ( symbol ) 
-                    count1 += amnt; 
-                else 
-                    count0 += amnt;
-
-                SetTriples();
-            }
+            //! Returns the count of all symbols.
+            calc_t Weight() const { return m_weight; }    
 
             //! Increment the count by 1
             /*!
                 Increment the count of symbol by 1.
                 \param    symbol    the symbol whose count is to be incremented (false=0, true=1)
              */    
-            void IncrCount( const bool symbol )
+            inline void IncrCount( const bool symbol )
             {
                 if ( symbol ) 
-                    count1++; 
+                    m_num1++; 
                 else 
-                    count0++;
+                    m_num0++;
 
-                SetTriples();
+                m_weight++;
+
+                if ( m_weight & 1 )
+                    SetRanges();
             }
 
              //! Divide the counts by 2, making sure neither ends up 0.
-            void HalveCounts()
+            inline void HalveCounts()
             {
-                count0 >>= 1;
-                count0++;
-                count1 >>= 1;
-                count1++;
+                m_num0 >>= 1;
+                m_num0++;
+                m_num1 >>= 1;
+                m_num1++;
 
-                SetTriples();
+                m_weight = m_num0 + m_num1;
+
+                SetRanges();
             }
 
-            //! Return the weight, equal to the count of 0 plus the count of 1.    
-            code_t Weight() const { return trip0.Weight(); }
-
             //! Return the triple associated with Symbol.    
-            const Triple & GetTriple( const bool symbol ) const { return (symbol ? trip1 : trip0); }
+            const ProbInterval & GetProbInterval( const bool symbol ) const { return (symbol ? m_r1 : m_r0); }
 
             //! Given a number, return the corresponding symbol and triple.
             /*!
-                Given a number, which should be in the range [0,m_weight)
-                return the corresponding symbol.  The range [0,m_weight) is
-                partitioned into portions [0,count0), [count0,m_weight)
-                corresponding to 0 and 1.
+                Given a number, return the corresponding symbol and triple.
             */
-            bool GetSymbol(const calc_t num, const calc_t factor , Triple & trip_val) const
+            bool GetSymbol(const calc_t num, const calc_t factor , ProbInterval & prob_val) const
             {
-                if (num < trip0.Stop()*factor)
+                if (num < m_r0.Stop()*factor)
                 {
-                    trip_val = trip0;
+                    prob_val = m_r0;
                     return false; //ie zero
                 }
                 else
                 {
-                    trip_val = trip1;
+                    prob_val = m_r1;
                     return true; //ie 1
                 }
             } 
 
+            inline void SetRanges()
+            {
+                // Updates the probability ranges
+                
+                const calc_t end0( ( m_num0 * 1024 ) / m_weight );
+
+                m_r0.SetValues( 0 , end0 );
+                m_r1.SetValues( end0 , 1024 );    
+
+            }
 
         private:
-            code_t count0;
-            code_t count1;
+            calc_t m_num0;
+            calc_t m_num1;
 
-            Triple trip0;
-            Triple trip1;
+            calc_t m_weight;
+            
+            ProbInterval m_r0;
+            ProbInterval m_r1;
+          
 
-            void SetTriples()
-            {
-                // updates triples given counts
-                code_t wt( count0 + count1 );
-
-                trip0.SetValues( 0 , count0 , wt );
-                trip1.SetValues( count0 , wt , wt );    
-            }
         };
 
     protected:
@@ -359,10 +343,10 @@ namespace dirac
         virtual void InitContexts()=0;                                        
 
         //! The method by which the counts are updated.
-        virtual void Update( const bool symbol , const int context_num )=0;    
+        void Update( const bool symbol , const int context_num );    
 
         //! The method by which _all_ the counts are resized.
-        virtual void ResetAll()=0;                                            
+        virtual void ResetAll()=0;
 
         //virtual encode-only functions
         /////////////////////////////// 
@@ -377,7 +361,7 @@ namespace dirac
         void InitEncoder();
 
         //! encodes a triple and writes to output
-        void EncodeTriple(const Triple & c , const calc_t range );
+        void EncodeProbInterval(const ProbInterval & prob_interval , const calc_t range );
 
         //! encodes a symbol and writes to output
         void EncodeSymbol(const bool symbol, const int context_num);    
@@ -396,7 +380,7 @@ namespace dirac
         void InitDecoder();                    
 
         //! Remove the symbol from the coded input stream
-        void RemFromStream(const Triple & trip , const calc_t range);
+        void RemFromStream(const ProbInterval & prob_interval , const calc_t range);
 
         //! Decodes a symbol given a context number
         bool DecodeSymbol( const int context_num );
@@ -453,6 +437,9 @@ namespace dirac
 
         //! Read in a bit of data
         inline bool InputBit();
+
+
+
 
     protected:
 
@@ -525,13 +512,13 @@ namespace dirac
     }
 
     template<class T>
-    void ArithCodec<T>::EncodeTriple( const Triple &trip , const calc_t range)
+    void ArithCodec<T>::EncodeProbInterval( const ProbInterval& prob_interval , const calc_t range)
     {
         //formulae given we know we're binary coding    
-        if ( !trip.Start() ) // trip.Start()=0, so symbol is 0, so m_low_code unchanged 
-            m_high_code = m_low_code + static_cast<code_t>(( range * trip.Stop() ) / trip.Weight() - 1 );
+        if ( !prob_interval.Start() ) // prob_interval.Start()=0, so symbol is 0, so m_low_code unchanged 
+            m_high_code = m_low_code + static_cast<code_t>( ( ( range * prob_interval.Stop() )>>10 ) - 1 );
         else //symbol is 1, so m_high_code unchanged
-            m_low_code += static_cast<code_t>(( range * trip.Start() ) / trip.Weight() );                
+            m_low_code += static_cast<code_t>(( range * prob_interval.Start() ) >>10 );                
 
         do
         {
@@ -561,7 +548,7 @@ namespace dirac
     inline void ArithCodec<T>::EncodeSymbol(const bool symbol, const int context_num)
     {
         const calc_t range( static_cast<calc_t>( m_high_code - m_low_code ) + 1 );
-        EncodeTriple( m_context_list[context_num].GetTriple(symbol) , range );
+        EncodeProbInterval( m_context_list[context_num].GetProbInterval(symbol) , range );
         Update( symbol , context_num );
     }
 
@@ -603,13 +590,13 @@ namespace dirac
     }
 
     template<class T>
-    void ArithCodec<T>::RemFromStream( const Triple &trip , const calc_t range )
+    void ArithCodec<T>::RemFromStream( const ProbInterval& prob_interval , const calc_t range )
     {
-        if( !trip.Start() )//trip.Start()=0, so symbol is 0, so m_low_code unchanged 
-            m_high_code = m_low_code + static_cast<code_t>(( range * trip.Stop() ) / trip.Weight() - 1 );
+        if( !prob_interval.Start() )//prob_interval.Start()=0, so symbol is 0, so m_low_code unchanged 
+            m_high_code = m_low_code + static_cast<code_t>( ( ( range * prob_interval.Stop() )>>10 ) - 1 );
 
         else//symbol is 1, so m_high_code unchanged
-            m_low_code += static_cast<code_t>(( range * trip.Start() ) / trip.Weight() );        
+            m_low_code += static_cast<code_t>(( range * prob_interval.Start() )>>10 );        
 
         do
         {        
@@ -639,10 +626,10 @@ namespace dirac
     template<class T>
     inline bool ArithCodec<T>::DecodeSymbol( const int context_num )
     {
-        Triple limits;
+        ProbInterval limits;
 
         const Context& c( m_context_list[context_num] );
-        const calc_t count( ( static_cast<calc_t>( m_code - m_low_code ) + 1 ) * c.Weight() - 1 );
+        const calc_t count( ( ( static_cast<calc_t>( m_code - m_low_code ) + 1 )<<10 ) - 1 );
 
         const calc_t range( static_cast<calc_t>( m_high_code - m_low_code ) + 1 );
 
@@ -682,6 +669,18 @@ namespace dirac
 
         return bool( ( (*m_data_ptr) >> m_input_bits_left ) & 1 );
     }
+
+    template<class T>
+    inline void ArithCodec<T>::Update( const bool symbol , const int context_num )
+    {
+        Context& ctx = m_context_list[context_num];
+
+        ctx.IncrCount( symbol );
+    
+        if ( ctx.Weight() >= 1024 )
+            ctx.HalveCounts();
+    }
+
 
 }// end dirac namespace
 
