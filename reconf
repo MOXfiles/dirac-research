@@ -1,0 +1,27 @@
+#!/bin/sh
+#
+#   A shell script to recreate the configuration files from
+#   configure.ac and several Makefile.am files.
+#
+rm -f config.cache
+rm -f acconfig.h
+rm -f Makefile
+rm -f libdirac_common/*.lo
+rm -f libdirac_common/Makefile
+rm -f libdirac_common/Makefile.in
+rm -f libdirac_encoder/*.lo
+rm -f libdirac_encoder/Makefile
+rm -f libdirac_encoder/Makefile.in
+rm -f libdirac_decoder/*.lo
+rm -f libdirac_decoder/Makefile
+rm -f libdirac_decoder/Makefile.in
+rm -f libdirac_motionest/*.lo
+rm -f libdirac_motionest/Makefile
+rm -f libdirac_motionest/Makefile.in
+rm -f test/*.lo
+rm -f test/Makefile
+rm -f test/Makefile.in
+aclocal
+autoconf
+automake -a
+exit

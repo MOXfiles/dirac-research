@@ -1,3 +1,4 @@
+AUTOMAKE_OPTIONS = no-dependencies
 INCLUDES = -I$(top_srcdir)
 
 h_sources = arith_codec.h arrays.h band_codec.h bit_manager.h common.h \
