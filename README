@@ -1,6 +1,9 @@
 README for the Dirac video codec
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+by Thomas Davies, BBC R&D (dirac@rd.bbc.co.uk)
+
+
 1. Executive Summary
 ~~~~~~~~~~~~~~~~~~~~
 
@@ -98,7 +101,7 @@ Example.
   interlaced, and has a frame-rate of 15Hz.
 
   Solution
-    make_header -xl 352 -yl 288 -zl 260 -cformat format420 -framerate 15 -interlace false output
+    make_header -xl 352 -yl 288 -zl 260 -cformat format420 -framerate 15 -interlace output
 
   This writes test.hdr with the corresponding parameters.
 
@@ -126,8 +129,7 @@ use the transcode utility (see http://zebra.fh-weingarten.de/~transcode/).
     transcode -i source.dv -x auto,null --dv_yuy2_mode -k -V -y raw,null -o test.avi
     tcextract -i test.avi -x rgb > test.yuv
 
-    make_header -xl 720 -yl 576 -zl 50 -cformat format420 -framerate 25 -interlace true test
-
+    make_header -xl 720 -yl 576 -zl 50 -cformat format420 -framerate 25 -interlace test
 
 4.3 Encoding
 
@@ -199,6 +201,3 @@ output to a file:
   dirac_decoder -verbose test_enc test_dec
 
 will decode into test_dec.{yuv,hdr} with running commentary.
-
-Thomas Davies
-(dirac@rd.bbc.co.uk)
