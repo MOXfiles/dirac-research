@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-24 12:38:55  tjdwave
+* Revision 1.5  2004-06-18 15:58:36  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.4  2004/05/24 12:38:55  tjdwave
 * Replaced spagetti code for linear interpolation in motion compensation
 * and motion estimation routines with simple loops. Code is much clearer,
 * although possibly slightly slower.
@@ -85,19 +94,20 @@ class Frame;
 	Motion compensator class, for doing motion compensation with two references and overlapped blocks,
 	using raised-cosine roll-off.
  */
-class MotionCompensator{
+class MotionCompensator
+{
 
 public:
-	    //! Constructor.
+	//! Constructor.
     /*!
         Constructor initialises using codec parameters.
      */
-	MotionCompensator(const CodecParams &cp);
+	MotionCompensator( const CodecParams &cp );
 	//! Destructor
 	~MotionCompensator();
 
 	//! Toggles the MC mode
-	void SetCompensationMode(AddOrSub a_or_s) {add_or_sub=a_or_s;}
+	void SetCompensationMode( AddOrSub a_or_s ) { add_or_sub = a_or_s; }
 
 	//! Compensate a frame
     /*!
@@ -106,36 +116,44 @@ public:
 		/param	my_buffer	the FrameBuffer object containing the frame and the reference frames
 `		/param	mv_data	the motion vector data
      */
-	void CompensateFrame(FrameBuffer& my_buffer,int fnum,const MvData& mv_data);	//motion compensate a given frame
+	void CompensateFrame( FrameBuffer& my_buffer , int fnum , const MvData& mv_data );	//motion compensate a given frame
 
 private:
 	//private, body-less copy constructor: this class should not be copied
-	MotionCompensator(const MotionCompensator& cpy);
+	MotionCompensator( const MotionCompensator& cpy );
 	//private, body-less assignment=: this class should not be assigned
-	MotionCompensator& operator=(const MotionCompensator& rhs);
+	MotionCompensator& operator=( const MotionCompensator& rhs );
 
 	//functions
 
-	//MC a component
-	void CompensateComponent(Frame& picframe, const Frame &ref1frame, const Frame& ref2frame, const MvData& mv_data,const CompSort cs);
-	//Do an individual block
-	void CompensateBlock(PicArray &pic_data, const PicArray &refup_data, const MVector &Vec, const ImageCoords Pos, CalcValueType** Weights);
-	void DCBlock(PicArray &pic_data,const ValueType dc, const ImageCoords Pos, CalcValueType** Weights);	
-	void ReConfig();		//Recalculates the weight matrix and stores other key block related parameters.
+	//! Motion-compensate a component
+	void CompensateComponent( Frame& picframe , const Frame& ref1frame , const Frame& ref2frame ,
+		const MvData& mv_data , const CompSort cs);
+
+	//! Motion-compensate an individual block
+	void CompensateBlock( PicArray& pic_data , const PicArray& refup_data , const MVector& Vec ,
+		const ImageCoords Pos , const TwoDArray<CalcValueType>& Weights , const ArithObj& arith );
+
+	//! DC-compensate an individual block
+	void DCBlock( PicArray &pic_data , const ValueType dc , const ImageCoords Pos , 
+		const TwoDArray<CalcValueType>& Weights ,const ArithObj& arith);
+
+	//! Recalculate the weight matrix and store other key block related parameters.
+	void ReConfig();
 
 	//variables	
 	CodecParams cparams;
 	bool luma_or_chroma;	//true if we're doing luma, false if we're coding chroma
-	ArithObj* arith;		//Pointer to generic arithmetic object
-	ArithObj* add;			//Particular arith obj
-	ArithObj* subtract;		//ditto
-	ArithObj* subtracthalf;	//ditto
-	ArithObj* addhalf;		//dittoCalcValueType*** BlockWeights;			//My weighting block to allow overlapping blocks
+
+	const ArithAddObj add;					//Particular arith obj
+	const ArithSubtractObj subtract;		//ditto
+	const ArithHalfSubtractObj subtracthalf;//ditto
+	const ArithHalfAddObj addhalf;			//ditto
 	AddOrSub add_or_sub;					//Motion compensated Addition/Subtraction flag
 
 	//Image and block information
 	OLBParams bparams;	//either luma or chroma block parameters
-	CalcValueType*** BlockWeights;
+	TwoDArray<CalcValueType>* BlockWeights;
 	int	xBlockSize,yBlockSize;
 	int ImageWidth;
 	int ImageHeight;

@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-05-12 08:35:34  tjdwave
+* Revision 1.3  2004-06-18 15:58:36  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.2  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -84,69 +93,62 @@ U_data(0),
 V_data(0),
 upY_data(0),
 upU_data(0),
-upV_data(0){
+upV_data(0)
+{
 	ChromaFormat cformat=fparams.cformat;
 
-	Init();
-	*Y_data=*(cpy.Y_data);
-	if (cpy.upY_data!=0){
-		upY_data=new PicArray(2*Y_data->length(0),2*Y_data->length(1));
-		*upY_data=*(cpy.upY_data);
+	//delete data to be overwritten
+	ClearData();
+
+	//now copy the data accross
+	Y_data=new PicArray( *(cpy.Y_data) );
+	if (cpy.upY_data != 0){
+		upY_data = new PicArray( *(cpy.upY_data) );
 	}
-	if (cformat!=Yonly){
-		*U_data=*(cpy.U_data);
-		*V_data=*(cpy.V_data);
-		if (cpy.U_data!=0){
-			upU_data=new PicArray(2*U_data->length(0),2*U_data->length(1));
-			*upU_data=*(cpy.upU_data);
+	if (cformat != Yonly){
+		U_data = new PicArray( *(cpy.U_data) );
+		V_data = new PicArray( *(cpy.V_data) );
+		if ( cpy.upU_data != 0 )
+		{
+			upU_data = new PicArray( *(cpy.upU_data) );
 		}
-		if (cpy.V_data!=0){
-			upV_data=new PicArray(2*V_data->length(0),2*V_data->length(1));
-			*upV_data=*(cpy.upV_data);
+		if ( cpy.upV_data != 0 )
+		{
+			upV_data = new PicArray( *(cpy.upV_data) );
 		}
 	}
 }
 
-Frame::~Frame(){
+
+Frame::~Frame()
+{
 	ClearData();	
 }
 
-Frame& Frame::operator=(const Frame& rhs){
+Frame& Frame::operator=(const Frame& rhs)
+{
 	if (&rhs!=this){
 		fparams=rhs.fparams;
 		ChromaFormat cformat=fparams.cformat;
 
-		if (Y_data!=0)
-			delete Y_data;
-		Y_data=new PicArray((rhs.Y_data)->length(0),(rhs.Y_data)->length(1));
-		*Y_data=*(rhs.Y_data);
+		//delete current data
+		ClearData();
 
-		if (upY_data!=0)
-			delete upY_data;
-		upY_data=new PicArray((rhs.upY_data)->length(0),(rhs.upY_data)->length(1));
-		*upY_data=*(rhs.upY_data);
+		//copy the data across		
+		Y_data = new PicArray( *(rhs.Y_data) );
+
+		if ( rhs.upY_data != 0)
+			upY_data = new PicArray( *(rhs.upY_data) );
 
 		if (cformat!=Yonly){
 
-			if (U_data!=0)
-				delete U_data;
-			U_data=new PicArray((rhs.U_data)->length(0),(rhs.U_data)->length(1));
-			*U_data=*(rhs.U_data);
+			U_data = new PicArray( *(rhs.U_data) );			
+			if (rhs.upU_data!=0)
+				upU_data = new PicArray(*(rhs.upU_data) );
 
-			if (upU_data!=0)
-				delete upU_data;			
-			upU_data=new PicArray((rhs.upU_data)->length(0),(rhs.upU_data)->length(1));
-			*upU_data=*(rhs.upU_data);
-
-			if (V_data!=0)
-				delete V_data;
-			V_data=new PicArray((rhs.V_data)->length(0),(rhs.V_data)->length(1));
-			*V_data=*(rhs.V_data);
-
-			if (upV_data!=0)
-				delete upV_data;			
-			upV_data=new PicArray((rhs.upV_data)->length(0),(rhs.upV_data)->length(1));
-			*upV_data=*(rhs.upV_data);
+			V_data = new PicArray( *(rhs.V_data) );			
+			if (rhs.upV_data!=0)
+				upV_data = new PicArray( *(rhs.upV_data) );
 		}
 	}
 	return *this;

@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-25 15:30:19  tjdwave
+* Revision 1.5  2004-06-18 15:58:36  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.4  2004/05/25 15:30:19  tjdwave
 * Removed scaling from the wavelet transform. Scaling is now incorporated into
 * perceptual weighting; the wavelet transform is now exactly invertible.
 *
@@ -384,10 +393,12 @@ float WaveletTransform::Threshold(float xf,float yf,CompSort cs){
 	return pow((double)10.0,(double)(log10(a)+k*(log10(freq)-log10((g0*f0))*(log10(freq)-log10(g0*f0)))));
 }
 
-void WaveletTransform::SetBandWeights (const EncoderParams& encparams,const FrameParams& fparams,const CompSort csort){
+void WaveletTransform::SetBandWeights (float cpd ,FrameSort fsort , ChromaFormat cformat , CompSort csort)
+{
+	//NB - only designed for progressive to date	
+
 	int xlen,ylen,xl,yl,xp,yp,depth;
 	float xfreq,yfreq;
-	const FrameSort& fsort=fparams.fsort;
 	float temp;
 
 	//factor used to compensate for the absence of scaling in the wavelet transform	
@@ -396,67 +407,78 @@ void WaveletTransform::SetBandWeights (const EncoderParams& encparams,const Fram
 	xlen=2*band_list(1).Xl();
 	ylen=2*band_list(1).Yl();
 
-	if (encparams.CPD!=0.0){
-		for(int I=1;I<=band_list.Length();I++){
+	if (cpd != 0.0)
+	{
+		for( int I = 1; I<=band_list.Length() ; I++ )
+		{
 			xp=band_list(I).Xp();
 			yp=band_list(I).Yp();
 			xl=band_list(I).Xl();
 			yl=band_list(I).Yl();
 
-			if(fsort==I_frame){ 
-				xfreq=encparams.CPD*(float(xp)+float(xl)/2.0)/float(xlen);
-				yfreq=encparams.CPD*(float(yp)+float(yl)/2.0)/float(ylen);
+			if( fsort == I_frame )
+			{ 
+				xfreq = cpd * ( float(xp) + (float(xl)/2.0) ) / float(xlen);
+				yfreq = cpd * ( float(yp) + (float(yl)/2.0) ) / float(ylen);
 			}
-			else{
-				xfreq=(encparams.CPD*(float(xp)+float(xl)/2.0)/float(xlen))/4.0;
-				yfreq=(encparams.CPD*(float(yp)+float(yl)/2.0)/float(ylen))/4.0;
-			}
-			if(encparams.interlace){ 
-				yfreq/=2.0;
+			else
+			{
+				xfreq = ( cpd * ( float(xp) + (float(xl)/2.0) ) / float(xlen) )/4.0;
+				yfreq = ( cpd * ( float(yp) + (float(yl)/2.0) ) / float(ylen) )/4.0;
 			}
 
-			if( csort!=Y){
-				if( encparams.cformat==format422){
-					xfreq/=2.0;
+			if( csort != Y){
+				if( cformat == format422)
+				{
+					xfreq /= 2.0;
 				}
-				else if(encparams.cformat==format411 ){
-					xfreq/=4.0;
+				else if( cformat == format411 )
+				{
+					xfreq /= 4.0;
 				}
-				else if(encparams.cformat==format420 ){
-					xfreq/=2.0;
-					yfreq/=2.0;
+				else if( cformat == format420 )
+				{
+					xfreq /= 2.0;
+					yfreq /= 2.0;
 				}
 			}
-			temp=2.0*Threshold(xfreq,yfreq,csort);
+			temp = 2.0*Threshold(xfreq,yfreq,csort);
 			band_list(I).SetWt(temp);
 
-		}
+		}//I
+
 		//make sure dc is always the lowest weight
 		float min_weight=band_list(band_list.Length()).Wt();
-		for(int I=1;I<=band_list.Length()-1;I++ ){
-			min_weight=((min_weight>band_list(I).Wt()) ? band_list(I).Wt() : min_weight);
+		for(int I=1;I<=band_list.Length()-1;I++ )
+		{
+			min_weight = ((min_weight>band_list(I).Wt()) ? band_list(I).Wt() : min_weight);
 		}		
 		band_list(band_list.Length()).SetWt(min_weight);
 
 		//normalize weights wrt dc subband
-		for(int I=1;I<=band_list.Length();I++ ){
+		for( int I=1 ; I<=band_list.Length() ; I++ )
+		{
 			band_list(I).SetWt(band_list(I).Wt()/band_list(band_list.Length()).Wt());		
 		}
 	}
-	else{//CPD=0 so set all weights to 1
-		for(int I=1;I<=band_list.Length();I++ ){
+	else
+	{//cpd=0 so set all weights to 1
+		for( int I=1 ; I<=band_list.Length() ; I++ ){
 			band_list(I).SetWt(1.0);		
 		}	
 	}
 
 	//Finally, compensate for the absence of scaling in the transform
-	for (int I=1;I<band_list.Length();++I){
+	for ( int I=1 ; I<band_list.Length() ; ++I )
+	{
 
 		depth=band_list(I).Depth();
-		if (band_list(I).Xp()==0 && band_list(I).Yp()==0){
+		if ( band_list(I).Xp() == 0 && band_list(I).Yp() == 0)
+		{
 			temp=std::pow(alpha,2*depth);
 		} 
-		else if (band_list(I).Xp()!=0 && band_list(I).Yp()!=0){
+		else if ( band_list(I).Xp() != 0 && band_list(I).Yp() != 0)
+		{
 			temp=std::pow(alpha,2*(depth-2));
 		}
 		else {

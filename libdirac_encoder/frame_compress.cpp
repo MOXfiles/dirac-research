@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-05-12 08:35:34  tjdwave
+* Revision 1.3  2004-06-18 15:58:37  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.2  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -74,9 +83,10 @@ global_pred_mode(REF1_ONLY){ }
 
 void FrameCompressor::Compress(FrameBuffer& my_buffer, int fnum){
 
-	ChromaFormat cf=encparams.cformat;	
 	Frame& my_frame=my_buffer.GetFrame(fnum);
 	FrameSort fsort=my_frame.GetFparams().fsort;
+	ChromaFormat cf=my_frame.GetFparams().cformat;	
+
 	unsigned int num_mv_bits;//number of bits written, without byte alignment
 
 	CompCompressor my_compcoder(encparams,my_frame.GetFparams());

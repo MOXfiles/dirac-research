@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-06-18 15:58:36  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -129,7 +138,7 @@ void EntropyCorrector::Update(int bandnum, FrameSort fsort, CompSort c,int est_b
 		Yfctrs[fsort][bandnum-1]*=multiplier;
 }
 
-void CodecParams::SetBlockSizes(const OLBParams& olbparams){
+void CodecParams::SetBlockSizes(const OLBParams& olbparams, ChromaFormat cformat){
 	//given the raw overlapped block parameters, set the modified internal parameters to
 	//take account of the chroma sampling format and overlapping requirements, as well
 	//as the equivalent parameters for sub-MBs and MBs.

@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-06-18 16:00:28  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -69,7 +78,30 @@
 #include "libdirac_common/motion.h"
 #include <cmath>
 
-//motion compensation stuff
+//motion compensation stuff//
+/////////////////////////////
+
+//arithmetic functions
+void ArithAddObj::DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight) const {
+	CalcValueType t = ((rhs*Weight)+512)>>10;
+	lhs+=short(t);
+}
+
+void ArithSubtractObj::DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight) const {
+	CalcValueType t = ((rhs*Weight)+512)>>10;
+	lhs-=short(t);
+}
+
+void ArithHalfAddObj::DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight) const {
+	CalcValueType t = ((rhs*Weight)+1024)>>11;
+	lhs+=short(t);
+}
+
+void ArithHalfSubtractObj::DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight) const {
+	CalcValueType t = ((rhs*Weight)+1024)>>11;
+	lhs-=short(t);
+}
+
 
 //Overlapping blocks are acheived by applying a 2D raised cosine shape
 //to them. This function facilitates the calculations
@@ -90,12 +122,10 @@ float RaisedCosine(float t, float B){
 //  *       *                  *
 //*           *                  *
 
-void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, CalcValueType** WeightArray){
+void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, TwoDArray<CalcValueType>& WeightArray){
 
 	//Create temporary array.
-	float** CalcArray = new float*[bparams.YBLEN];
-	for(int i = 0; i < bparams.YBLEN; ++i)
-		CalcArray[i] = new float[bparams.XBLEN];
+	TwoDArray<float> CalcArray(WeightArray.length(0),WeightArray.length(1));
 
 	//Calculation variables
 	float rolloffX = (float(bparams.XBLEN+1)/float(bparams.XBSEP)) - 1;
@@ -154,15 +184,10 @@ void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, CalcValueType
 			WeightArray[y][x] = ValueType(g);
 		}
 	}
-
-	//Delete the temporary array
-	for(int i = 0; i < bparams.YBLEN; ++i)
-		delete[] CalcArray[i];
-	delete[] CalcArray;
 }
 
 //Flips the values in an array in the x direction.
-void FlipX(CalcValueType** Original, const OLBParams &bparams, CalcValueType** Flipped){
+void FlipX(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, TwoDArray<CalcValueType>& Flipped){
 	for(int x = 0; x < bparams.XBLEN; ++x){
 		for(int y = 0; y < bparams.YBLEN; ++y){
 			Flipped[y][x] = Original[y][(bparams.XBLEN-1) - x];
@@ -171,7 +196,7 @@ void FlipX(CalcValueType** Original, const OLBParams &bparams, CalcValueType** F
 }
 
 //Flips the values in an array in the y direction.
-void FlipY(CalcValueType** Original, const OLBParams &bparams, CalcValueType** Flipped){
+void FlipY(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, TwoDArray<CalcValueType>& Flipped){
 	for(int x = 0; x < bparams.XBLEN; ++x){
 		for(int y = 0; y < bparams.YBLEN; ++y){
 			Flipped[y][x] = Original[(bparams.YBLEN-1) - y][x];

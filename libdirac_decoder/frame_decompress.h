@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-24 16:03:48  tjdwave
+* Revision 1.5  2004-06-18 15:58:36  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.4  2004/05/24 16:03:48  tjdwave
 * Support for IO error handling. Decoder freezes on last frame if out of data.
 *
 * Revision 1.3  2004/05/12 08:35:34  tjdwave
@@ -79,10 +88,13 @@ public:
         the decompression process. It decodes motion data before decoding each
         component of the frame. 
 
-        \param  decp    decoder parameters
+        \param  decp	decoder parameters
+		\param  cf		the chroma format of the frame being decompressed
     */
-	FrameDecompressor(const DecoderParams& decp): 
-	decparams(decp){}
+	FrameDecompressor(const DecoderParams& decp, ChromaFormat cf): 
+	decparams(decp),
+	cformat(cf)
+	{}
 
     //! Decompress the next frame into the buffer
     /*!
@@ -111,19 +123,28 @@ private:
 	//! Parameters for the decompression, as provided in constructor
 	DecoderParams decparams;
 
+	//! Chroma format of the frame being decompressed
+	ChromaFormat cformat;
+
     //! Motion vector data
 	MvData* mv_data;
+
 	//! An indicator which is true if the frame has been skipped, false otherwise
 	bool skipped;
+
 	//! An indicator that is true if we use global motion vectors, false otherwise
 	bool use_global;
+
 	//! An indicator that is true if we use block motion vectors, false otherwise
 	bool use_block_mv;
+
 	//! Prediction mode to use if we only have global motion vectors
 	PredMode global_pred_mode;
 
+
 	//! Decodes component data	
 	void CompDecompress(FrameBuffer& my_buffer,int fnum, CompSort cs);
+
 	//! Reads the header data associated with decompressing the frame
 	bool ReadFrameHeader(FrameParams& fparams);	//read the frame header data
 };

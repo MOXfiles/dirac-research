@@ -39,7 +39,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.6  2004-05-18 07:46:15  tjdwave
+* Revision 1.7  2004-06-18 15:58:37  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.6  2004/05/18 07:46:15  tjdwave
 * Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
 *
 * Revision 1.5  2004/05/12 16:06:20  tjdwave
@@ -163,7 +172,7 @@ delay(1)
 	picIn->SetPadding(xpad_luma,ypad_luma);
 
 	//Set up the frame buffer with the PADDED picture sizes
-	my_buffer=new FrameBuffer(encparams.cformat,encparams.NUM_L1,encparams.L1_SEP,sparams.xl+xpad_luma,sparams.yl+ypad_luma);
+	my_buffer=new FrameBuffer(sparams.cformat,encparams.NUM_L1,encparams.L1_SEP,sparams.xl+xpad_luma,sparams.yl+ypad_luma);
 }
 
 SequenceCompressor::~SequenceCompressor(){
@@ -258,7 +267,7 @@ void SequenceCompressor::WriteStreamHeader(){
 	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) encparams.X_NUMBLOCKS);
 	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) encparams.Y_NUMBLOCKS);
     //chroma format
-	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) encparams.cformat);
+	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) picIn->GetSeqParams().cformat);
     //interlace marker
 	((encparams.BIT_OUT)->header).OutputBit(encparams.interlace);
 

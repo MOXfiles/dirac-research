@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-26 14:31:39  tjdwave
+* Revision 1.5  2004-06-18 15:58:36  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.4  2004/05/26 14:31:39  tjdwave
 * Added doxygen comments to describe how perceptual weighting now incorporates
 * scaling factors from the scaling.
 *
@@ -236,10 +245,13 @@ public:
 		/param	pic_data	the data to be transformed
 	*/
 	void Transform(const Direction d, PicArray& pic_data);
+
 	//! Returns the set of subbands
 	SubbandList& BandList(){return band_list;}
+
 	//! Returns the set of subbands
 	const SubbandList& BandList() const {return band_list;}
+
 	//! Sets the subband weights
 	/*!
 		Sets perceptual weights for the subbands. Takes into account both perceptual factors
@@ -250,7 +262,7 @@ public:
 		\param	fparams	the frame parameters, such as the frame sort (I, L1 or L2)
 		\param	csort	the component type (Y, U or V)  
 	*/
-	void SetBandWeights (const EncoderParams& encparams,const FrameParams& fparams,const CompSort csort);
+	void SetBandWeights(float cpd ,FrameSort fsort , ChromaFormat cformat , CompSort csort);
 
 private:
 	//other private variables	

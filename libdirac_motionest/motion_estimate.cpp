@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:35  tjdwave
+* Revision 1.4  2004-06-18 15:58:37  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.3  2004/05/12 08:35:35  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -78,21 +87,26 @@ MotionEstimator::MotionEstimator(const EncoderParams& params): encparams(params)
 }
 
 void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data){
-	fsort=my_buffer.GetFrame(frame_num).GetFparams().fsort;
-	ChromaFormat cformat=encparams.cformat;
-	if (fsort!=I_frame){
+
+	const FrameParams& fparams=my_buffer.GetFrame(frame_num).GetFparams();
+
+	if (fparams.fsort!=I_frame)
+	{
 		if (encparams.VERBOSE)		
 			std::cerr<<std::endl<<"Doing initial search ...";
 		DoHierarchicalSearch(my_buffer,frame_num,mv_data);
+
 		if (encparams.VERBOSE)
 			std::cerr<<std::endl<<"Doing sub-pixel refinement ...";
 		DoFinalSearch(my_buffer,frame_num,mv_data);				
-		ModeDecider my_mode_dec(encparams);
+
 		if (encparams.VERBOSE)
 			std::cerr<<std::endl<<"Doing mode decision ...";
+		ModeDecider my_mode_dec(encparams);
 		my_mode_dec.DoModeDecn(my_buffer,frame_num,mv_data);
 
-		if (cformat!=Yonly){
+		if (fparams.cformat!=Yonly)
+		{
 			if (encparams.VERBOSE)
 				std::cerr<<std::endl<<"Setting chroma DC values ... ";
 			SetChromaDC(my_buffer,frame_num,mv_data);	

@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-12 08:35:34  tjdwave
+* Revision 1.5  2004-06-18 15:58:36  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.4  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -320,7 +329,7 @@ struct CodecParams{
 	X_NUMBLOCKS(0),
 	Y_NUMBLOCKS(0),
 	VERBOSE(false),
-	cformat(Yonly),
+	//	cformat(Yonly),
 	interlace(false),
 	topfieldfirst(false),
 	lbparams(3),
@@ -335,7 +344,7 @@ struct CodecParams{
 	//! Return the Chroma block parameters for each macroblock splitting level
 	const OLBParams& ChromaBParams(int n) const {return cbparams[n];}
 	//! Set the block sizes for all MB splitting levels given these prototype block sizes for level=2
-	void SetBlockSizes(const OLBParams& olbparams);
+	void SetBlockSizes(const OLBParams& olbparams, ChromaFormat cformat);
 
 	//! The number of macroblocks horizontally
 	int X_NUM_MB;
@@ -349,9 +358,6 @@ struct CodecParams{
 
     //! Code/decode with commentary if true	
 	bool VERBOSE;
-
-	//! The chroma format
-	ChromaFormat cformat;
 
 	//! True if input is interlaced, false otherwise
 	bool interlace;

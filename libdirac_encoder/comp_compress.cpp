@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.7  2004-05-26 14:33:45  tjdwave
+* Revision 1.8  2004-06-18 15:58:37  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.7  2004/05/26 14:33:45  tjdwave
 * Updated default DC prediction value to take into account the removal of
 * scaling from the wavelet transform.
 *
@@ -126,8 +135,8 @@ void CompCompressor::Compress(PicArray& pic_data){
 	WaveletTransformParams wparams(depth);
 	WaveletTransform wtransform(wparams);
 
-	wtransform.Transform(FORWARD,pic_data);
-	wtransform.SetBandWeights(encparams,fparams,csort);
+	wtransform.Transform( FORWARD , pic_data );
+	wtransform.SetBandWeights( encparams.CPD , fparams.fsort , fparams.cformat , csort);
 
 	SubbandList& bands=wtransform.BandList();
 

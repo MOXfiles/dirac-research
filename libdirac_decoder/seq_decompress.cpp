@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.5  2004-05-26 15:18:28  tjdwave
+* Revision 1.6  2004-06-18 15:58:36  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.5  2004/05/26 15:18:28  tjdwave
 * Corrected behaviour at end of stream, so that decoder freezes on the last
 * frame.
 *
@@ -90,42 +99,50 @@ last_frame_read(-1),
 show_fnum(-1)
 {
 
-	decparams.BIT_IN=new BitInputManager(infile);
-	decparams.VERBOSE=verbosity;
+	decparams.BIT_IN = new BitInputManager(infile);
+	decparams.VERBOSE = verbosity;
 	ReadStreamHeader();
 
 	//Amount of horizontal padding for Y,U and V components
 	int xpad_luma,xpad_chroma;
+
 	//Amount of vertical padding for Y,U and V components
 	int ypad_luma,ypad_chroma;
+
 	//scaling factors for chroma based on chroma format
 	int x_chroma_fac,y_chroma_fac;
 
 	//First, we need to have sufficient padding to take account of the blocksizes.
 	//It's sufficient to check for chroma
 
-	if (sparams.cformat==format411){
-		x_chroma_fac=4; y_chroma_fac=1;
+	if ( sparams.cformat == format411 )
+	{
+		x_chroma_fac = 4; 
+		y_chroma_fac = 1;
 	}
-	else if (sparams.cformat==format420){
-		x_chroma_fac=2; y_chroma_fac=2;
+	else if ( sparams.cformat == format420 )
+	{
+		x_chroma_fac = 2; 
+		y_chroma_fac = 2;
 	}
-	else if (sparams.cformat==format422){
-		x_chroma_fac=2; y_chroma_fac=1;
+	else if ( sparams.cformat == format422 ){
+		x_chroma_fac = 2; 
+		y_chroma_fac = 1;
 	}
 	else{
-		x_chroma_fac=1; y_chroma_fac=1;
+		x_chroma_fac = 1; 
+		y_chroma_fac = 1;
 	}
 
-	int xl_chroma=sparams.xl/x_chroma_fac;
-	int yl_chroma=sparams.yl/y_chroma_fac;
+	int xl_chroma=sparams.xl / x_chroma_fac;
+	int yl_chroma=sparams.yl / y_chroma_fac;
 
 	//make sure we have enough macroblocks to cover the pictures 
-	decparams.X_NUM_MB=sparams.xl/decparams.LumaBParams(0).XBSEP;
-	decparams.Y_NUM_MB=sparams.yl/decparams.LumaBParams(0).YBSEP;
-	if (decparams.X_NUM_MB*decparams.ChromaBParams(0).XBSEP<xl_chroma){
+	decparams.X_NUM_MB = sparams.xl / decparams.LumaBParams(0).XBSEP;
+	decparams.Y_NUM_MB = sparams.yl / decparams.LumaBParams(0).YBSEP;
+	if ( decparams.X_NUM_MB * decparams.ChromaBParams(0).XBSEP < xl_chroma ){
 		decparams.X_NUM_MB++;
-		xpad_chroma=decparams.X_NUM_MB*decparams.ChromaBParams(0).XBSEP-xl_chroma;
+		xpad_chroma = decparams.X_NUM_MB * decparams.ChromaBParams(0).XBSEP - xl_chroma;
 	}
 	else
 		xpad_chroma=0;
@@ -138,26 +155,26 @@ show_fnum(-1)
 		ypad_chroma=0;	
 
 	//Now we have an integral number of macroblocks in a picture and we set the number of blocks
-	decparams.X_NUMBLOCKS=4*decparams.X_NUM_MB;
-	decparams.Y_NUMBLOCKS=4*decparams.Y_NUM_MB;
+	decparams.X_NUMBLOCKS = 4*decparams.X_NUM_MB;
+	decparams.Y_NUMBLOCKS = 4*decparams.Y_NUM_MB;
 
 	//Next we work out the additional padding due to the wavelet transform
 	//For the moment, we'll fix the transform depth to be 4, so we need divisibility by 16.
 	//In the future we'll want arbitrary transform depths. It's sufficient to check for
 	//chroma only
 
-	int xpad_len=xl_chroma+xpad_chroma;
-	int ypad_len=yl_chroma+ypad_chroma;
-	if (xpad_len%16!=0)
-		xpad_chroma=((xpad_len/16)+1)*16-xl_chroma;
-	if (ypad_len%16!=0)
-		ypad_chroma=((ypad_len/16)+1)*16-yl_chroma;	
+	int xpad_len = xl_chroma+xpad_chroma;
+	int ypad_len = yl_chroma+ypad_chroma;
+	if ( xpad_len%16 != 0 )
+		xpad_chroma=( ( xpad_len/16 ) + 1 )*16 - xl_chroma;
+	if ( ypad_len%16 != 0)
+		ypad_chroma = ( ( ypad_len/16 ) + 1 )*16 - yl_chroma;	
 
-	xpad_luma=xpad_chroma*x_chroma_fac;
-	ypad_luma=ypad_chroma*y_chroma_fac;
+	xpad_luma = xpad_chroma*x_chroma_fac;
+	ypad_luma = ypad_chroma*y_chroma_fac;
 
 	//set up padded picture sizes, based on original picture sizes, the block parameters and the wavelet transform depth
-	my_buffer=new FrameBuffer(decparams.cformat,sparams.xl+xpad_luma,sparams.yl+ypad_luma);
+	my_buffer = new FrameBuffer( sparams.cformat , sparams.xl + xpad_luma , sparams.yl + ypad_luma );
 }
 
 SequenceDecompressor::~SequenceDecompressor(){
@@ -174,7 +191,7 @@ Frame& SequenceDecompressor::DecompressNextFrame(){
 	//the frames out. It's up to the calling function to do something with the decoded frames as they
 	//come out - write them to screen or to file, as required.
 
-	FrameDecompressor my_fdecoder(decparams);
+	FrameDecompressor my_fdecoder(decparams,sparams.cformat);
 
 	if (current_code_fnum!=0){
 		//if we're not at the beginning, clean the buffer of frames that can be discarded
@@ -225,9 +242,8 @@ void SequenceDecompressor::ReadStreamHeader(){//called from constructor
 	decparams.Y_NUM_MB=decparams.Y_NUMBLOCKS/4;
 
 	//chroma format
-	decparams.cformat=ChromaFormat(UnsignedGolombDecode(*(decparams.BIT_IN)));	
-	sparams.cformat=decparams.cformat;	
-	decparams.SetBlockSizes(bparams);	
+	sparams.cformat=ChromaFormat(UnsignedGolombDecode(*(decparams.BIT_IN)));		
+	decparams.SetBlockSizes(bparams,sparams.cformat);
 
  	//interlace marker
 	decparams.interlace=decparams.BIT_IN->InputBit();

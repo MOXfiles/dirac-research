@@ -38,7 +38,16 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-12 08:35:34  tjdwave
+* Revision 1.5  2004-06-18 16:00:28  tjdwave
+* Removed chroma format parameter cformat from CodecParams and derived
+* classes to avoid duplication. Made consequential minor mods to
+* seq_{de}compress and frame_{de}compress code.
+* Revised motion compensation to use built-in arrays for weighting
+* matrices and to enforce their const-ness.
+* Removed unnecessary memory (de)allocations from Frame class copy constructor
+* and assignment operator.
+*
+* Revision 1.4  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -241,46 +250,33 @@ public:
 class ArithObj{	
 public:
 	virtual ~ArithObj(){}
-	virtual void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight) = 0;
+	virtual void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight) const = 0;
 
 protected:
-	CalcValueType t;
 };
 
 //! Class to do weighted sums of values
 class ArithAddObj : public ArithObj{	
 public:
-	void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight){
-		t = ((rhs*Weight)+512)>>10;
-		lhs+=short(t);
-	};
+	void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight) const;
 };
 
 //! Class to do weighted difference of values
 class ArithSubtractObj : public ArithObj{	
 public:
-	void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight){
-		t = ((rhs*Weight)+512)>>10;
-		lhs-=short(t);
-	};
+	void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight) const;
 };
 
 //! Class to add half a weighted value
 class ArithHalfAddObj : public ArithObj{	
 public:
-	void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight){
-		t = ((rhs*Weight)+1024)>>11;
-		lhs+=short(t);
-	};
+	void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight) const;
 };
 
 //! Class to subtract half a weighted value
 class ArithHalfSubtractObj : public ArithObj{	
 public:
-	void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight){
-		t = ((rhs*Weight)+1024)>>11;
-		lhs-=short(t);
-	};
+	void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight) const;
 };
 
 
@@ -297,9 +293,13 @@ float RaisedCosine(float t, float B);
 //   *     *                  *
 //  *       *                  *
 //*           *                  *
-void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, CalcValueType** WeightArray);
-void FlipX(CalcValueType** Original, const OLBParams &bparams, CalcValueType** Flipped);//Flips the values in an array in the x direction.
-void FlipY(CalcValueType** Original, const OLBParams &bparams, CalcValueType** Flipped);//Flips the values in an array in the y direction.
+void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, TwoDArray<CalcValueType>& WeightArray);
+
+//Flips the values in an array in the x direction
+void FlipX(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, TwoDArray<CalcValueType>& Flipped);
+
+//Flips the values in an array in the y direction.
+void FlipY(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, TwoDArray<CalcValueType>& Flipped);
 
 //motion estimation and coding stuff
 
