@@ -68,6 +68,8 @@ void dirac_decoder_close(dirac_decoder_t *decoder)
 
     delete parser;
 
+    delete decoder->fbuf;
+
     delete decoder;
 
     decoder = NULL;
