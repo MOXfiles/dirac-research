@@ -10,7 +10,7 @@ dirac_decoder_SOURCES = decmain.cpp
 if USE_MSVC
 LDADD = ../libdirac_decoder/libdirac_decoder.a  ../libdirac_common/libdirac_common.a
 else
-LDADD = ../libdirac_decoder/libdirac_decoder.la
+LDADD = ../libdirac_decoder/libdirac_decoder.la $(CONFIG_MATH_LIB)
 if USE_STATIC
 dirac_decoder_LDFLAGS = $(LDFLAGS) -static
 endif

@@ -10,7 +10,7 @@ make_header_SOURCES = headmain.cpp
 if USE_MSVC
 LDADD = ../libdirac_common/libdirac_common.a
 else
-LDADD = ../libdirac_common/libdirac_common.la
+LDADD = ../libdirac_common/libdirac_common.la $(CONFIG_MATH_LIB)
 if USE_STATIC
 make_header_LDFLAGS = $(LDFLAGS) -static
 endif

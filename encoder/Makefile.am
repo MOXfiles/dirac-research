@@ -10,7 +10,7 @@ dirac_encoder_SOURCES = encmain.cpp
 if USE_MSVC
 LDADD = ../libdirac_encoder/libdirac_encoder.a ../libdirac_common/libdirac_common.a ../libdirac_motionest/libdirac_motionest.a
 else
-LDADD = ../libdirac_encoder/libdirac_encoder.la
+LDADD = ../libdirac_encoder/libdirac_encoder.la $(CONFIG_MATH_LIB)
 if USE_STATIC
 dirac_encoder_LDFLAGS = $(LDFLAGS) -static
 else
