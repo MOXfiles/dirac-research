@@ -3,5 +3,5 @@ bin_PROGRAMS = dirac_encoder
 
 dirac_encoder_SOURCES = encmain.cpp
 
-LIBS = ../libdirac_encoder/libdirac_encoder.a ../libdirac_common/libdirac_common.a ../libdirac_motionest/libdirac_motionest.a
+LDADD = ../libdirac_encoder/libdirac_encoder.a ../libdirac_common/libdirac_common.a ../libdirac_motionest/libdirac_motionest.a
 DEFS = -I.. -I. -I../.. -I$(srcdir)
