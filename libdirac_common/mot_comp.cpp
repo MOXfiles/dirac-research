@@ -50,9 +50,9 @@ using std::vector;
 //Initialises the lookup table that is needed for 1/8th pixel accuracy
 //motion estimation. Creates the necessary arithmetic objects and
 //calls ReConfig to create weighting blocks to fit the values within
-//cparams.
-MotionCompensator::MotionCompensator(const CodecParams &cp): 
-    cparams(cp),
+//m_cparams.
+MotionCompensator::MotionCompensator( const CodecParams &cp ): 
+    m_cparams(cp),
     luma_or_chroma(true),
     add_or_sub(SUBTRACT)
 {
@@ -74,8 +74,9 @@ void MotionCompensator::CompensateFrame(FrameBuffer& my_buffer,int fnum,const Mv
 
      int ref1_idx,ref2_idx;    
      Frame& my_frame=my_buffer.GetFrame(fnum);
-     const ChromaFormat& cformat=my_frame.GetFparams().CFormat();
      const FrameSort& fsort=my_frame.GetFparams().FSort();
+
+     m_cformat = my_frame.GetFparams().CFormat();
 
      if (fsort!=I_frame)
      {//we can motion compensate
@@ -96,9 +97,9 @@ void MotionCompensator::CompensateFrame(FrameBuffer& my_buffer,int fnum,const Mv
              //now do all the components
              CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , Y_COMP);
 
-             if (cformat != Yonly)
+             if ( m_cformat != Yonly )
              {
-                 luma_or_chroma=false;                
+                 luma_or_chroma = false;                
                  CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , U_COMP);
                  CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , V_COMP);
              }
@@ -116,9 +117,9 @@ void MotionCompensator::CompensateFrame(FrameBuffer& my_buffer,int fnum,const Mv
 void MotionCompensator::ReConfig()
 {
     if (luma_or_chroma)
-        m_bparams=cparams.LumaBParams(2);
+        m_bparams = m_cparams.LumaBParams(2);
     else
-        m_bparams=cparams.ChromaBParams(2);
+        m_bparams = m_cparams.ChromaBParams(2);
 
     if(m_block_weights != NULL)
         delete[] m_block_weights;
@@ -149,12 +150,39 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 {
 
     // Set up references to pictures and references
-    PicArray& pic_data = picframe.Data(cs);
-    const PicArray& ref1up = ref1frame.UpData(cs);
-    const PicArray& ref2up = ref2frame.UpData(cs);
+    PicArray& pic_data = picframe.Data( cs );
+    const PicArray& ref1up = ref1frame.UpData( cs );
+    const PicArray& ref2up = ref2frame.UpData( cs );
+
+    // Factors to compensate for subsampling of chroma
+    int xscale_factor = 1;
+    int yscale_factor = 1;
+
+//
+    if ( cs != Y_COMP )
+    {
+        if (m_cformat == format420)
+        {
+            xscale_factor = 2;
+            yscale_factor = 2;
+        }
+        else if (m_cformat == format422)
+        {
+            xscale_factor = 2;
+            yscale_factor = 1;
+        }
+        else if (m_cformat == format411)
+        {
+            xscale_factor = 4;
+            yscale_factor = 1;
+        }
+
+    } 
+
+//
 
     // Reference to the relevant DC array
-    const TwoDArray<ValueType>& dcarray = mv_data.DC(cs);
+    const TwoDArray<ValueType>& dcarray = mv_data.DC( cs );
 
     // Set up references to the vectors
     const int num_refs = picframe.GetFparams().Refs().size();
@@ -184,17 +212,17 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
     //Loop over all the block rows
 
     pos.y = -m_bparams.Yoffset();
-    for(int yblock = 0; yblock < cparams.YNumBlocks(); ++yblock)
+    for(int yblock = 0; yblock < m_cparams.YNumBlocks(); ++yblock)
     {
         pos.x = -m_bparams.Xoffset();
         //loop over all the blocks in a row
-        for(int xblock = 0 ; xblock < cparams.XNumBlocks(); ++xblock)
+        for(int xblock = 0 ; xblock < m_cparams.XNumBlocks(); ++xblock)
         {
 
             //Decide which weights to use.
-            if((xblock != 0)&&(xblock < cparams.XNumBlocks() - 1))
+            if((xblock != 0)&&(xblock < m_cparams.XNumBlocks() - 1))
             {
-                if((yblock != 0)&&(yblock < cparams.YNumBlocks() - 1))    
+                if((yblock != 0)&&(yblock < m_cparams.YNumBlocks() - 1))    
                     wgt_idx = 4;
                 else if(yblock == 0) 
                     wgt_idx = 1;
@@ -203,26 +231,33 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
             }
             else if(xblock == 0)
             {
-                if((yblock != 0)&&(yblock < cparams.YNumBlocks() - 1))    
-                    wgt_idx= 3;
+                if((yblock != 0)&&(yblock < m_cparams.YNumBlocks() - 1))    
+                    wgt_idx = 3;
                 else if(yblock == 0) 
-                    wgt_idx= 0;
+                    wgt_idx = 0;
                 else 
-                    wgt_idx= 6;
+                    wgt_idx = 6;
             }
             else
             {
-                if((yblock != 0)&&(yblock < cparams.YNumBlocks() - 1))    
-                    wgt_idx= 5;
+                if((yblock != 0)&&(yblock < m_cparams.YNumBlocks() - 1))    
+                    wgt_idx = 5;
                 else if(yblock == 0) 
-                    wgt_idx= 2;
+                    wgt_idx = 2;
                 else 
-                    wgt_idx= 8;
+                    wgt_idx = 8;
             }
 
             block_mode = mv_data.Mode()[yblock][xblock];
             mv1 = (*mv_array1)[yblock][xblock];
+            mv1.x /= xscale_factor;
+            mv1.y /= yscale_factor;
+
             mv2 = (*mv_array2)[yblock][xblock];
+            mv2.x /= xscale_factor;
+            mv2.y /= yscale_factor;
+
+
             dc = dcarray[yblock][xblock]<<2;// DC is only given 8 bits, 
                                             // so need to shift to get 10-bit data
 
@@ -273,7 +308,7 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
         {
 
             for ( int y=yblock*m_bparams.Ybsep() ; y<(yblock+1)*m_bparams.Ybsep() ; ++y )
-                for (int x=( cparams.XNumBlocks()*m_bparams.Xbsep() ); x<pic_data.LengthX() ; ++x )
+                for (int x=( m_cparams.XNumBlocks()*m_bparams.Xbsep() ); x<pic_data.LengthX() ; ++x )
                     pic_data[y][x] = 0;
 
         }//?add_or_sub
@@ -288,7 +323,7 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
     if (add_or_sub == SUBTRACT)
     {
 
-        for ( int y=cparams.YNumBlocks()*m_bparams.Ybsep() ; y<pic_data.LengthY() ; ++y )
+        for ( int y=m_cparams.YNumBlocks()*m_bparams.Ybsep() ; y<pic_data.LengthY() ; ++y )
             for ( int x=0 ; x<pic_data.LengthX() ; ++x )
                 pic_data[y][x] = 0;
 

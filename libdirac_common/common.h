@@ -223,34 +223,38 @@ public:
     A class used by the encoder for correcting estimates of entropy. Used for selecting quantisers in
     subband coefficient coding. Factors can be adjusted in the light of previous experience.
  */
-class EntropyCorrector{//factors for correcting entropy estimates
+class EntropyCorrector
+{
 public:
-        //! Constructor.
-        /*!
-        Constructs arrays of correction factors of size.
-        /param    depth    the depth of the wavelet transform.
-        */
+    //! Constructor.
+    /*!
+    Constructs arrays of correction factors of size.
+    /param    depth    the depth of the wavelet transform.
+    */
     EntropyCorrector(int depth);
     
-        ////////////////////////////////////////////////////////////////////
-        //NB: Assume default copy constructor, assignment = and destructor//
-        ////////////////////////////////////////////////////////////////////    
-    
-        //! Returns the correction factor.
-        /*!
-        Returns the correction factor for the band given also the type of frame and component.
-        */
+    ////////////////////////////////////////////////////////////////////
+    //NB: Assume default copy constructor, assignment = and destructor//
+    ////////////////////////////////////////////////////////////////////    
+
+    //! Returns the correction factor.
+    /*!
+    Returns the correction factor for the band given also the type of frame and component.
+    */
     float Factor(const int bandnum, const FrameSort fsort,const CompSort c) const;
-        //! Update the correction factors.
-        /*!
-        Update the factors for a given subband, component and frame type.
-        /param    est_bits    the number of bits it was estimated would be used
-        /param    actual_bits    the number of bits that actually were used
-         */    
+
+    //! Update the correction factors.
+    /*!
+    Update the factors for a given subband, component and frame type.
+    /param    est_bits    the number of bits it was estimated would be used
+    /param    actual_bits    the number of bits that actually were used
+     */    
     void Update(int bandnum, FrameSort fsort, CompSort c,int est_bits,int actual_bits);
     
 private:
-    void Init();//initialises the correction factors
+    //! Initialises the correction factors
+    void Init();
+
     TwoDArray<float> m_Yfctrs;
     TwoDArray<float> m_Ufctrs;
     TwoDArray<float> m_Vfctrs;
@@ -258,7 +262,7 @@ private:
 
 //! Parameters for overlapped block motion compensation
 class OLBParams
-{//params for overlapped blocks
+{
     
 public:
     
@@ -365,13 +369,13 @@ public:
     // ... Sets
     
     //! Sets the picture width
-    void SetXl(int xlen) {m_xl=xlen;}
+    void SetXl(int xlen) {m_xl = xlen;}
     
     //! Sets the picture height
-    void SetYl(int ylen) {m_yl=ylen;}
+    void SetYl(int ylen) {m_yl = ylen;}
     
     //! Sets the length of the sequence in frames
-    void SetZl(int zlen) {m_zl=zlen;}
+    void SetZl(int zlen) {m_zl = zlen;}
     
     //! Sets the chroma format (Y only, 420, 422 etc)
     void SetCFormat(ChromaFormat cf) {m_cformat=cf;}
@@ -636,18 +640,49 @@ public:
         ////////////////////////////////////////////////////////////////////
     
      // Gets ...
+
+    //! Get the quality factor
     float Qf() const {return m_qf;}
+
+    //! Return the nominal number of L1 frames before the next I frame
+    /*! 
+        Return the nominal number of L1 frames before the next I frame. Can be
+        overridden by I-frame insertion
+
+    */
     int NumL1() const {return m_num_L1;}
+
+    //! Return the separation between L1 frames (and between L1 and I frames)
     int L1Sep() const {return m_L1_sep;}
+
+    //! Return the amount we're weighting noise in the U component
     float UFactor() const {return m_ufactor;}
+
+    //! Return the amount we're weighting noise in the V component
     float VFactor() const {return m_vfactor;}
+
+    //! Return the number of cycles per degree at the nominal viewing distance for the raster
     float CPD() const {return m_cpd;}
+
+    //! Return the Lagrangian parameter to be used for I frames
     float ILambda() const {return m_I_lambda;}
+
+    //! Return the Lagrangian parameter to be used for L1 frames
     float L1Lambda() const {return m_L1_lambda;}
+
+    //! Return the Lagrangian parameter to be used for L2 frames
     float L2Lambda() const {return m_L2_lambda;}
+
+    //! Return the Lagrangian parameter to be used for frames
     float Lambda(const FrameSort& fsort) const;
+
+    //! Return the Lagrangian ME parameter to be used for L1 frames
     float L1MELambda() const {return m_L1_me_lambda;}
+
+    //! Return the Lagrangian ME parameter to be used for L2 frames
     float L2MELambda() const {return m_L2_me_lambda;}
+
+    //! Return the output path to be used for storing diagnositic data
     char * OutputPath() const {return ( char* ) m_output_path;}
     
     //! Return a reference to the entropy factors
@@ -663,18 +698,44 @@ public:
     SequenceOutputManager& BitsOut() {return *m_bit_out;}
     
     // ... and Sets
+
+    //! Set the quality factor
     void SetQf(const float qfac){m_qf=qfac;}
+
+    //! Set the nominal number of L1 frames between I frames
     void SetNumL1(const int nl){m_num_L1=nl;}
+
+    //! Set the separation between L1 frames
     void SetL1Sep(const int lsep){m_L1_sep=lsep;}
+
+    //! Set the amount to weight noise in the U component
     void SetUFactor(const float uf){m_ufactor=uf;}
+
+    //! Set the amount to weight noise in the V component
     void SetVFactor(const float vf){m_vfactor=vf;}
+
+    //! Set the number of cycles per degree at the nominal viewing distance
     void SetCPD(const float cpd){m_cpd=cpd;}
+
+    //! Set the Lagrangian parameter to be used for I frames
     void SetILambda(const float l){m_I_lambda=l;}
+
+    //! Set the Lagrangian parameter to be used for L1 frames
     void SetL1Lambda(const float l){m_L1_lambda=l;}
+
+    //! Set the Lagrangian parameter to be used for L2 frames
     void SetL2Lambda(const float l){m_L2_lambda=l;}
+
+    //! Set the Lagrangian parameters to be used for frames
     void SetLambda(const FrameSort& fsort, const float l);
+
+    //! Set the Lagrangian parameter to be used for L1 motion estimation
     void SetL1MELambda(const float l){m_L1_me_lambda=l;}
+
+    //! Set the Lagrangian parameter to be used for L2 motion estimation
     void SetL2MELambda(const float l){m_L2_me_lambda=l;}
+
+    //! Set the output path to be used for diagnostic data
     void SetOutputPath(const char * op){strcpy(m_output_path, op);}
     
     //! Sets the entropy factors - TBD: set this up in a constructor and pass encoder params around entirely by reference
@@ -702,13 +763,19 @@ private:
     //! Cycles per degree assumed for viewing the video
     float m_cpd;
     
-    //! Lagrangian parameters for coding
+    //! Lagrangian parameter for Intra frame coding
     float m_I_lambda;
+
+    //! Lagrangian parameter for L1 frame coding
     float m_L1_lambda;
+
+    //! Lagrangian parameter for L2 frame coding
     float m_L2_lambda;
     
-    //! Lagrangian params for motion estimation
+    //! Lagrangian param for L1 motion estimation
     float m_L1_me_lambda;
+
+    //! Lagrangian param for L2 motion estimation
     float m_L2_me_lambda; 
     
     //! Correction factors for quantiser selection 

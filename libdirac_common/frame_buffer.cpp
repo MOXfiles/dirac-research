@@ -325,7 +325,7 @@ void FrameBuffer::SetFrameParams( unsigned int fnum )
     if ( m_gop_len>0 )
     {
 
-        if (fnum%m_gop_len == 0)
+        if ( fnum % m_gop_len == 0)
         {
             m_fparams.SetFSort( I_frame );
 
@@ -336,13 +336,13 @@ void FrameBuffer::SetFrameParams( unsigned int fnum )
         {
             m_fparams.SetFSort( L1_frame );
 
-            // Ref the previous I frame
-            m_fparams.Refs().push_back((fnum/m_gop_len)*m_gop_len);
+            // Ref the previous I or L1 frame
+            m_fparams.Refs().push_back( fnum - m_L1_sep );
 
             // if we don't have the first L1 frame ...
             if ((fnum-m_L1_sep) % m_gop_len>0)
-                // ... other ref is the prior L1 frame
-                m_fparams.Refs().push_back(fnum-m_L1_sep);
+                // ... other ref is the prior I frame
+                m_fparams.Refs().push_back( ( fnum/m_gop_len ) * m_gop_len  );
 
             // Expires after the next L1 or I frame            
             m_fparams.SetExpiryTime( m_L1_sep );

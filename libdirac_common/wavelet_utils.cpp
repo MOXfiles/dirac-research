@@ -481,6 +481,31 @@ void WaveletTransform::SetBandWeights (const float cpd,
     float xfreq, yfreq;
     float temp;
 
+    // Compensate for chroma subsampling
+
+    float chroma_xfac(1.0);
+    float chroma_yfac(1.0);
+
+    if( csort != Y_COMP)
+    {
+        if( cformat == format422)
+        {
+            chroma_xfac = 2.0;
+            chroma_yfac = 1.0;
+        }
+        else if( cformat == format411 )
+        {
+            chroma_xfac = 4.0;
+            chroma_yfac = 1.0;
+        }
+        else if( cformat == format420 )
+        {
+            chroma_xfac = 2.0;
+            chroma_yfac = 2.0;
+        }
+
+    }
+
     xlen = 2 * band_list(1).Xl();
     ylen = 2 * band_list(1).Yl();
 
@@ -503,43 +528,29 @@ void WaveletTransform::SetBandWeights (const float cpd,
                 yfreq /= 8.0;
             }
 
-             if( csort != Y_COMP){
-                 if( cformat == format422)
-                 {
-                     xfreq /= 2.0;
-                 }
-                 else if( cformat == format411 )
-                 {
-                     xfreq /= 4.0;
-                 }
-                 else if( cformat == format420 )
-                 {
-                     xfreq /= 2.0;
-                     yfreq /= 2.0;
-                 }
-             }
 
-            temp = PerceptualWeight( xfreq , yfreq , csort );
+            temp = PerceptualWeight( xfreq/chroma_xfac , yfreq/chroma_yfac , csort );
 
             band_list(i).SetWt(temp);
-
-        }//I
+        }// i
 
         // Give more welly to DC in a completely unscientific manner ...
         // (should really relate this to the frame rate)
         band_list( band_list.Length() ).SetWt(band_list(13).Wt()/6.0);
 
-        //make sure dc is always the lowest weight
+        // Make sure dc is always the lowest weight
         float min_weight=band_list(band_list.Length()).Wt();
-        for(int I=1;I<=band_list.Length()-1;I++ )
-            min_weight = ((min_weight>band_list(I).Wt()) ? band_list(I).Wt() : min_weight);
-        band_list(band_list.Length()).SetWt(min_weight);
 
-        // now normalize weights so that white noise is always weighted the same
+        for( int b=1 ; b<=band_list.Length()-1 ; b++ )
+            min_weight = ((min_weight>band_list(b).Wt()) ? band_list(b).Wt() : min_weight);
 
-        // overall factor to ensure that white noise ends up with the same RMS, whatever the weight
+        band_list( band_list.Length() ).SetWt( min_weight );
+
+        // Now normalize weights so that white noise is always weighted the same
+
+        // Overall factor to ensure that white noise ends up with the same RMS, whatever the weight
         double overall_factor=0.0;
-        // fraction of the total number of samples belonging to each subband
+        //fraction of the total number of samples belonging to each subband
         double subband_fraction;    
 
         for( int i=1 ; i<=band_list.Length() ; i++ )
@@ -552,13 +563,14 @@ void WaveletTransform::SetBandWeights (const float cpd,
         //go through and normalise
 
         for( int i=band_list.Length() ; i>0 ; i-- )
-            band_list(i).SetWt( band_list(i).Wt() * overall_factor);
-
+            band_list(i).SetWt( band_list(i).Wt() * overall_factor );
     }
     else
     {//cpd=0 so set all weights to 1
+
         for( int i=1 ; i<=band_list.Length() ; i++ )
-            band_list(i).SetWt(1.0);        
+           band_list(i).SetWt( 1.0 );        
+
     }
 
     //Finally, adjust to compensate for the absence of scaling in the transform

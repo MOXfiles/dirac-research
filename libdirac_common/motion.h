@@ -340,6 +340,15 @@ public:
     //! Get the MB costs
     const TwoDArray<float>& MBCosts() const { return m_MB_costs; }
 
+    //! Set up the lambda map by detecting motion discontinuities 
+    void SetLambdaMap( const int num_refs , const float lambda );
+
+    //! Set up the lambda map by averaging the lambda map from a lower level 
+    void SetLambdaMap( const int level , const TwoDArray<float>& l_map , const float wt );
+
+    //! Get a lambda value for a given block and level
+    const TwoDArray<float> LambdaMap() const { return m_lambda_map; }
+
     //! Overloaded operator<< for outputing to (file) stream
     friend std::ostream &operator<< (std::ostream & stream, MEData & me_data);
 
@@ -349,6 +358,9 @@ public:
 private:
     // Initialises the arrays of data
     void InitMEData();
+
+    // Finds transitions in the motion vectors
+    void FindTransitions( TwoDArray<bool>& trans_map , const int ref_num );
 
     // The costs of predicting each block, for each reference
     OneDArray< TwoDArray<MvCostData>* > m_pred_costs;
@@ -361,6 +373,9 @@ private:
 
     // The costs for each macroblock as a whole
     TwoDArray<float> m_MB_costs;
+
+    // A map of the lambda values to use
+    TwoDArray<float> m_lambda_map;
 
 };
 
@@ -533,12 +548,12 @@ inline MVector MvMean(MVector& mv1,MVector& mv2) {
 }
 
 //! Return the squared length of a motion vector
-inline int Norm2(MVector& mv){//L^2 norm of a motion vector
+inline int Norm2(const MVector& mv){//L^2 norm of a motion vector
     return mv.x*mv.x+mv.y*mv.y;
 }
 
 //! Return the sum of the lengths of a motion vector's componets
-inline int Norm1(MVector& mv){//L^1 norm of a motion vector
+inline int Norm1(const MVector& mv){//L^1 norm of a motion vector
     return abs(mv.x)+abs(mv.y);
 }
 

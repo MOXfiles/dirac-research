@@ -332,21 +332,22 @@ void Frame::ClipComponent(PicArray& pic_data)
     {
         for (int i=pic_data.FirstX() ; i<=pic_data.LastX() ; ++i)
         {
-            pic_data[j][i] = BChk( pic_data[j][i] , 1021 );
-        }//I        
-    }//J
+            pic_data[j][i] = std::min( pic_data[j][i] , ValueType( 960 ) );
+            pic_data[j][i] = std::max( pic_data[j][i] , ValueType( 64 ) );
+        }// i        
+    }// j
 }
 
 void Frame::Clip()
 {
     //just clips the straight picture data, not the upconverted data
 
-    ClipComponent(*m_Y_data);
+    ClipComponent( *m_Y_data );
 
     if (m_fparams.CFormat() != Yonly)
     {
-        ClipComponent(*m_U_data);
-        ClipComponent(*m_V_data);    
+        ClipComponent( *m_U_data );
+        ClipComponent( *m_V_data );    
     }    
 }
 

@@ -106,8 +106,14 @@ private:
     //! Recalculate the weight matrix and store other key block related parameters.
     void ReConfig();
 
+private:
     //variables    
-    CodecParams cparams;
+
+    //! The codec parameters
+    CodecParams m_cparams;
+
+    //! The chroma format
+    ChromaFormat m_cformat;
     bool luma_or_chroma;    //true if we're doing luma, false if we're coding chroma
 
     // Particular arithmetic objects

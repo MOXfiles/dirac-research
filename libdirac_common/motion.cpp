@@ -244,23 +244,25 @@ MvData::~MvData()
 
 
 
- MEData::MEData(const int xnumMB , const int ynumMB ,
+MEData::MEData(const int xnumMB , const int ynumMB ,
                 const int xnumblocks , const int ynumblocks , const int num_refs ):
      MvData( xnumMB , ynumMB , xnumblocks , ynumblocks , num_refs ),
      m_pred_costs( Range( 1 , num_refs ) ),
      m_intra_costs( ynumblocks , xnumblocks ),
      m_bipred_costs( ynumblocks , xnumblocks ),
-     m_MB_costs( ynumMB , xnumMB )
+     m_MB_costs( ynumMB , xnumMB ),
+     m_lambda_map( ynumblocks , xnumblocks )
 {
     InitMEData();
 }
 
- MEData::MEData( const int xnumMB , const int ynumMB ,  const int num_refs ):
+MEData::MEData( const int xnumMB , const int ynumMB ,  const int num_refs ):
      MvData( xnumMB , ynumMB , num_refs ),
      m_pred_costs( Range( 1 , num_refs ) ),
      m_intra_costs( 4*ynumMB , 4*xnumMB ),
      m_bipred_costs( 4*ynumMB , 4*xnumMB ),
-     m_MB_costs( ynumMB , xnumMB )
+     m_MB_costs( ynumMB , xnumMB ),
+     m_lambda_map( 4*ynumMB , 4*xnumMB )
 {
     InitMEData();
 
@@ -272,6 +274,207 @@ void MEData::InitMEData()
     for ( int i=m_pred_costs.First() ; i<=m_pred_costs.Last() ; ++i )
         m_pred_costs[i] = new TwoDArray<MvCostData>( Mode().LengthY() , Mode().LengthX() );
 }
+
+void MEData::SetLambdaMap( const int num_refs , const float lambda )
+{
+    TwoDArray<bool> transition_map1( Mode().LengthY() , Mode().LengthX() );
+    TwoDArray<bool> transition_map2( Mode().LengthY() , Mode().LengthX() );
+
+    FindTransitions( transition_map1 , 1 );
+
+    for ( int j=0 ; j<m_lambda_map.LengthY() ; j++)
+    {
+        for ( int i=0 ; i<m_lambda_map.LengthX() ; i++)
+        {
+            if ( transition_map1[j][i] )
+                m_lambda_map[j][i] = 0.0;
+            else
+                m_lambda_map[j][i] = lambda;
+            if ( i<4 || j<4 )
+                m_lambda_map[j][i] /= 5.0; 
+        }// i
+    }// j
+
+    if ( num_refs > 1 )
+    {
+        FindTransitions( transition_map2 , 2 );
+
+        for ( int j=0 ; j<m_lambda_map.LengthY() ; j++)
+        {
+            for ( int i=0 ; i<m_lambda_map.LengthX() ; i++)
+            {
+                if ( transition_map1[j][i] || transition_map2[j][i] )
+                    m_lambda_map[j][i] = 0.0;
+                else
+                    m_lambda_map[j][i] = lambda;
+            }// i
+        }// j
+    }
+
+}
+
+void MEData::SetLambdaMap( const int level , const TwoDArray<float>& l_map , const float wt )
+{
+
+    const int factor = 1<<(2-level);
+    int xstart , xend , ystart , yend;
+ 
+    for (int j = 0 ; j<m_lambda_map.LengthY() ; ++j )
+    {
+        for (int i = 0 ; i<m_lambda_map.LengthX() ; ++i )
+        {
+            xstart = factor * i;
+            ystart = factor * j;
+            xend = factor * ( i + 1 );
+            yend = factor * ( j + 1 );
+
+            m_lambda_map[j][i] = l_map[ystart][xstart];
+
+            for (int q = ystart ; q<yend ; ++q )
+                for (int p = xstart ; p<xend ; ++p )
+                      m_lambda_map[j][i] = std::max( l_map[q][p] , m_lambda_map[j][i] );
+
+           m_lambda_map[j][i] *= wt;
+
+        }// i
+    }// j
+
+}
+
+void MEData::FindTransitions( TwoDArray<bool>& trans_map , const int ref_num )
+{
+    const MvArray& mv_array = Vectors( ref_num );
+
+    // Start with a statistical approach - determine thresholds later
+
+    // Compute mean and standard deviation of local motion vector variance //
+    /////////////////////////////////////////////////////////////////////////
+
+    long double total_cost = 0.0;
+    long double mean_cost;
+ 
+    // first, mean
+    for ( int j=0 ; j<mv_array.LengthY() ; ++j )
+        for ( int i=0 ; i<mv_array.LengthX() ; ++i )
+            total_cost += PredCosts( ref_num )[j][i].SAD;
+
+    mean_cost = total_cost / 
+                   static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
+
+    // next , Standard Deviation
+    long double sd_cost = 0.0;
+    double diff;
+    
+    for ( int j=0 ; j<mv_array.LengthY() ; ++j )
+    {
+        for ( int i=0 ; i<mv_array.LengthX() ; ++i )
+        {
+            diff = PredCosts( ref_num )[j][i].SAD - mean_cost;
+            diff *= diff;
+            sd_cost += diff;
+
+        }// i
+    }// j
+
+    // Get the variance ...
+    sd_cost /= static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
+
+    // ... and then the SD
+    sd_cost = std::sqrt( sd_cost );
+
+    float threshold = static_cast<float>( mean_cost + 1.5*sd_cost );
+
+    // now go through and mark those that go above the threshold
+    for ( int j=0 ; j<mv_array.LengthY() ; ++j )
+        for ( int i=0 ; i<mv_array.LengthX() ; ++i )
+            trans_map[j][i] = ( PredCosts( ref_num )[j][i].SAD >= threshold )? true : false;
+
+//
+    // Next look at motion-vector costs
+    TwoDArray<double> val_array( mv_array.LengthY() , mv_array.LengthX() );
+
+    // first, mean
+    total_cost = 0.0;
+    for ( int i=0 ; i<mv_array.LengthX() ; ++i )
+    {
+        val_array[0][i] = 0.0;
+        val_array[val_array.LastY()][i] = 0.0;
+    }// i
+
+    for ( int j=1 ; j<mv_array.LengthY()-1 ; ++j )
+    {
+        val_array[j][0] = 0.0;
+        val_array[j][val_array.LastY()] = 0.0;
+        for ( int i=1 ; i<mv_array.LengthX()-1 ; ++i )
+        {
+            val_array[j][i] =0.0;
+            for (int q=-1 ; q<=1 ; ++q)
+                for (int p=-1 ; p<=1 ; ++p)
+                    val_array[j][i] = std::max( val_array[j][i] , (double)Norm1( mv_array[j+q][i+p] - mv_array[j][i] ) );
+
+            total_cost += val_array[j][i];
+
+        }// i
+    }// j
+
+
+    mean_cost = total_cost / 
+                   static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
+
+    // next , Standard Deviation
+    sd_cost = 0.0;
+    
+    for ( int j=1 ; j<mv_array.LengthY()-1 ; ++j )
+    {
+        for ( int i=1 ; i<mv_array.LengthX()-1 ; ++i )
+        {
+            diff = val_array[j][i] - mean_cost;
+            diff *= diff;
+
+            sd_cost += diff;
+
+        }// i
+    }// j
+
+    // Get the variance ...
+    sd_cost /= static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
+
+    // ... and then the SD
+    sd_cost = std::sqrt( sd_cost );
+
+    threshold = static_cast<float>( mean_cost + 1.5*sd_cost );
+
+    // now go through and mark those that go above the threshold
+    for ( int j=0 ; j<mv_array.LengthY() ; ++j )
+        for ( int i=0 ; i<mv_array.LengthX() ; ++i )
+//            trans_map[j][i] = ( val_array[j][i] >= threshold )? true : false;
+trans_map[j][i] = false;
+
+//     bool contains_trans;
+
+//     for ( int j=0 ; j<mv_array.LengthY()/4 ; ++j )
+//     {
+//         for ( int i=0 ; i<mv_array.LengthX()/4 ; ++i )
+//         {     
+//             contains_trans = false;
+//             for ( int q=4*j ; q<4*(j+1) ; ++q )
+//             {
+//                 for ( int p=4*i ; p<4*(i+1) ; ++p )
+//                 {
+//                     if (trans_map[q][p])
+//                         contains_trans = true;
+//                 }// p
+//             }// q
+//             for ( int q=4*j ; q<4*(j+1) ; ++q )
+//                 for ( int p=4*i ; p<4*(i+1) ; ++p )
+//                     trans_map[q][p] = contains_trans;
+
+//         }// i
+//     }// j
+
+     
+}
+
 
 MEData::~MEData()
 {
