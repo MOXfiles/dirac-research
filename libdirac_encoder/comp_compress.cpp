@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.6  2004-05-18 07:46:15  tjdwave
+* Revision 1.7  2004-05-26 14:33:45  tjdwave
+* Updated default DC prediction value to take into account the removal of
+* scaling from the wavelet transform.
+*
+* Revision 1.6  2004/05/18 07:46:15  tjdwave
 * Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
 *
 * Revision 1.5  2004/05/12 08:35:34  tjdwave
@@ -121,6 +125,7 @@ void CompCompressor::Compress(PicArray& pic_data){
 
 	WaveletTransformParams wparams(depth);
 	WaveletTransform wtransform(wparams);
+
 	wtransform.Transform(FORWARD,pic_data);
 	wtransform.SetBandWeights(encparams,fparams,csort);
 
@@ -141,7 +146,7 @@ void CompCompressor::Compress(PicArray& pic_data){
 			bands(I).SetQf(0,qflist[bands(I).Qf(0)]);
 
 
-			//pick the right codec according to the frame type and subband
+ 			//pick the right codec according to the frame type and subband
 			if (I>=bands.Length()){
 				if (fsort==I_frame && I==bands.Length())
 					bcoder=new IntraDCBandCodec(&(encparams.BIT_OUT->data),ctx_list,bands);
@@ -153,7 +158,7 @@ void CompCompressor::Compress(PicArray& pic_data){
 
 			num_band_bits=bcoder->Compress(pic_data);
 
-			//update the entropy correction factors
+ 			//update the entropy correction factors
 			encparams.EntCorrect->Update(I,fsort,csort,est_band_bits,num_band_bits);
 			UnsignedGolombCode((encparams.BIT_OUT)->header,num_band_bits);
 			encparams.BIT_OUT->WriteToFile();
@@ -162,7 +167,7 @@ void CompCompressor::Compress(PicArray& pic_data){
 		else{
 			encparams.BIT_OUT->WriteToFile();
 			if (I==bands.Length() && fsort==I_frame)
-				SetToVal(pic_data,bands(I),8187);
+				SetToVal(pic_data,bands(I),2692);
 			else
 				SetToVal(pic_data,bands(I),0);
 		}		
@@ -249,8 +254,8 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 	Subband& node=bands(band_num);
 
 	//Point to start looking for quantisation factors in the qf list.
-	//Quantiser must be at least qflist[qf_start_idx-3]
-	int qf_start_idx=16;
+	//May be able to short-circuit searching in future by setting this
+	int qf_start_idx=12;
 
 	if (band_num==bands.Length()){
 		AddSubAverage(pic_data,node.Xl(),node.Yl(),SUBTRACT);
@@ -563,6 +568,7 @@ ValueType CompCompressor::PicAbsMax(const PicArray& pic_data) const{
 }
 
 ValueType CompCompressor::PicAbsMax(const PicArray& pic_data,int xp, int yp ,int xl ,int yl) const{
+
 	int lbound0=std::max(pic_data.lbound(0),xp);	
 	int lbound1=std::max(pic_data.lbound(1),yp);	
 	int ubound0=std::min(pic_data.ubound(0),xp+xl-1);	
@@ -587,7 +593,8 @@ void CompCompressor::SetToVal(PicArray& pic_data,const Subband& node,ValueType v
 
 void CompCompressor::AddSubAverage(PicArray& pic_data,int xl,int yl,AddOrSub dirn){
 
-	ValueType last_val=8187;//corresponds to mid-grey in this band with these filters
+	ValueType last_val=2692;//corresponds to mid-grey in this DC band with these filters
+							//NB this is hard-wired for a level 4 transform
 	ValueType last_val2;
 	if (dirn==SUBTRACT){
 		for (int J=0;J<yl;J++){

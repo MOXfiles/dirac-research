@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-18 07:46:15  tjdwave
+* Revision 1.4  2004-05-26 14:33:46  tjdwave
+* Updated default DC prediction value to take into account the removal of
+* scaling from the wavelet transform.
+*
+* Revision 1.3  2004/05/18 07:46:15  tjdwave
 * Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
 *
 * Revision 1.2  2004/05/12 08:35:34  tjdwave
@@ -107,7 +111,7 @@ void CompDecompressor::Decompress(PicArray& pic_data){
 		else{
 			(decparams.BIT_IN)->FlushInput();
 			if (I==bands.Length() && fsort==I_frame)
-				SetToVal(pic_data,bands(I),8187);
+				SetToVal(pic_data,bands(I),2692);
 			else
 				SetToVal(pic_data,bands(I),0);
 		}

@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-20 10:50:24  stuart_hc
+* Revision 1.4  2004-05-26 14:33:46  tjdwave
+* Updated default DC prediction value to take into account the removal of
+* scaling from the wavelet transform.
+*
+* Revision 1.3  2004/05/20 10:50:24  stuart_hc
 * Corrected CRLF line-endings to LF for consistency.
 *
 * Revision 1.2  2004/05/12 08:35:33  tjdwave
@@ -384,6 +388,6 @@ ValueType IntraDCBandCodec::GetPrediction(PicArray& Data){
 	}
 	else{
 		if(xpos!=0) return Data[0][xpos-1];
-		else return 8187;
+		else return 2692;
 	}
 }
