@@ -1,6 +1,17 @@
-Thomas Davies, BBC Research and Development, is the original author.
+ORIGINAL AUTHORS
+~~~~~~~~~~~~~~~~
 
-Richard Felton, BBC Research and Development, did the up- and down-
-conversion routines, plus the entropy coding/decoding core.
+Thomas Davies, BBC Research and Development
+dirac@rd.bbc.co.uk
 
-To contact BBC R&D authors, email dirac@rd.bbc.co.uk
+CONTRIBUTORS
+~~~~~~~~~~~~
+
+Richard Felton, BBC Research and Development
+dirac@rd.bbc.co.uk
+
+Scott Ladd, CoyoteGulch 
+coyote@coyotegulch.com
+
+Stuart Cunningham, BBC Research and Development
+dirac@rd.bbc.co.uk
