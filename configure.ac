@@ -133,7 +133,7 @@ AM_CONDITIONAL(HAVE_ALGO, $HAVE_ALGO)
 dnl -----------------------------------------------
 dnl Setup for the testsuite
 dnl -----------------------------------------------
-AC_CONFIG_TESTDIR([tests], [tests:picheader:encoder:decoder:unit_tests])
+AC_CONFIG_TESTDIR([tests], [tests:picheader:encoder:decoder:unit_tests:util/instrumentation])
 AC_CONFIG_FILES([tests/Makefile])
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
