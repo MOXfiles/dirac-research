@@ -1,3 +1,90 @@
+2004-08-03 10:22  asuraparaju
+
+	* Makefile.am, configure.ac, dirac.pc.in, decoder/decmain.cpp,
+	  encoder/encmain.cpp, libdirac_common/Makefile.am,
+	  libdirac_common/arrays.h, libdirac_common/bit_manager.cpp,
+	  libdirac_common/bit_manager.h, libdirac_common/common.cpp,
+	  libdirac_common/common.h, libdirac_common/mot_comp.cpp,
+	  libdirac_common/mot_comp.h, libdirac_common/motion.cpp,
+	  libdirac_common/motion.h, libdirac_common/mv_codec.cpp,
+	  libdirac_common/mv_codec.h, libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_encoder/Makefile.am, libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/comp_compress.h,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/frame_compress.h,
+	  libdirac_encoder/quality_monitor.cpp,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h, libdirac_motionest/Makefile.am,
+	  libdirac_motionest/block_match.cpp,
+	  libdirac_motionest/block_match.h,
+	  libdirac_motionest/downconvert.cpp,
+	  libdirac_motionest/downconvert.h,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.cpp, libdirac_motionest/me_subpel.h,
+	  libdirac_motionest/me_utils.cpp, libdirac_motionest/me_utils.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/motion_estimate.h,
+	  libdirac_motionest/pixel_match.cpp,
+	  libdirac_motionest/pixel_match.h: libdirac_common,
+	  libdirac_encoder, encoder:	 Incorporated diagnostic tool
+
+	  libdirac_common, libdirac_encoder, libdirac_motionest:     Added
+	  lifting classes for wavelet transform. Refactored motion
+	  estimation to make logic clearer, and added separate
+	  pixel-accurate matching classes.  Put in a longer temporal filter
+	      in QualityMonitor class to reduce oscillation and changed
+	  motion     estimation Lagrangian parameter to improve
+	  performance.	TO DO:	   tune ME parameter for each picture
+	  size/block size combination.
+
+	  libdirac_common:     Corrected bug with lifting functions not
+	  returning a value.	  Modified MvData class to make member
+	  variables private.
+
+	  libdirac_encoder:	Modified ME lambda value to improve
+	  performance.
+
+	  libdirac_decode, libdirac_encoder, libdirac_motionest,
+	  libdirac_common:     Modified MvData class to make member
+	  variables private. Created	 MEData class as a subclass of
+	  MvData for use in motion estimation.
+
+	  libdirac_commonm libdirac_encoder:	 Refactored output classes
+	  to create classes for unit, frame and     sequence output, where
+	  a unit is a subband or MV data, and consists of     a header and
+	  subsequent data. Output can only be effected at the	  sequence
+	  level and occurs only after a whole frame of data has been
+	  accumulated.	This will allow for frames to be re-coded before
+	  being     output if their quality is not satisfactory.
+
+2004-08-03 10:07  asuraparaju
+
+	* util/: Makefile.am, instrumentation/Makefile.am,
+	  instrumentation/README, instrumentation/instrmain.cpp,
+	  instrumentation/libdirac_instrument/Makefile.am,
+	  instrumentation/libdirac_instrument/draw_overlay.cpp,
+	  instrumentation/libdirac_instrument/draw_overlay.h,
+	  instrumentation/libdirac_instrument/motion_arrows.cpp,
+	  instrumentation/libdirac_instrument/motion_arrows.h,
+	  instrumentation/libdirac_instrument/motion_colour.cpp,
+	  instrumentation/libdirac_instrument/motion_colour.h,
+	  instrumentation/libdirac_instrument/motion_colour_arrows.cpp,
+	  instrumentation/libdirac_instrument/motion_colour_arrows.h,
+	  instrumentation/libdirac_instrument/overlay.cpp,
+	  instrumentation/libdirac_instrument/overlay.h,
+	  instrumentation/libdirac_instrument/overlay_symbols.cpp,
+	  instrumentation/libdirac_instrument/overlay_symbols.h,
+	  instrumentation/libdirac_instrument/pred_mode.cpp,
+	  instrumentation/libdirac_instrument/pred_mode.h,
+	  instrumentation/libdirac_instrument/sad.cpp,
+	  instrumentation/libdirac_instrument/sad.h,
+	  instrumentation/libdirac_instrument/split_mode.cpp,
+	  instrumentation/libdirac_instrument/split_mode.h: Adding
+	  instrumentation tool
+
 2004-07-16 16:29  asuraparaju
 
 	* libdirac_encoder/quality_monitor.cpp: Fixed bug with model
