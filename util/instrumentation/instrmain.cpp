@@ -39,7 +39,10 @@
 #include <fstream>
 #include <sstream>
 #include <libdirac_common/cmd_line.h>
+using namespace dirac;
+
 #include <util/instrumentation/process_sequence.h>
+using namespace dirac_instr;
 
 using namespace std;
 
@@ -249,7 +252,7 @@ int main (int argc, char* argv[])
     } // args > 3
 
     // Create objects for input and output picture sequences
-    PicInput inputpic(input.c_str());
+    FileStreamInput inputpic(input.c_str());
     inputpic.ReadPicHeader();
 
     // if the input sequence is Y only, make the ouput sequence 4:2:0
@@ -259,7 +262,7 @@ int main (int argc, char* argv[])
         seqparams.SetCFormat( format420 );
     }
     
-    PicOutput outputpic(output.c_str(), seqparams);
+    FileStreamOutput outputpic(output.c_str(), seqparams);
     outputpic.WritePicHeader();
     
     // read motion data from file
@@ -282,7 +285,7 @@ int main (int argc, char* argv[])
     ProcessSequence process(oparams, inputpic, outputpic, in, verbose, buffer, seqparams);
     process.DoSequence(start, stop);
     if (verbose) cerr << endl << "Done sequence." << endl;
-	return 0;
+    return 0;
 }
 
 
