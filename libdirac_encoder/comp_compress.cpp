@@ -252,19 +252,19 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 	int count1;	
 	OneDArray<int> countPOS(length);
 	OneDArray<int> countNEG(length);	
-	OneDArray<float> error_total(length);	
+	OneDArray<double> error_total(length);	
 	OneDArray<CostType> costs(length);
 	int quant_val;	
 	ValueType val,abs_val;
 	int error;
-	float p0,p1;	
+	double p0,p1;	
 	double sign_entropy;	
 
 	int xp=node.Xp();
 	int yp=node.Yp();
 	int xl=node.Xl();
 	int yl=node.Yl();
-	float vol;
+	double vol;
 
 	if (bandmax<m_qflist[qf_start_idx-3])
     {
@@ -288,7 +288,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 
 		//first, find to nearest integral number of bits using 1/4 of the data
 		//////////////////////////////////////////////////////////////////////
-		vol=float((yl/2)*(xl/2));//vol is only 1/4 of the coeffs
+		vol=double((yl/2)*(xl/2));//vol is only 1/4 of the coeffs
 		count1=int(vol);
 		for ( int j=yp+1 ; j<yp+yl ; j+=2 )
         {
@@ -318,11 +318,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 					if ( quant_val != 0)					
 						error -= m_offset[q];
 
-					error *= error;
-//
-					error *= error;
-//
-					error_total[q] += error;
+					error_total[q] +=  pow( error, 4.0 );
 
 				}// q
 			}// i
@@ -336,7 +332,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
             costs[q].MSE = std::sqrt( costs[q].MSE );
 // 	
     	 	//calculate probabilities and entropy
-			p0 = float( count0[q] )/float( count0[q]+count1 );
+			p0 = double( count0[q] )/double( count0[q]+count1 );
 			p1 = 1.0-p0;
 
 			if ( p0 != 0.0 && p1 != 0.0)
@@ -345,7 +341,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 				costs[q].ENTROPY = 0.0;
 
 			//we want the entropy *per symbol*, not per bit ...			
-			costs[q].ENTROPY *= float(count0[q]+count1);
+			costs[q].ENTROPY *= double(count0[q]+count1);
 			costs[q].ENTROPY /= vol;
 
 			//now add in the sign entropy
@@ -362,7 +358,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 				sign_entropy=0.0;	
 
  		 	//we want the entropy *per symbol*, not per bit ...
-			sign_entropy *= float( countNEG[q]+countPOS[q] );
+			sign_entropy *= double( countNEG[q]+countPOS[q] );
 			sign_entropy /= vol;	
 
 			costs[q].ENTROPY += sign_entropy;
@@ -394,7 +390,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 			}
 		}
 
-		vol = float( (yl/2) * (xl/2) );
+		vol = double( (yl/2) * (xl/2) );
 		count1 = int(vol);
 		int top_idx = std::min(costs.Last(),min_idx+2);
 		int bottom_idx = std::max(0,min_idx-2);
@@ -430,11 +426,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 						if ( quant_val != 0 )					
 							error -= m_offset[q];
 
-						error *= error;
-//
-						error *= error;
-//
-						error_total[q] += float(error);
+						error_total[q] += pow( error, 4.0 );
 
 					}//end of if
 				}//q
@@ -453,7 +445,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 
 
 	 		 	//calculate probabilities and entropy
-				p0 = float(count0[q]) / float(count0[q]+count1);
+				p0 = double(count0[q]) / double(count0[q]+count1);
 				p1 = 1.0-p0;
 
 				if (p0 != 0.0 && p1 != 0.0)
@@ -467,7 +459,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
  		     	//now add in the sign entropy
 				if (countPOS[q]+countNEG[q] != 0)
                 {
-					p0 = float( countNEG[q] )/float( countPOS[q] + countNEG[q] );
+					p0 = double( countNEG[q] )/double( countPOS[q] + countNEG[q] );
 					p1 = 1.0-p0;
 					if (p0 != 0.0 && p1 != 0.0)
 						sign_entropy =- ( (p0*log(p0)+p1*log(p1)) / log(2.0) );
@@ -478,7 +470,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 					sign_entropy = 0.0;	
 
  		 	    //we want the entropy *per symbol*, not per bit ...
-				sign_entropy *= float(countNEG[q]+countPOS[q]);
+				sign_entropy *= double(countNEG[q]+countPOS[q]);
 				sign_entropy /= vol;	
 
 				costs[q].ENTROPY += sign_entropy;
@@ -509,7 +501,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 			countNEG[q] = 0;			
 		}
 
-		vol = float( (yl/2) * xl );
+		vol = double( (yl/2) * xl );
 		count1 = int( vol );		
 
 		for (int j=yp ; j<yp+yl ; ++j )
@@ -541,11 +533,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 					if ( quant_val != 0 )					
 						error -= m_offset[q];
 
-					error *= error;
-//
-					error *= error;
-//
-					error_total[q] += float(error);
+					error_total[q] +=  pow( error, 4.0 );
 
 				}//q
 			}//i
@@ -559,7 +547,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
             costs[q].MSE = std::sqrt( costs[q].MSE );
 //
 		 	//calculate probabilities and entropy
-			p0 = float( count0[q] )/ float( count0[q]+count1 );
+			p0 = double( count0[q] )/ double( count0[q]+count1 );
 			p1 = 1.0 - p0;
 
 			if ( p0 != 0.0 && p1 != 0.0)
@@ -568,13 +556,13 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 				costs[q].ENTROPY = 0.0;
 
  		 	//we want the entropy *per symbol*, not per bit ...			
-			costs[q].ENTROPY *= float(count0[q]+count1);
+			costs[q].ENTROPY *= double(count0[q]+count1);
 			costs[q].ENTROPY /= vol;
 
  			//now add in the sign entropy
 			if ( countPOS[q] + countNEG[q] != 0 )
             {
-				p0 = float( countNEG[q] )/float( countPOS[q]+countNEG[q] );
+				p0 = double( countNEG[q] )/double( countPOS[q]+countNEG[q] );
 				p1 = 1.0-p0;
 				if ( p0 != 0.0 && p1 != 0.0)
 					sign_entropy = -( (p0*log(p0)+p1*log(p1) ) / log(2.0));
@@ -585,7 +573,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 				sign_entropy = 0.0;	
 
  		 	//we want the entropy *per symbol*, not per bit ...
-			sign_entropy *= float(countNEG[q]+countPOS[q]);
+			sign_entropy *= double(countNEG[q]+countPOS[q]);
 			sign_entropy /= vol;	
 
 			costs[q].ENTROPY += sign_entropy;
@@ -611,7 +599,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 		if ( band_num == bands.Length())
 			AddSubAverage(pic_data,node.Xl(),node.Yl(),ADD);
 
-		return int(costs[min_idx].ENTROPY*float(xl*yl));
+		return int(costs[min_idx].ENTROPY*double(xl*yl));
 	}
 
 }
