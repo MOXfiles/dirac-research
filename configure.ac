@@ -78,11 +78,24 @@ AC_CHECK_PROG(HAVE_DOXYGEN, doxygen, true, false)
 		AC_MSG_WARN([*** doxygen not found, code documentation will not be built])
 	fi
 AM_CONDITIONAL(HAVE_DOXYGEN, $HAVE_DOXYGEN)
+
+AC_CHECK_PROG(HAVE_DOT, dot, true, false)
+	if test $HAVE_DOT = "false"; then
+		AC_MSG_WARN([*** dot not found, inheritance diagrams will not be generated in code documentation])
+	fi
+AM_CONDITIONAL(HAVE_DOT, $HAVE_DOT)
+
 AC_CHECK_PROG(HAVE_LATEX, latex, true, false)
 	if test $HAVE_LATEX = "false"; then
 		AC_MSG_WARN([*** latex not found, algorithm documentation will not be built])
 	fi
 AM_CONDITIONAL(HAVE_LATEX, $HAVE_LATEX)
+
+AC_CHECK_PROG(HAVE_DVIPDFM, dvipdfm, true, false)
+	if test $HAVE_DVIPDFM = "false"; then
+	    AC_MSG_WARN([*** dvipdfm not found, programmer documentation will not be built])
+    fi
+AM_CONDITIONAL(HAVE_DVIPDFM, $HAVE_DVIPDFM)
 
 AC_ARG_ENABLE(overlay,
 [ --enable-overlay Turns onDirectory instrumentation],
@@ -115,13 +128,19 @@ dnl -----------------------------------------------
 AC_MSG_CHECKING([whether extra debug flags are to be used when compiling])
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [enable extra debug flags (no)]),
 [
+AC_LANG_PUSH(C++)
 if test x"${enableval}" = x"yes" ; then
 	AC_MSG_RESULT(yes)
 	CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
 	CXXFLAGS="-DDIRAC_DEBUG -g -O0 $CXXFLAGS"
 	case "$CXX" in
 	    g++)
-		    # report only errors and warnings as errors
+			SAVE_CXXFLAGS=$CXXFLAGS;
+			AC_MSG_CHECKING([whether -Wno-long-double is supported])
+			CXXFLAGS="$CXXFLAGS -Wno-long-double"
+			AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[#include <math.h>]], [[long double lw;]])],[AC_MSG_RESULT(yes)],[CXXFLAGS=$SAVE_CXXFLAGS; AC_MSG_RESULT(no)])
+		    
+			# report only errors and warnings as errors
 		    CXXFLAGS="$CXXFLAGS -pedantic -Wall -Werror -Woverloaded-virtual"
 		    ;;
 	    icc)
@@ -132,6 +151,7 @@ if test x"${enableval}" = x"yes" ; then
 		    # do nothing at the moment
 			;;
     esac
+AC_LANG_POP(C++)
 else
 	AC_MSG_RESULT(no)
 fi], [AC_MSG_RESULT(no)]
