@@ -48,12 +48,21 @@ running the codec can be found at http://www.bbc.co.uk/rd/projects/dirac.
         (to enable extra debug compile options and profiling options)
      OR
      ./configure
+
+     By default, both shared and static libraries are built. To build all-static
+     libraries use
+     ./configure --disable-shared
+
+	 To build shared libraries only use
+     ./configure --disable-static
+
      make
      make install
 
   The INSTALL file documents arguments to ./configure such as
   --prefix=/usr/local (specify the installation location prefix).
 
+  
   MSYS and Microsoft Visual C++
   -----------------------------
      Download and install the no-cost Microsoft C++ compiler from
@@ -81,10 +90,14 @@ running the codec can be found at http://www.bbc.co.uk/rd/projects/dirac.
      Exit from the MSYS shell and click on the MSYS icon on the desktop to open 
      a new MSYS shell window for the .profile to take effect.
 
-     Change directory to the directory where Dirac was unpacked.
+     Change directory to the directory where Dirac was unpacked. By default 
+	 only the dynamic libraries are built.
 
      ./configure --enable-debug
          (to enable extra debug compile options)
+     OR
+     ./configure --disable-shared
+	     (to build static libraries)
      OR
      ./configure
      make
