@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author),
+                  Scott R Ladd,
+                  Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -33,186 +37,287 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.4  2004-06-18 15:58:36  tjdwave
-* Removed chroma format parameter cformat from CodecParams and derived
-* classes to avoid duplication. Made consequential minor mods to
-* seq_{de}compress and frame_{de}compress code.
-* Revised motion compensation to use built-in arrays for weighting
-* matrices and to enforce their const-ness.
-* Removed unnecessary memory (de)allocations from Frame class copy constructor
-* and assignment operator.
-*
-* Revision 1.3  2004/05/12 08:35:34  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
-* Modifications to allow compilation by Visual C++ 6.0
-* Changed local for loop declarations into function-wide definitions
-* Replaced variable array declarations with new/delete of dynamic array
-* Added second argument to allocator::alloc calls, since MS has no default
-* Fixed missing and namespace problems with min, max, cos, and abs
-* Added typedef unsigned int uint (MS does not have this)
-* Added a few missing std:: qualifiers that GCC didn't require
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:08  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
-
 #include "libdirac_common/common.h"
 #include <algorithm>
 
-float EntropyCorrector::Factor(const int bandnum, const FrameSort fsort,const CompSort c) const{
-	if (c==U)
-		return Ufctrs[fsort][bandnum-1];
-	else if (c==V)
-		return Vfctrs[fsort][bandnum-1];
+
+//PicArray functions
+
+PicArray::PicArray(int xl, int yl, CompSort cs):
+TwoDArray<ValueType>(xl,yl),
+m_csort(cs)
+{
+        //Nothing
+}
+
+const CompSort& PicArray::CSort() const 
+{
+	return m_csort;
+}
+
+void PicArray::SetCSort(const CompSort cs)
+{
+	m_csort=cs;
+}    
+
+
+
+//EntropyCorrector functions
+
+EntropyCorrector::EntropyCorrector(int depth)
+: 
+m_Yfctrs(3*depth+1,3),
+m_Ufctrs(3*depth+1,3),
+m_Vfctrs(3*depth+1,3)
+{
+	Init();
+}
+
+float EntropyCorrector::Factor(const int bandnum , const FrameSort fsort ,const CompSort c) const
+{
+
+	if (c == U)
+		return m_Ufctrs[fsort][bandnum-1];
+	else if (c == V)
+		return m_Vfctrs[fsort][bandnum-1];
 	else
-		return Yfctrs[fsort][bandnum-1];
+		return m_Yfctrs[fsort][bandnum-1];
 }
 
-void EntropyCorrector::Init(){//depth is the depth of the wavelet transform
+void EntropyCorrector::Init()
+{
 
-	//do I-frames
-	for (int I=0;I<Yfctrs.length(0);++I){
-		if (I==Yfctrs.last(0)){		
-			Yfctrs[I_frame][I]=1.0;
-			Ufctrs[I_frame][I]=1.0;
-			Vfctrs[I_frame][I]=1.0;
-			Yfctrs[L1_frame][I]=0.85;
-			Ufctrs[L1_frame][I]=0.85;
-			Vfctrs[L1_frame][I]=0.85;
-			Yfctrs[L2_frame][I]=0.85;
-			Ufctrs[L2_frame][I]=0.85;
-			Vfctrs[L2_frame][I]=0.85;
+    //do I-frames
+	for (int  I=0 ; I<m_Yfctrs.length(0) ; ++I )
+	{
+		if ( I == m_Yfctrs.last(0) )
+		{        
+			m_Yfctrs[I_frame][I] = 1.0;
+			m_Ufctrs[I_frame][I] = 1.0;
+			m_Vfctrs[I_frame][I] = 1.0;
+			m_Yfctrs[L1_frame][I] = 0.85;
+			m_Ufctrs[L1_frame][I] = 0.85;
+			m_Vfctrs[L1_frame][I] = 0.85;
+			m_Yfctrs[L2_frame][I] = 0.85;
+			m_Ufctrs[L2_frame][I] = 0.85;
+			m_Vfctrs[L2_frame][I] = 0.85;
 		}
-		else if (I>=Yfctrs.last(0)-3){
-			Yfctrs[I_frame][I]=0.85;
-			Ufctrs[I_frame][I]=0.85;
-			Vfctrs[I_frame][I]=0.85;
-			Yfctrs[L1_frame][I]=0.75;
-			Ufctrs[L1_frame][I]=0.75;
-			Vfctrs[L1_frame][I]=0.75;
-			Yfctrs[L2_frame][I]=0.75;
-			Ufctrs[L2_frame][I]=0.75;
-			Vfctrs[L2_frame][I]=0.75;			
+		else if ( I >= m_Yfctrs.last(0)-3 )
+		{
+			m_Yfctrs[I_frame][I] = 0.85;
+			m_Ufctrs[I_frame][I] = 0.85;
+			m_Vfctrs[I_frame][I] = 0.85;
+			m_Yfctrs[L1_frame][I] = 0.75;
+			m_Ufctrs[L1_frame][I] = 0.75;
+			m_Vfctrs[L1_frame][I] = 0.75;
+			m_Yfctrs[L2_frame][I] = 0.75;
+			m_Ufctrs[L2_frame][I] = 0.75;
+			m_Vfctrs[L2_frame][I] = 0.75;            
 		}
-		else{
-			Yfctrs[I_frame][I]=0.75;
-			Ufctrs[I_frame][I]=0.75;
-			Vfctrs[I_frame][I]=0.75;
-			Yfctrs[L1_frame][I]=0.75;
-			Ufctrs[L1_frame][I]=0.75;
-			Vfctrs[L1_frame][I]=0.75;
-			Yfctrs[L2_frame][I]=0.75;
-			Ufctrs[L2_frame][I]=0.75;
-			Vfctrs[L2_frame][I]=0.75;			
+		else
+		{
+			m_Yfctrs[I_frame][I] = 0.75;
+			m_Ufctrs[I_frame][I] = 0.75;
+			m_Vfctrs[I_frame][I] = 0.75;
+			m_Yfctrs[L1_frame][I] = 0.75;
+			m_Ufctrs[L1_frame][I] = 0.75;
+			m_Vfctrs[L1_frame][I] = 0.75;
+			m_Yfctrs[L2_frame][I] = 0.75;
+			m_Ufctrs[L2_frame][I] = 0.75;
+			m_Vfctrs[L2_frame][I] = 0.75;            
 		}
-	}
+	}//I
+
 }
 
-void EntropyCorrector::Update(int bandnum, FrameSort fsort, CompSort c,int est_bits,int actual_bits){
-	//updates the factors - note that the estimated bits are assumed to already include the correction factor
+void EntropyCorrector::Update(int bandnum , FrameSort fsort , CompSort c ,int est_bits , int actual_bits){
+    //updates the factors - note that the estimated bits are assumed to already include the correction factor
+
 	float multiplier;
-	if (actual_bits!=0 && est_bits!=0)
-		multiplier=float(actual_bits)/float(est_bits);
+	if (actual_bits != 0 && est_bits != 0)
+		multiplier = float(actual_bits)/float(est_bits);
 	else
 		multiplier=1.0;
-	if (c==U)
-		Ufctrs[fsort][bandnum-1]*=multiplier;
-	else if (c==V)
-		Vfctrs[fsort][bandnum-1]*=multiplier;
+	if (c == U)
+		m_Ufctrs[fsort][bandnum-1] *= multiplier;
+	else if (c == V)
+		m_Vfctrs[fsort][bandnum-1] *= multiplier;
 	else
-		Yfctrs[fsort][bandnum-1]*=multiplier;
+		m_Yfctrs[fsort][bandnum-1] *= multiplier;
 }
 
-void CodecParams::SetBlockSizes(const OLBParams& olbparams, ChromaFormat cformat){
-	//given the raw overlapped block parameters, set the modified internal parameters to
-	//take account of the chroma sampling format and overlapping requirements, as well
-	//as the equivalent parameters for sub-MBs and MBs.
-	//Does NOT set the number of blocks or macroblocks, as padding may be required.
+CodecParams::CodecParams():
+m_x_num_mb(0),
+m_y_num_mb(0),
+m_x_num_blocks(0),
+m_y_num_blocks(0),
+m_verbose(false),
+m_interlace(false),
+m_topfieldfirst(false),
+m_lbparams(3),
+m_cbparams(3){}
 
-	lbparams[2]=olbparams;
-	lbparams[2].XBSEP=std::max(lbparams[2].XBSEP,4);
-	lbparams[2].XBLEN=std::max(lbparams[2].XBSEP+2,lbparams[2].XBLEN);
-	lbparams[2].YBSEP=std::max(lbparams[2].YBSEP,4);
-	lbparams[2].YBLEN=std::max(lbparams[2].YBSEP+2,lbparams[2].YBLEN);	
-	lbparams[2].XOFFSET=(lbparams[2].XBLEN-lbparams[2].XBSEP)/2;	
-	lbparams[2].YOFFSET=(lbparams[2].YBLEN-lbparams[2].YBSEP)/2;	
-	if ((lbparams[2].XBLEN-lbparams[2].XBSEP)%2!=0)
-		lbparams[2].XBLEN++;
-	if ((lbparams[2].YBLEN-lbparams[2].YBSEP)%2!=0)
-		lbparams[2].YBLEN++;
+void CodecParams::SetBlockSizes(const OLBParams& olbparams , ChromaFormat cformat)
+{
+    //given the raw overlapped block parameters, set the modified internal parameters to
+    //take account of the chroma sampling format and overlapping requirements, as well
+    //as the equivalent parameters for sub-MBs and MBs.
+    //Does NOT set the number of blocks or macroblocks, as padding may be required.
 
-	//the chroma block params
+	m_lbparams[2]=olbparams;
+
+    //check the separations aren't too small
+	m_lbparams[2].XBSEP=std::max(m_lbparams[2].XBSEP,4);
+	m_lbparams[2].YBSEP=std::max(m_lbparams[2].YBSEP,4);    
+
+    //check there's sufficient overlap
+	m_lbparams[2].XBLEN=std::max(m_lbparams[2].XBSEP+2,m_lbparams[2].XBLEN);    
+	m_lbparams[2].YBLEN=std::max(m_lbparams[2].YBSEP+2,m_lbparams[2].YBLEN);
+
+    //check overlap is divisible by 2
+	if ((m_lbparams[2].XBLEN-m_lbparams[2].XBSEP)%2!=0)
+		m_lbparams[2].XBLEN++;
+	if ((m_lbparams[2].YBLEN-m_lbparams[2].YBSEP)%2!=0)
+		m_lbparams[2].YBLEN++;
+
+    //compute the resulting offets
+	m_lbparams[2].XOFFSET=(m_lbparams[2].XBLEN-m_lbparams[2].XBSEP)/2;    
+	m_lbparams[2].YOFFSET=(m_lbparams[2].YBLEN-m_lbparams[2].YBSEP)/2;    
+
+    //Now compute the resulting chroma block params
 	if (cformat==format420){
-		cbparams[2].XBSEP=lbparams[2].XBSEP/2;
-		cbparams[2].YBSEP=lbparams[2].YBSEP/2;	
-		cbparams[2].XBLEN=std::max(lbparams[2].XBLEN/2,cbparams[2].XBSEP+2);
-		cbparams[2].YBLEN=std::max(lbparams[2].YBLEN/2,cbparams[2].YBSEP+2);
+		m_cbparams[2].XBSEP=m_lbparams[2].XBSEP/2;
+		m_cbparams[2].YBSEP=m_lbparams[2].YBSEP/2;    
+		m_cbparams[2].XBLEN=std::max(m_lbparams[2].XBLEN/2,m_cbparams[2].XBSEP+2);
+		m_cbparams[2].YBLEN=std::max(m_lbparams[2].YBLEN/2,m_cbparams[2].YBSEP+2);
 	}
 	else if (cformat==format422){
-		cbparams[2].XBSEP=lbparams[2].XBSEP/2;
-		cbparams[2].YBSEP=lbparams[2].YBSEP;	
-		cbparams[2].XBLEN=std::max(lbparams[2].XBLEN/2,cbparams[2].XBSEP+2);
-		cbparams[2].YBLEN=std::max(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
+		m_cbparams[2].XBSEP=m_lbparams[2].XBSEP/2;
+		m_cbparams[2].YBSEP=m_lbparams[2].YBSEP;    
+		m_cbparams[2].XBLEN=std::max(m_lbparams[2].XBLEN/2,m_cbparams[2].XBSEP+2);
+		m_cbparams[2].YBLEN=std::max(m_lbparams[2].YBLEN,m_cbparams[2].YBSEP+2);
 	}
 	else if (cformat==format411){
-		cbparams[2].XBSEP=lbparams[2].XBSEP/4;
-		cbparams[2].YBSEP=lbparams[2].YBSEP;	
-		cbparams[2].XBLEN=std::max(lbparams[2].XBLEN/4,cbparams[2].XBSEP+2);
-		cbparams[2].YBLEN=std::max(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
+		m_cbparams[2].XBSEP=m_lbparams[2].XBSEP/4;
+		m_cbparams[2].YBSEP=m_lbparams[2].YBSEP;    
+		m_cbparams[2].XBLEN=std::max(m_lbparams[2].XBLEN/4,m_cbparams[2].XBSEP+2);
+		m_cbparams[2].YBLEN=std::max(m_lbparams[2].YBLEN,m_cbparams[2].YBSEP+2);
 	}
 	else{
-		cbparams[2].XBSEP=lbparams[2].XBSEP;
-		cbparams[2].YBSEP=lbparams[2].YBSEP;	
-		cbparams[2].XBLEN=std::max(lbparams[2].XBLEN,cbparams[2].XBSEP+2);
-		cbparams[2].YBLEN=std::max(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
+		m_cbparams[2].XBSEP=m_lbparams[2].XBSEP;
+		m_cbparams[2].YBSEP=m_lbparams[2].YBSEP;    
+		m_cbparams[2].XBLEN=std::max(m_lbparams[2].XBLEN,m_cbparams[2].XBSEP+2);
+		m_cbparams[2].YBLEN=std::max(m_lbparams[2].YBLEN,m_cbparams[2].YBSEP+2);
 	}
 
-	if ((cbparams[2].XBLEN-cbparams[2].XBSEP)%2!=0)
-		cbparams[2].XBLEN++;
-	if ((cbparams[2].YBLEN-cbparams[2].YBSEP)%2!=0)
-		cbparams[2].YBLEN++;
+	if ((m_cbparams[2].XBLEN-m_cbparams[2].XBSEP)%2!=0)
+		m_cbparams[2].XBLEN++;
+	if ((m_cbparams[2].YBLEN-m_cbparams[2].YBSEP)%2!=0)
+		m_cbparams[2].YBLEN++;
 
-	cbparams[2].XOFFSET=(cbparams[2].XBLEN-cbparams[2].XBSEP)/2;	
-	cbparams[2].YOFFSET=(cbparams[2].YBLEN-cbparams[2].YBSEP)/2;	
+	m_cbparams[2].XOFFSET=(m_cbparams[2].XBLEN-m_cbparams[2].XBSEP)/2;    
+	m_cbparams[2].YOFFSET=(m_cbparams[2].YBLEN-m_cbparams[2].YBSEP)/2;    
 
-	lbparams[1].XBSEP=lbparams[2].XBSEP<<1;
-	lbparams[1].XBLEN=lbparams[2].XBLEN+lbparams[2].XBSEP;
-	lbparams[1].YBSEP=lbparams[2].YBSEP<<1;
-	lbparams[1].YBLEN=lbparams[2].YBLEN+lbparams[2].XBSEP;	
-	lbparams[1].XOFFSET=lbparams[2].XOFFSET;
-	lbparams[1].YOFFSET=lbparams[2].YOFFSET;
-	lbparams[0].XBSEP=lbparams[1].XBSEP<<1;
-	lbparams[0].XBLEN=lbparams[1].XBLEN+lbparams[1].XBSEP;
-	lbparams[0].YBSEP=lbparams[1].YBSEP<<1;
-	lbparams[0].YBLEN=lbparams[1].YBLEN+lbparams[1].XBSEP;		
-	lbparams[0].XOFFSET=lbparams[1].XOFFSET;
-	lbparams[0].YOFFSET=lbparams[1].YOFFSET;
+    //Now work out the overlaps for splitting levels 1 and 0
+	m_lbparams[1].XBSEP=m_lbparams[2].XBSEP<<1;
+	m_lbparams[1].XBLEN=m_lbparams[2].XBLEN+m_lbparams[2].XBSEP;
+	m_lbparams[1].YBSEP=m_lbparams[2].YBSEP<<1;
+	m_lbparams[1].YBLEN=m_lbparams[2].YBLEN+m_lbparams[2].XBSEP;    
+	m_lbparams[1].XOFFSET=m_lbparams[2].XOFFSET;
+	m_lbparams[1].YOFFSET=m_lbparams[2].YOFFSET;
 
-	cbparams[1].XBSEP=cbparams[2].XBSEP<<1;
-	cbparams[1].XBLEN=cbparams[2].XBLEN+cbparams[2].XBSEP;
-	cbparams[1].YBSEP=cbparams[2].YBSEP<<1;
-	cbparams[1].YBLEN=cbparams[2].YBLEN+cbparams[2].XBSEP;	
-	cbparams[1].XOFFSET=cbparams[2].XOFFSET;
-	cbparams[1].YOFFSET=cbparams[2].YOFFSET;
-	cbparams[0].XBSEP=cbparams[1].XBSEP<<1;
-	cbparams[0].XBLEN=cbparams[1].XBLEN+cbparams[1].XBSEP;
-	cbparams[0].YBSEP=cbparams[1].YBSEP<<1;
-	cbparams[0].YBLEN=cbparams[1].YBLEN+cbparams[1].XBSEP;		
-	cbparams[0].XOFFSET=cbparams[1].XOFFSET;
-	cbparams[0].YOFFSET=cbparams[1].YOFFSET;
+	m_lbparams[0].XBSEP=m_lbparams[1].XBSEP<<1;
+	m_lbparams[0].XBLEN=m_lbparams[1].XBLEN+m_lbparams[1].XBSEP;
+	m_lbparams[0].YBSEP=m_lbparams[1].YBSEP<<1;
+	m_lbparams[0].YBLEN=m_lbparams[1].YBLEN+m_lbparams[1].XBSEP;        
+	m_lbparams[0].XOFFSET=m_lbparams[1].XOFFSET;
+	m_lbparams[0].YOFFSET=m_lbparams[1].YOFFSET;
+
+	m_cbparams[1].XBSEP=m_cbparams[2].XBSEP<<1;
+	m_cbparams[1].XBLEN=m_cbparams[2].XBLEN+m_cbparams[2].XBSEP;
+	m_cbparams[1].YBSEP=m_cbparams[2].YBSEP<<1;
+	m_cbparams[1].YBLEN=m_cbparams[2].YBLEN+m_cbparams[2].XBSEP;    
+	m_cbparams[1].XOFFSET=m_cbparams[2].XOFFSET;
+	m_cbparams[1].YOFFSET=m_cbparams[2].YOFFSET;
+
+	m_cbparams[0].XBSEP=m_cbparams[1].XBSEP<<1;
+	m_cbparams[0].XBLEN=m_cbparams[1].XBLEN+m_cbparams[1].XBSEP;
+	m_cbparams[0].YBSEP=m_cbparams[1].YBSEP<<1;
+	m_cbparams[0].YBLEN=m_cbparams[1].YBLEN+m_cbparams[1].XBSEP;        
+	m_cbparams[0].XOFFSET=m_cbparams[1].XOFFSET;
+	m_cbparams[0].YOFFSET=m_cbparams[1].YOFFSET;
+
 }
+
+//EncoderParams functions
+
+//Default constructor    
+EncoderParams::EncoderParams(): 
+CodecParams(),
+m_num_L1(0),
+m_L1_sep(0),
+m_ufactor(1.0),
+m_vfactor(1.0),
+m_cpd(20.0),
+m_I_lambda(0.f),
+m_L1_lambda(0.0f),
+m_L2_lambda(0.0f),
+m_L1_me_lambda(0.0f),
+m_L2_me_lambda(0.0f),
+m_ent_correct(0),
+m_bit_out(0){}
+
+
+//SeqParams functions
+//constructor
+SeqParams::SeqParams(): 
+m_xl(0),
+m_yl(0),
+m_zl(0),
+m_cformat(format422),
+m_interlace(false),
+m_topfieldfirst(true),
+m_framerate(12)
+{}
+
+//FrameParams functions
+
+// Default constructor
+FrameParams::FrameParams(): 
+m_fsort(I_frame),
+m_output(false)
+{}    
+
+// Constructor 
+FrameParams::FrameParams(const ChromaFormat& cf, int xlen, int ylen): 
+m_cformat(cf),
+m_xl(xlen),
+m_yl(ylen),
+m_fsort(I_frame),
+m_output(false)
+{}
+
+// Constructor
+FrameParams::FrameParams(const ChromaFormat& cf, const FrameSort& fs): 
+m_cformat(cf),
+m_fsort(fs),
+m_output(false)
+{}    
+
+// Constructor
+FrameParams::FrameParams(const SeqParams& sparams): 
+m_cformat(sparams.CFormat()),
+m_xl(sparams.Xl()),
+m_yl(sparams.Yl()),
+m_fsort(I_frame),
+m_output(false)
+{}
+
+// Constructor
+FrameParams::FrameParams(const SeqParams& sparams, const FrameSort& fs): 
+m_cformat(sparams.CFormat()),
+m_xl(sparams.Xl()),
+m_yl(sparams.Yl()),
+m_fsort(fs),
+m_output(false)
+{}

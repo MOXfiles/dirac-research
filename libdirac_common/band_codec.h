@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -33,44 +35,11 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.4  2004-05-12 08:35:33  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.3  2004/04/11 22:50:46  chaoticcoyote
-* Modifications to allow compilation by Visual C++ 6.0
-* Changed local for loop declarations into function-wide definitions
-* Replaced variable array declarations with new/delete of dynamic array
-* Added second argument to allocator::alloc calls, since MS has no default
-* Fixed missing and namespace problems with min, max, cos, and abs
-* Added typedef unsigned int uint (MS does not have this)
-* Added a few missing std:: qualifiers that GCC didn't require
-*
-* Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
-* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:08  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
-
 #ifndef _BAND_CODEC_H_
 #define _BAND_CODEC_H_
 
-#include "libdirac_common/arith_codec.h"
-#include "libdirac_common/wavelet_utils.h"
-#include <iostream>
+#include <libdirac_common/arith_codec.h>
+#include <libdirac_common/wavelet_utils.h>
 
 //Subclasses the arithmetic codec to produce a coding/decoding tool for subbands
 
@@ -79,7 +48,8 @@
 /*!
 	A general class for coding and decoding wavelet subband data, deriving from the abstract ArithCodec class.
  */
-class BandCodec: public ArithCodec<PicArray >{
+class BandCodec: public ArithCodec<PicArray >
+{
 public:
 
 	//! Constructor for encoding.
@@ -90,21 +60,10 @@ public:
 		/param	band_list	the set of all the subbands
 		/param 	band_num	the number of the subband being coded 
      */
-	BandCodec(BasicOutputManager* bits_out, const std::vector<Context>& ctxs,const SubbandList& band_list,int band_num):
-	ArithCodec<PicArray >(bits_out,ctxs),
-	bnum(band_num),
-	node(band_list(band_num)),
-	xp(node.Xp()),
-	yp(node.Yp()),
-	xl(node.Xl()),
-	yl(node.Yl()),
-	vol(node.Xl()*node.Yl()),
-	reset_coeff_num(std::max(vol/32,50)),
-	cut_off_point(node.Scale()>>1)
-	{
-		if (node.Parent()!=0) 
-			pnode=band_list(node.Parent());
-	}		
+	BandCodec(BasicOutputManager* bits_out,
+              size_t number_of_contexts,
+              const SubbandList& band_list,
+              int band_num);
 
     //! Constructor for decoding.
     /*!
@@ -114,114 +73,88 @@ public:
 		/param	band_list	the set of all the subbands
 		/param 	band_num	the number of the subband being decoded 
      */
-	BandCodec(BitInputManager* bits_in, const std::vector<Context>& ctxs,const SubbandList& band_list,int band_num):
-	ArithCodec<PicArray >(bits_in,ctxs),
-	bnum(band_num),
-	node(band_list(band_num)),
-	xp(node.Xp()),
-	yp(node.Yp()),
-	xl(node.Xl()),
-	yl(node.Yl()),
-	vol(node.Xl()*node.Yl()),
-	reset_coeff_num(std::max(vol/32,50)),
-	cut_off_point(node.Scale()>>1)
-	{
-		if (node.Parent()!=0) pnode=band_list(node.Parent());
-	}
+	BandCodec(BitInputManager* bits_in,
+              size_t number_of_contexts,
+              const SubbandList& band_list,
+              int band_num);
 
 	//! Initialise the contexts according to predefined counts.
-	inline void InitContexts();
+	void InitContexts();
 
 protected:
-
-	//variables	
-	int bnum;
-	const Subband node;//the subband being coded
-	int xp,yp,xl,yl;//dimensions of the subband
-	int xpos,ypos;//position within the subband
-	int vol;
-	int reset_coeff_num;//the number of coefficients after which contexts are reset
-	int coeff_count;
-	int qf,qfinv;//quantisation and inverse quantisation values
-	ValueType offset;//reconstruction point
-	ValueType nhood_sum;
-	Subband pnode;//the parent subband
-	int pxp,pyp,pxl,pyl;//coords of the parent subband
-	int pxpos,pypos;//position of the parent coefficient
-	bool parent_zero;
-	ValueType cut_off_point;//used in selecting a context
-
-	//functions
-	virtual void DoWorkCode(PicArray& InData);					//overridden from the base class
-	virtual void DoWorkDecode(PicArray& OutData, int num_bits); //ditto
-
-	void CodeVal(PicArray& InData, ValueType& val);//code an individual value
-	void DecodeVal(PicArray& OutData);//decode an individual value
-
-	inline void Update(const int& context_num, const bool& Symbol);
-	inline void Resize(const int& context_num);
-	inline void Reset_all();
-	int ChooseContext(const PicArray& Data, const int BinNumber) const;
-	int ChooseContext(const PicArray& Data) const;
-	int ChooseSignContext(const PicArray& Data) const;
+	void CodeVal(PicArray& in_data, ValueType& val);//code an individual value
+	void DecodeVal(PicArray& out_data);//decode an individual value
 
 private:
+	//functions
+	virtual void DoWorkCode(PicArray& in_data);					//overridden from the base class
+	virtual void DoWorkDecode(PicArray& in_data, int num_bits); //ditto
+
+	void Update(const int& context_num, const bool& symbol);
+	void Resize(const int& context_num);
+	void ResetAll();
+    
+	int ChooseContext(const PicArray& data, const int bin_number) const;
+	int ChooseContext(const PicArray& data) const;
+	int ChooseSignContext(const PicArray& data) const;
 
 	BandCodec(const BandCodec& cpy);			//private, bodyless copy constructor: class should not be copied
 	BandCodec& operator=(const BandCodec& rhs);	//private, bodyless copy operator=: class should not be assigned
+
+protected:
+	//! variables	
+	int m_bnum;
+
+    //! the subband being coded
+	const Subband m_node;
+    
+    //! dimensions of the subband
+	int m_xp, m_yp, m_xl, m_yl;
+    
+    //! position within the subband
+	int m_xpos, m_ypos;
+    
+    //! size of the subband
+	int m_vol;
+    
+    //! the number of coefficients after which contexts are reset
+	int m_reset_coeff_num;
+    
+    //! count of the coefficients since the last context reset
+	int m_coeff_count;
+    
+    //! quantisation and inverse quantisation values
+	int m_qf, m_qfinv;
+    
+    //! reconstruction point
+	ValueType m_offset;
+    
+    //! sum of a neighbourhood of previously (de)coded values
+	ValueType m_nhood_sum;
+    
+    //! the parent subband
+	Subband m_pnode;
+    
+    //! coords of the parent subband
+	int m_pxp, m_pyp, m_pxl, m_pyl;
+    
+    //! position of the parent coefficient
+	int m_pxpos, m_pypos;
+    
+    //! TODO: description
+	bool m_parent_zero;
+    
+    //! used in selecting a context
+	ValueType m_cut_off_point;
 };
-
-//Overridden common codec functions
-///////////////////////////////////////
-inline void BandCodec::InitContexts(){
-	//initialises the contexts. 
-	//If ContextList does not already have values, then they're set to default values. 
-	//This way, the constructor can override default initialisation.
-	Context tmp_ctx;
-	for (unsigned int I=0;I<ContextList.size();++I){
-		if (I>=ContextList.size()){
-			ContextList.push_back(tmp_ctx);
-		}
-		else {
-			if (ContextList[I].Weight()==0){
-				ContextList[I].SetCounts(1,1);
-			}
-		}
-	}//I
-}
-
-inline void BandCodec::Update(const int& context_num, const bool& Symbol){
-	ContextList[context_num].IncrCount(Symbol,1);
-	if (ContextList[context_num].Weight()>=1024){
-		Resize(context_num);
-	}
-
-}
-
-inline void BandCodec::Resize(const int& context_num){
-	ContextList[context_num].HalveCounts();
-}
-
-inline void BandCodec::Reset_all(){
-
-	for (unsigned int C=0;C<ContextList.size();++C){
-		if (ContextList[C].Weight()>16)
-			ContextList[C].HalveCounts();
-	}//C
-}
-
-inline int BandCodec::ChooseContext(const PicArray& Data) const{return NZ_BIN5plus_CTX;}
-
-//////////////////////////////////////////////////////////////////////////////////
-//Now for special class for LF bands (since we don't want/can't refer to parent)//
-//////////////////////////////////////////////////////////////////////////////////
 
 //! A class specially for coding the LF subbands 
 /*!
     A class specially for coding the LF subbands, where we don't want to/can't refer to the 
 	parent subband.
 */
-class LFBandCodec: public BandCodec{
+class LFBandCodec: public BandCodec
+{
 public:
     //! Constructor for encoding
     /*!
@@ -231,8 +164,11 @@ public:
 		/param	band_list	the set of all the subbands
 		/param 	band_num	the number of the subband being coded 
      */		
-	LFBandCodec(BasicOutputManager* bits_out, const std::vector<Context>& ctxs,const SubbandList& band_list,int band_num):
-	BandCodec(bits_out,ctxs,band_list,band_num){}
+	LFBandCodec(BasicOutputManager* bits_out,
+                size_t number_of_contexts,
+                const SubbandList& band_list,
+                int band_num)
+          : BandCodec(bits_out,number_of_contexts,band_list,band_num){}
 
 	//! Constructor for decoding
     /*!
@@ -242,14 +178,16 @@ public:
 		/param	band_list	the set of all the subbands
 		/param 	band_num	the number of the subband being decoded 
      */
-	LFBandCodec(BitInputManager* bits_in, const std::vector<Context>& ctxs,const SubbandList& band_list,int band_num):
-	BandCodec(bits_in,ctxs,band_list,band_num){}
+	LFBandCodec(BitInputManager* bits_in,
+                size_t number_of_contexts,
+                const SubbandList& band_list,
+                int band_num)
+      : BandCodec(bits_in,number_of_contexts,band_list,band_num){}
 
-protected:
+private:
 	virtual void DoWorkCode(PicArray& InData);					//overridden from the base class
 	virtual void DoWorkDecode(PicArray& OutData, int num_bits); //ditto
 
-private:
 	LFBandCodec(const LFBandCodec& cpy);			//private, bodyless copy constructor: class should not be copied
 	LFBandCodec& operator=(const LFBandCodec& rhs);	//private, bodyless copy operator=: class should not be assigned
 
@@ -265,7 +203,8 @@ private:
 	A class specially for coding the DC subband of Intra frames, using intra-band prediction 
 	of coefficients.
 */
-class IntraDCBandCodec: public BandCodec{
+class IntraDCBandCodec: public BandCodec
+{
 public:
     //! Constructor for encoding
     /*!
@@ -275,8 +214,10 @@ public:
 		/param	band_list	the set of all the subbands
 		/param 	band_num	the number of the subband being coded 
      */
-	IntraDCBandCodec(BasicOutputManager* bits_out, const std::vector<Context>& ctxs,const SubbandList& band_list):
-	BandCodec(bits_out,ctxs,band_list,band_list.Length()){}
+	IntraDCBandCodec(BasicOutputManager* bits_out,
+                     size_t number_of_contexts,
+                     const SubbandList& band_list)
+	  : BandCodec(bits_out,number_of_contexts,band_list,band_list.Length()){}
 
 	//! Constructor for decoding
     /*!
@@ -286,18 +227,19 @@ public:
 		/param	band_list	the set of all the subbands
 		/param 	band_num	the number of the subband being decoded 
      */	
-	IntraDCBandCodec(BitInputManager* bits_in, const std::vector<Context>& ctxs,const SubbandList& band_list):
-	BandCodec(bits_in,ctxs,band_list,band_list.Length()){}
+	IntraDCBandCodec(BitInputManager* bits_in,
+                     size_t number_of_contexts,
+                     const SubbandList& band_list)
+      : BandCodec(bits_in,number_of_contexts,band_list,band_list.Length()){}
 
-protected:
+private:
 	virtual void DoWorkCode(PicArray& InData);					//overridden from the base class
 	virtual void DoWorkDecode(PicArray& OutData, int num_bits); //ditto
 
-private:
 	IntraDCBandCodec(const IntraDCBandCodec& cpy);				//private, bodyless copy constructor: class should not be copied
 	IntraDCBandCodec& operator=(const IntraDCBandCodec& rhs);	//private, bodyless copy operator=: class should not be assigned
 
-	ValueType GetPrediction(PicArray& Data);//prediction of a DC value from its previously coded neighbours
+	ValueType GetPrediction(const PicArray& Data) const;//prediction of a DC value from its previously coded neighbours
 };
 
 #endif

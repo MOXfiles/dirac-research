@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -33,43 +35,6 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.4  2004-06-18 15:58:37  tjdwave
-* Removed chroma format parameter cformat from CodecParams and derived
-* classes to avoid duplication. Made consequential minor mods to
-* seq_{de}compress and frame_{de}compress code.
-* Revised motion compensation to use built-in arrays for weighting
-* matrices and to enforce their const-ness.
-* Removed unnecessary memory (de)allocations from Frame class copy constructor
-* and assignment operator.
-*
-* Revision 1.3  2004/05/12 08:35:35  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
-* Modifications to allow compilation by Visual C++ 6.0
-* Changed local for loop declarations into function-wide definitions
-* Replaced variable array declarations with new/delete of dynamic array
-* Added second argument to allocator::alloc calls, since MS has no default
-* Fixed missing and namespace problems with min, max, cos, and abs
-* Added typedef unsigned int uint (MS does not have this)
-* Added a few missing std:: qualifiers that GCC didn't require
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:09  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
 
 #include "libdirac_motionest/motion_estimate.h"
 #include "libdirac_motionest/block_match.h"
@@ -82,32 +47,35 @@
 #include <vector>
 
 using std::vector;
+using std::log;
 
-MotionEstimator::MotionEstimator(const EncoderParams& params): encparams(params){
-}
+MotionEstimator::MotionEstimator(const EncoderParams& params)
+:
+encparams(params)
+{}
 
 void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data){
 
 	const FrameParams& fparams=my_buffer.GetFrame(frame_num).GetFparams();
 
-	if (fparams.fsort!=I_frame)
+	if (fparams.FSort() != I_frame)
 	{
-		if (encparams.VERBOSE)		
+		if (encparams.Verbose())		
 			std::cerr<<std::endl<<"Doing initial search ...";
 		DoHierarchicalSearch(my_buffer,frame_num,mv_data);
 
-		if (encparams.VERBOSE)
+		if (encparams.Verbose())
 			std::cerr<<std::endl<<"Doing sub-pixel refinement ...";
 		DoFinalSearch(my_buffer,frame_num,mv_data);				
 
-		if (encparams.VERBOSE)
+		if (encparams.Verbose())
 			std::cerr<<std::endl<<"Doing mode decision ...";
 		ModeDecider my_mode_dec(encparams);
 		my_mode_dec.DoModeDecn(my_buffer,frame_num,mv_data);
 
-		if (fparams.cformat!=Yonly)
+		if (fparams.CFormat() != Yonly)
 		{
-			if (encparams.VERBOSE)
+			if (encparams.Verbose())
 				std::cerr<<std::endl<<"Setting chroma DC values ... ";
 			SetChromaDC(my_buffer,frame_num,mv_data);	
 		}
@@ -116,24 +84,33 @@ void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MvData& 
 
 void MotionEstimator::DoHierarchicalSearch(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data){
  	//does an initial search using hierarchical matching to get guide vectors	
-	int ref1,ref2;
-	depth=4;
+
+	const PicArray& pic_data=my_buffer.GetComponent(frame_num,Y);
+
+	//set the number of downconversion levels	
+	depth = ( int) std::min( log(((double) pic_data.length(0))/12.0)/log(2.0) , log(((double) pic_data.length(1))/12.0)/log(2.0) );
+	depth = std::min( 4, depth );
+
 	int scale_factor;//factor by which pics have been downconverted
+
 	const OLBParams& bparams=encparams.LumaBParams(2);
 
 	DownConverter mydcon;
-	OneDArray<PicArray*> ref1_down(Range(1,depth));//down-converted pictures	
+
+	//down-converted pictures
+	OneDArray<PicArray*> ref1_down(Range(1,depth));
 	OneDArray<PicArray*> ref2_down(Range(1,depth));
 	OneDArray<PicArray*> pic_down(Range(1,depth));
 	OneDArray<MvData*> mv_data_set(Range(1,depth));
 
-	const PicArray& pic_data=my_buffer.GetComponent(frame_num,Y);
-	const vector<int>& refs=my_buffer.GetFrame(frame_num).GetFparams().refs;
+	int ref1,ref2;
+	const vector<int>& refs=my_buffer.GetFrame(frame_num).GetFparams().Refs();
 	ref1=refs[0];
 	if (refs.size()>1)
 		ref2=refs[1];
 	else	
 		ref2=ref1;
+
 	const PicArray& ref1_data=my_buffer.GetComponent(ref1,Y);
 	const PicArray& ref2_data=my_buffer.GetComponent(ref2,Y);
 
@@ -219,10 +196,10 @@ int ref_id,int level){
 
  	//set lambda
 	float loc_lambda;
-	if (fsort==L1_frame)
-		loc_lambda=encparams.L1_ME_lambda/pow(2.0,level);
+	if (fsort == L1_frame)
+		loc_lambda=encparams.L1MELambda()/pow(2.0,level);
 	else//must have an L2 frame
-		loc_lambda=encparams.L2_ME_lambda/pow(2.0,level);
+		loc_lambda=encparams.L2MELambda()/pow(2.0,level);
 	MVector tmp_mv;	
 	MvArray* mv_array;
 	const MvArray* guide_array;
@@ -265,7 +242,7 @@ int ref_id,int level){
 	vect_list.erase(vect_list.begin()+1,vect_list.end());
 
 	//now do the rest of the first row
-	matchparams.me_lambda=loc_lambda/float(encparams.Y_NUMBLOCKS);//use reduced lambda to start with
+	matchparams.me_lambda=loc_lambda/float(encparams.YNumBlocks());//use reduced lambda to start with
 	for (int I=1;I<xnum;++I){
 		if (level<depth){//use guide from lower down
 			tmp_mv.x=(*guide_array)[0][I>>1].x<<1;//scale up the
@@ -291,7 +268,7 @@ int ref_id,int level){
 		}
 
 		matchparams.mv_pred=(*mv_array)[J-1][0];
-		matchparams.me_lambda=loc_lambda/float(encparams.X_NUMBLOCKS);
+		matchparams.me_lambda=loc_lambda/float(encparams.XNumBlocks());
 		AddNewVlistD(vect_list,matchparams.mv_pred,xr,yr);
 		matchparams.Init(0,J);
 		(*block_costs)[J][0]=FindBestMatch(matchparams);
@@ -322,7 +299,7 @@ int ref_id,int level){
 		}		
 
 		matchparams.mv_pred=MvMean((*mv_array)[J-1][xnum-1],(*mv_array)[J][xnum-2]);
-		matchparams.me_lambda=loc_lambda/float(encparams.X_NUMBLOCKS);
+		matchparams.me_lambda=loc_lambda/float(encparams.XNumBlocks());
 		AddNewVlistD(vect_list,matchparams.mv_pred,xr,yr);
 		matchparams.Init(xnum-1,J);
 		(*block_costs)[J][xnum-1]=FindBestMatch(matchparams);

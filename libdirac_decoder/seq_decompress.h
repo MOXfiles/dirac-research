@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -33,28 +35,6 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.2  2004/03/29 01:52:08  chaoticcoyote
-* Added Doxygen comments
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:09  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
 
 #ifndef _SEQ_DECOMPRESS_H_
 #define _SEQ_DECOMPRESS_H_
@@ -113,7 +93,7 @@ public:
         Indicates whether or not the last frame in the sequence has been decompressed.
         \return     true if last frame has been compressed; false if not
     */
-	bool Finished() { return all_done; }
+	bool Finished() { return m_all_done; }
 
     //! Interrogates for decompression parameters.
     /*!
@@ -121,7 +101,7 @@ public:
 
         /return decompression parameters originally provide din the constructor.
      */
-	SeqParams & GetSeqParams() { return sparams; }
+	SeqParams & GetSeqParams() { return m_sparams; }
 
 private:
 	//! Copy constructor is private and body-less
@@ -146,25 +126,26 @@ private:
      */
 	void ReadStreamHeader();	
 
-    //! Completion flag, returned via the Finished method
-	bool all_done;
+	//Member variables
 
+    //! Completion flag, returned via the Finished method
+	bool m_all_done;
     //! Parameters for the decompression, as provided in constructor
-	DecoderParams decparams;
+	DecoderParams m_decparams;
 	//! The sequence parameters obtained from the stream header
-	SeqParams sparams;
+	SeqParams m_sparams;
 	//! A picture buffer used for local storage of frames whilst pending re-ordering or being used for reference.
-	FrameBuffer* my_buffer;
+	FrameBuffer* m_fbuffer;
 	//! Input file pointer, pointing at the bitstream
-	std::ifstream* infile;			
+	std::ifstream* m_infile;			
     //! Number of the frame in coded order which is to be decoded
-	int current_code_fnum;		
+	int m_current_code_fnum;		
     //! A delay so that we don't display what we haven't decoded
-	int delay;					
+	int m_delay;					
     //! Index, in display order, of the last frame read
-	int last_frame_read;
+	int m_last_frame_read;
 	//! Index, in display order of the frame to be displayed next - computed from delay and current_code_fnum
-	int show_fnum;
+	int m_show_fnum;
 };
 
 #endif

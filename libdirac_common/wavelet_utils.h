@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -33,51 +35,11 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.6  2004-06-22 10:10:05  asuraparaju
-* Modified doxygen comments to match the declaration of member function
-* SetBandWeights in class WaveletTransform.
-*
-* Revision 1.5  2004/06/18 15:58:36  tjdwave
-* Removed chroma format parameter cformat from CodecParams and derived
-* classes to avoid duplication. Made consequential minor mods to
-* seq_{de}compress and frame_{de}compress code.
-* Revised motion compensation to use built-in arrays for weighting
-* matrices and to enforce their const-ness.
-* Removed unnecessary memory (de)allocations from Frame class copy constructor
-* and assignment operator.
-*
-* Revision 1.4  2004/05/26 14:31:39  tjdwave
-* Added doxygen comments to describe how perceptual weighting now incorporates
-* scaling factors from the scaling.
-*
-* Revision 1.3  2004/05/12 08:35:34  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
-* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:09  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
-
 #ifndef _WAVELET_UTILS_H_
 #define _WAVELET_UTILS_H_
 
-#include "libdirac_common/arrays.h"
-#include "libdirac_common/common.h"
+#include <libdirac_common/arrays.h>
+#include <libdirac_common/common.h>
 #include <vector>
 #include <cmath>
 #include <iostream>
@@ -88,11 +50,13 @@
 class PicArray;
 
 //! Class encapsulating all the metadata relating to a wavelet subband
-class Subband{
+class Subband
+{
 public:
 
 	//! Default constructor
-	Subband(){}
+	Subband();
+
     //! Constructor
     /*!
         The constructor parameters are
@@ -101,14 +65,7 @@ public:
 		/param	xlen	the width of the subband
 		/param	ylen	the height of the subband
      */	
-	Subband(int xpos,int ypos, int xlen, int ylen): 
-	xps(xpos),
-	yps(ypos),
-	xln(xlen),
-	yln(ylen),
-	wgt(1),
-	qfac(8)
-	{}
+	Subband(int xpos, int ypos, int xlen, int ylen);
 
     //! Constructor
     /*!
@@ -119,59 +76,71 @@ public:
 		/param	ylen	the height of the subband
 		/param	d		the depth of the subband in the wavelet transform
      */	
-	Subband(int xpos,int ypos, int xlen, int ylen, int d):
-	xps(xpos),
-	yps(ypos),
-	xln(xlen), 
-	yln(ylen),
-	wgt(1),
-	dpth(d),
-	qfac(8)
-	{}
+	Subband(int xpos, int ypos, int xlen, int ylen, int d);
 
 	//! Destructor
-	~Subband(){}
+	~Subband();
 
 	//Default (shallow) copy constructor and operator= used
 
-	//gets ...
 	//! Return the width of the subband
 	int Xl() const {return xln;}
+    
 	//! Return the horizontal position of the subband
 	int Xp() const {return xps;}
+    
 	//! Return the height of the subband
 	int Yl() const {return yln;}
+    
 	//! Return the vertical position of the subband
 	int Yp() const {return yps;}
+    
 	//! Return the index of the maximum bit of the largest coefficient
 	int Max() const {return max_bit;}
+    
 	//! Return the subband perceptual weight
 	double Wt() const {return wgt;}
+    
 	//! Return the depth of the subband in the transform
 	int Depth() const {return dpth;}
+    
 	//! Return the scale of the subband, viewed as a subsampled version of the picture
 	int Scale() const {return (1<<dpth);}
+    
 	//! Return a quantisation factor
 	int Qf(int n) const {return qfac[n];}
+    
 	//! Return the index of the parent subband
 	int Parent() const {return prt;}
+    
 	//! Return the indices of any child subbands
 	std::vector<int> Children() const {return childvec;}
+    
 	int Child(int n) const {return childvec[n];}
 
 	// ... and sets
 	//! Set the perceptual weight
-	void SetQf(int n, int q){if (n>=qfac.lbound(0) && n<=qfac.ubound(0)) qfac[n]=q;}
+	void SetQf(int n, int q)
+    {
+        if (n >= qfac.lbound(0) && n<=qfac.ubound(0))
+            qfac[n]=q;
+    }
+    
 	//! Set the perceptual weight
 	void SetWt(float w){wgt=w;}
+    
 	//! Set the parent index
 	void SetParent(int p){prt=p;}
+    
 	//! Set the subband depth
 	void SetDepth(int d){dpth=d;}
+    
 	//! Set the index of the maximum bit of the largest coefficient
 	void SetMax(int m){max_bit=m;};
+    
 	//! Set the indices of the children of the subband
 	void SetChildren(std::vector<int>& clist){childvec=clist;}
+    
 	//! Add a child to the list of child subbands
 	void AddChild(int c){childvec.push_back(c);}
 
@@ -186,7 +155,8 @@ private:
 };
 
 //!	A class encapulating all the subbands produced by a transform
-class SubbandList {
+class SubbandList
+{
 public:
 	//! Constructor
 	SubbandList(){}
@@ -197,50 +167,40 @@ public:
 	//Default (shallow) copy constructor and operator= used
 	//! Initialise the list
 	void Init(const int depth,const int xlen,const int ylen);
+    
 	//! Return the length of the subband list	
 	int Length() const {return bands.size();}
+    
 	//! Return the subband at position n (1<=n<=length)
 	Subband& operator()(int n){return bands[n-1];}
+    
 	//! Return the subband at position n (1<=n<=length)	
 	const Subband& operator()(int n) const {return bands[n-1];}	
+    
 	//! Add a band to the list
 	void AddBand(Subband& b){bands.push_back(b);}
+    
 	//! Remove all the bands from the list	
 	void Clear(){bands.clear();}
+    
 private:	
 	std::vector<Subband> bands;
 };
-
-//! A class encapsulating the parameters needed to set up the wavelet transform
-class WaveletTransformParams{
-
-public:
-	//! Constructor
-	WaveletTransformParams():depth(4),filt_sort(DAUB){}	
-	//! Constructor
-	WaveletTransformParams(int d):depth(d),filt_sort(DAUB){}		
-	//! Destructor
-	~WaveletTransformParams(){}
-
-	//! Depth of the transform
-	int depth;
-	//! The filter set to be used (only Daubechies supported at present)
-	WltFilter filt_sort;	
-};
-
 
 //! A class to do wavelet transforms
 /*!
 	A class to do forward and backward wavelet transforms by iteratively splitting or merging the
 	lowest frequency band.
 */
-class WaveletTransform {
+class WaveletTransform
+{
 public:
 	//! Constructor
-	WaveletTransform(WaveletTransformParams p): params(p){}
-
+	// WaveletTransform(WaveletTransformParams p);
+    WaveletTransform(int d = 4, WltFilter f = DAUB);
+        
 	//! Destructor
-	virtual ~WaveletTransform(){}
+	virtual ~WaveletTransform();
 
 	//! Transforms the data to and from the wavelet domain
 	/*!
@@ -249,34 +209,43 @@ public:
 		/param	pic_data	the data to be transformed
 	*/
 	void Transform(const Direction d, PicArray& pic_data);
-
+    
 	//! Returns the set of subbands
 	SubbandList& BandList(){return band_list;}
-
+    
 	//! Returns the set of subbands
 	const SubbandList& BandList() const {return band_list;}
-
+    
 	//! Sets the subband weights
 	/*!
 		Sets perceptual weights for the subbands. Takes into account both perceptual factors
 		(weight noise less at higher spatial frequencies) and the scaling needed for the 
 		wavelet transform. 
 
-		\param	cpd		perceptual weights cycles per degree
-		\param	fsort	frame sort (I, L1 or L2)
-		\param	cformat	Chroma format type
+		\param	cpd	perctual factor - the number of cycles per degree
+		\param	fparams	the frame parameters, such as the frame sort (I, L1 or L2)
 		\param	csort	the component type (Y, U or V)  
 	*/
-	void SetBandWeights(float cpd ,FrameSort fsort , ChromaFormat cformat , CompSort csort);
+	void SetBandWeights (const float cpd,
+                         const FrameParams & fparams,
+                         const CompSort csort);
 
 private:
 	//other private variables	
-	WaveletTransformParams params;
+	// WaveletTransformParams params;
+
 	SubbandList band_list;
+
+	//! Depth of the transform
+	int depth;
+    
+	//! The filter set to be used (only Daubechies supported at present)
+	WltFilter filt_sort;	
 
 	//functions
 	//!	Private, bodyless copy constructor: class should not be copied
 	WaveletTransform(const WaveletTransform& cpy);
+    
 	//! Private, bodyless copy operator=: class should not be assigned
 	WaveletTransform& operator=(const WaveletTransform& rhs);
 

@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -51,7 +53,7 @@ In YUV411 format the U and V colour components are
 subsampled 4:1 horizontally.
 
 Original Author: Tim Borer
-/*****************************************************************/
+****************************************************************/
 
 #include <stdlib.h> //Contains EXIT_SUCCESS, EXIT_FAILURE
 #include <iostream> //For cin, cout, cerr
@@ -190,4 +192,3 @@ int main(int argc, char * argv[] ) {
 
     return EXIT_SUCCESS;
 }
-

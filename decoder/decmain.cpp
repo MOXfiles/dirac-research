@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -32,48 +34,6 @@
 * your version of this file under the terms of any one of the MPL, the GPL
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
-
-
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.8  2004-05-24 15:59:31  tjdwave
-* Changed CLI names and functions to house style.
-*
-* Revision 1.7  2004/05/20 12:38:29  tjdwave
-* Fixed minor bug with -verbose option to make it true boolean.
-*
-* Revision 1.6  2004/05/19 17:39:34  chaoticcoyote
-* Restored make_debug.sh to it's proper function
-* Modified command line parser to correctly handle boolean options
-*
-* Revision 1.5  2004/05/14 17:27:13  stuart_hc
-* Added better error checking.
-*
-* Revision 1.4  2004/05/12 16:04:20  tjdwave
-*
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.3  2004/05/11 14:17:58  tjdwave
-* Removed dependency on XParam CLI library for both encoder and decoder.
-*
-* Revision 1.2  2004/04/12 01:57:46  chaoticcoyote
-* Fixed problem Intel C++ had in finding xparam headers on Linux
-* Solved Segmentation Fault bug in pic_io.cpp
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:08  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
 
 #include <iostream>
 #include <fstream>
@@ -165,7 +125,7 @@ int main(int argc, char* argv[]) {
 			std::cerr << "Can't open " << bit_name << std::endl;
 			exit(1);
 		}
-		SequenceDecompressor mydecompress(&infile,verbose);
+		SequenceDecompressor mydecompress( &infile , verbose );
 		SeqParams& sparams=mydecompress.GetSeqParams();
 
 	 /******************************************************************/
@@ -179,7 +139,7 @@ int main(int argc, char* argv[]) {
 		clock_t start_t, stop_t;
 		start_t=clock();
 		mydecompress.DecompressNextFrame();
-		for (int I=0;I<sparams.zl;++I)
+		for (int I=0;I<sparams.Zl();++I)
 			myoutputpic.WriteNextFrame(mydecompress.DecompressNextFrame());
 		stop_t=clock();
 
@@ -187,7 +147,7 @@ int main(int argc, char* argv[]) {
 		infile.close();
 
 		if (verbose){
-			std::cerr<<"Time per frame: "<<diff/double(CLOCKS_PER_SEC*sparams.zl);
+			std::cerr<<"Time per frame: "<<diff/double(CLOCKS_PER_SEC*sparams.Zl());
 			std::cerr<<std::endl<<"Finished decoding";
 		}
 

@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -55,7 +57,7 @@ Return value: as _setmode function for Windows (-1 indicates error)
               0 for *nix (always succeeds)
 
 Original author: Tim Borer
-/*****************************************************************/
+****************************************************************/
 
 #ifndef dirac_utilities_setstdiomode
 #define dirac_utilities_setstdiomode
@@ -70,4 +72,3 @@ namespace dirac_vu { //dirac video utilities namespace
 }  // end namespace dirac_vu
 
 #endif // dirac_utilities_setstdiomode
-

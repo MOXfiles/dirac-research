@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Richard Felton (Original Author), Thomas Davies
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -33,44 +35,7 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.6  2004-06-18 15:58:36  tjdwave
-* Removed chroma format parameter cformat from CodecParams and derived
-* classes to avoid duplication. Made consequential minor mods to
-* seq_{de}compress and frame_{de}compress code.
-* Revised motion compensation to use built-in arrays for weighting
-* matrices and to enforce their const-ness.
-* Removed unnecessary memory (de)allocations from Frame class copy constructor
-* and assignment operator.
-*
-* Revision 1.5  2004/05/24 12:38:55  tjdwave
-* Replaced spagetti code for linear interpolation in motion compensation
-* and motion estimation routines with simple loops. Code is much clearer,
-* although possibly slightly slower.
-*
-* Revision 1.3  2004/05/19 09:16:48  tjdwave
-* Replaced zero-padding with edge-padding to eliminate colour-fringeing at low bitrates. Mod to set padded values to 0 when compensating frames.
-*
-* Revision 1.2  2004/05/12 08:35:34  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:09  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-* Motion compensation by Richard Felton, with mods by Thomas Davies.
-*/
 
-//Implements the motion compensation functions outlined in mot_comp.h
 #include "libdirac_common/mot_comp.h"
 #include "libdirac_common/motion.h"
 #include "libdirac_common/frame_buffer.h"
@@ -108,13 +73,13 @@ void MotionCompensator::CompensateFrame(FrameBuffer& my_buffer,int fnum,const Mv
 
 	int ref1_idx,ref2_idx;	
 	Frame& my_frame=my_buffer.GetFrame(fnum);
-	ChromaFormat cformat=my_frame.GetFparams().cformat;
-	const FrameSort& fsort=my_frame.GetFparams().fsort;
+	const ChromaFormat& cformat=my_frame.GetFparams().CFormat();
+	const FrameSort& fsort=my_frame.GetFparams().FSort();
 
 	if (fsort!=I_frame)
 	{//we can motion compensate
 
-		const vector<int>& refs=my_frame.GetFparams().refs;
+		const vector<int>& refs=my_frame.GetFparams().Refs();
 		if (refs.size()>0)
 		{
 			//extract the references
@@ -218,17 +183,17 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 	//Loop over all the block rows
 
 	Pos.y=-bparams.YOFFSET;
-	for(int yBlock = 0; yBlock < cparams.Y_NUMBLOCKS; ++yBlock)
+	for(int yBlock = 0; yBlock < cparams.YNumBlocks(); ++yBlock)
 	{
 		Pos.x=-bparams.XOFFSET;
 		//loop over all the blocks in a row
-		for(int xBlock = 0 ; xBlock < cparams.X_NUMBLOCKS; ++xBlock)
+		for(int xBlock = 0 ; xBlock < cparams.XNumBlocks(); ++xBlock)
 		{
 
 			//Decide which weights to use.
-			if((xBlock != 0)&&(xBlock < cparams.X_NUMBLOCKS - 1))
+			if((xBlock != 0)&&(xBlock < cparams.XNumBlocks() - 1))
 			{
-				if((yBlock != 0)&&(yBlock < cparams.Y_NUMBLOCKS - 1))	
+				if((yBlock != 0)&&(yBlock < cparams.YNumBlocks() - 1))	
 					wgt_idx = 4;
 				else if(yBlock == 0) 
 					wgt_idx = 1;
@@ -237,7 +202,7 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 			}
 			else if(xBlock == 0)
 			{
-				if((yBlock != 0)&&(yBlock < cparams.Y_NUMBLOCKS - 1))	
+				if((yBlock != 0)&&(yBlock < cparams.YNumBlocks() - 1))	
 					wgt_idx= 3;
 				else if(yBlock == 0) 
 					wgt_idx= 0;
@@ -246,7 +211,7 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 			}
 			else
 			{
-				if((yBlock != 0)&&(yBlock < cparams.Y_NUMBLOCKS - 1))	
+				if((yBlock != 0)&&(yBlock < cparams.YNumBlocks() - 1))	
 					wgt_idx= 5;
 				else if(yBlock == 0) 
 					wgt_idx= 2;
@@ -304,7 +269,7 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 		if (add_or_sub==SUBTRACT)
 		{//only need to do this when we're subtracting
 			for (int y=yBlock*bparams.YBSEP;y<(yBlock+1)*bparams.YBSEP;++y){
-				for (int x=(cparams.X_NUMBLOCKS*bparams.XBSEP);x<pic_data.length(0);++x){
+				for (int x=(cparams.XNumBlocks()*bparams.XBSEP);x<pic_data.length(0);++x){
 					pic_data[y][x]=0;
 				}//x
 			}//y
@@ -318,7 +283,7 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 	if (add_or_sub==SUBTRACT)
 
 	{//only need to do this when we're subtracting
-		for (int y=cparams.Y_NUMBLOCKS*bparams.YBSEP;y<pic_data.length(1);++y)
+		for (int y=cparams.YNumBlocks()*bparams.YBSEP;y<pic_data.length(1);++y)
 		{
 			for (int x=0;x<pic_data.length(0);++x)
 			{

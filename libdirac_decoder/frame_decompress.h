@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -33,47 +35,13 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.5  2004-06-18 15:58:36  tjdwave
-* Removed chroma format parameter cformat from CodecParams and derived
-* classes to avoid duplication. Made consequential minor mods to
-* seq_{de}compress and frame_{de}compress code.
-* Revised motion compensation to use built-in arrays for weighting
-* matrices and to enforce their const-ness.
-* Removed unnecessary memory (de)allocations from Frame class copy constructor
-* and assignment operator.
-*
-* Revision 1.4  2004/05/24 16:03:48  tjdwave
-* Support for IO error handling. Decoder freezes on last frame if out of data.
-*
-* Revision 1.3  2004/05/12 08:35:34  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.2  2004/03/29 01:52:08  chaoticcoyote
-* Added Doxygen comments
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:08  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
+
 
 #ifndef _FRAME_DECOMPRESS_H_
 #define _FRAME_DECOMPRESS_H_
 
 #include "libdirac_common/frame_buffer.h"
 #include "libdirac_common/common.h"
-class MvData;
 
 //! Compress a single image frame
 /*!
@@ -91,10 +59,7 @@ public:
         \param  decp	decoder parameters
 		\param  cf		the chroma format of the frame being decompressed
     */
-	FrameDecompressor(const DecoderParams& decp, ChromaFormat cf): 
-	decparams(decp),
-	cformat(cf)
-	{}
+	FrameDecompressor(DecoderParams& decp, ChromaFormat cf);
 
     //! Decompress the next frame into the buffer
     /*!
@@ -120,33 +85,32 @@ private:
 	*/
 	FrameDecompressor& operator=(const FrameDecompressor& rhs);
 
-	//! Parameters for the decompression, as provided in constructor
-	DecoderParams decparams;
-
-	//! Chroma format of the frame being decompressed
-	ChromaFormat cformat;
-
-    //! Motion vector data
-	MvData* mv_data;
-
-	//! An indicator which is true if the frame has been skipped, false otherwise
-	bool skipped;
-
-	//! An indicator that is true if we use global motion vectors, false otherwise
-	bool use_global;
-
-	//! An indicator that is true if we use block motion vectors, false otherwise
-	bool use_block_mv;
-
-	//! Prediction mode to use if we only have global motion vectors
-	PredMode global_pred_mode;
-
-
 	//! Decodes component data	
 	void CompDecompress(FrameBuffer& my_buffer,int fnum, CompSort cs);
 
 	//! Reads the header data associated with decompressing the frame
 	bool ReadFrameHeader(FrameParams& fparams);	//read the frame header data
+
+	//Member variables	
+
+	//! Parameters for the decompression, as provided in constructor
+	DecoderParams& m_decparams;
+
+	//! Chroma format of the frame being decompressed
+	ChromaFormat m_cformat;
+
+	//! An indicator which is true if the frame has been skipped, false otherwise
+	bool m_skipped;
+
+	//! An indicator that is true if we use global motion vectors, false otherwise
+	bool m_use_global;
+
+	//! An indicator that is true if we use block motion vectors, false otherwise
+	bool m_use_block_mv;
+
+	//! Prediction mode to use if we only have global motion vectors
+	PredMode m_global_pred_mode;
+
 };
 
 #endif

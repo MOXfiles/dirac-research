@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -49,7 +51,7 @@ component. That is the colour component are multiplexed framewise,
 rather than pixel wise or in some other way.
 
 Original author: Tim Borer
-/*****************************************************************/
+****************************************************************/
 
 #include <stdlib.h> //Contains EXIT_SUCCESS, EXIT_FAILURE
 #include <iostream> //For cin, cout, cerr
@@ -153,4 +155,3 @@ int main(int argc, char * argv[] ) {
 
     return EXIT_SUCCESS;
 }
-

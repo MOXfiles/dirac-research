@@ -38,6 +38,9 @@ the codec can be found at http://www.bbc.co.uk/rd/projects/dirac.
 
   GNU/Linux, Unix, MacOS X, Cygwin, Mingw
   ---------------------------------------
+     ./configure --enable-debug
+	    (to enable g++ compile options -Wall -pedantic)
+     OR
      ./configure
      make
      make install

@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -205,10 +207,10 @@ const PicArray& FrameBuffer::GetUpComponent(unsigned int fnum, CompSort c) const
 
 void FrameBuffer::PushFrame(unsigned int frame_num){//Put a new frame onto the top of the stack using built-in frame parameters
 													//with frame number frame_num
-	fparams.fnum=frame_num;
+	fparams.SetFrameNum(frame_num);
 	Frame* fptr=new Frame(fparams);
 	frame_data.push_back(fptr);
-	std::pair<unsigned int,unsigned int> temp_pair(fparams.fnum,frame_data.size()-1);
+	std::pair<unsigned int,unsigned int> temp_pair(fparams.FrameNum() , frame_data.size()-1);
 	fnum_map.insert(temp_pair);
 }
 
@@ -216,7 +218,7 @@ void FrameBuffer::PushFrame(const FrameParams& fp){	//Put a new frame onto the t
 
 	Frame* fptr=new Frame(fp);
 	frame_data.push_back(fptr);
-	std::pair<unsigned int,unsigned int> temp_pair(fp.fnum,frame_data.size()-1);
+	std::pair<unsigned int,unsigned int> temp_pair(fp.FrameNum() , frame_data.size()-1);
 	fnum_map.insert(temp_pair);
 }
 
@@ -232,7 +234,8 @@ void FrameBuffer::PushFrame(PicInput* picin, unsigned int fnum){	//Read a frame 
 	PushFrame(picin,fparams);
 }
 
-void FrameBuffer::Remove(unsigned int pos){//remove frame fnum from the buffer, shifting everything above down
+void FrameBuffer::Remove(unsigned int pos)
+{//remove frame fnum from the buffer, shifting everything above down
 
 	std::pair<unsigned int,unsigned int>* tmp_pair;
 
@@ -245,7 +248,7 @@ void FrameBuffer::Remove(unsigned int pos){//remove frame fnum from the buffer, 
  		//make a new map
 		fnum_map.clear();
 		for (unsigned int I=0;I<frame_data.size();++I){
-			tmp_pair=new std::pair<unsigned int,unsigned int>(frame_data[I]->GetFparams().fnum,I);
+			tmp_pair=new std::pair<unsigned int,unsigned int>(frame_data[I]->GetFparams().FrameNum() , I);
 			fnum_map.insert(*tmp_pair);		
 			delete tmp_pair;
 		}//I
@@ -253,58 +256,76 @@ void FrameBuffer::Remove(unsigned int pos){//remove frame fnum from the buffer, 
 	}
 }
 
-void FrameBuffer::Clean(int fnum){//clean out all frames that have expired
+void FrameBuffer::Clean(int fnum)
+{//clean out all frames that have expired
 	for (unsigned int I=0;I<frame_data.size();++I){
-		if ((frame_data[I]->GetFparams().fnum+frame_data[I]->GetFparams().expiry_time)<=fnum)
+		if ((frame_data[I]->GetFparams().FrameNum() + frame_data[I]->GetFparams().ExpiryTime() )<=fnum)
 			Remove(I);
 	}//I
 }
 
-void FrameBuffer::SetFrameParams(unsigned int fnum){	//set the frame parameters, given the GOP set-up and the frame number in display order
-														//This function can be ignored by setting the frame parameters directly if required
+void FrameBuffer::SetFrameParams(unsigned int fnum)
+{	//set the frame parameters, given the GOP set-up and the frame number in display order
+	//This function can be ignored by setting the frame parameters directly if required
 
-	fparams.fnum=fnum;
-	fparams.refs.clear();	
+	fparams.SetFrameNum( fnum );
+	fparams.Refs().clear();	
 
-	if (gop_len>0){
+	if ( gop_len>0 )
+	{
 
-		if (fnum%gop_len==0){
-			fparams.fsort=I_frame;
-			fparams.expiry_time=gop_len;//expires after we've coded the next I frame
+		if (fnum%gop_len == 0)
+		{
+			fparams.SetFSort( I_frame );
+
+			//expires after we've coded the next I frame
+			fparams.SetExpiryTime( gop_len );
 		}
-		else if (fnum % L1_sep==0){
-			fparams.fsort=L1_frame;
-			fparams.refs.push_back((fnum/gop_len)*gop_len);//ref the last I frame
+		else if (fnum % L1_sep == 0)
+		{
+			fparams.SetFSort( L1_frame );
+			fparams.Refs().push_back((fnum/gop_len)*gop_len);//ref the last I frame
+
 			if ((fnum-L1_sep) % gop_len>0)//we don't have the first L1 frame	
-				fparams.refs.push_back(fnum-L1_sep);//other ref is the prior L1 frame
-			fparams.expiry_time=L1_sep;//expires after the next L1 or I frame
+				fparams.Refs().push_back(fnum-L1_sep);//other ref is the prior L1 frame
+
+            //expires after the next L1 or I frame			
+			fparams.SetExpiryTime( L1_sep );
 		}
-		else{
-			fparams.fsort=L2_frame;
-			fparams.refs.push_back((fnum/L1_sep)*L1_sep);
-			fparams.refs.push_back(((fnum/L1_sep)+1)*L1_sep);
-			fparams.expiry_time=1;	//L2 frames could expire directly after being coded, but putting in a delay of 1
+		else
+		{
+			fparams.SetFSort( L2_frame );
+			fparams.Refs().push_back((fnum/L1_sep)*L1_sep);
+			fparams.Refs().push_back(((fnum/L1_sep)+1)*L1_sep);
+
+			fparams.SetExpiryTime( 1 );	//L2 frames could expire directly after being coded, but putting in a delay of 1
 										//allows for frame-skipping to be done, since the frame will still be around to
 										//be used if the next frame is skipped.
 		}
 	}	
 	else{		
-		if (fnum==0){
-			fparams.fsort=I_frame;
-			fparams.expiry_time=1<<30;//ie never
+		if (fnum==0)
+		{
+			fparams.SetFSort( I_frame );
+			fparams.SetExpiryTime( 1<<30 );//ie never
 		}
-		else if (fnum % L1_sep==0){
-			fparams.fsort=L1_frame;
-			fparams.refs.push_back(0);//frame 0 is the I frame
-			if (fnum!=L1_sep)//we don't have the first L1 frame	
-				fparams.refs.push_back(fnum-L1_sep);//other ref is the prior L1 frame
-			fparams.expiry_time=L1_sep;//expires after the next L1 or I frame			
+		else if (fnum % L1_sep==0)
+		{
+			fparams.SetFSort( L1_frame );
+			fparams.Refs().push_back(0);//frame 0 is the I frame
+
+			if (fnum != L1_sep)//we don't have the first L1 frame	
+				fparams.Refs().push_back(fnum-L1_sep);//other ref is the prior L1 frame
+
+            //expires after the next L1 or I frame						
+			fparams.SetExpiryTime( L1_sep );
 		}
-		else{
-			fparams.fsort=L2_frame;
-			fparams.refs.push_back((fnum/L1_sep)*L1_sep);
-			fparams.refs.push_back(((fnum/L1_sep)+1)*L1_sep);
-			fparams.expiry_time=1;	//L2 frames could expire directly after being coded, but putting in a delay of 1
+		else
+		{
+			fparams.SetFSort( L2_frame );
+			fparams.Refs().push_back((fnum/L1_sep)*L1_sep);
+			fparams.Refs().push_back(((fnum/L1_sep)+1)*L1_sep);
+			fparams.SetExpiryTime( 1 );	//L2 frames could expire directly after being coded, but putting in a delay of 1
 										//allows for frame-skipping to be done, since the frame will still be around to
 										//be used if the next frame is skipped.
 		}

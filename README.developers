@@ -57,7 +57,7 @@ E.g.
 
 Software practices
 ------------------
-Portability
+I. Portability
   This project aims to be as portable as possible and to that end follows the
   following standards:
     POSIX 1003.1 - System Interfaces volume (XSH) & Threads
@@ -70,20 +70,230 @@ Portability
   in conditional compilation is the accepted way to accommodate such
   differences.
 
-Source code formatting
-  Source code uses TABs with a spacing of 4.
+II. Coding Style
 
-Naming practice
-  Class and function names start with a capital then use lowercase with multi-
-  word names using a capital for each new word.  E.g. MultiWordName
+   The following guidelines must be adhered to while developing code.
 
-  Local variables are lowercase and use underscores to separate words.
+-- CVS related tags
+   
+ - Include the following RCS tags in all new files (.cpp and .h). Include them
+   on the first line of the licence block
 
-  Class member variables are lowercase with a leading underscore.
+   $Id$ $Name$
 
-(inspired by http://docs.kde.org/en/3.2/kdemultimedia/artsbuilder/coding-standards.html)
+   E.g.
+   /* ***** BEGIN LICENSE BLOCK *****
+   *
+   * $Id$ $Name$
+   *
+   *  rest of licence text
+   * ***** END LICENSE BLOCK ***** */
 
-Testing with "make check"
+
+ - Remove the following tags from all files. Do not include them in new files
+   $Author$
+   $Revision$
+   $Log$
+   Revision 1.5  2004-06-30 16:44:47  asuraparaju
+   -  Included a coding style guidelines sub-section (Coding Style) in
+      README.developers under the section 'Software Practices'. This
+      sub-section describes the coding guidelines for developers and is to be used
+      as a reference by developers while writing code and while peer-reviewing
+      code.
+
+   -  Removed the following CVS tags from all files
+      $Author$
+      $Log$
+      $Revision$
+
+   -  Included the following CVS tags in all source and header files
+      $Id$
+      $Name$
+
+   -  Included a new configuration option, --enable-debug, in configure.ac. This
+      option turns on the flags '-Wall -pedantic -Werror' to trap warnings.
+
+   -  Modified parameter classes in common.{h,cpp} to make member variables
+      private and accessible through class methods. Traced through codec.
+
+   -  Deleted context.h. The classes that were originally in this file have been
+      integrated as nested classes into ArithCodec class in arith_codec.h
+
+   -  Fixed bug on QCIF coding. The number of downconversions during
+      hierarchical motion estimation is now limited based on the size of the
+      picture
+
+   -  Changed decoder and encoder params to be references throughout frame and
+      component (de)compression rather than being copied.
+
+   -  Code cleansed to follow coding standards specified in README.developers.
+      - Changed names of member variables to use m_ convention
+      - Used spaces to improve readability of code
+      - Accessing class member variables through accessor/mutator function rather
+        than directly
+      - Non-trivial member functions moved from headers to .cpp files
+
+      Changes mainly in the following directories:
+      libdirac_common
+      libdirac_decoder
+      libdirac_encoder
+
+   -  Fixed g++ compiler warnings
+
+   Revision 1.3  2004/06/30 16:35:27  anuradha
+   Included Coding Style sub-section in Software Practices section. This
+   sub-section describes the coding guidelines for developers and is to be used
+   as a reference by developers while writing code and while peer-reviewing code.
+
+
+--  General Source code formatting
+
+ - Use spaces in assigment statements and compound statements to make code
+   more readable.
+
+   E.g.
+   a = b;
+   if (a < b)
+   for (i=0; i<10; i++)
+   c = (a < b) ? a : b;
+
+ - Curly braces go on a separate line
+   
+   E.g.
+
+   if (a < b)
+   {
+       statment1;
+       statement2;
+       .
+       .
+       .
+   }
+
+   Curly braces can be ommitted if there is only one statment in the block.
+
+ - Use space between the comment marker and start of text
+   E.g.
+
+   // this is a comment
+   
+   /*
+   * This is a multiple line 
+   * comment
+   */
+
+ - Use spaces instead of tabs for indentation
+
+ - Indent Constructor initialiser lists from the constructor name
+   
+   E.g.
+   MyClass::Myclass (int val) :
+       m_val(val)
+   {
+   }
+
+--  General naming standards
+
+ - Local variables are lowercase and use underscores to separate words.
+   
+   E.g.
+
+   int outer_loop_idx;
+
+ - Use constants instead of macros
+
+ - Type definitions and Enumerations start with an uppercase letter and
+   use lowercase multi-word names using an uppercase letter for each new word.
+
+   E.g
+
+   typedef int CompressionType;
+   enum CompSort {...};
+
+--  Class Definition
+
+ - Class names start with an uppercase letter and the use lowercase with
+   multi-word names using an uppercase letter for each new word.
+   E.g. ArithCodec
+
+ - Class member variables are lowercase with a leading "m_". Use underscores to
+   separate words.
+
+   E.g.
+   int m_num_contexts;
+
+ - Group declaration of member functions and member variables in the class
+   defintion based on access type.
+
+   E.g
+
+   class MyClass
+   {
+   public:
+       //constructor
+       MyClass (int val);
+       
+       //access functions
+       int Value(void);
+       void SetValue(int val);
+
+   private:
+       void Init(int val);
+
+   private:
+       int m_val;
+   };
+
+ - Avoid declaring public member variables. Make them private and define access
+   functions to set/get their values.
+
+ - Avoid defining functions in class definitions except for trivial functions
+
+ - The declaration syntax for accessor/mutator functions is as follows
+
+   void SetVariable (const VariableType& var);
+   
+   VariableType Variable() const;
+   const VariableType& Variable() const;
+
+
+ - Use builtin copy constructors and assigment operators whenever appropriate
+   e.g. when the class does not use dynamic memory allocation, but their use
+   should be commented. This is to ensure that changes to the class are properly
+   reflected in these operators.
+
+ - Encapsulate enumerated types in the class definition if the enumerated type
+   is relevant only to that class.
+
+ - Nest classes within a class if they have no meaning outside the context of
+   the class.
+
+--  Function Definitions
+
+ - Function names start with an upperccase letter and the use lowercase with
+   multi-word names using an uppercase letter for each new word.
+   E.g. ArithCodec
+
+ - Function parameters are lowercase. Use underscores to separate words.
+
+    void BandCodec::Resize(const int& context_num)
+
+ - Use the following notation for reference parameters in a function
+   void BandCodec::Resize(const int& context_num)
+                  OR
+   void BandCodec::Resize(const int &context_num)
+
+ - Dummy argument names, if used, should be the same in the function
+   declarations and definitions to avoid confusion.
+
+       
+III. Code Review
+
+   All code will be peer-reviewed before being checked in to SourceForge
+   CVS. Developers should use the guidelines specified in the Coding Style
+   sub-section while reviewing code.
+
+III. Testing with "make check"
   Developers should aim to have all the regression tests succeed.  If a
   developer anticipates breaking the tests (while a significant body of work
   is being undertaken) this must be announced on the Developer Forum, and

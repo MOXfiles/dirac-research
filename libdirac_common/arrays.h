@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -33,38 +35,6 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.4  2004-05-12 08:35:33  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.3  2004/04/11 22:50:46  chaoticcoyote
-* Modifications to allow compilation by Visual C++ 6.0
-* Changed local for loop declarations into function-wide definitions
-* Replaced variable array declarations with new/delete of dynamic array
-* Added second argument to allocator::alloc calls, since MS has no default
-* Fixed missing and namespace problems with min, max, cos, and abs
-* Added typedef unsigned int uint (MS does not have this)
-* Added a few missing std:: qualifiers that GCC didn't require
-*
-* Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
-* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:08  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
-
 #ifndef _ARRAYS_H_
 #define _ARRAYS_H_
 
@@ -90,9 +60,9 @@ public:
      */
 	Range(int s, int e):fst(s),lst(e){}
 	//! Returns the start of the range.
-	const int& first()const {return fst;}
+	const int first() const {return fst;}
 	//! Returns the end point of the range.
-	const int& last()	const {return lst;}
+	const int last() const {return lst;}
 private:
 	int fst,lst;
 };
@@ -113,27 +83,27 @@ public:
     /*!
 		Default constructor produces an empty array.
      */	
-	OneDArray(){init(0);}
+	OneDArray(){Init(0);}
 
     //! 'Length' constructor.
     /*!
 		Length constructor produces a zero-based array.
      */	
-	OneDArray(int len){init(len);}
+	OneDArray(int len){Init(len);}
 
    //! Range constructor
     /*!
 		Range constructor produces an array with values indexed within the range parameters.
 		/param	r	a range of indexing values.
      */		
-	OneDArray(Range r){init(r);}
+	OneDArray(Range r){Init(r);}
 
 	//! Destructor.
     /*!
 		Destructor frees the data allocated in the constructors.
      */
 	~OneDArray(){
-		free_ptr();
+		FreePtr();
 	}
 
 	//! Copy constructor.
@@ -181,9 +151,9 @@ public:
     //! Returns the index of the last element, Blitz-style.
 	int ubound(const int n) const {return last(n);}	
 private:
-	void init(int len);
-	void init(Range r);
-	void free_ptr();	
+	void Init(int len);
+	void Init(Range r);
+	void FreePtr();	
 
 	std::allocator<T> alloc;
 	int fst, lst;
@@ -199,10 +169,11 @@ OneDArray<T>::OneDArray(const OneDArray<T>& Cpy){
 	fst=Cpy.fst;
 	lst=Cpy.lst;
 	l=lst-fst+1;
+
 	if (fst==0)		
-		init(l);
+		Init(l);
 	else
-		init(Range(fst,lst));
+		Init(Range(fst,lst));
 	for (int I=0;I<l;++I)
 		*(ptr+I)=*(Cpy.ptr+I);
 }
@@ -210,14 +181,14 @@ OneDArray<T>::OneDArray(const OneDArray<T>& Cpy){
 template <class T>
 OneDArray<T>& OneDArray<T>::operator=(const OneDArray<T>& rhs){
 	if (&rhs!=this){
-		free_ptr();
+		FreePtr();
 		fst=rhs.fst;
 		lst=rhs.lst;
 		l=rhs.l;			
 		if (fst==0)
-			init(l);
+			Init(l);
 		else
-			init(Range(fst,lst));
+			Init(Range(fst,lst));
 		for (int I=0;I<l;++I)
 			*(ptr+I)=*(rhs.ptr+I);			
 
@@ -227,20 +198,21 @@ OneDArray<T>& OneDArray<T>::operator=(const OneDArray<T>& rhs){
 
 template <class T> 
 void OneDArray<T>::resize(int l){	
-	free_ptr();
-	init(l);
+	FreePtr();
+	Init(l);
 }
 
 //private member functions//
 ////////////////////////////
 
 template <class T>
-void OneDArray<T>::init(int len){
+void OneDArray<T>::Init(int len)
+{
 	l=len;
 	fst=0;
 	lst=l-1;
-	if (l>0){
-		//ptr=new T[l];
+	if (l>0)
+	{
 		ptr=alloc.allocate(l);
 	}
 	else {
@@ -251,13 +223,13 @@ void OneDArray<T>::init(int len){
 }		
 
 template <class T>
-void OneDArray<T>::init(Range r){
+void OneDArray<T>::Init(Range r)
+{
 	T tmp_val;
 	fst=r.first();
 	lst=r.last();
 	l=lst-fst+1; 
 	if (l>0){
-		//ptr=new T[l];
 		ptr=alloc.allocate(l);
 		std::uninitialized_fill(ptr,ptr+l,tmp_val);
 	}
@@ -269,9 +241,10 @@ void OneDArray<T>::init(Range r){
 }
 
 template <class T>
-void OneDArray<T>::free_ptr(){
-	if (l>0){
-		//delete ptr;
+void OneDArray<T>::FreePtr()
+{
+	if (l>0)
+	{
 		int I=l;
 		while (I!=0)
 			alloc.destroy(&ptr[--I]);
@@ -300,20 +273,20 @@ public:
     /*!
 		Default constructor creates an empty array.
      */	
-	TwoDArray(){init(0,0);}
+	TwoDArray(){Init(0,0);}
 
     //! Constructor.
     /*!
 		The constructor creates an array of width /param len0 and length /param len1.
      */	
-	TwoDArray(int len0,int len1){init(len0,len1);}
+	TwoDArray(int len0,int len1){Init(len0,len1);}
 
     //! Destructor.
     /*!
 		Destructor frees the data allocated in the constructor.
      */	
 	virtual ~TwoDArray(){
-		free_data();	
+		FreeData();	
 	}
 
     //! Copy constructor.
@@ -373,8 +346,8 @@ public:
 	int ubound(const int n) const {return last(n);}	
 
 private:
-	void init(int len0,int len1);
-	void free_data();	
+	void Init(int len0,int len1);
+	void FreeData();	
 
 	std::allocator<element_type> alloc;	
 	int first0,first1,last0,last1;
@@ -394,7 +367,7 @@ TwoDArray<T>::TwoDArray(const TwoDArray<T>& Cpy){
 	l0=last0-first0+1;
 	l1=last1-first1+1;		
 	if (first0==0 && first1==0)		
-		init(l0,l1);
+		Init(l0,l1);
 	else{
 			//based 2D arrays not yet supported	
 	}
@@ -408,15 +381,17 @@ TwoDArray<T>::TwoDArray(const TwoDArray<T>& Cpy){
 template <class T>
 TwoDArray<T>& TwoDArray<T>::operator=(const TwoDArray<T>& rhs){
 	if (&rhs!=this){
-		free_data();
-		first0=rhs.first0;
-		first1=rhs.first1;			
-		last0=rhs.last0;
-		last1=rhs.last1;
-		l0=last0-first0+1;
-		l1=last1-first1+1;		
-		if (first0==0 && first1==0)
-			init(l0,l1);
+		FreeData();
+
+		first0 = rhs.first0;
+		first1 = rhs.first1;			
+
+		last0 = rhs.last0;
+		last1 = rhs.last1;
+		l0 = last0-first0+1;
+		l1 = last1-first1+1;		
+		if (first0 == 0 && first1 == 0)
+			Init(l0,l1);
 		else{
 				//based 2D arrays not yet supported
 		}
@@ -431,20 +406,20 @@ TwoDArray<T>& TwoDArray<T>::operator=(const TwoDArray<T>& rhs){
 
 template <class T>
 void TwoDArray<T>::resize(int len0, int len1){
-	free_data();
-	init(len0,len1);
+	FreeData();
+	Init(len0,len1);
 }
 
 //private member functions//
 ////////////////////////////
 
 template <class T>
-void TwoDArray<T>::init(int len0,int len1){
+void TwoDArray<T>::Init(int len0,int len1){
 	l0=len0; l1=len1;
 	first0=0;first1=0;
 	last0=l0-1;last1=l1-1;
-	if (l1>0){
-		//		array_of_rows=new element_type[l1];
+	if (l1>0)
+	{
 		array_of_rows=alloc.allocate(l1);
 		if (l0>0){
 			for (int J=0;J<l1;++J){
@@ -465,14 +440,16 @@ void TwoDArray<T>::init(int len0,int len1){
 }
 
 template <class T>
-void TwoDArray<T>::free_data(){
-	if (l1>0){
-		if (l0>0) {
-			for (int J=0;J<l1;++J){
+void TwoDArray<T>::FreeData(){
+	if (l1>0)
+	{
+		if (l0>0) 
+		{
+			for (int J=0 ; J<l1 ; ++J)
+			{
 				delete[] array_of_rows[J];
-			}
+			}//J
 		}
-		//		delete array_of_rows;					
 		int I=l1;
 		while (I!=0)
 			alloc.destroy(&array_of_rows[--I]);

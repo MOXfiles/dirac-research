@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -33,83 +35,67 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.4  2004-05-26 14:33:46  tjdwave
-* Updated default DC prediction value to take into account the removal of
-* scaling from the wavelet transform.
-*
-* Revision 1.3  2004/05/18 07:46:15  tjdwave
-* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
-*
-* Revision 1.2  2004/05/12 08:35:34  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:08  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
 
-#include "libdirac_decoder/comp_decompress.h"
-#include "libdirac_common/wavelet_utils.h"
-#include "libdirac_common/band_codec.h"
-#include "libdirac_common/golomb.h"
+#include <libdirac_decoder/comp_decompress.h>
+#include <libdirac_common/wavelet_utils.h>
+#include <libdirac_common/band_codec.h>
+#include <libdirac_common/golomb.h>
 #include <vector>
 
 #include <ctime>
 
 using std::vector;
 
-void CompDecompressor::Decompress(PicArray& pic_data){
-	const FrameSort& fsort=fparams.fsort;
-	int depth=4;
+//Constructor
+CompDecompressor::CompDecompressor( DecoderParams& decp, const FrameParams& fp)
+:
+m_qflist(60),
+m_decparams(decp),
+m_fparams(fp)
+{}
+
+
+void CompDecompressor::Decompress(PicArray& pic_data)
+{
+	const FrameSort& fsort=m_fparams.FSort();
+	const int depth=4;
 	BandCodec* bdecoder;
-	vector<Context> ctx_list(24);
+    const size_t CONTEXTS_REQUIRED = 24;
 	Subband node;
 	unsigned int max_bits;
 	int qf_idx;
 
-	WaveletTransformParams wparams(depth);
-	WaveletTransform wtransform(wparams);
+	WaveletTransform wtransform(depth);
 	SubbandList& bands=wtransform.BandList();
 	bands.Init(depth,pic_data.length(0),pic_data.length(1));
 
 	GenQuantList();
 
-	for (int I=bands.Length();I>=1;--I){
+	for (int I=bands.Length();I>=1;--I)
+	{
 
 		//read the header data first
-		qf_idx=GolombDecode(*(decparams.BIT_IN));
+		qf_idx=GolombDecode( m_decparams.BitsIn() );
 		if (qf_idx!=-1){
-			bands(I).SetQf(0,qflist[qf_idx]);
-			max_bits=UnsignedGolombDecode(*(decparams.BIT_IN));
-			(decparams.BIT_IN)->FlushInput();
+			bands(I).SetQf(0,m_qflist[qf_idx]);
+			max_bits=UnsignedGolombDecode( m_decparams.BitsIn() );
+			m_decparams.BitsIn().FlushInput();
 
 			if (I>=bands.Length()){
 				if (fsort==I_frame && I==bands.Length())
-					bdecoder=new IntraDCBandCodec(decparams.BIT_IN,ctx_list,bands);
+					bdecoder=new IntraDCBandCodec( &m_decparams.BitsIn() , CONTEXTS_REQUIRED ,bands);
 				else
-					bdecoder=new LFBandCodec(decparams.BIT_IN,ctx_list,bands,I);
+					bdecoder=new LFBandCodec( &m_decparams.BitsIn() , CONTEXTS_REQUIRED ,bands , I);
 			}
 			else
-				bdecoder=new BandCodec(decparams.BIT_IN,ctx_list,bands,I);
+				bdecoder=new BandCodec( &m_decparams.BitsIn() , CONTEXTS_REQUIRED , bands , I);
 
 			bdecoder->InitContexts();
 			bdecoder->Decompress(pic_data,max_bits);
 			delete bdecoder;
 		}
 		else{
-			(decparams.BIT_IN)->FlushInput();
+			m_decparams.BitsIn().FlushInput();
 			if (I==bands.Length() && fsort==I_frame)
 				SetToVal(pic_data,bands(I),2692);
 			else
@@ -120,8 +106,10 @@ void CompDecompressor::Decompress(PicArray& pic_data){
 }
 
 void CompDecompressor::SetToVal(PicArray& pic_data,const Subband& node,ValueType val){
-	for (int J=node.Yp();J<node.Yp()+node.Yl();++J){	
-		for (int I=node.Xp();I<node.Xp()+node.Xl();++I){
+	for (int J=node.Yp();J<node.Yp()+node.Yl();++J)
+	{	
+		for (int I=node.Xp();I<node.Xp()+node.Xl();++I)
+		{
 			pic_data[J][I]=val;
 		}
 	}
@@ -131,64 +119,64 @@ void CompDecompressor::GenQuantList(){//generates the list of quantisers and inv
 	//there is some repetition in this list but at the moment this is easiest from the perspective of SelectQuant
 	//Need to remove this repetition later TJD 29 March 04.
 
-	qflist[0]=1;		
-	qflist[1]=1;		
-	qflist[2]=1;		
-	qflist[3]=1;		
-	qflist[4]=2;		
-	qflist[5]=2;		
-	qflist[6]=2;		
-	qflist[7]=3;		
-	qflist[8]=4;		
-	qflist[9]=4;		
-	qflist[10]=5;		
-	qflist[11]=6;		
-	qflist[12]=8;		
-	qflist[13]=9;		
-	qflist[14]=11;		
-	qflist[15]=13;		
-	qflist[16]=16;		
-	qflist[17]=19;		
-	qflist[18]=22;		
-	qflist[19]=26;		
-	qflist[20]=32;		
-	qflist[21]=38;		
-	qflist[22]=45;		
-	qflist[23]=53;		
-	qflist[24]=64;		
-	qflist[25]=76;		
-	qflist[26]=90;		
-	qflist[27]=107;		
-	qflist[28]=128;		
-	qflist[29]=152;		
-	qflist[30]=181;		
-	qflist[31]=215;		
-	qflist[32]=256;		
-	qflist[33]=304;		
-	qflist[34]=362;		
-	qflist[35]=430;		
-	qflist[36]=512;		
-	qflist[37]=608;		
-	qflist[38]=724;		
-	qflist[39]=861;		
-	qflist[40]=1024;	
-	qflist[41]=1217;	
-	qflist[42]=1448;	
-	qflist[43]=1722;	
-	qflist[44]=2048;	
-	qflist[45]=2435;	
-	qflist[46]=2896;	
-	qflist[47]=3444;	
-	qflist[48]=4096;	
-	qflist[49]=4870;	
-	qflist[50]=5792;	
-	qflist[51]=6888;	
-	qflist[52]=8192;	
-	qflist[53]=9741;	
-	qflist[54]=11585;	
-	qflist[55]=13777;	
-	qflist[56]=16384;	
-	qflist[57]=19483;	
-	qflist[58]=23170;	
-	qflist[59]=27554;		
+	m_qflist[0]=1;		
+	m_qflist[1]=1;		
+	m_qflist[2]=1;		
+	m_qflist[3]=1;		
+	m_qflist[4]=2;		
+	m_qflist[5]=2;		
+	m_qflist[6]=2;		
+	m_qflist[7]=3;		
+	m_qflist[8]=4;		
+	m_qflist[9]=4;		
+	m_qflist[10]=5;		
+	m_qflist[11]=6;		
+	m_qflist[12]=8;		
+	m_qflist[13]=9;		
+	m_qflist[14]=11;		
+	m_qflist[15]=13;		
+	m_qflist[16]=16;		
+	m_qflist[17]=19;		
+	m_qflist[18]=22;		
+	m_qflist[19]=26;		
+	m_qflist[20]=32;		
+	m_qflist[21]=38;		
+	m_qflist[22]=45;		
+	m_qflist[23]=53;		
+	m_qflist[24]=64;		
+	m_qflist[25]=76;		
+	m_qflist[26]=90;		
+	m_qflist[27]=107;		
+	m_qflist[28]=128;		
+	m_qflist[29]=152;		
+	m_qflist[30]=181;		
+	m_qflist[31]=215;		
+	m_qflist[32]=256;		
+	m_qflist[33]=304;		
+	m_qflist[34]=362;		
+	m_qflist[35]=430;		
+	m_qflist[36]=512;		
+	m_qflist[37]=608;		
+	m_qflist[38]=724;		
+	m_qflist[39]=861;		
+	m_qflist[40]=1024;	
+	m_qflist[41]=1217;	
+	m_qflist[42]=1448;	
+	m_qflist[43]=1722;	
+	m_qflist[44]=2048;	
+	m_qflist[45]=2435;	
+	m_qflist[46]=2896;	
+	m_qflist[47]=3444;	
+	m_qflist[48]=4096;	
+	m_qflist[49]=4870;	
+	m_qflist[50]=5792;	
+	m_qflist[51]=6888;	
+	m_qflist[52]=8192;	
+	m_qflist[53]=9741;	
+	m_qflist[54]=11585;	
+	m_qflist[55]=13777;	
+	m_qflist[56]=16384;	
+	m_qflist[57]=19483;	
+	m_qflist[58]=23170;	
+	m_qflist[59]=27554;		
 }

@@ -101,6 +101,21 @@ AC_CONFIG_TESTDIR([tests], [tests:picheader:encoder:decoder])
 AC_CONFIG_FILES([tests/Makefile])
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
+
+dnl ----------------------------------------------
+dnl enable debug flags
+dnl -----------------------------------------------
+AC_MSG_CHECKING([whether extra debug flags are to used when compiling])
+AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [enable extra debug flags (no)]),
+[
+if test x"${enableval}" = x"yes" ; then
+	AC_MSG_RESULT(yes)
+	CXXFLAGS="-g -O0 -Wall -pedantic -Werror -Woverloaded-virtual"
+	AC_SUBST(CXXFLAGS)
+else
+	AC_MSG_RESULT(no)
+fi], [AC_MSG_RESULT(no)]
+)
 dnl -----------------------------------------------
 dnl Generates Makefile's, configuration files and scripts
 dnl -----------------------------------------------

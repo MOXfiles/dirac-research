@@ -1,7 +1,7 @@
 INCLUDES = -I$(top_srcdir)
 
 h_sources = arith_codec.h arrays.h band_codec.h bit_manager.h common.h \
-            context.h frame.h golomb.h frame_buffer.h mot_comp.h motion.h \
+            frame.h golomb.h frame_buffer.h mot_comp.h motion.h \
             mv_codec.h pic_io.h upconvert.h wavelet_utils.h \
             cmd_line.h
 

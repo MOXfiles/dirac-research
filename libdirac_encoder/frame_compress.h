@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -33,32 +35,6 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.4  2004-05-12 08:35:34  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.3  2004/03/30 15:52:40  chaoticcoyote
-* New Doxygen comments
-*
-* Revision 1.2  2004/03/22 01:04:28  chaoticcoyote
-* Added API documentation to encoder library
-* Moved large constructors so they are no longer inlined
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:08  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
 
 #ifndef _FRAME_COMPRESS_H_
 #define _FRAME_COMPRESS_H_
@@ -82,18 +58,18 @@ public:
         component of the frame. 
         \param encp encoder parameters
     */
-	FrameCompressor(const EncoderParams& encp); 
+	FrameCompressor(EncoderParams& encp); 
 
     //! Compress a specific frame within a group of pictures (GOP)
     /*!
         Compresses a specified frame within a group of pictures. 
-        \param my_buffer picture buffer in which the frame resides
+        \param fbuffer picture buffer in which the frame resides
         \param fnum      frame number to compress
     */
-	void Compress(FrameBuffer& my_buffer, int fnum);
+	void Compress(FrameBuffer& fbuffer, int fnum);
 
 	//! Returns true if the frame has been skipped rather than coded normally
-	bool IsSkipped(){return skipped;}
+	bool IsSkipped(){return m_skipped;}
 
 private:
 	//! Copy constructor is private and body-less
@@ -110,15 +86,17 @@ private:
 	*/
 	FrameCompressor& operator=(const FrameCompressor& rhs);
 
-	EncoderParams encparams;
-	MvData* mv_data;
-	bool skipped;				//true if the frame has been skipped, false otherwise
-	bool use_global;			//true if we use global motion vectors, false otherwise
-	bool use_block_mv;			//true if we use block motion vectors, false otherwise
-	PredMode global_pred_mode;	//prediction mode to use if we only have global motion vectors
-
 	//! Write the frame compression header
 	void WriteFrameHeader(const FrameParams& fparams);
+
+	//member variables
+	EncoderParams& m_encparams;
+	bool m_skipped;				//true if the frame has been skipped, false otherwise
+	bool m_use_global;			//true if we use global motion vectors, false otherwise
+	bool m_use_block_mv;			//true if we use block motion vectors, false otherwise
+	PredMode m_global_pred_mode;	//prediction mode to use if we only have global motion vectors
+
+
 };
 
 #endif

@@ -1,5 +1,7 @@
  /* ***** BEGIN LICENSE BLOCK *****
  *
+ * $Id$ $Name$
+ *
  * Version: MPL 1.1/GPL 2.0/LGPL 2.1
  *
  * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,7 @@
  * Portions created by the Initial Developer are Copyright (C) 2004.
  * All Rights Reserved.
  *
- * Contributor(s):
+ * Contributor(s): Thomas Davies (Original Author), Scott R Ladd
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -32,54 +34,6 @@
  * your version of this file under the terms of any one of the MPL, the GPL
  * or the LGPL.
  * ***** END LICENSE BLOCK ***** */
-
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.10  2004-06-22 10:08:20  asuraparaju
-* Fixed compilation errors caused by trying to access non-existent cformat data
-* member in class EncoderParams.
-*
-* Revision 1.9  2004/05/24 15:59:30  tjdwave
-* Changed CLI names and functions to house style.
-*
-* Revision 1.8  2004/05/20 12:37:33  tjdwave
-* Corrected help text for CLI.
-*
-* Revision 1.7  2004/05/19 17:39:34  chaoticcoyote
-* Restored make_debug.sh to it's proper function
-* Modified command line parser to correctly handle boolean options
-*
-* Revision 1.6  2004/05/18 07:46:13  tjdwave
-* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
-*
-* Revision 1.5  2004/05/12 16:03:32  tjdwave
-*
-* Done general code tidy, implementing copy constructors, assignment= and const
-*  correctness for most classes. Replaced Gop class by FrameBuffer class throughout. Added support for frame padding so that arbitrary block sizes and frame
-*  dimensions can be supported.
-*
-* Revision 1.4  2004/05/11 14:17:58  tjdwave
-* Removed dependency on XParam CLI library for both encoder and decoder.
-*
-* Revision 1.3  2004/05/10 04:41:48  chaoticcoyote
-* Updated dirac algorithm document
-* Modified encoder to use simple, portable command-line parser
-*
-* Revision 1.2  2004/04/12 01:57:46  chaoticcoyote
-* Fixed problem Intel C++ had in finding xparam headers on Linux
-* Solved Segmentation Fault bug in pic_io.cpp
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:08  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
 
 #include <iostream>
 #include <fstream>
@@ -160,21 +114,21 @@ int main (int argc, char* argv[]){
 
 	//Set default values. To do: these should really be set in the constructor for the encoder parameters
 	//These default values assume a streaming preset.
-	encparams.L1_SEP =  3;
-	encparams.NUM_L1 = 11;
+	encparams.SetL1Sep(3);
+	encparams.SetNumL1(11);
 	bparams.XBLEN=12;
 	bparams.YBLEN=12;
 	bparams.XBSEP=8;
 	bparams.YBSEP=8;
-	encparams.UFACTOR=3.0f;
-	encparams.VFACTOR=1.75f;
-	encparams.CPD=20.0f;
-	encparams.I_lambda=pow(10.0,(Iqf/12.0)-0.3);
-	encparams.L1_lambda=pow(10.0,((L1qf/9.0)-0.81));
-	encparams.L2_lambda=pow(10.0,((L2qf/9.0)-0.81));
+	encparams.SetUFactor(3.0f);
+	encparams.SetVFactor(1.75f);
+	encparams.SetCPD(20.0f);
+	encparams.SetILambda( pow(10.0,(Iqf/12.0)-0.3) );
+	encparams.SetL1Lambda( pow(10.0,((L1qf/9.0)-0.81)) );
+	encparams.SetL2Lambda( pow(10.0,((L2qf/9.0)-0.81)) );
 	factor3 = 250.0;
 
-	encparams.VERBOSE=false;
+	encparams.SetVerbose( false );
 
 	if (argc<3)//need at least 3 arguments - the program name, an input and an output
 	{
@@ -247,73 +201,73 @@ int main (int argc, char* argv[]){
 		{
 			if (opt->m_name == "stream")
 			{
-				encparams.L1_SEP=3;
-				encparams.NUM_L1=11;
+				encparams.SetL1Sep(3);
+				encparams.SetNumL1(11);
 				bparams.XBLEN=12;
 				bparams.YBLEN=12;
 				bparams.XBSEP=8;
 				bparams.YBSEP=8;
-				encparams.UFACTOR=3.0f;
-				encparams.VFACTOR=1.75f;
-				encparams.CPD=20.0f;
-				encparams.I_lambda=pow(10.0,(Iqf/12.0)-0.3);
-				encparams.L1_lambda=pow(10.0,((L1qf/9.0)-0.81));
-				encparams.L2_lambda=pow(10.0,((L2qf/9.0)-0.81));
+				encparams.SetUFactor(3.0f);
+				encparams.SetVFactor(1.75f);
+				encparams.SetCPD(20.0f);
+				encparams.SetILambda( pow(10.0,(Iqf/12.0)-0.3) );
+				encparams.SetL1Lambda( pow(10.0,((L1qf/9.0)-0.81)) );
+				encparams.SetL2Lambda( pow(10.0,((L2qf/9.0)-0.81)) );
 
 				factor3=250.0;
 			}
 			else if (opt->m_name == "HD720p")
 			{
-				encparams.L1_SEP=6;
-				encparams.NUM_L1=3;
+				encparams.SetL1Sep(6);
+				encparams.SetNumL1(3);
 				bparams.XBLEN=16;
 				bparams.YBLEN=16;
 				bparams.XBSEP=10;
 				bparams.YBSEP=12;
-				encparams.UFACTOR=3.0f;
-				encparams.VFACTOR=1.75f;
-				encparams.CPD=20.0f;
+				encparams.SetUFactor(3.0f);
+				encparams.SetVFactor(1.75f);
+				encparams.SetCPD(20.0f);
 
-				encparams.I_lambda=pow(10.0,((Iqf/13.34)+0.12));
-				encparams.L1_lambda=pow(10.0,((L1qf/11.11)+0.14));
-				encparams.L2_lambda=pow(10.0,((L2qf/11.11)+0.14));
+				encparams.SetILambda( pow(10.0,((Iqf/13.34)+0.12)) );
+				encparams.SetL1Lambda( pow(10.0,((L1qf/11.11)+0.14)) );
+				encparams.SetL2Lambda( pow(10.0,((L2qf/11.11)+0.14)) );
 
 				factor3 = 2000.0;
 			}
 			else if (opt->m_name == "HD1080")
 			{
-				encparams.L1_SEP=3;
-				encparams.NUM_L1=3;
+				encparams.SetL1Sep(3);
+				encparams.SetNumL1(3);
 				bparams.XBLEN=20;
 				bparams.YBLEN=20;
 				bparams.XBSEP=16;
 				bparams.YBSEP=16;
-				encparams.UFACTOR=3.0f;
-				encparams.VFACTOR=1.75f;
-				encparams.CPD=32.0f;
+				encparams.SetUFactor(3.0f);
+				encparams.SetVFactor(1.75f);
+				encparams.SetCPD(32.0f);
 
 				//TBC - not yet tuned
-				encparams.I_lambda=pow(10.0,((Iqf/8.9)-0.58));
-				encparams.L1_lambda=pow(10.0,((L1qf/9.7)+0.05));
-				encparams.L2_lambda=pow(10.0,((L2qf/9.7)+0.05));
+				encparams.SetILambda( pow(10.0,((Iqf/8.9)-0.58)) );
+				encparams.SetL1Lambda( pow(10.0,((L1qf/9.7)+0.05)) );
+				encparams.SetL2Lambda( pow(10.0,((L2qf/9.7)+0.05)) );
 
 				factor3 = 100.0;
 			}
 			else if (opt->m_name == "SD576")
 			{
-				encparams.L1_SEP=3;
-				encparams.NUM_L1=3;
+				encparams.SetL1Sep(3);
+				encparams.SetNumL1(3);
 				bparams.XBLEN=12;
 				bparams.YBLEN=12;
 				bparams.XBSEP=8;
 				bparams.YBSEP=8;
-				encparams.UFACTOR=3.0f;
-				encparams.VFACTOR=1.75f;
-				encparams.CPD=32.0f;
+				encparams.SetUFactor(3.0f);
+				encparams.SetVFactor(1.75f);
+				encparams.SetCPD(32.0f);
 
-				encparams.I_lambda=pow(10.0,((Iqf/8.9)-0.58));
-				encparams.L1_lambda=pow(10.0,((L1qf/9.7)+0.05));
-				encparams.L2_lambda=pow(10.0,((L2qf/9.7)+0.05));
+				encparams.SetILambda( pow(10.0,((Iqf/8.9)-0.58)) );
+				encparams.SetL1Lambda( pow(10.0,((L1qf/9.7)+0.05)) );
+				encparams.SetL2Lambda( pow(10.0,((L2qf/9.7)+0.05)) );
 
 				factor3 = 100.0;
 			}
@@ -325,11 +279,11 @@ int main (int argc, char* argv[]){
 		{
 			if (opt->m_name == "L1_sep")
 			{
-				encparams.L1_SEP = strtoul(opt->m_value.c_str(),NULL,10);
+				encparams.SetL1Sep( strtoul(opt->m_value.c_str(),NULL,10) );
 			}
 			else if (opt->m_name == "num_L1")
 			{
-				encparams.NUM_L1 = strtoul(opt->m_value.c_str(),NULL,10);
+				encparams.SetNumL1( strtoul(opt->m_value.c_str(),NULL,10) );
 			}
 			else if (opt->m_name == "xblen")
 			{
@@ -349,21 +303,21 @@ int main (int argc, char* argv[]){
 			}
 			else if (opt->m_name == "cpd")
 			{
-				encparams.CPD = strtoul(opt->m_value.c_str(),NULL,10);
+				encparams.SetCPD( strtoul(opt->m_value.c_str(),NULL,10) );
 			}
 			else if (opt->m_name == "verbose")
 			{
-				encparams.VERBOSE = true;
+				encparams.SetVerbose( true );
 			}
 		}//opt
 
 		//Now rationalise the GOP options
 		//this stuff should really be done in a constructor!
-		if (encparams.NUM_L1<0){//don't have a proper GOP
-			encparams.L1_SEP=std::max(1,encparams.L1_SEP);
+		if (encparams.NumL1()<0){//don't have a proper GOP
+			encparams.SetL1Sep( std::max(1 , encparams.L1Sep()) );
 		}
-		else if (encparams.NUM_L1==0){//have I-frame only coding
-			encparams.L1_SEP=0;
+		else if (encparams.NumL1() == 0){//have I-frame only coding
+			encparams.SetL1Sep(0);
 		}
 
 
@@ -383,26 +337,28 @@ int main (int argc, char* argv[]){
 	/********************************************************************/
 
 
-	//set up all the block parameters so we have a self-consistent set
-		encparams.SetBlockSizes(bparams, myinputpic.GetSeqParams().cformat);
-	//Finally, do the motion estimation Lagrangian parameters
-  	//factor1 normalises the Lagrangian ME factors to take into account different overlaps
+   		//set up all the block parameters so we have a self-consistent set
+		encparams.SetBlockSizes( bparams , myinputpic.GetSeqParams().CFormat() );
+
+		//Finally, do the motion estimation Lagrangian parameters
+  		//factor1 normalises the Lagrangian ME factors to take into account different overlaps
 		const OLBParams& bparams2=encparams.LumaBParams(2);//in case we've changed them
 		factor1=float(bparams2.XBLEN*bparams2.YBLEN)/
 			float(bparams2.XBSEP*bparams2.YBSEP);
-     //factor2 normalises the Lagrangian ME factors to take into account the number of
-     //blocks in the picture. The more blocks there are, the more the MV field must be
-     //smoothed and hence the higher the ME lambda must be
-		int xnumblocks=myinputpic.GetSeqParams().xl/bparams2.XBSEP;
-		int ynumblocks=myinputpic.GetSeqParams().yl/bparams2.YBSEP;
+
+	  	//factor2 normalises the Lagrangian ME factors to take into account the number of
+     	//blocks in the picture. The more blocks there are, the more the MV field must be
+     	//smoothed and hence the higher the ME lambda must be
+		int xnumblocks=myinputpic.GetSeqParams().Xl()/bparams2.XBSEP;
+		int ynumblocks=myinputpic.GetSeqParams().Yl()/bparams2.YBSEP;
 		factor2=sqrt(float(xnumblocks*ynumblocks));
-    //factor3 is an heuristic factor taking into account the different CPD values and picture sizes, since residues
-    //after motion compensation will have a different impact depending upon the perceptual weighting
-    //in the subsequent wavelet transform. This has to be tuned by hand. Probably varies with bit-rate too.
+
+	    //factor3 is an heuristic factor taking into account the different CPD values and picture sizes, since residues
+    	//after motion compensation will have a different impact depending upon the perceptual weighting
+	    //in the subsequent wavelet transform. This has to be tuned by hand. Probably varies with bit-rate too.
 		float ratio=factor1*factor2/factor3;
-		encparams.L1_ME_lambda=encparams.L1_lambda*ratio;
-		encparams.L2_ME_lambda=encparams.L2_lambda*ratio;
-		encparams.L1I_ME_lambda=encparams.L1I_lambda*ratio;
+		encparams.SetL1MELambda( encparams.L1Lambda() * ratio );
+		encparams.SetL2MELambda( encparams.L2Lambda() * ratio );
 
    /********************************************************************/
       //open the bitstream file
@@ -412,16 +368,17 @@ int main (int argc, char* argv[]){
     	//do the work!!
 		SequenceCompressor seq_compressor(&myinputpic,&outfile,encparams);
 		seq_compressor.CompressNextFrame();
-		for (int I=0;I<myinputpic.GetSeqParams().zl;++I){
+		for (int I=0 ; I<myinputpic.GetSeqParams().Zl() ; ++I)
+		{
 			if (!seq_compressor.Finished())
-				myoutputpic.WriteNextFrame(seq_compressor.CompressNextFrame());
+				myoutputpic.WriteNextFrame( seq_compressor.CompressNextFrame() );
 		}//I
 
    /********************************************************************/
  	//close the bitstream file
 		outfile.close();
 
-		if (encparams.VERBOSE)
+		if ( encparams.Verbose() )
 			std::cerr<<std::endl<<"Finished encoding";
 		return EXIT_SUCCESS;
 

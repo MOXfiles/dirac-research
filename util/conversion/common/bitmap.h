@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -81,7 +83,7 @@ BGRTriple:           3 bytes
     red:             1 byte
 
 Original author: Tim Borer
-/**********************************************************************/
+*********************************************************************/
 
 #ifndef dirac_utilities_bitmap
 #define dirac_utilities_bitmap
@@ -121,4 +123,3 @@ namespace dirac_vu { //dirac video utilities namespace
 }  // end namespace dirac_vu
 
 #endif // dirac_utilities_bitmap
-

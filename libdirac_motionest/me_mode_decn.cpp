@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -33,35 +35,6 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
-* Modifications to allow compilation by Visual C++ 6.0
-* Changed local for loop declarations into function-wide definitions
-* Replaced variable array declarations with new/delete of dynamic array
-* Added second argument to allocator::alloc calls, since MS has no default
-* Fixed missing and namespace problems with min, max, cos, and abs
-* Added typedef unsigned int uint (MS does not have this)
-* Added a few missing std:: qualifiers that GCC didn't require
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:09  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
-
 #include "libdirac_motionest/me_mode_decn.h"
 #include "libdirac_common/frame_buffer.h"
 #include <algorithm>
@@ -86,47 +59,57 @@ void ModeDecider::DoModeDecn(const FrameBuffer& my_buffer, int frame_num, MvData
 	factor2x2=float(4*encparams.LumaBParams(2).XBLEN*encparams.LumaBParams(2).YBLEN)/
 		float(encparams.LumaBParams(1).XBLEN*encparams.LumaBParams(1).YBLEN);
 
-	fsort=my_buffer.GetFrame(frame_num).GetFparams().fsort;
-	if (fsort!=I_frame){
+	fsort=my_buffer.GetFrame(frame_num).GetFparams().FSort();
+	if (fsort != I_frame)
+	{
 		mv_data=&mvdata;
 		pic_data=&(my_buffer.GetComponent(frame_num,Y));
-		const vector<int>& refs=my_buffer.GetFrame(frame_num).GetFparams().refs;
+		const vector<int>& refs=my_buffer.GetFrame(frame_num).GetFparams().Refs();
+
 		num_refs=refs.size();
 		ref1=refs[0];
+
 		intradiff=new IntraBlockDiff(*pic_data);
 		ref1_updata=&(my_buffer.GetUpComponent(ref1,Y));
 		checkdiff1=new BChkBlockDiffUp(*ref1_updata,*pic_data);
 		simplediff1=new SimpleBlockDiffUp(*ref1_updata,*pic_data);
-		if (num_refs>1){
+
+		if (num_refs>1)
+		{
 			ref2=refs[1];
 			ref2_updata=&(my_buffer.GetUpComponent(ref2,Y));			
 			checkdiff2=new BChkBlockDiffUp(*ref2_updata,*pic_data);
 			simplediff2=new SimpleBlockDiffUp(*ref2_updata,*pic_data);
 			bicheckdiff=new BiBChkBlockDiffUp(*ref1_updata,*ref2_updata,*pic_data);
 		}
-		else{	
+		else
+		{	
 			ref2=ref1;
 		}
-		for (ymb_loc=0;ymb_loc<encparams.Y_NUM_MB;++ymb_loc){
-			for (xmb_loc=0;xmb_loc<encparams.X_NUM_MB;++xmb_loc){
+
+		for (ymb_loc=0 ; ymb_loc<encparams.YNumMB() ; ++ymb_loc)
+		{
+			for (xmb_loc=0 ; xmb_loc<encparams.XNumMB(); ++xmb_loc)
+			{
 				xtl=xmb_loc<<2;//top-left block
 				ytl=ymb_loc<<2;//coords	
 				xsubMBtl=xmb_loc<<1;//top-left subMB
 				ysubMBtl=ymb_loc<<1;//coords	
 
-				if (xmb_loc<encparams.X_NUM_MB-1 && ymb_loc<encparams.Y_NUM_MB-1){
+				if (xmb_loc<encparams.XNumMB()-1 && ymb_loc<encparams.YNumMB()-1){
 					xbr=xtl+4;
 					ybr=ytl+4;
 					xsubMBbr=xsubMBtl+2;
 					ysubMBbr=ysubMBtl+2;
 				}
 				else{
-					xbr=std::min(xtl+4,encparams.X_NUMBLOCKS);
-					ybr=std::min(ytl+4,encparams.Y_NUMBLOCKS);
-					xsubMBbr=std::min(xsubMBtl+2,encparams.X_NUMBLOCKS>>1);
-					ysubMBbr=std::min(ysubMBtl+2,encparams.Y_NUMBLOCKS>>1);
+					xbr=std::min(xtl+4,encparams.XNumBlocks());
+					ybr=std::min(ytl+4,encparams.YNumBlocks());
+					xsubMBbr=std::min(xsubMBtl+2,encparams.XNumBlocks()>>1);
+					ysubMBbr=std::min(ysubMBtl+2,encparams.YNumBlocks()>>1);
 				}
-				DoMBDecn();				
+				DoMBDecn();
+
 			}//xmb_loc		
 		}//ymb_loc
 
@@ -161,10 +144,10 @@ void ModeDecider::Do4x4Decn(){
 
 	float MB_cost=0.0;
 	if (fsort==L1_frame)
-		loc_lambda=encparams.L1_ME_lambda;
+		loc_lambda=encparams.L1MELambda();
 	else
-		loc_lambda=encparams.L2_ME_lambda;
-	if (xmb_loc==0 || ymb_loc==0 || xmb_loc==encparams.X_NUM_MB-1 || ymb_loc==encparams.Y_NUM_MB-1)
+		loc_lambda=encparams.L2MELambda();
+	if (xmb_loc==0 || ymb_loc==0 || xmb_loc==encparams.XNumMB()-1 || ymb_loc==encparams.YNumMB()-1)
 		loc_lambda/=5.0;//have reduced lambda at the picture edges
 
 	(mv_data->mb)[ymb_loc][xmb_loc].split_mode=2;//split down to second level
@@ -197,10 +180,10 @@ void ModeDecider::Do2x2Decn(){
    	//computes the best costs if we were to
   	//stick to a 2x2 decomposition
 	if (fsort==L1_frame)
-		loc_lambda=encparams.L1_ME_lambda/factor2x2;
+		loc_lambda=encparams.L1MELambda()/factor2x2;
 	else
-		loc_lambda=encparams.L2_ME_lambda/factor2x2;
-	if (xmb_loc==0 || ymb_loc==0 || xmb_loc==encparams.X_NUM_MB-1 || ymb_loc==encparams.Y_NUM_MB-1)
+		loc_lambda=encparams.L2MELambda()/factor2x2;
+	if (xmb_loc==0 || ymb_loc==0 || xmb_loc==encparams.XNumMB()-1 || ymb_loc==encparams.YNumMB()-1)
 		loc_lambda/=5.0;//have reduced lambda at the picture edges
 
 	Do2x2ME();//first do the motion estimation for the subMBs
@@ -262,10 +245,10 @@ void ModeDecider::Do1x1Decn(){
 	float MB_cost;	
 
 	if (fsort==L1_frame)
-		loc_lambda=encparams.L1_ME_lambda/factor1x1;
+		loc_lambda=encparams.L1MELambda()/factor1x1;
 	else
-		loc_lambda=encparams.L2_ME_lambda/factor1x1;
-	if (xmb_loc==0 || ymb_loc==0 || xmb_loc==encparams.X_NUM_MB-1 || ymb_loc==encparams.Y_NUM_MB-1)
+		loc_lambda=encparams.L2MELambda()/factor1x1;
+	if (xmb_loc==0 || ymb_loc==0 || xmb_loc==encparams.XNumMB()-1 || ymb_loc==encparams.YNumMB()-1)
 		loc_lambda/=5.0;//have reduced lambda at the picture edges
 
 	Do1x1ME();	//begin by finding motion vectors for the whole MB, using the 

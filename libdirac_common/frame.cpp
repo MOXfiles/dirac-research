@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -33,35 +35,6 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.3  2004-06-18 15:58:36  tjdwave
-* Removed chroma format parameter cformat from CodecParams and derived
-* classes to avoid duplication. Made consequential minor mods to
-* seq_{de}compress and frame_{de}compress code.
-* Revised motion compensation to use built-in arrays for weighting
-* matrices and to enforce their const-ness.
-* Removed unnecessary memory (de)allocations from Frame class copy constructor
-* and assignment operator.
-*
-* Revision 1.2  2004/05/12 08:35:34  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:08  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
-
 //Implementation of frame classes in frame.h
 
 #include "libdirac_common/frame.h"
@@ -74,47 +47,47 @@
 
 Frame::Frame(const FrameParams& fp)
 : 
-fparams(fp),
-Y_data(0),
-U_data(0),
-V_data(0),
-upY_data(0),
-upU_data(0),
-upV_data(0)
+m_fparams(fp),
+m_Y_data(0),
+m_U_data(0),
+m_V_data(0),
+m_upY_data(0),
+m_upU_data(0),
+m_upV_data(0)
 {
 	Init();
 }
 
 Frame::Frame(const Frame& cpy)
 : 
-fparams(cpy.fparams),
-Y_data(0),
-U_data(0),
-V_data(0),
-upY_data(0),
-upU_data(0),
-upV_data(0)
+m_fparams(cpy.m_fparams),
+m_Y_data(0),
+m_U_data(0),
+m_V_data(0),
+m_upY_data(0),
+m_upU_data(0),
+m_upV_data(0)
 {
-	ChromaFormat cformat=fparams.cformat;
+	const ChromaFormat& cformat=m_fparams.CFormat();
 
 	//delete data to be overwritten
 	ClearData();
 
 	//now copy the data accross
-	Y_data=new PicArray( *(cpy.Y_data) );
-	if (cpy.upY_data != 0){
-		upY_data = new PicArray( *(cpy.upY_data) );
+	m_Y_data=new PicArray( *(cpy.m_Y_data) );
+	if (cpy.m_upY_data != 0){
+		m_upY_data = new PicArray( *(cpy.m_upY_data) );
 	}
 	if (cformat != Yonly){
-		U_data = new PicArray( *(cpy.U_data) );
-		V_data = new PicArray( *(cpy.V_data) );
-		if ( cpy.upU_data != 0 )
+		m_U_data= new PicArray( *(cpy.m_U_data) );
+		m_V_data= new PicArray( *(cpy.m_V_data) );
+		if ( cpy.m_upU_data != 0 )
 		{
-			upU_data = new PicArray( *(cpy.upU_data) );
+			m_upU_data = new PicArray( *(cpy.m_upU_data) );
 		}
-		if ( cpy.upV_data != 0 )
+		if ( cpy.m_upV_data != 0 )
 		{
-			upV_data = new PicArray( *(cpy.upV_data) );
+			m_upV_data= new PicArray( *(cpy.m_upV_data) );
 		}
 	}
 }
@@ -128,27 +101,27 @@ Frame::~Frame()
 Frame& Frame::operator=(const Frame& rhs)
 {
 	if (&rhs!=this){
-		fparams=rhs.fparams;
-		ChromaFormat cformat=fparams.cformat;
+		m_fparams=rhs.m_fparams;
+		const ChromaFormat& cformat=m_fparams.CFormat();
 
 		//delete current data
 		ClearData();
 
 		//copy the data across		
-		Y_data = new PicArray( *(rhs.Y_data) );
+		m_Y_data= new PicArray( *(rhs.m_Y_data) );
 
-		if ( rhs.upY_data != 0)
-			upY_data = new PicArray( *(rhs.upY_data) );
+		if ( rhs.m_upY_data != 0)
+			m_upY_data = new PicArray( *(rhs.m_upY_data) );
 
 		if (cformat!=Yonly){
 
-			U_data = new PicArray( *(rhs.U_data) );			
-			if (rhs.upU_data!=0)
-				upU_data = new PicArray(*(rhs.upU_data) );
+			m_U_data= new PicArray( *(rhs.m_U_data) );			
+			if (rhs.m_upU_data!=0)
+				m_upU_data = new PicArray(*(rhs.m_upU_data) );
 
-			V_data = new PicArray( *(rhs.V_data) );			
-			if (rhs.upV_data!=0)
-				upV_data = new PicArray( *(rhs.upV_data) );
+			m_V_data= new PicArray( *(rhs.m_V_data) );			
+			if (rhs.m_upV_data!=0)
+				m_upV_data= new PicArray( *(rhs.m_upV_data) );
 		}
 	}
 	return *this;
@@ -156,169 +129,202 @@ Frame& Frame::operator=(const Frame& rhs)
 
 //Other functions
 
-void Frame::Init() {
-	ChromaFormat cformat=fparams.cformat;
+void Frame::Init()
+{
+	const ChromaFormat cformat=m_fparams.CFormat();
 
 	//first delete data if we need to
 	ClearData();
 
-	Y_data=new PicArray(fparams.xl,fparams.yl);
-	Y_data->csort=Y;
+	m_Y_data=new PicArray(m_fparams.Xl() , m_fparams.Yl());
+	m_Y_data->SetCSort(Y);
 	if(cformat==format422) {
-		U_data=new PicArray(fparams.xl/2,fparams.yl); U_data->csort=U;
-		V_data=new PicArray(fparams.xl/2,fparams.yl); V_data->csort=V;
+		m_U_data=new PicArray(m_fparams.Xl()/2 , m_fparams.Yl()); 
+		m_U_data->SetCSort(U);
+		m_V_data=new PicArray(m_fparams.Xl()/2 , m_fparams.Yl());
+		m_V_data->SetCSort(V);
 	}
 	else if (cformat==format420){
-		U_data=new PicArray(fparams.xl/2,fparams.yl/2); U_data->csort=U;
-		V_data=new PicArray(fparams.xl/2,fparams.yl/2); V_data->csort=V;
+		m_U_data=new PicArray(m_fparams.Xl()/2 , m_fparams.Yl()/2);
+		m_U_data->SetCSort(U);
+		m_V_data=new PicArray(m_fparams.Xl()/2 , m_fparams.Yl()/2); 
+		m_V_data->SetCSort(V);
 	}
 	else if (cformat==format411){
-		U_data=new PicArray(fparams.xl/4,fparams.yl); U_data->csort=U;
-		V_data=new PicArray(fparams.xl/4,fparams.yl); V_data->csort=V;
+		m_U_data=new PicArray(m_fparams.Xl()/4 , m_fparams.Yl());
+		m_U_data->SetCSort(U);
+		m_V_data=new PicArray(m_fparams.Xl()/4 , m_fparams.Yl());
+		m_V_data->SetCSort(V);
 	}
 	else if (cformat==format444){
-		U_data=new PicArray(fparams.xl,fparams.yl); U_data->csort=U;
-		V_data=new PicArray(fparams.xl,fparams.yl); V_data->csort=V;
+		m_U_data=new PicArray(m_fparams.Xl() , m_fparams.Yl()); 
+		m_U_data->SetCSort(U);
+		m_V_data=new PicArray(m_fparams.Xl() , m_fparams.Yl());
+		m_V_data->SetCSort(V);
 	}
 	//(other formats all assumed to be Yonly
 }
 
-PicArray& Frame::Data(CompSort cs){//another way to access the data
-	if (cs==U) return *U_data; 
-	else if (cs==V) return *V_data; 
-	else return *Y_data;}	
-
-const PicArray& Frame::Data(CompSort cs) const {//another way to access the data
-	if (cs==U) return *U_data; 
-	else if (cs==V) return *V_data; 
-	else return *Y_data;}
-
-PicArray& Frame::UpYdata(){
-	if (upY_data!=0)
-		return *upY_data;
-	else{//we have to do the upconversion
-		upY_data=new PicArray(2*Y_data->length(0),2*Y_data->length(1));
-		UpConverter myupconv;
-		myupconv.DoUpConverter(*Y_data,*upY_data);
-		return *upY_data;
-	}
-}
-PicArray& Frame::UpUdata(){
-	if (upU_data!=0)
-		return *upU_data;
-	else{//we have to do the upconversion
-		upU_data=new PicArray(2*U_data->length(0),2*U_data->length(1));
-		UpConverter myupconv;
-		myupconv.DoUpConverter(*U_data,*upU_data);
-		return *upU_data;
-	}
-}
-PicArray& Frame::UpVdata(){
-	if (upV_data!=0)
-		return *upV_data;
-	else{//we have to do the upconversion
-		upV_data=new PicArray(2*V_data->length(0),2*V_data->length(1));
-		UpConverter myupconv;
-		myupconv.DoUpConverter(*V_data,*upV_data);
-		return *upV_data;
-	}
-}
-
-PicArray& Frame::UpData(CompSort cs){
-	if (cs==U) return UpUdata(); 
-	else if (cs==V) return UpVdata(); 
-	else return UpYdata();
+PicArray& Frame::Data(CompSort cs)
+{//another way to access the data
+	if (cs==U) return *m_U_data; 
+	else if (cs==V) return *m_V_data; 
+	else return *m_Y_data;
 }	
 
-const PicArray& Frame::UpYdata() const{
-	if (upY_data!=0)
-		return *upY_data;
-	else{//We have to do the upconversion
-		//Although we're changing a value - the pointer to the array - it doesn't affect the state of
-		//the object as viewable from outside. So the pointers to the upconveted data have been 
-		//declared mutable.
-		upY_data=new PicArray(2*Y_data->length(0),2*Y_data->length(1));
+const PicArray& Frame::Data(CompSort cs) const
+{//another way to access the data
+	if (cs==U) return *m_U_data; 
+	else if (cs==V) return *m_V_data; 
+	else return *m_Y_data;
+}
+
+PicArray& Frame::UpYdata()
+{
+	if (m_upY_data!=0)
+		return *m_upY_data;
+	else{//we have to do the upconversion
+		m_upY_data=new PicArray(2*m_Y_data->length(0),2*m_Y_data->length(1));
 		UpConverter myupconv;
-		myupconv.DoUpConverter(*Y_data,*upY_data);
-		return *upY_data;
+		myupconv.DoUpConverter(*m_Y_data,*m_upY_data);
+		return *m_upY_data;
 	}
 }
 
-const PicArray& Frame::UpUdata() const{
-	if (upU_data!=0)
-		return *upU_data;
-	else{//We have to do the upconversion
-		//Although we're changing a value - the pointer to the array - it doesn't affect the state of
-		//the object as viewable from outside. So the pointers to the upconveted data have been 
-		//declared mutable.
-		upU_data=new PicArray(2*U_data->length(0),2*U_data->length(1));
+PicArray& Frame::UpUdata()
+{
+	if (m_upU_data!=0)
+		return *m_upU_data;
+	else{//we have to do the upconversion
+		m_upU_data=new PicArray(2*m_U_data->length(0),2*m_U_data->length(1));
 		UpConverter myupconv;
-		myupconv.DoUpConverter(*U_data,*upU_data);
-		return *upU_data;
+		myupconv.DoUpConverter(*m_U_data,*m_upU_data);
+		return *m_upU_data;
 	}
 }
 
-const PicArray& Frame::UpVdata() const{
-	if (upV_data!=0)
-		return *upV_data;
-	else{//We have to do the upconversion
-		//Although we're changing a value - the pointer to the array - it doesn't affect the state of
-		//the object as viewable from outside. So the pointers to the upconveted data have been 
-		//declared mutable.
-		upV_data=new PicArray(2*V_data->length(0),2*V_data->length(1));
+PicArray& Frame::UpVdata()
+{
+	if (m_upV_data!=0)
+		return *m_upV_data;
+	else{//we have to do the upconversion
+		m_upV_data=new PicArray(2*m_V_data->length(0),2*m_V_data->length(1));
 		UpConverter myupconv;
-		myupconv.DoUpConverter(*V_data,*upV_data);
-		return *upV_data;
+		myupconv.DoUpConverter(*m_V_data,*m_upV_data);
+		return *m_upV_data;
 	}
 }
 
-const PicArray& Frame::UpData(CompSort cs) const {
-	if (cs==U) return UpUdata(); 
-	else if (cs==V) return UpVdata(); 
-	else return UpYdata();
+PicArray& Frame::UpData(CompSort cs)
+{
+	if (cs==U)
+		return UpUdata(); 
+	else if (cs==V) 
+		return UpVdata(); 
+	else 
+		return UpYdata();
 }	
 
-void Frame::ClipComponent(PicArray& pic_data){
-	for (int J=pic_data.first(1);J<=pic_data.last(1);++J){
-		for (int I=pic_data.first(0);I<=pic_data.last(0);++I){
+const PicArray& Frame::UpYdata() const
+{
+	if (m_upY_data!=0)
+		return *m_upY_data;
+	else{//We have to do the upconversion
+		//Although we're changing a value - the pointer to the array - it doesn't affect the state of
+		//the object as viewable from outside. So the pointers to the upconveted data have been 
+		//declared mutable.
+		m_upY_data=new PicArray(2*m_Y_data->length(0),2*m_Y_data->length(1));
+		UpConverter myupconv;
+		myupconv.DoUpConverter(*m_Y_data,*m_upY_data);
+		return *m_upY_data;
+	}
+}
+
+const PicArray& Frame::UpUdata() const
+{
+	if (m_upU_data!=0)
+		return *m_upU_data;
+	else{//We have to do the upconversion
+		//Although we're changing a value - the pointer to the array - it doesn't affect the state of
+		//the object as viewable from outside. So the pointers to the upconveted data have been 
+		//declared mutable.
+		m_upU_data=new PicArray(2*m_U_data->length(0),2*m_U_data->length(1));
+		UpConverter myupconv;
+		myupconv.DoUpConverter(*m_U_data,*m_upU_data);
+		return *m_upU_data;
+	}
+}
+
+const PicArray& Frame::UpVdata() const
+{
+	if (m_upV_data!=0)
+		return *m_upV_data;
+	else{//We have to do the upconversion
+		//Although we're changing a value - the pointer to the array - it doesn't affect the state of
+		//the object as viewable from outside. So the pointers to the upconveted data have been 
+		//declared mutable.
+		m_upV_data=new PicArray(2*m_V_data->length(0),2*m_V_data->length(1));
+		UpConverter myupconv;
+		myupconv.DoUpConverter(*m_V_data,*m_upV_data);
+		return *m_upV_data;
+	}
+}
+
+const PicArray& Frame::UpData(CompSort cs) const
+{
+	if (cs==U) 
+		return UpUdata(); 
+	else if (cs==V)
+		return UpVdata(); 
+	else 
+		return UpYdata();
+}	
+
+void Frame::ClipComponent(PicArray& pic_data)
+{
+	for (int J=pic_data.first(1) ; J<=pic_data.last(1) ; ++J)
+	{
+		for (int I=pic_data.first(0);I<=pic_data.last(0);++I)
+		{
 			pic_data[J][I]=BChk(pic_data[J][I],1021);
 		}//I		
 	}//J
 }
 
-void Frame::Clip(){
+void Frame::Clip()
+{
 	//just clips the straight picture data, not the upconverted data
 
-	ClipComponent(*Y_data);
-	if (fparams.cformat!=Yonly){
-		ClipComponent(*U_data);
-		ClipComponent(*V_data);	
+	ClipComponent(*m_Y_data);
+	if (m_fparams.CFormat() != Yonly){
+		ClipComponent(*m_U_data);
+		ClipComponent(*m_V_data);	
 	}	
 }
 
 void Frame::ClearData(){
-	if (Y_data!=0){
-		delete Y_data;
-		Y_data=0;
+	if (m_Y_data!=0){
+		delete m_Y_data;
+		m_Y_data=0;
 	}
-	if (U_data!=0){
-		delete U_data;
-		U_data=0;
+	if (m_U_data!=0){
+		delete m_U_data;
+		m_U_data=0;
 	}
-	if (V_data!=0){
-		delete V_data;
-		V_data=0;
+	if (m_V_data!=0){
+		delete m_V_data;
+		m_V_data=0;
 	}
-	if (upY_data!=0){
-		delete upY_data;
-		upY_data=0;
+	if (m_upY_data!=0){
+		delete m_upY_data;
+		m_upY_data=0;
 	}
-	if (upU_data!=0){
-		delete upU_data;
-		upU_data=0;
+	if (m_upU_data!=0){
+		delete m_upU_data;
+		m_upU_data=0;
 	}
-	if (upV_data!=0){
-		delete upV_data;
-		upV_data=0;
+	if (m_upV_data!=0){
+		delete m_upV_data;
+		m_upV_data=0;
 	}
 }

@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -33,26 +35,6 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.2  2004-05-12 08:35:34  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:09  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
-
 #include "libdirac_motionest/me_subpel.h"
 #include "libdirac_common/frame_buffer.h"
 
@@ -83,17 +65,19 @@ void SubpelRefine::DoSubpel(const FrameBuffer& my_buffer,int frame_num, MvData& 
 	factor2x2=float(4*encparams.LumaBParams(2).XBLEN*encparams.LumaBParams(2).YBLEN)/
 		float(encparams.LumaBParams(1).XBLEN*encparams.LumaBParams(1).YBLEN);
 
-	const FrameSort fsort=my_buffer.GetFrame(frame_num).GetFparams().fsort;
-	if (fsort!=I_frame){
+	const FrameSort fsort=my_buffer.GetFrame(frame_num).GetFparams().FSort();
+
+	if (fsort != I_frame)
+	{
 		if (fsort==L1_frame)
-			lambda=encparams.L1_ME_lambda;
+			lambda=encparams.L1MELambda();
 		else
-			lambda=encparams.L2_ME_lambda;
+			lambda=encparams.L2MELambda();
 
 		mv_data=&mvd;
 		matchparams.pic_data=&(my_buffer.GetComponent(frame_num,Y));
 
-		const vector<int>& refs=my_buffer.GetFrame(frame_num).GetFparams().refs;
+		const vector<int>& refs=my_buffer.GetFrame(frame_num).GetFparams().Refs();
 		num_refs=refs.size();
 		ref1=refs[0];
 		if (num_refs>1)
@@ -103,8 +87,10 @@ void SubpelRefine::DoSubpel(const FrameBuffer& my_buffer,int frame_num, MvData& 
 		up1_data=&(my_buffer.GetUpComponent(ref1,Y));
 		up2_data=&(my_buffer.GetUpComponent(ref2,Y));
 
-		for (int yblock=0;yblock<encparams.Y_NUMBLOCKS;++yblock){
-			for (int xblock=0;xblock<encparams.X_NUMBLOCKS;++xblock){				
+		for (int yblock=0;yblock<encparams.YNumBlocks();++yblock)
+		{
+			for (int xblock=0;xblock<encparams.XNumBlocks();++xblock)
+			{				
 				DoBlock(xblock,yblock);
 			}//xblock		
 		}//yblock		

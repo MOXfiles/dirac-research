@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -32,39 +34,6 @@
 * your version of this file under the terms of any one of the MPL, the GPL
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
-
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.5  2004-05-25 02:39:24  chaoticcoyote
-* Unnecessary qualification of some class members in frame.h and pic_io.h.
-* ISO C++ forbids variable-size automatic arrays; fixed in pic_io.cpp
-* Removed spurious semi-colons in me_utils.cpp
-* Fixed out-of-order member constructors in seq_compress.h
-*
-* Revision 1.4  2004/05/12 08:35:34  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.3  2004/03/30 15:52:40  chaoticcoyote
-* New Doxygen comments
-*
-* Revision 1.2  2004/03/22 01:04:28  chaoticcoyote
-* Added API documentation to encoder library
-* Moved large constructors so they are no longer inlined
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:09  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
 
 #ifndef _SEQ_COMPRESS_H_
 #define _SEQ_COMPRESS_H_
@@ -96,7 +65,7 @@ public:
         /param		outfile	an output stream for the compressed output
         /param      encp    parameters for the encoding process
     */
-	SequenceCompressor(PicInput* pin, std::ofstream* outfile, const EncoderParams& encp);	
+	SequenceCompressor(PicInput* pin, std::ofstream* outfile, EncoderParams& encp);	
 
 	//! Destructor
 	/*!
@@ -127,9 +96,8 @@ public:
         Indicates whether or not the last frame in the sequence has been compressed.
         \return     true if last frame has been compressed; false if not
     */
-	bool Finished(){
-		return all_done;
-	}
+	bool Finished(){return m_all_done;}
+
 
 private:
 	//! Copy constructor is private and body-less
@@ -154,38 +122,38 @@ private:
 	*/
 	void WriteStreamHeader();	
 
+		//! Uses the GOP parameters to convert frame numbers in coded order to display order.
+	int CodedToDisplay(int fnum);
+
 	//! Completion flag, returned via the Finished method.
-	bool all_done;
+	bool m_all_done;
 	//! Flag indicating whether we've just finished.
 	/*!
 		Flag which is false if we've been all-done for more than one frame, true otherwise 
 		(so that we can take actions on finishing once only).
 	*/
-	bool just_finished;
+	bool m_just_finished;
 
 	//! The parameters used for encoding.
-	EncoderParams encparams;
+	EncoderParams& m_encparams;
 
 	//! Pointer pointing at the picture input.
-	PicInput* picIn;
-    
-	//! A picture buffer used for local storage of frames whilst pending re-ordering or being used for reference.
-	FrameBuffer* my_buffer;
+	PicInput* m_pic_in;
 
-	//! Uses the GOP parameters to convert frame numbers in coded order to display order.
-	int CodedToDisplay(int fnum);
+	//! A picture buffer used for local storage of frames whilst pending re-ordering or being used for reference.
+	FrameBuffer* m_fbuffer;
 
 	//state variables for CompressNextFrame
 	//! The number of the current frame to be coded, in display order
-	int current_display_fnum;
+	int m_current_display_fnum;
 	//! The number of the current frame to be coded, in coded order
-	int current_code_fnum;
+	int m_current_code_fnum;
 	//! The number of the frame which should be output for concurrent display or storage
-	int show_fnum;
+	int m_show_fnum;
 	//! The index, in display order, of the last frame read
-	int last_frame_read;		
+	int m_last_frame_read;		
 	//! A delay so that we don't display what we haven't coded
-	int delay;
+	int m_delay;
 };
 
 #endif

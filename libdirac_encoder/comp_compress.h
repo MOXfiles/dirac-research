@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -18,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -33,32 +35,6 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-/*
-*
-* $Author$
-* $Revision$
-* $Log$
-* Revision 1.4  2004-05-18 07:46:15  tjdwave
-* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
-*
-* Revision 1.3  2004/05/12 08:35:34  tjdwave
-* Done general code tidy, implementing copy constructors, assignment= and const
-* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
-* Added support for frame padding so that arbitrary block sizes and frame
-* dimensions can be supported.
-*
-* Revision 1.2  2004/03/22 01:04:28  chaoticcoyote
-* Added API documentation to encoder library
-* Moved large constructors so they are no longer inlined
-*
-* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
-* Initial import (well nearly!)
-*
-* Revision 0.1.0  2004/02/20 09:36:08  thomasd
-* Dirac Open Source Video Codec. Originally devised by Thomas Davies,
-* BBC Research and Development
-*
-*/
 
 #ifndef _COMP_COMPRESS_H_
 #define _COMP_COMPRESS_H_
@@ -81,7 +57,7 @@ public:
         \param  encp    encoding parameters
         \param  fp      frame parameters
     */
-	CompCompressor(const EncoderParams & encp, const FrameParams& fp);
+	CompCompressor( EncoderParams & encp, const FrameParams& fp);
 
     //! Compress a frame component
     /*!
@@ -105,24 +81,29 @@ private:
 	*/
 	CompCompressor& operator=(const CompCompressor& rhs);
 
-	EncoderParams encparams;
-	FrameParams fparams;
-	float lambda;
-	CompSort csort;
-	ChromaFormat cformat;
-	FrameSort fsort;	
-	OneDArray<int> qflist;
-	OneDArray<int> qfinvlist;
-	OneDArray<int> offset;
-
 	void GenQuantList();
+
 	int SelectQuant(PicArray& pic_data,SubbandList& bands,int band_num);
+
 	ValueType PicAbsMax(const PicArray& pic_data,int xp, int yp ,int xl ,int yl) const;
+
 	ValueType PicAbsMax(const PicArray& pic_data) const;
+
 	void SetToVal(PicArray& pic_data,const Subband& node,ValueType val);
+
 	void AddSubAverage(PicArray& pic_data,int xl,int yl,AddOrSub dirn);
 
-	void Init();
+	//member variables
+	EncoderParams& m_encparams;
+	const FrameParams& m_fparams;
+    const FrameSort& m_fsort;	
+	const ChromaFormat& m_cformat;
+	CompSort m_csort;
+	OneDArray<int> m_qflist;
+	OneDArray<int> m_qfinvlist;
+	OneDArray<int> m_offset;
+	float m_lambda;
+
 };
 
 
