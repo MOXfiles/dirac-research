@@ -23,5 +23,6 @@ rm -f test/Makefile
 rm -f test/Makefile.in
 aclocal
 autoconf
+libtoolize --force
 automake -a
 exit
