@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.7  2004-05-19 09:16:49  tjdwave
+* Revision 1.8  2004-05-19 14:04:44  tjdwave
+* Changed YUV output to output lines instead of bytes, according to patch provided by Malcolm Parsons
+*
+* Revision 1.7  2004/05/19 09:16:49  tjdwave
 * Replaced zero-padding with edge-padding to eliminate colour-fringeing at low bitrates. Mod to set padded values to 0 when compensating frames.
 *
 * Revision 1.5  2004/05/14 17:25:43  stuart_hc
@@ -74,6 +77,7 @@
 */
 
 #include "libdirac_common/pic_io.h"
+
 
 /**************************************Output***********************************/
 
