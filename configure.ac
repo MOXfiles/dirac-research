@@ -14,10 +14,10 @@ GENERIC_LIBRARY_NAME=dirac
 #release versioning
 GENERIC_MAJOR_VERSION=0
 GENERIC_MINOR_VERSION=4
-GENERIC_MICRO_VERSION=0
+GENERIC_MICRO_VERSION=1
 
 #shared library versioning
-GENERIC_LIBRARY_VERSION=0:4:0
+GENERIC_LIBRARY_VERSION=0:4:1
 #                       | | |
 #                +------+ | +---+
 #                |        |     |
