@@ -60,7 +60,7 @@ At the moment there is a very simple command-line parser class which is
 used in all the executables. The general procedure for running a program
 is to type:
 
-prog_name -<flag_name> flag_val ... param1 param2 ...
+  prog_name -<flag_name> flag_val ... param1 param2 ...
 
 In other words, options are prefixed by a dash and all options take values.
 This includes boolean options. Parameters (like filenames) are not prefixed 
@@ -85,22 +85,43 @@ Raw YUV is commonly used in video codec standardisation processes, although
 the chroma format is often restricted to 4:2:0. The provision of an additional
 header file is unusual, however. For this reason the make_header tool is provided.
 This writes a header file with the appropriate parameters input from the command
-line. (NB, make_header also requires the XParam library).
+line.
 
-Example. Write a header to accompany a raw data file test.yuv. The video has
-dimensions 352 x 288 pixels x 260 frames long, is in 4:2:2 format and not
-interlaced, and has a frame-rate of 15Hz.
+Example.
+  Write a header to accompany a raw data file test.yuv. The video has
+  dimensions 352 x 288 pixels x 260 frames long, is in 4:2:0 format and not
+  interlaced, and has a frame-rate of 15Hz.
 
-Solution
+  Solution
+    make_header -xl 352 -yl 288 -zl 260 -cformat format420 -framerate 15 -interlace false output
 
-make_header -xl 352 -yl 288 -zl 260 -cformat format422 -framerate 15 -interlace false output
+  This writes test.hdr with the corresponding parameters.
 
-This writes test.hdr with the right parameters.
+Viewing and playback utilities for uncompressed video include MPlayer and
+ImageMagick's display command.
 
-WARNING: Dirac currently does not support all frame sizes. The encoder or decoder may
-crash if there is not an integral number of macroblocks in each component of a frame,
-as well as being divisible by 16 to support a 4-level wavelet transform. This
-deficiency will be remedied soon. See below for advice on block sizes.
+  Continuing the 352x288 4:2:0 example above, to display a single frame
+  with ImageMagick use the following.  Use <spacebar> to see subsequent frames.
+
+    display -size 352x288 test.yuv
+
+  To playback the uncompressed video use the following MPlayer command:
+
+    mplayer -fps 15 -rawvideo on:size=152064:w=352:h=288 test.yuv
+
+  (at the time of writing MPlayer could not playback 4:2:2 or 4:4:4 YUV data)
+
+To generate uncompressed video in a suitable format for encoding with Dirac,
+use the transcode utility (see http://zebra.fh-weingarten.de/~transcode/).
+
+  This example uses a 720x576x50 DV source, and transcodes to 720x576 YUV in
+  4:2:0 chroma format.  Note that cascading codecs (DV + Dirac) is a bad idea.
+
+    transcode -i source.dv -x auto,null --dv_yuy2_mode -k -V -y raw,null -o test.avi
+    tcextract -i test.avi -x rgb > test.yuv
+
+    make_header -xl 720 -yl 576 -zl 50 -cformat format420 -framerate 25 -interlace false test
+
 
 4.3 Encoding
 
@@ -124,7 +145,7 @@ Simple coding example. Code an SD sequence to high quality.
 
 Solution.
 
-dirac_encoder -SD576 true -qf 20 test test_out
+  dirac_encoder -SD576 true -qf 20 test test_out
 
 will read test.yuv and test.hdr as input, and output a compressed bitstream test_out.drc
 as well as locally-decoded files test_out.yuv and test_out.hdr.
@@ -169,11 +190,9 @@ so 4xblen must divide the frame width and 4yblen the frame height.
 Decoding is much simpler. Just point the decoder input at the bitstream and the
 output to a file:
 
-dirac_decoder -verbose true test_enc test_dec
+  dirac_decoder -verbose true test_enc test_dec
 
 will decode into test_dec.{yuv,hdr} with running commentary.
 
 Thomas Davies
 (dirac@rd.bbc.co.uk)
-
-11 May 2004
