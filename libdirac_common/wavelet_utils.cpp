@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-05-25 15:30:19  tjdwave
+* Removed scaling from the wavelet transform. Scaling is now incorporated into
+* perceptual weighting; the wavelet transform is now exactly invertible.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -197,13 +201,6 @@ void WaveletTransform::VHSplit(const int xp, const int yp, const int xl, const i
 		line_data[xl-1]+=ValueType((3616*int(line_data[xend-1]+line_data[xend-1]))>>12);
 		line_data[xend-1]+=ValueType((1817*int(line_data[xl-2]+line_data[xl-1]))>>12);
 
-		for (I=0,K=xl2; I<xl2;++I,++K){
-//			TBC: scale factors can be removed and incorporated into noise
-//			weighting factors for quantisation
-
-			line_data[I]=ValueType((4709*int(line_data[I]))>>12);
-			line_data[K]=ValueType((3563*int(line_data[K]))>>12);
-		}
 		tmp_data[J]=line_data;
 	}
 
@@ -240,14 +237,8 @@ void WaveletTransform::VHSplit(const int xp, const int yp, const int xl, const i
 		col_data[yend-1]+=ValueType((1817*int(col_data[yl-2]+col_data[yl-1]))>>12);
 
 		for (J=0,K=yl2; J<yend;++J,++K){
-// 			pic_data[J+yp][I+xp]=col_data[J];
-// 			pic_data[K+yp][I+xp]=col_data[K];
-//			TBC: scale factors can be removed and incorporated into noise
-//			weighting factors for quantisation
-
-			pic_data[J+yp][I+xp]=ValueType((4709*int(col_data[J]))>>12);
-			pic_data[K+yp][I+xp]=ValueType((3563*int(col_data[K]))>>12);
-
+			pic_data[J+yp][I+xp]=col_data[J];
+			pic_data[K+yp][I+xp]=col_data[K];
 		}//I
 
 	}
@@ -277,13 +268,8 @@ void WaveletTransform::VHSynth(const int xp, const int yp, const int xl, const i
 	for (I=0; I<xend;++I){		
 		col_data=new ValueType[yl];
 		for (J=0,K=yl2;J<yl2;++J,++K){
-// 			col_data[J]=pic_data[J+yp][I+xp];	
-// 			col_data[K]=pic_data[K+yp][I+xp];			
-//			TBC: scale factors can be removed and incorporated into noise
-//			weighting factors for quantisation
-
-			col_data[J]=ValueType((3563*int(pic_data[J+yp][I+xp]))>>12);	
-			col_data[K]=ValueType((4709*int(pic_data[K+yp][I+xp]))>>12);			
+			col_data[J]=pic_data[J+yp][I+xp];	
+			col_data[K]=pic_data[K+yp][I+xp];			
 		}
 
 		//first lifting stage
@@ -319,12 +305,8 @@ void WaveletTransform::VHSynth(const int xp, const int yp, const int xl, const i
 	for (J=0; J<yend;++J){
 
 		for (I=0,K=xl2;I<xl2;++I,++K){
-// 			line_data[I]=tmp_data[I][J];
-// 			line_data[K]=tmp_data[K][J];
-//			TBC: scale factors can be removed and incorporated into noise
-//			weighting factors for quantisation
-			line_data[I]=ValueType((3563*int(tmp_data[I][J]))>>12);
-			line_data[K]=ValueType((4709*int(tmp_data[K][J]))>>12);
+			line_data[I]=tmp_data[I][J];
+			line_data[K]=tmp_data[K][J];
 		}		
 
 		//first lifting stage
@@ -403,9 +385,13 @@ float WaveletTransform::Threshold(float xf,float yf,CompSort cs){
 }
 
 void WaveletTransform::SetBandWeights (const EncoderParams& encparams,const FrameParams& fparams,const CompSort csort){
-	int xlen,ylen,xl,yl,xp,yp;
+	int xlen,ylen,xl,yl,xp,yp,depth;
 	float xfreq,yfreq;
-	const FrameSort& fsort=fparams.fsort;	
+	const FrameSort& fsort=fparams.fsort;
+	float temp;
+
+	//factor used to compensate for the absence of scaling in the wavelet transform	
+	const double alpha(1.149658203);
 
 	xlen=2*band_list(1).Xl();
 	ylen=2*band_list(1).Yl();
@@ -441,17 +427,18 @@ void WaveletTransform::SetBandWeights (const EncoderParams& encparams,const Fram
 					yfreq/=2.0;
 				}
 			}
-			band_list(I).SetWt(2.0*Threshold(xfreq,yfreq,csort));
+			temp=2.0*Threshold(xfreq,yfreq,csort);
+			band_list(I).SetWt(temp);
 
 		}
 		//make sure dc is always the lowest weight
 		float min_weight=band_list(band_list.Length()).Wt();
 		for(int I=1;I<=band_list.Length()-1;I++ ){
 			min_weight=((min_weight>band_list(I).Wt()) ? band_list(I).Wt() : min_weight);
-		}
-
+		}		
 		band_list(band_list.Length()).SetWt(min_weight);
- 		//normalize weights wrt dc subband
+
+		//normalize weights wrt dc subband
 		for(int I=1;I<=band_list.Length();I++ ){
 			band_list(I).SetWt(band_list(I).Wt()/band_list(band_list.Length()).Wt());		
 		}
@@ -461,4 +448,23 @@ void WaveletTransform::SetBandWeights (const EncoderParams& encparams,const Fram
 			band_list(I).SetWt(1.0);		
 		}	
 	}
+
+	//Finally, compensate for the absence of scaling in the transform
+	for (int I=1;I<band_list.Length();++I){
+
+		depth=band_list(I).Depth();
+		if (band_list(I).Xp()==0 && band_list(I).Yp()==0){
+			temp=std::pow(alpha,2*depth);
+		} 
+		else if (band_list(I).Xp()!=0 && band_list(I).Yp()!=0){
+			temp=std::pow(alpha,2*(depth-2));
+		}
+		else {
+			temp=std::pow(alpha,2*(depth-1));
+		}
+
+		band_list(I).SetWt(band_list(I).Wt()/temp);
+
+	}//I		
+
 }	
