@@ -197,13 +197,38 @@ CodecParams::CodecParams():
     m_cbparams(3)
 {}
 
-void CodecParams::SetBlockSizes(const OLBParams& olbparams , ChromaFormat cformat)
+void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat cformat)
 {
     //given the raw overlapped block parameters, set the modified internal parameters to
     //take account of the chroma sampling format and overlapping requirements, as well
     //as the equivalent parameters for sub-MBs and MBs.
     //Does NOT set the number of blocks or macroblocks, as padding may be required.
-    
+
+    // Factors for scaling chroma blocks
+    int xcfactor,ycfactor; 
+ 
+    if (cformat == format420)
+    {
+        xcfactor = 2;
+        ycfactor = 2;
+    }
+    else if (cformat == format422)
+    {
+        xcfactor = 2;
+        ycfactor = 1;
+
+    }
+    else if (cformat==format411)
+    {
+        xcfactor = 4;
+        ycfactor = 1;
+    }
+    else
+    {// assume 444
+        xcfactor = 1;
+        ycfactor = 1;
+    }
+
     m_lbparams[2] = olbparams;
     
     //check the separations aren't too small
@@ -219,36 +244,30 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , ChromaFormat cforma
         m_lbparams[2].SetXblen( m_lbparams[2].Xblen()+1 );
     if (( m_lbparams[2].Yblen() - m_lbparams[2].Ybsep() )%2 != 0)
         m_lbparams[2].SetYblen( m_lbparams[2].Yblen()+1 );
+
+    // If the overlapped blocks don't work for the chroma format, we have to iterate
+    if ( (m_lbparams[2].Xbsep()%xcfactor != 0) || (m_lbparams[2].Ybsep()%ycfactor != 0) )
+    {
+        OLBParams new_olbparams( m_lbparams[2] );
+
+        if (m_lbparams[2].Xbsep()%xcfactor != 0)
+            new_olbparams.SetXbsep( ( (m_lbparams[2].Xbsep()/xcfactor) + 1 )*xcfactor );
+
+        if (m_lbparams[2].Ybsep()%ycfactor != 0)
+            new_olbparams.SetYbsep( ( (m_lbparams[2].Ybsep()/ycfactor) + 1 )*ycfactor );
+
+        new_olbparams.SetXblen( std::max( new_olbparams.Xbsep()+2 , olbparams.Xblen() ) );
+        new_olbparams.SetYblen( std::max( new_olbparams.Xbsep()+2 , olbparams.Xblen() ) );
+        
+        SetBlockSizes( new_olbparams , cformat );
+    }
     
-    //Now compute the resulting chroma block params
-    if (cformat == format420)
-    {
-        m_cbparams[2].SetXbsep( m_lbparams[2].Xbsep()/2 );
-        m_cbparams[2].SetYbsep( m_lbparams[2].Ybsep()/2 );
-        m_cbparams[2].SetXblen( std::max(m_lbparams[2].Xblen()/2 , m_cbparams[2].Xbsep()+2) );
-        m_cbparams[2].SetYblen( std::max(m_lbparams[2].Yblen()/2 , m_cbparams[2].Ybsep()+2) );
-    }
-    else if (cformat == format422)
-    {
-        m_cbparams[2].SetXbsep( m_lbparams[2].Xbsep()/2 );
-        m_cbparams[2].SetYbsep( m_lbparams[2].Ybsep() );
-        m_cbparams[2].SetXblen( std::max(m_lbparams[2].Xblen()/2 , m_cbparams[2].Xbsep()+2) );
-        m_cbparams[2].SetYblen( std::max(m_lbparams[2].Yblen() , m_cbparams[2].Ybsep()+2) );
-    }
-    else if (cformat==format411)
-    {
-        m_cbparams[2].SetXbsep( m_lbparams[2].Xbsep()/4 );
-        m_cbparams[2].SetYbsep( m_lbparams[2].Ybsep() );
-        m_cbparams[2].SetXblen( std::max(m_lbparams[2].Xblen()/4 , m_cbparams[2].Xbsep()+2) );
-        m_cbparams[2].SetYblen( std::max(m_lbparams[2].Yblen() , m_cbparams[2].Ybsep()+2) );
-    }
-    else
-    {// assume 444
-        m_cbparams[2].SetXbsep( m_lbparams[2].Xbsep() );
-        m_cbparams[2].SetYbsep( m_lbparams[2].Ybsep() );
-        m_cbparams[2].SetXblen( std::max(m_lbparams[2].Xblen() , m_cbparams[2].Xbsep()+2) );
-        m_cbparams[2].SetYblen( std::max(m_lbparams[2].Yblen() , m_cbparams[2].Ybsep()+2) );
-    }
+    // Now compute the resulting chroma block params
+
+    m_cbparams[2].SetXbsep( m_lbparams[2].Xbsep()/xcfactor );
+    m_cbparams[2].SetYbsep( m_lbparams[2].Ybsep()/ycfactor );
+    m_cbparams[2].SetXblen( std::max(m_lbparams[2].Xblen()/xcfactor , m_cbparams[2].Xbsep()+2) );
+    m_cbparams[2].SetYblen( std::max(m_lbparams[2].Yblen()/ycfactor , m_cbparams[2].Ybsep()+2) );
     
     //check overlap is divisible by 2
     if (( m_cbparams[2].Xblen() - m_cbparams[2].Xbsep() )%2 != 0)

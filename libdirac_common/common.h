@@ -593,7 +593,7 @@ public:
     void SetTopFieldFirst(bool topf){m_topfieldfirst=topf;}
     
     //! Set the block sizes for all MB splitting levels given these prototype block sizes for level=2
-    void SetBlockSizes(const OLBParams& olbparams, ChromaFormat cformat);
+    void SetBlockSizes(const OLBParams& olbparams , const ChromaFormat cformat);
     
 private:
     
