@@ -38,7 +38,7 @@
 #ifndef _BAND_CODEC_H_
 #define _BAND_CODEC_H_
 
-#include <libdirac_common/arith_codec.h>
+#include <libdirac_common/range_codec.h>
 #include <libdirac_common/wavelet_utils.h>
 
 namespace dirac
@@ -49,9 +49,9 @@ namespace dirac
 
     //! A general class for coding and decoding wavelet subband data.
     /*!
-        A general class for coding and decoding wavelet subband data, deriving from the abstract ArithCodec class.
+        A general class for coding and decoding wavelet subband data, deriving from the abstract RangeCodec class.
      */
-    class BandCodec: public ArithCodec<PicArray >
+    class BandCodec: public RangeCodec<PicArray >
     {
     public:
 
@@ -104,7 +104,6 @@ namespace dirac
         virtual void CodeCoeffBlock(const CodeBlock& code_block , PicArray& in_data);
         virtual void DecodeCoeffBlock(const CodeBlock& code_block , PicArray& out_data);
 
-        void Update( const bool symbol , const int context_num );
         void ResetAll();
     
         int ChooseContext( const int bin_number) const;

@@ -45,7 +45,7 @@ using namespace dirac;
 MvDataCodec::MvDataCodec(BasicOutputManager* bits_out,
                          size_t number_of_contexts,
                          const ChromaFormat& cf)
-  : ArithCodec <MvData> (bits_out,number_of_contexts),
+  : RangeCodec <MvData> (bits_out,number_of_contexts),
     m_MB_count( 0 ),
     m_reset_num( 32 ),
     m_cformat(cf)
@@ -55,7 +55,7 @@ MvDataCodec::MvDataCodec(BasicOutputManager* bits_out,
 MvDataCodec::MvDataCodec(BitInputManager* bits_in,
                          size_t number_of_contexts,
                          const ChromaFormat& cf)
-  : ArithCodec <MvData> (bits_in,number_of_contexts),
+  : RangeCodec <MvData> (bits_in,number_of_contexts),
     m_MB_count( 0 ),
     m_reset_num( 32 ),
 	m_cformat(cf)
@@ -71,16 +71,6 @@ void MvDataCodec::InitContexts()
 
 //protected functions//
 ///////////////////////
-
-inline void MvDataCodec::Update( const bool symbol , const int context_num )
-{
-    Context& ctx = m_context_list[context_num];
-
-    ctx.IncrCount( symbol );
-    
-    if ( ctx.Weight() >= 1024 )
-        ctx.HalveCounts();
-}
 
 inline void MvDataCodec::ResetAll()
 {

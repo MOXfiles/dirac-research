@@ -44,7 +44,7 @@ BandCodec::BandCodec(BasicOutputManager* bits_out,
                      size_t number_of_contexts,
                      const SubbandList & band_list,
                      int band_num):
-    ArithCodec<PicArray>(bits_out,number_of_contexts),
+    RangeCodec<PicArray>(bits_out,number_of_contexts),
     m_bnum(band_num),
     m_node(band_list(band_num)),
     m_vol(m_node.Xl()*m_node.Yl()),
@@ -60,7 +60,7 @@ BandCodec::BandCodec(BitInputManager* bits_in,
                      size_t number_of_contexts,
                      const SubbandList& band_list,
                      int band_num):
-    ArithCodec<PicArray>(bits_in,number_of_contexts),
+    RangeCodec<PicArray>(bits_in,number_of_contexts),
     m_bnum(band_num),
     m_node(band_list(band_num)),
     m_vol(m_node.Xl()*m_node.Yl()),
@@ -94,16 +94,6 @@ void BandCodec::ResetAll()
     for (unsigned int c = 0; c < m_context_list.size(); ++c)
         if (m_context_list[c].Weight()>16)
             m_context_list[c].HalveCounts();
-}
-
-void BandCodec::Update( const bool symbol , const int context_num )
-{
-    Context& ctx = m_context_list[context_num];
-
-    ctx.IncrCount( symbol );
-    
-    if ( ctx.Weight() >= 1024 )
-        ctx.HalveCounts();
 }
 
 //encoding function

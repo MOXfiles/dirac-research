@@ -43,7 +43,7 @@
 //------using adaptive arithmetic coding-------//
 /////////////////////////////////////////////////
 
-#include <libdirac_common/arith_codec.h>
+#include <libdirac_common/range_codec.h>
 #include <libdirac_common/common.h>
 #include <libdirac_common/motion.h>
 #include <libdirac_common/wavelet_utils.h>
@@ -54,9 +54,9 @@ namespace dirac
 
     //! Codes and decodes all the Motion Vector data
     /*!
-        Derived from the ArithCodec class, this codes and decodes all the motion vector data.
+        Derived from the RangeCodec class, this codes and decodes all the motion vector data.
      */
-    class MvDataCodec: public ArithCodec<MvData>
+    class MvDataCodec: public RangeCodec<MvData>
     {
     public:
         //! Constructor for encoding
@@ -138,7 +138,6 @@ namespace dirac
         void DoWorkDecode(MvData& out_data);
 
         // Context stuff    
-        void Update( const bool symbol , const int context_num );
         void ResetAll();
 
         int ChooseMBSContext(const MvData& data, const int BinNumber) const;
