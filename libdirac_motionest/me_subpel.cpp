@@ -157,8 +157,8 @@ void SubpelRefine::DoBlock(const int xblock , const int yblock ,
     // doing 1/8th pixel accuracy
     mv_array[yblock][xblock] = mv_array[yblock][xblock]<<3;
 
-    // Re-calculate at pixel accuracy, with correct predictor
-    pred_costs[yblock][xblock].mvcost = GetVar(mv_pred , mv_array[yblock][xblock]);
+    // Re-calculate at pixel accuracy, with correct predictor and lambda
+    pred_costs[yblock][xblock].mvcost = my_bmatch.GetVarUp(mv_pred , mv_array[yblock][xblock]);
     pred_costs[yblock][xblock].SetTotal( loc_lambda );
 
     AddNewVlist( cand_list , mv_array[yblock][xblock] , 0 , 0 , 1 );// (creates a singleton list)

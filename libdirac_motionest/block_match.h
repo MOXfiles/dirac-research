@@ -148,6 +148,22 @@ namespace dirac
                                 const MVector& mv_prediction,
                                 float lambda);
 
+        //! Get a measure of the difference between a motion vector and a prediction
+        /*!
+            Get a measure of the difference between a motion vector and a prediction
+            \param predmv  the predicting motion vector
+            \param mv  the motion vector
+        */
+        ValueType GetVar( const MVector& predmv , const MVector& mv ) const;
+
+        //! Get a measure of the difference between a motion vector and a prediction, to 1/8pel accuracy
+        /*!
+            Get a measure of the difference between a motion vector and a prediction, to 1/8pel accuracy
+            \param predmv  the predicting motion vector
+            \param mv  the motion vector
+        */
+        ValueType GetVarUp( const MVector& predmv , const MVector& mv ) const;
+
     private:
         // Local copies of the picture and reference
         const PicArray& m_pic_data;
@@ -168,6 +184,10 @@ namespace dirac
 
         // The block parameters we're using
         OLBParams m_bparams;
+
+        // The maximum variations allowed in calculating motion vector costs
+        const int m_var_max;
+        const int m_var_max_up;
 
     };
 

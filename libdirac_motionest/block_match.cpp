@@ -45,29 +45,6 @@ using std::vector;
 namespace dirac
 {
 
-ValueType GetVar( const MVector& predmv , const MVector& mv )
-{
-    MVector diff;
-    diff.x = mv.x-predmv.x;
-    diff.y = mv.y-predmv.y;    
-
-    return std::max( Norm1( diff ) , 48 );
-}
-
-ValueType GetVar( const std::vector<MVector>& pred_list , const MVector& mv)
-{
-    ValueType sum=0;
-    MVector diff;
-    for (size_t i=0 ; i<pred_list.size() ; ++i)
-    {
-        diff.x = mv.x - pred_list[i].x;
-        diff.y = mv.y - pred_list[i].y;
-        sum += Norm1( diff );
-    }
-
-    return sum;
-}
-
 void AddNewVlist( CandidateList& vect_list, const MVector& mv, const int xr , const int yr , const int step )
 {
       //Creates a new motion vector list in a square region around mv
@@ -224,9 +201,30 @@ BlockMatcher::BlockMatcher( const PicArray& pic_data , const PicArray& ref_data 
     m_checkdiff( ref_data , pic_data ),
     m_simplediffup( ref_data , pic_data ),
     m_checkdiffup( ref_data , pic_data ),
-    m_bparams(bparams)
+    m_bparams( bparams ),
+    m_var_max( (pic_data.LengthX()+pic_data.LengthY() )/216 ),
+    m_var_max_up( (pic_data.LengthX()+pic_data.LengthY() )/27 )
 {}
-    
+
+
+ValueType BlockMatcher::GetVar( const MVector& predmv , const MVector& mv ) const
+{
+    MVector diff;
+    diff.x = mv.x-predmv.x;
+    diff.y = mv.y-predmv.y;    
+
+    return std::max( Norm1( diff ) , m_var_max );
+}
+ 
+ValueType BlockMatcher::GetVarUp( const MVector& predmv , const MVector& mv ) const
+{
+    MVector diff;
+    diff.x = mv.x-predmv.x;
+    diff.y = mv.y-predmv.y;    
+
+    return std::max( Norm1( diff ) , m_var_max_up );
+}   
+
 void BlockMatcher::FindBestMatch(int xpos , int ypos ,
                                  const CandidateList& cand_list,
                                  const MVector& mv_prediction,
@@ -386,7 +384,7 @@ void BlockMatcher::FindBestMatchSubp(int xpos, int ypos,
     {
 
         cand_mv = cand_list[list_num][0];
-        cand_costs.mvcost = GetVar( mv_prediction , cand_mv );
+        cand_costs.mvcost = GetVarUp( mv_prediction , cand_mv );
 
         // See whether we need to do bounds checking or not
         if (   (( dparams.Xp()<<1 )+(cand_mv.x>>2))<0 
@@ -440,7 +438,7 @@ void BlockMatcher::FindBestMatchSubp(int xpos, int ypos,
         {//start at 1 since did 0 above
 
             cand_mv = cand_list[list_num][i];
-            cand_costs.mvcost = GetVar( mv_prediction , cand_mv );
+            cand_costs.mvcost = GetVarUp( mv_prediction , cand_mv );
 
             if (   (( dparams.Xp()<<1 )+( cand_mv.x>>2 ))<0 
                 || ((( dparams.Xp()+dparams.Xl() )<<1)+( cand_mv.x>>2 )) >= m_ref_data.LengthX()
