@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-05-24 16:03:48  tjdwave
+* Support for IO error handling. Decoder freezes on last frame if out of data.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -83,11 +86,12 @@ public:
 
     //! Decompress the next frame into the buffer
     /*!
-        Decompresses the next frame from the stream and place at the end of a frame buffer
+        Decompresses the next frame from the stream and place at the end of a frame buffer.
+		Returns 0 if able to decode successfully, 1 otherwise
 
         \param my_buffer   picture buffer into which the frame is placed
     */
-	void Decompress(FrameBuffer& my_buffer);
+	bool Decompress(FrameBuffer& my_buffer);
 
 private:
 	//! Copy constructor is private and body-less
@@ -121,7 +125,7 @@ private:
 	//! Decodes component data	
 	void CompDecompress(FrameBuffer& my_buffer,int fnum, CompSort cs);
 	//! Reads the header data associated with decompressing the frame
-	void ReadFrameHeader(FrameParams& fparams);	//read the frame header data
+	bool ReadFrameHeader(FrameParams& fparams);	//read the frame header data
 };
 
 #endif

@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-05-24 16:03:48  tjdwave
+* Support for IO error handling. Decoder freezes on last frame if out of data.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -172,9 +175,14 @@ Frame& SequenceDecompressor::DecompressNextFrame(){
 	if (current_code_fnum!=0)//if we're not at the beginning, clean the buffer of already displayed frames
 		my_buffer->Clean(show_fnum);	
 
-	my_fdecoder.Decompress(*my_buffer);
-	show_fnum=std::min(std::max(current_code_fnum-delay,0),sparams.zl-1);
-	current_code_fnum++;
+	int end_of_data=my_fdecoder.Decompress(*my_buffer);
+
+	//if we've exited with success, there's a new frame to display, so increment
+	//the counters. Otherwise, freeze on the last frame shown	
+	if (!end_of_data){
+		show_fnum=std::min(std::max(current_code_fnum-delay,0),sparams.zl-1);
+		current_code_fnum++;
+	}
 
 	return my_buffer->GetFrame(show_fnum);
 }
