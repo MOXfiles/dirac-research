@@ -41,6 +41,7 @@
 #include <libdirac_motionest/pixel_match.h>
 #include <libdirac_motionest/me_subpel.h>
 #include <libdirac_motionest/me_mode_decn.h>
+#include <libdirac_motionest/global_motion.h>
 using namespace dirac;
 
 #include <cmath>
@@ -68,6 +69,14 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
     pelrefine.DoSubpel( my_buffer , frame_num , me_data );
 
 
+    // Now find BEST global motion vectors
+	GlobalMotion globalMotion( my_buffer, me_data, frame_num, m_encparams );
+
+	for (unsigned int i=1; i<=my_buffer.GetFrame(frame_num).GetFparams().Refs().size(); ++i)
+    {
+        std::cerr<<std::endl<<"Global Motion, ref "<<i;
+        globalMotion.ModelGlobalMotion(i);
+    }
     // Step3.
     // We now have to decide how each macroblock should be split 
     // and which references should be used, and so on.
