@@ -19,4 +19,8 @@ BMPtoRGB_SOURCES=BMPtoRGB.cpp
 
 LDADD = common/libconv_common.a
 
+if USE_MSVC
+CLEANFILES = *.pdb *.ilk
+endif
+
 SUBDIRS=common

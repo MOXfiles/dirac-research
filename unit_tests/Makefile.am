@@ -9,3 +9,7 @@ dirac_unittest_SOURCES = utmain.cpp \
 						 arrays_test.cpp
 
 LDADD = ../libdirac_encoder/libdirac_encoder.a ../libdirac_common/libdirac_common.a ../libdirac_motionest/libdirac_motionest.a -ldl -lcppunit
+
+if USE_MSVC
+CLEANFILES = *.pdb *.ilk
+endif

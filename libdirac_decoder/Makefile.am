@@ -12,3 +12,13 @@ libdirac_decoder_a_SOURCES = $(h_sources) $(cpp_sources)
 
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)/libdirac_decoder
 library_include_HEADERS = $(h_sources)
+
+if USE_MSVC
+CLEANFILES = *.pdb *.ilk
+endif
+
+if USE_MSVC
+libdirac_decoder_a_AR = link.exe -lib /out:libdirac_decoder.a $(libdirac_decoder_a_OBJECTS) ; echo
+else
+libdirac_decoder_a_AR = ar crv
+endif

@@ -11,3 +11,12 @@ libdirac_motionest_a_SOURCES = $(h_sources) $(cpp_sources)
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)/libdirac_motionest
 library_include_HEADERS = $(h_sources)
 
+if USE_MSVC
+CLEANFILES = *.pdb *.ilk
+endif
+
+if USE_MSVC
+libdirac_motionest_a_AR = link.exe -lib /out:libdirac_motionest.a $(libdirac_motionest_a_OBJECTS) ; echo
+else
+libdirac_motionest_a_AR = ar crv
+endif

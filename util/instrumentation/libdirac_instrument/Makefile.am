@@ -11,3 +11,12 @@ libdirac_instrument_a_SOURCES = $(h_sources) $(cpp_sources)
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
 
+if USE_MSVC
+CLEANFILES = *.pdb *.ilk
+endif
+
+if USE_MSVC
+libdirac_instrument_a_AR = link.exe -lib /out:libdirac_instrument.a $(libdirac_instrument_a_OBJECTS) ; echo
+else
+libdirac_instrument_a_AR = ar crv
+endif
