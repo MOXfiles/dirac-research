@@ -51,134 +51,143 @@ using std::vector;
 //Constructor
 CompDecompressor::CompDecompressor( DecoderParams& decp, const FrameParams& fp)
 :
-m_qflist(60),
-m_decparams(decp),
-m_fparams(fp)
+    m_decparams(decp),
+    m_fparams(fp)
 {}
 
 
-void CompDecompressor::Decompress(PicArray& pic_data)
+void CompDecompressor::Decompress( PicArray& pic_data )
 {
 	const FrameSort& fsort=m_fparams.FSort();
-	const int depth=4;
+	const int depth( 4 );
+
+    // A pointer to the object(s) we'll be using for coding the bands
 	BandCodec* bdecoder;
-    const size_t CONTEXTS_REQUIRED = 24;
-	Subband node;
-	unsigned int max_bits;
+    const size_t CONTEXTS_REQUIRED( 24 );
+
+	unsigned int num_band_bytes;
 	int qf_idx;
 
-	WaveletTransform wtransform(depth);
+	WaveletTransform wtransform( depth );
 	SubbandList& bands=wtransform.BandList();
+
+    // Initialise all the subbands
 	bands.Init(depth , pic_data.LengthX() , pic_data.LengthY());
 
-	GenQuantList();
+    // Set up the code blocks
+    SetupCodeBlocks( bands , fsort );
 
-	for (int I=bands.Length();I>=1;--I)
+	for ( int b=bands.Length() ; b>=1 ; --b )
 	{
+		// Read the header data first
+        num_band_bytes = ReadBandHeader( m_decparams.BitsIn() , bands(b) );
 
-		//read the header data first
-		qf_idx=GolombDecode( m_decparams.BitsIn() );
-		if (qf_idx!=-1){
-			bands(I).SetQf(0,m_qflist[qf_idx]);
-			max_bits=UnsignedGolombDecode( m_decparams.BitsIn() );
-			m_decparams.BitsIn().FlushInput();
-
-			if (I>=bands.Length()){
-				if (fsort==I_frame && I==bands.Length())
+		if ( !bands(b).Skipped() )
+        {
+			if ( b>=bands.Length()-3)
+            {
+				if ( fsort==I_frame && b==bands.Length() )
 					bdecoder=new IntraDCBandCodec( &m_decparams.BitsIn() , CONTEXTS_REQUIRED ,bands);
 				else
-					bdecoder=new LFBandCodec( &m_decparams.BitsIn() , CONTEXTS_REQUIRED ,bands , I);
+					bdecoder=new LFBandCodec( &m_decparams.BitsIn() , CONTEXTS_REQUIRED ,bands , b);
 			}
 			else
-				bdecoder=new BandCodec( &m_decparams.BitsIn() , CONTEXTS_REQUIRED , bands , I);
+				bdecoder=new BandCodec( &m_decparams.BitsIn() , CONTEXTS_REQUIRED , bands , b);
 
 			bdecoder->InitContexts();
-			bdecoder->Decompress(pic_data,max_bits);
+			bdecoder->Decompress(pic_data , num_band_bytes);
 			delete bdecoder;
 		}
-		else{
-			m_decparams.BitsIn().FlushInput();
-			if (I==bands.Length() && fsort==I_frame)
-				SetToVal(pic_data,bands(I),2692);
+		else
+        {
+			if ( b==bands.Length() && fsort==I_frame )
+				SetToVal( pic_data , bands(b) , 2692 );
 			else
-				SetToVal(pic_data,bands(I),0);
+				SetToVal( pic_data , bands(b) , 0 );
 		}
 	}
 	wtransform.Transform(BACKWARD,pic_data);
 }
 
-void CompDecompressor::SetToVal(PicArray& pic_data,const Subband& node,ValueType val){
-	for (int J=node.Yp();J<node.Yp()+node.Yl();++J)
-	{	
-		for (int I=node.Xp();I<node.Xp()+node.Xl();++I)
-		{
-			pic_data[J][I]=val;
-		}
-	}
+int CompDecompressor::ReadBandHeader( BitInputManager& bits_in , Subband& band )
+{
+    int num_band_bytes( 0 );
+
+    // See if the subband is skipped
+    band.SetSkip( bits_in.InputBit() );
+
+    if ( !band.Skipped() )
+    {
+        // If we're not skipped, we need a quantisation index for the subband
+        band.SetQIndex( UnsignedGolombDecode( bits_in ) );
+
+        // We also need to say whether there are multiple quantisers in the subband.
+        // If so, offsets from the band QIndex will be decoded in the code block
+        // headers in the arithmetic coded subband data.
+        band.SetUsingMultiQuants( bits_in.InputBit() );
+
+        if ( !band.UsingMultiQuants() )
+        {
+            // Propogate the quantiser index to all the code blocks if we 
+            // don't have multiquants
+            for ( int j=0 ; j<band.GetCodeBlocks().LengthY() ; ++j )
+                for ( int i=0 ; i<band.GetCodeBlocks().LengthX() ; ++i )
+                   band.GetCodeBlocks()[j][i].SetQIndex( band.QIndex() );
+        }
+        // In the multiquant case, quantiser indexes for
+        // code blocks will be coded as offsets in the entropy-coded stream
+    
+        num_band_bytes = UnsignedGolombDecode( bits_in );
+    }
+    bits_in.FlushInput();
+
+    // Read the number of bits read for the band and return
+    return num_band_bytes;
 }
 
-void CompDecompressor::GenQuantList(){//generates the list of quantisers and inverse quantisers
-	//there is some repetition in this list but at the moment this is easiest from the perspective of SelectQuant
-	//Need to remove this repetition later TJD 29 March 04.
+void CompDecompressor::SetupCodeBlocks( SubbandList& bands , const FrameSort fsort )
+{
+    int xregions;
+    int yregions;
 
-	m_qflist[0]=1;		
-	m_qflist[1]=1;		
-	m_qflist[2]=1;		
-	m_qflist[3]=1;		
-	m_qflist[4]=2;		
-	m_qflist[5]=2;		
-	m_qflist[6]=2;		
-	m_qflist[7]=3;		
-	m_qflist[8]=4;		
-	m_qflist[9]=4;		
-	m_qflist[10]=5;		
-	m_qflist[11]=6;		
-	m_qflist[12]=8;		
-	m_qflist[13]=9;		
-	m_qflist[14]=11;		
-	m_qflist[15]=13;		
-	m_qflist[16]=16;		
-	m_qflist[17]=19;		
-	m_qflist[18]=22;		
-	m_qflist[19]=26;		
-	m_qflist[20]=32;		
-	m_qflist[21]=38;		
-	m_qflist[22]=45;		
-	m_qflist[23]=53;		
-	m_qflist[24]=64;		
-	m_qflist[25]=76;		
-	m_qflist[26]=90;		
-	m_qflist[27]=107;		
-	m_qflist[28]=128;		
-	m_qflist[29]=152;		
-	m_qflist[30]=181;		
-	m_qflist[31]=215;		
-	m_qflist[32]=256;		
-	m_qflist[33]=304;		
-	m_qflist[34]=362;		
-	m_qflist[35]=430;		
-	m_qflist[36]=512;		
-	m_qflist[37]=608;		
-	m_qflist[38]=724;		
-	m_qflist[39]=861;		
-	m_qflist[40]=1024;	
-	m_qflist[41]=1217;	
-	m_qflist[42]=1448;	
-	m_qflist[43]=1722;	
-	m_qflist[44]=2048;	
-	m_qflist[45]=2435;	
-	m_qflist[46]=2896;	
-	m_qflist[47]=3444;	
-	m_qflist[48]=4096;	
-	m_qflist[49]=4870;	
-	m_qflist[50]=5792;	
-	m_qflist[51]=6888;	
-	m_qflist[52]=8192;	
-	m_qflist[53]=9741;	
-	m_qflist[54]=11585;	
-	m_qflist[55]=13777;	
-	m_qflist[56]=16384;	
-	m_qflist[57]=19483;	
-	m_qflist[58]=23170;	
-	m_qflist[59]=27554;		
+    for (int band_num = 1; band_num<=bands.Length() ; ++band_num)
+    {
+        if ( band_num < bands.Length()-6 )
+        {
+            if ( fsort != I_frame )
+            {
+                xregions = 12;
+                yregions = 8;
+            }
+            else
+            {
+                xregions = 4;
+                yregions = 3;
+            }
+        }
+        else if (band_num < bands.Length()-3)
+        {
+            xregions = 8;
+            yregions = 6;
+        }
+        else
+        {
+            xregions = 1;
+            yregions = 1;
+        }
+
+        bands( band_num ).SetNumBlocks( yregions , xregions );
+
+    }// band_num   
+}
+
+void CompDecompressor::SetToVal( PicArray& pic_data , 
+                                 const Subband& node , 
+                                 ValueType val )
+{
+
+	for (int j=node.Yp() ; j<node.Yp()+node.Yl() ; ++j)
+		for (int i=node.Xp() ; i<node.Xp()+node.Xl() ; ++i)
+			pic_data[j][i]=val;
+
 }
