@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author)
+* Contributor(s): Thomas Davies (Original Author), Peter Meerwald (pmeerw@users.sourceforge.net)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -187,8 +187,7 @@ OneDArray<T>::OneDArray(const OneDArray<T>& cpy)
     else
         Init(Range(m_first , m_last));
 
-    for (int i=0 ; i<m_length ; ++i)
-        *(m_ptr+i) = *(cpy.m_ptr+i);
+    memcpy( m_ptr , cpy.m_ptr , m_length * sizeof( T ) );
 }
 
 template <class T>
@@ -206,8 +205,7 @@ OneDArray<T>& OneDArray<T>::operator=(const OneDArray<T>& rhs)
         else
             Init(Range(m_first , m_last));
 
-        for (int i=0 ; i<m_length ; ++i)
-            *(m_ptr+i) = *(rhs.m_ptr+i);            
+        memcpy( m_ptr , rhs.m_ptr , m_length * sizeof( T ) );
 
     }
     return *this;
@@ -317,14 +315,14 @@ public:
         Accesses the rows of the arrays, which are returned in the form of pointers to the row data
         NOT OneDArray objects.
      */    
-    element_type& operator[](const int pos){return m_array_of_rows[pos];}
+    inline element_type& operator[](const int pos){return m_array_of_rows[pos];}
 
     //! Element access.
     /*!
         Accesses the rows of the arrays, which are returned in the form of pointers to the row data
         NOT OneDArray objects.
      */    
-    const element_type& operator[](const int pos) const {return m_array_of_rows[pos];}
+    inline const element_type& operator[](const int pos) const {return m_array_of_rows[pos];}
 
     //! Returns the width
     const int LengthX() const { return m_length_x; }
@@ -414,17 +412,13 @@ TwoDArray<T>::TwoDArray(const TwoDArray<T>& Cpy)
             //based 2D arrays not yet supported    
     }
     for (int j=0 ; j<m_length_y ; ++j) 
-    {
-        for (int i=0 ; i<m_length_x ; ++i)
-        {
-            *(m_array_of_rows[j] + i) = *( (Cpy.m_array_of_rows)[j] + i );    
-        }// i
-    }// j
+        memcpy( m_array_of_rows[j] , (Cpy.m_array_of_rows)[j] , m_length_x * sizeof( T ) ); 
 
 }
 
 template <class T>
-TwoDArray<T>& TwoDArray<T>::operator=(const TwoDArray<T>& rhs){
+TwoDArray<T>& TwoDArray<T>::operator=(const TwoDArray<T>& rhs)
+{
     if (&rhs != this)
     {
         FreeData();
@@ -446,12 +440,8 @@ TwoDArray<T>& TwoDArray<T>::operator=(const TwoDArray<T>& rhs){
         }
 
         for ( int j=0 ; j<m_length_y; ++j)
-        {
-            for ( int i=0; i<m_length_x ; ++i)
-            {
-                *(m_array_of_rows[j] + i ) = *( (rhs.m_array_of_rows)[j] + i );
-            }                
-        }
+            memcpy( m_array_of_rows[j] , (rhs.m_array_of_rows)[j] , m_length_x * sizeof( T ) ); 
+
     }
 
     return *this;
