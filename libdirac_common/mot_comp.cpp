@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-19 09:16:48  tjdwave
+* Revision 1.4  2004-05-21 14:17:00  tjdwave
+* Fixed bug with erroneous linear interpolation for sub-pixel values.
+*
+* Revision 1.3  2004/05/19 09:16:48  tjdwave
 * Replaced zero-padding with edge-padding to eliminate colour-fringeing at low bitrates. Mod to set padded values to 0 when compensating frames.
 *
 * Revision 1.2  2004/05/12 08:35:34  tjdwave
@@ -450,21 +453,20 @@ const ImageCoords Pos, CalcValueType** Weights){
 
 			if(rmdr.x%2 == 0){
 				if(rmdr.y%2 == 0) PixLookup = 4;
-				if(rmdr.y%4 > 1) PixLookup = 7;
+				else if(rmdr.y%4 == 3) PixLookup = 7;
 				else PixLookup = 1;
 			}
-			else if (rmdr.y%2 == 0){
-				if(rmdr.x%4 > 1) PixLookup = 5;
-				else PixLookup = 3;
-			}
-			else if(rmdr.x%4 > 1){
-				if(rmdr.y%4 > 1) PixLookup = 8;
-				else PixLookup = 2;
-			}
-			else{
-				if(rmdr.y%4 > 1) PixLookup = 6;
+			else if (rmdr.x%4 == 1){
+				if(rmdr.y%2 == 0) PixLookup = 3;
+				else if(rmdr.y%4 == 3) PixLookup = 6;
 				else PixLookup = 0;
 			}
+			else{ //rmdr.x%4 ==3
+				if(rmdr.y%2 == 0) PixLookup = 5;
+				else if(rmdr.y%4 == 3) PixLookup = 8;
+				else PixLookup = 2;
+			}
+
 			for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
 				for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
 
@@ -574,21 +576,20 @@ const ImageCoords Pos, CalcValueType** Weights){
 
 			if(rmdr.x%2 == 0){
 				if(rmdr.y%2 == 0) PixLookup = 4;
-				if(rmdr.y%4 > 1) PixLookup = 7;
+				else if(rmdr.y%4 == 3) PixLookup = 7;
 				else PixLookup = 1;
 			}
-			else if (rmdr.y%2 == 0){
-				if(rmdr.x%4 > 1) PixLookup = 5;
-				else PixLookup = 3;
-			}
-			else if(rmdr.x%4 > 1){
-				if(rmdr.y%4 > 1) PixLookup = 8;
-				else PixLookup = 2;
-			}
-			else{
-				if(rmdr.y%4 > 1) PixLookup = 6;
+			else if (rmdr.x%4 == 1){
+				if(rmdr.y%2 == 0) PixLookup = 3;
+				else if(rmdr.y%4 == 3) PixLookup = 6;
 				else PixLookup = 0;
 			}
+			else{ //rmdr.x%4 ==3
+				if(rmdr.y%2 == 0) PixLookup = 5;
+				else if(rmdr.y%4 == 3) PixLookup = 8;
+				else PixLookup = 2;
+			}
+
 			for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
 				for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
 					temp = (InterpLookup[PixLookup][0]*refup_data[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)] +
