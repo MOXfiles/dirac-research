@@ -48,7 +48,7 @@
 extern "C" {
 #endif
 
-#ifdef WIN32
+#if defined(WIN32) && defined(_WINDLL)
 #define DllExport   __declspec( dllexport )
 #else
 #define DllExport
