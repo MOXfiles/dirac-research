@@ -13,8 +13,8 @@ GENERIC_LIBRARY_NAME=dirac
 
 #release versioning
 GENERIC_MAJOR_VERSION=0
-GENERIC_MINOR_VERSION=4
-GENERIC_MICRO_VERSION=3
+GENERIC_MINOR_VERSION=5
+GENERIC_MICRO_VERSION=0
 
 #shared library versioning
 GENERIC_LIBRARY_VERSION=0:0:0
@@ -54,19 +54,29 @@ dnl Checks for required programs.
 dnl -----------------------------------------------
 AC_PROG_CXX
 AM_SANITY_CHECK
+AC_LIBTOOL_WIN32_DLL
+AM_PROG_LIBTOOL
 
 dnl -------------------------------------------------------------------------
 dnl Check if compiling using MS VC++ compiler in msys environment on Windows
 dnl -------------------------------------------------------------------------
 use_msvc=no
+AC_SUBST([LIBFLAGS],[])
+AC_SUBST([LIBEXT],[])
 case "$CXX" in
 		cl*|CL*)
-		CXXFLAGS="-nologo -W1 -EHsc"
+		CXXFLAGS="-nologo -W1 -EHsc -DWIN32"
+		if test x"$enable_shared" = "xyes"; then
+		    LIBEXT=".dll";
+		    LIBFLAGS="-DLL -INCREMENTAL:NO"
+		else
+		    LIBEXT=".lib";
+		    LIBFLAGS="-lib"
+		fi
 		RANLIB="echo"
 		use_msvc=yes
 		;;
 	*)
-		AC_PROG_RANLIB
 		;;
 esac
 AM_CONDITIONAL(USE_MSVC, test x"$use_msvc" = "xyes")
@@ -135,6 +145,7 @@ dnl Setup for the testsuite
 dnl -----------------------------------------------
 AC_CONFIG_TESTDIR([tests], [tests:picheader:encoder:decoder:unit_tests:util/instrumentation])
 AC_CONFIG_FILES([tests/Makefile])
+AC_CONFIG_FILES([tests/at_wrap], [chmod +x tests/at_wrap])
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
 dnl ----------------------------------------------
@@ -169,7 +180,10 @@ if test x"${enableval}" = x"yes" ; then
 			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
 			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[a-z]]*//g'`
 			CXXFLAGS=`echo $CXXFLAGS | sed 's/-W[[0-9]]*//g'`
-		    CXXFLAGS="$CXXFLAGS -Od -Z7 -W2" 
+		    CXXFLAGS="$CXXFLAGS -Od -Z7 -W2"
+			if test x"$enable_shared" = "xyes"; then
+			  LIBFLAGS="$LIBFLAGS -DEBUG";
+            fi
 		    ;;
         *)
 		    # do nothing at the moment
@@ -220,6 +234,24 @@ AC_CHECK_HEADER([cppunit/TestRunner.h],[HAVE_CPPUNIT="true"], [HAVE_CPPUNIT="fal
 	fi
 AM_CONDITIONAL(HAVE_CPPUNIT, $HAVE_CPPUNIT)
 AC_LANG_POP(C++)
+
+dnl -----------------------------------------------
+dnl Check if static libraries to be used on non-Windows platforms
+dnl -----------------------------------------------
+AM_CONDITIONAL(USE_STATIC, test x"$enable_static" = "xyes")
+
+dnl -----------------------------------------------
+dnl Setup valgrind and necessary args for memcheck
+dnl -----------------------------------------------
+dnl Using -q --leak-check on valgrind pre-2.2 gives stderr output when
+dnl no leaks are found so only use --leak-check with recent valgrind.
+dnl valgrind is used during the make valgrind-check target.
+AC_CHECK_PROGS(VALGRIND, valgrind)
+if test x"$VALGRIND" != "x" ; then
+	if $VALGRIND -q --tool=memcheck true 2>/dev/null; then
+		VALGRIND="valgrind --tool=memcheck --leak-check=yes"
+	fi
+fi
 
 dnl -----------------------------------------------
 dnl Generates Makefile's, configuration files and scripts
