@@ -275,6 +275,8 @@ public:
         /param    pic_data    the data to be transformed
     */
     void Transform(const Direction d, PicArray& pic_data);
+
+    void Transform2(const Direction d, PicArray& pic_data);
     
     //! Returns the set of subbands
     SubbandList& BandList(){return band_list;}
@@ -319,10 +321,14 @@ private:
 
     //! Given x and y spatial frequencies in cycles per degree, returns a weighting value
     float PerceptualWeight(float xf,float yf,CompSort cs);
-    void VHSplit(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data);
-    void VHSplit2(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data);
-    void VHSynth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);  
-    void VHSynth2(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);  
+
+    //! Split a subband into 4
+    void VHSplit(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+
+    //! Synthesise a picture from 4 subbands
+    void VHSynth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+  
+
 };
 
 #endif

@@ -193,7 +193,8 @@ void WaveletTransform::Transform(const Direction d, PicArray& pic_data)
 //private functions
 ///////////////////
 
-void WaveletTransform::VHSplit(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data){
+void WaveletTransform::VHSplit(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data)
+{
 
     //version based on integer-like types
     //using edge-extension rather than reflection
@@ -201,11 +202,13 @@ void WaveletTransform::VHSplit(const int xp, const int yp, const int xl, const i
     OneDArray<ValueType *> tmp_data(yl); 
     const int xl2 = xl/2; 
     const int yl2 = yl/2; 
-    ValueType * line_data; 
-    ValueType * col_data=new ValueType[yl];     
+    const int xend=xp+xl;
+    const int yend=yp+yl;
+
+    ValueType* line_data; 
 
     // Positional variables
-    int i,j,k,l; 
+    int i,j,k,r,s; 
   
     // Objects to do lifting stages 
     // (in revese order and type from synthesis)
@@ -216,241 +219,256 @@ void WaveletTransform::VHSplit(const int xp, const int yp, const int xl, const i
 
      //first do horizontal 
 
-    int xend=xl2;     
-    int yend=yl; 
-
-
-    for (j = 0;  j < yend; ++j)
+    for (j = yp;  j < yend; ++j)
     {
-        line_data=new ValueType[xl]; 
-
-        // Copy data across to a temporary array, separating odd and even
-        for (i = 0, k = xl2, l = 0;  i < xend; ++i, ++k, ++l)
-        {
-            line_data[i] = pic_data[ j+yp ][ l+xp ]; 
-            line_data[k] = pic_data[ j+yp ][ ++l+xp ];             
-        }//i
-
         // First lifting stage
- 
-        predictA.Filter( line_data[xl2] , line_data[1] , line_data[0] );
-        predictB.Filter( line_data[0] , line_data[xl2] , line_data[xl2] );
-        
-        for (i = 1, k = xl2+1; i < xend-1; ++i, ++k)
+        line_data = pic_data[j];                 
+
+        predictA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
+        predictB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
+
+        for (i = xp+2, k = xp+3; i < xend-2; i+=2, k+=2)
         {
-            predictA.Filter( line_data[k] , line_data[i+1] , line_data[i] );
-            predictB.Filter( line_data[i] , line_data[k-1] , line_data[k] );
-        }//i
+            predictA.Filter( line_data[k] , line_data[i+2] , line_data[i] );
+            predictB.Filter( line_data[i] , line_data[k-2] , line_data[k] );
+        }// i
         
-        predictA.Filter( line_data[xl-1] , line_data[xend-1] , line_data[xend-1] );
-        predictB.Filter( line_data[xend-1] , line_data[xl-2] , line_data[xl-1] );
+        predictA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
+        predictB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] );
+
 
          //second lifting stage 
-        updateA.Filter( line_data[xl2] , line_data[1] , line_data[0] );
-        updateB.Filter( line_data[0] , line_data[xl2]  ,line_data[xl2] );
         
-        //main body
-        for (i = 1, k = xl2+1;  i < xend-1; ++i,++k)
+        updateA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
+        updateB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
+
+        for (i = xp+2, k = xp+3;  i < xend-2; i+=2 , k+=2)
         { 
-            updateA.Filter( line_data[k] , line_data[i+1] , line_data[i] );
-            updateB.Filter( line_data[i] , line_data[k-1] , line_data[k] );
-        }
-        
-        updateA.Filter( line_data[xl-1] , line_data[xend-1] , line_data[xend-1] );
-        updateB.Filter( line_data[xend-1] , line_data[xl-2] , line_data[xl-1] );
+            updateA.Filter( line_data[k] , line_data[i+2] , line_data[i] );
+            updateB.Filter( line_data[i] , line_data[k-2] , line_data[k] );
+        }// i
 
-        tmp_data[j] = line_data; 
-    }
+        updateA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
+        updateB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] );
 
-     //next do vertical
-    xend = xl;     
-    yend = yl2; 
+    }// j
 
-    for (i = 0; i < xend; ++i)
+    // next do vertical
+
+    // First lifting stage
+
+    // top edge - j=xp
+    for ( i = xp ; i<xend ; ++ i)
     {
+        predictA.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
+        predictB.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
+    }// i
 
-        for (j = 0, k = yl2, l=0;  j < yend; ++j, ++k, ++l)
+    // middle bit
+    for ( j = yp+2, k = yp+3 ; j<yend-2 ; j+=2 , k+=2)
+    {
+        for ( i = xp ; i<xend ; ++ i)
         {
-            col_data[j] = tmp_data[l][i]; 
-            col_data[k] = tmp_data[++l][i];             
-        }//j
+            predictA.Filter( pic_data[k][i] , pic_data[j+2][i] , pic_data[j][i] );
+            predictB.Filter( pic_data[j][i] , pic_data[k-2][i] , pic_data[k][i] );
+        }// i
+    }// j
+    // bottom edge
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        predictA.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
+        predictB.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
+    }// i
 
-        // First lifting stage 
-        predictA.Filter( col_data[yl2] , col_data[1] , col_data[0] );
-        predictB.Filter( col_data[0] , col_data[yl2] , col_data[yl2] );
-        
-        //main body
-        for (j = 1, k = yl2+1;  j < yend-1; ++j, ++k)
+    // Second lifting stage
+
+    // top edge - j=xp
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        updateA.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
+        updateB.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
+    }// i
+
+    // middle bit
+    for ( j = yp+2, k = yp+3 ; j<yend-2 ; j+=2 , k+=2)
+    {
+        for ( i = xp ; i<xend ; ++ i)
         {
-            predictA.Filter( col_data[k] , col_data[j+1] , col_data[j] );
-            predictB.Filter( col_data[j] , col_data[k-1] , col_data[k] ); 
-        }//j
-        
-        predictA.Filter( col_data[yl-1] , col_data[yend-1] , col_data[yend-1] );
-        predictB.Filter( col_data[yend-1] , col_data[yl-2] , col_data[yl-1] );        
+            updateA.Filter( pic_data[k][i] , pic_data[j+2][i] , pic_data[j][i] );
+            updateB.Filter( pic_data[j][i] , pic_data[k-2][i] , pic_data[k][i] );
+        }// i
+    }// j
+    // bottom edge
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        updateA.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
+        updateB.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
+    }// i
 
-        //second lifting stage
-        updateA.Filter( col_data[yl2] , col_data[1] , col_data[0] );
-        updateB.Filter( col_data[0] , col_data[yl2] , col_data[yl2] );
-        
-        for (j = 1,k = yl2+1;  j < yend-1; ++j, ++k)
-        {
-            updateA.Filter( col_data[k] , col_data[j+1] , col_data[j] );
-            updateB.Filter( col_data[j] , col_data[k-1] , col_data[k]);
-        }//j
-        
-        updateA.Filter( col_data[yl-1] , col_data[yend-1] , col_data[yend-1] );
-        updateB.Filter( col_data[yend-1] , col_data[yl-2] , col_data[yl-1] );
+    // Lastly, have to reorder so that subbands are no longer interleaved
 
-        // Copy the data back into the original array
-        for (j=0, k=yl2;  j < yend; ++j, ++k)
-        {
-            pic_data[ j+yp ][ i+xp ] = col_data[j]; 
-            pic_data[ k+yp ][ i+xp ] = col_data[k]; 
-        }//i
+    ValueType** temp_data = new ValueType*[yl];
+    for ( j = 0 ; j< yl ; ++ j)
+        temp_data[j] = new ValueType[xl];
 
-    }
-    
-    // Tidy up
-    delete [] col_data;
-    
-    for (int j=0; j<yl; ++j)
-        delete[] tmp_data[j]; 
+    // Make a temporary copy of the subband
+    for ( j = yp; j<yend ; j++ )
+        memcpy( temp_data[j-yp] , pic_data[j]+xp , xl * sizeof( ValueType ) );
+
+    // Re-order to de-interleave
+    for ( j = yp, s=0; j<yp+yl2 ; j++, s+=2)
+    {
+        for ( i = xp , r=0 ; i<xp+xl2 ; i++ , r += 2)
+            pic_data[j][i] = temp_data[s][r];
+        for ( i = xp+xl2, r=1; i<xend ; i++ , r += 2)
+            pic_data[j][i] = temp_data[s][r];
+    }// j 
+
+    for ( j = yp+yl2, s=1 ; j<yend ; j++ , s += 2)
+    {
+        for ( i = xp , r=0 ; i<xp+xl2 ; i++ , r += 2)
+            pic_data[j][i] = temp_data[s][r];
+        for ( i = xp+xl2, r=1; i<xend ; i++ , r += 2)
+            pic_data[j][i] = temp_data[s][r];
+    }// j 
+
+
+    for ( j = 0 ; j< yl ; ++ j)
+        delete[] temp_data[j];
+    delete[] temp_data;
 
 }
 
-void WaveletTransform::VHSynth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data){    
+void WaveletTransform::VHSynth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data)
+{
+    int i,j,k,r,s;
 
-    ValueType* line_data = new ValueType[xl]; 
-    ValueType* col_data;     
-    OneDArray<ValueType*> tmp_data(xl); 
+    const int xend( xp+xl );
+    const int yend( yp+yl );
+    const int xl2( xl/2 );
+    const int yl2( yl/2 );
 
-    const int xl2 = xl/2; 
-    const int yl2 = yl/2; 
-    int i,j,k,l,m; //positional variables
+    const PredictStep< 1817 > predictB;
+    const PredictStep< 3616 > predictA;
+    const UpdateStep< 217 > updateB;
+    const UpdateStep< 6497 > updateA;
 
-    // set up lifting objects
-    const PredictStep< 1817 > predictA;
-    const PredictStep< 3616 > predictB;
+    ValueType* line_data;
 
-    const UpdateStep< 217 > updateA;
-    const UpdateStep< 6497 > updateB;
+    // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
 
-    //first do vertical synth//
-    ///////////////////////////
+    ValueType** temp_data = new ValueType*[yl];
+    for ( j = 0 ; j< yl ; ++ j)
+        temp_data[j] = new ValueType[xl];
 
-    int xend=xl;
-    int yend=yl2; 
+    // Make a temporary copy of the subband
+    for ( j = yp; j<yend ; j++ )
+        memcpy( temp_data[j-yp] , pic_data[j]+xp , xl * sizeof( ValueType ) );
 
-    for (i=0;  i<xend; ++i)
-    {        
-        // copy a column of data into a temp array
-        col_data = new ValueType[yl];
-        for ( j=0 , k=yl2 ; j<yl2 ; ++j , ++k)
+    // Re-order to interleave
+    for ( j = 0, s=yp; j<yl2 ; j++, s+=2)
+    {
+        for ( i = 0 , r=xp ; i<xl2 ; i++ , r += 2)
+            pic_data[s][r] = temp_data[j][i];
+        for ( i = xl2, r=xp+1; i<xl ; i++ , r += 2)
+            pic_data[s][r] = temp_data[j][i];
+    }// j 
+
+    for ( j = yl2, s=yp+1 ; j<yl ; j++ , s += 2)
+    {
+        for ( i = 0 , r=xp ; i<xl2 ; i++ , r += 2)
+            pic_data[s][r] = temp_data[j][i];
+        for ( i = xl2, r=xp+1; i<xl ; i++ , r += 2)
+            pic_data[s][r] = temp_data[j][i];
+    }// j 
+
+    for ( j = 0 ; j< yl ; ++ j)
+        delete[] temp_data[j];
+    delete[] temp_data;
+
+    // Next, do the vertical synthesis
+    // First lifting stage
+
+    // Begin with the bottom edge
+    for ( i = xend-1 ; i>=xp ; --i)
+    {
+        predictB.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
+        predictA.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
+    }// i
+    // Next, do the middle bit
+    for ( j = yend-4, k = yend-3 ; j>yp ; j-=2 , k-=2)
+    {
+        for ( i = xend-1 ; i>=xp ; --i)
         {
-            col_data[j] = pic_data[ j+yp ][ i+xp ];     
-            col_data[k] = pic_data[ k+yp ][ i+xp ];             
-        }
-
-        // First lifting stage
-        predictA.Filter( col_data[yend-1] , col_data[yl-2] , col_data[yl-1] );
-        predictB.Filter( col_data[yl-1] , col_data[yend-1] , col_data[yend-1] );
-
-        for ( j=yend-2 , k=yl-2 ; j>=1 ; --j , --k ) 
-        {
-            predictA.Filter( col_data[j] , col_data[k-1] , col_data[k] );
-            predictB.Filter( col_data[k] , col_data[j+1] , col_data[j] );
-        }// j
-
-        predictA.Filter( col_data[0] , col_data[yl2] , col_data[yl2] );
-        predictB.Filter( col_data[yl2] , col_data[1] , col_data[0] );
- 
-       // Second lifting stage
-        updateA.Filter( col_data[yend-1] , col_data[yl-2] , col_data[yl-1] );
-        updateB.Filter( col_data[yl-1] , col_data[yend-1] , col_data[yend-1] );
-
-        for ( j=yend-2 , k=yl-2 ; j>=1; --j , --k )
-        {
-            updateA.Filter( col_data[j] , col_data[k-1] , col_data[k] );
-            updateB.Filter( col_data[k] , col_data[j+1] , col_data[j] );
-        }// j
-
-        updateA.Filter( col_data[0] , col_data[yl2] , col_data[yl2] );
-        updateB.Filter( col_data[yl2] , col_data[1] , col_data[0] );
-
-        tmp_data[i] = col_data;
-
+            predictB.Filter( pic_data[j][i] , pic_data[k-2][i] , pic_data[k][i] );
+            predictA.Filter( pic_data[k][i] , pic_data[j+2][i] , pic_data[j][i] );
+        }// i
+    }// j
+    // Then do the top edge
+    for ( i = xend-1 ; i>=xp ; --i)
+    {
+        predictB.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
+        predictA.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
     }// i
 
-     //next do horizontal//    
-     //////////////////////
+    // Second lifting stage
 
-    xend=xl2;     
-    yend=yl; 
-
-    for ( j=0 ; j<yend ; ++j )
+    // Begin with the bottom edge
+    for ( i = xend-1 ; i>=xp ; --i)
     {
-
-        for ( i=0 , k=xl2 ; i<xl2; ++i , ++k )
+        updateB.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
+        updateA.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
+    }// i
+    // Next, do the middle bit
+    for ( j = yend-4, k = yend-3 ; j>yp ; j-=2 , k-=2)
+    {
+        for ( i = xend-1 ; i>=xp ; --i)
         {
-            line_data[i] = tmp_data[i][j]; 
-            line_data[k] = tmp_data[k][j]; 
-        }        
+            updateB.Filter( pic_data[j][i] , pic_data[k-2][i] , pic_data[k][i] );
+            updateA.Filter( pic_data[k][i] , pic_data[j+2][i] , pic_data[j][i] );
+        }// i
+    }// j
+    // Then do the top edge
+    for ( i = xend-1 ; i>=xp ; --i)
+    {
+        updateB.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
+        updateA.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
+    }// i
 
-        // First lifting stage
-        predictA.Filter( line_data[xend-1] , line_data[xl-2] , line_data[xl-1] );
-        predictB.Filter( line_data[xl-1] , line_data[xend-1] , line_data[xend-1] );                         
 
-        for ( i=xend-2 , k=xl-2 ; i>=1; --i , --k )
-        {
-            predictA.Filter( line_data[i] , line_data[k-1] , line_data[k] );
-            predictB.Filter( line_data[k] , line_data[i+1] , line_data[i] );
+    // Next do the horizontal synthesis
+    for (j = yend-1;  j >= yp ; --j)
+    {
+        // First lifting stage 
+        line_data = pic_data[j];
+
+        predictB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] ); 
+        predictA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
+
+        for (i = xend-4, k = xend-3;  i > xp; i-=2 , k-=2)
+        { 
+            predictB.Filter( line_data[i] , line_data[k-2] , line_data[k] );
+            predictA.Filter( line_data[k] , line_data[i+2] , line_data[i] );
         }// i
 
-        predictA.Filter( line_data[0] , line_data[xl2] , line_data[xl2] );
-        predictB.Filter( line_data[xl2] , line_data[1] , line_data[0] );
+        predictB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
+        predictA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
 
-         // Second lifting stage 
-        updateA.Filter( line_data[xend-1] , line_data[xl-2] , line_data[xl-1] );
-        updateB.Filter( line_data[xl-1] , line_data[xend-1] , line_data[xend-1] );                         
+        // Second lifting stage
 
-        for ( i=xend-2 , k=xl-2 ; i>=1 ; --i,--k)
+        updateB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] );
+        updateA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
+
+        for (i = xend-4, k = xend-3;  i > xp; i-=2 , k-=2)
         {
-            updateA.Filter( line_data[i] , line_data[k-1] , line_data[k] );
-            updateB.Filter( line_data[k] , line_data[i+1] , line_data[i] );
-        }// i 
-    
-        updateA.Filter( line_data[0] , line_data[xl2] , line_data[xl2] );
-        updateB.Filter( line_data[xl2] , line_data[1] , line_data[0] );
+            updateB.Filter( line_data[i] , line_data[k-2] , line_data[k] );
+            updateA.Filter( line_data[k] , line_data[i+2] , line_data[i] );
+        }// i
 
-         // Copy data back into the original array
-         if ( j<yl2 )
-         {
-             l = 2*j; 
-             for ( i=0 , k=xl2 ,m=0 ; i<xl2 ; ++i , ++k , m=m+2 )
-             {
-                 pic_data[l][m] = line_data[i]; 
-                 pic_data[l][m+1] = line_data[k]; 
-             }// i
-         }
-         else
-         {
-             l = 2*j - yl + 1; 
-             for ( i=0 , k=xl2 , m=0; i<xl2 ; ++i , ++k , m=m+2 )
-             {
-                 pic_data[l+yp][m+xp] = line_data[i]; 
-                 pic_data[l+yp][m+1+xp] = line_data[k]; 
-             }// i
+        updateB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
+        updateA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
 
-         }
     }
-
-    // Tidy up
-    delete[] line_data; 
-
-    // This deletes all the allocated col_data's
-    for ( int i=0 ; i<xl ; ++i )
-        delete[] tmp_data[i]; 
 
 }
 
