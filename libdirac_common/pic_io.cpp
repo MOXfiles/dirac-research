@@ -38,8 +38,8 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.6  2004-05-18 07:46:15  tjdwave
-* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
+* Revision 1.7  2004-05-19 09:16:49  tjdwave
+* Replaced zero-padding with edge-padding to eliminate colour-fringeing at low bitrates. Mod to set padded values to 0 when compensating frames.
 *
 * Revision 1.5  2004/05/14 17:25:43  stuart_hc
 * Replaced binary header files with ASCII text format to achieve cross-platform interoperability.
@@ -209,7 +209,7 @@ void PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs)
 		}
 	}
 
-	unsigned char tempc;
+	unsigned char* tempc=new unsigned char[xl];
 	ValueType tempv;
 
 	if (*op_pic_ptr){
@@ -217,13 +217,15 @@ void PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs)
 			for (int I=0;I<xl;++I){
 				tempv=pic_data[J][I]+2;
 				tempv>>=2;
-				tempc=(unsigned char) tempv;
-				op_pic_ptr->write((char*) &tempc,1);
+				tempc[I]=(unsigned char) tempv;
 			}//I
+			op_pic_ptr->write((char*) tempc,xl);
 		}//J
 	}
 	else
 		std::cerr<<std::endl<<"Can't open picture data file for writing";
+
+	delete[] tempc;
 }
 
 /**************************************Input***********************************/
@@ -345,14 +347,14 @@ void PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
 			pic_data[J][I]=(ValueType) temp[I];
 			pic_data[J][I]<<=2;
 		}//I
-		//pad the columns on the rhs
+		//pad the columns on the rhs using the edge value
 		for (int I=xl;I<pic_data.length(0);++I){
-			pic_data[J][I]=0;
+			pic_data[J][I]=pic_data[J][xl-1];
 		}//I
 	}//J
-	//now do the padded lines
+	//now do the padded lines, using the last true line
 	for (int J=yl;J<pic_data.length(1);++J){
 		for (int I=0;I<pic_data.length(0);++I)
-			pic_data[J][I]=0;
+			pic_data[J][I]=pic_data[yl-1][I];
 	}//J
 }

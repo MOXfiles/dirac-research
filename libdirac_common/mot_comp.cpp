@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-05-12 08:35:34  tjdwave
+* Revision 1.3  2004-05-19 09:16:48  tjdwave
+* Replaced zero-padding with edge-padding to eliminate colour-fringeing at low bitrates. Mod to set padded values to 0 when compensating frames.
+*
+* Revision 1.2  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -220,7 +223,10 @@ void MotionCompensator::CompensateComponent
 	//and add the compensated pixels to the image pointed to by pic_data.
 	CalcValueType** WeightIndex;
 
+	//Loop over all the block rows
 	for(int yBlock = 0; yBlock < cparams.Y_NUMBLOCKS; ++yBlock){
+
+		//loop over all the blocks in a row
 		for(int xBlock = 0; xBlock < cparams.X_NUMBLOCKS; ++xBlock){
 			//Calculate which part of the image we are writing to.
 			Pos.x = (xBlock * bparams.XBSEP) - bparams.XOFFSET;
@@ -271,8 +277,28 @@ void MotionCompensator::CompensateComponent
 				else arith = subtract;
 				DCBlock(pic_data, dc,Pos, WeightIndex);
 			}
-		}
-	}
+		}//xBlock
+		//Okay, we've done all the actual blocks. Now if the picture is further padded
+		//we need to set the padded values to zero beyond the last block in the row,
+		//for all the picture lines in the block row.
+		if (add_or_sub==SUBTRACT){//only need to do this when we're subtracting
+			for (int y=yBlock*bparams.YBSEP;y<(yBlock+1)*bparams.YBSEP;++y){
+				for (int x=(cparams.X_NUMBLOCKS*bparams.XBSEP);x<pic_data.length(0);++x){
+					pic_data[y][x]=0;
+				}//x
+			}//y
+		}//?add_or_sum
+	}//yBlock
+
+	//Finally, now we've done all the blocks, we must set all padded lines below the last row equal to 0
+	if (add_or_sub==SUBTRACT){//only need to do this when we're subtracting
+		for (int y=cparams.Y_NUMBLOCKS*bparams.YBSEP;y<pic_data.length(1);++y){
+			for (int x=0;x<pic_data.length(0);++x){
+				pic_data[y][x]=0;
+			}//x
+		}//y
+	}//?add_or_sum
+
 }
 
 void MotionCompensator::CompensateBlock(PicArray &pic_data, const PicArray &refup_data, const MVector &Vec, 
