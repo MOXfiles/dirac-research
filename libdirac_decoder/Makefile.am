@@ -1,3 +1,4 @@
+AUTOMAKE_OPTIONS = no-dependencies
 INCLUDES = -I$(top_srcdir)
 
 h_sources = comp_decompress.h frame_decompress.h seq_decompress.h

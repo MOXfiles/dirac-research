@@ -1,3 +1,4 @@
+AUTOMAKE_OPTIONS = no-dependencies
 bin_PROGRAMS = dirac_decoder
 
 dirac_decoder_SOURCES = decmain.cpp
