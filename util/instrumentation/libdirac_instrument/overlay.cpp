@@ -251,7 +251,7 @@ void Overlay::CalculateFactors(const ChromaFormat & cformat)
     }
     else if (cformat == format411)
     {
-        m_draw_params.SetChromaFactorY(4);
+        m_draw_params.SetChromaFactorY(1);
         m_draw_params.SetChromaFactorX(4);
     }
     else
