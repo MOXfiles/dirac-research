@@ -1,3 +1,6 @@
+# $Id$
+#
+
 INCLUDES = -I$(top_srcdir) -I$(srcdir) -I$(srcdir)/common
 
 bin_PROGRAMS = RGBtoYUV411 RGBtoYUV420 RGBtoYUV422 RGBtoYUV444 RGBtoUYVY RGBtoBMP \
