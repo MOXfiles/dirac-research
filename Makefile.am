@@ -1,4 +1,4 @@
-EXTRA_DIST = win
+EXTRA_DIST = win/Makefile win/README
 
 if HAVE_DOXYGEN
 DOC_DIR = doc
