@@ -1,3 +1,13 @@
+dirac-0.4.1
+===========
+  - Added support for build under Microsoft Windows using gnu autotools,
+    MSYS and no-cost MS VC++ 2003 compiler
+
+  - Fixed bug in building unit tests when older versions of cppunit are 
+    installed
+
+  - Fixed bugs in measurement of PSNR and motion estimation process
+
 dirac-0.4.0
 ===========
   - Added constant quality encoding interface using PSNR
@@ -26,7 +36,7 @@ dirac-0.4.0
     in the doc directory.
   - Fixed bug 1008694 (Out-of-tree building fails)
   - Fixed header and pkconfig installation
-  - Update algorithm documentation
+  - Updated algorithm documentation
 
 Dirac-0.3.1
 ===========
