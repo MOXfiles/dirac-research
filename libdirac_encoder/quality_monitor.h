@@ -78,8 +78,8 @@ private:
     //! Use the model parameters to calculate the resulting Lagrangian parameters
     void CalcNewLambdas(const FrameSort fsort, const double slope, const double offset);
 
-    //! Calculate the Weighted PSNR difference between two picture components
-    double WeightedPSNRDiff(const PicArray& pic1_data, const PicArray& pic2_data , double cpd );
+    //! Calculate the quality of coded wrt original picture
+    double QualityVal(const PicArray& coded_data, const PicArray& orig_data , double cpd );
 
     //member variables//
     ////////////////////
@@ -90,18 +90,21 @@ private:
     //! The chroma format
     const ChromaFormat m_cformat;
 
+    //! The true picture width, minus padding
     const int m_true_xl;
+
+    //! The true picture height, minus padding
     const int m_true_yl;
 
     // target weighted PSNR values for each frame type
-    OneDArray<double> m_target_wpsnr;
+    OneDArray<double> m_target_quality;
 
     // weighted PSNR values for last of each frame type
-    OneDArray<double> m_last_wpsnr;
+    OneDArray<double> m_last_quality;
 
-    /* Default Model parameters for weighted PSNR wrt to log10(lambda)
+    /* Default Model parameters for quality wrt to log10(lambda)
 	    Model is : 
-            wpnsr = offset + slope * log10( lambda )
+            quality = offset + slope * log10( lambda )
         for each lambda parameter type.
         Default parameters will be used if it's not possible to measure them, and updated 
         using measured data
@@ -109,17 +112,15 @@ private:
     OneDArray<double> m_slope;
     OneDArray<double> m_offset;
 
-    //Lagrangian parameters for the last I, L1 and L2 frames	
+    //! Lagrangian parameters for the last I, L1 and L2 frames	
     OneDArray<double> m_last_lambda;
 
-    // the Lagrangian ME parameters	
+    //! The Lagrangian ME parameters	
     double m_L1_me_lambda, m_L2_me_lambda;
 
-    // the ratio of Lagrangian ME parameters to frame motion estimation parameters
+    //! The ratio of Lagrangian ME parameters to frame motion estimation parameters
     double m_me_ratio;
 
-    // a wavelet transform object to do the transforming and weighting
-    WaveletTransform m_wtransform;
 };
 
 #endif

@@ -83,10 +83,10 @@ void CompCompressor::Compress(PicArray& pic_data)
 	else 
 		m_lambda= m_encparams.L2Lambda();
 
-	if (m_csort == U_COMP) 
-		m_lambda*= m_encparams.UFactor();
-	if (m_csort == V_COMP) 
-		m_lambda*= m_encparams.VFactor();
+ 	if (m_csort == U_COMP) 
+ 		m_lambda*= m_encparams.UFactor();
+ 	if (m_csort == V_COMP) 
+ 		m_lambda*= m_encparams.VFactor();
 
 	WaveletTransform wtransform(depth);
 
@@ -319,6 +319,9 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 						error -= m_offset[q];
 
 					error *= error;
+//
+					error *= error;
+//
 					error_total[q] += error;
 
 				}// q
@@ -329,7 +332,9 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 		for ( int q=qf_start_idx ; q<costs.Length() ; q+=4 )
         {
 			costs[q].MSE = error_total[q]/( vol*node.Wt()*node.Wt() );
- 	
+//
+            costs[q].MSE = std::sqrt( costs[q].MSE );
+// 	
     	 	//calculate probabilities and entropy
 			p0 = float( count0[q] )/float( count0[q]+count1 );
 			p1 = 1.0-p0;
@@ -426,6 +431,9 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 							error -= m_offset[q];
 
 						error *= error;
+//
+						error *= error;
+//
 						error_total[q] += float(error);
 
 					}//end of if
@@ -439,6 +447,11 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 			if ( q != min_idx )
             {
 				costs[q].MSE = error_total[q] / (vol*node.Wt()*node.Wt());
+//
+                costs[q].MSE = std::sqrt( costs[q].MSE );
+// 	
+
+
 	 		 	//calculate probabilities and entropy
 				p0 = float(count0[q]) / float(count0[q]+count1);
 				p1 = 1.0-p0;
@@ -529,6 +542,9 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 						error -= m_offset[q];
 
 					error *= error;
+//
+					error *= error;
+//
 					error_total[q] += float(error);
 
 				}//q
@@ -538,8 +554,10 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
  		//do entropy calculation		
 		for ( int q=bottom_idx ; q<=top_idx ; q++ )
         {
-			costs[q].MSE=error_total[q]/(vol*node.Wt()*node.Wt());
-
+			costs[q].MSE = error_total[q]/(vol*node.Wt()*node.Wt());
+//
+            costs[q].MSE = std::sqrt( costs[q].MSE );
+//
 		 	//calculate probabilities and entropy
 			p0 = float( count0[q] )/ float( count0[q]+count1 );
 			p1 = 1.0 - p0;

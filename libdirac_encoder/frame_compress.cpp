@@ -48,7 +48,6 @@
 #include <libdirac_common/mv_codec.h>
 #include <libdirac_common/golomb.h>
 #include <libdirac_common/bit_manager.h>
-#include <libdirac_common/dirac_assertions.h>
 #include <iostream>
 #include <sstream>
 
@@ -84,7 +83,7 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_
         bool is_a_cut = my_motEst.DoME( orig_buffer , fnum , *m_me_data );
 
         // If we have a cut, and an L1 frame, then turn into an I-frame
-        if ( fsort == L1_frame && is_a_cut )
+        if ( is_a_cut )
         {
             my_frame.SetFrameSort( I_frame );
             if ( m_encparams.Verbose() )
@@ -147,7 +146,7 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_
             my_compcoder.Compress( my_buffer.GetComponent( fnum , V_COMP) );
         }
 
-        // Motion compensate again if necessary
+        //motion compensate again if necessary
         if ( fsort != I_frame )
         {
             MotionCompensator mycomp( m_encparams );
@@ -157,8 +156,11 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_
             delete m_me_data;    
         }//?fsort
 
-        // Finally clip the data to keep it in range
+         //finally clip the data to keep it in range
         my_buffer.GetFrame(fnum).Clip();
+
+
+
 
     }//?m_skipped
 }
@@ -188,10 +190,9 @@ void FrameCompressor::WriteFrameHeader( const FrameParams& fparams )
          break;
 
     default:
-         ASSERTM (false, "Frame type is I_frame or L1_frame or L2_frame");
+//         ASSERTM (false, "Frame type is I_frame or L1_frame or L2_frame");
          break;
     }
-
     frame_header_op.OutputBytes((char *)frame_start, 5);
 
     // Write the frame number
@@ -242,7 +243,7 @@ void FrameCompressor::WriteMotionData( const FrameBuffer& fbuffer , const int fn
     const FrameSort fsort = fparams.FSort();
 
     if (m_encparams.Verbose())
-        std::cerr<<std::endl<<"Writing motion data to diagnostics file. ";
+        std::cerr<<std::endl<<"Writing motion data to file: ";
 
     char file[150];
     std::strcpy(file, m_encparams.OutputPath());
