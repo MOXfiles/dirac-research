@@ -38,8 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-03-22 01:04:28  chaoticcoyote
+* Added API documentation to encoder library
+* Moved large constructors so they are no longer inlined
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -60,19 +64,48 @@
 #include "libdirac_common/gop.h"
 #include "libdirac_common/pic_io.h"
 
+//! Compresses a sequence of frames from a stream.
+/*!
+    This class compresses a sequence of frames, frame by frame.
+*/
 class SequenceCompressor{
 public:
+    //! Constructor
+    /*!
+        Creates and sequence compressor, and prepares to begin compressing with
+        the first frame.
+        /param      pin     an input stream containing a sequence of frames
+        /param      encp    parameters for the encoding process
+    */
+    SequenceCompressor(PicInput* pin, EncoderParams& encp);
 
-	SequenceCompressor(PicInput* pin, EncoderParams& encp): all_done(false),picIn(pin),sparams(picIn->GetSeqParams()),
-	encparams(encp),my_gop(encparams),current_display_fnum(0),current_code_fnum(0),delay(1),
-	last_frame_read(-1){WriteStreamHeader();}
+    //! Compress the next frame in sequence
+    /*!
+	    This function codes the next frame in coding order and returns the next frame in display
+        order. In general these will differ, and because of re-ordering there is a delay which
+        needs to be imposed. This creates problems at the start and at the end of the sequence
+        which must be dealt with. At the start we just keep outputting frame 0. At the end you
+        will need to loop for longer to get all the frames out. It's up to the calling function
+        to do something with the decoded frames as they come out -- write them to screen or to
+        file, for example.
+        
+        If coding is fast enough the compressed version could be watched
+        real-time (with suitable buffering in the calling function to account for
+        encode-time variations).
+        
+        \return     reference to the next locally decoded frame available for display
+    */
+    Frame & CompressNextFrame();
 
-	Frame& CompressNextFrame();	//compress the next frame in the sequence if not all done, else return last frame. 
-								//Returns reference to the next locally decoded frame available for display
-								//so that if coding is fast enough the compressed version could be watched real-time
-								//(with suitable buffering in the calling function to account for encode-time variations).
-
-	bool Finished(){return all_done;}
+    //! Determine if compression is complete.
+    /*!
+        Indicates whether or not the last frame in the sequence has been compressed.
+        \return     true if last frame has been compressed; false if not
+    */
+	bool Finished()
+    {
+        return all_done;
+    }
 
 private:
 	void WriteStreamHeader();	//writes the sequence data to the bitstream. This contains all the block and GOP information. 

@@ -38,8 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-03-22 01:04:28  chaoticcoyote
+* Added API documentation to encoder library
+* Moved large constructors so they are no longer inlined
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -54,12 +58,28 @@
 #include "libdirac_common/wavelet_utils.h"
 #include "libdirac_common/common.h"
 
-
-class CompCompressor{
+//! Compress a frame component
+/*!
+    This class compresses one of the three components (Y, U, or V) of a frame
+    according to a given set or parameters. CompCompressor is used by FrameCompressor.
+*/
+class CompCompressor
+{
 public:
-	CompCompressor(EncoderParams& encp,FrameParams& fp):encparams(encp),fparams(fp),
-	qflist(60),qfinvlist(60),offset(60){Init();}
-	void Compress(PicArray& pic_data);
+    //! Constructor
+    /*!
+        Create and initialize a component compressor with the given characteristics.
+        \param  encp    encoding parameters
+        \param  fp      frame parameters
+    */
+	CompCompressor(EncoderParams & encp, FrameParams& fp);
+
+    //! Compress a frame component
+    /*!
+        Compress a PicArray containing a frame component (Y, U, or V).
+        \param  pic_data    contains the component data to be compressed
+    */
+	void Compress(PicArray & pic_data);
 
 private:
 	EncoderParams encparams;

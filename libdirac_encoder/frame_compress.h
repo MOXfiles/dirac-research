@@ -38,8 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-03-22 01:04:28  chaoticcoyote
+* Added API documentation to encoder library
+* Moved large constructors so they are no longer inlined
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -55,9 +59,28 @@
 
 class MvData;
 
+//! Compress a single image frame
+/*!
+    This class compresses a single frame at a time, using parameters supplied at
+    its construction. FrameCompressor is used by SequenceCompressor.
+*/
 class FrameCompressor{
 public:
-	FrameCompressor(EncoderParams& encp): encparams(encp){}
+    //! Constructor
+    /*!
+        Creates a FrameEncoder with specific set of parameters the control
+        the compression process. It encodes motion data before encoding each
+        component of the frame. 
+        \param encp encoder parameters
+    */
+	FrameCompressor(EncoderParams& encp) : encparams(encp) { }
+
+    //! Compress a specific frame within a group of pictures (GOP)
+    /*!
+        Compresses a specified frame within a group of pictures. 
+        \param my_gop   group of pictures in which the frame resides
+        \param fnum     frame number to compress
+    */
 	void Compress(Gop& my_gop, int fnum);
 
 private:

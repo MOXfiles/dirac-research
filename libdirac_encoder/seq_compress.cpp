@@ -38,8 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-03-22 01:04:28  chaoticcoyote
+* Added API documentation to encoder library
+* Moved large constructors so they are no longer inlined
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -57,6 +61,20 @@
 #include "libdirac_encoder/frame_compress.h"
 #include "libdirac_common/golomb.h"
 #include <iostream>
+
+SequenceCompressor::SequenceCompressor(PicInput* pin, EncoderParams& encp)
+  : all_done(false),
+    picIn(pin),
+    sparams(picIn->GetSeqParams()),
+	encparams(encp),
+    my_gop(encparams),
+    current_display_fnum(0),
+    current_code_fnum(0),
+    delay(1),
+	last_frame_read(-1)
+{
+    WriteStreamHeader();
+}
 
 Frame& SequenceCompressor::CompressNextFrame(){
 

@@ -38,8 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-03-22 01:04:28  chaoticcoyote
+* Added API documentation to encoder library
+* Moved large constructors so they are no longer inlined
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -59,7 +63,18 @@
 #include <vector>
 #include <iostream>
 
-void CompCompressor::Init(){
+CompCompressor::CompCompressor(EncoderParams& encp,FrameParams& fp)
+  : encparams(encp),
+    fparams(fp),
+	qflist(60),
+    qfinvlist(60),
+    offset(60)
+{
+    Init();
+}
+
+void CompCompressor::Init()
+{
 	fsort=fparams.fsort;
 	cformat=fparams.seq_params.cformat;
 }
