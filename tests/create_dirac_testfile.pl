@@ -68,7 +68,7 @@ for (my $i = 0; $i < $num_files; $i++)
 		}
 	}
 	#my $frame_rate = $frame_rate_num . "/" . $frame_rate_denom;
-	my $fram_rate = $frame_rate_num;
+	my $frame_rate = $frame_rate_num;
 	my $yuv_file = basename($ARGV[$i]);
 	$yuv_file =~ s/\.rgb//g;
 	print "\nConverting $ARGV[$i] - ";
