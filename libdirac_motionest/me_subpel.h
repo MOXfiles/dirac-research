@@ -87,9 +87,8 @@ private:
                              int ref_id);
 
     //! Match an individual block
-    void DoBlock(const int xblock , const int yblock , 
-                 BlockMatcher& my_bmatch, MvArray& mv_array, 
-                 TwoDArray<MvCostData>& block_costs );
+    void DoBlock( const int xblock , const int yblock , 
+                  BlockMatcher& my_bmatch, MEData& me_data , const int ref_id );
 
     //! Get a prediction for a block MV from the neighbouring blocks
     MVector GetPred( int xblock , int yblock , const MvArray& mvarray );
@@ -98,9 +97,6 @@ private:
 
     //! A local reference to the encoder params
     const EncoderParams& m_encparams;
-
-    //! The Lagrangian parameter to use in motion estimation    
-    float m_lambda;
 
     //! The list of candidate vectors being tested
     CandidateList m_cand_list;

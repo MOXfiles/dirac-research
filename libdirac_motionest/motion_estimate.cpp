@@ -53,14 +53,12 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 {
 
     const FrameParams& fparams = my_buffer.GetFrame(frame_num).GetFparams();
-//std::cout<<std::endl<<"Frame number "<<fparams.FrameNum();
 
    // Step 1. 
    //Initial search gives vectors for each reference accurate to 1 pixel
 
     PixelMatcher pix_match( m_encparams );
     pix_match.DoSearch( my_buffer , frame_num , me_data);
-
 
     // Step 2. 
     // Pixel accurate vectors are then refined to 1/8 of a pixel
@@ -235,7 +233,7 @@ bool MotionEstimator::IsACut( const MEData& me_data ) const
     if ( block_count != 0)
         sad_average /= static_cast<long double>( block_count );
    
-    if ( (sad_average > 30.0) || (intra_percent > 70.0) )
+    if ( (sad_average > 30.0) || (intra_percent > 50.0) )
         return true;
     else
         return false;

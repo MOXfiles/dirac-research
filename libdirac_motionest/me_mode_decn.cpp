@@ -66,6 +66,7 @@ ModeDecider::ModeDecider( const EncoderParams& encp):
 
     for (int i=0 ; i<=2 ; ++i)
         m_mode_factor[i] = 160.0*std::pow(0.8 , 2-i);
+//        m_mode_factor[i] = 0.0;
 }
 
 
@@ -108,6 +109,10 @@ void ModeDecider::DoModeDecn(const FrameBuffer& my_buffer, int frame_num, MEData
                                        m_encparams.XNumBlocks()/2 , m_encparams.YNumBlocks()/2 );
 
         m_me_data_set[2] = &me_data;
+
+        // Set up the lambdas to use per block
+        m_me_data_set[0]->SetLambdaMap( 0 , me_data.LambdaMap() , 1.0/m_level_factor[0] );
+        m_me_data_set[1]->SetLambdaMap( 1 , me_data.LambdaMap() , 1.0/m_level_factor[1] );
 
         // Set up the reference pictures
         m_ref1_updata = &(my_buffer.GetUpComponent( ref1 , Y_COMP));
@@ -175,15 +180,6 @@ void ModeDecider::DoLevelDecn( int level )
     // Looks at two cases: the prediction mode is
     // constant across the MB; and the pred mode
     // for each constituent is different.
-
-    if (fsort==L1_frame)
-        m_lambda=m_encparams.L1MELambda();
-    else
-        m_lambda=m_encparams.L2MELambda();
-
-     // We have reduced lambda at the picture edges
-    if (m_xmb_loc==0 || m_ymb_loc==0 || m_xmb_loc==m_encparams.XNumMB()-1 || m_ymb_loc==m_encparams.YNumMB()-1)
-        m_lambda/=5.0;
 
     // The limits of the prediction units
     const int xstart = m_xmb_loc <<level;
@@ -321,18 +317,14 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
     CandidateList cand_list;
 
     // The lambda to use for motion estimation
-    float lambda = m_lambda / m_level_factor[level];
+    const float lambda = me_data.LambdaMap()[ypos][xpos];
 
     // The predicting motion vector
     MVector mv_pred;
 
     for ( int j=0 ; j<2 ; ++j )
-    {
         for (int i=0 ; i<2 ; ++i )
-        {
             AddNewVlist( cand_list , guide_data.Vectors(1)[guide_ypos+j][guide_xpos+i] , 1 , 1 );
-        }// i
-    }// j
 
     if (xblock>0 && yblock>0)
         mv_pred = MvMedian( m_me_data_set[2]->Vectors(1)[yblock][xblock-1] ,
@@ -353,6 +345,15 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
                                                      me_data.Vectors(1) , me_data.PredCosts(1) );
     me_data.PredCosts(1)[ypos][xpos].total = 100000000.0f;
     my_bmatch1.FindBestMatchSubp( xpos , ypos , cand_list, mv_pred, lambda );
+//
+//     for ( int j=0 ; j<2 ; ++j )
+//         for (int i=0 ; i<2 ; ++i )
+//             me_data.PredCosts(1)[ypos][xpos].SAD += 1000*Norm2( me_data.Vectors(1)[ypos][xpos] - 
+//                                                               guide_data.Vectors(1)[guide_ypos+j][guide_xpos+i]);
+//     me_data.PredCosts(1)[ypos][xpos].SetTotal( lambda );
+// //std::cerr<<std::endl<<"Lambda is "<<lambda;
+//
+
 
     if (num_refs>1)
     {//do the same for the other reference
@@ -387,6 +388,15 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
         me_data.PredCosts(2)[ypos][xpos].total = 100000000.0f;
         my_bmatch2.FindBestMatchSubp( xpos , ypos , cand_list, mv_pred, lambda );
 
+//
+//    for ( int j=0 ; j<2 ; ++j )
+//         for (int i=0 ; i<2 ; ++i )
+//             me_data.PredCosts(2)[ypos][xpos].SAD += 1000*Norm2( me_data.Vectors(2)[ypos][xpos] - 
+//                                                               guide_data.Vectors(2)[guide_ypos+j][guide_xpos+i]);
+//     me_data.PredCosts(2)[ypos][xpos].SetTotal( lambda );
+//
+
+
      }
 }
 
@@ -404,7 +414,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
     const int xblock = xpos<<(2-level);
     const int yblock = ypos<<(2-level);
 
-    const float loc_lambda = m_lambda / m_level_factor[level];
+    const float loc_lambda = me_data.LambdaMap()[ypos][xpos];
 
     float unit_cost;
     float mode_cost;
@@ -581,7 +591,7 @@ float ModeDecider::ModeCost(const int xindex , const int yindex ,
         var += std::abs( diff );
     }
 
-    return var*m_lambda;
+    return var*m_me_data_set[2]->LambdaMap()[yindex][xindex];
 }
 
 float ModeDecider::GetDCVar( const ValueType dc_val , const ValueType dc_pred)

@@ -70,12 +70,12 @@ void SubpelRefine::DoSubpel(const FrameBuffer& my_buffer,int frame_num, MEData& 
 
     if (fsort != I_frame)
     {
-        if ( fsort == L1_frame )
-            m_lambda = m_encparams.L1MELambda();
-        else
-            m_lambda = m_encparams.L2MELambda();
+        float lambda;
 
-        const PicArray& pic_data = my_buffer.GetComponent(frame_num , Y_COMP);
+        if ( fsort == L1_frame )
+            lambda = m_encparams.L1MELambda();
+        else
+            lambda = m_encparams.L2MELambda();
 
         // Get the references
         const vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();
@@ -87,6 +87,10 @@ void SubpelRefine::DoSubpel(const FrameBuffer& my_buffer,int frame_num, MEData& 
         else    
             ref2 = ref1;
 
+        // Set up the lambda to be used
+        me_data.SetLambdaMap( num_refs , lambda );
+
+        const PicArray& pic_data = my_buffer.GetComponent(frame_num , Y_COMP);
         const PicArray& refup1_data = my_buffer.GetUpComponent( ref1 , Y_COMP);
         const PicArray& refup2_data = my_buffer.GetUpComponent( ref2 , Y_COMP);
 
@@ -109,7 +113,6 @@ void SubpelRefine::MatchPic(const PicArray& pic_data , const PicArray& refup_dat
     ////////////////////
 
     // Provide aliases for the appropriate motion vector data components
-
     MvArray& mv_array = me_data.Vectors( ref_id );
     TwoDArray<MvCostData>& pred_costs = me_data.PredCosts( ref_id );
 
@@ -126,19 +129,25 @@ void SubpelRefine::MatchPic(const PicArray& pic_data , const PicArray& refup_dat
     {
         for (int xblock=0 ; xblock<m_encparams.XNumBlocks() ; ++xblock)
         {    
-            DoBlock(xblock , yblock , my_bmatch , mv_array , pred_costs );
+            DoBlock(xblock , yblock , my_bmatch , me_data , ref_id );
         }// xblock        
     }// yblock
 }
 
 
 void SubpelRefine::DoBlock(const int xblock , const int yblock , 
-                           BlockMatcher& my_bmatch, MvArray& mv_array, TwoDArray<MvCostData>& pred_costs )
+                           BlockMatcher& my_bmatch, MEData& me_data , const int ref_id )
 {
     // For each block, home into the sub-pixel vector
 
+    // Provide aliases for the appropriate motion vector data components
+    MvArray& mv_array = me_data.Vectors( ref_id );
+    TwoDArray<MvCostData>& pred_costs = me_data.PredCosts( ref_id );
+
     // The list of potential candidates
     CandidateList cand_list;
+
+    const float loc_lambda = me_data.LambdaMap()[yblock][xblock];
 
     // The prediction for the motion vector
     const MVector mv_pred = GetPred( xblock , yblock , mv_array );
@@ -149,24 +158,25 @@ void SubpelRefine::DoBlock(const int xblock , const int yblock ,
 
     // Re-calculate at pixel accuracy, with correct predictor
     pred_costs[yblock][xblock].mvcost = GetVar(mv_pred , mv_array[yblock][xblock]);
-    pred_costs[yblock][xblock].SetTotal( m_lambda );
+    pred_costs[yblock][xblock].SetTotal( loc_lambda );
 
     AddNewVlist( cand_list , mv_array[yblock][xblock] , 0 , 0 , 1 );// (creates a singleton list)
 
     // Do half-pel accuracy
     AddNewVlist(cand_list , mv_array[yblock][xblock] , 1 , 1 , 4);
     cand_list.erase( cand_list.begin() );
-    my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, m_lambda );
+    my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, loc_lambda );
 
     // Next , go down to 1/4-pixel accuracy
     AddNewVlist(cand_list , mv_array[yblock][xblock] , 1 , 1 , 2);
     cand_list.erase( cand_list.begin() );
-    my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, m_lambda );
+    my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, loc_lambda );
 
     // Finally, do 1/8-pixel accuracy
     AddNewVlist(cand_list , mv_array[yblock][xblock] , 1 , 1 , 1);
     cand_list.erase( cand_list.begin() );
-    my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, m_lambda );
+    my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, loc_lambda );
+
 }
 
 
