@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.5  2004-05-19 17:39:34  chaoticcoyote
+* Revision 1.6  2004-05-20 12:39:07  tjdwave
+* Fixed help message for CLI.
+*
+* Revision 1.5  2004/05/19 17:39:34  chaoticcoyote
+* Restored make_debug.sh to it's proper function
 * Modified command line parser to correctly handle boolean options
 *
 * Revision 1.4  2004/05/14 17:25:43  stuart_hc
@@ -83,7 +87,7 @@ static void display_help()
 {
 	cout << "\nDIRAC wavelet video decoder.";
 	cout << "\n";
-	cout << "\nUsage: progname -<flag1> <flag_val> ... <input1> <intput2> ...";
+	cout << "\nUsage: progname -<flag1> [<flag_val>] ... <input1> <intput2> ...";
 	cout << "\nIn case of multiple assignment to the same parameter, the last holds.";
 	cout << "\n";
 	cout << "\nName          Type   I/O Default Value Description";
@@ -105,7 +109,7 @@ int main( int argc, char *argv[] )
 	set<string> bool_opts;
 	bool_opts.insert("interlace");
 	bool_opts.insert("topfieldfirst");
-    
+
 	command_line args(argc,argv,bool_opts);
 
  	//the variables we'll read parameters into
