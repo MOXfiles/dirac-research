@@ -5,15 +5,18 @@ Checklist for releasing new versions of Dirac
 1.1    Compile with gcc under Linux with debug options on and remove all errors
 and warnings (use ./configure --enable-debug)
 
-1.2    Compile with icc under Linux without debug options (icc produces too 
-many warnings otherwise) and remove all errors and warnings
+1.2    Compile with icc under Linux with debug options and remove all errors 
+and warnings (use ./configure CXX=icc --enable-debug)
 
-1.3 Compile with VC++ under Windows XP/2000 with debug options and remove all 
+1.3    Compile with cl under Windows and MSYS with debug options 
+and remove all errors and warnings (use ./configure --enable-debug)
+
+1.4 Compile with VC++ under Windows XP/2000 with debug options and remove all 
 errors and warnings
 
 2.    Execution
 
-2.1    Run make check with gcc and icc makes.
+2.1    Run make check with gcc and icc and cl makes.
 
 2.2    Check that a) the Linux gcc decoder executable can decode the output of 
 the Windows VC++ encoder executable and the decoder output is the same as the 
@@ -71,20 +74,25 @@ checked in.
 6.3 Update the release id in configure.ac and commit the changes. Regenerate
 the configure script (./bootstrap)
 
-6.3 Compile and test the code again in this directory to ensure that all files
+6.4 Compile and test the code again in this directory to ensure that all files
 have been checked in.
 
-6.4 Create the distribution using 'make dist'. 
+6.5 Create the distribution using 'make dist'. 
 
-6.5 Unpack the distribution and compile and test it (Steps 1 and 2) to ensure 
+6.6 Unpack the distribution and compile and test it (Steps 1 and 2) to ensure 
 that the release distribution has all the necessary files.
 
-6.6 Ensure that all the documentation (new READMEs) are present in the release.
+6.7 Ensure that all the documentation (new READMEs) are present in the release.
 
-6.7 Tag all the files with the latest release tag
+6.8 Tag all the files with the latest release tag
 
-6.8 Repeat Steps 6.2 thru 6.6
+6.9 Repeat Steps 6.2 thru 6.6
 
-6.8 Upload the distribution to Dirac project page on Sourceforge.
+6.10 Upload the distribution to Dirac project page on Sourceforge.
 
-6.8 Announce the new release in the Dirac forums on SourceForge.
+6.11 Announce the new release by sending an email to the Dirac announce mailing 
+    list dirac-announce@lists.sourceforge.net
+
+6.12 Update News on the Dirac project page on Sourceforge.
+
+6.13 Update project page on www.freshmeat.net
