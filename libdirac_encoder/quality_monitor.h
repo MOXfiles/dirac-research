@@ -60,8 +60,13 @@ public:
     //                 and destructor                         //
     ////////////////////////////////////////////////////////////
 
-    //! Update the quality factors given a locally decoded and an original frame
-    void UpdateModel(const Frame& ld_frame, const Frame& orig_frame, float cpd);
+    //! Update the quality factors, returning true if we need to recode
+    /*!
+        Update the quality factors, returning true if we need to recode
+        \param ld_frame the locally-decoded frame
+        \param orig_frame the original frame
+    */
+    bool UpdateModel(const Frame& ld_frame, const Frame& orig_frame);
 
     //! Reset the quality factors (say if there's been a cut)
     void ResetAll();
@@ -73,13 +78,13 @@ private:
     void CalcNewLambdas(const FrameSort fsort, const double slope, const double offset);
 
     //! Calculate the Weighted PSNR difference between two picture components
-    double WeightedPSNRDiff(const PicArray& pic1_data, const PicArray& pic2_data, float cpd);
+    double WeightedPSNRDiff(const PicArray& pic1_data, const PicArray& pic2_data , double cpd );
 
     //member variables//
     ////////////////////
 
     //! A reference to the encoder parameters
-    EncoderParams& encparams;
+    EncoderParams& m_encparams;
 
     //! The chroma format
     const ChromaFormat m_cformat;

@@ -50,7 +50,8 @@ class MvData;
     This class compresses a single frame at a time, using parameters supplied at
     its construction. FrameCompressor is used by SequenceCompressor.
 */
-class FrameCompressor{
+class FrameCompressor
+{
 public:
     //! Constructor
     /*!
@@ -59,7 +60,7 @@ public:
         component of the frame. 
         \param encp encoder parameters
     */
-	FrameCompressor(EncoderParams& encp); 
+    FrameCompressor( EncoderParams& encp ); 
 
     //! Compress a specific frame within a group of pictures (GOP)
     /*!
@@ -67,10 +68,12 @@ public:
         \param fbuffer picture buffer in which the frame resides
         \param fnum      frame number to compress
     */
-	void Compress(FrameBuffer& fbuffer, int fnum);
+	void Compress( FrameBuffer& fbuffer , int fnum );
 
 	//! Returns true if the frame has been skipped rather than coded normally
-	bool IsSkipped(){return m_skipped;}
+	bool IsSkipped(){ return m_skipped; }
+
+
 
 private:
 	//! Copy constructor is private and body-less
@@ -78,7 +81,7 @@ private:
 		Copy constructor is private and body-less. This class should not be copied.
 
 	*/
-	FrameCompressor(const FrameCompressor& cpy);
+	FrameCompressor( const FrameCompressor& cpy );
 
 	//! Assignment = is private and body-less
 	/*!
@@ -90,18 +93,27 @@ private:
 	//! Write the frame compression header
 	void WriteFrameHeader(const FrameParams& fparams);
 
-    //! Called if verbosity is on to make a report of the bytes written
-    void MakeFrameReport();
-
     //! Write frame motion data
-    void WriteMotionData(int, const FrameParams &, MEData &, const FrameSort &);
+    void WriteMotionData( const FrameBuffer& fbuffer , const int fnum );
 
 	//member variables
+    // a local copy of the encoder params
 	EncoderParams& m_encparams;
-	bool m_skipped;				//true if the frame has been skipped, false otherwise
-	bool m_use_global;			//true if we use global motion vectors, false otherwise
-	bool m_use_block_mv;			//true if we use block motion vectors, false otherwise
-	PredMode m_global_pred_mode;	//prediction mode to use if we only have global motion vectors
+ 
+    // Pointer to the motion vector data
+    MEData* m_me_data;
+
+    // True if the frame has been skipped, false otherwise
+	bool m_skipped;				
+
+    // True if we use global motion vectors, false otherwise
+	bool m_use_global;
+
+    // True if we use block motion vectors, false otherwise
+	bool m_use_block_mv;
+	
+    // Prediction mode to use if we only have global motion vectors
+    PredMode m_global_pred_mode;
 
 
 };

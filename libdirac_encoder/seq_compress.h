@@ -130,11 +130,15 @@ private:
     */
 	int CodedToDisplay(const int fnum);
 
-    //! Make a report on the coding results to screen
+    //! Make a report to screen on the coding results for the whole sequence
     void MakeSequenceReport(); 
+
+    //! Make a report to screen on the coding results for a single frame
+    void MakeFrameReport();
 
 	//! Completion flag, returned via the Finished method.
 	bool m_all_done;
+
 	//! Flag indicating whether we've just finished.
 	/*!
 		Flag which is false if we've been all-done for more than one frame, true otherwise 

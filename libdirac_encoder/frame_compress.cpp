@@ -21,8 +21,9 @@
 * All Rights Reserved.
 *
 * Contributor(s): Thomas Davies (Original Author), 
-                  Scott R Ladd,
-                  Chris Bowley
+*                 Scott R Ladd,
+*                 Chris Bowley,
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -50,208 +51,174 @@
 #include <iostream>
 #include <sstream>
 
-
-
 FrameCompressor::FrameCompressor( EncoderParams& encp ) :
-m_encparams(encp),
-m_skipped(false),
-m_use_global(false),
-m_use_block_mv(true),
-m_global_pred_mode(REF1_ONLY)
+    m_encparams(encp),
+    m_skipped(false),
+    m_use_global(false),
+    m_use_block_mv(true),
+    m_global_pred_mode(REF1_ONLY)
 {}
 
-void FrameCompressor::Compress(FrameBuffer& my_buffer, int fnum)
+void FrameCompressor::Compress( FrameBuffer& my_buffer, int fnum )
 {
     FrameOutputManager& foutput = m_encparams.BitsOut().FrameOutput();
 
-	Frame& my_frame = my_buffer.GetFrame( fnum );
-	const FrameSort& fsort = my_frame.GetFparams().FSort();
-	const ChromaFormat cformat = my_frame.GetFparams().CFormat();
-	MEData* me_data;
+    Frame& my_frame = my_buffer.GetFrame( fnum );
+    const FrameParams& fparams = my_frame.GetFparams();
+    const FrameSort& fsort = fparams.FSort();
+    const ChromaFormat cformat = fparams.CFormat();
 
-	unsigned int num_mv_bits;//number of bits written, without byte alignment
+    // number of bits written, without byte alignment
+    unsigned int num_mv_bits;
 
-	CompCompressor my_compcoder(m_encparams , my_frame.GetFparams());
+    CompCompressor my_compcoder(m_encparams , fparams );
 
-	if ( fsort != I_frame )
+    if ( fsort != I_frame )
     {
-		me_data = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB() );
+        m_me_data = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB());
+//  ,fparams.Refs().size() );
 
-		// Motion estimate first
-		if (m_encparams.Verbose()) std::cerr<<std::endl<<"Motion estimating ...";
-		MotionEstimator my_motEst( m_encparams );
-		my_motEst.DoME( my_buffer , fnum , *me_data );
-	}
+        // Motion estimate first
+        MotionEstimator my_motEst( m_encparams );
+        bool is_a_cut = my_motEst.DoME( my_buffer , fnum , *m_me_data );
+
+        // If we have a cut, and an L1 frame, then turn into an I-frame
+        if ( fsort == L1_frame && is_a_cut )
+        {
+            my_frame.SetFrameSort( I_frame );
+//            std::cerr<<std::endl<<"Cut detected and I-frame inserted!";
+        }
+
+    }
 
     // Write the motion data out to file for instrumentation purposes
-    WriteMotionData(fnum, my_frame.GetFparams(), *me_data, fsort);
+    // (NB: recoding will mean that this is could be written more than once)
+    WriteMotionData( my_buffer , fnum );
 
-	// Write the frame header. We wait until after motion estimation, since
+    // Write the frame header. We wait until after motion estimation, since
     // this allows us to do cut-detection and (possibly) to decide whether
     // or not to skip a frame before actually encoding anything. However we
-	// can do this at any point prior to actually writing any frame data.
-	WriteFrameHeader( my_frame.GetFparams() );
+    // can do this at any point prior to actually writing any frame data.
+    WriteFrameHeader( my_frame.GetFparams() );
 
 
-	if ( !m_skipped )
-	{	// If not skipped we continue with the coding ...
+    if ( !m_skipped )
+    {    // If not skipped we continue with the coding ...
 
-		if ( fsort != I_frame){
+        if ( fsort != I_frame)
+        {
+             // Code the MV data
 
- 			//code the MV data
-			if ( m_encparams.Verbose() ) std::cerr<<std::endl<<"Coding motion data ...";
+            // If we're using global motion parameters, code them
+            if (m_use_global)
+            {
+                /*
+                    Code the global motion parameters
+                    TBC ....
+                */
+            }
 
-			//if we're using global motion parameters, code them
-			if (m_use_global)
-			{
-				/*
-					Code the global motion parameters
-					TBC ....
-				*/
-			}
+            // If we're using block motion vectors, code them
+            if ( m_use_block_mv )
+            {
+                MvDataCodec my_mv_coder( &( foutput.MVOutput().Data() ) , 50 , cformat);
 
-			// If we're using block motion vectors, code them
-			if ( m_use_block_mv )
-			{
-				MvDataCodec my_mv_coder( &( foutput.MVOutput().Data() ) , 50 , cformat);
+                my_mv_coder.InitContexts();//may not be necessary
+                num_mv_bits = my_mv_coder.Compress( *m_me_data );            
 
-				my_mv_coder.InitContexts();//may not be necessary
-				num_mv_bits = my_mv_coder.Compress( *me_data );			
+                UnsignedGolombCode( foutput.MVOutput().Header() , num_mv_bits);
+            }
 
-				UnsignedGolombCode( foutput.MVOutput().Header() , num_mv_bits);
-			}
+             // Then motion compensate
 
- 			//then motion compensate
-			if ( m_encparams.Verbose() )
-				std::cerr<<std::endl<<"Motion compensating ...";
+            MotionCompensator mycomp( m_encparams );
+            mycomp.SetCompensationMode( SUBTRACT );
+            mycomp.CompensateFrame( my_buffer , fnum , *m_me_data );
 
-			MotionCompensator mycomp( m_encparams );
-			mycomp.SetCompensationMode( SUBTRACT );
-			mycomp.CompensateFrame( my_buffer , fnum , *me_data );
+        }//?fsort
 
-		}//?fsort
-
- 		//code component data
-		my_compcoder.Compress( my_buffer.GetComponent( fnum , Y_COMP) );
-  		if (cformat != Yonly)
+         //code component data
+        my_compcoder.Compress( my_buffer.GetComponent( fnum , Y_COMP) );
+          if (cformat != Yonly)
           {
-  			my_compcoder.Compress( my_buffer.GetComponent( fnum , U_COMP) );
-  			my_compcoder.Compress( my_buffer.GetComponent( fnum , V_COMP) );
-  		}
+              my_compcoder.Compress( my_buffer.GetComponent( fnum , U_COMP) );
+              my_compcoder.Compress( my_buffer.GetComponent( fnum , V_COMP) );
+          }
 
- 		//motion compensate again if necessary
-		if ( fsort != I_frame )
-		{
-			MotionCompensator mycomp( m_encparams );
-			mycomp.SetCompensationMode( ADD );
-			mycomp.CompensateFrame( my_buffer , fnum , *me_data );
+         //motion compensate again if necessary
+        if ( fsort != I_frame )
+        {
+            MotionCompensator mycomp( m_encparams );
+            mycomp.SetCompensationMode( ADD );
+            mycomp.CompensateFrame( my_buffer , fnum , *m_me_data );
 
-			delete me_data;	
-		}//?fsort
+            delete m_me_data;    
+        }//?fsort
 
- 		//finally clip the data to keep it in range
-		my_buffer.GetFrame(fnum).Clip();
-
-	}//?m_skipped
-
-    // Finish by writing everything out to file ...
-    m_encparams.BitsOut().WriteFrameData();
+         //finally clip the data to keep it in range
+        my_buffer.GetFrame(fnum).Clip();
 
 
-    if ( m_encparams.Verbose() )
-        MakeFrameReport();
-}
 
-void FrameCompressor::MakeFrameReport()
-{
-    // Write out to screen a report of the number of bits written
-    const FrameOutputManager& foutput = m_encparams.BitsOut().FrameOutput();
 
-    unsigned int unit_bits = foutput.MVBytes() * 8;			
-    unsigned int unit_head_bits = foutput.MVHeadBytes() * 8;
-
-    std::cerr<<std::endl<<"Number of MV bits="<<unit_bits;
-    std::cerr<<" ( "<<unit_head_bits<<" header bits)";
-
-    unit_bits = foutput.ComponentBytes( Y_COMP ) * 8;
-    unit_head_bits = foutput.ComponentHeadBytes( Y_COMP ) * 8;
-
-    std::cerr<<std::endl<<"Number of bits for Y="<<unit_bits;
-    std::cerr<<" ( "<<unit_head_bits<<" header bits)";
-
-    unit_bits = foutput.ComponentBytes( U_COMP ) * 8;
-    unit_head_bits = foutput.ComponentHeadBytes( U_COMP ) * 8;
-
-    std::cerr<<std::endl<<"Number of bits for U="<<unit_bits;
-    std::cerr<<" ( "<<unit_head_bits<<" header bits)";
-
-    unit_bits = foutput.ComponentBytes( V_COMP ) * 8;
-    unit_head_bits = foutput.ComponentHeadBytes( V_COMP ) * 8;
-
-    std::cerr<<std::endl<<"Number of bits for V="<<unit_bits;
-    std::cerr<<" ( "<<unit_head_bits<<" header bits)";
-
-    unit_bits = foutput.FrameBytes() * 8;
-    unit_head_bits = foutput.FrameHeadBytes() * 8;
-
-    std::cerr<<std::endl<<std::endl<<"Total frame bits="<<unit_bits;
-    std::cerr<<" ( "<<unit_head_bits<<" header bits)"<<std::endl<<std::endl;
-
+    }//?m_skipped
 }
 
 void FrameCompressor::WriteFrameHeader( const FrameParams& fparams )
 {
-
-	//write the frame number
-	int temp_int=fparams.FrameNum();
-
     BasicOutputManager& frame_header_op = m_encparams.BitsOut().FrameOutput().HeaderOutput();
 
-	frame_header_op.OutputBytes(  (char*) &temp_int , 4 );
+    // Write the frame start code
+    unsigned char frame_start[5] = { START_CODE_PREFIX_BYTE0, START_CODE_PREFIX_BYTE1, START_CODE_PREFIX_BYTE2, START_CODE_PREFIX_BYTE3, FRAME_START_CODE };
+    frame_header_op.OutputBytes((char *)frame_start, 5);
 
-	//write whether the frame is m_skipped or not
-	frame_header_op.OutputBit( m_skipped );
+    // Write the frame number
+    UnsignedGolombCode(frame_header_op , fparams.FrameNum());
 
-	if (!m_skipped)
-	{// If we're not m_skipped, then we write the rest of the metadata
+    //write whether the frame is m_skipped or not
+    frame_header_op.OutputBit( m_skipped );
 
-		// Write the expiry time relative to the frame number
-		UnsignedGolombCode( frame_header_op , fparams.ExpiryTime() );
+    if (!m_skipped)
+    {// If we're not m_skipped, then we write the rest of the metadata
 
-		// Write the frame sort
-		UnsignedGolombCode( frame_header_op , (unsigned int) fparams.FSort() );		
+        // Write the expiry time relative to the frame number 
+        UnsignedGolombCode( frame_header_op , fparams.ExpiryTime() );
 
-		if (fparams.FSort() != I_frame)
-		{		
-			// If not an I-frame, write how many references there are		
-			UnsignedGolombCode( frame_header_op , (unsigned int) fparams.Refs().size() );
+        // Write the frame sort
+        UnsignedGolombCode( frame_header_op , (unsigned int) fparams.FSort() );        
+        if (fparams.FSort() != I_frame)
+        {        
+            // If not an I-frame, write how many references there are        
+            UnsignedGolombCode( frame_header_op , (unsigned int) fparams.Refs().size() );
 
-			// For each reference, write the reference number relative to the frame number
-			for ( size_t i=0 ; i<fparams.Refs().size() ; ++i )
-				GolombCode( frame_header_op , fparams.Refs()[i]-fparams.FrameNum() );
+            // For each reference, write the reference number relative to the frame number
+            for ( size_t i=0 ; i<fparams.Refs().size() ; ++i )
+                GolombCode( frame_header_op , fparams.Refs()[i]-fparams.FrameNum() );
 
-			// Indicate whether or not there is global motion vector data
-			frame_header_op.OutputBit( m_use_global );
+            // Indicate whether or not there is global motion vector data
+            frame_header_op.OutputBit( m_use_global );
 
-			// Indicate whether or not there is block motion vector data
-			frame_header_op.OutputBit( m_use_block_mv );
+            // Indicate whether or not there is block motion vector data
+            frame_header_op.OutputBit( m_use_block_mv );
 
-			// If there is global but no block motion vector data, indicate the 
+            // If there is global but no block motion vector data, indicate the 
             // prediction mode to use for the whole frame
-			if ( m_use_global && !m_use_block_mv )
-			{
-				UnsignedGolombCode( frame_header_op , (unsigned int) m_global_pred_mode );
-			}
-		}
+            if ( m_use_global && !m_use_block_mv )
+            {
+                UnsignedGolombCode( frame_header_op , (unsigned int) m_global_pred_mode );
+            }
+        }
 
-	}// ?m_skipped
-
+    }// ?m_skipped
 }
 
 // Write motion data (MvData object) to file.
 // uses overloaded operator<< defined in libdirac_common/motion.cpp
-void FrameCompressor::WriteMotionData(int fnum, const FrameParams & fparams, MEData & me_data, const FrameSort & fsort)
+void FrameCompressor::WriteMotionData( const FrameBuffer& fbuffer , const int fnum)
 {
+    const FrameParams& fparams = fbuffer.GetFrame( fnum ).GetFparams();
+    const FrameSort fsort = fparams.FSort();
+
     if (m_encparams.Verbose())
         std::cerr<<std::endl<<"Writing motion data to file: ";
 
@@ -276,7 +243,7 @@ void FrameCompressor::WriteMotionData(int fnum, const FrameParams & fparams, MED
 
         OLBParams block_params = m_encparams.LumaBParams(2);
         out << block_params << " ";
-        out << me_data;
+        out << *m_me_data;
     }
     
     out.close();

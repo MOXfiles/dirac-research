@@ -8,7 +8,7 @@ lib_LIBRARIES = libdirac_encoder.a
 
 libdirac_encoder_a_SOURCES = $(h_sources) $(cpp_sources)
 
-library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)
+library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)/libdirac_encoder
 library_include_HEADERS = $(h_sources)
 
 DEFS = -I. -I$(srcdir)

@@ -43,7 +43,7 @@ using std::log10;
 QualityMonitor::QualityMonitor(EncoderParams& encp, 
                                const SeqParams& sparams)
 :
-    encparams(encp),
+    m_encparams(encp),
     m_cformat( sparams.CFormat() ),
 
     m_target_wpsnr(3),
@@ -60,7 +60,7 @@ QualityMonitor::QualityMonitor(EncoderParams& encp,
 void QualityMonitor::ResetAll()
 {
     // set target WPSNRs
- 	m_target_wpsnr[I_frame] = 0.28 * encparams.Qf()* encparams.Qf() + 20.0 ;
+ 	m_target_wpsnr[I_frame] = 0.28 * m_encparams.Qf()* m_encparams.Qf() + 20.0 ;
 	m_target_wpsnr[L1_frame] = m_target_wpsnr[I_frame] - 1.5;
 	m_target_wpsnr[L2_frame] = m_target_wpsnr[I_frame] - 2.5;
 
@@ -89,48 +89,49 @@ void QualityMonitor::ResetAll()
  	// set up the Lagrangian parameters
     for (size_t fsort=0; fsort<3; ++fsort)
     {
-        encparams.SetLambda( FrameSort(fsort), m_last_lambda[fsort] );
+        m_encparams.SetLambda( FrameSort(fsort), m_last_lambda[fsort] );
     }// fsort
 
-    encparams.SetL1MELambda( encparams.L1Lambda()*m_me_ratio );
-    encparams.SetL2MELambda( encparams.L2Lambda()*m_me_ratio );
+    m_encparams.SetL1MELambda( m_encparams.L1Lambda()*m_me_ratio );
+    m_encparams.SetL2MELambda( m_encparams.L2Lambda()*m_me_ratio );
 }
 
-void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame, float cpd)
+bool QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame)
 {
+    // The return value - true if we need to recode, false otherwise
+    bool recode = false;
+
 	const FrameSort& fsort = ld_frame.GetFparams().FSort();	
 	double target_wpsnr;	
 
-	//parameters relating to the last frame we measured
+	// Parameters relating to the last frame we measured
 	double last_lambda;
 	double last_wpsnr;
 
-	//parameters relating to the current frame
+	// Parameters relating to the current frame
 	double current_lambda;
 	double current_wpsnr;
 
 
     //set up local parameters for the particular frame type
-    current_lambda = encparams.Lambda(fsort);
+    current_lambda = m_encparams.Lambda(fsort);
     last_lambda = m_last_lambda[fsort];
     last_wpsnr = m_last_wpsnr[fsort];
     target_wpsnr = m_target_wpsnr[fsort];
 
-	// calculate the actual WPSNR that we have for the current frame
-//	current_wpsnr = WeightedPSNRDiff( ld_frame.Ydata() , orig_frame.Ydata() , cpd);
     // TBD: Currently using unweighted PSNR since this seems to give a) more stable convergence and b) more bits allocated
-    //to I frames at the expense of L1 and L2 frames, which is more efficient. Need to get a better measure, however.
+    // to I frames at the expense of L1 and L2 frames, which is more efficient. Need to get a better measure, however.
 	current_wpsnr = WeightedPSNRDiff( ld_frame.Ydata() , orig_frame.Ydata() , 0.0);
 
-    if ( encparams.Verbose() )
+    if ( m_encparams.Verbose() )
         std::cerr<<std::endl<<"Weighted PSNR for frame is "<<current_wpsnr<<" ; target is "<<target_wpsnr;
 
     // Copy current data into memory for last frame data
-    m_last_lambda[fsort] = encparams.Lambda(fsort);
+    m_last_lambda[fsort] = m_encparams.Lambda(fsort);
     m_last_wpsnr[fsort] = current_wpsnr;
 
-	//ok, so we've got an actual WPSNR to use. We know the lambda used before and the resulting
-	//WPSNR then allows us to estimate the slope of the curve of WPSNR versus log of lambda
+	// ok, so we've got an actual WPSNR to use. We know the lambda used before and the resulting
+	// WPSNR then allows us to estimate the slope of the curve of WPSNR versus log of lambda
 
 	if ( std::abs(current_wpsnr - last_wpsnr)> 0.2 && 
          std::abs(log10(current_lambda) - log10(last_lambda)) > 0.1 ) 
@@ -148,8 +149,8 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame,
 		offset = current_wpsnr - ( log10(current_lambda) * slope );
 
         // Update the default values using a simple recursive filter
-        m_slope[fsort] = (9.0*m_slope[fsort] + slope)/10.0;
-        m_offset[fsort] = (9.0*m_offset[fsort] + offset)/10.0;
+        m_slope[fsort] = (3.0*m_slope[fsort] + slope)/4.0;
+        m_offset[fsort] = (3.0*m_offset[fsort] + offset)/4.0;
         m_slope[fsort] = std::min( std::max( -10.0 , m_slope[fsort] ), -0.1);
 
     }
@@ -163,43 +164,49 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame,
         CalcNewLambdas(fsort , m_slope[fsort] , wpsnr_diff );
     }
 
+    // if we have a large difference in WPSNR, recode)
+    if ( std::abs( current_wpsnr - target_wpsnr )>1.5 )
+        recode = true;
 
+    return recode;
 }
 
 void QualityMonitor::CalcNewLambdas(const FrameSort fsort, const double slope, const double wpsnr_diff )
 {	
 
-     if ( encparams.Lambda(fsort) <= 100001.0 && std::abs(wpsnr_diff/slope <2.0) )
-         encparams.SetLambda(fsort, encparams.Lambda(fsort) *
+     if ( m_encparams.Lambda(fsort) <= 100001.0 && std::abs(wpsnr_diff/slope <2.0) )
+         m_encparams.SetLambda(fsort, m_encparams.Lambda(fsort) *
                              std::pow( (double)10.0, wpsnr_diff/slope ) );
      else
-         encparams.SetLambda(fsort, 100000.0);
+         m_encparams.SetLambda(fsort, 100000.0);
 
      if (fsort == L1_frame)
- 		encparams.SetL1MELambda( encparams.L1Lambda() * m_me_ratio );
+ 		m_encparams.SetL1MELambda( m_encparams.L1Lambda() * m_me_ratio );
      else if (fsort == L2_frame)
- 		encparams.SetL2MELambda( encparams.L2Lambda() * m_me_ratio );
+ 		m_encparams.SetL2MELambda( m_encparams.L2Lambda() * m_me_ratio );
 
 }
 
-double QualityMonitor::WeightedPSNRDiff(const PicArray& pic1_data, const PicArray& pic2_data, float cpd)
+double QualityMonitor::WeightedPSNRDiff(const PicArray& pic1_data, const PicArray& pic2_data , double cpd)
 {
-	long double mean_square_diff = 0.0;
+    long double mean_square_diff = 0.0;
 	long double diff;
 
 	if ( cpd == 0.0 )
 	{
-		for (int j=0; j<pic1_data.LengthY(); ++j)
-		{
-			for (int i=0; i<pic1_data.LengthX(); ++i)
-			{
-				diff = (long double) ( pic1_data[j][i] - pic2_data[j][i]);
-				diff *= diff;
-				mean_square_diff += diff;
-			}//i
-		}//j
 
-		mean_square_diff /= pic1_data.LengthX()*pic1_data.LengthY();
+ 		for (int j=0; j<pic1_data.LengthY(); ++j)
+ 		{
+ 			for (int i=0; i<pic1_data.LengthX(); ++i)
+ 			{
+ 				diff = (long double) ( pic1_data[j][i] - pic2_data[j][i]);
+ 				diff *= diff;
+ 				mean_square_diff += diff;
+ 			}//i
+ 		}//j
+
+ 		mean_square_diff /= pic1_data.LengthX()*pic1_data.LengthY();
+
 	}
 	else
 	{
@@ -217,7 +224,7 @@ double QualityMonitor::WeightedPSNRDiff(const PicArray& pic1_data, const PicArra
 		}//j
 
 		wtransform.Transform(FORWARD , diff_data);
-	    wtransform.SetBandWeights(cpd , I_frame , m_cformat , pic1_data.CSort());
+	    wtransform.SetBandWeights( cpd , I_frame , m_cformat , pic1_data.CSort() );
 
 		const SubbandList& bands=wtransform.BandList();
 		long double temp_val;
