@@ -1,8 +1,7 @@
-TESTSUITE_AT = testsuite.at colourbars.at
+TESTSUITE_AT = testsuite.at colourbars.at unittests.at
 TESTSUITE = $(srcdir)/testsuite
 
-EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4 \
-	colourbars_420.yuv
+EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4
 
 DISTCLEANFILES = atconfig
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
@@ -28,6 +27,12 @@ atconfig: $(top_builddir)/config.status
 clean-local:
 	if test -f $(TESTSUITE); then \
 		$(SHELL) $(TESTSUITE) --clean; \
+		rm $(TESTSUITE); \
+		rm -f $(srcdir)/testpics/*enc*.drc; \
+		rm -f $(srcdir)/testpics/*enc*.yuv; \
+		rm -f $(srcdir)/testpics/*enc*.hdr; \
+		rm -f $(srcdir)/testpics/*dec*.yuv; \
+		rm -f $(srcdir)/testpics/*dec*.hdr; \
 	fi
 
 check-local: atconfig $(TESTSUITE)

@@ -10,5 +10,9 @@ if HAVE_LATEX
 DOC_DIR = doc
 endif
 
+if HAVE_CPPUNIT
+CPPUNITTESTS_DIR = unit_tests
+endif
+
 SUBDIRS = libdirac_common libdirac_motionest libdirac_encoder libdirac_decoder \
-encoder decoder picheader util tests $(DOC_DIR) 
+encoder decoder picheader util $(CPPUNITTESTS_DIR) tests $(DOC_DIR) 

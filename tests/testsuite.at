@@ -23,5 +23,5 @@ m4_version_prereq([2.52g])
 
 
 AT_INIT(dirac)
-
+m4_include([unittests.at])
 m4_include([colourbars.at])

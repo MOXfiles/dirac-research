@@ -97,7 +97,7 @@ AM_CONDITIONAL(HAVE_ALGO, $HAVE_ALGO)
 dnl -----------------------------------------------
 dnl Setup for the testsuite
 dnl -----------------------------------------------
-AC_CONFIG_TESTDIR([tests], [tests:picheader:encoder:decoder])
+AC_CONFIG_TESTDIR([tests], [tests:picheader:encoder:decoder:unit_tests])
 AC_CONFIG_FILES([tests/Makefile])
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
@@ -116,6 +116,19 @@ else
 	AC_MSG_RESULT(no)
 fi], [AC_MSG_RESULT(no)]
 )
+
+dnl -----------------------------------------------
+dnl Setup for the cppunit testsuite
+dnl -----------------------------------------------
+AC_LANG_PUSH(C++)
+dnl need to determine how to run AC_CHECK_LIB on a c++ library
+dnl Until then just use AC_CHECK_HEADER by itself
+dnl AC_CHECK_HEADER([cppunit/Asserter.h],
+dnl     [AC_CHECK_LIB([cppunit], [CppUnit::Exception], [HAVE_CPPUNIT="true"], [HAVE_CPPUNIT="false"], [ -ldl ])], [HAVE_CPPUNIT="false"])
+AC_CHECK_HEADER([cppunit/Asserter.h],[HAVE_CPPUNIT="true"], [HAVE_CPPUNIT="false"])
+AM_CONDITIONAL(HAVE_CPPUNIT, $HAVE_CPPUNIT)
+AC_LANG_POP(C++)
+
 dnl -----------------------------------------------
 dnl Generates Makefile's, configuration files and scripts
 dnl -----------------------------------------------
@@ -131,4 +144,5 @@ AC_OUTPUT(Makefile dirac.pc \
           libdirac_decoder/Makefile \
           encoder/Makefile \
           decoder/Makefile \
-          picheader/Makefile)
+          picheader/Makefile \
+          unit_tests/Makefile)
