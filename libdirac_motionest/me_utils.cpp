@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-24 12:38:55  tjdwave
+* Revision 1.5  2004-05-25 02:39:24  chaoticcoyote
+* Unnecessary qualification of some class members in frame.h and pic_io.h.
+* ISO C++ forbids variable-size automatic arrays; fixed in pic_io.cpp
+* Removed spurious semi-colons in me_utils.cpp
+* Fixed out-of-order member constructors in seq_compress.h
+*
+* Revision 1.4  2004/05/24 12:38:55  tjdwave
 * Replaced spagetti code for linear interpolation in motion compensation
 * and motion estimation routines with simple loops. Code is much clearer,
 * although possibly slightly slower.
@@ -179,7 +185,7 @@ void BChkBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv){
 			dparams.best_mv=mv;
 		}
 	}
-};
+}
 
 void IntraBlockDiff::Diff(BlockDiffParams& dparams,ValueType dc_pred,float loc_lambda){
 
@@ -198,7 +204,7 @@ void IntraBlockDiff::Diff(BlockDiffParams& dparams,ValueType dc_pred,float loc_l
 	for (int J=dparams.yp;J!=dparams.yp+dparams.yl;++J)
 		for(int I=dparams.xp;I!=dparams.xp+dparams.xl;++I)
 			dparams.intra_cost+=float(abs((*pic_data)[J][I]-(dparams.dc<<2)));
-};
+}
 
 void BiSimpleBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2){
 

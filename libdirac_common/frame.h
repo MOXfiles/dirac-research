@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-05-25 02:39:23  chaoticcoyote
+* Unnecessary qualification of some class members in frame.h and pic_io.h.
+* ISO C++ forbids variable-size automatic arrays; fixed in pic_io.cpp
+* Removed spurious semi-colons in me_utils.cpp
+* Fixed out-of-order member constructors in seq_compress.h
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -74,7 +80,7 @@ public:
     /*!
         Constructor initialises the frame parameters and the data
      */	
-	Frame::Frame(const FrameParams& fp);
+	Frame(const FrameParams& fp);
 
 	//! Copy constructor
 	Frame(const Frame& cpy);//copy constructor

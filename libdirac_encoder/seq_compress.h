@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-12 08:35:34  tjdwave
+* Revision 1.5  2004-05-25 02:39:24  chaoticcoyote
+* Unnecessary qualification of some class members in frame.h and pic_io.h.
+* ISO C++ forbids variable-size automatic arrays; fixed in pic_io.cpp
+* Removed spurious semi-colons in me_utils.cpp
+* Fixed out-of-order member constructors in seq_compress.h
+*
+* Revision 1.4  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -157,11 +163,12 @@ private:
 	*/
 	bool just_finished;
 
-	//! Pointer pointing at the picture input.
-	PicInput* picIn;
 	//! The parameters used for encoding.
 	EncoderParams encparams;
 
+	//! Pointer pointing at the picture input.
+	PicInput* picIn;
+    
 	//! A picture buffer used for local storage of frames whilst pending re-ordering or being used for reference.
 	FrameBuffer* my_buffer;
 

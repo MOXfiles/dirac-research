@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.5  2004-05-24 15:53:55  tjdwave
+* Revision 1.6  2004-05-25 02:39:23  chaoticcoyote
+* Unnecessary qualification of some class members in frame.h and pic_io.h.
+* ISO C++ forbids variable-size automatic arrays; fixed in pic_io.cpp
+* Removed spurious semi-colons in me_utils.cpp
+* Fixed out-of-order member constructors in seq_compress.h
+*
+* Revision 1.5  2004/05/24 15:53:55  tjdwave
 * Added error handling: IO functions now return boolean values.
 *
 * Revision 1.4  2004/05/14 17:25:43  stuart_hc
@@ -121,10 +127,10 @@ protected:
 	virtual bool WriteComponent(const PicArray& pic_data, const CompSort& cs);
 
 	//! Open picture's header file for output
-	virtual bool PicOutput::OpenHeader(const char* output_name);
+	virtual bool OpenHeader(const char* output_name);
 
 	//! Open picture's YUV data file for output
-	virtual bool PicOutput::OpenYUV(const char* output_name);
+	virtual bool OpenYUV(const char* output_name);
 };
 
 //! Picture input class

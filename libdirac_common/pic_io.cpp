@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.9  2004-05-24 15:53:55  tjdwave
+* Revision 1.10  2004-05-25 02:39:23  chaoticcoyote
+* Unnecessary qualification of some class members in frame.h and pic_io.h.
+* ISO C++ forbids variable-size automatic arrays; fixed in pic_io.cpp
+* Removed spurious semi-colons in me_utils.cpp
+* Fixed out-of-order member constructors in seq_compress.h
+*
+* Revision 1.9  2004/05/24 15:53:55  tjdwave
 * Added error handling: IO functions now return boolean values.
 *
 * Revision 1.8  2004/05/19 14:04:44  tjdwave
@@ -371,7 +377,8 @@ bool PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
 		}
 	}
 
-	unsigned char temp[xl];//array big enough for one line
+	unsigned char * temp = new unsigned char[xl];//array big enough for one line
+    
 	for (int J=0;J<yl;++J){
 		ip_pic_ptr->read((char*) &temp, sizeof(temp));
 		for (int I=0;I<xl;++I){
@@ -383,6 +390,9 @@ bool PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
 			pic_data[J][I]=pic_data[J][xl-1];
 		}//I
 	}//J
+    
+    delete [] temp;
+    
 	//now do the padded lines, using the last true line
 	for (int J=yl;J<pic_data.length(1);++J){
 		for (int I=0;I<pic_data.length(0);++I)

@@ -1,0 +1,614 @@
+2004-05-24 12:03  tjdwave
+
+	* libdirac_decoder/: frame_decompress.cpp, frame_decompress.h,
+	  seq_decompress.cpp: Support for IO error handling. Decoder
+	  freezes on last frame if out of data.
+
+2004-05-24 11:57  tjdwave
+
+	* picheader/headmain.cpp, encoder/encmain.cpp, decoder/decmain.cpp:
+	  Changed CLI names and functions to house style.
+
+2004-05-24 11:55  tjdwave
+
+	* libdirac_common/: cmd_line.cpp, cmd_line.h: Modified class name
+	  to fit house style: ClassName, not class_name.
+
+2004-05-24 11:53  tjdwave
+
+	* libdirac_common/: pic_io.cpp, pic_io.h: Added error handling: IO
+	  functions now return boolean values.
+
+2004-05-24 11:52  tjdwave
+
+	* tests/colourbars.at: Fixed test so that header file has correct
+	  zlength=1.
+
+2004-05-24 11:51  tjdwave
+
+	* Makefile.am: Switched order so that docs are builts last.
+
+2004-05-24 08:38  tjdwave
+
+	* libdirac_common/mot_comp.cpp, libdirac_common/mot_comp.h,
+	  libdirac_motionest/me_utils.cpp, libdirac_motionest/me_utils.h:
+	  Replaced spagetti code for linear interpolation in motion
+	  compensation and motion estimation routines with simple loops.
+	  Code is much clearer, although possibly slightly slower.
+
+2004-05-21 13:46  asuraparaju
+
+	* Makefile.am, configure.ac, tests/Makefile.am,
+	  tests/colourbars.at, tests/colourbars_420.yuv,
+	  tests/testsuite.at: Initial support for autotest testsuite (run
+	  "make check").
+
+2004-05-21 12:27  stuart_hc
+
+	* README.developers: Initial revision of software practice
+	  guidelines for CVS developers.
+
+2004-05-21 10:17  tjdwave
+
+	* libdirac_common/mot_comp.cpp: Fixed bug with erroneous linear
+	  interpolation for sub-pixel values.
+
+2004-05-20 08:44  tjdwave
+
+	* README: Minor edit of example of making a header, to reflect the
+	  new CLI.
+
+2004-05-20 08:39  tjdwave
+
+	* picheader/headmain.cpp: Fixed help message for CLI.
+
+2004-05-20 08:38  tjdwave
+
+	* decoder/decmain.cpp: Fixed minor bug with -verbose option to make
+	  it true boolean.
+
+2004-05-20 08:37  tjdwave
+
+	* encoder/encmain.cpp: Corrected help text for CLI.
+
+2004-05-20 06:50  stuart_hc
+
+	* doc/dirac_api.doxygen, doc/dirac_api_foot.html,
+	  doc/dirac_api_head.html, doc/libdirac_encoder_api_foot.html,
+	  doc/libdirac_encoder_api_head.html,
+	  libdirac_common/band_codec.cpp: Corrected CRLF line-endings to LF
+	  for consistency.
+
+2004-05-20 06:35  stuart_hc
+
+	* NEWS: Added mention of libtool removal, slight rearrangement for
+	  clarity.  Corrected CRLF line-endings to LF.
+
+2004-05-20 06:31  stuart_hc
+
+	* README: Fixed incorrect interlace argument in DV transcode
+	  example.  Minor grammatical errors fixed.
+
+2004-05-19 18:08  chaoticcoyote
+
+	* README: Updated for changes in command-line parser
+
+2004-05-19 18:00  chaoticcoyote
+
+	* AUTHORS: Added my middle name to credits Corrected company name
+
+2004-05-19 13:39  chaoticcoyote
+
+	* decoder/decmain.cpp, encoder/encmain.cpp,
+	  libdirac_common/cmd_line.cpp, libdirac_common/cmd_line.h,
+	  picheader/headmain.cpp: Modified command line parser to correctly
+	  handle boolean options
+
+2004-05-19 12:27  stuart_hc
+
+	* README: Added example usage for MPlayer, display (ImageMagick),
+	  and transcode.  Reformatted all example commands to be indented
+	  for clarity.
+
+2004-05-19 11:51  tjdwave
+
+	* NEWS: More details for 0.3.0 release
+
+2004-05-19 10:29  tjdwave
+
+	* NEWS: Include release notes for 0.2.0 & 0.3.0
+
+2004-05-19 10:19  tjdwave
+
+	* TODO: Removed mention of frame buffer class, since now complete.
+
+2004-05-19 10:14  tjdwave
+
+	* AUTHORS: Added contributers.
+
+2004-05-19 10:04  tjdwave
+
+	* libdirac_common/pic_io.cpp: Changed YUV output to output lines
+	  instead of bytes, according to patch provided by Malcolm Parsons
+
+2004-05-19 05:16  tjdwave
+
+	* libdirac_common/: mot_comp.cpp, pic_io.cpp: Replaced zero-padding
+	  with edge-padding to eliminate colour-fringeing at low bitrates.
+	  Mod to set padded values to 0 when compensating frames.
+
+2004-05-18 03:46  tjdwave
+
+	* README, encoder/encmain.cpp, libdirac_common/frame_buffer.cpp,
+	  libdirac_common/frame_buffer.h, libdirac_common/pic_io.cpp,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_decoder/comp_decompress.h,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/comp_compress.h,
+	  libdirac_encoder/seq_compress.cpp: Added support for I-frame only
+	  coding by setting num_L1 equal 0; num_L1 negative gives a single
+	  initial I-frame ('infinitely' many L1 frames). Revised quantiser
+	  selection to cope with rounding error noise.
+
+2004-05-14 13:27  stuart_hc
+
+	* decoder/decmain.cpp: Added better error checking.
+
+2004-05-14 13:25  stuart_hc
+
+	* libdirac_common/pic_io.cpp, libdirac_common/pic_io.h,
+	  picheader/headmain.cpp: Replaced binary header files with ASCII
+	  text format to achieve cross-platform interoperability.
+	  Rearranged PicOutput constructor to permit code reuse from
+	  picheader/headmain.cpp
+
+2004-05-14 13:20  stuart_hc
+
+	* decoder/Makefile.am, encoder/Makefile.am, picheader/Makefile.am:
+	  Use LDADD to ensure files which depend on libraries are rebuilt
+	  when necessary.
+
+2004-05-14 10:21  tjdwave
+
+	* README: Build information now incorporated.
+
+2004-05-14 06:48  stuart_hc
+
+	* bootstrap: Avoid errors when mixing versions of autotools.
+
+2004-05-14 06:47  stuart_hc
+
+	* make_debug.sh: Rearranged to use "make" to be more maintainable.
+
+2004-05-12 12:04  tjdwave
+
+	* decoder/decmain.cpp, picheader/headmain.cpp,
+	  libdirac_encoder/seq_compress.cpp:
+	  Done general code tidy, implementing copy constructors,
+	  assignment= and const correctness for most classes. Replaced Gop
+	  class by FrameBuffer class throughout.  Added support for frame
+	  padding so that arbitrary block sizes and frame dimensions can be
+	  supported.
+
+2004-05-12 12:03  tjdwave
+
+	* encoder/encmain.cpp:
+	  Done general code tidy, implementing copy constructors,
+	  assignment= and const  correctness for most classes. Replaced Gop
+	  class by FrameBuffer class throughout. Added support for frame
+	  padding so that arbitrary block sizes and frame  dimensions can
+	  be supported.
+
+2004-05-12 05:23  tjdwave
+
+	* reconf: Removed since it duplicated the job of ./bootstrap.
+
+2004-05-12 05:20  tjdwave
+
+	* dirac_build_howto.txt: All build instructions are now in the
+	  README file.	Information on creating a distribution removed
+	  since it is not indended for the target audience.
+
+2004-05-12 04:46  tjdwave
+
+	* win/xparam/README: XParam library is no longer needed to build
+	  Dirac.
+
+2004-05-12 04:35  tjdwave
+
+	* libdirac_common/arith_codec.h, libdirac_common/arrays.h,
+	  libdirac_common/band_codec.cpp, libdirac_common/band_codec.h,
+	  libdirac_common/bit_manager.cpp, libdirac_common/bit_manager.h,
+	  libdirac_common/common.cpp, libdirac_common/common.h,
+	  libdirac_common/context.h, libdirac_common/frame.cpp,
+	  libdirac_common/frame.h, libdirac_common/golomb.cpp,
+	  libdirac_common/golomb.h, libdirac_common/mot_comp.cpp,
+	  libdirac_common/mot_comp.h, libdirac_common/motion.cpp,
+	  libdirac_common/motion.h, libdirac_common/mv_codec.cpp,
+	  libdirac_common/mv_codec.h, libdirac_common/pic_io.cpp,
+	  libdirac_common/pic_io.h, libdirac_common/upconvert.cpp,
+	  libdirac_common/upconvert.h, libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_decoder/comp_decompress.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/frame_decompress.h,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_decoder/seq_decompress.h,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/comp_compress.h,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/frame_compress.h,
+	  libdirac_encoder/seq_compress.h,
+	  libdirac_motionest/block_match.cpp,
+	  libdirac_motionest/block_match.h,
+	  libdirac_motionest/downconvert.cpp,
+	  libdirac_motionest/downconvert.h,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.cpp, libdirac_motionest/me_subpel.h,
+	  libdirac_motionest/me_utils.cpp, libdirac_motionest/me_utils.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/motion_estimate.h: Done general code tidy,
+	  implementing copy constructors, assignment= and const correctness
+	  for most classes. Replaced Gop class by FrameBuffer class
+	  throughout.  Added support for frame padding so that arbitrary
+	  block sizes and frame dimensions can be supported.
+
+2004-05-12 04:21  stuart_hc
+
+	* libdirac_common/: gop.cpp, gop.h, Makefile.am: FrameBuffer
+	  classes (frame_buffer.{cpp,h}) now replace Gop classes
+	  (gop.{cpp,h}).
+
+2004-05-12 04:14  tjdwave
+
+	* libdirac_common/: frame_buffer.cpp, frame_buffer.h: Initial
+	  commit of FrameBuffer classes to handle free-style temporal
+	  reference structures. Replaces Gop class (gop.{cpp,h}).
+
+2004-05-11 12:11  stuart_hc
+
+	* Makefile.am, bootstrap, configure.ac, decoder/Makefile.am,
+	  doc/Makefile.am, encoder/Makefile.am,
+	  libdirac_common/Makefile.am, libdirac_decoder/Makefile.am,
+	  libdirac_encoder/Makefile.am, libdirac_motionest/Makefile.am,
+	  picheader/Makefile.am: Removed use of libtool - all libraries and
+	  binaries are now static for ease of development & debugging.
+	  Added tests for documentation tools and added documentation to
+	  default make target 'all'.
+
+2004-05-11 10:17  tjdwave
+
+	* Makefile.am, README, configure.ac, dirac_build_howto.txt,
+	  decoder/Makefile.am, decoder/decmain.cpp, encoder/Makefile.am,
+	  encoder/encmain.cpp, libdirac_common/cmd_line.cpp,
+	  libdirac_common/cmd_line.h, libdirac_encoder/seq_compress.cpp,
+	  picheader/Makefile.am, picheader/headmain.cpp, win/Makefile,
+	  win/README, win/xparam/README: Removed dependency on XParam CLI
+	  library for both encoder and decoder.
+
+2004-05-11 10:15  tjdwave
+
+	* doc/dirac_algor.tex: Removed inline comments and notes. Added
+	  text describing frame types (I, L1 and L2) and relation to MPEG
+	  types.
+
+2004-05-10 00:44  chaoticcoyote
+
+	* doc/dirac_algor.tex: Newest version of "programmer's guide"
+
+2004-05-10 00:43  chaoticcoyote
+
+	* libdirac_common/: cmd_line.cpp, cmd_line.h: Simple, portable
+	  command-line parser (eliminates Xparam dependency)
+
+2004-05-10 00:41  chaoticcoyote
+
+	* doc/dirac_algor.tex, encoder/encmain.cpp,
+	  libdirac_common/Makefile.am: Updated dirac algorithm document
+	  Modified encoder to use simple, portable command-line parser
+
+2004-05-09 21:04  chaoticcoyote
+
+	* encoder/decmain.cpp: Removed spurious file
+
+2004-04-25 18:27  chaoticcoyote
+
+	* win/: README, xparam/README: Read Me files to explain the context
+	  of this directory and Makefile
+
+2004-04-25 18:16  chaoticcoyote
+
+	* win/Makefile: Added nmake makefile for Microsoft Visual C++
+
+2004-04-22 18:14  chaoticcoyote
+
+	* make_debug.sh: Enhanced the debug build script to support
+	  different architectures
+
+2004-04-22 17:11  chaoticcoyote
+
+	* misc/xparam-1.22-gcc-3.4.0.patch: A patch for xparam 1.22 to work
+	  around a GCC 3.4.0 internal compiler error
+
+2004-04-22 17:08  chaoticcoyote
+
+	* make_debug.sh, libdirac_encoder/comp_compress.cpp: Fixed warning
+	  generated by some versions of GCC for
+	  libdirac_encoder/comp_compress.cpp Added make_debug.sh script to
+	  build debuggable, profilable versions of encoder and decoder
+
+2004-04-15 23:12  chaoticcoyote
+
+	* doc/Makefile.in: Removed spurious file
+
+2004-04-15 23:11  chaoticcoyote
+
+	* doc/: Makefile.in, dirac_api.doxygen.in: Added additional
+	  documentation build files
+
+2004-04-15 23:10  chaoticcoyote
+
+	* Makefile.am, doc/Makefile.am, doc/dirac_api.doxygen: Addiitonal
+	  work on generating docs for distribution
+
+2004-04-15 21:41  chaoticcoyote
+
+	* doc/: dirac_algor.tex, dirac_algorithm2.tex: Renamed algorithm
+	  document
+
+2004-04-15 21:28  chaoticcoyote
+
+	* Makefile.am, doc/Makefile.am: Added documentation targets to
+	  makefiles
+
+2004-04-15 09:59  chaoticcoyote
+
+	* configure.ac: Added doc/Makefile
+
+2004-04-15 09:57  chaoticcoyote
+
+	* doc/Makefile.am: Added makefile boilerplate to generate docusment
+	  via "docs" target
+
+2004-04-15 09:54  chaoticcoyote
+
+	* configure.ac: Added program checks for Doxygen and LaTeX
+
+2004-04-15 08:31  chaoticcoyote
+
+	* configure.ac: Updated to version 0.2.0
+
+2004-04-15 08:30  chaoticcoyote
+
+	* doc/dirac_algorithm2.tex: Dirac algorithm document added
+
+2004-04-11 21:57  chaoticcoyote
+
+	* Makefile.am, decoder/decmain.cpp, encoder/encmain.cpp,
+	  libdirac_common/pic_io.cpp: Fixed problem Intel C++ had in
+	  finding xparam headers on Linux Solved Segmentation Fault bug in
+	  pic_io.cpp
+
+2004-04-11 18:54  chaoticcoyote
+
+	* libdirac_common/: arith_codec.h, bit_manager.h, context.h:
+	  Additional comments
+
+2004-04-11 18:50  chaoticcoyote
+
+	* libdirac_common/arrays.h, libdirac_common/band_codec.h,
+	  libdirac_common/bit_manager.cpp, libdirac_common/common.cpp,
+	  libdirac_common/common.h, libdirac_common/golomb.cpp,
+	  libdirac_common/gop.cpp, libdirac_common/motion.cpp,
+	  libdirac_common/motion.h, libdirac_common/mv_codec.cpp,
+	  libdirac_common/pic_io.cpp, libdirac_common/upconvert.cpp,
+	  libdirac_common/upconvert.h, libdirac_common/wavelet_utils.cpp,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_motionest/block_match.cpp,
+	  libdirac_motionest/downconvert.cpp,
+	  libdirac_motionest/downconvert.h,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_utils.cpp,
+	  libdirac_motionest/motion_estimate.cpp: Modifications to allow
+	  compilation by Visual C++ 6.0 Changed local for loop declarations
+	  into function-wide definitions Replaced variable array
+	  declarations with new/delete of dynamic array Added second
+	  argument to allocator::alloc calls, since MS has no default Fixed
+	  missing and namespace problems with min, max, cos, and abs Added
+	  typedef unsigned int uint (MS does not have this) Added a few
+	  missing std:: qualifiers that GCC didn't require
+
+2004-04-11 12:25  chaoticcoyote
+
+	* windows/dirac/: dirac.dsw, libdirac_common/libdirac_common.dsp,
+	  libdirac_decoder/libdirac_decoder.dsp,
+	  libdirac_encoder/libdirac_encoder.dsp,
+	  libdirac_motionest/libdirac_motionest.dsp: Added initial Windows
+	  Visual Studio C++ 6.0 project files
+
+2004-04-06 14:06  chaoticcoyote
+
+	* libdirac_common/: arith_codec.h, arrays.h, band_codec.h,
+	  bit_manager.h, common.h, context.h, frame.h, gop.h, mot_comp.h,
+	  motion.h, mv_codec.h, pic_io.h, upconvert.h, wavelet_utils.h:
+	  Boilerplate for Doxygen comments; testing ability to commit into
+	  SF CVS
+
+2004-04-04 23:05  chaoticcoyote
+
+	* libdirac_motionest/: downconvert.h, me_mode_decn.h, me_subpel.h,
+	  me_utils.h, motion_estimate.h: Updated Doxygen API documentation
+	  comments Test to see if Scott's CVS is now working correctly
+
+2004-03-30 10:52  chaoticcoyote
+
+	* doc/dirac_api.doxygen, libdirac_encoder/frame_compress.h,
+	  libdirac_encoder/seq_compress.h: New Doxygen comments
+
+2004-03-28 20:52  chaoticcoyote
+
+	* libdirac_decoder/: comp_decompress.h, frame_decompress.h,
+	  seq_decompress.h: Added Doxygen comments
+
+2004-03-21 20:33  chaoticcoyote
+
+	* doc/dirac_doc_howto.txt: Added more description of HTML and LATEX
+	  document generation
+
+2004-03-21 20:04  chaoticcoyote
+
+	* libdirac_encoder/: comp_compress.cpp, comp_compress.h,
+	  frame_compress.h, seq_compress.cpp, seq_compress.h: Added API
+	  documentation to encoder library Moved large constructors so they
+	  are no longer inlined
+
+2004-03-21 16:01  chaoticcoyote
+
+	* doc/: libdirac_encoder_api_foot.html,
+	  libdirac_encoder_api_head.html: Adding custome header and footer
+	  for HTML libdirac_encoder docs
+
+2004-03-21 16:00  chaoticcoyote
+
+	* doc/: libdirac_encoder_api.doxygen, libdirac_encoder_foot.html,
+	  libdirac_encoder_head.html: Adjusting file names
+
+2004-03-21 15:51  chaoticcoyote
+
+	* doc/: libdirac_encoder_api.doxygen, libdirac_encoder_foot.html,
+	  libdirac_encoder_head.html: Added files to generate socumentation
+	  specific to libdirac_encoder
+
+2004-03-21 14:26  chaoticcoyote
+
+	* doc/dirac_api.doxygen: Change graphic configuration
+
+2004-03-21 09:05  chaoticcoyote
+
+	* dirac_build_howto.txt, doc/dirac_api.doxygen,
+	  doc/dirac_api_foot.html, doc/dirac_api_head.html,
+	  doc/dirac_doc_howto.txt: Updated documentation files
+
+2004-03-21 08:06  chaoticcoyote
+
+	* ltmain.sh, reconf: Updated autoconf to use libtoolize Removed
+	  spurious ltmain.sh
+
+2004-03-19 02:43  chaoticcoyote
+
+	* doc/dirac_algorithm.doc: Removed Word doc because the conversion
+	  didn't work
+
+2004-03-19 02:35  chaoticcoyote
+
+	* doc/: dirac_algorithm.doc, dirac_api.doxygen: Created document
+	  diractory Populated doc directory with preliminary texts
+
+2004-03-13 12:34  chaoticcoyote
+
+	* decoder/Makefile.am, encoder/Makefile.am,
+	  libdirac_decoder/Makefile.am, libdirac_encoder/Makefile.am,
+	  libdirac_motionest/Makefile.am: Disabled auto-dependency checking
+	  in newer versions of AutoMake
+
+2004-03-13 12:11  chaoticcoyote
+
+	* ltmain.sh, reconf, libdirac_common/Makefile.am: Required files
+	  for for autoconf
+
+2004-03-12 12:09  chaoticcoyote
+
+	* NEWS: Minor change to test commit ability
+
+2004-03-11 12:45  timborer
+
+	* AUTHORS, COPYING, ChangeLog, INSTALL, Makefile.am, NEWS, README,
+	  TODO, bootstrap, configure.ac, dirac.pc.in, decoder/Makefile.am,
+	  decoder/decmain.cpp, encoder/Makefile.am, encoder/decmain.cpp,
+	  encoder/encmain.cpp, libdirac_common/Makefile.am,
+	  libdirac_common/arith_codec.h, libdirac_common/arrays.h,
+	  libdirac_common/band_codec.cpp, libdirac_common/band_codec.h,
+	  libdirac_common/bit_manager.cpp, libdirac_common/bit_manager.h,
+	  libdirac_common/common.cpp, libdirac_common/common.h,
+	  libdirac_common/context.h, libdirac_common/frame.cpp,
+	  libdirac_common/frame.h, libdirac_common/golomb.cpp,
+	  libdirac_common/golomb.h, libdirac_common/gop.cpp,
+	  libdirac_common/gop.h, libdirac_common/mot_comp.cpp,
+	  libdirac_common/mot_comp.h, libdirac_common/motion.cpp,
+	  libdirac_common/motion.h, libdirac_common/mv_codec.cpp,
+	  libdirac_common/mv_codec.h, libdirac_common/pic_io.cpp,
+	  libdirac_common/pic_io.h, libdirac_common/upconvert.cpp,
+	  libdirac_common/upconvert.h, libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h, libdirac_decoder/Makefile.am,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_decoder/comp_decompress.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/frame_decompress.h,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_decoder/seq_decompress.h, libdirac_encoder/Makefile.am,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/comp_compress.h,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/frame_compress.h,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h, libdirac_motionest/Makefile.am,
+	  libdirac_motionest/block_match.cpp,
+	  libdirac_motionest/block_match.h,
+	  libdirac_motionest/downconvert.cpp,
+	  libdirac_motionest/downconvert.h,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.cpp, libdirac_motionest/me_subpel.h,
+	  libdirac_motionest/me_utils.cpp, libdirac_motionest/me_utils.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/motion_estimate.h, picheader/Makefile.am,
+	  picheader/headmain.cpp: Initial import (well nearly!)
+
+2004-03-11 12:45  timborer
+
+	* AUTHORS, COPYING, ChangeLog, INSTALL, Makefile.am, NEWS, README,
+	  TODO, bootstrap, configure.ac, dirac.pc.in, decoder/Makefile.am,
+	  decoder/decmain.cpp, encoder/Makefile.am, encoder/decmain.cpp,
+	  encoder/encmain.cpp, libdirac_common/Makefile.am,
+	  libdirac_common/arith_codec.h, libdirac_common/arrays.h,
+	  libdirac_common/band_codec.cpp, libdirac_common/band_codec.h,
+	  libdirac_common/bit_manager.cpp, libdirac_common/bit_manager.h,
+	  libdirac_common/common.cpp, libdirac_common/common.h,
+	  libdirac_common/context.h, libdirac_common/frame.cpp,
+	  libdirac_common/frame.h, libdirac_common/golomb.cpp,
+	  libdirac_common/golomb.h, libdirac_common/gop.cpp,
+	  libdirac_common/gop.h, libdirac_common/mot_comp.cpp,
+	  libdirac_common/mot_comp.h, libdirac_common/motion.cpp,
+	  libdirac_common/motion.h, libdirac_common/mv_codec.cpp,
+	  libdirac_common/mv_codec.h, libdirac_common/pic_io.cpp,
+	  libdirac_common/pic_io.h, libdirac_common/upconvert.cpp,
+	  libdirac_common/upconvert.h, libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h, libdirac_decoder/Makefile.am,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_decoder/comp_decompress.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/frame_decompress.h,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_decoder/seq_decompress.h, libdirac_encoder/Makefile.am,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/comp_compress.h,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/frame_compress.h,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h, libdirac_motionest/Makefile.am,
+	  libdirac_motionest/block_match.cpp,
+	  libdirac_motionest/block_match.h,
+	  libdirac_motionest/downconvert.cpp,
+	  libdirac_motionest/downconvert.h,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.cpp, libdirac_motionest/me_subpel.h,
+	  libdirac_motionest/me_utils.cpp, libdirac_motionest/me_utils.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/motion_estimate.h, picheader/Makefile.am,
+	  picheader/headmain.cpp: Initial revision
+
