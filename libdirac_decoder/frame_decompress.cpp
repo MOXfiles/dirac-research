@@ -79,8 +79,8 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 
     if ( !(m_decparams.BitsIn().End())&& m_read_header )
     {//if we've not finished the data, can proceed
-        ASSERT (my_buffer.GetFParams().Xl() == m_fparams->Xl());
-        ASSERT (my_buffer.GetFParams().Yl() == m_fparams->Yl());
+        TEST (my_buffer.GetFParams().Xl() == m_fparams->Xl());
+        TEST (my_buffer.GetFParams().Yl() == m_fparams->Yl());
 
         if ( !m_skipped )
         {//if we're not m_skipped then we can decode the rest of the frame

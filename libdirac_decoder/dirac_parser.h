@@ -41,9 +41,65 @@
 #include <libdirac_common/common_types.h>
 #include <libdirac_decoder/decoder_types.h>
 
-/*! 
-    C interface to Dirac decoder
-    A set of 'C' functions that define the interface to the Dirac decoder.
+/*! \file
+\brief C interface to Dirac decoder.
+ 
+ A set of 'C' functions that define the public interface to the Dirac decoder.
+ Refer to the the reference decoder source code, decoder/decmain.cpp for
+ an example of how to use the "C" interface. The pseudocode below gives
+ a brief description of the "C" interface usage.
+
+\verbatim
+ #include <libdirac_decoder/dirac_parser.h>\n
+ Initialise the decodern
+
+ decoder_handle = dirac_decoder_init();
+ do
+ {
+     state = dirac_parse (decoder);
+     switch (state)
+     {
+     case STATE_BUFFER:
+         read more data.
+         Pass data to the decoder.
+         dirac_buffer (decoder_handle, data_start, data_end)
+         break;
+
+     case STATE_SEQUENCE:
+         handle start of sequence.
+         The decoder returns the sequence parameters in the 
+         seq_params member of the decoder handle.
+         Allocate space for the frame data buffers and pass 
+         this to the decoder.
+         dirac_set_buf (decoder_handle, buf, NULL);
+         break;
+
+     case STATE_SEQUENCE_END:
+         Deallocate frame data buffers
+         break;
+
+     case STATE_PICTURE_START:
+         handle start of picture data
+         The decoder sets the frame_params member in the 
+         decoder handle to the details of the next frame
+         to be processed.
+         break;
+
+     case STATE_PICTURE_AVAIL:
+         Handle picture data.
+         The decoder sets the fbuf member in the decoder 
+         handle to the frame decoded.
+         break;
+
+     case STATE_INVALID:
+         Unrecoverable error. Stop all processing
+         break;
+     }
+ } while (data available && decoder state != STATE_INVALID
+ 
+ Free the decoder resources
+ dirac_decoder_close(decoder_handle)
+ \endverbatim
 */
 #ifdef __cplusplus
 extern "C" {
@@ -115,28 +171,38 @@ typedef struct
 
 /*! 
     Decoder Init
-    Initialise the decoder. It returns a dirac_decoder_t object
-    \param verbose boolean flag to set verbose output
+    Initialise the decoder. 
+    \param  verbose boolean flag to set verbose output
+    \return decoder handle
 */
 dirac_decoder_t *dirac_decoder_init(int verbose);
 
 /*!
-    Close the decoder
+    Release the decoder resources
     \param decoder  Decoder object
 */
 void dirac_decoder_close(dirac_decoder_t *decoder);
 
 /*!
     Parses the data in the input buffer. This function returns the 
-    following values
-    STATE_BUFFER         Not enough data in internal buffer to process 
-    STATE_SEQUENCE       Start of sequence detected
-    STATE_PICTURE_START  Start of picture detected
-    STATE_PICTURE_AVAIL  Decoded picture available
-    STATE_SEQUENCE_END   End of sequence detected
-    STATE_INVALID        Invalid stream. Stop further processing
+    following values.
+    \n STATE_BUFFER:         Not enough data in internal buffer to process 
+    \n STATE_SEQUENCE:       Start of sequence detected. The seq_params member
+                             in the decoder object is set to the details of the
+                             next sequence to be processed.
+    \n STATE_PICTURE_START:  Start of picture detected. The frame_params member
+                             of the decoder object is set to the details of the
+                             next frame to be processed.
+    \n STATE_PICTURE_AVAIL:  Decoded picture available. The frame_aprams member
+                             of the decoder object is set the the details of
+                             the decoded frame available. The fbuf member of
+                             the decoder object has the luma and chroma data of
+                             the decompressed frame.
+    \n STATE_SEQUENCE_END:   End of sequence detected.
+    \n STATE_INVALID:        Invalid stream. Stop further processing.
 
     \param decoder  Decoder object
+    \return         Decoder state
 
 */
 DecoderState dirac_parse (dirac_decoder_t *decoder);

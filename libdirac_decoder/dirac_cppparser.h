@@ -135,12 +135,12 @@ public:
     /*!
         Parses the data in the input buffer. This function returns one 
         of the following values
-        STATE_BUFFER         Not enough data in internal buffer to process 
-        STATE_SEQUENCE       Start of sequence detected
-        STATE_PICTURE_START  Start of picture detected
-        STATE_PICTURE_AVAIL  Decoded picture available
-        STATE_SEQUENCE_END   End of sequence detected
-        STATE_INVALID        Invalid stream. Stop further processing
+        \n STATE_BUFFER        : Not enough data in internal buffer to process 
+        \n STATE_SEQUENCE      : Start of sequence detected
+        \n STATE_PICTURE_START : Start of picture detected
+        \n STATE_PICTURE_AVAIL : Decoded picture available
+        \n STATE_SEQUENCE_END  : End of sequence detected
+        \n STATE_INVALID       : Invalid stream. Stop further processing
     */
     DecoderState Parse();
 

@@ -170,7 +170,7 @@ Frame& SequenceDecompressor::DecompressNextFrame(bool skip /* = false */)
     //the frames out. It's up to the calling function to do something with the decoded frames as they
     //come out - write them to screen or to file, as required.
 
-    ASSERT (m_fdecoder != NULL);
+    TEST (m_fdecoder != NULL);
 
     if (m_current_code_fnum!=0){
         //if we're not at the beginning, clean the buffer of frames that can be discarded
@@ -225,6 +225,13 @@ void SequenceDecompressor::ReadStreamHeader()
         seq_start[i]=m_decparams.BitsIn().InputByte();    
     }    
     //TBC: test that kwname="KW-DIRAC"    
+
+    //bit stream version
+    m_sparams.SetBitstreamVersion( m_decparams.BitsIn().InputByte() );
+
+    // TODO: test if this bit stream version is supported. Report an error
+    // otherwise
+    TESTM (m_sparams.BitstreamVersion() == BITSTREAM_VERSION, "Bitstream version match");
 
     //picture dimensions
     m_sparams.SetXl( int(UnsignedGolombDecode( m_decparams.BitsIn() )) );

@@ -359,6 +359,9 @@ public:
     //! Returns the number of frames to be displayed per second
     int FrameRate() const {return m_framerate;}
     
+    //! Returns the bitstream version
+    int BitstreamVersion() const {return m_bs_ver;}
+    
     // ... Sets
     
     //! Sets the picture width
@@ -382,6 +385,9 @@ public:
     //! Sets the number of frames to be displayed per second
     void SetFrameRate(int fr){m_framerate=fr;}
     
+    //! Sets the bitstream version
+    void SetBitstreamVersion(int bs_ver){m_bs_ver=bs_ver;}
+    
 private:
     //! Width of video
     int m_xl;
@@ -403,6 +409,9 @@ private:
     
     //! Frame rate, per second
     int m_framerate;
+    
+    //! Bitsream version.
+    unsigned char  m_bs_ver;
 };
 
 //! Parameters for initialising frame class objects

@@ -35,6 +35,7 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
+#include <sstream>
 #include <cstdio>
 #include <cstring>
 #include <libdirac_common/dirac_assertions.h> 
@@ -160,7 +161,7 @@ DiracParser::~DiracParser()
 
 void DiracParser::SetBuffer (char *start, char *end)
 {
-    ASSERT (end > start);
+    TEST (end > start);
     m_sbuf.Copy(start, end - start);
 
 }
@@ -183,6 +184,13 @@ DecoderState DiracParser::Parse()
                     delete m_decomp;
 
                 m_decomp = new SequenceDecompressor (m_istr, m_verbose);
+                if (m_decomp->GetSeqParams().BitstreamVersion() != BITSTREAM_VERSION)
+                {
+                    std::ostringstream errstr;
+                    errstr << "Input Bitstream version " << m_decomp->GetSeqParams().BitstreamVersion() << " supported";
+                    REPORTM(false, errstr.str().c_str());
+                    return STATE_INVALID;
+                }
                 InitStateVars();
                 return m_state;
             }
@@ -292,6 +300,8 @@ const Frame& DiracParser::GetLastFrame() const
 void DiracParser::SetSkip(bool skip)
 {
     const FrameParams& fparams = m_decomp->GetNextFrameParams();
+    // FIXME: need to change this logic once bitstream is finalised. so that
+    // we skip to next RAP when an L1 frame is skipped
     if (skip == false)
     {
         if (m_skip_type == L2_frame)
@@ -351,11 +361,13 @@ DecoderState DiracParser::SeekChunk()
                     m_shift = 0xffffffff;
                     continue;
 
-                case SEQ_START_CODE:
+                case RAP_START_CODE:
                     m_next_state = STATE_SEQUENCE;
                     break;
 
-                case FRAME_START_CODE:
+                case IFRAME_START_CODE:
+                case L1FRAME_START_CODE:
+                case L2FRAME_START_CODE:
                     m_next_state = STATE_PICTURE_START;
                     break;
 
@@ -395,10 +407,12 @@ DecoderState DiracParser::SeekChunk()
                     m_shift = 0xffffffff;
                     continue;
 
-                case SEQ_START_CODE:
+                case RAP_START_CODE:
                     break;
 
-                case FRAME_START_CODE:
+                case IFRAME_START_CODE:
+                case L1FRAME_START_CODE:
+                case L2FRAME_START_CODE:
                     break;
 
                 case SEQ_END_CODE:

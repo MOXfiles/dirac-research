@@ -62,8 +62,8 @@ dirac_decoder_t *dirac_decoder_init(int verbose)
 
 void dirac_decoder_close(dirac_decoder_t *decoder)
 {
-    ASSERT (decoder != NULL);
-    ASSERT (decoder->parser != NULL);
+    TEST (decoder != NULL);
+    TEST (decoder->parser != NULL);
     DiracParser *parser = static_cast<DiracParser *>(decoder->parser);
 
     delete parser;
@@ -75,8 +75,8 @@ void dirac_decoder_close(dirac_decoder_t *decoder)
 
 void dirac_buffer (dirac_decoder_t *decoder, unsigned char *start, unsigned char *end)
 {
-    ASSERT (decoder != NULL);
-    ASSERT (decoder->parser != NULL);
+    TEST (decoder != NULL);
+    TEST (decoder->parser != NULL);
     DiracParser *parser = static_cast<DiracParser *>(decoder->parser);
 
     parser->SetBuffer((char *)start, (char *)end);
@@ -84,8 +84,8 @@ void dirac_buffer (dirac_decoder_t *decoder, unsigned char *start, unsigned char
 
 static void set_sequence_params (const  DiracParser * const parser, dirac_decoder_t *decoder)
 {
-    ASSERT (parser != NULL);
-    ASSERT (decoder != NULL);
+    TEST (parser != NULL);
+    TEST (decoder != NULL);
 
     dirac_seqparams_t *seq_params = &decoder->seq_params;
     const SeqParams& sparams = parser->GetSeqParams();
@@ -127,7 +127,7 @@ static void set_sequence_params (const  DiracParser * const parser, dirac_decode
 
 static void set_component (const PicArray& pic_data,  const CompSort cs, dirac_decoder_t *decoder)
 {
-    ASSERT (decoder->fbuf != NULL);
+    TEST (decoder->fbuf != NULL);
     int xl, yl;
 
     unsigned char *buf;
@@ -153,7 +153,7 @@ static void set_component (const PicArray& pic_data,  const CompSort cs, dirac_d
         break;
     }
 
-    ASSERT (buf != NULL);
+    TEST (buf != NULL);
     ValueType tempv;
 
     for (int j=0 ; j<yl ;++j)
@@ -170,10 +170,10 @@ static void set_component (const PicArray& pic_data,  const CompSort cs, dirac_d
 
 static void set_frame_data (const  DiracParser * const parser, dirac_decoder_t *decoder)
 {
-    ASSERT (parser != NULL);
-    ASSERT (decoder != NULL);
-    ASSERT (decoder->fbuf != NULL);
-    ASSERT (decoder->state == STATE_PICTURE_AVAIL);
+    TEST (parser != NULL);
+    TEST (decoder != NULL);
+    TEST (decoder->fbuf != NULL);
+    TEST (decoder->state == STATE_PICTURE_AVAIL);
 
     const Frame& my_frame = parser->GetNextFrame();
 
@@ -189,10 +189,10 @@ static void set_frame_data (const  DiracParser * const parser, dirac_decoder_t *
 
 static void set_frame_params (const FrameParams& my_frame_params,  dirac_decoder_t *decoder)
 {
-    ASSERT (decoder != NULL);
+    TEST (decoder != NULL);
     dirac_frameparams_t *frame_params = &decoder->frame_params;
 
-    ASSERT (decoder->state == STATE_PICTURE_AVAIL ||
+    TEST (decoder->state == STATE_PICTURE_AVAIL ||
           decoder->state == STATE_PICTURE_START);
 
     frame_params->ftype = (dirac_frame_type_t)my_frame_params.FSort();
@@ -203,8 +203,8 @@ static void set_frame_params (const FrameParams& my_frame_params,  dirac_decoder
 
 DecoderState dirac_parse (dirac_decoder_t *decoder)
 {
-    ASSERT (decoder != NULL);
-    ASSERT (decoder->parser != NULL);
+    TEST (decoder != NULL);
+    TEST (decoder->parser != NULL);
     DiracParser *parser = static_cast<DiracParser *>(decoder->parser);
 
     decoder->state = parser->Parse();
@@ -243,8 +243,8 @@ DecoderState dirac_parse (dirac_decoder_t *decoder)
 
 void dirac_skip (dirac_decoder_t *decoder, int skip)
 {
-    ASSERT (decoder != NULL);
-    ASSERT (decoder->parser != NULL);
+    TEST (decoder != NULL);
+    TEST (decoder->parser != NULL);
     DiracParser *parser = static_cast<DiracParser *>(decoder->parser);
 
     parser->SetSkip(skip > 0 ? true : false);
@@ -253,8 +253,8 @@ void dirac_skip (dirac_decoder_t *decoder, int skip)
 
 void dirac_set_buf (dirac_decoder_t *decoder, unsigned char *buf[3], void *id)
 {
-    ASSERT (decoder != NULL);
-    ASSERT (decoder->fbuf != NULL);
+    TEST (decoder != NULL);
+    TEST (decoder->fbuf != NULL);
 
     decoder->fbuf->buf[0] = buf[0];
     decoder->fbuf->buf[1] = buf[1];

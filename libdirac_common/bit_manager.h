@@ -46,22 +46,28 @@
 #include <vector>
 #include <iostream>
 
-//! Bitstream codes
-//! Prefix for all start codes
-const unsigned int START_CODE_PREFIX = 0x01020304;
+//!  Prefix for all start codes
+const unsigned int START_CODE_PREFIX = 0x42424344; //BBCD
 const unsigned int START_CODE_PREFIX_BYTE0 = (START_CODE_PREFIX >> 24) & 0xFF;
 const unsigned int START_CODE_PREFIX_BYTE1 = (START_CODE_PREFIX >> 16) & 0xFF;
 const unsigned int START_CODE_PREFIX_BYTE2 = (START_CODE_PREFIX >>  8) & 0xFF;
 const unsigned int START_CODE_PREFIX_BYTE3 = START_CODE_PREFIX & 0xFF;
 
-//! Sequence start code
-const unsigned char SEQ_START_CODE = 0xB3;
-//! Frame start code
-const unsigned char FRAME_START_CODE = 0xB4;
+//! Random Access Point (RAP) Intra Frame start Code
+const unsigned char RAP_START_CODE = 0xD7;
+//! Non-RAP Intra Frame start code
+const unsigned char IFRAME_START_CODE = 0xD6;
+//! L1 Frame start code
+const unsigned char L1FRAME_START_CODE = 0xD4;
+//! L2 Frame start code
+const unsigned char L2FRAME_START_CODE = 0xD5;
 //! Sequence end code
-const unsigned char SEQ_END_CODE = 0xB7;
+const unsigned char SEQ_END_CODE = 0xD0;
 //! Not a start code but part of data
 const unsigned char NOT_START_CODE = 0xFF;
+//! Bitstream version
+const unsigned char BITSTREAM_VERSION = 0x01;  //0.1
+
 
 ////////////////////////////////////////////////
 //--------------Bit output stuff--------------//
