@@ -38,8 +38,14 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-05-12 08:35:33  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -47,26 +53,25 @@
 *
 */
 
-#include "band_codec.h"
+#include "libdirac_common/band_codec.h"
 
 //encoding function
 void BandCodec::DoWorkCode(PicArray& InData){
 
 	//main coding function, using binarisation
-	if (node.parent()!=0){
-		pxp=pnode.xp();pyp=pnode.yp();
-		pxl=pnode.xl();pyl=pnode.yl();
+	if (node.Parent()!=0){
+		pxp=pnode.Xp();pyp=pnode.Yp();
+		pxl=pnode.Xl();pyl=pnode.Yl();
 	}
 	else{
 		pxp=0;pyp=0;
 		pxl=0;pyl=0;
 	}
 	register ValueType val;
-	qf=node.qf(0);
+	qf=node.Qf(0);
 	qfinv=(1<<17)/qf;
 	offset=(3*qf+4)>>3;	
 	cut_off_point*=qf;
-
 
 	coeff_count=0;
 
@@ -125,16 +130,16 @@ void BandCodec::CodeVal(PicArray& InData,ValueType& val){
 
 void BandCodec::DoWorkDecode(PicArray& OutData, int num_bits){
 
-	if (node.parent()!=0){
-		pxp=pnode.xp();pyp=pnode.yp();
-		pxl=pnode.xl();pyl=pnode.yl();
+	if (node.Parent()!=0){
+		pxp=pnode.Xp();pyp=pnode.Yp();
+		pxl=pnode.Xl();pyl=pnode.Yl();
 	}
 	else{
 		pxp=0;pyp=0;
 		pxl=0;pyl=0;
 	}	
 
-	qf=node.qf(0);
+	qf=node.Qf(0);
 	offset=(3*qf+4)>>3;
 	cut_off_point*=qf;
 
@@ -182,10 +187,10 @@ void BandCodec::DecodeVal(PicArray& OutData){
 	}
 }
 
-int BandCodec::ChooseContext(PicArray& Data, const int BinNumber){
+int BandCodec::ChooseContext(const PicArray& Data, const int BinNumber) const{
 	//condition on neighbouring values and parent values
 
-	if (!parent_zero && pxp!=0 && pyp!=0){
+	if (!parent_zero && (pxp!=0 || pyp!=0)){
 		if (BinNumber==1){
 			if(nhood_sum==0)
 				return Z_BIN1z_CTX;
@@ -221,8 +226,8 @@ int BandCodec::ChooseContext(PicArray& Data, const int BinNumber){
 	}
 }
 
-int BandCodec::ChooseSignContext(PicArray& Data){	
-	if (yp==0){
+int BandCodec::ChooseSignContext(const PicArray& Data) const{	
+	if (yp==0 && xp!=0){
 		//we're in a vertically oriented subband
 		if (ypos==0)
 			return SIGN0_CTX;
@@ -235,7 +240,7 @@ int BandCodec::ChooseSignContext(PicArray& Data){
 				return SIGN0_CTX;
 		}		
 	}
-	else if (xp==0){
+	else if (xp==0 && yp!=0){
 		//we're in a horizontally oriented subband
 		if (xpos==0)
 			return SIGN0_CTX;
@@ -263,10 +268,11 @@ void LFBandCodec::DoWorkCode(PicArray& InData){
 	parent_zero=false;//set parent to always be zero
 	register ValueType val;
 
-	qf=node.qf(0);
+	qf=node.Qf(0);
 	qfinv=(1<<17)/qf;
 	offset=(3*qf+4)>>3;
 	cut_off_point*=qf;
+
 	coeff_count=0;
 	for (ypos=yp;ypos<yp+yl;++ypos){		
 		for (xpos=xp;xpos<xp+xl;++xpos){
@@ -285,7 +291,7 @@ void LFBandCodec::DoWorkDecode(PicArray& OutData, int num_bits){
 
 	pxp=0; pyp=0;
 	parent_zero=false;//set parent to always be zero	
-	qf=node.qf(0);
+	qf=node.Qf(0);
 	offset=(3*qf+4)>>3;
 	cut_off_point*=qf;
 
@@ -306,6 +312,7 @@ void LFBandCodec::DoWorkDecode(PicArray& OutData, int num_bits){
 //////////////////////////////////////////////////////////////////////////////////
 
 void IntraDCBandCodec::DoWorkCode(PicArray& InData){
+
 	//main coding function, using binarisation
 	pxp=0; pyp=0;
 	parent_zero=false;//set parent to always be zero
@@ -313,7 +320,7 @@ void IntraDCBandCodec::DoWorkCode(PicArray& InData){
 	PicArray PredRes(xl,yl);//residues after prediction, quantisation and inverse quant
 	ValueType prediction;
 
-	qf=node.qf(0);
+	qf=node.Qf(0);
 	qfinv=(1<<17)/qf;
 	offset=(3*qf+4)>>3;
 	cut_off_point*=qf;
@@ -331,6 +338,13 @@ void IntraDCBandCodec::DoWorkCode(PicArray& InData){
 			PredRes[ypos][xpos]=InData[ypos][xpos];
 			InData[ypos][xpos]+=prediction;
 		}//xpos
+
+		// 		std::cerr<<std::endl<<"Val at "<<ypos<<" "<<xl-1<<" : "<<InData[ypos][xl-1];
+// 		std::cerr<<std::endl<<"Contexts at "<<ypos<<" "<<xl-1<<" : ";
+// 		for (int C=0;C<18;++C){
+// 			std::cerr<<std::endl<<C<<": Zero "<<ContextList[C].get_count0()<<", One "<<ContextList[C].get_count1();	
+// 		}
+
 	}//ypos	
 
 }
@@ -341,7 +355,7 @@ void IntraDCBandCodec::DoWorkDecode(PicArray& OutData, int num_bits){
 	parent_zero=false;//set parent to always be zero
 	PicArray PredRes(xl,yl);//residues after prediction, quantisation and inverse quant
 
-	qf=node.qf(0);
+	qf=node.Qf(0);
 	offset=(3*qf+4)>>3;
 	cut_off_point*=qf;
 

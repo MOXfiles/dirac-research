@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-05 03:05:02  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/05 03:05:02  chaoticcoyote
 * Updated Doxygen API documentation comments
 * Test to see if Scott's CVS is now working correctly
 *
@@ -56,48 +62,63 @@
 
 #include "libdirac_common/motion.h"
 #include "libdirac_motionest/block_match.h"
-#include "libdirac_common/gop.h"
 
-//! 
+class FrameBuffer;
+
+//! Decides between macroblock and block prediction modes, doing additional motion estimation as necessary
 /*!
-    
+    Loops over all the macroblocks and decides on the best modes. A macroblock is a square of 16 blocks.
+	 There are three possible splitting levels: level 0 means
+	the macroblock is considered as a single block; level 1 means the macroblock is considered as 4 larger blocks, termed
+	sub-macroblocks; level 0 means the macroblock is split right down to blocks. In addition there is a common_ref
+	mode which if true means the prediction mode of all units within the MB are the same (e.g. all sub-MBs are predicted
+	only from reference 1). In deciding which modes to adopt, the ModeDecider object calculates costs for all
+	permutations, doing motion estimation for the level 1 and level 0 modes as these have not been calculated before.
  */
 class ModeDecider{
- 					//does the mode decisions
-public:
-    //! 
-    /*!
 
+public:
+	//! Constructor
+    /*!
+		The constructor creates arrays for handling the motion vector data at splitting levels 0 and 1, as motion
+		estimation must be performed for these levels.
      */
-	ModeDecider(EncoderParams& params): encparams(params){
+	ModeDecider(EncoderParams& params):
+	encparams(params){
 		split1_mv_data=new MvData(1,1,2,2);
 		split0_mv_data=new MvData(1,1,1,1);}	
-        
-    //! 
-    /*!
 
-     */
+    //! Destructor
+    /*!
+		The destructor destroys the classes created in the constructor
+     */	
 	~ModeDecider(){delete split1_mv_data; delete split0_mv_data;}
 
-    //! 
-    /*!
-
+	//! Does the actual mode decision
+	/*!
+		Does the mode decision
+		/param	my_buffer	the buffer of all the relevant frames
+		/param	frame_num	the frame number for which motion estimation is being done
+		/param	mvd	the motion vector data into which decisions will be written
      */
-	void DoModeDecn(Gop& my_gop,int frame_num, MvData& mvd);
+	void DoModeDecn(const FrameBuffer& my_buffer,int frame_num, MvData& mvd);
 
 private:
+	ModeDecider(const ModeDecider& cpy);//private, body-less copy constructor: this class should not be copied
+	ModeDecider& operator=(const ModeDecider& rhs);//private, body-less assignment=: this class should not be assigned
+
  	//internal data
 	FrameSort fsort;
 	EncoderParams encparams;
 	float loc_lambda;
 	float factor1x1,factor2x2;
 
-	MvData* mv_data;
+	const MvData* mv_data;
 	MvData* split1_mv_data;	//MV data associated with a level 1 splitting of the MB
 	MvData* split0_mv_data;	//MV data associated with a non-split MB	
-	PicArray* pic_data;
-	PicArray* ref1_updata;
-	PicArray* ref2_updata;
+	const PicArray* pic_data;
+	const PicArray* ref1_updata;
+	const PicArray* ref2_updata;
 	int num_refs;
 
 	BlockDiff* mydiff;

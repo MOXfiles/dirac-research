@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
 * Boilerplate for Doxygen comments; testing ability to commit into SF CVS
 *
 * Revision 1.1.1.1  2004/03/11 17:45:43  timborer
@@ -62,57 +68,54 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
-#include "common.h"
-#include "upconvert.h"
-#include "motion.h"
-#include "gop.h"
+#include "libdirac_common/common.h"
+#include "libdirac_common/upconvert.h"
+#include "libdirac_common/motion.h"
 
-//Motion compensation class, for all your motion compensation needs
-//! 
+class FrameBuffer;
+class Frame;
+
+//! Motion compensator class. 
 /*!
-
+	Motion compensator class, for doing motion compensation with two references and overlapped blocks,
+	using raised-cosine roll-off.
  */
 class MotionCompensator{
 
 public:
-
-    //! 
+	    //! Constructor.
     /*!
-        
+        Constructor initialises using codec parameters.
      */
-	//Constructor sets up the member variables using information
-	//from cparams.
 	MotionCompensator(const CodecParams &cp);
-
-    //! 
-    /*!
-        
-     */
-	//Destructor
+	//! Destructor
 	~MotionCompensator();
 
-    //! 
-    /*!
-        
-     */
-	void SetCompensationMode(AddOrSub a_or_s) {add_or_sub=a_or_s;}	//Toggles the MC mode
+	//! Toggles the MC mode
+	void SetCompensationMode(AddOrSub a_or_s) {add_or_sub=a_or_s;}
 
-
-    //! 
+	//! Compensate a frame
     /*!
-        
+		Perform motion compensated addition/subtraction on a frame using parameters
+		/param	fnum	number of frame in the frame buffer to be compensated
+		/param	my_buffer	the FrameBuffer object containing the frame and the reference frames
+`		/param	mv_data	the motion vector data
      */
-	//Perform motion compensated addition/subtraction on pic_data
-	//Note for L1 frames you can duplicate arguments so UpConv and UpConvTwo are
-	//the same thing - the function will not use UpConvTwo unless there are L2 blocks
-	//in the frame.
-	void CompensateFrame(Gop& my_gop,int fnum,MvData& mv_data);	//motion compensate a given frame
+	void CompensateFrame(FrameBuffer& my_buffer,int fnum,const MvData& mv_data);	//motion compensate a given frame
 
 private:
+	//private, body-less copy constructor: this class should not be copied
+	MotionCompensator(const MotionCompensator& cpy);
+	//private, body-less assignment=: this class should not be assigned
+	MotionCompensator& operator=(const MotionCompensator& rhs);
+
 	//functions
-	void CompensateComponent(Frame& picframe, Frame &ref1frame, Frame& ref2frame, MvData& mv_data,CompSort cs);//MC a component
-	void CompensateBlock(PicArray &pic_data, PicArray &refup_data, MVector &Vec, ImageCoords Pos, CalcValueType** Weights);
-	void DCBlock(PicArray &pic_data,ValueType dc, ImageCoords Pos, CalcValueType** Weights);	
+
+	//MC a component
+	void CompensateComponent(Frame& picframe, const Frame &ref1frame, const Frame& ref2frame, const MvData& mv_data,const CompSort cs);
+	//Do an individual block
+	void CompensateBlock(PicArray &pic_data, const PicArray &refup_data, const MVector &Vec, const ImageCoords Pos, CalcValueType** Weights);
+	void DCBlock(PicArray &pic_data,const ValueType dc, const ImageCoords Pos, CalcValueType** Weights);	
 	int InterpLookup[9][4];//A lookup table to simplify the 1/8 pixel accuracy code
 	void ReConfig();		//Recalculates the weight matrix and stores other key block related parameters.
 

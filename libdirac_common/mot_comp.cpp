@@ -38,8 +38,14 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -48,8 +54,9 @@
 */
 
 //Implements the motion compensation functions outlined in mot_comp.h
-#include "mot_comp.h"
-#include "motion.h"
+#include "libdirac_common/mot_comp.h"
+#include "libdirac_common/motion.h"
+#include "libdirac_common/frame_buffer.h"
 
 using std::vector;
 
@@ -104,24 +111,24 @@ MotionCompensator::~MotionCompensator(){
 }
 
 //Called to perform motion compensated addition/subtraction on an entire frame.
-void MotionCompensator::CompensateFrame(Gop& my_gop,int fnum,MvData& mv_data){
+void MotionCompensator::CompensateFrame(FrameBuffer& my_buffer,int fnum,const MvData& mv_data){
 
 	int ref1_idx,ref2_idx;	
-	Frame& my_frame=my_gop.GetFrame(fnum);
-	ChromaFormat cformat=cparams.sparams.cformat;
-	FrameSort& fsort=my_frame.GetFparams().fsort;
+	Frame& my_frame=my_buffer.GetFrame(fnum);
+	ChromaFormat cformat=cparams.cformat;
+	const FrameSort& fsort=my_frame.GetFparams().fsort;
 
 	if (fsort!=I_frame){//we can motion compensate
 
-		vector<int> refs=my_gop.GetRefs(fnum);
+		const vector<int>& refs=my_frame.GetFparams().refs;
 		if (refs.size()>0){
 			ref1_idx=refs[0];
 			if (refs.size()>1)
 				ref2_idx=refs[1];
 			else
 				ref2_idx=refs[0];
-			Frame& ref1frame=my_gop.GetFrame(ref1_idx);
-			Frame& ref2frame=my_gop.GetFrame(ref2_idx);
+			Frame& ref1frame=my_buffer.GetFrame(ref1_idx);
+			Frame& ref2frame=my_buffer.GetFrame(ref2_idx);
 
 			CompensateComponent(my_frame,ref1frame,ref2frame,mv_data,Y);
 			if (cformat!=Yonly){
@@ -184,16 +191,16 @@ void MotionCompensator::ReConfig(){
 }
 
 void MotionCompensator::CompensateComponent
-(Frame& picframe, Frame &ref1frame, Frame& ref2frame, MvData& mv_data,CompSort cs){
+(Frame& picframe, const Frame &ref1frame, const Frame& ref2frame, const MvData& mv_data,const CompSort cs){
 
-	MvArray& mv1array=mv_data.mv1;
-	MvArray& mv2array=mv_data.mv2;
+	const MvArray& mv1array=mv_data.mv1;
+	const MvArray& mv2array=mv_data.mv2;
 	PicArray& pic_data=picframe.Data(cs);
-	PicArray& ref1up=ref1frame.UpData(cs);
-	PicArray& ref2up=ref2frame.UpData(cs);
-	TwoDArray<ValueType>& dcarray=mv_data.dc(cs);
+	const PicArray& ref1up=ref1frame.UpData(cs);
+	const PicArray& ref2up=ref2frame.UpData(cs);
+	const TwoDArray<ValueType>& dcarray=mv_data.dc(cs);
 
-	TwoDArray<PredMode>& mode_array=mv_data.mode;
+	const TwoDArray<PredMode>& mode_array=mv_data.mode;
 
 	ReConfig();//set all the weighting blocks up	
 
@@ -268,7 +275,8 @@ void MotionCompensator::CompensateComponent
 	}
 }
 
-void MotionCompensator::CompensateBlock(PicArray &pic_data, PicArray &refup_data, MVector &Vec, ImageCoords Pos, CalcValueType** Weights){
+void MotionCompensator::CompensateBlock(PicArray &pic_data, const PicArray &refup_data, const MVector &Vec, 
+const ImageCoords Pos, CalcValueType** Weights){
 
 	//Coordinates in the image being written to.
 	ImageCoords StartPos;

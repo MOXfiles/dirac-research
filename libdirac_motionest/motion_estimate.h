@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-05 03:05:03  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:35  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/05 03:05:03  chaoticcoyote
 * Updated Doxygen API documentation comments
 * Test to see if Scott's CVS is now working correctly
 *
@@ -51,32 +57,32 @@
 *
 */
 
+
 #ifndef _MOTION_ESTIMATE_H_
 #define _MOTION_ESTIMATE_H_
 
 #include "libdirac_common/motion.h"
 
-class Gop;
+class FrameBuffer;
 
-//! 
-/*!
-    
- */
+
+//! Class to handle the whole motion estimation process 
 class MotionEstimator{
 public:
-    //! 
-    /*!
-        \param 
-     */
-	MotionEstimator(EncoderParams& params);
+	//! Constructor
+	MotionEstimator(const EncoderParams& params);
+	//! Destructor
+	~MotionEstimator(){}
 
-    //! 
-    /*!
-        \param 
-     */
-	void DoME(Gop& my_gop,int frame_num, MvData& mv_data);
+	//! Do the motion estimation
+	void DoME(const FrameBuffer& my_buffer,int frame_num, MvData& mv_data);
 
-private:	
+private:
+	//Copy constructor
+	MotionEstimator(const MotionEstimator& cpy);//private, body-less copy constructor: class should not be copied
+	//Assignment= 
+	MotionEstimator& operator=(const MotionEstimator& rhs);//private, body-less copy constructor: class should not be copied
+
 	//internal data
 	FrameSort fsort;
 	EncoderParams encparams;
@@ -84,18 +90,18 @@ private:
 	int depth;
 
 	//functions
-	void DoHierarchicalSearch(Gop& my_gop, int frame_num, MvData& mv_data); //find vectors to pixel accuracy
-																			//using a hierarchical search method
-	void DoFinalSearch(Gop& my_gop, int frame_num, MvData& mv_data);		//refine vectors to 1/8 pel accuracy, given
-																			//pixel-accurate vectors
-	void MatchPic(PicArray& ref_data,PicArray& pic_data,MvData& mv_data,MvData& guide_data,
+	void DoHierarchicalSearch(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data); 	//find vectors to pixel accuracy
+																						//using a hierarchical search method
+	void DoFinalSearch(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data);		//refine vectors to 1/8 pel accuracy, given
+																					//pixel-accurate vectors
+	void MatchPic(const PicArray& ref_data,const PicArray& pic_data,MvData& mv_data,const MvData& guide_data,
 		int ref_id,int level);												//do a basic matching from pic_data to reference
 																			//ref_data by block-matching, using guide data from
 																			//lower levels in the resolution hierarchy
-	void SetChromaDC(Gop& my_gop, int frame_num, MvData& mv_data);			//go through all the intra blocks and extract the
-																			//dc values to be coded from the chroma components
-	void SetChromaDC(PicArray& pic_data, MvData& mv_data,CompSort csort);	//Called by previous fn for each component
-	ValueType GetChromaBlockDC(PicArray& pic_data, MvData& mv_data,int xloc,int yloc,int split);
+	void SetChromaDC(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data);	//go through all the intra blocks and extract the
+																				//dc values to be coded from the chroma components
+	void SetChromaDC(const PicArray& pic_data, MvData& mv_data,CompSort csort);		//Called by previous fn for each component
+	ValueType GetChromaBlockDC(const PicArray& pic_data, MvData& mv_data,int xloc,int yloc,int split);
 };
 
 #endif

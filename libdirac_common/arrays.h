@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.4  2004-05-12 08:35:33  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.3  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -72,31 +78,21 @@
 typedef short ValueType;
 typedef int CalcValueType;
 
-
-//! 
+//! Range type. 
 /*!
-
+	Range type encapsulating a closed range of values [first,last]. Used to initialies OneDArrays.
  */
-class range{
+class Range{
 public:
-
-    //! 
+	//! Constructor
     /*!
-
+		Constructor taking a start and an end point for the range.
      */
-	range(int s, int e):fst(s),lst(e){}
-
-    //! 
-    /*!
-
-     */
-	int& first(){return fst;}
-
-    //! 
-    /*!
-
-     */
-	int& last(){return lst;}
+	Range(int s, int e):fst(s),lst(e){}
+	//! Returns the start of the range.
+	const int& first()const {return fst;}
+	//! Returns the end point of the range.
+	const int& last()	const {return lst;}
 private:
 	int fst,lst;
 };
@@ -105,115 +101,88 @@ private:
 //One-Dimensional Array type//
 //////////////////////////////
 
-
-//! 
+//! A template class for one-dimensional arrays.
 /*!
-
+	A template class for one-D arrays. Can be used wherever built-in arrays are used, and 
+	eliminates the need for explicit memory (de-)allocation. Also supports arrays not 
+	based at zero.
  */
 template <class T> class OneDArray{
 public:
-
-    //! 
+    //! Default constructor.
     /*!
-
-     */
+		Default constructor produces an empty array.
+     */	
 	OneDArray(){init(0);}
 
-    //! 
+    //! 'Length' constructor.
     /*!
-
-     */
+		Length constructor produces a zero-based array.
+     */	
 	OneDArray(int len){init(len);}
 
-    //! 
+   //! Range constructor
     /*!
+		Range constructor produces an array with values indexed within the range parameters.
+		/param	r	a range of indexing values.
+     */		
+	OneDArray(Range r){init(r);}
 
-     */
-	OneDArray(range r){init(r);}
-
-    //! 
+	//! Destructor.
     /*!
-
+		Destructor frees the data allocated in the constructors.
      */
 	~OneDArray(){
 		free_ptr();
 	}
 
-    //! 
+	//! Copy constructor.
     /*!
-
+		Copy constructor copies both data and metadata.
      */
 	OneDArray(const OneDArray<T>& Cpy);
 
-    //! 
+	//! Assignment=
     /*!
-
+		Assignment= assigns both data and metadata.
      */
 	OneDArray<T>& operator=(const OneDArray<T>& rhs);	
 
-    //! 
-    /*!
-
-     */
+	//! Resize the array, throwing away the current data.
 	void resize(int l);
 
+	//! Element access.
+	T& operator[](int pos){return ptr[pos-fst];}
 
-    //! 
-    /*!
+	//! Element access.
+	const T& operator[](int pos) const {return ptr[pos-fst];}
 
-     */
-	inline T& operator[](int pos){return ptr[pos-fst];}
+    //! Returns the length of the array if n=0, 0 otherwise.
+	int length(const int n)const {if (n==0) return l; else return 0;}
 
-    //! 
-    /*!
+    //! Returns the length of the array.	
+	int length() const {return l;}
 
-     */
-	int length(const int n){if (n==0) return l; else return 0;}
+    //! Returns the index of the first element if n=0, 0 otherwise.	
+	int first(const int n) const {if (n==0) return fst; else return 0;}
 
-    //! 
-    /*!
+    //! Returns the index of the first element.	
+	int first() const {return fst;}
 
-     */
-	int length(){return l;}
+    //! Returns the index of the first element, Blitz-style.	
+	int lbound(const int n) const {return first(n);}
 
-    //! 
-    /*!
+    //! Returns the index of the last element if n=0, 0 otherwise.	
+	int last(const int n) const {if (n==0) return lst; else return -1;}
 
-     */
-	int first(const int n){if (n==0) return fst; else return 0;}
+    //! Returns the index of the last element.	
+	int last() const {return lst;}
 
-    //! 
-    /*!
-
-     */
-	int first(){return fst;}
-
-    //! 
-    /*!
-
-     */
-	int lbound(const int n){return first(n);}
-
-    //! 
-    /*!
-
-     */
-	int last(const int n){if (n==0) return lst; else return -1;}
-
-    //! 
-    /*!
-
-     */
-	int last(){return lst;}
-
-    //! 
-    /*!
-
-     */
-	int ubound(const int n){return last(n);}	
+    //! Returns the index of the last element, Blitz-style.
+	int ubound(const int n) const {return last(n);}	
 private:
 	void init(int len);
-	void init(range r);
+	void init(Range r);
 	void free_ptr();	
 
 	std::allocator<T> alloc;
@@ -233,7 +202,7 @@ OneDArray<T>::OneDArray(const OneDArray<T>& Cpy){
 	if (fst==0)		
 		init(l);
 	else
-		init(range(fst,lst));
+		init(Range(fst,lst));
 	for (int I=0;I<l;++I)
 		*(ptr+I)=*(Cpy.ptr+I);
 }
@@ -248,7 +217,7 @@ OneDArray<T>& OneDArray<T>::operator=(const OneDArray<T>& rhs){
 		if (fst==0)
 			init(l);
 		else
-			init(range(fst,lst));
+			init(Range(fst,lst));
 		for (int I=0;I<l;++I)
 			*(ptr+I)=*(rhs.ptr+I);			
 
@@ -272,7 +241,7 @@ void OneDArray<T>::init(int len){
 	lst=l-1;
 	if (l>0){
 		//ptr=new T[l];
-		ptr=alloc.allocate(l,0);
+		ptr=alloc.allocate(l);
 	}
 	else {
 		l=0;
@@ -282,14 +251,14 @@ void OneDArray<T>::init(int len){
 }		
 
 template <class T>
-void OneDArray<T>::init(range r){
+void OneDArray<T>::init(Range r){
 	T tmp_val;
 	fst=r.first();
 	lst=r.last();
 	l=lst-fst+1; 
 	if (l>0){
 		//ptr=new T[l];
-		ptr=alloc.allocate(l,0);
+		ptr=alloc.allocate(l);
 		std::uninitialized_fill(ptr,ptr+l,tmp_val);
 	}
 	else {
@@ -316,104 +285,92 @@ void OneDArray<T>::free_ptr(){
 //Two-Dimensional Array type//
 //////////////////////////////
 
-
-//! 
+//! A template class for two-dimensional arrays.
 /*!
-
+	A template class to do two-d arrays, so that explicit memory (de-)allocation is not required. Only
+	zero-based arrays are currently supported so that access is fast. The array is viewed as a 
+	(vertical) array of (horizontal) arrays. Accessing elements along a row is therefore much faster
+	than accessing them along a column.
  */
 template <class T> class TwoDArray{
 	typedef T* element_type;
 public:
 
-    //! 
+    //! Default constructor.
     /*!
-
-     */
+		Default constructor creates an empty array.
+     */	
 	TwoDArray(){init(0,0);}
 
-    //! 
+    //! Constructor.
     /*!
-
-     */
+		The constructor creates an array of width /param len0 and length /param len1.
+     */	
 	TwoDArray(int len0,int len1){init(len0,len1);}
 
-    //! 
+    //! Destructor.
     /*!
-
-     */
+		Destructor frees the data allocated in the constructor.
+     */	
 	virtual ~TwoDArray(){
 		free_data();	
 	}
 
-    //! 
+    //! Copy constructor.
     /*!
-
-     */
+		Copy constructor copies data and metadata.
+     */	
 	TwoDArray(const TwoDArray<T>& Cpy);
 
-    //! 
+    //! Assignment =
     /*!
-
-     */
+		Assignement = assigns both data and metadata.
+     */	
 	TwoDArray<T>& operator=(const TwoDArray<T>& rhs);
 
-    //! 
-    /*!
-
-     */
+    //! Resizes the array, deleting the current data.	
 	void resize(int len0, int len1);	
 
-
-    //! 
+    //! Element access.
     /*!
-
-     */
+		Accesses the rows of the arrays, which are returned in the form of pointers to the row data
+		NOT OneDArray objects.
+     */	
 	inline element_type& operator[](const int pos){return array_of_rows[pos];}
 
-    //! 
+   //! Element access.
     /*!
+		Accesses the rows of the arrays, which are returned in the form of pointers to the row data
+		NOT OneDArray objects.
+     */	
+	inline const element_type& operator[](const int pos) const {return array_of_rows[pos];}
 
-     */
+    //! Returns the raw data [deprecated]	
 	inline T**& data(){return array_of_rows;}
 
-    //! 
-    /*!
-
-     */
-	int length(const int n){
+    //! Returns the width if n=0, the height if n=1, 0 otherwise.	
+	int length(const int n) const {
 		if (n==0) return l0; 
 		else if (n==1) return l1;
 		else return 0;}
 
-    //! 
-    /*!
-
-     */
-	int first(const int n){
+    //! Returns the index of the first element of a row/column (n=0/1) or 0 (n>1)	
+	int first(const int n) const {
 		if (n==0) return first0;
 		else if (n==1) return first1; 
 		else return 0;}
 
-    //! 
-    /*!
+    //! Returns the index of the first element of a row/column (n=0/1) or 0 (n>1), Blitz style.	
+	int lbound(const int n) const {return first(n);}
 
-     */
-	int lbound(const int n){return first(n);}
-
-    //! 
-    /*!
-
-     */
-	int last(const int n){
+    //! Returns the index of the last element of a row/column (n=0/1) or 0 (n>1)	
+	int last(const int n) const {
 		if (n==0) return last0;
 		else if (n==1) return last1; 
 		else return -1;}
 
-    //! 
-    /*!
-
-     */
-	int ubound(const int n){return last(n);}	
+    //! Returns the index of the last element of a row/column (n=0/1) or 0 (n>1), Blitz style.	
+	int ubound(const int n) const {return last(n);}	
 
 private:
 	void init(int len0,int len1);
@@ -488,7 +445,7 @@ void TwoDArray<T>::init(int len0,int len1){
 	last0=l0-1;last1=l1-1;
 	if (l1>0){
 		//		array_of_rows=new element_type[l1];
-		array_of_rows=alloc.allocate(l1,0);
+		array_of_rows=alloc.allocate(l1);
 		if (l0>0){
 			for (int J=0;J<l1;++J){
 				array_of_rows[J]=new T[l0];

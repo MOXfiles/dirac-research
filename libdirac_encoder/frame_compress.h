@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-03-30 15:52:40  chaoticcoyote
+* Revision 1.4  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.3  2004/03/30 15:52:40  chaoticcoyote
 * New Doxygen comments
 *
 * Revision 1.2  2004/03/22 01:04:28  chaoticcoyote
@@ -57,7 +63,7 @@
 #ifndef _FRAME_COMPRESS_H_
 #define _FRAME_COMPRESS_H_
 
-#include "libdirac_common/gop.h"
+#include "libdirac_common/frame_buffer.h"
 #include "libdirac_common/common.h"
 
 class MvData;
@@ -71,25 +77,48 @@ class FrameCompressor{
 public:
     //! Constructor
     /*!
-        Creates a FrameCompressor with specific set of parameters the control
+        Creates a FrameEncoder with specific set of parameters the control
         the compression process. It encodes motion data before encoding each
         component of the frame. 
         \param encp encoder parameters
     */
-	FrameCompressor(EncoderParams& encp) : encparams(encp) { }
+	FrameCompressor(const EncoderParams& encp); 
 
     //! Compress a specific frame within a group of pictures (GOP)
     /*!
         Compresses a specified frame within a group of pictures. 
-        \param my_gop   group of pictures in which the frame resides
-        \param fnum     frame number to compress
+        \param my_buffer picture buffer in which the frame resides
+        \param fnum      frame number to compress
     */
-	void Compress(Gop& my_gop, int fnum);
+	void Compress(FrameBuffer& my_buffer, int fnum);
+
+	//! Returns true if the frame has been skipped rather than coded normally
+	bool IsSkipped(){return skipped;}
 
 private:
+	//! Copy constructor is private and body-less
+	/*!
+		Copy constructor is private and body-less. This class should not be copied.
+
+	*/
+	FrameCompressor(const FrameCompressor& cpy);
+
+	//! Assignment = is private and body-less
+	/*!
+		Assignment = is private and body-less. This class should not be assigned.
+
+	*/
+	FrameCompressor& operator=(const FrameCompressor& rhs);
+
 	EncoderParams encparams;
 	MvData* mv_data;
-};
+	bool skipped;				//true if the frame has been skipped, false otherwise
+	bool use_global;			//true if we use global motion vectors, false otherwise
+	bool use_block_mv;			//true if we use block motion vectors, false otherwise
+	PredMode global_pred_mode;	//prediction mode to use if we only have global motion vectors
 
+	//! Write the frame compression header
+	void WriteFrameHeader(const FrameParams& fparams);
+};
 
 #endif

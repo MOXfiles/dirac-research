@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -56,7 +62,7 @@
 *
 */
 
-#include "bit_manager.h"
+#include "libdirac_common/bit_manager.h"
 
 using std::vector;
 
@@ -100,10 +106,16 @@ void BasicOutputManager::OutputBytes(char* str_array){
 	}
 }
 
+void BasicOutputManager::OutputBytes(char* str_array,int num){
+	FlushOutput();
+	for (int I=0;I<num;++I)
+		buffer.push_back(str_array[I]);
+}
+
 
 void BasicOutputManager::WriteToFile(){
 	FlushOutput();
-	for (std::vector<char>::iterator it=buffer.begin();it!=buffer.end();++it){
+	for (vector<char>::iterator it=buffer.begin();it!=buffer.end();++it){
 		op_ptr->write(&(*it),1);		
 	}
 	num_out_bytes=buffer.size();
@@ -174,13 +186,22 @@ bool BitInputManager::InputBit(int& count, const int max_count){
 	}
 }
 
-char BitInputManager::input_byte(){
+char BitInputManager::InputByte(){
 	FlushInput();//forget about what's in the current byte	
 	char byte;
 	ip_ptr->read(&byte,1);
 	return byte;	
 }
 
+void BitInputManager::InputBytes(char* cptr, int num){
+	FlushInput();//forget about what's in the current byte	
+	ip_ptr->read(cptr,num);	
+}
+
 void BitInputManager::FlushInput(){
 	InputBitsLeft=0;	
+}
+
+bool BitInputManager::End() const {
+	return ip_ptr->eof();	
 }

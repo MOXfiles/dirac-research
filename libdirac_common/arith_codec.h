@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-04-11 22:54:13  chaoticcoyote
+* Revision 1.4  2004-05-12 08:35:33  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.3  2004/04/11 22:54:13  chaoticcoyote
 * Additional comments
 *
 * Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
@@ -65,52 +71,58 @@
 /////////////////////////////////////////////////////////////////////////
 /////////////////////////////////////////////////////////////////////////
 
-#include "common.h"
-#include "context.h"
-#include "bit_manager.h"
+#include "libdirac_common/common.h"
+#include "libdirac_common/context.h"
+#include "libdirac_common/bit_manager.h"
 #include <vector>
-
 
 //! Abstract binary arithmetic coding class
 /*!
     This is an abtract binary arithmetic encoding class, used as the base
     for concrete classes that encode motion vectors and subband residues.
-    \param      T       a container (most probably, and array) type
+    \param      T       a container (most probably, or array) type
  */
-template<class T>
+template<class T>//T is container/array type
 class ArithCodec{
+
 public:
-
-    //! Input constructor
+	//! Constructor for decoding
     /*!
-        Creates an ArithCodec object to encode input based on a set of parameters.
-        \param      bits_in     source of bits to be encoded
-        \param      ctxs        
+        Creates an ArithCodec object to decode input based on a set of parameters.
+        \param      bits_in     source of bits to be decoded
+        \param      ctxs    	the list contexts used in decoding     
      */
-	ArithCodec(BitInputManager* bits_in, std::vector<Context>& ctxs)
-        : bit_count(0),BitIP(bits_in),ContextList(ctxs){}	
+	ArithCodec(BitInputManager* bits_in, const std::vector<Context>& ctxs):
+	bit_count(0),
+	BitIP(bits_in),
+	ContextList(ctxs)
+	{}	
 
-    //! 
+    //! Constructor for encoding
     /*!
+        Creates an ArithCodec object to decode input based on a set of parameters.
+        \param      bits_out     output for encoded bits
+        \param      ctxs         the list of contexts used in encoding
+    */	
+	ArithCodec(BasicOutputManager* bits_out, const std::vector<Context>& ctxs):
+	bit_count(0),
+	BitOP(bits_out),
+	ContextList(ctxs)
+	{}	
 
-     */
-	ArithCodec(BasicOutputManager* bits_out, std::vector<Context>& ctxs)
-        : bit_count(0),BitOP(bits_out),ContextList(ctxs){}	
-
-
-
-    //! 
+    //! Destructor
     /*!
-
-     */
-	// Destructors
+		Destructor is virtual as this class is abstract.
+     */	
 	virtual ~ArithCodec(){}
 
-    //! 
+    //! Compresses the input and returns the number of bits written. 
     /*!
-
+		Compress takes a type T object (a container or array) and compresses it using the abstract
+		function /param DoWorkCode() which is overridden in subclasses. It returns the number of 
+		bits written. 
+		/param 	InData	the input to be compressed. Non-const, since the compression may be lossy.
      */
-	//General encode and decode functions: these call virtual functions which should be overridden
 	int Compress(T &InData){
 		InitEncoder();				
 		DoWorkCode(InData);
@@ -118,11 +130,15 @@ public:
 		return bit_count;
 	}
 
-
-    //! 
+    //! Decompresses the bitstream and writes into the output.
     /*!
-
-     */
+		Decompresses the  bitstream, up to the number of bits specified and writes into the output
+		T object, by calling the abstract function /param DoWorkDecode() which is overridden in
+		subclasses.
+		/param	OutData	the output into which the decompressed data is written.
+		/param	num_bits	the number of bits to be read from the bitstream. [May be eliminated in
+		future revisions. TJD 13 April 2004.]
+     */	
 	void Decompress(T &OutData, int num_bits){
 		max_count=num_bits;
 		InitDecoder();
@@ -130,6 +146,9 @@ public:
 		FlushDecoder();		
 		BitIP->FlushInput();
 	}
+
+	//! Return the context counts, perhaps so as to improve initialisation the next time around
+	const std::vector<Context>& GetContextList() const {return ContextList;}
 
 protected :
 
@@ -153,8 +172,8 @@ protected :
 	virtual void Update(const int& context_num, const bool& Symbol)=0;	// The method by which the counts are updated.
 	virtual void Resize(const int& context_num)=0;						// The method by which the counts are resized
 	virtual void Reset_all()=0;											// The method by which _all_ the counts are resized.
-	virtual int ChooseContext(T &Data, const int BinNumber)=0;			// Choose the context based on previous data.
-	virtual int ChooseContext(T &Data)=0;								// Choose the context based on previous data.
+	virtual int ChooseContext(const T &Data, const int BinNumber) const =0;// Choose the context based on previous data.
+	virtual int ChooseContext(const T &Data) const=0;						 // Choose the context based on previous data.
 
 	//virtual encode-only functions
 	///////////////////////////////	
@@ -178,6 +197,10 @@ protected :
 	inline void RemFromStream(const Triple& c);// Remove the symbol from the coded input stream
 	inline void SetCurrentCount(const int context_num);	
 	inline void DecodeSymbol(bool& symbol,int context_num);	// Decodes a symbol given a context number
+
+private:
+	ArithCodec(const ArithCodec& cpy);//private, bodyless copy constructor: class should not be copied
+	ArithCodec& operator=(const ArithCodec& rhs);//private, bodyless copy operator=: class should not be assigned
 };
 
 //Implementation - core functions
@@ -196,8 +219,6 @@ inline void ArithCodec<T>::EncodeTriple(const Triple &c){
 
 	// Rescale high and low for the new symbol
 	range=(MyCalcType)(high-low) + 1;
-	// 	high=low + (MyCodeType)(( range * c.Stop ) / c.Weight - 1 );//general formulae
-	// 	low+=(MyCodeType)(( range * c.Start ) / c.Weight );
 
 	//formulae given we know we're binary coding	
 	if(!c.Start)//c.Start=0, so symbol is 0, so low unchanged 
@@ -271,12 +292,10 @@ void ArithCodec<T>::RemFromStream(const Triple &c)
 
 	//First, the range is expanded to account for the symbol removal.	
 	range=(MyCalcType)( high - low ) + 1;
-	if(!c.Start){//c.Start=0, so symbol is 0, so low unchanged 
+	if(!c.Start)//c.Start=0, so symbol is 0, so low unchanged 
 		high = low + (MyCodeType)(( range * c.Stop ) / c.Weight - 1 );
-	}
-	else{//symbol is 1, so high unchanged
-		low+=(MyCodeType)(( range * c.Start ) / c.Weight );			
-	}	
+	else//symbol is 1, so high unchanged
+		low+=(MyCodeType)(( range * c.Start ) / c.Weight );		
 
 	do
 	{		

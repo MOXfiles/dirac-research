@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-05 03:05:03  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:35  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/05 03:05:03  chaoticcoyote
 * Updated Doxygen API documentation comments
 * Test to see if Scott's CVS is now working correctly
 *
@@ -63,429 +69,380 @@
 //-------------------------------//
 ///////////////////////////////////
 
-//! 
-/*!
-    
- */
-class BMParams{//block matching params	
-public:
-    //! 
-    /*!
+//! A class for encapsulating the parameters for matching a block
+struct BMParams{//block matching params	
 
-     */
-	BMParams():xp(0),yp(0),xl(0),yl(0),bp(),me_lambda(0.0),mv_pred(),best_mv(),up_conv(false),
-	pic_data(0),ref_data(0)
+	BMParams():
+	xp(0),
+	yp(0),
+	xl(0),
+	yl(0),
+	bp(),
+	me_lambda(0.0),
+	mv_pred(),
+	best_mv(),
+	up_conv(false),
+	pic_data(0),
+	ref_data(0)
 	{}//default constructor
 
-    //! 
-    /*!
+	////////////////////////////////////////////////////////////////////
+	//NB: Assume default copy constructor, assignment = and destructor//
+	//This means that ptrs are copied and deleted, not their objects.///
+	////////////////////////////////////////////////////////////////////
 
-     */
-	void Init(OLBParams& bparams,int M,int N); 	//set up parameters for an overlapped block with given parameters
+	void Init(const OLBParams& bparams,int M,int N); 	//set up parameters for an overlapped block with given parameters
 											  	//nominally located at (M*XBSEP-XOFFSET,N*YBSEP-YOFFSET)
 												//overriding current block params bp
-    //! 
-    /*!
-
-     */
 	void Init(int M,int N); //ditto, but using current block params bp
 
-	int xp,yp,xl,yl;
-	OLBParams bp;//block params
-	float me_lambda;//lagrangian parameter used
-	MVector mv_pred;//predictor computed from neighbouring blocks	
+	//! The xcoord of the top-left coord of the block being matched
+	int xp;
+	//! The ycoord of the top-left coord of the block being matched
+	int yp;
+	//! The width of the block being matched
+	int xl;
+	//! The height of the block being matched
+	int yl;
+
+	//! The block parameter set being used for matching 
+	OLBParams bp;
+	//! The Lagrangian weighting parameter to be applied to the motion vector cost
+	float me_lambda;
+	//! The predictor for the motion vector for this block
+	MVector mv_pred;
+	//! The best motion vector found so far	
 	MVector best_mv;
+	//! The set of candidate vectors to choose from
 	std::vector<std::vector<MVector> >* vect_list;
-	bool up_conv;//indicates whether the reference has been upconverted
-	PicArray* pic_data;
-	PicArray* ref_data;
+	//! Indicates whether the reference has been upconverted
+	bool up_conv;
+	//! A pointer to the picture data
+	const PicArray* pic_data;
+	//! A pointer to the reference picture data
+	const PicArray* ref_data;
 };
 
-//! 
-/*!
 
- */
-class BlockDiffParams{//parameters for doing block differences	
-public:
-    //! 
-    /*!
+//! A class encapsulating parameters for calculating a block difference value (a single instance of matching)
+struct BlockDiffParams{
 
-     */
-	BlockDiffParams(BMParams& bmparams): xp(bmparams.xp),yp(bmparams.yp),xl(bmparams.xl),yl(bmparams.yl),
-	bailout(false),start_val(0.0f){}
-
-    //! 
-    /*!
-
-     */
+	//! Constructor
 	BlockDiffParams(){}
 
-    //! 
+	//! Constructor
+	BlockDiffParams(const BMParams& bmparams): 
+	xp(bmparams.xp),
+	yp(bmparams.yp),
+	xl(bmparams.xl),
+	yl(bmparams.yl),
+	bailout(false),
+	start_val(0.0f){}
+
+	////////////////////////////////////////////////////////////////////
+	//NB: Assume default copy constructor, assignment = and destructor//
+	//This means that ptrs are copied and deleted, not their objects.///
+	////////////////////////////////////////////////////////////////////
+
+	//! The xcoord of the top-left coord of the block being matched
 	int xp;
-
-    //! 
-    int yp;
-
-    //! 
-    int xl;
-
-    //! 
-    int yl;		//coords and dimensions of current block
-    
-    //! 
-	MVector best_mv;		//best motion vector so far
-    
-    //! 
-	bool bailout;			//allow bail-out
-    
-    //! 
+	//! The ycoord of the top-left coord of the block being matched
+	int yp;
+	//! The width of the block being matched
+	int xl;
+	//! The height of the block being matched
+	int yl;
+	//! The best motion vector so far
+	MVector best_mv;		
+	//! Whether we're allowed to bail out of the calculation early if we're not close to the best
+	bool bailout;
+	//! The average value of the current block
 	ValueType dc;
-    
-    //! 
+	//! The cost data associated with the match
 	MvCostData cost;
-    
-    //! 
+	//! The intra cost for the block
 	float intra_cost;
-
-    //! 
-	float start_val;		//value, normally representing motion vector cost, which is to be added to the raw block difference
+	//! The value to start adding the SAD values to - will be the weighted motion vector cost
+	float start_val;
 };
 
 //////////////////////////////////////////////////
 //----Different difference classes, so that-----//
 //bounds-checking need only be done as necessary//
 //////////////////////////////////////////////////
-//! 
-/*!
 
- */
+//! An abstract class for doing block difference calculations
 class BlockDiff{
 public:
-    //! 
-    /*!
-
-     */
+	//! Constructor
 	BlockDiff(){}
-
-    //! 
-    /*!
-
-     */
-	BlockDiff(PicArray& ref,PicArray& pic):pic_data(&pic),ref_data(&ref){}
-    
-    //! 
-    /*!
-
-     */
+	//! Constructor, initialising the reference and picture data
+	BlockDiff(const PicArray& ref,const PicArray& pic):pic_data(&pic),ref_data(&ref){}
+	//! Destructor	
 	virtual ~BlockDiff(){}
-    
-    //! 
-    /*!
-
-     */
-	virtual void Diff(BlockDiffParams& dparams,MVector& mv)=0;//must be overidden
+	//! Do the actual difference
+	/*!
+		Do the actual difference
+		\param	dparams	the parameters in which costs, block parameters etc are stored
+		\param	mv	the motion vector being used 
+	*/
+	virtual void Diff(BlockDiffParams& dparams,const MVector& mv)=0;//must be overidden
 protected:
-	PicArray* pic_data;
-	PicArray* ref_data;
+	const PicArray* pic_data;
+	const PicArray* ref_data;
+private:
+	BlockDiff(const BlockDiff& cpy);			//private, bodyless copy-constructor: class and its 
+												//derivatives should not be copied
+	BlockDiff& operator=(const BlockDiff& rhs);	//private, bodyless assignment=: class and its 
+												//derivatives should not be assigned
 };
 
-//! 
-/*!
-
- */
+//! A class for doing block differences without bounds-checking, inherited from BlockDiff
 class SimpleBlockDiff: public BlockDiff{//block difference with 1 reference and no bounds checking
 public:
-    //! 
-    /*!
-
-     */
+	//! Constructor
 	SimpleBlockDiff(){}
-
-    //! 
-    /*!
-
-     */
-	SimpleBlockDiff(PicArray& ref,PicArray& pic):BlockDiff(ref,pic){}
-    
-    //! 
-    /*!
-
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv);
+	//! Constructor, initialising the reference and picture data
+	SimpleBlockDiff(const PicArray& ref,const PicArray& pic):BlockDiff(ref,pic){}
+	//! Do the actual difference without bounds checking
+	/*!
+		Do the actual difference without bounds checking
+		\param	dparams	the parameters in which costs, block parameters etc are stored
+		\param	mv	the motion vector being used 
+	*/
+	void Diff(BlockDiffParams& dparams, const MVector& mv);
+private:
+	SimpleBlockDiff(const SimpleBlockDiff& cpy);			//private, bodyless copy-constructor: class and its 
+															//derivatives should not be copied
+	SimpleBlockDiff& operator=(const SimpleBlockDiff& rhs);	//private, bodyless assignment=: class and its 
+															//derivatives should not be assigned
 
 };
 
-//! 
-/*!
-
- */
+//! A class for doing block differences with bounds-checking, inherited from BlockDiff
 class BChkBlockDiff: public BlockDiff{//block difference with 1 reference and bounds checking
 public:
-    //! 
-    /*!
-
-     */
+	//! Constructor
 	BChkBlockDiff(){}
-
-    //! 
-    /*!
-
-     */
-	BChkBlockDiff(PicArray& ref,PicArray& pic):BlockDiff(ref,pic){}	
-    
-    //! 
-    /*!
-
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv);
-
+	//! Constructor, initialising the reference and picture data
+	BChkBlockDiff(const PicArray& ref,const PicArray& pic):BlockDiff(ref,pic){}	
+	//! Do the actual difference with bounds checking
+	/*!
+		Do the actual difference with bounds checking
+		\param	dparams	the parameters in which costs, block parameters etc are stored
+		\param	mv	the motion vector being used 
+	*/	
+	void Diff(BlockDiffParams& dparams, const MVector& mv);
+private:
+	BChkBlockDiff(const BChkBlockDiff& cpy);			//private, bodyless copy-constructor: class and its 
+															//derivatives should not be copied
+	BChkBlockDiff& operator=(const BChkBlockDiff& rhs);	//private, bodyless assignment=: class and its 
+															//derivatives should not be assigned
 };
 
-//! 
-/*!
-
- */
-class IntraBlockDiff: public BlockDiff{//block difference with pred by dc value
+//! A class for calculating the difference between a block and its DC value (average)
+class IntraBlockDiff: public BlockDiff{
 public:
-    //! 
-    /*!
-
-     */
+	//! Constructor
 	IntraBlockDiff(){}
-    //! 
-    /*!
-
-     */
-	IntraBlockDiff(PicArray& pic): BlockDiff(pic,pic){}
-    //! 
-    /*!
-
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv){}
-    //! 
-    /*!
-
-     */
+	//! Constructor, initialising the reference and picture data to be the same, as there's no temporal reference
+	IntraBlockDiff(const PicArray& pic): BlockDiff(pic,pic){}
+	//! Empty function to override virtual inherited function
+	void Diff(BlockDiffParams& dparams, const MVector& mv){}
+	//! Do the actual difference
+	/*!
+		Do the actual difference
+		\param	dparams	the parameters in which costs, block parameters etc are stored
+		\param	dc_pred	a prediction for the DC value from neighbouring blocks
+		\param	loc_lambda	a weighting parameter for the DC value coding cost
+	*/		
 	void Diff(BlockDiffParams& dparams,ValueType dc_pred,float loc_lambda);
+private:
+	IntraBlockDiff(const IntraBlockDiff& cpy);				//private, bodyless copy-constructor: class and its 
+															//derivatives should not be copied
+	IntraBlockDiff& operator=(const IntraBlockDiff& rhs);	//private, bodyless assignment=: class and its 
+															//derivatives should not be assigned
 };
 
-//! 
-/*!
-
- */
-class BiSimpleBlockDiff: public BlockDiff{//block difference with 2 references and no bounds checking
+//! A class for bi-directional differences with two references, and no bounds checking
+class BiSimpleBlockDiff: public BlockDiff{
 public:
-    //! 
-    /*!
-
-     */
+	//! Constructor
 	BiSimpleBlockDiff(){}
-
-    //! 
-    /*!
-
-     */
-	BiSimpleBlockDiff(PicArray& ref,PicArray& ref2,PicArray& pic):BlockDiff(ref,pic),ref_data2(&ref2){}
-    
-    //! 
-    /*!
-
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv){}
-    
-    //! 
-    /*!
-
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2);
+	//! Constructor, initialising the references and picture data
+	BiSimpleBlockDiff(const PicArray& ref,const PicArray& ref2,const PicArray& pic):BlockDiff(ref,pic),ref_data2(&ref2){}
+	//! Empty function, overriding pure virtual inherited function
+	void Diff(BlockDiffParams& dparams, const MVector& mv){}
+	//! Do the actual difference without bounds checking
+	/*!
+		Do the actual difference without bounds checking
+		\param	dparams	the parameters in which costs, block parameters etc are stored
+		\param	mv1	the motion vector being used for reference 1
+		\param	mv2	the motion vector being used for reference 2
+	*/		
+	void Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2);
 private:
-	PicArray* ref_data2;
+	const PicArray* ref_data2;
+
+	BiSimpleBlockDiff(const BiSimpleBlockDiff& cpy);			//private, bodyless copy-constructor: class and its 
+																//derivatives should not be copied
+	BiSimpleBlockDiff& operator=(const BiSimpleBlockDiff& rhs);	//private, bodyless assignment=: class and its 
+																//derivatives should not be assigned
 };
 
-//! 
-/*!
-
- */
-class BiBChkBlockDiff: public BlockDiff{//block difference with 2 references with bounds checking
+//! A class for bi-directional differences with two references, with bounds checking
+class BiBChkBlockDiff: public BlockDiff{
 public:
-    //! 
-    /*!
-
-     */
+	//! Constructor
 	BiBChkBlockDiff(){}
+	//! Constructor, initialising the references and picture data
+	BiBChkBlockDiff(const PicArray& ref,const PicArray& ref2,const PicArray& pic):BlockDiff(ref,pic),ref_data2(&ref2){}
+	//! Empty function, overriding pure virtual inherited function
+	void Diff(BlockDiffParams& dparams, const MVector& mv){}
+	//! Do the actual difference with bounds checking
+	/*!
+		Do the actual difference with bounds checking
+		\param	dparams	the parameters in which costs, block parameters etc are stored
+		\param	mv1	the motion vector being used for reference 1
+		\param	mv2	the motion vector being used for reference 2
+	*/		
 
-    //! 
-    /*!
-
-     */
-	BiBChkBlockDiff(PicArray& ref,PicArray& ref2,PicArray& pic):BlockDiff(ref,pic),ref_data2(&ref2){}
-    
-    //! 
-    /*!
-
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv){}
-    
-    //! 
-    /*!
-
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2);
+	void Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2);
 private:
-	PicArray* ref_data2;
+	const PicArray* ref_data2;
+
+	BiBChkBlockDiff(const BiBChkBlockDiff& cpy);			//private, bodyless copy-constructor: class and its 
+															//derivatives should not be copied
+	BiBChkBlockDiff& operator=(const BiBChkBlockDiff& rhs);	//private, bodyless assignment=: class and its 
+															//derivatives should not be assigned
 };
 
 //classes where the reference is upconverted
 
+//! An abstract class for doing block differences with an upconverted reference
 class BlockDiffUp: public BlockDiff{//overall class for upconversion
 public:	
-    //! 
-    /*!
-
-     */
+	//! Constructor
 	BlockDiffUp(){}
-
-    //! 
-    /*!
-
-     */
-	BlockDiffUp(PicArray& ref,PicArray& pic): BlockDiff(ref,pic){Init();}
-    
-    //! 
-    /*!
-
-     */
+	//! Constructor, initialising the reference and picture data
+	BlockDiffUp(const PicArray& ref,const PicArray& pic): BlockDiff(ref,pic){Init();}
+	//! Destructor
 	virtual ~BlockDiffUp(){}
 
 protected:
 	int InterpLookup[9][4];//A lookup table to simplify the 1/8 pixel accuracy code
 	void Init();
+private:
+	BlockDiffUp(const BlockDiffUp& cpy);			//private, bodyless copy-constructor: class and its 
+													//derivatives should not be copied
+	BlockDiffUp& operator=(const BlockDiffUp& rhs);	//private, bodyless assignment=: class and its 
+													//derivatives should not be assigned
 };
 
-//! 
-/*!
+//! A class for doing block differences without bounds-checking with upconverted references, inherited from BlockDiffUp
+class SimpleBlockDiffUp: public BlockDiffUp{
 
- */
-class SimpleBlockDiffUp: public BlockDiffUp{//no bounds checking
-	//does block difference without bounds checking, assuming an upconverted reference and 1/8 pel vectors
 public:
-    //! 
-    /*!
-
-     */
+	//! Constructor
 	SimpleBlockDiffUp(){}
-
-    //! 
-    /*!
-
-     */
+	//! Constructor, initialising the reference and picture data
+	SimpleBlockDiffUp(const PicArray& ref,const PicArray& pic):BlockDiffUp(ref,pic){}
+	//! Destructor
 	~SimpleBlockDiffUp(){}
-    
-    //! 
-    /*!
 
-     */
-	SimpleBlockDiffUp(PicArray& ref,PicArray& pic):BlockDiffUp(ref,pic){}
-    
-    //! 
-    /*!
+	//! Do the actual difference without bounds checking
+	/*!
+		Do the actual difference without bounds checking
+		\param	dparams	the parameters in which costs, block parameters etc are stored
+		\param	mv	the motion vector being used 
+	*/		
+	void Diff(BlockDiffParams& dparams, const MVector& mv);
 
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv);
+private:
+	SimpleBlockDiffUp(const SimpleBlockDiffUp& cpy);//private, bodyless copy-constructor: class and its 
+													//derivatives should not be copied
+	SimpleBlockDiffUp& operator=(const SimpleBlockDiffUp& rhs);	//private, bodyless assignment=: class and its 
+																//derivatives should not be assigned
 };
 
+//! A class for doing block differences with bounds-checking with upconverted references, inherited from BlockDiffUp
+class BChkBlockDiffUp: public BlockDiffUp{
 
-//! 
-/*!
-
- */
-class BChkBlockDiffUp: public BlockDiffUp{//bounds checking
- 	//does block difference with bounds checking
 public:
-    //! 
-    /*!
-
-     */
+	//! Constructor
 	BChkBlockDiffUp() {}
-
-    //! 
-    /*!
-
-     */
+	//! Constructor, initialising the reference and picture data
+	BChkBlockDiffUp(const PicArray& ref,const PicArray& pic):BlockDiffUp(ref,pic){}
+	//! Destructor
 	~BChkBlockDiffUp(){}
-    
-    //! 
-    /*!
 
-     */
-	BChkBlockDiffUp(PicArray& ref,PicArray& pic):BlockDiffUp(ref,pic){}
-    
-    //! 
-    /*!
-
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv);
+	//! Do the actual difference with bounds checking
+	/*!
+		Do the actual difference with bounds checking
+		\param	dparams	the parameters in which costs, block parameters etc are stored
+		\param	mv	the motion vector being used 
+	*/		
+	void Diff(BlockDiffParams& dparams, const MVector& mv);
+private:
+	BChkBlockDiffUp(const BChkBlockDiffUp& cpy);//private, bodyless copy-constructor: class and its 
+												//derivatives should not be copied
+	BChkBlockDiffUp& operator=(const BChkBlockDiffUp& rhs);	//private, bodyless assignment=: class and its 
+															//derivatives should not be assigned
 };
 
-class BiSimpleBlockDiffUp: public BlockDiffUp{//no bounds checking
+//! A class for doing bi-directional block differences without bounds checking
+class BiSimpleBlockDiffUp: public BlockDiffUp{
 public:
-    //! 
-    /*!
-
-     */
+	//! Constructor
 	BiSimpleBlockDiffUp(){}
+	//! Constructor, initialising the references and picture data
+	BiSimpleBlockDiffUp(const PicArray& ref,const PicArray& ref2,const PicArray& pic):BlockDiffUp(ref,pic),ref_data2(&ref2){}
 
-    //! 
-    /*!
+	//! Empty function, overriding pure virtual inherited function
+	void Diff(BlockDiffParams& dparams, const MVector& mv){}
 
-     */
-	BiSimpleBlockDiffUp(PicArray& ref,PicArray& ref2,PicArray& pic):BlockDiffUp(ref,pic),ref_data2(&ref2){}
-    
-    //! 
-    /*!
-
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv){}
-    
-    //! 
-    /*!
-
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2);
+	//! Do the actual difference without bounds checking
+	/*!
+		Do the actual difference without bounds checking
+		\param	dparams	the parameters in which costs, block parameters etc are stored
+		\param	mv1	the motion vector being used for reference 1
+		\param	mv2	the motion vector being used for reference 2
+	*/		
+	void Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2);
 private:
-	PicArray* ref_data2;
+	const PicArray* ref_data2;
+
+	BiSimpleBlockDiffUp(const BiSimpleBlockDiffUp& cpy);//private, bodyless copy-constructor: class and its 
+														//derivatives should not be copied
+	BiSimpleBlockDiffUp& operator=(const BiSimpleBlockDiffUp& rhs);	//private, bodyless assignment=: class and its 
+																	//derivatives should not be assigned
 };
 
-//! 
-/*!
-
- */
-class BiBChkBlockDiffUp: public BlockDiffUp{//no bounds checking
+//! A class for doing  bi-directional block differences with bounds checking
+class BiBChkBlockDiffUp: public BlockDiffUp{
 public:
-    //! 
-    /*!
-
-     */
+	//Constructor
 	BiBChkBlockDiffUp(){}
+	//! Constructor, initialising the references and picture data
+	BiBChkBlockDiffUp(const PicArray& ref,const PicArray& ref2,const PicArray& pic):BlockDiffUp(ref,pic),ref_data2(&ref2){}
 
-    //! 
-    /*!
+	//! Empty function, overriding pure virtual inherited function
+	void Diff(BlockDiffParams& dparams, const MVector& mv){}
 
-     */
-	BiBChkBlockDiffUp(PicArray& ref,PicArray& ref2,PicArray& pic):BlockDiffUp(ref,pic),ref_data2(&ref2){}
-    
-    //! 
-    /*!
-
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv){}
-    
-    //! 
-    /*!
-
-     */
-	void Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2);
+	//! Do the actual difference with bounds checking
+	/*!
+		Do the actual difference with bounds checking
+		\param	dparams	the parameters in which costs, block parameters etc are stored
+		\param	mv1	the motion vector being used for reference 1
+		\param	mv2	the motion vector being used for reference 2
+	*/	
+	void Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2);
 private:
-	PicArray* ref_data2;
+	const PicArray* ref_data2;
+
+	BiBChkBlockDiffUp(const BiBChkBlockDiffUp& cpy);//private, bodyless copy-constructor: class and its 
+													//derivatives should not be copied
+	BiBChkBlockDiffUp& operator=(const BiBChkBlockDiffUp& rhs);	//private, bodyless assignment=: class and its 
+																//derivatives should not be assigned
 };
 #endif

@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-03-29 01:52:08  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/03/29 01:52:08  chaoticcoyote
 * Added Doxygen comments
 *
 * Revision 1.1.1.1  2004/03/11 17:45:43  timborer
@@ -53,7 +59,7 @@
 #ifndef _FRAME_DECOMPRESS_H_
 #define _FRAME_DECOMPRESS_H_
 
-#include "libdirac_common/gop.h"
+#include "libdirac_common/frame_buffer.h"
 #include "libdirac_common/common.h"
 class MvData;
 
@@ -67,31 +73,55 @@ public:
     //! Constructor
     /*!
         Creates a FrameDecompressor with specific set of parameters the control
-        the decompression process. It encodes motion data before encoding each
+        the decompression process. It decodes motion data before decoding each
         component of the frame. 
-        
+
         \param  decp    decoder parameters
     */
-	FrameDecompressor(DecoderParams& decp): decparams(decp){}
+	FrameDecompressor(const DecoderParams& decp): 
+	decparams(decp){}
 
-    //! Decompress a specific frame within a group of pictures (GOP)
+    //! Decompress the next frame into the buffer
     /*!
-        Decompresses a specified frame within a group of pictures. 
-        
-        \param my_gop   group of pictures in which the frame resides
-        \param fnum     frame number to compress
+        Decompresses the next frame from the stream and place at the end of a frame buffer
+
+        \param my_buffer   picture buffer into which the frame is placed
     */
-	void Decompress(Gop& my_gop, int fnum);
+	void Decompress(FrameBuffer& my_buffer);
 
 private:
-    //! Parameters for the decompression, as provided in constructor
+	//! Copy constructor is private and body-less
+	/*!
+		Copy constructor is private and body-less. This class should not be copied.
+
+	*/
+	FrameDecompressor(const FrameDecompressor& cpy);
+
+	//! Assignment = is private and body-less
+	/*!
+		Assignment = is private and body-less. This class should not be assigned.
+
+	*/
+	FrameDecompressor& operator=(const FrameDecompressor& rhs);
+
+	//! Parameters for the decompression, as provided in constructor
 	DecoderParams decparams;
 
     //! Motion vector data
 	MvData* mv_data;
+	//! An indicator which is true if the frame has been skipped, false otherwise
+	bool skipped;
+	//! An indicator that is true if we use global motion vectors, false otherwise
+	bool use_global;
+	//! An indicator that is true if we use block motion vectors, false otherwise
+	bool use_block_mv;
+	//! Prediction mode to use if we only have global motion vectors
+	PredMode global_pred_mode;
 
-    //! Decodes component data
-	void CompDecompress(Gop& my_gop, int fnum, CompSort cs);
+	//! Decodes component data	
+	void CompDecompress(FrameBuffer& my_buffer,int fnum, CompSort cs);
+	//! Reads the header data associated with decompressing the frame
+	void ReadFrameHeader(FrameParams& fparams);	//read the frame header data
 };
 
 #endif

@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-04-11 22:54:13  chaoticcoyote
+* Revision 1.4  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.3  2004/04/11 22:54:13  chaoticcoyote
 * Additional comments
 *
 * Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
@@ -59,7 +65,7 @@
 //Context classes, used in arithmetic (de)coding
 /////////////////////////////////////////////////
 
-#include "arrays.h"
+#include "libdirac_common/arrays.h"
 #include <algorithm>
 
 #define MyCodeTypeMax 0xffff
@@ -69,116 +75,96 @@
 typedef unsigned short int MyCodeType;
 typedef unsigned long MyCalcType;
 
-
-//! 
+//! A class for encapsulating interval fractions for use in arithmetic coding.
 /*!
-     
+     A class for encapsulating a subinterval of the unit interval [0,1) (0<=x<1) as a Start value,
+	 a Stop value (numerators) and a Weight value (the denominator). The interval is the to be
+	 interpreted as [Start/Weight,Stop/Weight).
  */
 class Triple{
 
 public:
 
-    //! 
-    /*!
-        
-     */
+    //! Constructor.
 	Triple():Start(0),Stop(0),Weight(0){}
 
-    //! 
-    /*!
-        
-     */
+    //! Assignment= 
 	inline Triple& operator=(const Triple& rhs){Start=rhs.Start;Stop=rhs.Stop;Weight=rhs.Weight;return *this;}
 
-    //! 
-    /*!
-        
-     */
+    //! The start value. 
 	MyCodeType Start;	
 
-    //! 
-    /*!
-        
-     */
+    //! The stop value.Should be >=Start. 
 	MyCodeType Stop;
 
-    //! 
-    /*!
-        
-     */
+    //! The denominator for interpreting Start, Stop. Should be >=Start,Stop. 
 	MyCodeType Weight;	
 };
 
-
-
-//! 
+//! A class for binary contexts.
 /*!
-
+	A class for binary contexts. Stores probabilities for 0 and 1 in terms of counts of numbers of 
+	occurrences, and also as Triples partitioning the interval [0,1) into two parts [0,p) and [p,1). 
  */
 class Context{
 
 public:
-
-    //! 
+    //! Default Constructor.
     /*!
-        
-     */
-	Context() {set_counts(1,1);}
+        Default constructor initialises counts to 1 each of 0 and 1.
+     */	
+	Context() {SetCounts(1,1);}
 
-    //! 
+    //! Constructor.
     /*!
-        
-     */
-	Context(int cnt0,int cnt1) {set_counts(cnt0,cnt1);}
+        Constructor initialises the counts to those set.
+     */	
+	Context(int cnt0,int cnt1) {SetCounts(cnt0,cnt1);}
 
+	//! Copy constructor
+	Context(const Context& cpy): 
+	count0(cpy.count0),
+	count1(cpy.count1),
+	trip0(cpy.trip0),
+	trip1(cpy.trip1){}
 
-    //! 
+	//! Assignment=
+	Context& operator=(const Context& rhs){count0=rhs.count0;count1=rhs.count1;trip0=rhs.trip0;trip1=rhs.trip1;return *this;}
+	//! Destructor
+	~Context(){}
+
+    //! Sets the counts according to the input.
     /*!
-        
-     */
-	inline void set_counts(int cnt0,int cnt1){count0=cnt0;count1=cnt1;set_triples();}
+        Sets the counts, and then the triples to reflect the counts.
+     */	
+	inline void SetCounts(int cnt0,int cnt1){count0=cnt0;count1=cnt1;set_triples();}
+	//! Returns the count of zeroes.
+	inline MyCodeType GetCount0() const {return count0;}	
+	//! Returns the count of ones.
+	inline MyCodeType GetCount1() const {return count1;}	
 
-    //! 
+    //! Increment the count.
     /*!
-        
-     */
-	inline MyCodeType get_count0(){return count0;}	
-
-    //! 
-    /*!
-        
-     */
-	inline MyCodeType get_count1(){return count1;}	
-
-    //! 
-    /*!
-        
-     */
+        Increment the count of Symbol by amnt.
+		/param	Symbol	the symbol whose count is to be incremented (false=0, true=1)
+		/param	amnt	the amount to increment by
+     */	
 	inline void IncrCount(const bool& Symbol,const int& amnt);
 
-    //! 
-    /*!
-        
-     */
+	 //! Divide the counts by 2, making sure neither ends up 0.
 	inline void HalveCounts();	
+	//! Return the weight, equal to the count of 0 plus the count of 1.	
+	inline MyCodeType Weight() const {return trip0.Weight;}
+   	//! Return the triple associated with Symbol.	
+	inline const Triple& GetTriple(const bool& symbol) const {return (symbol ? trip1 : trip0);}
 
-    //! 
+    //! Given a number, return the corresponding symbol and triple.
     /*!
-        
-     */
-	inline MyCodeType& Weight(){return trip0.Weight;}
-
-    //! 
-    /*!
-        
-     */
-	inline Triple& GetTriple(const bool& symbol){return (symbol ? trip1 : trip0);}
-
-    //! 
-    /*!
-        
-     */
-	inline bool GetSymbol(const int& num, Triple& trip_val){
+        Given a number, which should be in the range [0,Weight) return the corresponding symbol.
+		The range [0,Weight) is partitioned into portions [0,count0), [count0,Weight) corresponding
+		to 0 and 1.
+     */	
+	inline bool GetSymbol(const int& num, Triple& trip_val) const {
 		if (num<trip0.Stop){
 			trip_val=trip0;
 			return false;//ie zero

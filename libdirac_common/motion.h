@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.4  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.3  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -59,7 +65,7 @@
 *
 */
 
-#include "common.h"
+#include "libdirac_common/common.h"
 #include <algorithm>
 #ifndef _MOTION_H
 #define _MOTION_H
@@ -70,258 +76,213 @@
 
 //classes
 
-        
-//! 
-/*!
-
- */
+//! Motion vector class - just a pair
 template <class T>
 class MotionVector{
 public:
-    //! 
-    /*!
-        
-     */
-	T x,y;
-	//constructors
-        
-    //! 
-    /*!
-        
-     */
+
+    //! Constructor 
 	MotionVector<T>(T a, T b) : x(a), y(b) {};
-        
-    //! 
-    /*!
-        
-     */
+	//! Default construct - sets components to 0
 	MotionVector<T>() : x(0), y(0) {};
-        
-    //! 
-    /*!
-        
-     */
+	//! Constructor 
 	MotionVector<T>(T a) : x(a), y(a) {};
 
-        
-    //! 
-    /*!
-        
-     */
+	//! Addition 
 	inline MotionVector<T> operator+(MotionVector<T>& argument){
 		MotionVector<T> temp;
 		temp.x=x+argument.x;
 		temp.y=y+argument.y;
 		return temp;}
-        
-    //! 
-    /*!
-        
-     */
+	//! Subtraction 
 	inline MotionVector<T> operator-(MotionVector<T>& argument){
 		MotionVector<T> temp;
 		temp.x=x-argument.x;
 		temp.y=y-argument.y;
 		return temp;}
-        
-    //! 
-    /*!
-        
-     */
+	//! Scalar multiplication
 	inline MotionVector<T> operator*(float& argument){
 		MotionVector<T> temp;
 		temp.x=x*argument;
 		temp.y=y*argument;
 		return temp;}
-        
-    //! 
-    /*!
-        
-     */
+	//! Scalar multiplication
 	inline MotionVector<T> operator*(int& argument){
 		MotionVector<T> temp;
 		temp.x=x*argument;
 		temp.y=y*argument;
 		return temp;}
+	//! x and y components 
+	T x,y;
 };
 
-
-        
-    //! 
-    /*!
-        
-     */
+//! MVector class is a vector of ints 
 typedef MotionVector<int> MVector;
-        
-    //! 
-    /*!
-        
-     */
-typedef MotionVector<int> ImageCoords;//Re-use the motionvector class without confusing the reader
 
+//! ImageCoords class is a vector of ints 
+typedef MotionVector<int> ImageCoords;
+
+//! MvArray is a two-D array of MVectors
 typedef TwoDArray<MVector> MvArray;
 
-        
-    //! 
-    /*!
-        
-     */
+//! Class for recording costs derived in motion estimation
 class MvCostData{
 public:
-        
-    //! 
-    /*!
-        
-     */
-	MvCostData():SAD(0.0),mvcost(0.0),total(0.0){}
-        
-    //! 
-    /*!
-        
-     */
+	//! Constructor
+	MvCostData():
+	SAD(0.0),
+	mvcost(0.0),
+	total(0.0){}
+
+	//! The Sum of Absolute Differences - easier to compute than Sum-Squared Differences
 	float SAD;
-        
-    //! 
-    /*!
-        
-     */
+
+    //! The (Lagrangian-weighted) motion vector cost - the difference of a motion vector from its neighbouring vectors
 	float mvcost;
-        
-    //! 
-    /*!
-        
-     */
+
+    //! Total=SAD+mvcost
 	float total;
 };
 
-        
-    //! 
-    /*!
-        
-     */
+//! Data relating to a macroblock
 class MBData{
 public:
-        
-    //! 
-    /*!
-        
-     */
-	unsigned int split_mode;	//depth to which MB is split
-        
-    //! 
-    /*!
-        
-     */
-	bool common_ref;//true if there is a single reference picture for the whole MB, false otherwise
+
+    //! Depth to which the MB is split 
+	unsigned int split_mode;
+
+    //! True is there is a single reference mode for the whole MB, false otherwise
+	bool common_ref;
 };
 
-        
-    //! 
-    /*!
-        
-     */
+//! Class for all the motion vector data
+/*!
+    Motion vector data: the motion vectors themselves, the costs, DC values for blocks,
+	the prediction modes chosen for each block and the MB data.
+*/
 class MvData{
 	//class to encapsulate data used in motion estimation and compensation
 public:
-	//constructor
-        
-    //! 
+    //! Constructor
     /*!
-        
+		Constructor - data arrays are sized according to the number of blocks/MBs.        
      */
-	MvData(int xnumMB, int ynumMB, int xnumBlock, int ynumBlock): mb(xnumMB,ynumMB), 
-	mv1(xnumBlock,ynumBlock),mv2(xnumBlock,ynumBlock),mode(xnumBlock,ynumBlock),
-	dcY(xnumBlock,ynumBlock),dcU(xnumBlock,ynumBlock),dcV(xnumBlock,ynumBlock),
-	MB_costs(xnumMB,ynumMB),block_costs1(xnumBlock,ynumBlock),block_costs2(xnumBlock,ynumBlock),
-	block_intra_costs(xnumBlock,ynumBlock),block_bipred_costs(xnumBlock,ynumBlock){}
+	MvData(int xnumMB, int ynumMB, int xnumBlock, int ynumBlock): 
+	mb(xnumMB,ynumMB), 
+	mv1(xnumBlock,ynumBlock),
+	mv2(xnumBlock,ynumBlock),
+	mode(xnumBlock,ynumBlock),
+	dcY(xnumBlock,ynumBlock),
+	dcU(xnumBlock,ynumBlock),
+	dcV(xnumBlock,ynumBlock),
+	MB_costs(xnumMB,ynumMB),
+	block_costs1(xnumBlock,ynumBlock),
+	block_costs2(xnumBlock,ynumBlock),
+	block_intra_costs(xnumBlock,ynumBlock),
+	block_bipred_costs(xnumBlock,ynumBlock){}
 
-        
-    //! 
-    /*!
-        
-     */
+	//! Return the array of DC values for blocks for each component
 	TwoDArray<ValueType>& dc(CompSort cs){
 		if (cs==U) return dcU;
 		else if (cs==V) return dcV;
 		else return dcY;}
 
-        
-    //! 
-    /*!
-        
-     */
+	//! Return the array of DC values for blocks for each component
+	const TwoDArray<ValueType>& dc(CompSort cs) const {
+		if (cs==U) return dcU;
+		else if (cs==V) return dcV;
+		else return dcY;}
+
+	    //! The MB data array
 	TwoDArray<MBData> mb;
-        
-    //! 
-    /*!
-        
-     */
+
+    //! The motion vectors for reference 1.
 	MvArray mv1;
-        
-    //! 
-    /*!
-        
-     */
+
+    //! The motion vectors for reference 2.
 	MvArray mv2;
-        
-    //! 
-    /*!
-        
-     */
+
+    //! The block prediction modes
 	TwoDArray<PredMode> mode;
-        
-    //! 
-    /*!
-        
-     */
+
+    //! The Y DC values
 	TwoDArray<ValueType> dcY;
-        
-    //! 
-    /*!
-        
-     */
+
+    //! The U DC values
 	TwoDArray<ValueType> dcU;
-        
-    //! 
-    /*!
-        
-     */
+
+    //! The V DC values
 	TwoDArray<ValueType> dcV;
-        
-    //! 
-    /*!
-        
-     */
+
+    //! The total cost for each MB
 	TwoDArray<float> MB_costs;	
-        
-    //! 
-    /*!
-        
-     */
+
+    //! The cost structures for each block for reference 1 
 	TwoDArray<MvCostData> block_costs1;
-        
-    //! 
-    /*!
-        
-     */
+
+    //! The cost structures for each block for reference 2
 	TwoDArray<MvCostData> block_costs2;	
-        
-    //! 
-    /*!
-        
-     */
+
+    //! The costs of coding each block Intra
 	TwoDArray<float> block_intra_costs;
-        
-    //! 
-    /*!
-        
-     */
-	TwoDArray<MvCostData> block_bipred_costs;	
-private:
+
+    //! The costs of coding each block with bi-directional prediction
+	TwoDArray<MvCostData> block_bipred_costs;
 
 };
 
-//motion compensation stuff
+//motion compensation stuff//
+/////////////////////////////
+
+
+//First have arithmetic classes to avoid code duplication
+
+//! Abstract class to do arithmetic with weighted values, a weight being between 0 and 1023
+class ArithObj{	
+public:
+	virtual ~ArithObj(){}
+	virtual void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight) = 0;
+
+protected:
+	CalcValueType t;
+};
+
+//! Class to do weighted sums of values
+class ArithAddObj : public ArithObj{	
+public:
+	void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight){
+		t = ((rhs*Weight)+512)>>10;
+		lhs+=short(t);
+	};
+};
+
+//! Class to do weighted difference of values
+class ArithSubtractObj : public ArithObj{	
+public:
+	void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight){
+		t = ((rhs*Weight)+512)>>10;
+		lhs-=short(t);
+	};
+};
+
+//! Class to add half a weighted value
+class ArithHalfAddObj : public ArithObj{	
+public:
+	void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight){
+		t = ((rhs*Weight)+1024)>>11;
+		lhs+=short(t);
+	};
+};
+
+//! Class to subtract half a weighted value
+class ArithHalfSubtractObj : public ArithObj{	
+public:
+	void DoArith(ValueType &lhs, const CalcValueType rhs, const CalcValueType &Weight){
+		t = ((rhs*Weight)+1024)>>11;
+		lhs-=short(t);
+	};
+};
+
 
 //Overlapping blocks are acheived by applying a 2D raised cosine shape
 //to them. This function facilitates the calculations
@@ -337,13 +298,13 @@ float RaisedCosine(float t, float B);
 //  *       *                  *
 //*           *                  *
 void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, CalcValueType** WeightArray);
-        
 void FlipX(CalcValueType** Original, const OLBParams &bparams, CalcValueType** Flipped);//Flips the values in an array in the x direction.
-        
 void FlipY(CalcValueType** Original, const OLBParams &bparams, CalcValueType** Flipped);//Flips the values in an array in the y direction.
 
 //motion estimation and coding stuff
-inline MVector MvMedian(MVector& mv1,MVector& mv2,MVector& mv3) {
+
+//! Return the median of three motion vectors 
+inline MVector MvMedian(const MVector& mv1,const MVector& mv2,const MVector& mv3) {
 	//takes median of each vector component	
 	MVector tmp_mv;
 
@@ -351,23 +312,23 @@ inline MVector MvMedian(MVector& mv1,MVector& mv2,MVector& mv3) {
 	tmp_mv.x+=mv2.x;
 	tmp_mv.x+=mv3.x;
 
-	tmp_mv.x-=DIRAC_MAX(DIRAC_MAX(mv1.x,mv2.x),mv3.x);
-	tmp_mv.x-=DIRAC_MIN(DIRAC_MIN(mv1.x,mv2.x),mv3.x);
+	tmp_mv.x-=std::max(std::max(mv1.x,mv2.x),mv3.x);
+	tmp_mv.x-=std::min(std::min(mv1.x,mv2.x),mv3.x);
 
 	tmp_mv.y=mv1.y;
 	tmp_mv.y+=mv2.y;
 	tmp_mv.y+=mv3.y;
 
-	tmp_mv.y-=DIRAC_MAX(DIRAC_MAX(mv1.y,mv2.y),mv3.y);
-	tmp_mv.y-=DIRAC_MIN(DIRAC_MIN(mv1.y,mv2.y),mv3.y);
+	tmp_mv.y-=std::max(std::max(mv1.y,mv2.y),mv3.y);
+	tmp_mv.y-=std::min(std::min(mv1.y,mv2.y),mv3.y);
 
 	return tmp_mv;
 }
 
-       
-inline MVector MvMedian(std::vector<MVector>& vect_list){
+//! Return the median of a set of motion vectors 
+inline MVector MvMedian(const std::vector<MVector>& vect_list){
 	//more general median. Takes the median of each vector component	
-	int I, K;
+
 	MVector median;
 	int num_vals=int(vect_list.size());
 	if (num_vals>0)	{
@@ -375,8 +336,8 @@ inline MVector MvMedian(std::vector<MVector>& vect_list){
 		std::vector<int> ordered_vals(vect_list.size());
 		//do x first
 		ordered_vals[0]=vect_list[0].x;		
-		for (I=1;I<num_vals;++I){
-			for (K=0;K<I;++K){
+		for (int I=1;I<num_vals;++I){
+			for (int K=0;K<I;++K){
 				if (vect_list[I].x<ordered_vals[K]){
 					pos=K;
 					break;
@@ -387,7 +348,7 @@ inline MVector MvMedian(std::vector<MVector>& vect_list){
 			if (pos==I)
 				ordered_vals[I]=vect_list[I].x;
 			else{
-				for (K=pos;K>=I-1;--K){
+				for (int K=pos;K>=I-1;--K){
 					ordered_vals[K+1]=ordered_vals[K];
 				}
 				ordered_vals[pos]=vect_list[I].x;
@@ -400,8 +361,8 @@ inline MVector MvMedian(std::vector<MVector>& vect_list){
 
 		//now do y
 		ordered_vals[0]=vect_list[0].y;		
-		for (I=1;I<num_vals;++I){
-			for (K=0;K<I;++K){
+		for (int I=1;I<num_vals;++I){
+			for (int K=0;K<I;++K){
 				if (vect_list[I].y<ordered_vals[K]){
 					pos=K;
 					break;
@@ -412,7 +373,7 @@ inline MVector MvMedian(std::vector<MVector>& vect_list){
 			if (pos==I)
 				ordered_vals[I]=vect_list[I].y;
 			else{
-				for (K=pos;K>=I-1;--K){
+				for (int K=pos;K>=I-1;--K){
 					ordered_vals[K+1]=ordered_vals[K];
 				}
 				ordered_vals[pos]=vect_list[I].y;
@@ -431,6 +392,7 @@ inline MVector MvMedian(std::vector<MVector>& vect_list){
 	return median;
 }
 
+//! Return the mean of two motion vectors
 inline MVector MvMean(MVector& mv1,MVector& mv2) {
 	//takes median of each vector component	
 	MVector tmp_mv;
@@ -446,15 +408,17 @@ inline MVector MvMean(MVector& mv1,MVector& mv2) {
 	return tmp_mv;
 }
 
+//! Return the squared length of a motion vector
 inline int Norm2(MVector& mv){//L^2 norm of a motion vector
 	return mv.x*mv.x+mv.y*mv.y;
 }
 
-
+//! Return the sum of the lengths of a motion vector's componets
 inline int Norm1(MVector& mv){//L^1 norm of a motion vector
 	return abs(mv.x)+abs(mv.y);
 }
 
+//! Return the mean of a set of integer values
 inline int GetMean(std::vector<int>& values){
 	int sum=0;
 	for (unsigned int I=0;I<values.size();++I)
@@ -463,6 +427,7 @@ inline int GetMean(std::vector<int>& values){
 	return sum;
 }
 
+//! Return the mean of a set of unsigned integer values
 inline unsigned int GetMean(std::vector<unsigned int>& values){
 	int sum=0;
 	for (unsigned int I=0;I<values.size();++I)

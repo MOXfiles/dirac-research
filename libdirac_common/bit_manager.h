@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-04-11 22:54:13  chaoticcoyote
+* Revision 1.4  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.3  2004/04/11 22:54:13  chaoticcoyote
 * Additional comments
 *
 * Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
@@ -64,72 +70,81 @@
 //--------------Bit output stuff--------------//
 ////////////////////////////////////////////////
 
-
-
-//! 
+//! Class for managing bit- and byte-oriented output.
 /*!
-
+	A class for managing bit- and byte-oriented output. Wraps around an ostream object but stores 
+	data in memory until told told to write out in order to support data re-ordering - for example
+	writing a header once the subsequent data has been obtained. Implementation to be reviewed in
+	future. TJD 13 April 2004.
  */
 class BasicOutputManager{
 public:
-
-    //! 
+    //! Constructor
     /*!
-        
+        Constructor requires an ostream object pointer.
+		/param	OutData	the output stream object pointer
      */
-	//Constructors
-	BasicOutputManager(std::ostream* OutData ): num_out_bytes(0),op_ptr(OutData){InitOutputStream();}
+	BasicOutputManager(std::ostream* OutData ): 
+	num_out_bytes(0),
+	op_ptr(OutData)
+	{
+		InitOutputStream();
+	}
 
-    //! 
-    /*!
-        
-     */
-	//Destructors
+	//Copy constructor is default shallow copy
+
+	//Operator= is default shallow=
+
+	//! Destructor
 	~BasicOutputManager(){}
 
-
-    //! 
+    //! Write a bit out. 
     /*!
-        
-     */
-	//output functions	
-	void OutputBit(const bool& bit);// Write bit to data char and output to buffer if full
+        Write a bit out to the internal data cache.
+     */	
+	void OutputBit(const bool& bit);
 
-    //! 
+	//! Write a bit out and increment count 
     /*!
-        
+        Write a bit out to the internal data cache and increment the count of bits written.
      */
 	void OutputBit(const bool& bit,int& count);// Ditto, incrementing count
 
-    //! 
+	//! Write a byte out.
     /*!
-        
+        Write a byte out to the internal data cache.
      */
 	void OutputByte(const char& byte);
 
-    //! 
+	//! Write a null-terminated set of bytes out.
     /*!
-        
-     */
-	void OutputBytes(char* str_array);	
+        Write a null-terminated set of bytes out to the internal data cache.
+     */	
+	void OutputBytes(char* str_array);
 
-    //! 
+    //! Write a number of bytes out.
     /*!
-        
-     */
+        Write a number of bytes out to the internal data cache.
+     */	
+	void OutputBytes(char* str_array,int num);
+
+    //! Write all data to file.
+    /*!
+        Dump the internal data cache to the internal ostream object.
+     */	
 	void WriteToFile();	// Write the buffer to the file 
 
-    //! 
+	//! Return the number of bytes last output to file.
     /*!
-        
-     */
-	unsigned int GetNumBytes(){return num_out_bytes;}//return the number of output bytes written at last output
+        Return the number of bytes last output to file.
+     */	
+	unsigned int GetNumBytes() const {return num_out_bytes;}
 
-    //! 
+    //! Size of the internal data cache in bytes.
     /*!
-        
-     */
-	unsigned int Size(){return buffer.size();}//return the current size of the output buffer
+        Size of the internal data cache in bytes.
+     */	
+	unsigned int Size() const {return buffer.size();}
 
 private:
 	unsigned int num_out_bytes;//number of output bytes written
@@ -140,86 +155,77 @@ private:
 
 	//functions 	
 	void InitOutputStream();// Initialise the output stream.
-	void FlushOutput();	// Clean out any remaining output bits to the buffer	
+	void FlushOutput();	// Clean out any remaining output bits to the buffer
 };
 
-
-
-//! 
+//! A class for handling data output, including headers.
 /*!
-
+	A class for handling data output, including headers and reordering.
  */
 class BitOutputManager{
 public:
-
-    //! 
+    //! Constructor.
     /*!
-        
+  		Constructor wraps around a pointer to an ostream object, and initialises 
+		/param 	header	a BasicOutputManager object to handle the header      
+		/param 	data	a BasicOutputManager object to handle the data
      */
-	BitOutputManager(std::ostream* OutData )
-        : header(OutData),
-          data(OutData),
-          total_bytes(0),
-          total_data_bytes(0),
-          total_head_bytes(0),
-          unit_bytes(0),
-          unit_data_bytes(0),
-          unit_head_bytes(0){}
+	BitOutputManager(std::ostream* OutData ): 
+	header(OutData),
+	data(OutData),
+	total_bytes(0),
+	total_data_bytes(0),
+	total_head_bytes(0),
+	unit_bytes(0),
+	unit_data_bytes(0),
+	unit_head_bytes(0)
+	{}
 
-    //! 
+	//Copy constructor is default shallow copy
+
+	//Operator= is default shallow=
+
+	//! Destructor
+	~BitOutputManager(){}
+
+	//! Handles the header bits.
     /*!
-        
+        A BasicOutputManager object for handling the header bits.
      */
 	BasicOutputManager header;
 
-    //! 
+    //! Handles the data bits.
     /*!
-        
-     */
+        A BasicOutputManager object for handling the data bits.
+     */	
 	BasicOutputManager data;
 
-    //! 
+    //! Writes the bit caches to file.
     /*!
-        
-     */
+        Writes the header bits to the ostream, followed by the data bits.
+     */	
 	void WriteToFile();
 
-
-    //! 
+	    //! Returns the total number of bytes written in the last unit coded.
     /*!
-        
+        Returns the total number of bytes written in the last unit coded - header + data.
      */
-	unsigned int GetUnitBytes(){return unit_bytes;}	
+	unsigned int GetUnitBytes() const {return unit_bytes;}	
 
-    //! 
-    /*!
-        
-     */
-	unsigned int GetUnitDataBytes(){return unit_data_bytes;}
+    //! Returns the total number of data bytes written in the last unit coded.
+	unsigned int GetUnitDataBytes() const {return unit_data_bytes;}
 
-    //! 
-    /*!
-        
-     */
-	unsigned int GetUnitHeadBytes(){return unit_head_bytes;}
+    //! Returns the total number of header bytes written in the last unit coded. 
+	unsigned int GetUnitHeadBytes() const {return unit_head_bytes;}
 
-    //! 
-    /*!
-        
-     */
-	unsigned int GetTotalBytes(){return total_bytes;}
+    //! Returns the total number of bytes written to date (header and data). 
+	unsigned int GetTotalBytes() const {return total_bytes;}
 
-    //! 
-    /*!
-        
-     */
-	unsigned int GetTotalHeadBytes(){return total_head_bytes;}
+    //! Returns the total number of header bytes written to date. 
+	unsigned int GetTotalHeadBytes() const {return total_head_bytes;}
 
-    //! 
-    /*!
-        
-     */
-	unsigned int GetTotalDataBytes(){return total_data_bytes;}
+    //! Returns the total number of data bytes written to date.
+	unsigned int GetTotalDataBytes() const {return total_data_bytes;}
 
 private:
 	unsigned int total_bytes;//total number of bytes written to date- sum of:
@@ -234,61 +240,48 @@ private:
 //--------------Bit input stuff--------------//
 ///////////////////////////////////////////////
 
-
-
-//! 
-/*!
-
- */
+//! A class for managing bit-wise and byte-wise input. 
 class BitInputManager{
 
 public:
-
-    //! 
+    //! Constructor. 
     /*!
-        
+        Constructor. Wraps around an istream object.
      */
-	//Constructors
-	BitInputManager(std::istream* InData ): ip_ptr(InData){InitInputStream();}
+	BitInputManager(std::istream* InData ): 
+	ip_ptr(InData)
+	{
+		InitInputStream();
+	}
 
-    //! 
-    /*!
-        
-     */
-	//Destructors
+	//Copy constructor is default shallow copy
+
+	//Operator= is default shallow=	
+
+	//! Destructor
 	~BitInputManager(){}
 
-
-    //! 
-    /*!
-        
-     */
 	//input functions	
+    //! Obtain the next bit.
 	bool InputBit();			// Obtain the next bit	
 
-    //! 
-    /*!
-        
-     */
+    //! Obtain the next bit, incrementing count. 
 	bool InputBit(int& count);	// Ditto, incrementing count	
 
-    //! 
-    /*!
-        
-     */
+    //! Obtain the next bit, incrementing count, if count<max_count; else return 0 (false).
 	bool InputBit(int& count, const int max_count);// Ditto, returns 0 if >=max_count
 
-    //! 
-    /*!
-        
-     */
-	char input_byte();
+    //! Obtain the next byte. 
+	char InputByte();
 
-    //! 
-    /*!
-        
-     */
-	void FlushInput();	// Reset ip current byte - needs to be public so we can read 
+	//! Obtain a number of bytes. 
+	void InputBytes(char* cptr,int num);
+
+    //! Move onto the next byte. Needed if a data unit is not an exact number of bytes.
+	void FlushInput();
+
+	//! Returns true if we're at the end of the input, false otherwise	
+	bool End() const ;		
 
 private:
 

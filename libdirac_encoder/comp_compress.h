@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-03-22 01:04:28  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/03/22 01:04:28  chaoticcoyote
 * Added API documentation to encoder library
 * Moved large constructors so they are no longer inlined
 *
@@ -72,7 +78,7 @@ public:
         \param  encp    encoding parameters
         \param  fp      frame parameters
     */
-	CompCompressor(EncoderParams & encp, FrameParams& fp);
+	CompCompressor(const EncoderParams & encp, const FrameParams& fp);
 
     //! Compress a frame component
     /*!
@@ -82,6 +88,20 @@ public:
 	void Compress(PicArray & pic_data);
 
 private:
+	//! Copy constructor is private and body-less
+	/*!
+		Copy constructor is private and body-less. This class should not be copied.
+
+	*/
+	CompCompressor(const CompCompressor& cpy);
+
+	//! Assignment = is private and body-less
+	/*!
+		Assignment = is private and body-less. This class should not be assigned.
+
+	*/
+	CompCompressor& operator=(const CompCompressor& rhs);
+
 	EncoderParams encparams;
 	FrameParams fparams;
 	float lambda;

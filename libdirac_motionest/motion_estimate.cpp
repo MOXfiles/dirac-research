@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:35  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -59,7 +65,7 @@
 #include "libdirac_motionest/motion_estimate.h"
 #include "libdirac_motionest/block_match.h"
 #include "libdirac_common/motion.h"
-#include "libdirac_common/gop.h"
+#include "libdirac_common/frame_buffer.h"
 #include "libdirac_motionest/downconvert.h"
 #include "libdirac_motionest/me_mode_decn.h"
 #include "libdirac_motionest/me_subpel.h"
@@ -68,66 +74,59 @@
 
 using std::vector;
 
-MotionEstimator::MotionEstimator(EncoderParams& params): encparams(params){
+MotionEstimator::MotionEstimator(const EncoderParams& params): encparams(params){
 }
 
-void MotionEstimator::DoME(Gop& my_gop, int frame_num, MvData& mv_data){
-	fsort=my_gop.GetFrame(frame_num).GetFparams().fsort;
-	ChromaFormat cformat=encparams.sparams.cformat;
+void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data){
+	fsort=my_buffer.GetFrame(frame_num).GetFparams().fsort;
+	ChromaFormat cformat=encparams.cformat;
 	if (fsort!=I_frame){
 		if (encparams.VERBOSE)		
 			std::cerr<<std::endl<<"Doing initial search ...";
-		DoHierarchicalSearch(my_gop,frame_num,mv_data);
+		DoHierarchicalSearch(my_buffer,frame_num,mv_data);
 		if (encparams.VERBOSE)
 			std::cerr<<std::endl<<"Doing sub-pixel refinement ...";
-		DoFinalSearch(my_gop,frame_num,mv_data);				
+		DoFinalSearch(my_buffer,frame_num,mv_data);				
 		ModeDecider my_mode_dec(encparams);
 		if (encparams.VERBOSE)
 			std::cerr<<std::endl<<"Doing mode decision ...";
-		my_mode_dec.DoModeDecn(my_gop,frame_num,mv_data);
+		my_mode_dec.DoModeDecn(my_buffer,frame_num,mv_data);
 
 		if (cformat!=Yonly){
 			if (encparams.VERBOSE)
 				std::cerr<<std::endl<<"Setting chroma DC values ... ";
-			SetChromaDC(my_gop,frame_num,mv_data);	
+			SetChromaDC(my_buffer,frame_num,mv_data);	
 		}
 	}
 }
 
-void MotionEstimator::DoHierarchicalSearch(Gop& my_gop, int frame_num, MvData& mv_data){
+void MotionEstimator::DoHierarchicalSearch(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data){
  	//does an initial search using hierarchical matching to get guide vectors	
 	int ref1,ref2;
-	int depth=4;
-	int I;
+	depth=4;
 	int scale_factor;//factor by which pics have been downconverted
-	OLBParams& bparams=encparams.LumaBParams(2);
+	const OLBParams& bparams=encparams.LumaBParams(2);
 
 	DownConverter mydcon;
-	vector<PicArray*> ref1_down(depth+1);//down-converted pictures	
-	vector<PicArray*> ref2_down(depth+1);
-	vector<PicArray*> pic_down(depth+1);
-	vector<MvData*> mv_data_set(depth+1);
+	OneDArray<PicArray*> ref1_down(Range(1,depth));//down-converted pictures	
+	OneDArray<PicArray*> ref2_down(Range(1,depth));
+	OneDArray<PicArray*> pic_down(Range(1,depth));
+	OneDArray<MvData*> mv_data_set(Range(1,depth));
 
-	PicArray& pic_data=my_gop.GetComponent(frame_num,Y);
-	vector<int>& refs=my_gop.GetRefs(frame_num);
+	const PicArray& pic_data=my_buffer.GetComponent(frame_num,Y);
+	const vector<int>& refs=my_buffer.GetFrame(frame_num).GetFparams().refs;
 	ref1=refs[0];
 	if (refs.size()>1)
 		ref2=refs[1];
 	else	
 		ref2=ref1;
-
-	PicArray& ref1_data=my_gop.GetComponent(ref1,Y);
-	PicArray& ref2_data=my_gop.GetComponent(ref2,Y);
-
-	pic_down[0]=&pic_data;
-	ref1_down[0]=&ref1_data;
-	ref2_down[0]=&ref2_data;
-	mv_data_set[0]=&mv_data;
+	const PicArray& ref1_data=my_buffer.GetComponent(ref1,Y);
+	const PicArray& ref2_data=my_buffer.GetComponent(ref2,Y);
 
 	//allocate
 	scale_factor=1;	
 	int xnumblocks,ynumblocks;
-	for (I=1;I<=depth;++I){
+	for (int I=1;I<=depth;++I){
    		//dimensions of pic_down[I] will be shrunk by a factor 2**I		
 		scale_factor*=2;
 		pic_down[I]=new PicArray(pic_data.length(0)/scale_factor,pic_data.length(1)/scale_factor);
@@ -142,44 +141,51 @@ void MotionEstimator::DoHierarchicalSearch(Gop& my_gop, int frame_num, MvData& m
 			ynumblocks++;
 		mv_data_set[I]=new MvData(0,0,xnumblocks,ynumblocks);
 	}
-
 	//do all the downconversions
-	for (I=0;I<=depth-1;++I){
-		mydcon.dodownconvert(*(pic_down[I]),*(pic_down[I+1]));
-		mydcon.dodownconvert(*(ref1_down[I]),*(ref1_down[I+1]));				
-		if (refs.size()>1){
-			//there's a second reference, so repeat
-			mydcon.dodownconvert(*(ref2_down[I]),*(ref2_down[I+1]));
-		}		
+	if (depth>0){
+		mydcon.DoDownConvert(pic_data,*(pic_down[1]));
+		mydcon.DoDownConvert(ref1_data,*(ref1_down[1]));
+		if (refs.size()>1 && ref1!=ref2)//there's a second reference, so repeat
+			mydcon.DoDownConvert(ref2_data,*(ref2_down[1]));
+		for (int I=1;I<depth;++I){
+			mydcon.DoDownConvert(*(pic_down[I]),*(pic_down[I+1]));
+			mydcon.DoDownConvert(*(ref1_down[I]),*(ref1_down[I+1]));				
+			if (refs.size()>1 && ref1!=ref2)//there's a second reference, so repeat
+				mydcon.DoDownConvert(*(ref2_down[I]),*(ref2_down[I+1]));
+		}
 	}
-
  	//start with motion estimating at the lowest level
 	MatchPic(*(ref1_down[depth]),*(pic_down[depth]),*(mv_data_set[depth]),*(mv_data_set[depth]),1,depth);	
 	if (ref1!=ref2)
 		MatchPic(*(ref2_down[depth]),*(pic_down[depth]),*(mv_data_set[depth]),*(mv_data_set[depth]),2,depth);
- 	//do the remaining levels
-	for (int level=depth-1;level>=0;--level){
+ 	//do the intervening levels
+	for (int level=depth-1;level>=1;--level){
 		MatchPic(*(ref1_down[level]),*(pic_down[level]),*(mv_data_set[level]),*(mv_data_set[level+1]),1,level);
 		if (ref1!=ref2){
 			MatchPic(*(ref2_down[level]),*(pic_down[level]),*(mv_data_set[level]),*(mv_data_set[level+1]),2,level);
 		}
+	}//level
+	//finally, do the top level
+	MatchPic(ref1_data,pic_data,mv_data,*(mv_data_set[1]),1,0);
+	if (ref1!=ref2){
+		MatchPic(ref2_data,pic_data,mv_data,*(mv_data_set[1]),2,0);
 	}
 
-	for (I=1; I<=depth;++I){
+	for (int I=1; I<=depth;++I){
 		delete pic_down[I];
 		delete ref1_down[I];
 		delete mv_data_set[I];
-		if (refs.size()>1)
+		if (refs.size()>1 && ref1!=ref2)
 			delete ref2_down[I];
 	}
 }
 
-void MotionEstimator::DoFinalSearch(Gop& my_gop, int frame_num, MvData& mv_data){
+void MotionEstimator::DoFinalSearch(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data){
 	SubpelRefine pelrefine(encparams);
-	pelrefine.DoSubpel(my_gop,frame_num,mv_data);
+	pelrefine.DoSubpel(my_buffer,frame_num,mv_data);
 }
 
-void MotionEstimator::MatchPic(PicArray& ref_data,PicArray& pic_data,MvData& mv_data,MvData& guide_data,
+void MotionEstimator::MatchPic(const PicArray& ref_data,const PicArray& pic_data,MvData& mv_data,const MvData& guide_data,
 int ref_id,int level){	
 
 	if (level==depth){
@@ -193,9 +199,10 @@ int ref_id,int level){
 	}
 
 	BMParams matchparams;
-	OLBParams& bparams=encparams.LumaBParams(2);
+	const OLBParams& bparams=encparams.LumaBParams(2);
 	matchparams.pic_data=&pic_data;
 	matchparams.ref_data=&ref_data;
+
  	//set lambda
 	float loc_lambda;
 	if (fsort==L1_frame)
@@ -204,7 +211,7 @@ int ref_id,int level){
 		loc_lambda=encparams.L2_ME_lambda/pow(2.0,level);
 	MVector tmp_mv;	
 	MvArray* mv_array;
-	MvArray* guide_array;
+	const MvArray* guide_array;
 	TwoDArray<MvCostData>* block_costs;
 	vector<vector<MVector> > vect_list;
 	matchparams.vect_list=&vect_list;	//point the matching parameters at the list of candidate vectors
@@ -310,7 +317,7 @@ int ref_id,int level){
 	}//J
 }
 
-ValueType MotionEstimator::GetChromaBlockDC(PicArray& pic_data, MvData& mv_data,int xblock,int yblock,int split){
+ValueType MotionEstimator::GetChromaBlockDC(const PicArray& pic_data, MvData& mv_data,int xblock,int yblock,int split){
 	BMParams matchparams;
 	matchparams.pic_data=&pic_data;
 	matchparams.Init(encparams.ChromaBParams(split),xblock,yblock);
@@ -320,7 +327,7 @@ ValueType MotionEstimator::GetChromaBlockDC(PicArray& pic_data, MvData& mv_data,
 	return dparams.dc;
 }
 
-void MotionEstimator::SetChromaDC(PicArray& pic_data, MvData& mv_data,CompSort csort){
+void MotionEstimator::SetChromaDC(const PicArray& pic_data, MvData& mv_data,CompSort csort){
 
 	int xtl,ytl;//lower limit of block coords in MB
 	int xbr,ybr;//upper limit of block coords in MB
@@ -347,12 +354,12 @@ void MotionEstimator::SetChromaDC(PicArray& pic_data, MvData& mv_data,CompSort c
 			ysubMBbr=ysubMBtl+2;
 
 			if (xmb_loc==mv_data.mb.last(0)){
-				xbr=DIRAC_MIN(mv_data.mv1.length(0),xbr);
-				xsubMBbr=DIRAC_MIN(mv_data.mv1.length(0)>>1,xsubMBbr);
+				xbr=std::min(mv_data.mv1.length(0),xbr);
+				xsubMBbr=std::min(mv_data.mv1.length(0)>>1,xsubMBbr);
 			}
 			if (ymb_loc==mv_data.mb.last(1)){
-				ybr=DIRAC_MIN(mv_data.mv1.length(1),ybr);
-				ysubMBbr=DIRAC_MIN(mv_data.mv1.length(1)>>1,ysubMBbr);
+				ybr=std::min(mv_data.mv1.length(1),ybr);
+				ysubMBbr=std::min(mv_data.mv1.length(1)>>1,ysubMBbr);
 			}
 
 			if (mv_data.mb[ymb_loc][xmb_loc].split_mode==2){
@@ -394,9 +401,9 @@ void MotionEstimator::SetChromaDC(PicArray& pic_data, MvData& mv_data,CompSort c
 	}//J
 }
 
-void MotionEstimator::SetChromaDC(Gop& my_gop, int frame_num, MvData& mv_data){
+void MotionEstimator::SetChromaDC(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data){
 
-	SetChromaDC(my_gop.GetComponent(frame_num,U),mv_data,U);
-	SetChromaDC(my_gop.GetComponent(frame_num,V),mv_data,V);
+	SetChromaDC(my_buffer.GetComponent(frame_num,U),mv_data,U);
+	SetChromaDC(my_buffer.GetComponent(frame_num,V),mv_data,V);
 
 }

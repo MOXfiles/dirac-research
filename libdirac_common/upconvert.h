@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.4  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.3  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -62,146 +68,36 @@
 #ifndef _UPCONVERT_H_
 #define _UPCONVERT_H_
 
-#include "common.h"
+#include "libdirac_common/common.h"
 
 //Optimised upconversion class - no array resizes.
 //Uses integer math - no floats!
 //
 
-//First have arithmetic classes to avoid code duplication
-        
-//! 
+//! Upconversion class
 /*!
-
- */
-class ArithObj{	
-public:
-        
-    //! 
-    /*!
-        
-     */
-	virtual ~ArithObj(){}
-        
-    //! 
-    /*!
-        
-     */
-	virtual void DoArith(ValueType &lhs, CalcValueType rhs, CalcValueType &Weight) = 0;
-        
-    //! 
-    /*!
-        
-     */
-	CalcValueType t;
-private:
-
-};
-
-        
-//! 
-/*!
-
- */
-class ArithAddObj : public ArithObj{	
-public:
-        
-    //! 
-    /*!
-        
-     */
-	void DoArith(ValueType &lhs, CalcValueType rhs, CalcValueType &Weight){
-		t = ((rhs*Weight)+128)>>10;
-		lhs+=short(t);
-	};
-};
-
-        
-//! 
-/*!
-
- */
-class ArithSubtractObj : public ArithObj{	
-public:
-        
-    //! 
-    /*!
-        
-     */
-	void DoArith(ValueType &lhs, CalcValueType rhs, CalcValueType &Weight){
-		t = ((rhs*Weight)+128)>>10;
-		lhs-=short(t);
-	};
-};
-
-        
-//! 
-/*!
-
- */
-class ArithHalfAddObj : public ArithObj{	
-public:
-        
-    //! 
-    /*!
-        
-     */
-	void DoArith(ValueType &lhs, CalcValueType rhs, CalcValueType &Weight){
-		t = ((rhs*Weight)+256)>>11;
-		lhs+=short(t);
-	};
-};
-
-        
-//! 
-/*!
-
- */
-class ArithHalfSubtractObj : public ArithObj{	
-public:
-        
-    //! 
-    /*!
-        
-     */
-	void DoArith(ValueType &lhs, CalcValueType rhs, CalcValueType &Weight){
-		t = ((rhs*Weight)+256)>>11;
-		lhs-=short(t);
-	};
-};
-
-        
-//! 
-/*!
-
+	Class to picture data by a factor of 2 in both dimensions
  */
 class UpConverter{
 
 public:
 
-	//Constructor
-        
-    //! 
-    /*!
-        
-     */
+	//! Constructor
 	UpConverter(){}
-	//Destructor
-        
-    //! 
-    /*!
-        
-     */
+	//! Destructor
 	~UpConverter(){};
-        
-    //! 
+
+    //! Upconvert the picture data
     /*!
-        
+		Upconvert the picture data, where the parameters are
+		/param	OldImage	is the original data
+		/param	NewImage	is the upconverted data
      */
-	//Calls the up-conversion function
-	void DoUpConverter(PicArray &OldImage, PicArray &NewImage);
+	void DoUpConverter(const PicArray &OldImage, PicArray &NewImage);
 
 private:
+	UpConverter(const UpConverter& cpy);//private body-less copy constructor: class should not be copied
+	UpConverter& operator=(const UpConverter& rhs);//private body-less assignment: class should not be assigned
 
 	//Applies the filter to a row number 
 	//LinePos and its neighbour.
@@ -212,16 +108,6 @@ private:
 	int xNew, yNew;
 
 	//Define first set of filter parameters
-#if defined(_MSC_VER)
-	static const int Stage_I_Size;
-	static const int StageI_I;
-	static const int StageI_II; 
-	static const int StageI_III;
-	static const int StageI_IV; 
-	static const int StageI_V;
-	static const int StageI_VI;	
-	static const int Stage_I_Shift;
-#else
 	static const int Stage_I_Size = 6;
 	static const int StageI_I = 167;
 	static const int StageI_II = -56; 
@@ -230,7 +116,6 @@ private:
 	static const int StageI_V = 4;
 	static const int StageI_VI = -1;	
 	static const int Stage_I_Shift = 8;
-#endif
 };
 
 #endif

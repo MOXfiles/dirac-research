@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -60,7 +66,7 @@
 //classes and functions for motion estimation and compensation//
 ////////////////////////////////////////////////////////////////
 
-#include "motion.h"
+#include "libdirac_common/motion.h"
 #include <cmath>
 
 //motion compensation stuff
@@ -68,9 +74,9 @@
 //Overlapping blocks are acheived by applying a 2D raised cosine shape
 //to them. This function facilitates the calculations
 float RaisedCosine(float t, float B){
-	if(DIRAC_ABS(t)>(B+1.0)/2.0) return 0.0f;
-	else if(DIRAC_ABS(t)<(1.0-B)/2.0) return 1.0f;
-	else return(0.5*(1.0+DIRAC_COS(3.141592654*(DIRAC_ABS(t)-(1.0-B)/2.0)/B)));
+	if(std::abs(t)>(B+1.0)/2.0) return 0.0f;
+	else if(std::abs(t)<(1.0-B)/2.0) return 1.0f;
+	else return(0.5*(1.0+std::cos(3.141592654*(std::abs(t)-(1.0-B)/2.0)/B)));
 }
 
 //Calculates a weighting block.
@@ -86,11 +92,9 @@ float RaisedCosine(float t, float B){
 
 void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, CalcValueType** WeightArray){
 
-	int x, y, i;
-
 	//Create temporary array.
 	float** CalcArray = new float*[bparams.YBLEN];
-	for(i = 0; i < bparams.YBLEN; ++i)
+	for(int i = 0; i < bparams.YBLEN; ++i)
 		CalcArray[i] = new float[bparams.XBLEN];
 
 	//Calculation variables
@@ -99,15 +103,15 @@ void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, CalcValueType
 	float val;
 
 	//Initialise the temporary array to one
-	for(y = 0; y < bparams.YBLEN; ++y){
-		for(x = 0; x < bparams.XBLEN; ++x){
+	for(int y = 0; y < bparams.YBLEN; ++y){
+		for(int x = 0; x < bparams.XBLEN; ++x){
 			CalcArray[y][x] = 1;
 		}
 	}
 
 	//Window temporary array in the x direction
-	for(y = 0; y < bparams.YBLEN; ++y){
-		for(x = 0; x < bparams.XBLEN; ++x){
+	for(int y = 0; y < bparams.YBLEN; ++y){
+		for(int x = 0; x < bparams.XBLEN; ++x){
 			//Apply the window
 			if(!FullX){
 				if(x >= (bparams.XBLEN)>>1){
@@ -123,8 +127,8 @@ void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, CalcValueType
 	}
 
 	//Window the temporary array in the y direction
-	for(x = 0; x < bparams.XBLEN; ++x){
-		for(y = 0; y < bparams.YBLEN; ++y){
+	for(int x = 0; x < bparams.XBLEN; ++x){
+		for(int y = 0; y < bparams.YBLEN; ++y){
 			//Apply the window			
 			if(!FullY){
 				if(y >= (bparams.YBLEN)>>1){
@@ -144,15 +148,15 @@ void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, CalcValueType
 	//point values by 1024. This can be removed
 	//later using a right shift of ten.
 	float g;
-	for(y = 0; y < bparams.YBLEN; ++y){
-		for(x = 0; x < bparams.XBLEN; ++x){
+	for(int y = 0; y < bparams.YBLEN; ++y){
+		for(int x = 0; x < bparams.XBLEN; ++x){
 			g = floor((CalcArray[y][x]*1024)+0.5);
 			WeightArray[y][x] = ValueType(g);
 		}
 	}
 
 	//Delete the temporary array
-	for(i = 0; i < bparams.YBLEN; ++i)
+	for(int i = 0; i < bparams.YBLEN; ++i)
 		delete[] CalcArray[i];
 	delete[] CalcArray;
 }

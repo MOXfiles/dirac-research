@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-05 03:05:03  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/05 03:05:03  chaoticcoyote
 * Updated Doxygen API documentation comments
 * Test to see if Scott's CVS is now working correctly
 *
@@ -58,43 +64,46 @@
 #include "libdirac_common/motion.h"
 #include "libdirac_motionest/block_match.h"
 
-class Gop;
+class FrameBuffer;
 class MvData;
 class PicArray;
 
-//! 
+//! The SubpelRefine class takes pixel-accurate motion vectors and refines them to 1/8-pixel accuracy
 /*!
-    
+    The SubpelRefine class takes pixel-accurate motion vectors and refines them to 1/8-pixel accuracy. It uses references
+	upconverted by a factor of 2 in each dimension, with the remaining precision gained by doing linear interpolation
+	between values on-the-fly.
  */
 class SubpelRefine{
-	//class to refine the pixel-level motion vectors to sub-pixel values
-	//uses similar techniques to the motion compensation class to get subpel values.
-	//Uses reference pictures upconverted by 2 in both dimensions - gives 1/2pel accuracy
-	//immediately, with 1/4 and 1/8 pel coming from linear interpolation.
 
 public:
-    //! 
+    //! Constructor
     /*!
-
+		The constructor initialises the encoder parameters.
+		/param	cp	the parameters used for controlling encoding
      */
-	SubpelRefine(EncoderParams& cp): encparams(cp),nshift(4),lambda(3){
-		nshift[0].x=-1; nshift[0].y=0;
-		nshift[1].x=-1; nshift[1].y=-1;
-		nshift[2].x=0; nshift[2].y=-1;
-		nshift[3].x=1; nshift[3].y=-1;
-	}
+	SubpelRefine(EncoderParams& cp);
 
-    //! 
+	//! Destructor
+	~SubpelRefine(){}
+
+	//! Does the actual sub-pixel refinement
     /*!
-
+		Does the actual sub-pixel refinement.
+		/param	my_buffer	the buffer of pictures being used
+		/param	frame_num	the frame number on which motion estimation is being performed
+		/param	mvd	the motion vector data, into which the results will be written
      */
-	void DoSubpel(Gop& my_gop,int frame_num, MvData& mvd);
+	void DoSubpel(const FrameBuffer& my_buffer,int frame_num, MvData& mvd);
 
 private:
+	SubpelRefine(const SubpelRefine& cpy);//private, body-less copy constructor: this class should not be copied
+	SubpelRefine& operator=(const SubpelRefine& rhs);//private, body-less assignment=: this class should not be assigned
+
 	//member variables
 	EncoderParams encparams;
-	PicArray* up1_data;
-	PicArray* up2_data;
+	const PicArray* up1_data;
+	const PicArray* up2_data;
 	MvData* mv_data;
 	int num_refs;//the number of reference frames
 
@@ -108,7 +117,7 @@ private:
 
 	//functions
 	void DoBlock(int xblock,int yblock);
-	MVector GetPred(int xblock,int yblock,MvArray& mvarray);
+	MVector GetPred(int xblock,int yblock,const MvArray& mvarray);
 };
 
 #endif

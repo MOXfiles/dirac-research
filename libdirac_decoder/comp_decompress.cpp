@@ -38,8 +38,14 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -58,32 +64,32 @@
 using std::vector;
 
 void CompDecompressor::Decompress(PicArray& pic_data){
-	FrameSort fsort=fparams.fsort;
+	const FrameSort& fsort=fparams.fsort;
 	int depth=4;
 	BandCodec* bdecoder;
 	vector<Context> ctx_list(24);
 	Subband node;
-	int max_bits;
+	unsigned int max_bits;
 	int qf_idx;
 
 	WaveletTransformParams wparams(depth);
 	WaveletTransform wtransform(wparams);
 	SubbandList& bands=wtransform.BandList();
-	bands.init(depth,pic_data.length(0),pic_data.length(1));
+	bands.Init(depth,pic_data.length(0),pic_data.length(1));
 
 	GenQuantList();
 
-	for (int I=bands.length();I>=1;--I){
+	for (int I=bands.Length();I>=1;--I){
 
 		//read the header data first
 		qf_idx=GolombDecode(*(decparams.BIT_IN));
 		if (qf_idx!=-1){
-			bands(I).set_qf(0,qflist[qf_idx]);
-			max_bits=GolombDecode(*(decparams.BIT_IN));
+			bands(I).SetQf(0,qflist[qf_idx]);
+			max_bits=UnsignedGolombDecode(*(decparams.BIT_IN));
 			(decparams.BIT_IN)->FlushInput();
 
-			if (I>=bands.length()){
-				if (fsort==I_frame && I==bands.length())
+			if (I>=bands.Length()){
+				if (fsort==I_frame && I==bands.Length())
 					bdecoder=new IntraDCBandCodec(decparams.BIT_IN,ctx_list,bands);
 				else
 					bdecoder=new LFBandCodec(decparams.BIT_IN,ctx_list,bands,I);
@@ -103,17 +109,17 @@ void CompDecompressor::Decompress(PicArray& pic_data){
 	wtransform.Transform(BACKWARD,pic_data);
 }
 
-void CompDecompressor::SetToZero(PicArray& pic_data,Subband& node){
-	for (int J=node.yp();J<node.yp()+node.yl();++J){	
-		for (int I=node.xp();I<node.xp()+node.xl();++I){
+void CompDecompressor::SetToZero(PicArray& pic_data,const Subband& node){
+	for (int J=node.Yp();J<node.Yp()+node.Yl();++J){	
+		for (int I=node.Xp();I<node.Xp()+node.Xl();++I){
 			pic_data[J][I]=0;
-		}
-	}
+		}//I
+	}//J
 }
 
 void CompDecompressor::GenQuantList(){//generates the list of quantisers and inverse quantisers
 	//there is some repetition in this list but at the moment this is easiest from the perspective of SelectQuant
-	//Need to remove this repetition later
+	//Need to remove this repetition later TJD 29 March 04.
 
 	qflist[0]=1;		
 	qflist[1]=1;		

@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -65,23 +71,91 @@
 #include "libdirac_decoder/seq_decompress.h"
 #include "libdirac_common/common.h"
 #include "libdirac_common/golomb.h"
-#include "libdirac_common/gop.h"
+#include "libdirac_common/frame_buffer.h"
 #include "libdirac_decoder/frame_decompress.h"
 
-//Add bitstream IO and initialise IO objects!!!!!
-
-SequenceDecompressor::SequenceDecompressor(std::ifstream* ip,bool verbosity): all_done(false),infile(ip),
-current_display_fnum(0),current_code_fnum(0),delay(1),last_frame_read(-1)
+SequenceDecompressor::SequenceDecompressor(std::ifstream* ip,bool verbosity): 
+all_done(false),
+infile(ip),
+current_code_fnum(0),
+delay(1),
+last_frame_read(-1),
+show_fnum(-1)
 {
+
 	decparams.BIT_IN=new BitInputManager(infile);
 	decparams.VERBOSE=verbosity;
 	ReadStreamHeader();
-	my_gop=new Gop(decparams);	
+
+	//Amount of horizontal padding for Y,U and V components
+	int xpad_luma,xpad_chroma;
+	//Amount of vertical padding for Y,U and V components
+	int ypad_luma,ypad_chroma;
+	//scaling factors for chroma based on chroma format
+	int x_chroma_fac,y_chroma_fac;
+
+	//First, we need to have sufficient padding to take account of the blocksizes.
+	//It's sufficient to check for chroma
+
+	if (sparams.cformat==format411){
+		x_chroma_fac=4; y_chroma_fac=1;
+	}
+	else if (sparams.cformat==format420){
+		x_chroma_fac=2; y_chroma_fac=2;
+	}
+	else if (sparams.cformat==format422){
+		x_chroma_fac=2; y_chroma_fac=1;
+	}
+	else{
+		x_chroma_fac=1; y_chroma_fac=1;
+	}
+
+	int xl_chroma=sparams.xl/x_chroma_fac;
+	int yl_chroma=sparams.yl/y_chroma_fac;
+
+	//make sure we have enough macroblocks to cover the pictures 
+	decparams.X_NUM_MB=sparams.xl/decparams.LumaBParams(0).XBSEP;
+	decparams.Y_NUM_MB=sparams.yl/decparams.LumaBParams(0).YBSEP;
+	if (decparams.X_NUM_MB*decparams.ChromaBParams(0).XBSEP<xl_chroma){
+		decparams.X_NUM_MB++;
+		xpad_chroma=decparams.X_NUM_MB*decparams.ChromaBParams(0).XBSEP-xl_chroma;
+	}
+	else
+		xpad_chroma=0;
+
+	if (decparams.Y_NUM_MB*decparams.ChromaBParams(0).YBSEP<yl_chroma){
+		decparams.Y_NUM_MB++;
+		ypad_chroma=decparams.Y_NUM_MB*decparams.ChromaBParams(0).YBSEP-yl_chroma;
+	}
+	else
+		ypad_chroma=0;	
+
+	//Now we have an integral number of macroblocks in a picture and we set the number of blocks
+	decparams.X_NUMBLOCKS=4*decparams.X_NUM_MB;
+	decparams.Y_NUMBLOCKS=4*decparams.Y_NUM_MB;
+
+	//Next we work out the additional padding due to the wavelet transform
+	//For the moment, we'll fix the transform depth to be 4, so we need divisibility by 16.
+	//In the future we'll want arbitrary transform depths. It's sufficient to check for
+	//chroma only
+
+	int xpad_len=xl_chroma+xpad_chroma;
+	int ypad_len=yl_chroma+ypad_chroma;
+	if (xpad_len%16!=0)
+		xpad_chroma=((xpad_len/16)+1)*16-xl_chroma;
+	if (ypad_len%16!=0)
+		ypad_chroma=((ypad_len/16)+1)*16-yl_chroma;	
+
+	xpad_luma=xpad_chroma*x_chroma_fac;
+	ypad_luma=ypad_chroma*y_chroma_fac;
+
+	//set up padded picture sizes, based on original picture sizes, the block parameters and the wavelet transform depth
+	my_buffer=new FrameBuffer(decparams.cformat,sparams.xl+xpad_luma,sparams.yl+ypad_luma);
 }
 
 SequenceDecompressor::~SequenceDecompressor(){
 	infile->close();//should this be in this class ???
-	delete my_gop;
+	delete my_buffer;
 	delete decparams.BIT_IN;
 }
 
@@ -94,50 +168,15 @@ Frame& SequenceDecompressor::DecompressNextFrame(){
 	//come out - write them to screen or to file, as required.
 
 	FrameDecompressor my_fdecoder(decparams);
-	int fnum;
-	int zpos;
 
-	//set which frame to code
-	fnum=my_gop->CodedToDisplay(current_code_fnum);
-	zpos=my_gop->GopNumber()*my_gop->GetLength()+fnum;
+	if (current_code_fnum!=0)//if we're not at the beginning, clean the buffer of already displayed frames
+		my_buffer->Clean(show_fnum);	
 
-	if (zpos>=decparams.sparams.zl)
-		all_done=true;
+	my_fdecoder.Decompress(*my_buffer);
+	show_fnum=std::min(std::max(current_code_fnum-delay,0),sparams.zl-1);
+	current_code_fnum++;
 
-	if (!all_done){//we haven't decoded everything
-
-		if (decparams.VERBOSE){
-			std::cerr<<std::endl<<"Decoding frame "<<my_gop->GopNumber()*my_gop->GetLength()+current_code_fnum;
-			std::cerr<<" (gop number "<<my_gop->GopNumber()<<"), ";
-			std::cerr<<zpos<<" in display order";
-		}
-
-		my_gop->GetFrame(fnum).Init();
-
-		my_fdecoder.Decompress(*my_gop,fnum);
-
-		//set which frame to display
-		current_display_fnum=current_code_fnum-delay;
-		if (current_display_fnum<0){		
-			if (my_gop->GopNumber()>0)
-				current_display_fnum+=my_gop->GetLength();
-			else
-				current_display_fnum=0;
-		}
-
-		current_code_fnum++;
-		if (current_code_fnum>my_gop->GetLength()){
-			current_code_fnum=1;
-			my_gop->IncrementGopNum();
-			last_frame_read=0;
-		}
-	}
-	else{//we have decoded everything, but we may not have output everything
-		current_display_fnum=DIRAC_MIN(current_code_fnum-delay,my_gop->GetLength());
-		current_code_fnum++;
-	}
-
-	return my_gop->GetFrame(current_display_fnum);	
+	return my_buffer->GetFrame(show_fnum);
 }
 
 void SequenceDecompressor::ReadStreamHeader(){//called from constructor
@@ -147,38 +186,40 @@ void SequenceDecompressor::ReadStreamHeader(){//called from constructor
 	OLBParams bparams;
 	char kwname[9];
 	for (int I=0;I<8;++I){
-		kwname[I]=(decparams.BIT_IN)->input_byte();	
+		kwname[I]=(decparams.BIT_IN)->InputByte();	
 	}	
 	kwname[8]='\0';
 	//TBC: test that kwname="KW-DIRAC"	
 
 	//picture dimensions
-	decparams.sparams.xl=GolombDecode(*(decparams.BIT_IN));
-	decparams.sparams.yl=GolombDecode(*(decparams.BIT_IN));	
-	decparams.sparams.zl=GolombDecode(*(decparams.BIT_IN));
+	sparams.xl=int(UnsignedGolombDecode(*(decparams.BIT_IN)));
+	sparams.yl=int(UnsignedGolombDecode(*(decparams.BIT_IN)));	
+	sparams.zl=int(UnsignedGolombDecode(*(decparams.BIT_IN)));	
+
 	//picture rate
-	decparams.sparams.framerate=GolombDecode(*(decparams.BIT_IN));
+	sparams.framerate=int(UnsignedGolombDecode(*(decparams.BIT_IN)));
+
  	//block parameters
-	bparams.XBLEN=GolombDecode(*(decparams.BIT_IN));	
-	bparams.YBLEN=GolombDecode(*(decparams.BIT_IN));	
-	bparams.XBSEP=GolombDecode(*(decparams.BIT_IN));
-	bparams.YBSEP=GolombDecode(*(decparams.BIT_IN));		
+	bparams.XBLEN=int(UnsignedGolombDecode(*(decparams.BIT_IN)));
+	bparams.YBLEN=int(UnsignedGolombDecode(*(decparams.BIT_IN)));	
+	bparams.XBSEP=int(UnsignedGolombDecode(*(decparams.BIT_IN)));
+	bparams.YBSEP=int(UnsignedGolombDecode(*(decparams.BIT_IN)));
+
+	//dimensions of block arrays (remember there may need to be padding for some block and picture sizes)
+	decparams.X_NUMBLOCKS=int(UnsignedGolombDecode(*(decparams.BIT_IN)));
+	decparams.Y_NUMBLOCKS=int(UnsignedGolombDecode(*(decparams.BIT_IN)));
+	decparams.X_NUM_MB=decparams.X_NUMBLOCKS/4;
+	decparams.Y_NUM_MB=decparams.Y_NUMBLOCKS/4;
+
 	//chroma format
-	decparams.sparams.cformat=ChromaFormat(GolombDecode(*(decparams.BIT_IN)));
-	decparams.SetBlockSizes(bparams);
- 	//GOP parameters
-	decparams.NUM_L1=GolombDecode(*(decparams.BIT_IN));
-	decparams.L1_SEP=GolombDecode(*(decparams.BIT_IN));
-	if (decparams.NUM_L1>0 && decparams.L1_SEP>0)
-		decparams.GOP_LEN=(decparams.NUM_L1+1)*decparams.L1_SEP;
-	else{
-		decparams.NUM_L1=0;
-		decparams.L1_SEP=0;
-		decparams.GOP_LEN=1;
-	}
+	decparams.cformat=ChromaFormat(UnsignedGolombDecode(*(decparams.BIT_IN)));	
+	sparams.cformat=decparams.cformat;	
+	decparams.SetBlockSizes(bparams);	
 
  	//interlace marker
-	decparams.sparams.interlace=bool(GolombDecode(*(decparams.BIT_IN)));
+	decparams.interlace=decparams.BIT_IN->InputBit();
+	sparams.interlace=decparams.interlace;
 
+	//Flush the input to the end of the header
 	(decparams.BIT_IN)->FlushInput();	
 }

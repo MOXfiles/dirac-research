@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -66,7 +72,7 @@
 #include "libdirac_common/common.h"
 #include <algorithm>
 
-void BMParams::Init(OLBParams& bparams,int M, int N){
+void BMParams::Init(const OLBParams& bparams,int M, int N){
 
 	bp=bparams;
 	Init(M,N);
@@ -76,8 +82,8 @@ void BMParams::Init(int M, int N){
 	int xpos=M*bp.XBSEP-bp.XOFFSET;
 	int ypos=N*bp.YBSEP-bp.YOFFSET;
 
-	xp=DIRAC_MAX(xpos,0);//TL corner of 
-	yp=DIRAC_MAX(ypos,0);//block to be matched
+	xp=std::max(xpos,0);//TL corner of 
+	yp=std::max(ypos,0);//block to be matched
 	xl=bp.XBLEN-xp+xpos;
 	yl=bp.YBLEN-yp+ypos;
 
@@ -88,7 +94,7 @@ void BMParams::Init(int M, int N){
 	me_lambda*=(xl*yl);//if I've shrunk the block I need to shrink the weight I apply to the entropy measure	
 }
 
-void SimpleBlockDiff::Diff(BlockDiffParams& dparams, MVector& mv){
+void SimpleBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv){
 
 	TwoDArray<ValueType> diff(dparams.xl,dparams.yl);	
 	float sum=dparams.start_val;
@@ -127,7 +133,7 @@ void SimpleBlockDiff::Diff(BlockDiffParams& dparams, MVector& mv){
 	}
 }
 
-void BChkBlockDiff::Diff(BlockDiffParams& dparams, MVector& mv){
+void BChkBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv){
 
 	int xmax=ref_data->length(0);
 	int ymax=ref_data->length(1);
@@ -173,47 +179,45 @@ void BChkBlockDiff::Diff(BlockDiffParams& dparams, MVector& mv){
 void IntraBlockDiff::Diff(BlockDiffParams& dparams,ValueType dc_pred,float loc_lambda){
 
  	//computes the cost if block is predicted by its dc component
-	int J, I;
+
 	int dc=0;
 
-	for (J=dparams.yp;J!=dparams.yp+dparams.yl;++J)
-		for(I=dparams.xp;I!=dparams.xp+dparams.xl;++I)
+	for (int J=dparams.yp;J!=dparams.yp+dparams.yl;++J)
+		for(int I=dparams.xp;I!=dparams.xp+dparams.xl;++I)
 			dc+=int((*pic_data)[J][I]);
 
 	dparams.dc=ValueType(dc/(dparams.xl*dparams.yl));	
 	dparams.dc=(dparams.dc+2)>>2;	//just give dc to 8-bit accuracy
 
 	dparams.intra_cost=float(abs(dparams.dc-dc_pred))*loc_lambda;
-	for (J=dparams.yp;J!=dparams.yp+dparams.yl;++J)
-		for(I=dparams.xp;I!=dparams.xp+dparams.xl;++I)
+	for (int J=dparams.yp;J!=dparams.yp+dparams.yl;++J)
+		for(int I=dparams.xp;I!=dparams.xp+dparams.xl;++I)
 			dparams.intra_cost+=float(abs((*pic_data)[J][I]-(dparams.dc<<2)));
 };
 
-void BiSimpleBlockDiff::Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2){
+void BiSimpleBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2){
 
-	int I, J, K, L;
 	TwoDArray<ValueType> diff(dparams.xl,dparams.yl);
 
 	dparams.cost.mvcost=dparams.start_val;
 	dparams.cost.SAD=0.0;
 
-	for (J=dparams.yp,L=0;J!=dparams.yp+dparams.yl;++J,++L){
-		for(I=dparams.xp,K=0;I!=dparams.xp+dparams.xl;++I,++K){
+	for (int J=dparams.yp,L=0;J!=dparams.yp+dparams.yl;++J,++L){
+		for(int I=dparams.xp,K=0;I!=dparams.xp+dparams.xl;++I,++K){
 			diff[L][K]=(*pic_data)[J][I]-(((*ref_data)[J+mv1.y][I+mv1.x]+1)>>1);
 			diff[L][K]-=(((*ref_data2)[J+mv2.y][I+mv2.x]+1)>>1);
 		}//I
 	}//J
 
-	for (J=0;J!=dparams.yl;++J)
-		for(I=0;I!=dparams.xl;++I)
+	for (int J=0;J!=dparams.yl;++J)
+		for(int I=0;I!=dparams.xl;++I)
 			dparams.cost.SAD+=float(abs(diff[J][I]));
 
 	dparams.cost.total=dparams.cost.mvcost+dparams.cost.SAD;
 }
 
-void BiBChkBlockDiff::Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2){
+void BiBChkBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2){
 
-	int I, J, K, L;
 	TwoDArray<ValueType> diff(dparams.xl,dparams.yl);
 	int xmax1=ref_data->length(0); int ymax1=ref_data->length(1);
 	int xmax2=ref_data2->length(0);	int ymax2=ref_data2->length(1);
@@ -221,16 +225,16 @@ void BiBChkBlockDiff::Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2){
 	dparams.cost.mvcost=dparams.start_val;
 	dparams.cost.SAD=0.0;
 
-	for (J=dparams.yp,L=0;J!=dparams.yp+dparams.yl;++J,++L){
-		for(I=dparams.xp,K=0;I!=dparams.xp+dparams.xl;++I,++K){
+	for (int J=dparams.yp,L=0;J!=dparams.yp+dparams.yl;++J,++L){
+		for(int I=dparams.xp,K=0;I!=dparams.xp+dparams.xl;++I,++K){
 			diff[L][K]=(*pic_data)[J][I]-(((*ref_data)[BChk(J+mv1.y,ymax1)][BChk(I+mv1.x,xmax1)]+1)>>1);
 			diff[L][K]-=(((*ref_data2)[BChk(J+mv2.y,ymax2)][BChk(I+mv2.x,xmax2)]+1)>>1);
 		}//I
 	}//J
 
 
-	for (J=0;J!=dparams.yl;++J){
-		for(I=0;I!=dparams.xl;++I){
+	for (int J=0;J!=dparams.yl;++J){
+		for(int I=0;I!=dparams.xl;++I){
 			dparams.cost.SAD+=float(abs(diff[J][I]));
 		}//I
 	}//J
@@ -249,7 +253,7 @@ void BlockDiffUp::Init(){
 	InterpLookup[8][0] = 1; InterpLookup[8][1] = 3; InterpLookup[8][2] = 3; InterpLookup[8][3] = 9;	
 }
 
-void SimpleBlockDiffUp::Diff(BlockDiffParams& dparams, MVector& mv){
+void SimpleBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv){
 
 	ImageCoords StartPos;//Coordinates in the image being written to
 	StartPos.x=dparams.xp;
@@ -379,7 +383,7 @@ void SimpleBlockDiffUp::Diff(BlockDiffParams& dparams, MVector& mv){
 	}	
 }
 
-void BChkBlockDiffUp::Diff(BlockDiffParams& dparams, MVector& mv){
+void BChkBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv){
  	//Same as SimpleBlockDiffUp, but with bounds-checking and edge extension.
 	ImageCoords StartPos;//Coordinates in the image being written to
 	StartPos.x=dparams.xp;
@@ -523,7 +527,7 @@ void BChkBlockDiffUp::Diff(BlockDiffParams& dparams, MVector& mv){
 	}	
 }
 
-void BiSimpleBlockDiffUp::Diff(BlockDiffParams& dparams, MVector& mv1, MVector& mv2){
+void BiSimpleBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv1, const MVector& mv2){
 
 	ImageCoords StartPos;//Coordinates in the current image
 	StartPos.x=dparams.xp;
@@ -788,7 +792,7 @@ void BiSimpleBlockDiffUp::Diff(BlockDiffParams& dparams, MVector& mv1, MVector& 
 	dparams.cost.total=dparams.cost.SAD+dparams.cost.mvcost;		
 }
 
-void BiBChkBlockDiffUp::Diff(BlockDiffParams& dparams, MVector& mv1, MVector& mv2){
+void BiBChkBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv1, const MVector& mv2){
 
 	//as above, but with bounds checking
 	int xmax1=ref_data->length(0); int ymax1=ref_data->length(1);

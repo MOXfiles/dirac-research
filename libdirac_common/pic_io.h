@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
 * Boilerplate for Doxygen comments; testing ability to commit into SF CVS
 *
 * Revision 1.1.1.1  2004/03/11 17:45:43  timborer
@@ -53,8 +59,8 @@
 #ifndef _PIC_IO_H_
 #define _PIC_IO_H_
 
-#include "common.h"
-#include "frame.h"
+#include "libdirac_common/common.h"
+#include "libdirac_common/frame.h"
 
 #include <iostream>
 #include <fstream>
@@ -73,103 +79,83 @@
 
 //Subclass these to provide functionality for different file formats and for streaming.
 
-        
-//! 
+//! Class for outputting pictures
 /*!
-
+	Outputs pictures to a file
  */
 class PicOutput{
 public:
 
-        
-    //! 
+    //! Constructor
     /*!
-        
-     */
-	PicOutput(char* output_name, SeqParams& sp);
-        
-    //! 
-    /*!
-        
-     */
+        Constructor, takes
+		/param	output_name	the name of the output file
+		/params	sp			the sequence parameters
+     */	
+	PicOutput(const char* output_name, const SeqParams& sp);
+
+	//! Destructor
 	virtual ~PicOutput();
 
-        
-    //! 
-    /*!
-        
-     */
-	virtual void WriteNextFrame(Frame& myframe);
-        
-    //! 
-    /*!
-        
-     */
+	//! Write the next frame to the output
+	virtual void WriteNextFrame(const Frame& myframe);
+
+	//! Write the picture sequence header
 	virtual void WritePicHeader();
-        
-    //! 
-    /*!
-        
-     */
-	virtual void WriteComponent(PicArray& pic_data);
 
 protected:
 
 	SeqParams sparams;	
 	std::ofstream* op_pic_ptr;
 	std::ofstream* op_head_ptr;
+
+	//! Write a component to file
+	virtual void WriteComponent(const PicArray& pic_data, const CompSort& cs);
 };
 
-        
-//! 
+//! Picture input class
 /*!
-
+	Class for reading picture data from a file.
  */
 class PicInput{
 public:
-        
-    //! 
+
+    //! Constructor
     /*!
-        
-     */
-	PicInput(char* input_name);
-        
-    //! 
-    /*!
-        
-     */
+        Constructor, takes
+		/param	input_name	the name of the input picture file
+     */	
+	PicInput(const char* input_name);
+
+	//! Destructor
 	virtual ~PicInput();
 
-        
-    //! 
-    /*!
-        
-     */
+	//! Set padding values to take into account block and transform sizes
+	void SetPadding(const int xpd, const int ypd);
+
+	//! Read the next frame from the file
 	virtual void ReadNextFrame(Frame& myframe);
-        
-    //! 
-    /*!
-        
-     */
-	virtual void ReadComponent(PicArray& pic_data);
-        
-    //! 
-    /*!
-        
-     */
+
+	//! Read the picture header
 	virtual void ReadPicHeader();
-        
-    //! 
-    /*!
-        
-     */
-	virtual SeqParams& GetSeqParams(){return sparams;}
+
+	//! Get the sequence parameters (got from the picture header)
+	const SeqParams& GetSeqParams() const {return sparams;}
+
+	//! Returns true if we're at the end of the input, false otherwise	
+	bool End() const ;
 
 protected:
 
 	SeqParams sparams;
 	std::ifstream* ip_pic_ptr;
 	std::ifstream* ip_head_ptr;
+
+	//padding values
+	int xpad,ypad;
+
+	//! Read a component from the file
+	virtual void ReadComponent(PicArray& pic_data,const CompSort& cs);	
 
 };
 

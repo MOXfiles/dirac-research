@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -56,55 +62,54 @@
 *
 */
 
-#include "wavelet_utils.h"
-#include "common.h"
+#include "libdirac_common/wavelet_utils.h"
+#include "libdirac_common/common.h"
 #include <iostream>
 #include <cstdlib>
 
 //subband list methods
 
-void SubbandList::init(const int depth,const int xlen,const int ylen){
+void SubbandList::Init(const int depth,const int xlen,const int ylen){
 	int xl=xlen;
 	int yl=ylen;
-	int L;
-	clear();
+	Clear();
 	Subband* tmp;
-	for (L=1;L<=depth;++L){
+	for (int L=1;L<=depth;++L){
 		xl/=2;
 		yl/=2;
 		tmp=new Subband(xl,0,xl,yl,L);
-		add_band(*tmp);
+		AddBand(*tmp);
 		delete tmp;
 		tmp=new Subband(0,yl,xl,yl,L);
-		add_band(*tmp);
+		AddBand(*tmp);
 		delete tmp;
 		tmp=new Subband(xl,yl,xl,yl,L);
-		add_band(*tmp);
+		AddBand(*tmp);
 		delete tmp;
 		if (L==depth){
 			tmp=new Subband(0,0,xl,yl,L);
-			add_band(*tmp);
+			AddBand(*tmp);
 			delete tmp;
 		}		
 	}
 	//now set the parent-child relationships
 	int len=bands.size();
-	(*this)(len).set_parent(0);		
-	(*this)(len).add_child(len-3);
-	(*this)(len-3).set_parent(len);
-	(*this)(len).add_child(len-2);
-	(*this)(len-2).set_parent(len);
-	(*this)(len).add_child(len-1);
-	(*this)(len-1).set_parent(len);
+	(*this)(len).SetParent(0);		
+	(*this)(len).AddChild(len-3);
+	(*this)(len-3).SetParent(len);
+	(*this)(len).AddChild(len-2);
+	(*this)(len-2).SetParent(len);
+	(*this)(len).AddChild(len-1);
+	(*this)(len-1).SetParent(len);
 
-	for (L=1;L<depth;++L){
+	for (int L=1;L<depth;++L){
  		//do parent-child relationship for other bands
-		(*this)(3*L+1).add_child(3*(L-1)+1);
-		(*this)(3*(L-1)+1).set_parent(3*L+1);
-		(*this)(3*L+2).add_child(3*(L-1)+2);
-		(*this)(3*(L-1)+2).set_parent(3*L+2);
-		(*this)(3*L+3).add_child(3*(L-1)+3);
-		(*this)(3*(L-1)+3).set_parent(3*L+3);
+		(*this)(3*L+1).AddChild(3*(L-1)+1);
+		(*this)(3*(L-1)+1).SetParent(3*L+1);
+		(*this)(3*L+2).AddChild(3*(L-1)+2);
+		(*this)(3*(L-1)+2).SetParent(3*L+2);
+		(*this)(3*L+3).AddChild(3*(L-1)+3);
+		(*this)(3*(L-1)+3).SetParent(3*L+3);
 	}
 }
 
@@ -121,31 +126,31 @@ void WaveletTransform::Transform(Direction d, PicArray& pic_data){
 		xl=pic_data.length(0);
 		yl=pic_data.length(1);
 		for (int L=1;L<=params.depth;++L){
-			vhsplit(0,0,xl,yl,pic_data);
+			VHSplit(0,0,xl,yl,pic_data);
 			xl=xl/2;
 			yl=yl/2;
 		}
 
-		band_list.init(params.depth,pic_data.length(0),pic_data.length(1));
+		band_list.Init(params.depth,pic_data.length(0),pic_data.length(1));
 	}
 	else{
 		//do work
 		xl=pic_data.length(0)/(1<<(params.depth-1));
 		yl=pic_data.length(1)/(1<<(params.depth-1));
 		for (int L=1;L<=params.depth;++L){
-			vhsynth(0,0,xl,yl,pic_data);
+			VHSynth(0,0,xl,yl,pic_data);
 			xl*=2;
 			yl*=2;
 		}
 		//band list now inaccurate, so clear		
-		band_list.clear();	
+		band_list.Clear();	
 	}
 }
 
 //private functions
 ///////////////////
 
-void WaveletTransform::vhsplit(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data){
+void WaveletTransform::VHSplit(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data){
 
 	//version based on integer-like types
 	//using edge-extension rather than reflection
@@ -182,7 +187,7 @@ void WaveletTransform::vhsplit(const int xp, const int yp, const int xl, const i
 		line_data[xl-1]-=ValueType((6497*int(line_data[xend-1]+line_data[xend-1]))>>12);
 		line_data[xend-1]-=ValueType((217*int(line_data[xl-2]+line_data[xl-1]))>>12);
 
-    		//second lifting stage
+     		//second lifting stage
 		line_data[xl2]+=ValueType((3616*int(line_data[1]+line_data[0]))>>12);
 		line_data[0]+=ValueType((1817*int(line_data[xl2]+line_data[xl2]))>>12);
 		for (I=1,K=xl2+1; I<xend-1;++I,++K){//main body
@@ -190,14 +195,14 @@ void WaveletTransform::vhsplit(const int xp, const int yp, const int xl, const i
 			line_data[I]+=ValueType((1817*int(line_data[K-1]+line_data[K]))>>12);
 		}
 		line_data[xl-1]+=ValueType((3616*int(line_data[xend-1]+line_data[xend-1]))>>12);
-		line_data[xend-1]+=ValueType((1817*int(line_data[xl-2]+line_data[xl-1]))>>12);	
+		line_data[xend-1]+=ValueType((1817*int(line_data[xl-2]+line_data[xl-1]))>>12);
 
 		for (I=0,K=xl2; I<xl2;++I,++K){
 //			TBC: scale factors can be removed and incorporated into noise
 //			weighting factors for quantisation
 
 			line_data[I]=ValueType((4709*int(line_data[I]))>>12);
-			line_data[K]=ValueType((3563*int(line_data[K]))>>12);						
+			line_data[K]=ValueType((3563*int(line_data[K]))>>12);
 		}
 		tmp_data[J]=line_data;
 	}
@@ -224,7 +229,7 @@ void WaveletTransform::vhsplit(const int xp, const int yp, const int xl, const i
 		col_data[yl-1]-=ValueType((6497*int(col_data[yend-1]+col_data[yend-1]))>>12);
 		col_data[yend-1]-=ValueType((217*int(col_data[yl-2]+col_data[yl-1]))>>12);		
 
-   		//second lifting stage
+    		//second lifting stage
 		col_data[yl2]+=ValueType((3616*int(col_data[1]+col_data[0]))>>12);
 		col_data[0]+=ValueType((1817*int(col_data[yl2]+col_data[yl2]))>>12);
 		for (J=1,K=yl2+1; J<yend-1;++J,++K){
@@ -241,18 +246,19 @@ void WaveletTransform::vhsplit(const int xp, const int yp, const int xl, const i
 //			weighting factors for quantisation
 
 			pic_data[J+yp][I+xp]=ValueType((4709*int(col_data[J]))>>12);
-			pic_data[K+yp][I+xp]=ValueType((3563*int(col_data[K]))>>12);	
+			pic_data[K+yp][I+xp]=ValueType((3563*int(col_data[K]))>>12);
+
 		}//I
 
 	}
 	delete[] col_data;	
-	for (J=0;J<yl;++J)
+	for (int J=0;J<yl;++J)
 		delete[] tmp_data[J];
 
 }
 
 
-void WaveletTransform::vhsynth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data){	
+void WaveletTransform::VHSynth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data){	
 
 	register ValueType* line_data=new ValueType[xl];
 	register ValueType* col_data;	
@@ -321,7 +327,7 @@ void WaveletTransform::vhsynth(const int xp, const int yp, const int xl, const i
 			line_data[K]=ValueType((4709*int(tmp_data[K][J]))>>12);
 		}		
 
-	 	//first lifting stage
+		//first lifting stage
 		line_data[xend-1]-=ValueType((1817*int(line_data[xl-2]+line_data[xl-1]))>>12);
 		line_data[xl-1]-=ValueType((3616*int(line_data[xend-1]+line_data[xend-1]))>>12);						
 		for (I=xend-2,K=xl-2; I>=1;--I,--K){//main body
@@ -331,7 +337,7 @@ void WaveletTransform::vhsynth(const int xp, const int yp, const int xl, const i
 		line_data[0]-=ValueType((1817*int(line_data[xl2]+line_data[xl2]))>>12);
 		line_data[xl2]-=ValueType((3616*int(line_data[1]+line_data[0]))>>12);
 
-  		//second lifting stage
+   		//second lifting stage
 		line_data[xend-1]+=ValueType((217*int(line_data[xl-2]+line_data[xl-1]))>>12);	
 		line_data[xl-1]+=ValueType((6497*int(line_data[xend-1]+line_data[xend-1]))>>12);
 		for (I=xend-2,K=xl-2; I>=1;--I,--K){//main body
@@ -358,7 +364,7 @@ void WaveletTransform::vhsynth(const int xp, const int yp, const int xl, const i
 		}
 	}
 	delete[] line_data;
-	for (I=0;I<xl;++I)
+	for (int I=0;I<xl;++I)
 		delete[] tmp_data[I];
 
 }
@@ -367,7 +373,7 @@ void WaveletTransform::vhsynth(const int xp, const int yp, const int xl, const i
 ////////////////////////////
 
 float WaveletTransform::Twodto1d (float f,float g){
-	return (sqrt(2.0*(f*f+g*g)) -0.736*DIRAC_ABS(f-g));
+	return (sqrt(2.0*(f*f+g*g)) -0.736*std::abs(f-g));
 }
 
 float WaveletTransform::Threshold(float xf,float yf,CompSort cs){
@@ -396,22 +402,20 @@ float WaveletTransform::Threshold(float xf,float yf,CompSort cs){
 	return pow((double)10.0,(double)(log10(a)+k*(log10(freq)-log10((g0*f0))*(log10(freq)-log10(g0*f0)))));
 }
 
-void WaveletTransform::SetBandWeights (EncoderParams& encparams,FrameParams& fparams,CompSort csort){
+void WaveletTransform::SetBandWeights (const EncoderParams& encparams,const FrameParams& fparams,const CompSort csort){
 	int xlen,ylen,xl,yl,xp,yp;
 	float xfreq,yfreq;
-	SeqParams& sparams=encparams.sparams;	
-	FrameSort& fsort=fparams.fsort;	
-	int I;
+	const FrameSort& fsort=fparams.fsort;	
 
-	xlen=2*band_list(1).xl();
-	ylen=2*band_list(1).yl();
+	xlen=2*band_list(1).Xl();
+	ylen=2*band_list(1).Yl();
 
 	if (encparams.CPD!=0.0){
-		for(I=1;I<=band_list.length();I++){
-			xp=band_list(I).xp();
-			yp=band_list(I).yp();
-			xl=band_list(I).xl();
-			yl=band_list(I).yl();
+		for(int I=1;I<=band_list.Length();I++){
+			xp=band_list(I).Xp();
+			yp=band_list(I).Yp();
+			xl=band_list(I).Xl();
+			yl=band_list(I).Yl();
 
 			if(fsort==I_frame){ 
 				xfreq=encparams.CPD*(float(xp)+float(xl)/2.0)/float(xlen);
@@ -421,40 +425,40 @@ void WaveletTransform::SetBandWeights (EncoderParams& encparams,FrameParams& fpa
 				xfreq=(encparams.CPD*(float(xp)+float(xl)/2.0)/float(xlen))/4.0;
 				yfreq=(encparams.CPD*(float(yp)+float(yl)/2.0)/float(ylen))/4.0;
 			}
-			if(sparams.interlace){ 
+			if(encparams.interlace){ 
 				yfreq/=2.0;
 			}
 
 			if( csort!=Y){
-				if( sparams.cformat==format422){
+				if( encparams.cformat==format422){
 					xfreq/=2.0;
 				}
-				else if(sparams.cformat==format411 ){
+				else if(encparams.cformat==format411 ){
 					xfreq/=4.0;
 				}
-				else if(sparams.cformat==format420 ){
+				else if(encparams.cformat==format420 ){
 					xfreq/=2.0;
 					yfreq/=2.0;
 				}
 			}
-			band_list(I).set_wt(2.0*Threshold(xfreq,yfreq,csort));
+			band_list(I).SetWt(2.0*Threshold(xfreq,yfreq,csort));
 
 		}
 		//make sure dc is always the lowest weight
-		float min_weight=band_list(band_list.length()).wt();
-		for(I=1;I<=band_list.length()-1;I++ ){
-			min_weight=((min_weight>band_list(I).wt()) ? band_list(I).wt() : min_weight);
+		float min_weight=band_list(band_list.Length()).Wt();
+		for(int I=1;I<=band_list.Length()-1;I++ ){
+			min_weight=((min_weight>band_list(I).Wt()) ? band_list(I).Wt() : min_weight);
 		}
 
-		band_list(band_list.length()).set_wt(min_weight);
+		band_list(band_list.Length()).SetWt(min_weight);
  		//normalize weights wrt dc subband
-		for(I=1;I<=band_list.length();I++ ){
-			band_list(I).set_wt(band_list(I).wt()/band_list(band_list.length()).wt());		
+		for(int I=1;I<=band_list.Length();I++ ){
+			band_list(I).SetWt(band_list(I).Wt()/band_list(band_list.Length()).Wt());		
 		}
 	}
 	else{//CPD=0 so set all weights to 1
-		for(I=1;I<=band_list.length();I++ ){
-			band_list(I).set_wt(1.0);		
+		for(int I=1;I<=band_list.Length();I++ ){
+			band_list(I).SetWt(1.0);		
 		}	
 	}
 }	

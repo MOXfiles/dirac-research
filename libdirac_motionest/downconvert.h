@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.4  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.3  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -65,39 +71,37 @@
 
 #include "libdirac_common/common.h"
 
-//! 
+//! A class for fast downconversion of picture data
 /*!
-    
+    A class for fast down-conversion of picture data. The picture data is downconverted by a factor of two in each dimension,
+	using fast filtering techniques. The filter is a half-band filter designed to trade off frequency response, ringiness
+	and aliasing.
  */
 class DownConverter{
 
 public:
 
-    //! 
-    /*!
-
-     */
-	//Constructor
+	//! Constructor
 	DownConverter();
-
-    //! 
-    /*!
-
-     */
-	//Destructor
+	//! Destructor
 	~DownConverter(){};
-    
-    //! 
-    /*!
 
+	//! A function to do the actual down-conversion 
+	/*!
+		A function to do the actual downconversion. 
+		/param	old_data	the picture data to be downconverted
+		/param	new_data	the resulting down-converted data. The array must be of the correct size.
      */
-	//Calls the down-conversion function
-	void dodownconvert(PicArray& old_data, PicArray& new_data);
+	void DoDownConvert(const PicArray& old_data, PicArray& new_data);
 
 private:
+	//Copy constructor
+	DownConverter(const DownConverter& cpy);//private, body-less: class should not be copied
+	//Assignment=
+	DownConverter& operator=(const DownConverter& rhs);//private, body-less: class should not be assigned
 
 	//Applies the filter to a single column
-	void rowloop(int &colpos,PicArray& old_data,PicArray& new_data);
+	void RowLoop(int &colpos,const PicArray& old_data,PicArray& new_data);
 
 	//Variables to keep the loops in check
 	int yOld;
@@ -106,16 +110,6 @@ private:
 	ValueType* row_buffer;
 
 	//Define filter parameters
-#if defined(_MSC_VER)
-	static const int Stage_I_Size;
-	static const int StageI_I;
-	static const int StageI_II;
-	static const int StageI_III;
-	static const int StageI_IV; 
-	static const int StageI_V;
-	static const int StageI_VI;
-	static const int StageI_Shift;
-#else
 	static const int Stage_I_Size = 6;
 	static const int StageI_I = 86;
 	static const int StageI_II = 46;
@@ -124,7 +118,6 @@ private:
 	static const int StageI_V = -4;
 	static const int StageI_VI = 4;
 	static const int StageI_Shift = 8;
-#endif
 };
 
 #endif

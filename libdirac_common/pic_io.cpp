@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-04-12 01:57:46  chaoticcoyote
+* Revision 1.4  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.3  2004/04/12 01:57:46  chaoticcoyote
 * Fixed problem Intel C++ had in finding xparam headers on Linux
 * Solved Segmentation Fault bug in pic_io.cpp
 *
@@ -60,11 +66,11 @@
 *
 */
 
-#include "pic_io.h"
+#include "libdirac_common/pic_io.h"
 
 /**************************************Output***********************************/
 
-PicOutput::PicOutput(char* output_name, SeqParams& sp): sparams(sp){//constructor
+PicOutput::PicOutput(const char* output_name, const SeqParams& sp): sparams(sp){//constructor
 
 	char output_name_yuv[84];
 	char output_name_hdr[84];
@@ -121,24 +127,48 @@ void PicOutput::WritePicHeader(){//write a human-readable picture header as sepa
 
 }
 
-void PicOutput::WriteNextFrame(Frame& myframe){	
-	WriteComponent(myframe.Ydata());
+void PicOutput::WriteNextFrame(const Frame& myframe){	
+	WriteComponent(myframe.Ydata(),Y);
 	if (sparams.cformat!=Yonly){
-		WriteComponent(myframe.Udata());
-		WriteComponent(myframe.Vdata());
+		WriteComponent(myframe.Udata(),U);
+		WriteComponent(myframe.Vdata(),V);
 	}
 }
 
-void PicOutput::WriteComponent(PicArray& pic_data){
+void PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs){
 	//initially set up for 10-bit data input, rounded to 8 bits on file output
+	//This will throw out any padding to the right and bottom of a frame
 
-	unsigned char tempc;
+	int xl,yl;
+	if (cs==Y){
+		xl=sparams.xl;
+		yl=sparams.yl;
+	}
+	else{
+		if (sparams.cformat==format411){
+			xl=sparams.xl/4;
+			yl=sparams.yl;
+		}
+		else if (sparams.cformat==format420){
+			xl=sparams.xl/2;
+			yl=sparams.yl/2;
+		}
+		else if (sparams.cformat==format422){
+			xl=sparams.xl/2;
+			yl=sparams.yl;
+		}
+		else{
+			xl=sparams.xl;
+			yl=sparams.yl;
+		}
+	}	
 
+	unsigned char tempc;	
 	ValueType tempv;
 
 	if (*op_pic_ptr){	
-		for (int J=pic_data.first(1);J<=pic_data.last(1);++J){
-			for (int I=pic_data.first(0);I<=pic_data.last(0);++I){
+		for (int J=0;J<yl;++J){
+			for (int I=0;I<xl;++I){
 				tempv=pic_data[J][I]+2;
 				tempv>>=2;
 				tempc=(unsigned char) tempv;
@@ -152,7 +182,10 @@ void PicOutput::WriteComponent(PicArray& pic_data){
 
 /**************************************Input***********************************/
 
-PicInput::PicInput(char* input_name){//constructor
+PicInput::PicInput(const char* input_name):
+xpad(0),
+ypad(0)
+{//constructor
 
 	char input_name_yuv[84];
 	char input_name_hdr[84];
@@ -178,15 +211,21 @@ PicInput::~PicInput(){//destructor
 	delete ip_head_ptr;
 }
 
+void PicInput::SetPadding(const int xpd, const int ypd){
+	xpad=xpd;
+	ypad=ypd;
+}
+
 void PicInput::ReadNextFrame(Frame& myframe){
-	ReadComponent(myframe.Ydata());
+
+	ReadComponent(myframe.Ydata(),Y);
 	if (sparams.cformat!=Yonly){
-		ReadComponent(myframe.Udata());
-		ReadComponent(myframe.Vdata());
+		ReadComponent(myframe.Udata(),U);
+		ReadComponent(myframe.Vdata(),V);
 	}
 }
 
-void PicInput::ReadPicHeader(){//write a human-readable picture header as separate file
+void PicInput::ReadPicHeader(){//read a picture header from a separate file
 
 	int head_data[7];
 
@@ -205,24 +244,57 @@ void PicInput::ReadPicHeader(){//write a human-readable picture header as separa
 
 }
 
-void PicInput::ReadComponent(PicArray& pic_data){
+bool PicInput::End() const {
+	return ip_pic_ptr->eof();	
+}
+
+void PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs){
 	//initially set up for 8-bit file input expanded to 10 bits for array output
 
-	//	unsigned char temp[pic_data.length(0)*pic_data.length(1)];//array big enough for the whole component
-	// unsigned char temp[pic_data.length(0)];//array big enough for one line
-	unsigned char * temp = new unsigned char[pic_data.length(0)];//array big enough for one line
+	int xl,yl;
+	if (cs==Y){
+		xl=sparams.xl;
+		yl=sparams.yl;
+	}
+	else{
+		if (sparams.cformat==format411){
+			xl=sparams.xl/4;
+			yl=sparams.yl;
+		}
+		else if (sparams.cformat==format420){
+			xl=sparams.xl/2;
+			yl=sparams.yl/2;
+		}
+		else if (sparams.cformat==format422){
+			xl=sparams.xl/2;
+			yl=sparams.yl;
+		}
+		else{
+			xl=sparams.xl;
+			yl=sparams.yl;
+		}
+	}
+
+	unsigned char temp[xl];//array big enough for one line
 	if (*ip_pic_ptr){
 
-		for (int J=pic_data.first(1);J<=pic_data.last(1);++J){
-			ip_pic_ptr->read((char *)temp, pic_data.length(0));
-			for (int I=pic_data.first(0);I<=pic_data.last(0);++I){
+		for (int J=0;J<yl;++J){
+			ip_pic_ptr->read((char*) &temp, sizeof temp);
+			for (int I=0;I<xl;++I){
 				pic_data[J][I]=(ValueType) temp[I];
 				pic_data[J][I]<<=2;
-			}//I	
+			}//I
+			//pad the columns on the rhs
+			for (int I=xl;I<pic_data.length(0);++I){
+				pic_data[J][I]=0;
+			}//I
+		}//J
+		//now do the padded lines		
+		for (int J=yl;J<pic_data.length(1);++J){
+			for (int I=0;I<pic_data.length(0);++I)
+				pic_data[J][I]=0;
 		}//J
 	}
 	else
 		std::cerr<<std::endl<<"Can't open picture data file for reading";
-
-	delete [] temp;
 }

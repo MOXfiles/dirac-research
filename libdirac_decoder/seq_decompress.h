@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-03-29 01:52:08  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/03/29 01:52:08  chaoticcoyote
 * Added Doxygen comments
 *
 * Revision 1.1.1.1  2004/03/11 17:45:43  timborer
@@ -63,7 +69,7 @@
 #include <iostream>
 #include <fstream>
 
-class Gop;
+class FrameBuffer;
 class Frame;
 
 //! Decompresses a sequence of frames from a stream.
@@ -76,8 +82,8 @@ public:
     //! Constructor
     /*!
         Initializes the decompressor with an input stream and level of output detail.
-        
-        /param  ip      input data stream containing a sequnce of compressed images
+
+        /param  ip      input data stream containing a sequence of compressed images
         /param  verbosity   when true, increases the amount of information displayed during decompression
      */
 	SequenceDecompressor(std::ifstream * ip, bool verbosity);
@@ -97,7 +103,7 @@ public:
         frame 0. At the end you will need to loop for longer to get all the frames out. It's
         up to the calling function to do something with the decoded frames as they come out
         -- write them to screen or to file, as required.
-        
+
         \return     reference to the next locally decoded frame available for display
     */
 	Frame& DecompressNextFrame();
@@ -108,47 +114,57 @@ public:
         \return     true if last frame has been compressed; false if not
     */
 	bool Finished() { return all_done; }
-    
+
     //! Interrogates for decompression parameters.
     /*!
         Returns the parameters used for this decompression run.
-        
+
         /return decompression parameters originally provide din the constructor.
      */
-	SeqParams & GetSeqParams() { return decparams.sparams; }
+	SeqParams & GetSeqParams() { return sparams; }
 
 private:
-    //! Read a sequence from bitstream
+	//! Copy constructor is private and body-less
+	/*!
+		Copy constructor is private and body-less. This class should not be copied.
+
+	*/
+	SequenceDecompressor(const SequenceDecompressor& cpy);
+
+	//! Assignment = is private and body-less
+	/*!
+		Assignment = is private and body-less. This class should not be assigned.
+
+	*/
+	SequenceDecompressor& operator=(const SequenceDecompressor& rhs);
+
+    //! Read a sequence header from bitstream
     /*!
-        Reads the sequence data from the bitstream. This contains all the block and GOP information. 
-		In the long term we want to be able to reset all this stuff on the fly by sending a
-		parameter sets. We also want to move away from simple GOPs, to a picture buffer model.
+        Reads the sequence data from the bitstream. This contains all the block information. Temporal prediction
+		information is contained in the frame headers so that a simple GOP need not be used, or if so, can be reset
+		on the fly.
      */
 	void ReadStreamHeader();	
 
     //! Completion flag, returned via the Finished method
 	bool all_done;
-    
+
     //! Parameters for the decompression, as provided in constructor
 	DecoderParams decparams;
-    
-    //! Pointer to the current group of pictores (Gop)
-	Gop * my_gop;
-    
-    //! Input file object
-	std::ifstream* infile;			//
-
-    //! Number of the frame in display order which is to be displayed
-    int current_display_fnum;	
-
-    //! Number of the frame in coded order which is to be coded
-    int current_code_fnum;		
-
-    //! ??? Value so that when converted to display order, current_code_fnum is <= current_display_fnum
+	//! The sequence parameters obtained from the stream header
+	SeqParams sparams;
+	//! A picture buffer used for local storage of frames whilst pending re-ordering or being used for reference.
+	FrameBuffer* my_buffer;
+	//! Input file pointer, pointing at the bitstream
+	std::ifstream* infile;			
+    //! Number of the frame in coded order which is to be decoded
+	int current_code_fnum;		
+    //! A delay so that we don't display what we haven't decoded
 	int delay;					
-
     //! Index, in display order, of the last frame read
 	int last_frame_read;
+	//! Index, in display order of the frame to be displayed next - computed from delay and current_code_fnum
+	int show_fnum;
 };
 
 #endif

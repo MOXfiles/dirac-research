@@ -38,8 +38,14 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -50,13 +56,32 @@
 #ifndef _GOLOMB_H_
 #define _GOLOMB_H_
 
-#include "bit_manager.h"
+#include "libdirac_common/bit_manager.h"
 
 //exp-golomb coding and decoding
 
+//! Code a value using unsigned exp-Golomb coding and output it
+void UnsignedGolombCode(BasicOutputManager& bitman, const unsigned int val);
+
+//! Code a value using unsigned exp-Golomb coding and output it to a vector
+void UnsignedGolombCode(std::vector<bool>& bitvec, const unsigned int val);
+
+//! Code a value using signed exp-Golomb coding and output it
 void GolombCode(BasicOutputManager& bitman, const int val);
+
+//! Code a value using signed exp-Golomb coding and output it to a vector
 void GolombCode(std::vector<bool>& bitvec, const int val);
-int GolombDecode(BitInputManager& bitman);//VLC, returning the value decoded
-int GolombDecode(const std::vector<bool>& bitvec);//VLC, returning the value decoded
+
+//! Decode a value using unsigned exp-Golomb decoding and output it
+unsigned int UnsignedGolombDecode(BitInputManager& bitman);//returning the value decoded
+
+//! Decode a value using unsigned exp-Golomb decoding and output it
+unsigned int UnsignedGolombDecode(const std::vector<bool>& bitvec);//returning the value decoded
+
+//! Decode a value using signed exp-Golomb decoding and output it
+int GolombDecode(BitInputManager& bitman);//returning the value decoded
+
+//! Decode a value using signed exp-Golomb decoding and output it
+int GolombDecode(const std::vector<bool>& bitvec);//returning the value decoded
 
 #endif

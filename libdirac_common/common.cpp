@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -56,10 +62,10 @@
 *
 */
 
-#include "common.h"
+#include "libdirac_common/common.h"
 #include <algorithm>
 
-float EntropyCorrector::Factor(int bandnum, FrameSort fsort,CompSort c){
+float EntropyCorrector::Factor(const int bandnum, const FrameSort fsort,const CompSort c) const{
 	if (c==U)
 		return Ufctrs[fsort][bandnum-1];
 	else if (c==V)
@@ -123,16 +129,17 @@ void EntropyCorrector::Update(int bandnum, FrameSort fsort, CompSort c,int est_b
 		Yfctrs[fsort][bandnum-1]*=multiplier;
 }
 
-void CodecParams::SetBlockSizes(OLBParams& olbparams){
+void CodecParams::SetBlockSizes(const OLBParams& olbparams){
 	//given the raw overlapped block parameters, set the modified internal parameters to
 	//take account of the chroma sampling format and overlapping requirements, as well
-	//as the equivalent parameters for sub-MBs and MBs
+	//as the equivalent parameters for sub-MBs and MBs.
+	//Does NOT set the number of blocks or macroblocks, as padding may be required.
 
 	lbparams[2]=olbparams;
-	lbparams[2].XBSEP=DIRAC_MAX(lbparams[2].XBSEP,4);
-	lbparams[2].XBLEN=DIRAC_MAX(lbparams[2].XBSEP+2,lbparams[2].XBLEN);
-	lbparams[2].YBSEP=DIRAC_MAX(lbparams[2].YBSEP,4);
-	lbparams[2].YBLEN=DIRAC_MAX(lbparams[2].YBSEP+2,lbparams[2].YBLEN);	
+	lbparams[2].XBSEP=std::max(lbparams[2].XBSEP,4);
+	lbparams[2].XBLEN=std::max(lbparams[2].XBSEP+2,lbparams[2].XBLEN);
+	lbparams[2].YBSEP=std::max(lbparams[2].YBSEP,4);
+	lbparams[2].YBLEN=std::max(lbparams[2].YBSEP+2,lbparams[2].YBLEN);	
 	lbparams[2].XOFFSET=(lbparams[2].XBLEN-lbparams[2].XBSEP)/2;	
 	lbparams[2].YOFFSET=(lbparams[2].YBLEN-lbparams[2].YBSEP)/2;	
 	if ((lbparams[2].XBLEN-lbparams[2].XBSEP)%2!=0)
@@ -140,43 +147,30 @@ void CodecParams::SetBlockSizes(OLBParams& olbparams){
 	if ((lbparams[2].YBLEN-lbparams[2].YBSEP)%2!=0)
 		lbparams[2].YBLEN++;
 
-	X_NUMBLOCKS=sparams.xl/lbparams[2].XBSEP;
-	if (sparams.xl%X_NUMBLOCKS!=0)
-		X_NUMBLOCKS++;
-	Y_NUMBLOCKS=sparams.yl/lbparams[2].YBSEP;
-	if (sparams.yl%Y_NUMBLOCKS!=0)
-		Y_NUMBLOCKS++;
-	X_NUM_MB=X_NUMBLOCKS/4;
-	if (X_NUMBLOCKS%4!=0)
-		X_NUM_MB++;
-	Y_NUM_MB=Y_NUMBLOCKS/4;
-	if (Y_NUMBLOCKS%4!=0)
-		Y_NUM_MB++;
-
 	//the chroma block params
-	if (sparams.cformat==format420){
+	if (cformat==format420){
 		cbparams[2].XBSEP=lbparams[2].XBSEP/2;
 		cbparams[2].YBSEP=lbparams[2].YBSEP/2;	
-		cbparams[2].XBLEN=DIRAC_MAX(lbparams[2].XBLEN/2,cbparams[2].XBSEP+2);
-		cbparams[2].YBLEN=DIRAC_MAX(lbparams[2].YBLEN/2,cbparams[2].YBSEP+2);
+		cbparams[2].XBLEN=std::max(lbparams[2].XBLEN/2,cbparams[2].XBSEP+2);
+		cbparams[2].YBLEN=std::max(lbparams[2].YBLEN/2,cbparams[2].YBSEP+2);
 	}
-	else if (sparams.cformat==format422){
+	else if (cformat==format422){
 		cbparams[2].XBSEP=lbparams[2].XBSEP/2;
 		cbparams[2].YBSEP=lbparams[2].YBSEP;	
-		cbparams[2].XBLEN=DIRAC_MAX(lbparams[2].XBLEN/2,cbparams[2].XBSEP+2);
-		cbparams[2].YBLEN=DIRAC_MAX(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
+		cbparams[2].XBLEN=std::max(lbparams[2].XBLEN/2,cbparams[2].XBSEP+2);
+		cbparams[2].YBLEN=std::max(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
 	}
-	else if (sparams.cformat==format411){
+	else if (cformat==format411){
 		cbparams[2].XBSEP=lbparams[2].XBSEP/4;
 		cbparams[2].YBSEP=lbparams[2].YBSEP;	
-		cbparams[2].XBLEN=DIRAC_MAX(lbparams[2].XBLEN/4,cbparams[2].XBSEP+2);
-		cbparams[2].YBLEN=DIRAC_MAX(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
+		cbparams[2].XBLEN=std::max(lbparams[2].XBLEN/4,cbparams[2].XBSEP+2);
+		cbparams[2].YBLEN=std::max(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
 	}
 	else{
 		cbparams[2].XBSEP=lbparams[2].XBSEP;
 		cbparams[2].YBSEP=lbparams[2].YBSEP;	
-		cbparams[2].XBLEN=DIRAC_MAX(lbparams[2].XBLEN,cbparams[2].XBSEP+2);
-		cbparams[2].YBLEN=DIRAC_MAX(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
+		cbparams[2].XBLEN=std::max(lbparams[2].XBLEN,cbparams[2].XBSEP+2);
+		cbparams[2].YBLEN=std::max(lbparams[2].YBLEN,cbparams[2].YBSEP+2);
 	}
 
 	if ((cbparams[2].XBLEN-cbparams[2].XBSEP)%2!=0)
@@ -212,14 +206,4 @@ void CodecParams::SetBlockSizes(OLBParams& olbparams){
 	cbparams[0].YBLEN=cbparams[1].YBLEN+cbparams[1].XBSEP;		
 	cbparams[0].XOFFSET=cbparams[1].XOFFSET;
 	cbparams[0].YOFFSET=cbparams[1].YOFFSET;
-
-}
-
-std::vector<Context>& ContextInitialiser::GetInitCtx(FrameSort& fsort,CompSort& csort,int band_num){
-	int idx=int(fsort)*39+int(csort)*13+band_num;
-	return *(*init_list)[idx];
-}
-void ContextInitialiser::SetInitCtx(FrameSort& fsort,CompSort& csort,int band_num,std::vector<Context>& inits){
-	int idx=int(fsort)*39+int(csort)*13+band_num;
-	*(*init_list)[idx]=inits;
 }

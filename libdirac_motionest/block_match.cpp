@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -63,14 +69,13 @@ using std::vector;
 
 MvCostData FindBestMatch(BMParams& matchparams){
 
-	uint I, L;
 	BlockDiffParams dparams(matchparams);
 	BlockDiff* mydiff;
 	BlockDiff* simplediff;
 	BlockDiff* checkdiff;
 
-	PicArray& pic_data=*(matchparams.pic_data);
-	PicArray& ref_data=*(matchparams.ref_data);
+	const PicArray& pic_data=*(matchparams.pic_data);
+	const PicArray& ref_data=*(matchparams.ref_data);
 	if (matchparams.up_conv==true){
 		simplediff=new SimpleBlockDiffUp(ref_data,pic_data);
 		checkdiff=new BChkBlockDiffUp(ref_data,pic_data);				
@@ -94,7 +99,7 @@ MvCostData FindBestMatch(BMParams& matchparams){
    	//first test the first in each of the lists to choose which lists to pursue
 	dparams.cost.total=100000000.0f;//initialise so that we choose a valid vector to start with!
 	dparams.best_mv=vect_list[0][0];
-	for (L=0;L<vect_list.size();++L){
+	for (uint L=0;L<vect_list.size();++L){
 		temp_mv=vect_list[L][0];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 		if (matchparams.up_conv){
@@ -121,11 +126,11 @@ MvCostData FindBestMatch(BMParams& matchparams){
 
 	//select which lists we're going to use
 	min_cost=list_costs[0];
-	for (L=1;L<list_costs.length();++L){
+	for (int L=1;L<list_costs.length();++L){
 		if (list_costs[L]<min_cost)
 			min_cost=list_costs[L];
 	}//L
-	for (L=0;L<list_costs.length();++L){
+	for (int L=0;L<list_costs.length();++L){
 		if (list_costs[L]<1.5*min_cost){//value of 1.5 tbd. Only do lists whose 1st element isn't too far off best
 			list_nums.push_back(L);
 		}
@@ -136,7 +141,7 @@ MvCostData FindBestMatch(BMParams& matchparams){
 
 	for (uint N=0;N<list_nums.size();++N){
 		lnum=list_nums[N];
-		for (I=1;I<vect_list[lnum].size();++I){//start at 1 since did 0 above
+		for (uint I=1;I<vect_list[lnum].size();++I){//start at 1 since did 0 above
 			temp_mv=vect_list[lnum][I];
 			dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 			if (matchparams.up_conv){
@@ -167,19 +172,18 @@ MvCostData FindBestMatch(BMParams& matchparams){
 	return dparams.cost;
 }	
 
-void FindBestMatchSubp(BMParams& matchparams,MVector& pel_mv,MvCostData& block_cost){
+void FindBestMatchSubp(BMParams& matchparams,const MVector& pel_mv,MvCostData& block_cost){
 	//as find_best_match, but does sub-pel refinement from a pixel-accurate motion vector
 	//The reference is upconverted by a factor 2 in each dim, and vectors are computed to 1/8 pel
 	//accuracy by extension with linear interpolation
 
-	uint I;
 	int list_idx=0;//index of the current list we're working on	
 	BlockDiffParams dparams(matchparams);
 	dparams.bailout=true;
 	BlockDiff* mydiff;
 
-	PicArray& pic_data=*(matchparams.pic_data);
-	PicArray& ref_data=*(matchparams.ref_data);		
+	const PicArray& pic_data=*(matchparams.pic_data);
+	const PicArray& ref_data=*(matchparams.ref_data);		
 	SimpleBlockDiffUp* simplediff=new SimpleBlockDiffUp(ref_data,pic_data);
 	BChkBlockDiffUp* checkdiff=new BChkBlockDiffUp(ref_data,pic_data);
 
@@ -203,7 +207,7 @@ void FindBestMatchSubp(BMParams& matchparams,MVector& pel_mv,MvCostData& block_c
 	AddNewVlist(vect_list,dparams.best_mv,1,1,4);	//creates a list of all 1/2-pel vectors neighbouring
   													//pel_mv but not pel_mv itself. Will search this.	
  	//Next, go through list 1, which is 1/2-pel offsets
-	for (I=0;I<vect_list[list_idx].size();++I){
+	for (uint I=0;I<vect_list[list_idx].size();++I){
 		temp_mv=vect_list[list_idx][I];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 		if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
@@ -219,7 +223,7 @@ void FindBestMatchSubp(BMParams& matchparams,MVector& pel_mv,MvCostData& block_c
  	//next, the 1/4-pel offsets
 	AddNewVlist(vect_list,dparams.best_mv,1,1,2);
 	list_idx++;
-	for (I=0;I<vect_list[list_idx].size();++I){
+	for (uint I=0;I<vect_list[list_idx].size();++I){
 		temp_mv=vect_list[list_idx][I];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 		if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
@@ -236,7 +240,7 @@ void FindBestMatchSubp(BMParams& matchparams,MVector& pel_mv,MvCostData& block_c
 	AddNewVlist(vect_list,dparams.best_mv,1,1,1);
 
 	list_idx++;
-	for (I=0;I<vect_list[list_idx].size();++I){
+	for (uint I=0;I<vect_list[list_idx].size();++I){
 		temp_mv=vect_list[list_idx][I];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 		if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
@@ -253,7 +257,7 @@ void FindBestMatchSubp(BMParams& matchparams,MVector& pel_mv,MvCostData& block_c
 	AddNewVlist(vect_list,matchparams.mv_pred,1,1,1);
 	if (vect_list.size()>4){//we might not have successfully added anything
 		list_idx++;
-		for (I=0;I<vect_list[list_idx].size();++I){
+		for (uint I=0;I<vect_list[list_idx].size();++I){
 			temp_mv=vect_list[list_idx][I];
 			dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 			if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
@@ -275,14 +279,14 @@ void FindBestMatchSubp(BMParams& matchparams,MVector& pel_mv,MvCostData& block_c
 	block_cost=dparams.cost;
 }	
 
-ValueType GetVar(MVector& predmv,MVector& mv){
+ValueType GetVar(const MVector& predmv,const MVector& mv){
 	MVector diff;
 	diff.x=mv.x-predmv.x;
 	diff.y=mv.y-predmv.y;	
 	return Norm1(diff);
 }
 
-ValueType GetVar(std::vector<MVector>& pred_list,MVector& mv){
+ValueType GetVar(const std::vector<MVector>& pred_list,const MVector& mv){
 	ValueType sum=0;
 	MVector diff;
 	for (uint I=0;I<pred_list.size();++I){
@@ -294,7 +298,7 @@ ValueType GetVar(std::vector<MVector>& pred_list,MVector& mv){
 }
 
 
-float GetModeVar(MvData* mv_data,int xindex,int yindex, PredMode predmode,float loc_lambda){
+float GetModeVar(const MvData* mv_data,int xindex,int yindex, PredMode predmode,float loc_lambda){
 	//computes the variation of the given mode, predmode, from its immediate neighbours
 	//Currently, includes branches to cope with blocks on the edge of the picture.
 	int I,J;
@@ -304,25 +308,25 @@ float GetModeVar(MvData* mv_data,int xindex,int yindex, PredMode predmode,float 
 	I=xindex-1;J=yindex;
 	if (I>=0){
 		diff=float((mv_data->mode)[J][I]-predmode);
-		var=DIRAC_ABS(diff);
+		var=std::abs(diff);
 	}
 
 	I=xindex-1;J=yindex-1;
 	if (I>=0 && J>=0){
 		diff=float((mv_data->mode)[J][I]-predmode);
-		var+=DIRAC_ABS(diff);
+		var+=std::abs(diff);
 	}
 
 	I=xindex;J=yindex-1;
 	if (J>=0){
 		diff=float((mv_data->mode)[J][I]-predmode);
-		var+=DIRAC_ABS(diff);
+		var+=std::abs(diff);
 	}
 
 	return 2.0*var*loc_lambda;//multiple determined experimentally
 }
 
-void AddNewVlist(vector<vector<MVector> >& vect_list, MVector& mv, int xr, int yr, int step){
+void AddNewVlist(vector<vector<MVector> >& vect_list, const MVector& mv, int xr, int yr, int step){
   	//Creates a new motion vector list in a square region around mv
 
 	vector<MVector> tmp_list;
@@ -352,7 +356,7 @@ void AddNewVlist(vector<vector<MVector> >& vect_list, MVector& mv, int xr, int y
 		vect_list.erase(vect_list.begin()+list_num);//remove the list so we don't ever have to check its size
 }
 
-void AddNewVlist(vector<vector<MVector> >& vect_list, MVector& mv, int xr, int yr){
+void AddNewVlist(vector<vector<MVector> >& vect_list, const MVector& mv, int xr, int yr){
   	//Creates a new motion vector list in a square region around mv
 	//add_new_vlist(vect_list,mv,xr,yr,step);	
 	vector<MVector> tmp_list;
@@ -382,7 +386,7 @@ void AddNewVlist(vector<vector<MVector> >& vect_list, MVector& mv, int xr, int y
 		vect_list.erase(vect_list.begin()+list_num);//remove the list so we don't ever have to check its size
 }
 
-void AddNewVlistD(vector<vector<MVector> >& vect_list, MVector& mv, int xr, int yr){
+void AddNewVlistD(vector<vector<MVector> >& vect_list, const MVector& mv, int xr, int yr){
   	//As above, but using a diamond pattern
 
 	vector<MVector> tmp_list;
@@ -401,7 +405,7 @@ void AddNewVlistD(vector<vector<MVector> >& vect_list, MVector& mv, int xr, int 
 		AddVect(vect_list,tmp_mv,list_num);	
 	}
 	for (int J=1;J<=yr;++J){
-		xlim=xr*(yr-DIRAC_ABS(J))/yr;		
+		xlim=xr*(yr-std::abs(J))/yr;		
 		for (int I=-xlim;I<=xlim;++I){
 			tmp_mv.x=mv.x+I;
 			tmp_mv.y=mv.y+J;
@@ -414,7 +418,7 @@ void AddNewVlistD(vector<vector<MVector> >& vect_list, MVector& mv, int xr, int 
 		vect_list.erase(vect_list.begin()+list_num);//remove the list so we don't ever have to check its size
 }
 
-void AddVect(vector<vector<MVector> >& vect_list,MVector& mv,int list_num){
+void AddVect(vector<vector<MVector> >& vect_list,const MVector& mv,int list_num){
 
 	bool is_in_list=false;	
 	uint L=0;uint I;	

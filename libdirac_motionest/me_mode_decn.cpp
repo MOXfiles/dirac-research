@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -57,12 +63,13 @@
 */
 
 #include "libdirac_motionest/me_mode_decn.h"
+#include "libdirac_common/frame_buffer.h"
 #include <algorithm>
 
 using std::vector;
 
  //mode decision stuff
-void ModeDecider::DoModeDecn(Gop& my_gop, int frame_num, MvData& mvdata){
+void ModeDecider::DoModeDecn(const FrameBuffer& my_buffer, int frame_num, MvData& mvdata){
 
  	//we've got 'raw' block motion vectors for up to two reference frames. Now we want
  	//to make a decision as to mode. In this initial implementation,
@@ -79,20 +86,20 @@ void ModeDecider::DoModeDecn(Gop& my_gop, int frame_num, MvData& mvdata){
 	factor2x2=float(4*encparams.LumaBParams(2).XBLEN*encparams.LumaBParams(2).YBLEN)/
 		float(encparams.LumaBParams(1).XBLEN*encparams.LumaBParams(1).YBLEN);
 
-	fsort=my_gop.GetFrame(frame_num).GetFparams().fsort;
+	fsort=my_buffer.GetFrame(frame_num).GetFparams().fsort;
 	if (fsort!=I_frame){
 		mv_data=&mvdata;
-		pic_data=&(my_gop.GetComponent(frame_num,Y));
-		vector<int>& refs=my_gop.GetRefs(frame_num);
+		pic_data=&(my_buffer.GetComponent(frame_num,Y));
+		const vector<int>& refs=my_buffer.GetFrame(frame_num).GetFparams().refs;
 		num_refs=refs.size();
 		ref1=refs[0];
 		intradiff=new IntraBlockDiff(*pic_data);
-		ref1_updata=&(my_gop.GetUpComponent(ref1,Y));
+		ref1_updata=&(my_buffer.GetUpComponent(ref1,Y));
 		checkdiff1=new BChkBlockDiffUp(*ref1_updata,*pic_data);
 		simplediff1=new SimpleBlockDiffUp(*ref1_updata,*pic_data);
 		if (num_refs>1){
 			ref2=refs[1];
-			ref2_updata=&(my_gop.GetUpComponent(ref2,Y));			
+			ref2_updata=&(my_buffer.GetUpComponent(ref2,Y));			
 			checkdiff2=new BChkBlockDiffUp(*ref2_updata,*pic_data);
 			simplediff2=new SimpleBlockDiffUp(*ref2_updata,*pic_data);
 			bicheckdiff=new BiBChkBlockDiffUp(*ref1_updata,*ref2_updata,*pic_data);
@@ -114,10 +121,10 @@ void ModeDecider::DoModeDecn(Gop& my_gop, int frame_num, MvData& mvdata){
 					ysubMBbr=ysubMBtl+2;
 				}
 				else{
-					xbr=DIRAC_MIN(xtl+4,encparams.X_NUMBLOCKS);
-					ybr=DIRAC_MIN(ytl+4,encparams.Y_NUMBLOCKS);
-					xsubMBbr=DIRAC_MIN(xsubMBtl+2,encparams.X_NUMBLOCKS>>1);
-					ysubMBbr=DIRAC_MIN(ysubMBtl+2,encparams.Y_NUMBLOCKS>>1);
+					xbr=std::min(xtl+4,encparams.X_NUMBLOCKS);
+					ybr=std::min(ytl+4,encparams.Y_NUMBLOCKS);
+					xsubMBbr=std::min(xsubMBtl+2,encparams.X_NUMBLOCKS>>1);
+					ysubMBbr=std::min(ysubMBtl+2,encparams.Y_NUMBLOCKS>>1);
 				}
 				DoMBDecn();				
 			}//xmb_loc		
@@ -140,8 +147,8 @@ void ModeDecider::DoMBDecn(){
 	Do4x4Decn();//start with 4x4 modes
 	float old_best_MB_cost=(mv_data->MB_costs)[ymb_loc][xmb_loc];
 	Do2x2Decn();//next do 2x2 modes
-	old_best_MB_cost=(mv_data->MB_costs)[ymb_loc][xmb_loc];
 	if ((mv_data->MB_costs)[ymb_loc][xmb_loc]<=old_best_MB_cost){
+		old_best_MB_cost=(mv_data->MB_costs)[ymb_loc][xmb_loc];		
 		Do1x1Decn();//finally do 1x1 mode if merging worked before
 	}	
 }
@@ -214,8 +221,8 @@ void ModeDecider::Do2x2Decn(){
 		for (int J=ytl,Q=0;J<ybr;J+=2,++Q){
 			for (int I=xtl,P=0; I<xbr;I+=2,++P){
   				//copy data across				
-				for (int L=J;L<DIRAC_MIN(ybr,J+2);++L){
-					for (int K=I;K<DIRAC_MIN(xbr,I+2);++K){
+				for (int L=J;L<std::min(ybr,J+2);++L){
+					for (int K=I;K<std::min(xbr,I+2);++K){
 						(mv_data->mv1)[L][K]=(split1_mv_data->mv1)[Q][P];
 						(mv_data->mv2)[L][K]=(split1_mv_data->mv2)[Q][P];
 						(mv_data->mode)[L][K]=(split1_mv_data->mode)[Q][P];
@@ -237,8 +244,8 @@ void ModeDecider::Do2x2Decn(){
 		for (int J=ytl,Q=0;J<ybr;J+=2,++Q){
 			for (int I=xtl,P=0; I<xbr;I+=2,++P){
            				//copy data across				
-				for (int L=J;L<DIRAC_MIN(ybr,J+2);++L){
-					for (int K=I;K<DIRAC_MIN(xbr,I+2);++K){
+				for (int L=J;L<std::min(ybr,J+2);++L){
+					for (int K=I;K<std::min(xbr,I+2);++K){
 						(mv_data->mv1)[L][K]=(split1_mv_data->mv1)[Q][P];
 						(mv_data->mv2)[L][K]=(split1_mv_data->mv2)[Q][P];
 						(mv_data->dcY)[L][K]=(split1_mv_data->dcY)[Q][P];
@@ -468,13 +475,12 @@ float ModeDecider::DoBlockDecn4x4(int xblock, int yblock){
 
 float ModeDecider::DoCommonMode4x4(PredMode& predmode){
 
-	int I, J;
 	float MB_cost;
 	float best_4x4_cost;
 	//start with the intra cost
 	MB_cost=0.0;	
-	for (J=ytl;J<ybr;++J){
-		for (I=xtl;I<xbr;++I){
+	for (int J=ytl;J<ybr;++J){
+		for (int I=xtl;I<xbr;++I){
 			MB_cost+=(mv_data->block_intra_costs)[J][I];
 		}//I
 	}//J
@@ -484,8 +490,8 @@ float ModeDecider::DoCommonMode4x4(PredMode& predmode){
 
 	//next do ref1	
 	MB_cost=0.0;	
-	for (J=ytl;J<ybr;++J){
-		for (I=xtl;I<xbr;++I){
+	for (int J=ytl;J<ybr;++J){
+		for (int I=xtl;I<xbr;++I){
 			MB_cost+=(mv_data->block_costs1)[J][I].total;
 		}//I
 	}//J
@@ -499,8 +505,8 @@ float ModeDecider::DoCommonMode4x4(PredMode& predmode){
 	if (num_refs>1){
   		//next do ref2	
 		MB_cost=0.0;	
-		for (J=ytl;J<ybr;++J){
-			for (I=xtl;I<xbr;++I){
+		for (int J=ytl;J<ybr;++J){
+			for (int I=xtl;I<xbr;++I){
 				MB_cost+=(mv_data->block_costs2)[J][I].total;
 			}//I
 		}//J
@@ -511,8 +517,8 @@ float ModeDecider::DoCommonMode4x4(PredMode& predmode){
 		}
   		//finally do ref 1 and 2	
 		MB_cost=0.0;	
-		for (J=ytl;J<ybr;++J){
-			for (I=xtl;I<xbr;++I){
+		for (int J=ytl;J<ybr;++J){
+			for (int I=xtl;I<xbr;++I){
 				MB_cost+=(mv_data->block_bipred_costs)[J][I].total;
 			}//I
 		}//J
@@ -659,14 +665,13 @@ float ModeDecider::DoBlockDecn2x2(int xsubMB, int ysubMB){
 }
 
 float ModeDecider::DoCommonMode2x2(PredMode& predmode){
-	int I, J;
 	float MB_cost;
 	float best_2x2_cost;
 
   	//start with the intra cost
 	MB_cost=ModeCost(xtl,ytl,INTRA)*0.13;//multiple determined experimentally----TBD-------------------------------	
-	for (J=0;J<2;++J){
-		for (I=0;I<2;++I){
+	for (int J=0;J<2;++J){
+		for (int I=0;I<2;++I){
 			MB_cost+=(split1_mv_data->block_intra_costs)[J][I];			
 		}//I
 	}//J
@@ -676,8 +681,8 @@ float ModeDecider::DoCommonMode2x2(PredMode& predmode){
 
   	//next do ref1	
 	MB_cost=ModeCost(xtl,ytl,REF1_ONLY)*0.13;//multiple determined experimentally----TBD-------------------------------	
-	for (J=0;J<2;++J){
-		for (I=0;I<2;++I){
+	for (int J=0;J<2;++J){
+		for (int I=0;I<2;++I){
 			MB_cost+=(split1_mv_data->block_costs1)[J][I].total;
 		}//I
 	}//J
@@ -691,8 +696,8 @@ float ModeDecider::DoCommonMode2x2(PredMode& predmode){
 	if (num_refs>1){
   		//next do ref2	
 		MB_cost=ModeCost(xtl,ytl,REF2_ONLY)*0.13;//multiple determined experimentally----TBD-------------------------------	
-		for (J=0;J<2;++J){
-			for (I=0;I<2;++I){
+		for (int J=0;J<2;++J){
+			for (int I=0;I<2;++I){
 				MB_cost+=(split1_mv_data->block_costs2)[J][I].total;
 			}//I
 		}//J
@@ -704,8 +709,8 @@ float ModeDecider::DoCommonMode2x2(PredMode& predmode){
 		}
   		//finally do ref 1 and 2	
 		MB_cost=ModeCost(xtl,ytl,REF1AND2)*0.13;//multiple determined experimentally----TBD-------------------------------	
-		for (J=0;J<2;++J){
-			for (I=0;I<2;++I){
+		for (int J=0;J<2;++J){
+			for (int I=0;I<2;++I){
 				MB_cost+=(split1_mv_data->block_bipred_costs)[J][I].total;
 			}//I
 		}//J

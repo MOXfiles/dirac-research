@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -56,20 +62,18 @@
 *
 */
 
-#include "golomb.h"
-#include "bit_manager.h"
+#include "libdirac_common/golomb.h"
+#include "libdirac_common/bit_manager.h"
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
 
 using std::vector;
 
-void GolombCode(BasicOutputManager& bitman, const int val){
-
-	int I;
-	int M=0;
-	int info;
-	int val2=abs(val);
+void UnsignedGolombCode(BasicOutputManager& bitman, const unsigned int val){
+	unsigned int M=0;
+	unsigned int info;
+	unsigned int val2=val;
 
 	val2++;
 	while (val2>1){//get the log base 2 of val.
@@ -79,61 +83,67 @@ void GolombCode(BasicOutputManager& bitman, const int val){
 	info=abs(val)-(1<<M)+1;
 
 	//add length M+1 prefix
-	for (I=1;I<=M;++I){
+	for (unsigned int I=1;I<=M;++I){
 		bitman.OutputBit(0);
 	}
 	bitman.OutputBit(1);
 	//add info bits
-	for (I=0;I<M;++I){
+	for (unsigned int I=0;I<M;++I){
 		bitman.OutputBit(info & (1<<I));		
 	}
-	//do sign
-	if (val>0){
-		bitman.OutputBit(1);
-	}
-	else if (val<0){
-		bitman.OutputBit(0);
-	}
+
 }
+void UnsignedGolombCode(std::vector<bool>& bitvec, const unsigned int val){
+	unsigned int M;
+	unsigned int info;
+	unsigned int val2=val;
 
-
-
-void GolombCode(vector<bool>& bitvec, const int val){
-
-	int M, I;
-	int info;
 	bitvec.clear();
-
-	M=int(floor(log(double(abs(val)+1))/log(2.0)));
+	val2++;
+	while (val2>1){//get the log base 2 of val.
+		val2>>=1;
+		M++;		
+	}
 	info=abs(val)-(1<<M)+1;
 
 	//add length M+1 prefix
-	for (I=1;I<=M;++I){
+	for (unsigned int I=1;I<=M;++I){
 		bitvec.push_back(0);
 	}
 	bitvec.push_back(1);
 
 	//add info bits
-	for (I=0;I<M;++I){
+	for (unsigned int I=0;I<M;++I){
 		bitvec.push_back(info & (1<<I));
 	}
 
-	//do sign
-	if (val>0){
-		bitvec.push_back(1);
-	}
-	else if (val<0){
-		bitvec.push_back(0);
-	}
 }
 
+void GolombCode(BasicOutputManager& bitman, const int val){
 
-int GolombDecode(BitInputManager& bitman){
+	//code the magnitude
+	UnsignedGolombCode(bitman,(unsigned int) abs(val));
 
-	int	M=0;
-	int info=0;
+	//do sign
+	if (val>0) bitman.OutputBit(1);
+	else if (val<0) bitman.OutputBit(0);
+}
+
+void GolombCode(vector<bool>& bitvec, const int val){
+
+	//code the magnitude
+	UnsignedGolombCode(bitvec,(unsigned int) abs(val));
+
+	//do sign
+	if (val>0) bitvec.push_back(1);
+	else if (val<0) bitvec.push_back(0);
+}
+
+unsigned int UnsignedGolombDecode(BitInputManager& bitman){	
+	unsigned int M=0;
+	unsigned int info=0;
 	bool bit=0;
-	int val=0;
+	unsigned int val=0;
 
 	do{
 		bit=bitman.InputBit();
@@ -143,14 +153,48 @@ int GolombDecode(BitInputManager& bitman){
 	while(!bit && M<64);//terminate if the number is too big!
 
  	//now get the M info bits	
-	for (int I=0;I<M;++I){
+	for (unsigned int I=0;I<M;++I){
 		bit=bitman.InputBit();
 		if (bit)
 			info|=(1<<I);
 	}	
 	val=(1<<M)-1+info;
 
- 	//finally, get sign
+	return val;
+}
+
+unsigned int UnsignedGolombDecode(const std::vector<bool>& bitvec){
+	unsigned int	M=0;
+	unsigned int info=0;
+	bool bit=0;
+	unsigned int val=0;
+
+	unsigned int index=0;//index into bitvec
+
+	do{
+		bit=bitvec[++index];
+		if (!bit)
+			M++;
+	}
+	while(!bit && M<64);//terminate if the number is too big!
+
+ 	//now get the M info bits	
+	for (unsigned int I=0;I<M;++I){
+		bit=bitvec[++index];
+		if (bit)
+			info|=(1<<I);
+	}	
+	val=(1<<M)-1+info;
+
+	return val;
+}
+
+int GolombDecode(BitInputManager& bitman){
+
+	int val=int(UnsignedGolombDecode(bitman));
+	bool bit;
+
+ 	//get the sign
 	if (val!=0){
 		bit=bitman.InputBit();
 		if (!bit)
@@ -161,31 +205,12 @@ int GolombDecode(BitInputManager& bitman){
 
 int GolombDecode(const vector<bool>& bitvec){
 
-	int	M=0;
-	int info=0;
-	bool bit=0;
-	int val=0;
+	int val=int(UnsignedGolombDecode(bitvec));
+	bool bit;
 
-	int index=0;//index into bitvec
-
-	do{
-		bit=bitvec[++index];
-		if (!bit)
-			M++;
-	}
-	while(!bit && M<64);//terminate if the number is too big!
-
- 	//now get the M info bits	
-	for (int I=0;I<M;++I){
-		bit=bitvec[++index];
-		if (bit)
-			info|=(1<<I);
-	}	
-	val=(1<<M)-1+info;
-
- 	//finally, get sign
+ 	//get sign
 	if (val!=0){
-		bit=bitvec[++index];
+		bit=bitvec[bitvec.size()-1];
 		if (!bit)
 			val=-val;
 	}
