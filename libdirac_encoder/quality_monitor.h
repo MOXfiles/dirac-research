@@ -79,7 +79,10 @@ private:
     void CalcNewLambdas(const FrameSort fsort, const double slope, const double offset);
 
     //! Calculate the quality of coded wrt original picture
-    double QualityVal(const PicArray& coded_data, const PicArray& orig_data , double cpd );
+    double QualityVal( const PicArray& coded_data , 
+                                       const PicArray& orig_data ,
+                                       double cpd , 
+                                       const FrameSort fsort );
 
     //member variables//
     ////////////////////
@@ -103,7 +106,7 @@ private:
     OneDArray<double> m_last_quality;
 
     /* Default Model parameters for quality wrt to log10(lambda)
-	    Model is : 
+       Model is : 
             quality = offset + slope * log10( lambda )
         for each lambda parameter type.
         Default parameters will be used if it's not possible to measure them, and updated 
@@ -112,10 +115,10 @@ private:
     OneDArray<double> m_slope;
     OneDArray<double> m_offset;
 
-    //! Lagrangian parameters for the last I, L1 and L2 frames	
+    //! Lagrangian parameters for the last I, L1 and L2 frames
     OneDArray<double> m_last_lambda;
 
-    //! The Lagrangian ME parameters	
+    //! The Lagrangian ME parameters
     double m_L1_me_lambda, m_L2_me_lambda;
 
     //! The ratio of Lagrangian ME parameters to frame motion estimation parameters
