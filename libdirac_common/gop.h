@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -55,30 +58,109 @@
 #include "frame.h"
 #include <vector>
 
+
+//! 
+/*!
+
+ */
 class Gop {
 	//class for group of pictures. Encapsulates both the basic data, the methods for accessing it
 	//and the metadata associated with the coding GOP structure
 public:
 
+
+    //! 
+    /*!
+        
+     */
 	//Constructors
 	Gop(): gop_number(0){}
+
+    //! 
+    /*!
+        
+     */
 	Gop(const CodecParams& cp): cparams(cp),gop_number(0){Init();} 	
 	//Destructor
+
+    //! 
+    /*!
+        
+     */
 	virtual ~Gop();
 
+
+    //! 
+    /*!
+        
+     */
 	//gets and sets
 	int GopNumber(){return gop_number;}
+
+    //! 
+    /*!
+        
+     */
 	int GetLength(){return gop_len;}
+
+    //! 
+    /*!
+        
+     */
 	void SetGopStructure(int ref_sep);
+
+    //! 
+    /*!
+        
+     */
 	void SetGopStructure(OneDArray<std::vector<int>* >& rlist,OneDArray<int>& c2dmap);
+
+    //! 
+    /*!
+        
+     */
 	int CodedToDisplay(int c){return coded2display[c];}	
+
+    //! 
+    /*!
+        
+     */
 	std::vector<int>& GetRefs(int fnum){return *ref_list[fnum];}
 
+    //! 
+    /*!
+        
+     */
 	Frame& GetFrame(int frame_num) {return *(frame_buffer[frame_num]);}
+
+    //! 
+    /*!
+        
+     */
 	void SetFrame(int frame_num, Frame& frame_data);
+
+    //! 
+    /*!
+        
+     */
 	PicArray& GetComponent(int frame_num, CompSort c);
+
+    //! 
+    /*!
+        
+     */
 	PicArray& GetUpComponent(int frame_num, CompSort c);	
+
+    //! 
+    /*!
+        
+     */
 	void SetComponent(int frame_num, PicArray& comp_data,CompSort c);
+
+    //! 
+    /*!
+        
+     */
 	void IncrementGopNum();
 
 private:

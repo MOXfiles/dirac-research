@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -53,39 +56,129 @@
 //pic_file stuff
 #include "common.h"
 
+
+//! 
+/*!
+
+ */
 class Frame{
 
 public:
 
+
+    //! 
+    /*!
+        
+     */
 	//constructors and destructors
 	Frame(FrameParams fp): fparams(fp),Y_data(0),U_data(0),V_data(0),upY_data(0),upU_data(0),upV_data(0){Init();}
+
+    //! 
+    /*!
+        
+     */
 	virtual ~Frame();
 
+
+    //! 
+    /*!
+        
+     */
 	//initialisation/reinitialisation
 	void Init();
 
+
+    //! 
+    /*!
+        
+     */
 	//gets and sets
 	FrameParams& GetFparams() {return fparams;}
+
+    //! 
+    /*!
+        
+     */
 	void SetFrameSort(FrameSort fsort){fparams.fsort=fsort;}
+
+    //! 
+    /*!
+        
+     */
 	PicArray& Ydata(){return *Y_data;}//get the
+
+    //! 
+    /*!
+        
+     */
 	PicArray& Udata(){return *U_data;}//various
+
+    //! 
+    /*!
+        
+     */
 	PicArray& Vdata(){return *V_data;}//components
+
+    //! 
+    /*!
+        
+     */
 	PicArray& Data(CompSort cs){
 		if (cs==U) return *U_data; 
 		else if (cs==V) return *V_data; 
 		else return *Y_data;}	
+
+    //! 
+    /*!
+        
+     */
 	void SetY(PicArray& in_array);//set the
+
+    //! 
+    /*!
+        
+     */
 	void SetU(PicArray& in_array);//various
+
+    //! 
+    /*!
+        
+     */
 	void SetV(PicArray& in_array);//components
 
+
+    //! 
+    /*!
+        
+     */
 	PicArray& UpData(CompSort cs){
 		if (cs==U) return UpUdata(); 
 		else if (cs==V) return UpVdata(); 
 		else return UpYdata();}	
+
+    //! 
+    /*!
+        
+     */
 	PicArray& UpYdata();//get upconverted
+
+    //! 
+    /*!
+        
+     */
 	PicArray& UpUdata();//versions of the
+
+    //! 
+    /*!
+        
+     */
 	PicArray& UpVdata();//various components
 
+
+    //! 
+    /*!
+        
+     */
 	//other functions
 	void Clip();//clip the data in the frame
 private:

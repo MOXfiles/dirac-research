@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -62,14 +65,44 @@
 #include <vector>
 #include <iostream>
 
+        
+//! 
+/*!
+
+ */
 class MvDataCodec: public ArithCodec<MvData >{
 public:
+        
+    //! 
+    /*!
+        
+     */
 	MvDataCodec(BasicOutputManager* bits_out, std::vector<Context>& ctxs,CodecParams& cp,ChromaFormat& cf): 
+        
+    //! 
+    /*!
+        
+     */
 	ArithCodec<MvData >(bits_out,ctxs),cparams(cp),cformat(cf){}		
 
+        
+    //! 
+    /*!
+        
+     */
 	MvDataCodec(BitInputManager* bits_in, std::vector<Context>& ctxs,CodecParams& cp,ChromaFormat& cf): 
+        
+    //! 
+    /*!
+        
+     */
 	ArithCodec<MvData >(bits_in,ctxs),cparams(cp),cformat(cf){}		
 
+        
+    //! 
+    /*!
+        
+     */
 	void InitContexts();
 private:
 	int MB_count;

@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -63,30 +66,115 @@
 typedef unsigned short int MyCodeType;
 typedef unsigned long MyCalcType;
 
+
+//! 
+/*!
+
+ */
 class Triple{
 
 public:
+
+    //! 
+    /*!
+        
+     */
 	Triple():Start(0),Stop(0),Weight(0){}
+
+    //! 
+    /*!
+        
+     */
 	inline Triple& operator=(const Triple& rhs){Start=rhs.Start;Stop=rhs.Stop;Weight=rhs.Weight;return *this;}
+
+    //! 
+    /*!
+        
+     */
 	MyCodeType Start;	
+
+    //! 
+    /*!
+        
+     */
 	MyCodeType Stop;
+
+    //! 
+    /*!
+        
+     */
 	MyCodeType Weight;	
 };
 
 
+
+//! 
+/*!
+
+ */
 class Context{
 
 public:
+
+    //! 
+    /*!
+        
+     */
 	Context() {set_counts(1,1);}
+
+    //! 
+    /*!
+        
+     */
 	Context(int cnt0,int cnt1) {set_counts(cnt0,cnt1);}
 
+
+    //! 
+    /*!
+        
+     */
 	inline void set_counts(int cnt0,int cnt1){count0=cnt0;count1=cnt1;set_triples();}
+
+    //! 
+    /*!
+        
+     */
 	inline MyCodeType get_count0(){return count0;}	
+
+    //! 
+    /*!
+        
+     */
 	inline MyCodeType get_count1(){return count1;}	
+
+    //! 
+    /*!
+        
+     */
 	inline void IncrCount(const bool& Symbol,const int& amnt);
+
+    //! 
+    /*!
+        
+     */
 	inline void HalveCounts();	
+
+    //! 
+    /*!
+        
+     */
 	inline MyCodeType& Weight(){return trip0.Weight;}
+
+    //! 
+    /*!
+        
+     */
 	inline Triple& GetTriple(const bool& symbol){return (symbol ? trip1 : trip0);}
+
+    //! 
+    /*!
+        
+     */
 	inline bool GetSymbol(const int& num, Triple& trip_val){
 		if (num<trip0.Stop){
 			trip_val=trip0;

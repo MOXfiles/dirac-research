@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -70,14 +73,44 @@
 
 //Subclass these to provide functionality for different file formats and for streaming.
 
+        
+//! 
+/*!
+
+ */
 class PicOutput{
 public:
 
+        
+    //! 
+    /*!
+        
+     */
 	PicOutput(char* output_name, SeqParams& sp);
+        
+    //! 
+    /*!
+        
+     */
 	virtual ~PicOutput();
 
+        
+    //! 
+    /*!
+        
+     */
 	virtual void WriteNextFrame(Frame& myframe);
+        
+    //! 
+    /*!
+        
+     */
 	virtual void WritePicHeader();
+        
+    //! 
+    /*!
+        
+     */
 	virtual void WriteComponent(PicArray& pic_data);
 
 protected:
@@ -87,14 +120,49 @@ protected:
 	std::ofstream* op_head_ptr;
 };
 
+        
+//! 
+/*!
+
+ */
 class PicInput{
 public:
+        
+    //! 
+    /*!
+        
+     */
 	PicInput(char* input_name);
+        
+    //! 
+    /*!
+        
+     */
 	virtual ~PicInput();
 
+        
+    //! 
+    /*!
+        
+     */
 	virtual void ReadNextFrame(Frame& myframe);
+        
+    //! 
+    /*!
+        
+     */
 	virtual void ReadComponent(PicArray& pic_data);
+        
+    //! 
+    /*!
+        
+     */
 	virtual void ReadPicHeader();
+        
+    //! 
+    /*!
+        
+     */
 	virtual SeqParams& GetSeqParams(){return sparams;}
 
 protected:

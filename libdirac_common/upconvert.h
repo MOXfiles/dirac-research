@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -57,55 +60,135 @@
 //
 
 //First have arithmetic classes to avoid code duplication
+        
+//! 
+/*!
+
+ */
 class ArithObj{	
 public:
+        
+    //! 
+    /*!
+        
+     */
 	virtual ~ArithObj(){}
+        
+    //! 
+    /*!
+        
+     */
 	virtual void DoArith(ValueType &lhs, CalcValueType rhs, CalcValueType &Weight) = 0;
+        
+    //! 
+    /*!
+        
+     */
 	CalcValueType t;
 private:
 
 };
 
+        
+//! 
+/*!
+
+ */
 class ArithAddObj : public ArithObj{	
 public:
+        
+    //! 
+    /*!
+        
+     */
 	void DoArith(ValueType &lhs, CalcValueType rhs, CalcValueType &Weight){
 		t = ((rhs*Weight)+128)>>10;
 		lhs+=short(t);
 	};
 };
 
+        
+//! 
+/*!
+
+ */
 class ArithSubtractObj : public ArithObj{	
 public:
+        
+    //! 
+    /*!
+        
+     */
 	void DoArith(ValueType &lhs, CalcValueType rhs, CalcValueType &Weight){
 		t = ((rhs*Weight)+128)>>10;
 		lhs-=short(t);
 	};
 };
 
+        
+//! 
+/*!
+
+ */
 class ArithHalfAddObj : public ArithObj{	
 public:
+        
+    //! 
+    /*!
+        
+     */
 	void DoArith(ValueType &lhs, CalcValueType rhs, CalcValueType &Weight){
 		t = ((rhs*Weight)+256)>>11;
 		lhs+=short(t);
 	};
 };
 
+        
+//! 
+/*!
+
+ */
 class ArithHalfSubtractObj : public ArithObj{	
 public:
+        
+    //! 
+    /*!
+        
+     */
 	void DoArith(ValueType &lhs, CalcValueType rhs, CalcValueType &Weight){
 		t = ((rhs*Weight)+256)>>11;
 		lhs-=short(t);
 	};
 };
 
+        
+//! 
+/*!
+
+ */
 class UpConverter{
 
 public:
 
 	//Constructor
+        
+    //! 
+    /*!
+        
+     */
 	UpConverter(){}
 	//Destructor
+        
+    //! 
+    /*!
+        
+     */
 	~UpConverter(){};
+        
+    //! 
+    /*!
+        
+     */
 	//Calls the up-conversion function
 	void DoUpConverter(PicArray &OldImage, PicArray &NewImage);
 

@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -56,18 +59,38 @@
 
 //Subclasses the arithmetic codec to produce a coding/decoding tool for subbands
 
+
+//! 
+/*!
+
+ */
 class BandCodec: public ArithCodec<PicArray >{
 public:
+
+    //! 
+    /*!
+        
+     */
 	BandCodec(BasicOutputManager* bits_out, std::vector<Context>& ctxs,SubbandList& band_list,int band_num): 
 	ArithCodec<PicArray >(bits_out,ctxs),bnum(band_num),node(band_list(band_num)),xp(node.xp()),yp(node.yp()),xl(node.xl()),
 	yl(node.yl()),vol(node.xl()*node.yl()),reset_coeff_num(std::max(vol/32,50)),cut_off_point(node.scale()>>1)
 	{if (node.parent()!=0) pnode=band_list(node.parent());}		
 
+
+    //! 
+    /*!
+        
+     */
 	BandCodec(BitInputManager* bits_in, std::vector<Context>& ctxs,SubbandList& band_list,int band_num): 
 	ArithCodec<PicArray >(bits_in,ctxs),bnum(band_num),node(band_list(band_num)),xp(node.xp()),yp(node.yp()),xl(node.xl()),
 	yl(node.yl()),vol(node.xl()*node.yl()),reset_coeff_num(std::max(vol/32,50)),cut_off_point(node.scale()>>1)
 	{if (node.parent()!=0) pnode=band_list(node.parent());}
 
+
+    //! 
+    /*!
+        
+     */
 	inline void InitContexts();
 private:
 
@@ -150,11 +173,26 @@ inline int BandCodec::ChooseContext(PicArray& Data){return NZ_BIN5plus_CTX;
 //Now for special class for LF bands (since we don't want/can't refer to parent)//
 //////////////////////////////////////////////////////////////////////////////////
 
+
+    //! 
+    /*!
+        
+     */
 class LFBandCodec: public BandCodec{
 public:
+
+    //! 
+    /*!
+        
+     */
 	LFBandCodec(BasicOutputManager* bits_out, std::vector<Context>& ctxs,SubbandList& band_list,int band_num):
 	BandCodec(bits_out,ctxs,band_list,band_num){}
 
+
+    //! 
+    /*!
+        
+     */
 	LFBandCodec(BitInputManager* bits_in, std::vector<Context>& ctxs,SubbandList& band_list,int band_num):
 	BandCodec(bits_in,ctxs,band_list,band_num){}
 
@@ -169,11 +207,26 @@ protected:
 //Finally,special class incorporating prediction for the DC band of intra frames//
 //////////////////////////////////////////////////////////////////////////////////
 
+
+//! 
+/*!
+
+ */
 class IntraDCBandCodec: public BandCodec{
 public:
+
+    //! 
+    /*!
+        
+     */
 	IntraDCBandCodec(BasicOutputManager* bits_out, std::vector<Context>& ctxs,SubbandList& band_list):
 	BandCodec(bits_out,ctxs,band_list,band_list.length()){}
 
+
+    //! 
+    /*!
+        
+     */
 	IntraDCBandCodec(BitInputManager* bits_in, std::vector<Context>& ctxs,SubbandList& band_list):
 	BandCodec(bits_in,ctxs,band_list,band_list.length()){}
 private:

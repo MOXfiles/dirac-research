@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -65,17 +68,40 @@
 #include "gop.h"
 
 //Motion compensation class, for all your motion compensation needs
+//! 
+/*!
+
+ */
 class MotionCompensator{
 
 public:
+
+    //! 
+    /*!
+        
+     */
 	//Constructor sets up the member variables using information
 	//from cparams.
 	MotionCompensator(const CodecParams &cp);
+
+    //! 
+    /*!
+        
+     */
 	//Destructor
 	~MotionCompensator();
+
+    //! 
+    /*!
+        
+     */
 	void SetCompensationMode(AddOrSub a_or_s) {add_or_sub=a_or_s;}	//Toggles the MC mode
 
 
+    //! 
+    /*!
+        
+     */
 	//Perform motion compensated addition/subtraction on pic_data
 	//Note for L1 frames you can duplicate arguments so UpConv and UpConvTwo are
 	//the same thing - the function will not use UpConvTwo unless there are L2 blocks

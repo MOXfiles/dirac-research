@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -60,10 +63,30 @@
 typedef short ValueType;
 typedef int CalcValueType;
 
+
+//! 
+/*!
+
+ */
 class range{
 public:
+
+    //! 
+    /*!
+
+     */
 	range(int s, int e):fst(s),lst(e){}
+
+    //! 
+    /*!
+
+     */
 	int& first(){return fst;}
+
+    //! 
+    /*!
+
+     */
 	int& last(){return lst;}
 private:
 	int fst,lst;
@@ -73,26 +96,111 @@ private:
 //One-Dimensional Array type//
 //////////////////////////////
 
+
+//! 
+/*!
+
+ */
 template <class T> class OneDArray{
 public:
+
+    //! 
+    /*!
+
+     */
 	OneDArray(){init(0);}
+
+    //! 
+    /*!
+
+     */
 	OneDArray(int len){init(len);}
+
+    //! 
+    /*!
+
+     */
 	OneDArray(range r){init(r);}
+
+    //! 
+    /*!
+
+     */
 	~OneDArray(){
 		free_ptr();
 	}
+
+    //! 
+    /*!
+
+     */
 	OneDArray(const OneDArray<T>& Cpy);
+
+    //! 
+    /*!
+
+     */
 	OneDArray<T>& operator=(const OneDArray<T>& rhs);	
+
+    //! 
+    /*!
+
+     */
 	void resize(int l);
 
+
+    //! 
+    /*!
+
+     */
 	inline T& operator[](int pos){return ptr[pos-fst];}
+
+    //! 
+    /*!
+
+     */
 	int length(const int n){if (n==0) return l; else return 0;}
+
+    //! 
+    /*!
+
+     */
 	int length(){return l;}
+
+    //! 
+    /*!
+
+     */
 	int first(const int n){if (n==0) return fst; else return 0;}
+
+    //! 
+    /*!
+
+     */
 	int first(){return fst;}
+
+    //! 
+    /*!
+
+     */
 	int lbound(const int n){return first(n);}
+
+    //! 
+    /*!
+
+     */
 	int last(const int n){if (n==0) return lst; else return -1;}
+
+    //! 
+    /*!
+
+     */
 	int last(){return lst;}
+
+    //! 
+    /*!
+
+     */
 	int ubound(const int n){return last(n);}	
 private:
 	void init(int len);
@@ -199,33 +307,103 @@ void OneDArray<T>::free_ptr(){
 //Two-Dimensional Array type//
 //////////////////////////////
 
+
+//! 
+/*!
+
+ */
 template <class T> class TwoDArray{
 	typedef T* element_type;
 public:
+
+    //! 
+    /*!
+
+     */
 	TwoDArray(){init(0,0);}
+
+    //! 
+    /*!
+
+     */
 	TwoDArray(int len0,int len1){init(len0,len1);}
+
+    //! 
+    /*!
+
+     */
 	virtual ~TwoDArray(){
 		free_data();	
 	}
+
+    //! 
+    /*!
+
+     */
 	TwoDArray(const TwoDArray<T>& Cpy);
+
+    //! 
+    /*!
+
+     */
 	TwoDArray<T>& operator=(const TwoDArray<T>& rhs);
+
+    //! 
+    /*!
+
+     */
 	void resize(int len0, int len1);	
 
+
+    //! 
+    /*!
+
+     */
 	inline element_type& operator[](const int pos){return array_of_rows[pos];}
+
+    //! 
+    /*!
+
+     */
 	inline T**& data(){return array_of_rows;}
+
+    //! 
+    /*!
+
+     */
 	int length(const int n){
 		if (n==0) return l0; 
 		else if (n==1) return l1;
 		else return 0;}
+
+    //! 
+    /*!
+
+     */
 	int first(const int n){
 		if (n==0) return first0;
 		else if (n==1) return first1; 
 		else return 0;}
+
+    //! 
+    /*!
+
+     */
 	int lbound(const int n){return first(n);}
+
+    //! 
+    /*!
+
+     */
 	int last(const int n){
 		if (n==0) return last0;
 		else if (n==1) return last1; 
 		else return -1;}
+
+    //! 
+    /*!
+
+     */
 	int ubound(const int n){return last(n);}	
 
 private:

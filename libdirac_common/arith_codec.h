@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -64,19 +67,47 @@
 #include "bit_manager.h"
 #include <vector>
 
+
+//! Abstract binary arithmetic coding class
+/*!
+    This is an abtract binary arithmetic encoding class, used as the base
+    for concrete classes that encode motion vectors, handle subband residues,
+    and produce 
+    \param      T       a container (most probably, and array) type
+ */
 template<class T>//T is container/array type
 class ArithCodec{
 	//abstract binary arithmetic coding class
 public:
+
+    //! 
+    /*!
+
+     */
 	// Constructors	
 	ArithCodec(BitInputManager* bits_in, std::vector<Context>& ctxs):
 	bit_count(0),BitIP(bits_in),ContextList(ctxs){}	
+
+    //! 
+    /*!
+
+     */
 	ArithCodec(BasicOutputManager* bits_out, std::vector<Context>& ctxs):
 	bit_count(0),BitOP(bits_out),ContextList(ctxs){}	
 
 
+
+    //! 
+    /*!
+
+     */
 	// Destructors
 	virtual ~ArithCodec(){}
+
+    //! 
+    /*!
+
+     */
 	//General encode and decode functions: these call virtual functions which should be overridden
 	int Compress(T &InData){
 		InitEncoder();				
@@ -85,6 +116,11 @@ public:
 		return bit_count;
 	}
 
+
+    //! 
+    /*!
+
+     */
 	void Decompress(T &OutData, int num_bits){
 		max_count=num_bits;
 		InitDecoder();

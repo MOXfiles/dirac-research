@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -61,39 +64,157 @@
 
 class PicArray;
 
+//!
+/*!
+ */
 class Subband{
 public:
 	//type for a wavelet (or LOT or bestbasis or ...) subband
 	//constructors
+        
+    //! 
+    /*!
+        
+     */
 	Subband(){}
+        
+    //! 
+    /*!
+        
+     */
 	Subband(int xpos,int ypos, int xlen, int ylen): xps(xpos), yps(ypos), xln(xlen), yln(ylen), wgt(1), qfac(8){}
+        
+    //! 
+    /*!
+        
+     */
 	Subband(int xpos,int ypos, int xlen, int ylen, int d): xps(xpos), yps(ypos), xln(xlen), yln(ylen), wgt(1),
+        
+    //! 
+    /*!
+        
+     */
 	dpth(d),qfac(8){}
 
 	//gets ...
+        
+    //! 
+    /*!
+        
+     */
 	int xl() const {return xln;}	
+        
+    //! 
+    /*!
+        
+     */
 	int xp() const {return xps;}
+        
+    //! 
+    /*!
+        
+     */
 	int yl() const {return yln;}
+        
+    //! 
+    /*!
+        
+     */
 	int yp() const {return yps;}
+        
+    //! 
+    /*!
+        
+     */
 	int max() const {return max_bit;}
+        
+    //! 
+    /*!
+        
+     */
 	double wt() const {return wgt;}
+        
+    //! 
+    /*!
+        
+     */
 	int depth() const {return dpth;}
+        
+    //! 
+    /*!
+        
+     */
 	int scale() const {return (1<<dpth);}
+        
+    //! 
+    /*!
+        
+     */
 	int qf(int n) {return qfac[n];}
+        
+    //! 
+    /*!
+        
+     */
 	int parent() const {return prt;}
+        
+    //! 
+    /*!
+        
+     */
 	std::vector<int> children() const {return childvec;}
+        
+    //! 
+    /*!
+        
+     */
 	int child(int n) const {return childvec[n];}
 
 	// ... and sets
+        
+    //! 
+    /*!
+        
+     */
 	void set_qf(int n, int q){if (n>=qfac.lbound(0) && n<=qfac.ubound(0)) qfac[n]=q;}
 	//void set_costs(int n, CostType c){if (n>=cstarray.lbound(0) && n<=cstarray.ubound(0)) cstarray[n]=c;}
+        
+    //! 
+    /*!
+        
+     */
 	void set_wt(float w){wgt=w;}
+        
+    //! 
+    /*!
+        
+     */
 	void set_parent(int p){prt=p;}
+        
+    //! 
+    /*!
+        
+     */
 	void set_depth(int d){dpth=d;}
+        
+    //! 
+    /*!
+        
+     */
 	void set_max(int m){max_bit=m;};
+        
+    //! 
+    /*!
+        
+     */
 	void set_children(std::vector<int>& clist){childvec=clist;}
+        
+    //! 
+    /*!
+        
+     */
 	void add_child(int c){childvec.push_back(c);}
-
+        
 private:
 	int xps,yps,xln,yln;		//subband bounds
 	double wgt;					//perceptual weight for quantisation

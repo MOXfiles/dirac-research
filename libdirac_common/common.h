@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -65,22 +68,67 @@ enum AddOrSub{ADD,SUBTRACT};
 enum Direction {FORWARD,BACKWARD};
 enum WltFilter {DAUB,HAAR};
 
+
+//! 
+/*!
+
+ */
 class PicArray: public TwoDArray<ValueType>{
 public:
+
+    //! 
+    /*!
+        
+     */
 	PicArray(): TwoDArray<ValueType>(){}
+
+    //! 
+    /*!
+        
+     */
 	PicArray(int xl,int yl): TwoDArray<ValueType>(xl,yl),csort(Y){}
+
+    //! 
+    /*!
+        
+     */
 	~PicArray(){}
+
+    //! 
+    /*!
+        
+     */
 	CompSort csort;
 };
 
+
+//! 
+/*!
+
+ */
 class CostType{
 public:
+
+    //! 
+    /*!
+        
+     */
 	double MSE;
+
+    //! 
+    /*!
+        
+     */
 	double ENTROPY;
+
+    //! 
+    /*!
+        
+     */
 	double TOTAL;
 };
 
-//contexts used in the codecs
+//! Contexts used in the codecs
 enum CtxAliases{//used for residual coding
 	SIGN0_CTX,		//0		-sign, previous symbol is 0
 	SIGN_POS_CTX,	//1		-sign, previous symbol is +ve
@@ -165,10 +213,30 @@ enum MvCtxAliases{//used for MV data coding
 	MB_SPLIT_BIN2_CTX	//46	-bin2, MB split mode vals. Bin 3 not required
 };
 
+
+//! 
+/*!
+
+ */
 class EntropyCorrector{//factors for correcting entropy estimates
 public:
+
+    //! 
+    /*!
+        
+     */
 	EntropyCorrector(int depth): Yfctrs(3*depth+1,3),Ufctrs(3*depth+1,3),Vfctrs(3*depth+1,3){Init();}
+
+    //! 
+    /*!
+        
+     */
 	float Factor(int bandnum, FrameSort fsort,CompSort c);
+
+    //! 
+    /*!
+        
+     */
 	void Update(int bandnum, FrameSort fsort, CompSort c,int est_bits,int actual_bits);//updates the factors
 private:
 	void Init();//initialises the correction factors
@@ -177,20 +245,44 @@ private:
 	TwoDArray<float> Vfctrs;
 };
 
+//! 
+/*!
+
+ */
 class ContextInitialiser{	//class to provide initial values for contexts for arithmetic coding
 							//of subbands.Place in band_codec?
 public:
+
+    //! 
+    /*!
+        
+     */
 	ContextInitialiser(int num_bands) {
 		init_list=new OneDArray<std::vector<Context>*>(3*3*num_bands);
 		for (int I=init_list->first();I<=init_list->last();++I)
 			(*init_list)[I]=new std::vector<Context>(24);}
+
+    //! 
+    /*!
+        
+     */
 	~ContextInitialiser(){
 		for (int I=init_list->first();I<=init_list->last();++I)
 			delete (*init_list)[I];
 		delete init_list;
 	}
 
+
+    //! 
+    /*!
+        
+     */
 	std::vector<Context>& GetInitCtx(FrameSort& fsort,CompSort& csort,int band_num);
+
+    //! 
+    /*!
+        
+     */
 	void SetInitCtx(FrameSort& fsort,CompSort& csort,int band_num,std::vector<Context>& inits);
 
 private:
@@ -198,44 +290,166 @@ private:
 };
 
 
+
+//! 
+/*!
+
+ */
 struct OLBParams{//params for overlapped blocks
+
+    //! 
 	int XBLEN,YBLEN,XBSEP,YBSEP,XOFFSET,YOFFSET;
 };
 
+
+//! 
+/*!
+
+ */
 struct SeqParams{//parameters relating to the video sequence
 
+
+    //! 
+    /*!
+        
+     */
 	SeqParams(): xl(0),yl(0),zl(0),cformat(format422),
 	interlace(false),topfieldfirst(true),framerate(12){}
+
+    //! 
+    /*!
+        
+     */
 	int xl;
+
+    //! 
+    /*!
+        
+     */
 	int yl;
+
+    //! 
+    /*!
+        
+     */
 	int zl;	
+
+    //! 
+    /*!
+        
+     */
 	ChromaFormat cformat;
+
+    //! 
+    /*!
+        
+     */
 	bool interlace;		//is the sequence interlaced?
+
+    //! 
+    /*!
+        
+     */
 	bool topfieldfirst;	//if interlaced, is the top field first
+
+    //! 
+    /*!
+        
+     */
 	int framerate;		//frame rate
 };
 
+
+//! 
+/*!
+
+ */
 struct CodecParams{//parameters relating to the operation of the coder and decoder
 
+
+    //! 
+    /*!
+        
+     */
 	//parameters used throughout the codec
 	//for coding and decoding
 	CodecParams(): X_NUM_MB(0),Y_NUM_MB(0),X_NUMBLOCKS(0),Y_NUMBLOCKS(0),
 	GOP_LEN(1),NUM_L1(0),L1_SEP(0),VERBOSE(false),sparams(),lbparams(3),cbparams(3){}
 
+
+    //! 
+    /*!
+        
+     */
 	CodecParams(SeqParams& sp): X_NUM_MB(0),Y_NUM_MB(0),X_NUMBLOCKS(0),Y_NUMBLOCKS(0),
 	GOP_LEN(1),NUM_L1(0),L1_SEP(0),VERBOSE(false),sparams(sp),lbparams(3),cbparams(3){}
 
+
+    //! 
+    /*!
+        
+     */
 	OLBParams& LumaBParams(int n){return lbparams[n];}
+
+    //! 
+    /*!
+        
+     */
 	OLBParams& ChromaBParams(int n){return cbparams[n];}
+
+    //! 
+    /*!
+        
+     */
 	void SetBlockSizes(OLBParams& olbparams);
 
+
+    //! 
+    /*!
+        
+     */
 	int X_NUM_MB,Y_NUM_MB;
+
+    //! 
+    /*!
+        
+     */
 	int X_NUMBLOCKS, Y_NUMBLOCKS;
+
+    //! 
+    /*!
+        
+     */
 	int GOP_LEN;		//overall (target)
+
+    //! 
+    /*!
+        
+     */
 	int NUM_L1;			//gop params
+
+    //! 
+    /*!
+        
+     */
 	int L1_SEP;			//-can be overridden for particular GOPs
+
+    //! 
+    /*!
+        
+     */
 	bool VERBOSE;
+
+    //! 
+    /*!
+        
+     */
 	SeqParams sparams;
+
+    //! 
+    /*!
+        
+     */
 	ContextInitialiser* ctx_inits;
 
 private:
@@ -243,40 +457,139 @@ private:
 	OneDArray<OLBParams> cbparams;
 };
 
+
+//! 
+/*!
+
+ */
 class EncoderParams: public CodecParams{//codec params plus parameters relating solely to the operation of the encoder
 public:
+
+    //! 
+    /*!
+        
+     */
 	EncoderParams(): CodecParams(),UFACTOR(1.0),VFACTOR(1.0),CPD(20.0),I_lambda(0.f),L1_lambda(0.0f),
 	L2_lambda(0.0f),L1I_lambda(0.0f),L1_ME_lambda(0.0f),L2_ME_lambda(0.0f),L1I_ME_lambda(0.0f),
 	EntCorrect(0),BIT_OUT(0){}
+
+    //! 
+    /*!
+        
+     */
 	EncoderParams(SeqParams& sp): CodecParams(sp),UFACTOR(1.0),VFACTOR(1.0),CPD(20.0),I_lambda(0.f),L1_lambda(0.0f),
 	L2_lambda(0.0f),L1I_lambda(0.0f),L1_ME_lambda(0.0f),L2_ME_lambda(0.0f),L1I_ME_lambda(0.0f),
 	EntCorrect(0),BIT_OUT(0){}
 
+
+    //! 
+    /*!
+        
+     */
 	float UFACTOR;		//factors for weighting U
+
+    //! 
+    /*!
+        
+     */
 	float VFACTOR;		//and V quantisation noise
+
+    //! 
+    /*!
+        
+     */
 	float CPD;			//cycles per degree
+
+    //! 
+    /*!
+        
+     */
 	float I_lambda,L1_lambda,L2_lambda,L1I_lambda;//Lagrangian parameters for coding
+
+    //! 
+    /*!
+        
+     */
 	float L1_ME_lambda,L2_ME_lambda,L1I_ME_lambda;//Lagrangian params for motion estimation
+
+    //! 
+    /*!
+        
+     */
 	EntropyCorrector* EntCorrect;
+
+    //! 
+    /*!
+        
+     */
 	BitOutputManager* BIT_OUT;	//ptr to object for managing bitstream output
 };
 
 
+
+//! 
+/*!
+
+ */
 class DecoderParams: public CodecParams{//codec params plus parameters relating solely to the operation of the encoder
 public:
+
+    //! 
+    /*!
+        
+     */
 	DecoderParams(): CodecParams(),BIT_IN(0){}
+
+    //! 
+    /*!
+        
+     */
 	DecoderParams(SeqParams& sp): CodecParams(sp),BIT_IN(0){}
+
+    //! 
+    /*!
+        
+     */
 	BitInputManager* BIT_IN;	//ptr to object for managing bitstream input
 };
 
+
+//! 
+/*!
+
+ */
 struct FrameParams {
 	//parameters for setting up a frame object
 
+    //! 
+    /*!
+        
+     */
 	FrameParams(): fsort(I_frame){}	
+
+    //! 
+    /*!
+        
+     */
 	FrameParams(const SeqParams& sp): seq_params(sp),fsort(I_frame){}
+
+    //! 
+    /*!
+        
+     */
 	FrameParams(const SeqParams& sp, FrameSort& fs): seq_params(sp),fsort(fs){}	
 
+
+    //! 
+    /*!
+        
+     */
 	SeqParams seq_params;	
+
+    //! 
+    /*!
+        
+     */
 	FrameSort fsort;	
 };
 

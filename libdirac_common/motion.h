@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -58,30 +61,74 @@
 
 //classes
 
+        
+//! 
+/*!
+
+ */
 template <class T>
 class MotionVector{
 public:
+    //! 
+    /*!
+        
+     */
 	T x,y;
 	//constructors
+        
+    //! 
+    /*!
+        
+     */
 	MotionVector<T>(T a, T b) : x(a), y(b) {};
+        
+    //! 
+    /*!
+        
+     */
 	MotionVector<T>() : x(0), y(0) {};
+        
+    //! 
+    /*!
+        
+     */
 	MotionVector<T>(T a) : x(a), y(a) {};
 
+        
+    //! 
+    /*!
+        
+     */
 	inline MotionVector<T> operator+(MotionVector<T>& argument){
 		MotionVector<T> temp;
 		temp.x=x+argument.x;
 		temp.y=y+argument.y;
 		return temp;}
+        
+    //! 
+    /*!
+        
+     */
 	inline MotionVector<T> operator-(MotionVector<T>& argument){
 		MotionVector<T> temp;
 		temp.x=x-argument.x;
 		temp.y=y-argument.y;
 		return temp;}
+        
+    //! 
+    /*!
+        
+     */
 	inline MotionVector<T> operator*(float& argument){
 		MotionVector<T> temp;
 		temp.x=x*argument;
 		temp.y=y*argument;
 		return temp;}
+        
+    //! 
+    /*!
+        
+     */
 	inline MotionVector<T> operator*(int& argument){
 		MotionVector<T> temp;
 		temp.x=x*argument;
@@ -90,51 +137,176 @@ public:
 };
 
 
+        
+    //! 
+    /*!
+        
+     */
 typedef MotionVector<int> MVector;
+        
+    //! 
+    /*!
+        
+     */
 typedef MotionVector<int> ImageCoords;//Re-use the motionvector class without confusing the reader
 
 typedef TwoDArray<MVector> MvArray;
 
+        
+    //! 
+    /*!
+        
+     */
 class MvCostData{
 public:
+        
+    //! 
+    /*!
+        
+     */
 	MvCostData():SAD(0.0),mvcost(0.0),total(0.0){}
+        
+    //! 
+    /*!
+        
+     */
 	float SAD;
+        
+    //! 
+    /*!
+        
+     */
 	float mvcost;
+        
+    //! 
+    /*!
+        
+     */
 	float total;
 };
 
+        
+    //! 
+    /*!
+        
+     */
 class MBData{
 public:
+        
+    //! 
+    /*!
+        
+     */
 	unsigned int split_mode;	//depth to which MB is split
+        
+    //! 
+    /*!
+        
+     */
 	bool common_ref;//true if there is a single reference picture for the whole MB, false otherwise
 };
 
+        
+    //! 
+    /*!
+        
+     */
 class MvData{
 	//class to encapsulate data used in motion estimation and compensation
 public:
 	//constructor
+        
+    //! 
+    /*!
+        
+     */
 	MvData(int xnumMB, int ynumMB, int xnumBlock, int ynumBlock): mb(xnumMB,ynumMB), 
 	mv1(xnumBlock,ynumBlock),mv2(xnumBlock,ynumBlock),mode(xnumBlock,ynumBlock),
 	dcY(xnumBlock,ynumBlock),dcU(xnumBlock,ynumBlock),dcV(xnumBlock,ynumBlock),
 	MB_costs(xnumMB,ynumMB),block_costs1(xnumBlock,ynumBlock),block_costs2(xnumBlock,ynumBlock),
 	block_intra_costs(xnumBlock,ynumBlock),block_bipred_costs(xnumBlock,ynumBlock){}
 
+        
+    //! 
+    /*!
+        
+     */
 	TwoDArray<ValueType>& dc(CompSort cs){
 		if (cs==U) return dcU;
 		else if (cs==V) return dcV;
 		else return dcY;}
 
+        
+    //! 
+    /*!
+        
+     */
 	TwoDArray<MBData> mb;
+        
+    //! 
+    /*!
+        
+     */
 	MvArray mv1;
+        
+    //! 
+    /*!
+        
+     */
 	MvArray mv2;
+        
+    //! 
+    /*!
+        
+     */
 	TwoDArray<PredMode> mode;
+        
+    //! 
+    /*!
+        
+     */
 	TwoDArray<ValueType> dcY;
+        
+    //! 
+    /*!
+        
+     */
 	TwoDArray<ValueType> dcU;
+        
+    //! 
+    /*!
+        
+     */
 	TwoDArray<ValueType> dcV;
+        
+    //! 
+    /*!
+        
+     */
 	TwoDArray<float> MB_costs;	
+        
+    //! 
+    /*!
+        
+     */
 	TwoDArray<MvCostData> block_costs1;
+        
+    //! 
+    /*!
+        
+     */
 	TwoDArray<MvCostData> block_costs2;	
+        
+    //! 
+    /*!
+        
+     */
 	TwoDArray<float> block_intra_costs;
+        
+    //! 
+    /*!
+        
+     */
 	TwoDArray<MvCostData> block_bipred_costs;	
 private:
 
@@ -156,11 +328,12 @@ float RaisedCosine(float t, float B);
 //  *       *                  *
 //*           *                  *
 void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, CalcValueType** WeightArray);
+        
 void FlipX(CalcValueType** Original, const OLBParams &bparams, CalcValueType** Flipped);//Flips the values in an array in the x direction.
+        
 void FlipY(CalcValueType** Original, const OLBParams &bparams, CalcValueType** Flipped);//Flips the values in an array in the y direction.
 
 //motion estimation and coding stuff
-
 inline MVector MvMedian(MVector& mv1,MVector& mv2,MVector& mv3) {
 	//takes median of each vector component	
 	MVector tmp_mv;
@@ -182,6 +355,7 @@ inline MVector MvMedian(MVector& mv1,MVector& mv2,MVector& mv3) {
 	return tmp_mv;
 }
 
+       
 inline MVector MvMedian(std::vector<MVector>& vect_list){
 	//more general median. Takes the median of each vector component	
 

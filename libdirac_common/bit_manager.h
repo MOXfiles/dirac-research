@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Boilerplate for Doxygen comments; testing ability to commit into SF CVS
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -59,20 +62,70 @@
 ////////////////////////////////////////////////
 
 
+
+//! 
+/*!
+
+ */
 class BasicOutputManager{
 public:
+
+    //! 
+    /*!
+        
+     */
 	//Constructors
 	BasicOutputManager(std::ostream* OutData ): num_out_bytes(0),op_ptr(OutData){InitOutputStream();}
+
+    //! 
+    /*!
+        
+     */
 	//Destructors
 	~BasicOutputManager(){}
 
+
+    //! 
+    /*!
+        
+     */
 	//output functions	
 	void OutputBit(const bool& bit);// Write bit to data char and output to buffer if full
+
+    //! 
+    /*!
+        
+     */
 	void OutputBit(const bool& bit,int& count);// Ditto, incrementing count
+
+    //! 
+    /*!
+        
+     */
 	void OutputByte(const char& byte);
+
+    //! 
+    /*!
+        
+     */
 	void OutputBytes(char* str_array);	
+
+    //! 
+    /*!
+        
+     */
 	void WriteToFile();	// Write the buffer to the file 
+
+    //! 
+    /*!
+        
+     */
 	unsigned int GetNumBytes(){return num_out_bytes;}//return the number of output bytes written at last output
+
+    //! 
+    /*!
+        
+     */
 	unsigned int Size(){return buffer.size();}//return the current size of the output buffer
 
 private:
@@ -88,19 +141,74 @@ private:
 };
 
 
+
+//! 
+/*!
+
+ */
 class BitOutputManager{
 public:
+
+    //! 
+    /*!
+        
+     */
 	BitOutputManager(std::ostream* OutData ): header(OutData),data(OutData),total_bytes(0),total_data_bytes(0),
 	total_head_bytes(0),unit_bytes(0),unit_data_bytes(0),unit_head_bytes(0){}
+
+    //! 
+    /*!
+        
+     */
 	BasicOutputManager header;
+
+    //! 
+    /*!
+        
+     */
 	BasicOutputManager data;
+
+    //! 
+    /*!
+        
+     */
 	void WriteToFile();
 
+
+    //! 
+    /*!
+        
+     */
 	unsigned int GetUnitBytes(){return unit_bytes;}	
+
+    //! 
+    /*!
+        
+     */
 	unsigned int GetUnitDataBytes(){return unit_data_bytes;}
+
+    //! 
+    /*!
+        
+     */
 	unsigned int GetUnitHeadBytes(){return unit_head_bytes;}
+
+    //! 
+    /*!
+        
+     */
 	unsigned int GetTotalBytes(){return total_bytes;}
+
+    //! 
+    /*!
+        
+     */
 	unsigned int GetTotalHeadBytes(){return total_head_bytes;}
+
+    //! 
+    /*!
+        
+     */
 	unsigned int GetTotalDataBytes(){return total_data_bytes;}
 
 private:
@@ -117,19 +225,59 @@ private:
 ///////////////////////////////////////////////
 
 
+
+//! 
+/*!
+
+ */
 class BitInputManager{
 
 public:
+
+    //! 
+    /*!
+        
+     */
 	//Constructors
 	BitInputManager(std::istream* InData ): ip_ptr(InData){InitInputStream();}
+
+    //! 
+    /*!
+        
+     */
 	//Destructors
 	~BitInputManager(){}
 
+
+    //! 
+    /*!
+        
+     */
 	//input functions	
 	bool InputBit();			// Obtain the next bit	
+
+    //! 
+    /*!
+        
+     */
 	bool InputBit(int& count);	// Ditto, incrementing count	
+
+    //! 
+    /*!
+        
+     */
 	bool InputBit(int& count, const int max_count);// Ditto, returns 0 if >=max_count
+
+    //! 
+    /*!
+        
+     */
 	char input_byte();
+
+    //! 
+    /*!
+        
+     */
 	void FlushInput();	// Reset ip current byte - needs to be public so we can read 
 
 private:
