@@ -237,6 +237,9 @@ public:
     //! Get the DC values for each component
     const TwoDArray<ValueType>& DC(CompSort cs) const {return *( m_dc[cs] );}
 
+    //! Get a reference to the vector holding component DC values
+    const OneDArray< TwoDArray<ValueType>* >& DC() const {return m_dc;}
+
     //! Get the block prediction modes
     TwoDArray<PredMode>& Mode(){return m_modes;}
 

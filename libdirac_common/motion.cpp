@@ -284,9 +284,9 @@ MEData::~MEData()
 /*!
     Only writes SAD value to stream
 */
-std::ostream & operator<< (std::ostream & stream, MvCostData & cost)
+ostream & operator<< (ostream & stream, MvCostData & cost)
 {
-    stream << cost.SAD;
+    stream << cost.SAD << " " << cost.mvcost;
 
     return stream;
 }
@@ -295,9 +295,9 @@ std::ostream & operator<< (std::ostream & stream, MvCostData & cost)
 /*!
     Only reads SAD value from stream
 */
-std::istream & operator>> (std::istream & stream, MvCostData & cost)
+istream & operator>> (istream & stream, MvCostData & cost)
 {
-    stream >> cost.SAD;
+    stream >> cost.SAD >> cost.mvcost;
 
     return stream;
 }
@@ -307,7 +307,7 @@ std::istream & operator>> (std::istream & stream, MvCostData & cost)
     No operator<< is specified as enumeration is written as integers
     operator>> required to specify PredMode input
 */
-std::istream & operator>> (std::istream & stream, PredMode & mode)
+istream & operator>> (istream & stream, PredMode & mode)
 {
     int temp;
     stream >> temp;
@@ -322,12 +322,31 @@ istream &operator>> (istream & stream, MEData & me_data)
     stream.ignore(1000, '\n');
     
     // input reference-independent information
-    stream >> me_data.MBSplit() >> me_data.Mode();
+    stream >> me_data.MBSplit();
+    stream >> me_data.MBCommonMode();
+    stream >> me_data.MBCosts();
+    stream >> me_data.Mode();
+    stream >> me_data.IntraCosts();
 
+    if (me_data.m_pred_costs.Length() > 1)
+        stream >> me_data.BiPredCosts();
+
+    if (me_data.DC().Length() == 1)
+    {
+        stream >> me_data.DC( Y_COMP );
+    }
+    else if (me_data.DC().Length() == 3)
+    {
+        stream >> me_data.DC( Y_COMP );
+        stream >> me_data.DC( U_COMP );
+        stream >> me_data.DC( V_COMP );
+    }
+
+    // input reference information
     for (int i=1; i<=me_data.m_pred_costs.Length(); ++i)
     {
-        // input reference information
-        stream >> me_data.Vectors(i) >> me_data.PredCosts(i);
+        stream >> me_data.Vectors(i);
+        stream >> me_data.PredCosts(i);
     }
 
     return stream;
@@ -336,17 +355,33 @@ istream &operator>> (istream & stream, MEData & me_data)
 // Overriden operator for output of MvData member data (to file)
 ostream &operator<< (ostream & stream, MEData & me_data)
 {
-    // output macroblock and motion vector array dimensions
-    stream << me_data.MBSplit().LengthY() << " " << me_data.MBSplit().LengthX() << " ";
-    stream << me_data.Vectors(1).LengthY() << " " << me_data.Vectors(1).LengthX();
-
     // output reference-independent information
-    stream << endl << endl << me_data.MBSplit() << std::endl << me_data.Mode();
+    stream << endl << endl << me_data.MBSplit();
+    stream << endl << me_data.MBCommonMode();
+    stream << endl << me_data.MBCosts();
+    stream << endl << me_data.Mode();
+    stream << endl << me_data.IntraCosts() << endl;
 
+    if (me_data.m_pred_costs.Length() > 1)
+        stream << me_data.BiPredCosts();
+
+    // output component DC values
+    if (me_data.DC().Length() == 1)
+    {
+        stream << endl << me_data.DC( Y_COMP );
+    }
+    else if (me_data.DC().Length() == 3)
+    {
+        stream << endl << me_data.DC( Y_COMP );
+        stream << endl << me_data.DC( U_COMP );
+        stream << endl << me_data.DC( V_COMP );
+    }
+
+    // output reference information
     for (int i=1; i<=me_data.m_pred_costs.Length(); ++i)
     {
-        // output reference information
-        stream << endl << me_data.Vectors(i) << std::endl << me_data.PredCosts(i) << std::endl;
+        stream << endl << me_data.Vectors(i);
+        stream << endl << me_data.PredCosts(i) << endl;
     }
     
     return stream;
