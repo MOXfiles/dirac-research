@@ -152,7 +152,7 @@ namespace dirac
         //! Constructor
         /*!
             The constructor parameters are
-            xparam    xpos    the xposition of the subband when packed into a 
+            \param    xpos    the xposition of the subband when packed into a 
                               big array with all the others
             \param    ypos    the xposition of the subband
             \param    xlen    the width of the subband
