@@ -569,6 +569,12 @@ public:
     
     //! Return the Chroma block parameters for each macroblock splitting level
     const OLBParams& ChromaBParams(int n) const {return m_cbparams[n];}    
+
+    //! Return the original frame width
+    int OrigXl() const {return m_orig_xl;}
+
+    //! Return the original frame height
+    int OrigYl() const {return m_orig_yl;}
     
     // ... and Sets
     //! Set how many MBs there are horizontally
@@ -594,7 +600,13 @@ public:
     
     //! Set the block sizes for all MB splitting levels given these prototype block sizes for level=2
     void SetBlockSizes(const OLBParams& olbparams , const ChromaFormat cformat);
-    
+
+    //! Set the original frame width
+    void SetOrigXl(const int x){m_orig_xl=x;}
+
+    //! Set the original frame height
+    void SetOrigYl(const int y){m_orig_yl=y;}
+
 private:
     
     //! The number of macroblocks horizontally
@@ -620,6 +632,12 @@ private:
     
     OneDArray<OLBParams> m_lbparams;
     OneDArray<OLBParams> m_cbparams;
+
+    //! The original frame width
+    int m_orig_xl;
+
+    //! The original frame height
+    int m_orig_yl;
 };
 
 //! Parameters for the encoding process
