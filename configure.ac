@@ -69,6 +69,7 @@ case "$CXX" in
 		if test x"$enable_shared" = "xyes"; then
 		    LIBEXT=".dll";
 		    LIBFLAGS="-DLL -INCREMENTAL:NO"
+			CXXFLAGS="$CXXFLAGS -D_WINDLL"
 		else
 		    LIBEXT=".lib";
 		    LIBFLAGS="-lib"
@@ -229,7 +230,8 @@ AC_CHECK_HEADER([cppunit/TestRunner.h],[HAVE_CPPUNIT="true"], [HAVE_CPPUNIT="fal
 		AC_MSG_CHECKING([whether unit tests code will compile and link])
 		SAVE_LIBS=$LIBS
 		LIBS="$LIBS -lcppunit -ldl"
-		AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <cppunit/TestRunner.h>]], [[CPPUNIT_NS::TestRunner runner;]])],[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no); HAVE_CPPUNIT="false"])
+		AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <cppunit/TestResult.h> 
+		#include <cppunit/TestRunner.h>]], [[CPPUNIT_NS::TestResult controller; CPPUNIT_NS::TestRunner runner;]])],[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no); HAVE_CPPUNIT="false"])
 		LIBS=$SAVE_LIBS
 	fi
 AM_CONDITIONAL(HAVE_CPPUNIT, $HAVE_CPPUNIT)
@@ -271,4 +273,6 @@ AC_OUTPUT(Makefile dirac.pc \
           encoder/Makefile \
           decoder/Makefile \
           picheader/Makefile \
-          unit_tests/Makefile )
+          unit_tests/Makefile \
+          win32/Makefile \
+          win32/VS2003/Makefile )
