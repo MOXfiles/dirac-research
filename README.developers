@@ -79,7 +79,8 @@ II. Coding Style
  - Include the following RCS tags in all new files (.cpp and .h). Include them
    on the first line of the licence block
 
-   $Id$ $Name$
+   Id
+   Name
 
    E.g.
    /* ***** BEGIN LICENSE BLOCK *****
@@ -91,60 +92,9 @@ II. Coding Style
 
 
  - Remove the following tags from all files. Do not include them in new files
-   $Author$
-   $Revision$
-   $Log$
-   Revision 1.5  2004-06-30 16:44:47  asuraparaju
-   -  Included a coding style guidelines sub-section (Coding Style) in
-      README.developers under the section 'Software Practices'. This
-      sub-section describes the coding guidelines for developers and is to be used
-      as a reference by developers while writing code and while peer-reviewing
-      code.
-
-   -  Removed the following CVS tags from all files
-      $Author$
-      $Log$
-      $Revision$
-
-   -  Included the following CVS tags in all source and header files
-      $Id$
-      $Name$
-
-   -  Included a new configuration option, --enable-debug, in configure.ac. This
-      option turns on the flags '-Wall -pedantic -Werror' to trap warnings.
-
-   -  Modified parameter classes in common.{h,cpp} to make member variables
-      private and accessible through class methods. Traced through codec.
-
-   -  Deleted context.h. The classes that were originally in this file have been
-      integrated as nested classes into ArithCodec class in arith_codec.h
-
-   -  Fixed bug on QCIF coding. The number of downconversions during
-      hierarchical motion estimation is now limited based on the size of the
-      picture
-
-   -  Changed decoder and encoder params to be references throughout frame and
-      component (de)compression rather than being copied.
-
-   -  Code cleansed to follow coding standards specified in README.developers.
-      - Changed names of member variables to use m_ convention
-      - Used spaces to improve readability of code
-      - Accessing class member variables through accessor/mutator function rather
-        than directly
-      - Non-trivial member functions moved from headers to .cpp files
-
-      Changes mainly in the following directories:
-      libdirac_common
-      libdirac_decoder
-      libdirac_encoder
-
-   -  Fixed g++ compiler warnings
-
-   Revision 1.3  2004/06/30 16:35:27  anuradha
-   Included Coding Style sub-section in Software Practices section. This
-   sub-section describes the coding guidelines for developers and is to be used
-   as a reference by developers while writing code and while peer-reviewing code.
-
+   Author
+   Revision
+   Log
 
 --  General Source code formatting
 
