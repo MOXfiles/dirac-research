@@ -38,8 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-05 03:05:03  chaoticcoyote
+* Updated Doxygen API documentation comments
+* Test to see if Scott's CVS is now working correctly
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -59,15 +63,31 @@
 //-------------------------------//
 ///////////////////////////////////
 
+//! 
+/*!
+    
+ */
 class BMParams{//block matching params	
 public:
+    //! 
+    /*!
+
+     */
 	BMParams():xp(0),yp(0),xl(0),yl(0),bp(),me_lambda(0.0),mv_pred(),best_mv(),up_conv(false),
 	pic_data(0),ref_data(0)
 	{}//default constructor
 
+    //! 
+    /*!
+
+     */
 	void Init(OLBParams& bparams,int M,int N); 	//set up parameters for an overlapped block with given parameters
 											  	//nominally located at (M*XBSEP-XOFFSET,N*YBSEP-YOFFSET)
 												//overriding current block params bp
+    //! 
+    /*!
+
+     */
 	void Init(int M,int N); //ditto, but using current block params bp
 
 	int xp,yp,xl,yl;
@@ -81,18 +101,53 @@ public:
 	PicArray* ref_data;
 };
 
+//! 
+/*!
+
+ */
 class BlockDiffParams{//parameters for doing block differences	
 public:
+    //! 
+    /*!
+
+     */
 	BlockDiffParams(BMParams& bmparams): xp(bmparams.xp),yp(bmparams.yp),xl(bmparams.xl),yl(bmparams.yl),
 	bailout(false),start_val(0.0f){}
+
+    //! 
+    /*!
+
+     */
 	BlockDiffParams(){}
 
-	int xp,yp,xl,yl;		//coords and dimensions of current block
+    //! 
+	int xp;
+
+    //! 
+    int yp;
+
+    //! 
+    int xl;
+
+    //! 
+    int yl;		//coords and dimensions of current block
+    
+    //! 
 	MVector best_mv;		//best motion vector so far
+    
+    //! 
 	bool bailout;			//allow bail-out
+    
+    //! 
 	ValueType dc;
+    
+    //! 
 	MvCostData cost;
+    
+    //! 
 	float intra_cost;
+
+    //! 
 	float start_val;		//value, normally representing motion vector cost, which is to be added to the raw block difference
 };
 
@@ -100,56 +155,181 @@ public:
 //----Different difference classes, so that-----//
 //bounds-checking need only be done as necessary//
 //////////////////////////////////////////////////
+//! 
+/*!
+
+ */
 class BlockDiff{
 public:
+    //! 
+    /*!
+
+     */
 	BlockDiff(){}
+
+    //! 
+    /*!
+
+     */
 	BlockDiff(PicArray& ref,PicArray& pic):pic_data(&pic),ref_data(&ref){}
+    
+    //! 
+    /*!
+
+     */
 	virtual ~BlockDiff(){}
+    
+    //! 
+    /*!
+
+     */
 	virtual void Diff(BlockDiffParams& dparams,MVector& mv)=0;//must be overidden
 protected:
 	PicArray* pic_data;
 	PicArray* ref_data;
 };
 
+//! 
+/*!
+
+ */
 class SimpleBlockDiff: public BlockDiff{//block difference with 1 reference and no bounds checking
 public:
+    //! 
+    /*!
+
+     */
 	SimpleBlockDiff(){}
+
+    //! 
+    /*!
+
+     */
 	SimpleBlockDiff(PicArray& ref,PicArray& pic):BlockDiff(ref,pic){}
+    
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv);
 
 };
 
+//! 
+/*!
+
+ */
 class BChkBlockDiff: public BlockDiff{//block difference with 1 reference and bounds checking
 public:
+    //! 
+    /*!
+
+     */
 	BChkBlockDiff(){}
+
+    //! 
+    /*!
+
+     */
 	BChkBlockDiff(PicArray& ref,PicArray& pic):BlockDiff(ref,pic){}	
+    
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv);
 
 };
 
+//! 
+/*!
+
+ */
 class IntraBlockDiff: public BlockDiff{//block difference with pred by dc value
 public:
+    //! 
+    /*!
+
+     */
 	IntraBlockDiff(){}
+    //! 
+    /*!
+
+     */
 	IntraBlockDiff(PicArray& pic): BlockDiff(pic,pic){}
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv){}
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams,ValueType dc_pred,float loc_lambda);
 };
 
+//! 
+/*!
+
+ */
 class BiSimpleBlockDiff: public BlockDiff{//block difference with 2 references and no bounds checking
 public:
+    //! 
+    /*!
+
+     */
 	BiSimpleBlockDiff(){}
+
+    //! 
+    /*!
+
+     */
 	BiSimpleBlockDiff(PicArray& ref,PicArray& ref2,PicArray& pic):BlockDiff(ref,pic),ref_data2(&ref2){}
+    
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv){}
+    
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2);
 private:
 	PicArray* ref_data2;
 };
 
+//! 
+/*!
+
+ */
 class BiBChkBlockDiff: public BlockDiff{//block difference with 2 references with bounds checking
 public:
+    //! 
+    /*!
+
+     */
 	BiBChkBlockDiff(){}
+
+    //! 
+    /*!
+
+     */
 	BiBChkBlockDiff(PicArray& ref,PicArray& ref2,PicArray& pic):BlockDiff(ref,pic),ref_data2(&ref2){}
+    
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv){}
+    
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2);
 private:
 	PicArray* ref_data2;
@@ -159,8 +339,22 @@ private:
 
 class BlockDiffUp: public BlockDiff{//overall class for upconversion
 public:	
+    //! 
+    /*!
+
+     */
 	BlockDiffUp(){}
+
+    //! 
+    /*!
+
+     */
 	BlockDiffUp(PicArray& ref,PicArray& pic): BlockDiff(ref,pic){Init();}
+    
+    //! 
+    /*!
+
+     */
 	virtual ~BlockDiffUp(){}
 
 protected:
@@ -168,40 +362,128 @@ protected:
 	void Init();
 };
 
+//! 
+/*!
+
+ */
 class SimpleBlockDiffUp: public BlockDiffUp{//no bounds checking
 	//does block difference without bounds checking, assuming an upconverted reference and 1/8 pel vectors
 public:
+    //! 
+    /*!
+
+     */
 	SimpleBlockDiffUp(){}
+
+    //! 
+    /*!
+
+     */
 	~SimpleBlockDiffUp(){}
+    
+    //! 
+    /*!
+
+     */
 	SimpleBlockDiffUp(PicArray& ref,PicArray& pic):BlockDiffUp(ref,pic){}
+    
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv);
 };
 
 
+//! 
+/*!
+
+ */
 class BChkBlockDiffUp: public BlockDiffUp{//bounds checking
  	//does block difference with bounds checking
 public:
+    //! 
+    /*!
+
+     */
 	BChkBlockDiffUp() {}
+
+    //! 
+    /*!
+
+     */
 	~BChkBlockDiffUp(){}
+    
+    //! 
+    /*!
+
+     */
 	BChkBlockDiffUp(PicArray& ref,PicArray& pic):BlockDiffUp(ref,pic){}
+    
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv);
 };
 
 class BiSimpleBlockDiffUp: public BlockDiffUp{//no bounds checking
 public:
+    //! 
+    /*!
+
+     */
 	BiSimpleBlockDiffUp(){}
+
+    //! 
+    /*!
+
+     */
 	BiSimpleBlockDiffUp(PicArray& ref,PicArray& ref2,PicArray& pic):BlockDiffUp(ref,pic),ref_data2(&ref2){}
+    
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv){}
+    
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2);
 private:
 	PicArray* ref_data2;
 };
 
+//! 
+/*!
+
+ */
 class BiBChkBlockDiffUp: public BlockDiffUp{//no bounds checking
 public:
+    //! 
+    /*!
+
+     */
 	BiBChkBlockDiffUp(){}
+
+    //! 
+    /*!
+
+     */
 	BiBChkBlockDiffUp(PicArray& ref,PicArray& ref2,PicArray& pic):BlockDiffUp(ref,pic),ref_data2(&ref2){}
+    
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv){}
+    
+    //! 
+    /*!
+
+     */
 	void Diff(BlockDiffParams& dparams, MVector& mv1,MVector& mv2);
 private:
 	PicArray* ref_data2;

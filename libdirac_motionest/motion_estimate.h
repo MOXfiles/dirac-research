@@ -38,8 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-05 03:05:03  chaoticcoyote
+* Updated Doxygen API documentation comments
+* Test to see if Scott's CVS is now working correctly
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -54,10 +58,22 @@
 
 class Gop;
 
+//! 
+/*!
+    
+ */
 class MotionEstimator{
 public:
+    //! 
+    /*!
+        \param 
+     */
 	MotionEstimator(EncoderParams& params);
 
+    //! 
+    /*!
+        \param 
+     */
 	void DoME(Gop& my_gop,int frame_num, MvData& mv_data);
 
 private:	

@@ -38,8 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-05 03:05:02  chaoticcoyote
+* Updated Doxygen API documentation comments
+* Test to see if Scott's CVS is now working correctly
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -54,14 +58,31 @@
 #include "libdirac_motionest/block_match.h"
 #include "libdirac_common/gop.h"
 
+//! 
+/*!
+    
+ */
 class ModeDecider{
  					//does the mode decisions
 public:
+    //! 
+    /*!
+
+     */
 	ModeDecider(EncoderParams& params): encparams(params){
 		split1_mv_data=new MvData(1,1,2,2);
 		split0_mv_data=new MvData(1,1,1,1);}	
+        
+    //! 
+    /*!
+
+     */
 	~ModeDecider(){delete split1_mv_data; delete split0_mv_data;}
 
+    //! 
+    /*!
+
+     */
 	void DoModeDecn(Gop& my_gop,int frame_num, MvData& mvd);
 
 private:

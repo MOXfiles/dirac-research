@@ -38,8 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-05 03:05:03  chaoticcoyote
+* Updated Doxygen API documentation comments
+* Test to see if Scott's CVS is now working correctly
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:09  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -58,6 +62,10 @@ class Gop;
 class MvData;
 class PicArray;
 
+//! 
+/*!
+    
+ */
 class SubpelRefine{
 	//class to refine the pixel-level motion vectors to sub-pixel values
 	//uses similar techniques to the motion compensation class to get subpel values.
@@ -65,6 +73,10 @@ class SubpelRefine{
 	//immediately, with 1/4 and 1/8 pel coming from linear interpolation.
 
 public:
+    //! 
+    /*!
+
+     */
 	SubpelRefine(EncoderParams& cp): encparams(cp),nshift(4),lambda(3){
 		nshift[0].x=-1; nshift[0].y=0;
 		nshift[1].x=-1; nshift[1].y=-1;
@@ -72,6 +84,10 @@ public:
 		nshift[3].x=1; nshift[3].y=-1;
 	}
 
+    //! 
+    /*!
+
+     */
 	void DoSubpel(Gop& my_gop,int frame_num, MvData& mvd);
 
 private:
