@@ -47,11 +47,10 @@ ValueType GetVar( const MVector& predmv , const MVector& mv )
     diff.x = mv.x-predmv.x;
     diff.y = mv.y-predmv.y;    
 
-//    return Norm1( diff );
     return std::max( Norm1( diff ) , 48 );
 }
 
-/*ValueType GetVar( const std::vector<MVector>& pred_list , const MVector& mv)
+ValueType GetVar( const std::vector<MVector>& pred_list , const MVector& mv)
 {
     ValueType sum=0;
     MVector diff;
@@ -63,7 +62,7 @@ ValueType GetVar( const MVector& predmv , const MVector& mv )
     }
 
     return sum;
-}*/
+}
 
 void AddNewVlist( CandidateList& vect_list, const MVector& mv, const int xr , const int yr , const int step )
 {
