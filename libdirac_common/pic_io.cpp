@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.10  2004-05-25 02:39:23  chaoticcoyote
+* Revision 1.11  2004-05-25 09:49:55  tjdwave
+* Fixed bug where coder segfaulted on reading.
+*
+* Revision 1.10  2004/05/25 02:39:23  chaoticcoyote
 * Unnecessary qualification of some class members in frame.h and pic_io.h.
 * ISO C++ forbids variable-size automatic arrays; fixed in pic_io.cpp
 * Removed spurious semi-colons in me_utils.cpp
@@ -301,6 +304,7 @@ bool PicInput::ReadNextFrame(Frame& myframe)
 {
 	//return value. Failure if one of the components can't be read,
 	//success otherwise/.
+
 	bool ret_val;
 	ret_val=ReadComponent(myframe.Ydata(),Y);
 	if (sparams.cformat!=Yonly){
@@ -378,21 +382,22 @@ bool PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
 	}
 
 	unsigned char * temp = new unsigned char[xl];//array big enough for one line
-    
-	for (int J=0;J<yl;++J){
-		ip_pic_ptr->read((char*) &temp, sizeof(temp));
-		for (int I=0;I<xl;++I){
+
+	for (int J=0;J<yl;++J){		
+		ip_pic_ptr->read((char*) temp, xl);		
+		for (int I=0;I<xl;++I){			
 			pic_data[J][I]=(ValueType) temp[I];
 			pic_data[J][I]<<=2;
 		}//I
-		//pad the columns on the rhs using the edge value
+		//pad the columns on the rhs using the edge value		
 		for (int I=xl;I<pic_data.length(0);++I){
 			pic_data[J][I]=pic_data[J][xl-1];
 		}//I
+
 	}//J
-    
-    delete [] temp;
-    
+
+	delete [] temp;
+
 	//now do the padded lines, using the last true line
 	for (int J=yl;J<pic_data.length(1);++J){
 		for (int I=0;I<pic_data.length(0);++I)
