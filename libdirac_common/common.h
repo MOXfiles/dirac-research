@@ -876,7 +876,7 @@ namespace dirac
     };
 
     //! A constant list of the quantisers being used in Dirac
-    extern const QuantiserLists dirac_quantiser_lists;
+    static const QuantiserLists dirac_quantiser_lists;
 
 } // namespace dirac
 

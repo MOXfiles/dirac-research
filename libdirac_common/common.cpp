@@ -41,7 +41,7 @@
 #include <algorithm>
 using namespace dirac;
 
-const dirac::QuantiserLists dirac::dirac_quantiser_lists;
+//const dirac::QuantiserLists dirac::dirac_quantiser_lists;
 
 //PicArray functions
 PicArray::PicArray(int height, int width, CompSort cs):
