@@ -154,13 +154,12 @@ namespace dirac
         REF2y_SIGNP_CTX,    //39    -sign, REF2 y vals, previous value +ve
         REF2y_SIGNN_CTX,    //40    -sign, REF2 y vals, previous value -ve
         
-        PMODE_BIN1_CTX,     //41    -bin 1, prediction mode value
-        PMODE_BIN2_CTX,     //42    -bin 2, prediction mode value
-        PMODE_BIN3_CTX,     //43    -bin 3, prediction mode value. Bin 4 not required
+        PMODE_BIT0_CTX,     //41    -bit 0, prediction mode value
+        PMODE_BIT1_CTX,     //42    -bin 1, prediction mode value
         
-        MB_CMODE_CTX,       //44    -context for MB common block mode
-        MB_SPLIT_BIN1_CTX,  //45    -bin1, MB split mode vals
-        MB_SPLIT_BIN2_CTX   //46    -bin2, MB split mode vals. Bin 3 not required
+        MB_CMODE_CTX,       //43    -context for MB common block mode
+        MB_SPLIT_BIN1_CTX,  //44    -bin1, MB split mode vals
+        MB_SPLIT_BIN2_CTX   //45    -bin2, MB split mode vals. Bin 3 not required
         
     };
 

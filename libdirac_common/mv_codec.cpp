@@ -123,16 +123,6 @@ inline int MvDataCodec::ChooseMBCContext(const MvData& data) const
     return MB_CMODE_CTX; 
 }
 
-inline int MvDataCodec::ChoosePredContext(const MvData& data, const int BinNumber) const
-{
-    if (BinNumber == 1)
-        return PMODE_BIN1_CTX; 
-    else if (BinNumber == 2)
-        return PMODE_BIN2_CTX; 
-    else
-        return PMODE_BIN3_CTX; 
-}
-
 inline int MvDataCodec::ChooseREF1xContext(const MvData& data, const int BinNumber) const
 {
     if (BinNumber == 1)
@@ -294,20 +284,29 @@ inline bool MvDataCodec::MBCBModePrediction(const TwoDArray <bool> & cbm_data) c
 inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode > & preddata) const
 {
     unsigned int result = (unsigned int)(REF1_ONLY);
-    std::vector <unsigned int> nbrs; 
+    
+    unsigned int num_ref1_nbrs( 0 ); 
+    unsigned int num_ref2_nbrs( 0 );
     
     if (b_xp > 0 && b_yp > 0)
     {
-        nbrs.push_back( (unsigned int)( preddata[b_yp-1][b_xp] ) ); 
-        nbrs.push_back( (unsigned int)( preddata[b_yp-1][b_xp-1] ) ); 
-        nbrs.push_back( (unsigned int)( preddata[b_yp][b_xp-1] ) ); 
+        num_ref1_nbrs += ((unsigned int)( preddata[b_yp-1][b_xp] ) ) & 1; 
+        num_ref1_nbrs += ((unsigned int)( preddata[b_yp-1][b_xp-1] ) ) & 1; 
+        num_ref1_nbrs += ((unsigned int)( preddata[b_yp][b_xp-1] ) ) & 1;
 
-        result = GetMean(nbrs);
+        result = num_ref1_nbrs>>1;
+
+        num_ref2_nbrs += ((unsigned int)( preddata[b_yp-1][b_xp] ) ) & 2; 
+        num_ref2_nbrs += ((unsigned int)( preddata[b_yp-1][b_xp-1] ) ) & 2; 
+        num_ref2_nbrs += ((unsigned int)( preddata[b_yp][b_xp-1] ) ) & 2; 
+        num_ref2_nbrs >>= 1;
+
+        result ^= ( (num_ref2_nbrs>>1)<<1 );
     }
     else if (b_xp > 0 && b_yp == 0)
-        result = preddata[b_yp][b_xp-1]; 
+        result = (unsigned int)( preddata[0][b_xp-1] ); 
     else if (b_xp == 0 && b_yp > 0)
-        result = preddata[b_yp-1][b_xp]; 
+        result = (unsigned int)( preddata[b_yp-1][0] ); 
 
     return result; 
 }
@@ -530,16 +529,16 @@ void MvDataCodec::CodeMBCom(const MvData& in_data)
 
 void MvDataCodec::CodePredmode(const MvData& in_data)
 {
-    int val = in_data.Mode()[b_yp][b_xp] - BlockModePrediction( in_data.Mode() ); 
+    // Xor with the prediction so we predict whether REF1 is used or REF2 is
+    // used, separately
+    unsigned int residue = in_data.Mode()[b_yp][b_xp] ^ BlockModePrediction( in_data.Mode() ); 
     
-    if (val < 0)
-        val += 4;  //produce value mod 4    
-    
-    for (int bin = 1;  bin<= val;  ++bin)
-        EncodeSymbol( 0 , ChoosePredContext( in_data , bin ) ); 
-                 
-    if (val  !=  3) //if we've had three zeroes, know we must have value 3
-        EncodeSymbol( 1 , ChoosePredContext( in_data , val + 1 ) ); 
+    // Code REF1 part of the prediction residue (ie the first bit)
+    EncodeSymbol( residue & 1 , PMODE_BIT0_CTX );
+
+    // Code REF2 part of the prediction residue (ie the second bit)
+    EncodeSymbol( residue & 2 , PMODE_BIT1_CTX );
+
 }
 
 void MvDataCodec::CodeMv1(const MvData& in_data )
@@ -766,22 +765,20 @@ void MvDataCodec::DecodeMBCom( MvData& out_data )
 
 void MvDataCodec::DecodePredmode( MvData& out_data )
 {
-    int val = 0; 
-    int bin = 1; 
-    bool bit; 
+    // Xor with the prediction so we predict whether REF1 is used or REF2 is
+    // used, separately
+    unsigned int residue;
     
-    do
-    {
-        DecodeSymbol( bit , ChoosePredContext( out_data , bin ) ); 
-        
-        if (!bit)
-            val++; 
-        
-        bin++; 
-    }
-    while (!bit && val != 3);  
+    // Decode REF1 part of the prediction residue (ie the first bit)
+    bool bit;
+    DecodeSymbol( bit , PMODE_BIT0_CTX );
+    residue = (unsigned int) bit;
+
+    // Decode REF2 part of the prediction residue (ie the second bit)
+    DecodeSymbol( bit , PMODE_BIT1_CTX );
+    residue |= ( (unsigned int) bit ) << 1;
     
-    out_data.Mode()[b_yp][b_xp] = PredMode( ( val + BlockModePrediction (out_data.Mode() ) ) %4); 
+    out_data.Mode()[b_yp][b_xp] = PredMode( BlockModePrediction (out_data.Mode() ) ^ residue ); 
 }
 
 void MvDataCodec::DecodeMv1( MvData& out_data )

@@ -126,7 +126,6 @@ namespace dirac
 
         int ChooseMBSContext(const MvData& data, const int BinNumber) const;
         int ChooseMBCContext(const MvData& data) const;
-        int ChoosePredContext(const MvData& data, const int BinNumber) const;
         int ChooseREF1xContext(const MvData& data, const int BinNumber) const;
         int ChooseREF1xSignContext(const MvData& data) const;
         int ChooseREF1yContext(const MvData& data, const int BinNumber) const;

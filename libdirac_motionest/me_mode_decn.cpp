@@ -503,7 +503,7 @@ float ModeDecider::DoCommonMode( PredMode& predmode , const int level)
             if ( num_refs>1 )
             {
                 MB_cost[REF2_ONLY] += me_data.PredCosts(2)[j][i].total;
-//                MB_cost[REF1AND2] += me_data.BiPredCosts()[j][i].total;
+                MB_cost[REF1AND2] += me_data.BiPredCosts()[j][i].total;
             }
         }// i
     }// i
@@ -518,8 +518,8 @@ float ModeDecider::DoCommonMode( PredMode& predmode , const int level)
     {
         if ( MB_cost[REF2_ONLY]<MB_cost[predmode] )
             predmode = REF2_ONLY;
-//         if ( MB_cost[REF1AND2]<MB_cost[predmode] )
-//             predmode = REF1AND2;
+         if ( MB_cost[REF1AND2]<MB_cost[predmode] )
+             predmode = REF1AND2;
     }
  
     return MB_cost[predmode];
@@ -546,37 +546,39 @@ float ModeDecider::ModeCost(const int xindex , const int yindex ,
                  const PredMode predmode )
 {
     // Computes the variation of the given mode, predmode, from its immediate neighbours
-    // Currently, includes branches to cope with blocks on the edge of the picture.
-    int i ,j;
-    float diff;
-    float var = 0.0;
+    // First, get a prediction for the mode
 
-    i = xindex-1;
-    j = yindex;
-    if ( i>=0)
+    unsigned int mode_predictor = (unsigned int)(REF1_ONLY);
+    const TwoDArray<PredMode>& preddata( m_me_data_set[2]->Mode() );
+    
+    unsigned int num_ref1_nbrs( 0 ); 
+    unsigned int num_ref2_nbrs( 0 );
+    
+    if (xindex > 0 && yindex > 0)
     {
-        diff = static_cast<float>( m_me_data_set[2]->Mode()[j][i] - predmode );
-        var = std::abs( diff );
-    }
+        num_ref1_nbrs += ((unsigned int)( preddata[yindex-1][xindex] ) ) & 1; 
+        num_ref1_nbrs += ((unsigned int)( preddata[yindex-1][xindex-1] ) ) & 1; 
+        num_ref1_nbrs += ((unsigned int)( preddata[yindex][xindex-1] ) ) & 1;
 
-    i = xindex-1;
-    j = yindex-1;
-    if ( i>=0 && j>=0)
-    {
-        diff = static_cast<float>( m_me_data_set[2]->Mode()[j][i] - predmode);
-        var += std::abs( diff );
-    }
+        mode_predictor = num_ref1_nbrs>>1;
 
-    i = xindex;
-    j = yindex-1;
-    if ( j>=0 )
-    {
-        diff = static_cast<float>( m_me_data_set[2]->Mode()[j][i] - predmode );
-        var += std::abs( diff );
+        num_ref2_nbrs += ((unsigned int)( preddata[yindex-1][xindex] ) ) & 2; 
+        num_ref2_nbrs += ((unsigned int)( preddata[yindex-1][xindex-1] ) ) & 2; 
+        num_ref2_nbrs += ((unsigned int)( preddata[yindex][xindex-1] ) ) & 2; 
+        num_ref2_nbrs >>= 1;
+
+        mode_predictor ^= ( (num_ref2_nbrs>>1)<<1 );
     }
+    else if (xindex > 0 && yindex == 0)
+        mode_predictor = (unsigned int)( preddata[0][xindex-1] ); 
+    else if (xindex == 0 && yindex > 0)
+        mode_predictor = (unsigned int)( preddata[yindex-1][0] ); 
+
+    unsigned int var = (mode_predictor & 1)+((mode_predictor>>1) &1);
 
     return var*m_me_data_set[2]->LambdaMap()[yindex][xindex];
 }
+
 
 float ModeDecider::GetDCVar( const ValueType dc_val , const ValueType dc_pred)
 {
