@@ -1,3 +1,11 @@
+2004-08-26 12:05  asuraparaju
+
+	* NEWS: Included 0.4.1 release notes
+
+2004-08-26 12:02  asuraparaju
+
+	* configure.ac: Updated release id to 0.4.1
+
 2004-08-25 17:58  asuraparaju
 
 	* decoder/Makefile.am, encoder/Makefile.am,
