@@ -1,8 +1,66 @@
 Dirac software development practices
 ====================================
 
-Sourceforge Developers forum
-----------------------------
+Contents
+--------
+
+1. Licenses and submitting work
+
+2. Sourceforge Developers forum
+
+3. Mailing lists
+
+4. CVS log messages
+
+5. Software practices
+
+6. Profiling & optimisation
+
+7. Line-endings
+
+8. Binary files in CVS
+
+
+
+1. Licenses and submitting work
+-------------------------------
+
+Developers submitting work to the Dirac project should print out, 
+complete, and sign the Developer's Certificate of Origin contained 
+in the DCO.developers file. It should be posted to: 
+
+Dr Tim Borer
+BBC Research and Development
+Kingswood Warren
+Tadworth
+Surrey KT20 6NP
+United Kingdom
+
+For simplicity developers must submit code using the same
+license that we distribute under, which is the Mozilla Triple
+license (http://www.mozilla.org/MPL/). Using any other license
+causes complexity and FUD.
+
+Contributions should be in the form of a patch, which may be for a
+whole directory. For changes to an existing file all that is needed
+is to add the author's name to the list of contributors, since the
+license will remain the MPL. For new files, the header in each file
+should be completed from Exhibit A, the Mozilla Triple License (from the
+COPYING file). It should NOT be copied from files already obtained
+in the Dirac project, since some details may differ.
+
+To create a context diff patch run the command
+
+diff -ruN compress-orig compress-mods > patch.txt
+
+   where compress-orig is the directory with the original code and
+   compress-mods is the directory with the modified files.
+
+The patch.txt file should then be submitted to the Sourceforge Patch
+tracker.
+
+2. Sourceforge Developers forum
+-------------------------------
 The Developers forum is where Dirac core developers plan and coordinate
 changes to Dirac.  All API changes, new features and implementation
 difficulties are announced and discussed here.
@@ -27,15 +85,15 @@ to their username@users.sourceforge.net email address.
   http://sourceforge.net/forum/forum.php?forum_id=353620
 
 
-Mailing lists
---------------
+3. Mailing lists
+----------------
 Developers should subscribe to the dirac-announce and dirac-commits
 mailing lists.  dirac-announce is used to announce new releases and
 dirac-commits is sent mail automatically for every commit.
 
 
-CVS log messages
-----------------
+4. CVS log messages
+-------------------
 Always indicate why the change is necessary in addition to a succinct summary
 of what as changed.  As the number of developers increases it becomes
 increasingly difficult for developers to understand the changes going on in
@@ -55,8 +113,8 @@ E.g.
   - Enhanced portability: stricmp replaced by strcasecmp (the POSIX standard) 
 
 
-Software practices
-------------------
+5. Software practices
+---------------------
 I. Portability
   This project aims to be as portable as possible and to that end follows the
   following standards:
@@ -243,7 +301,7 @@ III. Code Review
    CVS. Developers should use the guidelines specified in the Coding Style
    sub-section while reviewing code.
 
-III. Testing with "make check"
+IV. Testing with "make check"
   Developers should aim to have all the regression tests succeed.  If a
   developer anticipates breaking the tests (while a significant body of work
   is being undertaken) this must be announced on the Developer Forum, and
@@ -254,8 +312,8 @@ III. Testing with "make check"
   "Where's the test?"
 
 
-Profiling & optimisation
-------------------------
+6. Profiling & optimisation
+---------------------------
 Dirac is alpha software so developers cannot expect optimisation improvements
 to survive algorithm improvements or code refactoring and restructuring.  That
 being said, the Dirac maintainers would like to encourage profiling analysis
@@ -286,16 +344,16 @@ should be followed:
 	alignment technique.
 
 
-Line-endings
-------------
+7. Line-endings
+---------------
 All source code and documentation will have LF line-endings, include makefiles
 and scripts.  The only exception will be for .dsp and .dsw (and any other
 WIN32 specific) files which will not function under MS VC++ unless they use
 CR-LF line-endings.
 
 
-Binary files in CVS
--------------------
+8. Binary files in CVS
+----------------------
 CVS will modify files during checkin and checkout unless they are tagged as
 binary.  The modifications include translation of CR-LF <-> LF (depending on
 the OS of the CVS client) and expansion of CVS keywords such as $Id and $Log.
