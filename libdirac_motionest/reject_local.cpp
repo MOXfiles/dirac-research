@@ -248,10 +248,12 @@ void RejectLocal::Reject(int & score)
             }
         }
 
-        if (m_debug) std::cerr << std::endl << "Reject local: Improved model";
+        //if (m_debug) std::cerr << std::endl << "Reject local: Improved model";
     }
 
-    else
+    /*
+	else
         if (m_debug) std::cerr << std::endl << "Reject local: Failed to improve model";
+	*/
 }
 
