@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author)
+* Contributor(s): Thomas Davies (Original Author), Chris Bowley
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -35,7 +35,7 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-#include "libdirac_common/common.h"
+#include <libdirac_common/common.h>
 #include <algorithm>
 #ifndef _MOTION_H
 #define _MOTION_H
@@ -48,7 +48,8 @@
 
 //! Motion vector class - just a pair
 template <class T>
-class MotionVector{
+class MotionVector
+{
 public:
 
     //! Constructor 
@@ -59,32 +60,108 @@ public:
     MotionVector<T>(T a) : x(a), y(a) {};
 
     //! Addition 
-    inline MotionVector<T> operator+(MotionVector<T>& argument){
-        MotionVector<T> temp;
-        temp.x=x+argument.x;
-        temp.y=y+argument.y;
-        return temp;}
+    inline MotionVector<T> operator+(const MotionVector<T>& argument) const;
+
     //! Subtraction 
-    inline MotionVector<T> operator-(MotionVector<T>& argument){
-        MotionVector<T> temp;
-        temp.x=x-argument.x;
-        temp.y=y-argument.y;
-        return temp;}
+    inline MotionVector<T> operator-(const MotionVector<T>& argument) const;
+
     //! Scalar multiplication
-    inline MotionVector<T> operator*(float& argument){
-        MotionVector<T> temp;
-        temp.x=x*argument;
-        temp.y=y*argument;
-        return temp;}
+    inline MotionVector<T> operator*(const float argument) const;
+
     //! Scalar multiplication
-    inline MotionVector<T> operator*(int& argument){
-        MotionVector<T> temp;
-        temp.x=x*argument;
-        temp.y=y*argument;
-        return temp;}
+    inline MotionVector<T> operator*(const int argument) const;
+
+    //! Bitshift of each component
+    inline MotionVector<T> operator<<(const int argument) const;
+
+    //! Bitshift of each component
+    inline MotionVector<T> operator>>(const int argument) const;
+
+
     //! x and y components 
     T x,y;
+
 };
+
+
+template <class T>
+inline MotionVector<T> MotionVector<T>::operator+(const MotionVector<T>& argument) const 
+{
+    MotionVector<T> temp;
+    temp.x = x + argument.x;
+    temp.y = y + argument.y;
+
+    return temp;
+}
+
+template <class T>
+inline MotionVector<T>  MotionVector<T>::operator-(const MotionVector<T>& argument) const 
+{
+    MotionVector<T> temp;
+    temp.x = x-argument.x;
+    temp.y = y-argument.y;
+
+    return temp;
+}
+
+template <class T>
+inline MotionVector<T>  MotionVector<T>::operator*(const float argument) const 
+{
+    MotionVector<T> temp;
+    temp.x = x*argument;
+    temp.y = y*argument;
+
+    return temp;
+}
+
+template <class T>
+inline MotionVector<T>  MotionVector<T>::operator*(const int argument) const 
+{
+    MotionVector<T> temp;
+    temp.x = x*argument;
+    temp.y = y*argument;
+
+    return temp;
+}
+
+template <class T>
+inline MotionVector<T>  MotionVector<T>::operator<<(const int argument) const 
+{
+    MotionVector<T> temp;
+    temp.x = x<<argument;
+    temp.y = y<<argument;
+
+    return temp;
+}
+
+template <class T>
+inline MotionVector<T>  MotionVector<T>::operator>>(const int argument) const 
+{
+    MotionVector<T> temp;
+    temp.x = x>>argument;
+    temp.y = y>>argument;
+
+    return temp;
+}
+
+//! Overloaded operator<< for MotionVector class for output to stream
+template <class T>
+std::ostream & operator<< (std::ostream & stream, MotionVector<T> & mv)
+{
+    stream << mv.x << " " << mv.y;
+
+    return stream;
+}
+
+//! Overloaded operator>> for MotionVector class for input from stream
+template <class T>
+std::istream & operator>> (std::istream & stream, MotionVector<T> & mv)
+{
+    stream >> mv.x;
+    stream >> mv.y;
+
+    return stream;
+}
 
 //! MVector class is a vector of ints 
 typedef MotionVector<int> MVector;
@@ -96,7 +173,8 @@ typedef MotionVector<int> ImageCoords;
 typedef TwoDArray<MVector> MvArray;
 
 //! Class for recording costs derived in motion estimation
-class MvCostData{
+class MvCostData
+{
 public:
     //! Constructor
     MvCostData():
@@ -114,98 +192,175 @@ public:
     float total;
 };
 
-//! Data relating to a macroblock
-class MBData{
-public:
-
-    //! Depth to which the MB is split 
-    unsigned int split_mode;
-
-    //! True is there is a single reference mode for the whole MB, false otherwise
-    bool common_ref;
-};
 
 //! Class for all the motion vector data
 /*!
-    Motion vector data: the motion vectors themselves, the costs, DC values for blocks,
-    the prediction modes chosen for each block and the MB data.
+     Motion vector data: the motion vectors themselves, the blocks 
+     and macroblock modes.
 */
-class MvData{
-    //class to encapsulate data used in motion estimation and compensation
+class MvData
+{
 public:
     //! Constructor
-    /*!
-        Constructor - data arrays are sized according to the number of blocks/MBs.        
-     */
-    MvData(int xnumMB, int ynumMB, int xnumBlock, int ynumBlock)
-    : 
-     mb(ynumMB , xnumMB), 
-     mv1(ynumBlock , xnumBlock),
-     mv2(ynumBlock , xnumBlock),
-     mode(ynumBlock , xnumBlock),
-     dcY(ynumBlock , xnumBlock),
-     dcU(ynumBlock , xnumBlock),
-     dcV(ynumBlock , xnumBlock),
-     MB_costs(ynumMB , xnumMB),
-     block_costs1(ynumBlock , xnumBlock),
-     block_costs2(ynumBlock , xnumBlock),
-     block_intra_costs(ynumBlock ,xnumBlock),
-     block_bipred_costs(ynumBlock , xnumBlock)
-    {}
+    /*! 
+        Constructor takes:
+        \param  xnumMB  the number of MBs horizontally
+        \param  ynumMB  the number of MBs vertically
+        \param  xnumblocks  the number of blocks horizontally
+        \param  ynumblocks  the number of blocks vertically
+        \param  num_refs  the number of references being used for the frame
+    */
+    MvData( const int xnumMB, int ynumMB , 
+            const int xnumblocks, int ynumblocks ,  const int num_refs = 2);
 
-    //! Return the array of DC values for blocks for each component
-    TwoDArray<ValueType>& dc(CompSort cs)
-    {
-        if (cs == U_COMP) return dcU;
-        else if (cs == V_COMP) return dcV;
-        else return dcY;}
+    //! Constructor
+    /*! 
+        Constructor. Numbers of blocks derived from the number of MBs
+        \param  xnumMB  the number of MBs horizontally
+        \param  ynumMB  the number of MBs vertically
+        \param  num_refs  the number of references being used for the frame
+    */
+    MvData( const int xnumMB, int ynumMB ,  const int num_refs = 2);
 
-    //! Return the array of DC values for blocks for each component
-    const TwoDArray<ValueType>& dc(CompSort cs) const {
-        if (cs == U_COMP) return dcU;
-        else if (cs == V_COMP) return dcV;
-        else return dcY;}
+    //! Destructor
+    ~MvData();
 
-        //! The MB data array
-    TwoDArray<MBData> mb;
+    //! Get the MVs for a reference
+    MvArray& Vectors(const int ref_id){return *( m_vectors[ref_id] );}
 
-    //! The motion vectors for reference 1.
-    MvArray mv1;
+    //! Get the MVs for a reference
+    const MvArray& Vectors(const int ref_id) const {return *( m_vectors[ref_id] );}
 
-    //! The motion vectors for reference 2.
-    MvArray mv2;
+    //! Get the DC values for each component
+    TwoDArray<ValueType>& DC(CompSort cs){return *( m_dc[cs] );}
 
-    //! The block prediction modes
-    TwoDArray<PredMode> mode;
+    //! Get the DC values for each component
+    const TwoDArray<ValueType>& DC(CompSort cs) const {return *( m_dc[cs] );}
 
-    //! The Y DC values
-    TwoDArray<ValueType> dcY;
+    //! Get the block prediction modes
+    TwoDArray<PredMode>& Mode(){return m_modes;}
 
-    //! The U DC values
-    TwoDArray<ValueType> dcU;
+    //! Get the block prediction modes
+    const TwoDArray<PredMode>& Mode() const {return m_modes;}
+ 
+    //! Get the MB split level
+    TwoDArray<int>& MBSplit(){return m_mb_split;}
 
-    //! The V DC values
-    TwoDArray<ValueType> dcV;
+    //! Get the MB split level
+    const TwoDArray<int>& MBSplit() const{return m_mb_split;}
 
-    //! The total cost for each MB
-    TwoDArray<float> MB_costs;    
+    //! Get the MB common mode parameters
+    TwoDArray<bool>& MBCommonMode(){return m_mb_common;}
 
-    //! The cost structures for each block for reference 1 
-    TwoDArray<MvCostData> block_costs1;
+    //! Get the MB common mode parameters
+    const TwoDArray<bool>& MBCommonMode() const{return m_mb_common;}
 
-    //! The cost structures for each block for reference 2
-    TwoDArray<MvCostData> block_costs2;    
+private:
+    // Initialises the arrays of data
+    void InitMvData();
 
-    //! The costs of coding each block Intra
-    TwoDArray<float> block_intra_costs;
+    // The motion vectors
+    OneDArray<MvArray*> m_vectors;
 
-    //! The costs of coding each block with bi-directional prediction
-    TwoDArray<MvCostData> block_bipred_costs;
+    // The block modes
+    TwoDArray<PredMode> m_modes;
+
+    // The DC values
+    OneDArray< TwoDArray<ValueType>* > m_dc;
+
+    // The MB split levels
+    TwoDArray<int> m_mb_split;
+
+    // The MB common mode indicators 
+    TwoDArray<bool> m_mb_common;
+
 
 };
 
-//motion compensation stuff//
-/////////////////////////////
+//! Class for all the motion estimation data
+/*!
+     Motion estimation data: derived from MvData class, also
+     incorporates costs for blocks and macroblocks
+*/
+
+class MEData: public MvData
+{
+public:
+
+    //! Constructor
+    /*! 
+        Constructor takes:
+        \param  xnumMB  the number of MBs horizontally
+        \param  ynumMB  the number of MBs vertically
+        \param  xnumblocks  the number of blocks horizontally
+        \param  ynumblocks  the number of blocks vertically
+        \param  num_refs  the number of references being used for the frame
+    */
+    MEData( const int xnumMB, const int ynumMB , 
+            const int xnumblocks, const int ynumblocks , const int num_refs = 2);
+
+    //! Constructor
+    /*! 
+        Constructor. Numbers of blocks derived from the number of MBs
+        \param  xnumMB  the number of MBs horizontally
+        \param  ynumMB  the number of MBs vertically
+        \param  num_refs  the number of references being used for the frame
+    */
+    MEData( const int xnumMB, const int ynumMB , const int num_refs = 2);
+
+    //! Destructor
+    ~MEData();
+
+    //! Get the block cost structures for each reference
+    TwoDArray<MvCostData>& PredCosts(const int ref_id){ return *( m_pred_costs[ref_id] ); }
+
+    //! Get the block cost structures for each reference
+    const TwoDArray<MvCostData>& PredCosts(const int ref_id) const { return *( m_pred_costs[ref_id] ); }
+
+    //! Get the intra costs
+    TwoDArray<float>& IntraCosts(){ return m_intra_costs; }
+
+    //! Get the intra costs
+    const TwoDArray<float>& IntraCosts() const { return m_intra_costs; }
+
+    //! Get the bipred costs
+    TwoDArray<MvCostData>& BiPredCosts(){ return m_bipred_costs; }
+
+    //! Get the bipred costs
+    const TwoDArray<MvCostData>& BiPredCosts() const { return m_bipred_costs; }
+
+    //! Get the MB costs
+    TwoDArray<float>& MBCosts(){ return m_MB_costs; }
+
+    //! Get the MB costs
+    const TwoDArray<float>& MBCosts() const { return m_MB_costs; }
+
+    //! Overloaded operator<< for outputing to (file) stream
+    friend std::ostream &operator<< (std::ostream & stream, MEData & me_data);
+
+    //! Overloaded operator>> for input of data from (file) stream
+    friend std::istream &operator>> (std::istream & stream, MEData & me_data);
+
+private:
+    // Initialises the arrays of data
+    void InitMEData();
+
+    // The costs of predicting each block, for each reference
+    OneDArray< TwoDArray<MvCostData>* > m_pred_costs;
+
+    // The costs of predicting each block by DC
+    TwoDArray<float> m_intra_costs;
+
+    // The costs of predicting each block bidirectionally
+    TwoDArray<MvCostData> m_bipred_costs;
+
+    // The costs for each macroblock as a whole
+    TwoDArray<float> m_MB_costs;
+
+};
+
+// Motion compensation stuff //
+///////////////////////////////
 
 
 //First have arithmetic classes to avoid code duplication
@@ -259,10 +414,10 @@ float RaisedCosine(float t, float B);
 //*           *                  *
 void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, TwoDArray<CalcValueType>& WeightArray);
 
-//Flips the values in an array in the x direction
+//! Flips the values in an array in the x direction
 void FlipX(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, TwoDArray<CalcValueType>& Flipped);
 
-//Flips the values in an array in the y direction.
+//! Flips the values in an array in the y direction.
 void FlipY(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, TwoDArray<CalcValueType>& Flipped);
 
 //motion estimation and coding stuff

@@ -85,7 +85,6 @@ public:
     
 private:
     int MB_count;
-    const CodecParams  m_cparams;
     const ChromaFormat & m_cformat;
 
     int b_xp, b_yp;            //position of current block
@@ -97,23 +96,23 @@ private:
     MvDataCodec& operator=(const MvDataCodec& rhs); //private, bodyless copy operator=: class should not be assigned
 
     // coding functions    
-    void CodeMBSplit(MvData& in_data);    //code the MB splitting mode
-    void CodeMBCom(MvData& in_data);    //code the MB common ref mode
-    void CodePredmode(MvData& in_data);    //code the block prediction mode
-    void CodeMv1(MvData& in_data);        //code the first motion vector
-    void CodeMv2(MvData& in_data);        //code the second motion vector
-    void CodeDC(MvData& in_data);        //code the dc value of intra blocks
+    void CodeMBSplit(const MvData& in_data);    //code the MB splitting mode
+    void CodeMBCom(const MvData& in_data);    //code the MB common ref mode
+    void CodePredmode(const MvData& in_data);    //code the block prediction mode
+    void CodeMv1(const MvData& in_data);        //code the first motion vector
+    void CodeMv2(const MvData& in_data);        //code the second motion vector
+    void CodeDC(const MvData& in_data);        //code the dc value of intra blocks
 
     // decoding functions
-    void DecodeMBSplit(MvData& out_data);    //decode the MB splitting mode
-    void DecodeMBCom(MvData& out_data);//decode the MB common ref mode
+    void DecodeMBSplit( MvData& out_data);    //decode the MB splitting mode
+    void DecodeMBCom( MvData& out_data);//decode the MB common ref mode
     void DecodePredmode(MvData& out_data);//decode the block prediction mode
-    void DecodeMv1(MvData& out_data);    //decode the first motion vector
-    void DecodeMv2(MvData& out_data);    //decode the second motion vector
-    void DecodeDC(MvData& out_data);    //decode the dc value of intra blocks    
+    void DecodeMv1( MvData& out_data);    //decode the first motion vector
+    void DecodeMv2( MvData& out_data);    //decode the second motion vector
+    void DecodeDC( MvData& out_data);    //decode the dc value of intra blocks    
 
-    void DoWorkCode(MvData& in_data);
-    void DoWorkDecode(MvData& out_data, int num_bits);
+    void DoWorkCode( MvData& in_data );
+    void DoWorkDecode(MvData& out_data, const int num_bits);
 
     // Context stuff    
     void Update(const int& context_num, const bool& Symbol);
@@ -143,8 +142,8 @@ private:
     int ChooseVDCSignContext(const MvData& data) const;
 
     //prediction stuff
-    unsigned int MBSplitPrediction(const TwoDArray<MBData>& mbdata) const;
-    bool MBCBModePrediction(const TwoDArray<MBData>& mbdata) const;
+    unsigned int MBSplitPrediction(const TwoDArray<int>& mbdata) const;
+    bool MBCBModePrediction(const TwoDArray<bool>& mbdata) const;
     unsigned int BlockModePrediction(const TwoDArray<PredMode>& preddata) const;
     MVector Mv1Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
     MVector Mv2Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;

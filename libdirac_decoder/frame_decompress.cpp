@@ -82,7 +82,7 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 
 			if ( fsort != I_frame )
 			{//do all the MV stuff		
-				mv_data = new MvData(m_decparams.XNumMB(),m_decparams.YNumMB() , m_decparams.XNumBlocks() , m_decparams.YNumBlocks());
+				mv_data = new MvData( m_decparams.XNumMB() , m_decparams.YNumMB() );
 
  				//decode mv data
 				if (m_decparams.Verbose())

@@ -187,6 +187,72 @@ private:
     std::vector<Subband> bands;
 };
 
+
+//! Class to do two-tap prediction lifting step
+template <int gain> class PredictStep
+{
+
+public:
+
+    //! Constructor
+    PredictStep(){}
+
+    // Assume default copy constructor, assignment= and destructor //
+
+    //! Do the filtering
+    /*
+        Do the filtering.
+        \param   in_val   the value being predicted
+        \param   val1   the first value being used for prediction
+        \param   val2   the second value being used for prediction
+    */
+    void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const;
+
+private:
+
+}; 
+
+template <int gain>
+inline void  PredictStep<gain>::Filter( ValueType& in_val, 
+                                            const ValueType& val1, 
+                                            const ValueType& val2) const
+{
+    in_val -= static_cast< ValueType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
+}
+
+//! Class to do two-tap updating lifting step
+template <int gain> class UpdateStep
+{
+
+public:
+    //! Constructor
+    UpdateStep(){}
+
+    //! Do the filtering
+    /*
+        Do the filtering.
+        \param   in_val   the value being updated
+        \param   val1   the first value being used for updating
+        \param   val2   the second value being used for updating
+    */
+    void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const;
+
+private:
+
+};  
+
+template <int gain>
+inline void UpdateStep<gain>::Filter(ValueType& in_val,
+                                          const ValueType& val1, 
+                                          const ValueType& val2) const
+{
+    in_val += static_cast< ValueType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
+}
+
+
+
+
+
 //! A class to do wavelet transforms
 /*!
     A class to do forward and backward wavelet transforms by iteratively splitting or merging the
@@ -253,9 +319,10 @@ private:
 
     //! Given x and y spatial frequencies in cycles per degree, returns a weighting value
     float PerceptualWeight(float xf,float yf,CompSort cs);
-    void VHSplit(int xp, int yp, int xl, int yl, PicArray&pic_data);
-    void VHSynth(int xp, int yp, int xl, int yl, PicArray& pic_data);    
-
+    void VHSplit(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data);
+    void VHSplit2(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data);
+    void VHSynth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);  
+    void VHSynth2(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);  
 };
 
 #endif

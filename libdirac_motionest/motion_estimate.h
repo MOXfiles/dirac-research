@@ -41,45 +41,62 @@
 
 #include <libdirac_common/motion.h>
 
+
 class FrameBuffer;
 
 
-//! Class to handle the whole motion estimation process 
+//! Class to handle the whole motion estimation process. 
+/*!
+ 
+ Class to handle the whole motion estimation process, which works in 
+ three stages. 
+
+ First a pixel-accurate estimate is formed by looking at the current 
+ frame data and the data from the reference frame(s). Motion vectors
+ are found for every block.
+
+ Second, these pixel-accurate motion vectors are refined to sub-pixel
+ accuracy. This means some sort of upconversion needs to be applied to
+ the reference. This can be done by actually upconverting the reference
+ to create a bigger picture or by doing some interpolation of values
+ on the fly.
+
+ Third, mode decisions have to be made. This means choosing which (if
+ any) reference to use for each block, and whether to use the same 
+ motion vectors for groups of blocks together. A 2x2 group of blocks is
+ called a sub-MB and a 4x4 group of blocks is a MB (Macroblock). All 
+ the MV data is organised by MB.
+*/
 class MotionEstimator{
 public:
-	//! Constructor
-	MotionEstimator(const EncoderParams& params);
-	//! Destructor
-	~MotionEstimator(){}
+    //! Constructor
+    MotionEstimator( const EncoderParams& encp );
+    //! Destructor
+    ~MotionEstimator(){}
 
-	//! Do the motion estimation
-	void DoME(const FrameBuffer& my_buffer,int frame_num, MvData& mv_data);
+    //! Do the motion estimation
+    void DoME(const FrameBuffer& my_buffer , int frame_num , MEData& me_data);
 
 private:
-	//Copy constructor
-	MotionEstimator(const MotionEstimator& cpy);//private, body-less copy constructor: class should not be copied
-	//Assignment= 
-	MotionEstimator& operator=(const MotionEstimator& rhs);//private, body-less copy constructor: class should not be copied
+    //! Copy constructor: private, body-less - class should not be copied
+    MotionEstimator( const MotionEstimator& cpy );
 
-	//internal data
-	FrameSort fsort;
-	EncoderParams encparams;
-	int xr, yr; // search ranges for block matching
-	int depth;
+    //! Assignment= : //private, body-less - class should not be assigned
+    MotionEstimator& operator=( const MotionEstimator& rhs );
 
-	//functions
-	void DoHierarchicalSearch(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data); 	//find vectors to pixel accuracy
-																						//using a hierarchical search method
-	void DoFinalSearch(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data);		//refine vectors to 1/8 pel accuracy, given
-																					//pixel-accurate vectors
-	void MatchPic(const PicArray& ref_data,const PicArray& pic_data,MvData& mv_data,const MvData& guide_data,
-		int ref_id,int level);												//do a basic matching from pic_data to reference
-																			//ref_data by block-matching, using guide data from
-																			//lower levels in the resolution hierarchy
-	void SetChromaDC(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data);	//go through all the intra blocks and extract the
-																				//dc values to be coded from the chroma components
-	void SetChromaDC(const PicArray& pic_data, MvData& mv_data,CompSort csort);		//Called by previous fn for each component
-	ValueType GetChromaBlockDC(const PicArray& pic_data, MvData& mv_data,int xloc,int yloc,int split);
+    //! Go through all the intra blocks and extract the chroma dc values to be coded
+    void SetChromaDC(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data);
+
+    //! Called by previous fn for each component
+    void SetChromaDC(const PicArray& pic_data, MvData& mv_data,CompSort csort);        
+
+    //! Called by previous fn for each block
+    ValueType GetChromaBlockDC(const PicArray& pic_data, int xloc,int yloc,int split);
+
+    // Member variables
+
+    //! A local reference to the encoder parameters
+    const EncoderParams& m_encparams;
 };
 
 #endif

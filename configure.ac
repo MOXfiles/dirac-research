@@ -85,6 +85,15 @@ AC_CHECK_PROG(HAVE_LATEX, latex, true, false)
 	fi
 AM_CONDITIONAL(HAVE_LATEX, $HAVE_LATEX)
 
+AC_ARG_ENABLE(overlay,
+[ --enable-overlay Turns onDirectory instrumentation],
+[case "${enableval}" in
+	yes) overlay=true ;;
+	no) overlay=false ;;
+	*) AC_MSG_ERROR(bad value ${enableval} for --enable-overlay) ;;
+esac],[overlay=false])
+AM_CONDITIONAL(OVERLAY, test x$overlay = xtrue)
+
 dnl -----------------------------------------------
 dnl Checks for optional files in doc directory.
 dnl algorithm documentation is not distributed in
@@ -137,6 +146,8 @@ AC_OUTPUT(Makefile dirac.pc \
           util/Makefile \
           util/conversion/Makefile \
           util/conversion/common/Makefile \
+	  util/instrumentation/Makefile \
+	  util/instrumentation/libdirac_instrument/Makefile \
           doc/Makefile \
           libdirac_common/Makefile \
           libdirac_motionest/Makefile \
@@ -145,4 +156,4 @@ AC_OUTPUT(Makefile dirac.pc \
           encoder/Makefile \
           decoder/Makefile \
           picheader/Makefile \
-          unit_tests/Makefile)
+          unit_tests/Makefile )

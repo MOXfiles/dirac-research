@@ -79,9 +79,9 @@ public:
         Perform motion compensated addition/subtraction on a frame using parameters
         /param    fnum    number of frame in the frame buffer to be compensated
         /param    my_buffer    the FrameBuffer object containing the frame and the reference frames
-`        /param    mv_data    the motion vector data
+`       /param    mv_data    the motion vector data
      */
-    void CompensateFrame( FrameBuffer& my_buffer , int fnum , const MvData& mv_data );    //motion compensate a given frame
+    void CompensateFrame( FrameBuffer& my_buffer , int fnum , const MvData& mv_data );
 
 private:
     //private, body-less copy constructor: this class should not be copied
@@ -97,10 +97,10 @@ private:
 
     //! Motion-compensate an individual block
     void CompensateBlock( PicArray& pic_data , const PicArray& refup_data , const MVector& Vec ,
-        const ImageCoords Pos , const TwoDArray<CalcValueType>& Weights , const ArithObj& arith );
+        const ImageCoords& Pos , const TwoDArray<CalcValueType>& Weights , const ArithObj& arith );
 
     //! DC-compensate an individual block
-    void DCBlock( PicArray &pic_data , const ValueType dc , const ImageCoords Pos , 
+    void DCBlock( PicArray &pic_data , const ValueType dc , const ImageCoords& Pos , 
         const TwoDArray<CalcValueType>& Weights ,const ArithObj& arith);
 
     //! Recalculate the weight matrix and store other key block related parameters.
@@ -110,18 +110,18 @@ private:
     CodecParams cparams;
     bool luma_or_chroma;    //true if we're doing luma, false if we're coding chroma
 
-    const ArithAddObj add;                    //Particular arith obj
-    const ArithSubtractObj subtract;        //ditto
-    const ArithHalfSubtractObj subtracthalf;//ditto
-    const ArithHalfAddObj addhalf;            //ditto
-    AddOrSub add_or_sub;                    //Motion compensated Addition/Subtraction flag
+    // Particular arithmetic objects
+    const ArithAddObj m_add;                    
+    const ArithSubtractObj m_subtract;        
+    const ArithHalfSubtractObj m_subtracthalf;
+    const ArithHalfAddObj m_addhalf;          
+    
+    AddOrSub add_or_sub;                    
 
     //Image and block information
-    OLBParams bparams;    //either luma or chroma block parameters
-    TwoDArray<CalcValueType>* BlockWeights;
-    int    xBlockSize,yBlockSize;
-    int ImageWidth;
-    int ImageHeight;
+    OLBParams m_bparams;
+    TwoDArray<CalcValueType>* m_block_weights;
+
 };
 
 #endif

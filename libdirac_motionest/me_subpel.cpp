@@ -42,117 +42,169 @@
 
 using std::vector;
 
-SubpelRefine::SubpelRefine(EncoderParams& cp): 
-    encparams(cp),
-    nshift(4),
-    lambda(3)
+SubpelRefine::SubpelRefine(const EncoderParams& encp): 
+    m_encparams(encp),
+    m_nshift(4)
 {
-	//define the relative coordinates of the four neighbours	
-	nshift[0].x = -1; nshift[0].y = 0;
-	nshift[1].x = -1; nshift[1].y = -1;
-	nshift[2].x = 0; nshift[2].y = -1;
-	nshift[3].x = 1; nshift[3].y = -1;
+    //define the relative coordinates of the four neighbours    
+    m_nshift[0].x = -1; 
+    m_nshift[0].y = 0;
+
+    m_nshift[1].x = -1;
+    m_nshift[1].y = -1;
+
+    m_nshift[2].x = 0;
+    m_nshift[2].y = -1;
+
+    m_nshift[3].x = 1;
+    m_nshift[3].y = -1;
+
 }
 
-void SubpelRefine::DoSubpel(const FrameBuffer& my_buffer,int frame_num, MvData& mvd)
+void SubpelRefine::DoSubpel(const FrameBuffer& my_buffer,int frame_num, MEData& me_data)
 {
-	//main loop for the subpel refinement
-	int ref1,ref2;
+    //main loop for the subpel refinement
+    int ref1,ref2;
 
- 	//these factors normalise costs for sub-MBs and MBs to those of blocks, so that the overlap is
- 	//take into account (e.g. a sub-MB has length XBLEN+XBSEP and YBLEN+YBSEP):
-	factor1x1 = float( 16 * encparams.LumaBParams(2).Xblen() * encparams.LumaBParams(2).Yblen() )/
-		float( encparams.LumaBParams(0).Xblen() * encparams.LumaBParams(0).Yblen() );
+    const FrameSort fsort = my_buffer.GetFrame(frame_num).GetFparams().FSort();
 
-	factor2x2 = float( 4 * encparams.LumaBParams(2).Xblen() * encparams.LumaBParams(2).Yblen() )/
-		float( encparams.LumaBParams(1).Xblen() * encparams.LumaBParams(1).Yblen() );
-
-	const FrameSort fsort = my_buffer.GetFrame(frame_num).GetFparams().FSort();
-
-	if (fsort != I_frame)
-	{
-		if (fsort==L1_frame)
-			lambda = encparams.L1MELambda();
-		else
-			lambda = encparams.L2MELambda();
-
-		mv_data = &mvd;
-		matchparams.pic_data = &( my_buffer.GetComponent(frame_num , Y_COMP));
-
-		const vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();
-		num_refs = refs.size();
-		ref1 = refs[0];
-		if (num_refs>1)
-			ref2 = refs[1];
-		else	
-			ref2 = ref1;
-		up1_data = &(my_buffer.GetUpComponent( ref1 , Y_COMP));
-		up2_data = &(my_buffer.GetUpComponent( ref2 , Y_COMP));
-
-		for (int yblock=0 ; yblock<encparams.YNumBlocks() ; ++yblock)
-		{
-			for (int xblock=0 ; xblock<encparams.XNumBlocks() ; ++xblock)
-			{				
-				DoBlock(xblock,yblock);
-			}//xblock		
-		}//yblock		
-	}
-}
-
-void SubpelRefine::DoBlock(int xblock,int yblock)
-{
-	vector<vector<MVector> > vect_list;
-	matchparams.vect_list = &vect_list;
-	matchparams.me_lambda = lambda;
-	const OLBParams& lbparams = encparams.LumaBParams(2);
-	matchparams.Init(lbparams,xblock,yblock);
-
-	//do the first reference
-	const MvArray* mvarray = &(mv_data->mv1);
-	matchparams.ref_data = up1_data;
-	matchparams.mv_pred = GetPred(xblock,yblock,*mvarray);
-	FindBestMatchSubp(matchparams,(*mvarray)[yblock][xblock],(mv_data->block_costs1)[yblock][xblock]);
-	(*mvarray)[yblock][xblock] = matchparams.best_mv;
-
-	if (num_refs>1)
+    if (fsort != I_frame)
     {
-		//do the second reference
-		mvarray = &(mv_data->mv2);
-		matchparams.ref_data = up2_data;
-		matchparams.mv_pred = GetPred(xblock,yblock,*mvarray);
-		FindBestMatchSubp(matchparams,(*mvarray)[yblock][xblock],(mv_data->block_costs2)[yblock][xblock]);
-		(*mvarray)[yblock][xblock] = matchparams.best_mv;		
-	}
+        if ( fsort == L1_frame )
+            m_lambda = m_encparams.L1MELambda();
+        else
+            m_lambda = m_encparams.L2MELambda();
+
+        const PicArray& pic_data = my_buffer.GetComponent(frame_num , Y_COMP);
+
+        // Get the references
+        const vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();
+
+        int num_refs = refs.size();
+        ref1 = refs[0];
+        if (num_refs>1)
+            ref2 = refs[1];
+        else    
+            ref2 = ref1;
+
+        const PicArray& refup1_data = my_buffer.GetUpComponent( ref1 , Y_COMP);
+        const PicArray& refup2_data = my_buffer.GetUpComponent( ref2 , Y_COMP);
+
+        // Now match the pictures
+        MatchPic( pic_data , refup1_data , me_data ,1 );
+
+        if (ref1 != ref2 )
+            MatchPic( pic_data , refup2_data , me_data ,2 );
+    
+    }
 }
 
-MVector SubpelRefine::GetPred(int xblock,int yblock,const MvArray& mvarray){
-	MVector mv_pred;
-	ImageCoords n_coords;
-	vector<MVector> neighbours;
+void SubpelRefine::MatchPic(const PicArray& pic_data , const PicArray& refup_data , MEData& me_data ,
+                             int ref_id)
+{
+    // Match a picture against a single reference. Loop over all the blocks
+    // doing the matching
 
-	if (xblock>0 && yblock>0 && xblock<mvarray.LastX())
+    // Initialisation //
+    ////////////////////
+
+    // Provide aliases for the appropriate motion vector data components
+
+    MvArray& mv_array = me_data.Vectors( ref_id );
+    TwoDArray<MvCostData>& pred_costs = me_data.PredCosts( ref_id );
+
+    // Provide a block matching object to do the work
+    BlockMatcher my_bmatch( pic_data , refup_data , m_encparams.LumaBParams(2) ,
+                                                      mv_array , pred_costs );
+
+    // Do the work //
+    /////////////////
+
+    // Loop over all the blocks, doing the work
+
+    for (int yblock=0 ; yblock<m_encparams.YNumBlocks() ; ++yblock)
+    {
+        for (int xblock=0 ; xblock<m_encparams.XNumBlocks() ; ++xblock)
+        {    
+            DoBlock(xblock , yblock , my_bmatch , mv_array , pred_costs );
+        }// xblock        
+    }// yblock
+}
+
+
+void SubpelRefine::DoBlock(const int xblock , const int yblock , 
+                           BlockMatcher& my_bmatch, MvArray& mv_array, TwoDArray<MvCostData>& pred_costs )
+{
+    // For each block, home into the sub-pixel vector
+
+    // The list of potential candidates
+    CandidateList cand_list;
+
+    // The prediction for the motion vector
+    const MVector mv_pred = GetPred( xblock , yblock , mv_array );
+
+    // Will use the integer vector as a guide - must multiply by 8 since we're
+    // doing 1/8th pixel accuracy
+    mv_array[yblock][xblock] = mv_array[yblock][xblock]<<3;
+
+    // Re-calculate at pixel accuracy, with correct predictor
+    pred_costs[yblock][xblock].mvcost = m_lambda * GetVar(mv_pred , mv_array[yblock][xblock]);
+    pred_costs[yblock][xblock].total = pred_costs[yblock][xblock].SAD+pred_costs[yblock][xblock].mvcost;
+
+    AddNewVlist( cand_list , mv_array[yblock][xblock] , 0 , 0 , 1 );// (creates a singleton list)
+
+    // Do half-pel accuracy
+    AddNewVlist(cand_list , mv_array[yblock][xblock] , 1 , 1 , 4);
+    cand_list.erase( cand_list.begin() );
+    my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, m_lambda );
+
+    // Next , go down to 1/4-pixel accuracy
+    AddNewVlist(cand_list , mv_array[yblock][xblock] , 1 , 1 , 2);
+    cand_list.erase( cand_list.begin() );
+    my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, m_lambda );
+
+    // Finally, do 1/8-pixel accuracy
+    AddNewVlist(cand_list , mv_array[yblock][xblock] , 1 , 1 , 1);
+    cand_list.erase( cand_list.begin() );
+    my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, m_lambda );
+
+    // Also, look in the nhood of the prediction
+    AddNewVlist(cand_list , mv_pred , 1 , 1 , 1);
+    cand_list.erase( cand_list.begin() );
+    if ( cand_list.size()>0 )
+        my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, m_lambda );
+}
+
+
+MVector SubpelRefine::GetPred(int xblock,int yblock,const MvArray& mvarray)
+{
+    MVector mv_pred;
+    ImageCoords n_coords;
+    vector<MVector> neighbours;
+
+    if (xblock>0 && yblock>0 && xblock<mvarray.LastX())
     {
 
-		for (int i=0 ; i<nshift.Length() ; ++i)
+        for (int i=0 ; i<m_nshift.Length() ; ++i)
         {
-			n_coords.x = xblock+nshift[i].x;
-			n_coords.y = yblock+nshift[i].y;
-			neighbours.push_back(mvarray[n_coords.y][n_coords.x]);
+            n_coords.x = xblock+m_nshift[i].x;
+            n_coords.y = yblock+m_nshift[i].y;
+            neighbours.push_back(mvarray[n_coords.y][n_coords.x]);
 
-		}// i
-	}
-	else 
+        }// i
+    }
+    else 
     {
-		for (int i=0 ; i<nshift.Length(); ++i )
+        for (int i=0 ; i<m_nshift.Length(); ++i )
         {
-			n_coords.x = xblock+nshift[i].x;
-			n_coords.y = yblock+nshift[i].y;
-			if (n_coords.x>=0 && n_coords.y>=0 && n_coords.x<mvarray.LengthX() && n_coords.y<mvarray.LengthY())
-				neighbours.push_back(mvarray[n_coords.y][n_coords.x]);
-		}// i
-	}
+            n_coords.x = xblock+m_nshift[i].x;
+            n_coords.y = yblock+m_nshift[i].y;
+            if (n_coords.x>=0 && n_coords.y>=0 && n_coords.x<mvarray.LengthX() && n_coords.y<mvarray.LengthY())
+                neighbours.push_back(mvarray[n_coords.y][n_coords.x]);
+        }// i
+    }
 
-	mv_pred = MvMedian(neighbours);
+    mv_pred = MvMedian(neighbours);
 
-	return mv_pred;
+    return mv_pred;
 }

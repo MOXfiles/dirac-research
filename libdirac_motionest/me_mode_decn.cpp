@@ -41,685 +41,543 @@
 
 using std::vector;
 
- //mode decision stuff
-void ModeDecider::DoModeDecn(const FrameBuffer& my_buffer, int frame_num, MvData& mvdata){
+ModeDecider::ModeDecider( const EncoderParams& encp):
+    m_encparams( encp ),
+    m_level_factor(3),
+    m_mode_factor(3),
+    m_me_data_set(3)
+{
 
- 	//we've got 'raw' block motion vectors for up to two reference frames. Now we want
- 	//to make a decision as to mode. In this initial implementation,
- 	//this is bottom-up i.e. find mvs for MBs and sub-MBs and see whether it's worthwhile merging.	
-	int ref1,ref2;
+    // The following factors normalise costs for sub-MBs and MBs to those of 
+    // blocks, so that the overlap is take into account (e.g. a sub-MB has
+    // length XBLEN+XBSEP and YBLEN+YBSEP). The MB costs for a 1x1 
+    // decomposition are not directly comprable to those for other decompositions
+    // because of the block overlaps. These factors remove these effects, so that
+    // all SAD costs are normalised to the area corresponding to non-overlapping
+    // 16 blocks of size XBLEN*YBLEN.    
 
-  	//Following factors normalise costs for sub-MBs and MBs to those of blocks, so that the overlap is
-  	//take into account (e.g. a sub-MB has length XBLEN+XBSEP and YBLEN+YBSEP). 
-	//The MB costs for a 1x1 decomposition are not directly comprable to those for other
-	//decompositions because of the block overlaps. These factors remove these effects, so that
-	//all SAD costs are normalised to the area corresponding to non-overlapping 16 blocks of size XBLEN*YBLEN.	
-	factor1x1 = float( 16 * encparams.LumaBParams(2).Xblen() * encparams.LumaBParams(2).Yblen() )/
-		float( encparams.LumaBParams(0).Xblen() * encparams.LumaBParams(0).Yblen() );
+    m_level_factor[0] = float( 16 * m_encparams.LumaBParams(2).Xblen() * m_encparams.LumaBParams(2).Yblen() )/
+        float( m_encparams.LumaBParams(0).Xblen() * m_encparams.LumaBParams(0).Yblen() );
 
-	factor2x2 = float( 4 * encparams.LumaBParams(2).Xblen() * encparams.LumaBParams(2).Yblen() )/
-		float( encparams.LumaBParams(1).Xblen() * encparams.LumaBParams(1).Yblen() );
+    m_level_factor[1] = float( 4 * m_encparams.LumaBParams(2).Xblen() * m_encparams.LumaBParams(2).Yblen() )/
+        float( m_encparams.LumaBParams(1).Xblen() * m_encparams.LumaBParams(1).Yblen() );
 
-	fsort = my_buffer.GetFrame(frame_num).GetFparams().FSort();
-	if (fsort != I_frame)
-	{
-		mv_data = &mvdata;
-		pic_data = &(my_buffer.GetComponent( frame_num , Y_COMP));
-		const vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();
+    m_level_factor[2] = 1.0f;
 
-		num_refs = refs.size();
-		ref1 = refs[0];
-
-		intradiff = new IntraBlockDiff(*pic_data);
-		ref1_updata = &(my_buffer.GetUpComponent( ref1 , Y_COMP));
-		checkdiff1 = new BChkBlockDiffUp(*ref1_updata,*pic_data);
-		simplediff1 = new SimpleBlockDiffUp(*ref1_updata,*pic_data);
-
-		if (num_refs>1)
-		{
-			ref2 = refs[1];
-			ref2_updata = &(my_buffer.GetUpComponent( ref2 , Y_COMP));			
-			checkdiff2 = new BChkBlockDiffUp(*ref2_updata,*pic_data);
-			simplediff2 = new SimpleBlockDiffUp(*ref2_updata,*pic_data);
-			bicheckdiff = new BiBChkBlockDiffUp(*ref1_updata,*ref2_updata,*pic_data);
-		}
-		else
-		{	
-			ref2 = ref1;
-		}
-
-		for (ymb_loc=0 ; ymb_loc<encparams.YNumMB() ; ++ymb_loc)
-		{
-			for (xmb_loc=0 ; xmb_loc<encparams.XNumMB(); ++xmb_loc)
-			{
-				xtl = xmb_loc<<2;//top-left block
-				ytl = ymb_loc<<2;//coords	
-				xsubMBtl = xmb_loc<<1;//top-left subMB
-				ysubMBtl = ymb_loc<<1;//coords	
-
-				if (xmb_loc<encparams.XNumMB()-1 && ymb_loc<encparams.YNumMB()-1)
-                {
-					xbr = xtl+4;
-					ybr = ytl+4;
-					xsubMBbr = xsubMBtl+2;
-					ysubMBbr = ysubMBtl+2;
-				}
-				else{
-					xbr = std::min(xtl+4,encparams.XNumBlocks());
-					ybr = std::min(ytl+4,encparams.YNumBlocks());
-					xsubMBbr = std::min(xsubMBtl+2,encparams.XNumBlocks()>>1);
-					ysubMBbr = std::min(ysubMBtl+2,encparams.YNumBlocks()>>1);
-				}
-				DoMBDecn();
-
-			}//xmb_loc		
-		}//ymb_loc
-
-		delete intradiff;
-		delete checkdiff1;
-		delete simplediff1;
-		if (num_refs>1){
-			delete checkdiff2;
-			delete simplediff2;
-			delete bicheckdiff;
-		}		
-	}
-}
-
-void ModeDecider::DoMBDecn(){
-  	//does the mode decision for the given MB
-
-	Do4x4Decn();//start with 4x4 modes
-	float old_best_MB_cost = (mv_data->MB_costs)[ymb_loc][xmb_loc];
-	Do2x2Decn();//next do 2x2 modes
-	if ((mv_data->MB_costs)[ymb_loc][xmb_loc]<=old_best_MB_cost){
-		old_best_MB_cost = (mv_data->MB_costs)[ymb_loc][xmb_loc];		
-		Do1x1Decn();//finally do 1x1 mode if merging worked before
-	}	
-}
-
-void ModeDecider::Do4x4Decn(){
-  	//computes the best costs if we were to
- 	//stick to a 4x4 decomposition
-  	//Assumes that we already have block-level costs defined
- 	//for each reference, but not intra or bi-pred costs	
-
-	float MB_cost = 0.0;
-	if (fsort==L1_frame)
-		loc_lambda = encparams.L1MELambda();
-	else
-		loc_lambda = encparams.L2MELambda();
-	if (xmb_loc==0 || ymb_loc==0 || xmb_loc==encparams.XNumMB()-1 || ymb_loc==encparams.YNumMB()-1)
-		loc_lambda/=5.0;//have reduced lambda at the picture edges
-
-	(mv_data->mb)[ymb_loc][xmb_loc].split_mode = 2;//split down to second level
-
- 	// 	Case 1: prediction modes are all different
-	(mv_data->mb)[ymb_loc][xmb_loc].common_ref = false;//modes all different	
-	for (int J=ytl;J<ybr;++J){
-		for (int I=xtl; I<xbr;++I){
-			MB_cost += DoBlockDecn4x4(I,J);
-		}//I
-	}//J
-	(mv_data->MB_costs)[ymb_loc][xmb_loc] = MB_cost;
-
-  	// 	Case 2: prediction modes are all the same
-	PredMode predmode;
-	MB_cost = DoCommonMode4x4(predmode);
-	if (MB_cost<=(mv_data->MB_costs)[ymb_loc][xmb_loc]){
-		MB_cost = (mv_data->MB_costs)[ymb_loc][xmb_loc];
-   		//propagate data - must set all modes to the common mode
-		(mv_data->mb)[ymb_loc][xmb_loc].common_ref = true;
-		for (int J=ytl;J<ybr;++J){
-			for (int I=xtl;I<xbr;++I){
-				(mv_data->mode)[J][I] = predmode;
-			}//I
-		}//J
-	}
-}
-
-void ModeDecider::Do2x2Decn(){
-   	//computes the best costs if we were to
-  	//stick to a 2x2 decomposition
-	if (fsort==L1_frame)
-		loc_lambda=encparams.L1MELambda()/factor2x2;
-	else
-		loc_lambda=encparams.L2MELambda()/factor2x2;
-	if (xmb_loc==0 || ymb_loc==0 || xmb_loc==encparams.XNumMB()-1 || ymb_loc==encparams.YNumMB()-1)
-		loc_lambda/=5.0;//have reduced lambda at the picture edges
-
-	Do2x2ME();//first do the motion estimation for the subMBs
-
-	// 	Case 1: prediction modes are all different
-
-	float MB_cost = 0.0;	
-	for (int J=0;J<2;++J){
-		for (int I=0; I<2;++I){
-			MB_cost += DoBlockDecn2x2(I,J);
-		}//I
-	}//J
-
-	if (MB_cost<=(mv_data->MB_costs)[ymb_loc][xmb_loc]){
-		(mv_data->MB_costs)[ymb_loc][xmb_loc]=MB_cost;
-		(mv_data->mb)[ymb_loc][xmb_loc].split_mode = 1;//split down to 1st
-		(mv_data->mb)[ymb_loc][xmb_loc].common_ref = false;
-		for (int J=ytl,Q=0;J<ybr;J+=2,++Q){
-			for (int I=xtl,P=0; I<xbr;I+=2,++P){
-  				//copy data across				
-				for (int L=J;L<std::min(ybr,J+2);++L){
-					for (int K=I;K<std::min(xbr,I+2);++K){
-						(mv_data->mv1)[L][K] = (split1_mv_data->mv1)[Q][P];
-						(mv_data->mv2)[L][K] = (split1_mv_data->mv2)[Q][P];
-						(mv_data->mode)[L][K] = (split1_mv_data->mode)[Q][P];
-						(mv_data->dcY)[L][K] = (split1_mv_data->dcY)[Q][P];
-					}//K
-				}//L
-			}//I
-		}//J
-	}
-
-	// 	Case 2: prediction modes are all the same
-
-	PredMode predmode;
-	MB_cost = DoCommonMode2x2(predmode); 	
-	if (MB_cost<=(mv_data->MB_costs)[ymb_loc][xmb_loc]){
-		(mv_data->MB_costs)[ymb_loc][xmb_loc] = MB_cost;
-		(mv_data->mb)[ymb_loc][xmb_loc].split_mode = 1;//split down to 1st
-		(mv_data->mb)[ymb_loc][xmb_loc].common_ref = true;
-		for (int J=ytl,Q=0;J<ybr;J+=2,++Q){
-			for (int I=xtl,P=0; I<xbr;I+=2,++P){
-           				//copy data across				
-				for (int L=J;L<std::min(ybr,J+2);++L){
-					for (int K=I;K<std::min(xbr,I+2);++K){
-						(mv_data->mv1)[L][K] = (split1_mv_data->mv1)[Q][P];
-						(mv_data->mv2)[L][K] = (split1_mv_data->mv2)[Q][P];
-						(mv_data->dcY)[L][K] = (split1_mv_data->dcY)[Q][P];
-						(mv_data->mode)[L][K] = predmode;
-					}//K
-				}//L
-			}//I
-		}//J
-	}
+    for (int i=0 ; i<=2 ; ++i)
+        m_mode_factor[i] = 80.0*std::pow(0.8 , 2-i);
 }
 
 
-void ModeDecider::Do1x1Decn(){
-	float MB_cost;	
-
-	if (fsort==L1_frame)
-		loc_lambda=encparams.L1MELambda()/factor1x1;
-	else
-		loc_lambda=encparams.L2MELambda()/factor1x1;
-	if (xmb_loc==0 || ymb_loc==0 || xmb_loc==encparams.XNumMB()-1 || ymb_loc==encparams.YNumMB()-1)
-		loc_lambda/=5.0;//have reduced lambda at the picture edges
-
-	Do1x1ME();	//begin by finding motion vectors for the whole MB, using the 
-				//subMB vectors as a guide
-
-	PredMode predmode;
-	MB_cost = DoCommonMode1x1(predmode);
-
-	if (MB_cost<=(mv_data->MB_costs)[ymb_loc][xmb_loc]){
-		(mv_data->MB_costs)[ymb_loc][xmb_loc]=MB_cost;
-		(mv_data->mb)[ymb_loc][xmb_loc].split_mode=0;//split down to 1st
-		(mv_data->mb)[ymb_loc][xmb_loc].common_ref=true;
-		for (int J=ytl;J<ybr;++J){
-			for (int I=xtl; I<xbr;++I){
-   				//copy data across		
-				(mv_data->mv1)[J][I] = (split0_mv_data->mv1)[0][0];
-				(mv_data->mv2)[J][I] = (split0_mv_data->mv2)[0][0];
-				(mv_data->dcY)[J][I] = (split0_mv_data->dcY)[0][0];
-				(mv_data->mode)[J][I] = predmode;
-			}//I
-		}//J
-	}
+ModeDecider::~ModeDecider()
+{
+    if (fsort != I_frame)
+    {
+        delete m_me_data_set[0];
+        delete m_me_data_set[1];
+    }
 }
 
-void ModeDecider::Do1x1ME(){
-	//motion estimation for the whole MB, using the subMB vectors as a guide
-	vector<vector<MVector> > vect_list;
-	BMParams matchparams;
-	matchparams.up_conv = true;
-	matchparams.pic_data = pic_data;
-	matchparams.ref_data = ref1_updata;
-	matchparams.vect_list = &vect_list;
-	matchparams.Init(encparams.LumaBParams(0),xmb_loc,ymb_loc);
+void ModeDecider::DoModeDecn(const FrameBuffer& my_buffer, int frame_num, MEData& me_data)
+{
 
-	matchparams.me_lambda = loc_lambda;
+     // We've got 'raw' block motion vectors for up to two reference frames. Now we want
+     // to make a decision as to mode. In this initial implementation, this is bottom-up
+    // i.e. find mvs for MBs and sub-MBs and see whether it's worthwhile merging.    
 
-	vect_list.clear();
-	for (int J=0;J<2;++J){
-		for (int I=0;I<2;++I){
-			AddNewVlist(vect_list,(split1_mv_data->mv1)[J][I],1,1);
-		}//I
-	}//J
-	if (xtl>0 && ytl>0)
-		matchparams.mv_pred = MvMedian((mv_data->mv1)[ytl][xtl-1],(mv_data->mv1)[ytl-1][xtl-1],
-				(mv_data->mv1)[ytl-1][xtl]);
-	else if (xtl==0 && ytl>0)
-		matchparams.mv_pred = MvMean((mv_data->mv1)[ytl-1][xtl],(mv_data->mv1)[ytl-1][xtl+1]);
-	else if (xtl>0 && ytl==0)
-		matchparams.mv_pred = MvMean((mv_data->mv1)[ytl][xtl-1],(mv_data->mv1)[ytl+1][xtl-1]);
-	else{
-		matchparams.mv_pred.x = 0;
-		matchparams.mv_pred.y = 0;
-	}
-	matchparams.ref_data = ref1_updata;
-	(split0_mv_data->block_costs1)[0][0] = FindBestMatch(matchparams);
-	(split0_mv_data->mv1)[0][0] = matchparams.best_mv;
-	if (num_refs>1){//do the same for the other reference
-		vect_list.clear();				
-		for (int J=0;J<2;++J){
-			for (int I=0;I<2;++I){
-				AddNewVlist(vect_list,(split1_mv_data->mv2)[J][I],0,0);
-			}//I
-		}//J
-		if (xtl>0 && ytl>0)
-			matchparams.mv_pred = MvMedian((mv_data->mv2)[ytl][xtl-1],(mv_data->mv2)[ytl-1][xtl-1],
-					(mv_data->mv2)[ytl-1][xtl]);
-		else if (xtl==0 && ytl>0)
-			matchparams.mv_pred=MvMean((mv_data->mv2)[ytl-1][xtl],(mv_data->mv2)[ytl-1][xtl+1]);
-		else if (xtl>0 && ytl==0)
-			matchparams.mv_pred = MvMean((mv_data->mv2)[ytl][xtl-1],(mv_data->mv2)[ytl+1][xtl-1]);
-		else{
-			matchparams.mv_pred.x = 0;
-			matchparams.mv_pred.y = 0;
-		}
-		matchparams.ref_data = ref2_updata;
- 		//no need to init matchparams, as already done above				
-		(split0_mv_data->block_costs2)[0][0] = FindBestMatch(matchparams);
-		(split0_mv_data->mv2)[0][0] = matchparams.best_mv;
-	}
-	(split0_mv_data->block_costs1)[0][0].total*=factor1x1;
-	(split0_mv_data->block_costs2)[0][0].total*=factor1x1;
-}
+    int ref1,ref2;
 
+    // Initialise // 
+    ////////////////
 
-float ModeDecider::DoCommonMode1x1(PredMode& predmode){
-   	//computes the best costs if we were to stick to a 1x1 decomposition
+    fsort = my_buffer.GetFrame(frame_num).GetFparams().FSort();
+    if (fsort != I_frame)
+    {
+        // Extract the references
+        const vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();
+        num_refs = refs.size();
+        ref1 = refs[0];
 
-	float best_1x1_cost;
-	float MB_cost;
-	float md_cost;
-	BMParams matchparams;
-	matchparams.pic_data = pic_data;
-	matchparams.Init(encparams.LumaBParams(0),xmb_loc,ymb_loc);
-	BlockDiffParams dparams(matchparams);
+        // The picture we're doing estimation from
+        m_pic_data = &(my_buffer.GetComponent( frame_num , Y_COMP));
 
- 	//intra first
-	ValueType dc_pred = 128;
-	if (xtl>0 && ytl>0)
-		dc_pred = ((mv_data->dcY)[ytl][xtl-1]+(mv_data->dcY)[ytl-1][xtl]+(mv_data->dcY)[ytl-1][xtl-1])/3;
-	else if (xtl ==0 && ytl>0)
-		dc_pred = (mv_data->dcY)[ytl-1][xtl];
-	else if (xtl>0 && ytl==0)
-		dc_pred = (mv_data->dcY)[ytl][xtl-1];
+        // Set up the hierarchy of motion vector data objects
+        m_me_data_set[0] = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB() , 
+                                       m_encparams.XNumBlocks()/4 , m_encparams.YNumBlocks()/4 );
+        m_me_data_set[1] = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB() , 
+                                       m_encparams.XNumBlocks()/2 , m_encparams.YNumBlocks()/2 );
 
-	intradiff->Diff(dparams,dc_pred,loc_lambda);
-	(split0_mv_data->block_intra_costs)[0][0] = dparams.intra_cost;
-	(split0_mv_data->block_intra_costs)[0][0]*=factor1x1;
-	(split0_mv_data->dcY)[0][0] = dparams.dc;
+        m_me_data_set[2] = &me_data;
 
-	md_cost = ModeCost(xtl,ytl,INTRA)*0.13;//multiple determined experimentally----TBD-------------------------------
-	best_1x1_cost = (split0_mv_data->block_intra_costs)[0][0]+md_cost;	
-	predmode = INTRA;
+        // Set up the reference pictures
+        m_ref1_updata = &(my_buffer.GetUpComponent( ref1 , Y_COMP));
 
- 	//next do ref1
-	md_cost = ModeCost(xtl,ytl,REF1_ONLY)*0.13;//multiple determined experimentally----TBD-------------------------------
-	MB_cost = (split0_mv_data->block_costs1)[0][0].total+md_cost;
-	if (MB_cost<best_1x1_cost){
-		predmode = REF1_ONLY;
-		best_1x1_cost = MB_cost;
-	}	
-	if (num_refs>1){
-
-		md_cost = ModeCost(xtl,ytl,REF2_ONLY)*0.13;//multiple determined experimentally----TBD-------------------------------
-		MB_cost = (split0_mv_data->block_costs2)[0][0].total+md_cost;
-		if (MB_cost<best_1x1_cost){
-			predmode = REF2_ONLY;
-			best_1x1_cost = MB_cost;
-		}
-
-		(split0_mv_data->block_bipred_costs)[0][0].mvcost = (split0_mv_data->block_costs1)[0][0].mvcost+
-			(split0_mv_data->block_costs2)[0][0].mvcost;
-		dparams.start_val = (split0_mv_data->block_bipred_costs)[0][0].mvcost;
-		bicheckdiff->Diff(dparams,(split0_mv_data->mv1)[0][0],(split0_mv_data->mv2)[0][0]);
-		(split0_mv_data->block_bipred_costs)[0][0] = dparams.cost;
-		(split0_mv_data->block_bipred_costs)[0][0].total*=factor1x1;
-		md_cost = ModeCost(xtl,ytl,REF1AND2)*0.13;//multiple determined experimentally----TBD-------------------------------
-		MB_cost = (split0_mv_data->block_bipred_costs)[0][0].total+md_cost;
-
-		if (MB_cost<best_1x1_cost){
-			predmode = REF1AND2;
-			best_1x1_cost = MB_cost;			
-		}
-	}
-	return best_1x1_cost;
-}
-
-float ModeDecider::DoBlockDecn4x4(int xblock, int yblock){
-
-	float block_cost;
-	float md_cost;
-	float min_block_cost;
-	BMParams matchparams;
-	matchparams.pic_data = pic_data;
-	matchparams.Init(encparams.LumaBParams(2),xblock,yblock);
-	BlockDiffParams dparams(matchparams);
-
- 	//first check REF1 and REF2 costs
-	md_cost = ModeCost(xblock,yblock,REF1_ONLY);
-	(mv_data->mode)[yblock][xblock] = REF1_ONLY;
-	min_block_cost = (mv_data->block_costs1)[yblock][xblock].total+md_cost;
-
-	if (num_refs>1){
-		md_cost = ModeCost(xblock,yblock,REF2_ONLY);
-		block_cost = (mv_data->block_costs2)[yblock][xblock].total+md_cost;
-		if (block_cost<min_block_cost){
-			(mv_data->mode)[yblock][xblock] = REF2_ONLY;
-			min_block_cost = block_cost;
-		}
-	}
-
-	//next, calculate the cost if we were to code the block as intra
-	md_cost = ModeCost(xblock,yblock,INTRA);
-	ValueType dc_pred = 128;
-
-	if (xblock>0 && yblock>0)
-		dc_pred = ((mv_data->dcY)[yblock][xblock-1]+(mv_data->dcY)[yblock-1][xblock]+(mv_data->dcY)[yblock-1][xblock-1])/3;
-	else if (xblock==0 && yblock>0)
-		dc_pred = (mv_data->dcY)[yblock-1][xblock];
-	else if (xblock>0 && yblock==0)
-		dc_pred = (mv_data->dcY)[yblock][xblock-1];
-
-	intradiff->Diff(dparams,dc_pred,loc_lambda);	
-	(mv_data->block_intra_costs)[yblock][xblock] = dparams.intra_cost+md_cost;//need some multiple of md_cost TBD.................
-
-	(mv_data->dcY)[yblock][xblock] = dparams.dc;	
-	if (dparams.intra_cost<min_block_cost){
-		(mv_data->mode)[yblock][xblock] = INTRA;
-		min_block_cost = dparams.intra_cost;
-	}
-
-   	//finally, calculate the cost if we were to use bi-predictions
-	if (num_refs>1){
-		md_cost = ModeCost(xblock,yblock,REF1AND2);
-		(mv_data->block_bipred_costs)[yblock][xblock].mvcost = (mv_data->block_costs1)[yblock][xblock].mvcost+
-			(mv_data->block_costs2)[yblock][xblock].mvcost;
-		dparams.start_val = (mv_data->block_bipred_costs)[yblock][xblock].mvcost;
-		bicheckdiff->Diff(dparams,(mv_data->mv1)[yblock][xblock],(mv_data->mv1)[yblock][xblock]);
-		(mv_data->block_bipred_costs)[yblock][xblock] = dparams.cost;		
-		dparams.cost.total += md_cost;
-		if (dparams.cost.total<min_block_cost){
-			(mv_data->mode)[yblock][xblock] = REF1AND2;
-			min_block_cost = dparams.cost.total;			
-		}		
-	}
-	return min_block_cost;
-}
-
-float ModeDecider::DoCommonMode4x4(PredMode& predmode){
-
-	float MB_cost;
-	float best_4x4_cost;
-	//start with the intra cost
-	MB_cost = 0.0;	
-	for (int J=ytl;J<ybr;++J){
-		for (int I=xtl;I<xbr;++I){
-			MB_cost += (mv_data->block_intra_costs)[J][I];
-		}//I
-	}//J
-	MB_cost += ModeCost(xtl,ytl,INTRA)*0.13;//multiple determined experimentally -- TBD -------------------------------
-	predmode = INTRA;
-	best_4x4_cost = MB_cost;
-
-	//next do ref1	
-	MB_cost = 0.0;	
-	for (int J=ytl;J<ybr;++J){
-		for (int I=xtl;I<xbr;++I){
-			MB_cost += (mv_data->block_costs1)[J][I].total;
-		}//I
-	}//J
-	MB_cost += ModeCost(xtl,ytl,REF1_ONLY)*0.13;//multiple determined experimentally -- TBD -------------------------------
-
-	if (MB_cost<best_4x4_cost){
-		predmode = REF1_ONLY;
-		best_4x4_cost = MB_cost;
-	}
-
-	if (num_refs>1){
-  		//next do ref2	
-		MB_cost = 0.0;	
-		for (int J=ytl;J<ybr;++J){
-			for (int I=xtl;I<xbr;++I){
-				MB_cost += (mv_data->block_costs2)[J][I].total;
-			}//I
-		}//J
-		MB_cost += ModeCost(xtl,ytl,REF2_ONLY)*0.13;//multiple determined experimentally -- TBD -------------------------------
-		if (MB_cost<best_4x4_cost){
-			predmode = REF2_ONLY;
-			best_4x4_cost = MB_cost;
-		}
-  		//finally do ref 1 and 2	
-		MB_cost = 0.0;	
-		for (int J=ytl;J<ybr;++J){
-			for (int I=xtl;I<xbr;++I){
-				MB_cost += (mv_data->block_bipred_costs)[J][I].total;
-			}//I
-		}//J
-		MB_cost += ModeCost(xtl,ytl,REF1AND2)*0.13;//multiple determined experimentally -- TBD -------------------------------		
-		if (MB_cost<best_4x4_cost){
-			predmode = REF1AND2;
-			best_4x4_cost = MB_cost;
-		}
-	}
-
-	return best_4x4_cost;
-}
-
-void ModeDecider::Do2x2ME(){
-	//does the motion estimation for the sub-Macroblocks (subMBs), using the block vectors as guides
-
-	vector<vector<MVector> > vect_list;
-	BMParams matchparams;
-	matchparams.up_conv = true;
-	matchparams.pic_data = pic_data;
-	matchparams.ref_data = ref1_updata;
-	matchparams.vect_list = &vect_list;
-	matchparams.me_lambda = loc_lambda/factor2x2;//take into account the block overlaps in the ME lagrangian param
-
-	for ( int J=ytl , Q=0 ; J<ybr ; J+=2 , ++Q )
+        if (num_refs>1)
         {
-		for (int I=xtl , P=0 ; I<xbr ; I+=2 , ++P)
+            ref2 = refs[1];
+            m_ref2_updata = &(my_buffer.GetUpComponent( ref2 , Y_COMP));
+            // Create an object for computing bi-directional prediction calculations            
+            m_bicheckdiff = new BiBChkBlockDiffUp( *m_ref1_updata ,
+                                                 *m_ref2_updata ,
+                                                 *m_pic_data );
+        }
+        else
+        {    
+            ref2 = ref1;
+        }
+
+
+        // Create an object for doing intra calculations
+        m_intradiff = new IntraBlockDiff( *m_pic_data );
+
+        // Loop over all the macroblocks, doing the work //
+        ///////////////////////////////////////////////////
+
+        for (m_ymb_loc=0 ; m_ymb_loc<m_encparams.YNumMB() ; ++m_ymb_loc )
+        {
+            for (m_xmb_loc=0 ; m_xmb_loc<m_encparams.XNumMB(); ++m_xmb_loc )
             {
-			vect_list.clear();
-			//use the 4 corresponding block vectors as a guide
-			for ( int L=J , V=0 ; L<ybr && V<2 ; ++L , ++V )
-               {
-				for (int K=I,U=0;K<xbr && U<2;++K,++U)
+                DoMBDecn();
+            }//m_xmb_loc        
+        }//m_ymb_loc
+
+        delete m_intradiff;
+        if (num_refs>1)
+            delete m_bicheckdiff;
+    }
+}
+
+void ModeDecider::DoMBDecn()
+{
+      // Does the mode decision for the given MB, in three stages
+
+    // Start with 4x4 modes
+    DoLevelDecn(2);
+    float old_best_MB_cost = m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc];
+
+    // Next do 2x2 modes
+      DoLevelDecn(1);
+
+    // Do 1x1 mode if merging worked before
+       if ( m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] <= old_best_MB_cost)
+      {
+           old_best_MB_cost = m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc];        
+           DoLevelDecn(0);
+       }
+
+}
+
+void ModeDecider::DoLevelDecn( int level )
+{
+    // Computes the best costs if we were to
+    // stick to a decomposition at this level
+
+    // Looks at two cases: the prediction mode is
+    // constant across the MB; and the pred mode
+    // for each constituent is different.
+
+    if (fsort==L1_frame)
+         m_lambda=m_encparams.L1MELambda();
+     else
+         m_lambda=m_encparams.L2MELambda();
+
+     // We have reduced lambda at the picture edges
+      if (m_xmb_loc==0 || m_ymb_loc==0 || m_xmb_loc==m_encparams.XNumMB()-1 || m_ymb_loc==m_encparams.YNumMB()-1)
+          m_lambda/=5.0;
+
+    // The limits of the prediction units
+    const int xstart = m_xmb_loc <<level;
+    const int ystart = m_ymb_loc <<level;
+
+    const int xend = xstart + (1<<level);
+    const int yend = ystart + (1<<level);
+
+    //    Case 1: prediction modes are all different
+
+     float MB_cost = 0.0;    
+     for ( int j=ystart ; j<yend ; ++j)
+     {
+         for (int i=xstart ; i<xend ; ++i)
+        {
+            if ( level<2 )
+                DoME( i , j , level);
+             MB_cost += DoUnitDecn( i , j ,level );
+
+         }// i
+     }// j
+
+    // if we've improved on the best cost, we should propagate data in 
+    // the base level motion vector set
+    if (level == 2)
+    {
+        m_me_data_set[2]->MBSplit()[m_ymb_loc][m_xmb_loc] = 2;
+        m_me_data_set[2]->MBCommonMode()[m_ymb_loc][m_xmb_loc] = false;
+        m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] = MB_cost;
+    }
+
+    if ( level<2 && MB_cost <= m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] )
+    {
+        m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] = MB_cost;
+        m_me_data_set[2]->MBSplit()[m_ymb_loc][m_xmb_loc] = level;
+        m_me_data_set[2]->MBCommonMode()[m_ymb_loc][m_xmb_loc] = false;
+
+        // Parameters of the base-level blocks corresponding to each
+        // prediction unit
+        int xblock_start;
+        int yblock_start;
+        int xblock_end;
+        int yblock_end;
+
+        for ( int j=ystart ; j<yend ; ++j )
+        {
+            yblock_start = j<<(2-level);
+            yblock_end = (j+1)<<(2-level);
+            for ( int i=xstart ; i<xend ; ++i )
+            {
+                xblock_start = i<<(2-level);
+                xblock_end = (i+1)<<(2-level);
+
+                for ( int v=yblock_start ; v<yblock_end ; ++v )
                 {
-					AddNewVlist( vect_list,(mv_data->mv1)[L][K] , 1 , 1);
-				}//K
-			}//L
+                    for ( int u=xblock_start ; u<xblock_end ; ++u )
+                    {
+                        m_me_data_set[2]->Mode()[v][u] = m_me_data_set[level]->Mode()[j][i];
+                        m_me_data_set[2]->DC( Y_COMP )[v][u] = m_me_data_set[level]->DC( Y_COMP )[j][i];
+                        m_me_data_set[2]->Vectors(1)[v][u] = m_me_data_set[level]->Vectors(1)[j][i];
+                        if ( num_refs>1 )
+                            m_me_data_set[2]->Vectors(2)[v][u] = m_me_data_set[level]->Vectors(2)[j][i];
+
+                    }// u
+                }// v
+
+            }// i
+        }// j
+
+    }
+
+    //     Case 2: prediction modes are all the same
+
+    PredMode predmode;
+
+    MB_cost = DoCommonMode( predmode , level );
+
+    if ( MB_cost <= m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] )
+    {
+        m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] = MB_cost;
+        m_me_data_set[2]->MBSplit()[m_ymb_loc][m_xmb_loc] = level;
+        m_me_data_set[2]->MBCommonMode()[m_ymb_loc][m_xmb_loc] = true;
+        // Parameters of the base-level blocks corresponding to each
+        // prediction unit
+        int xblock_start;
+        int yblock_start;
+        int xblock_end;
+        int yblock_end;
+
+        for ( int j=ystart ; j<yend ; ++j )
+        {
+            yblock_start = j<<(2-level);
+            yblock_end = (j+1)<<(2-level);
+            for ( int i=xstart ; i<xend ; ++i )
+            {
+                xblock_start = i<<(2-level);
+                xblock_end = (i+1)<<(2-level);
+                for ( int v=yblock_start ; v<yblock_end ; ++v )
+                {
+                    for ( int u=xblock_start ; u<xblock_end ; ++u )
+                    {
+                        m_me_data_set[2]->Vectors(1)[v][u] = m_me_data_set[level]->Vectors(1)[j][i];
+                        m_me_data_set[2]->Mode()[v][u] = predmode;
+                        m_me_data_set[2]->DC( Y_COMP )[v][u] = m_me_data_set[level]->DC( Y_COMP )[j][i];
+                        if ( num_refs>1 )
+                            m_me_data_set[2]->Vectors(2)[v][u] = m_me_data_set[level]->Vectors(2)[j][i];
+
+                    }// u
+                }// v
  
-			if (I>0 && J>0)
-				matchparams.mv_pred = MvMedian((mv_data->mv1)[J][I-1],(mv_data->mv1)[J-1][I-1],
-						(mv_data->mv1)[J-1][I]);
-			else if (I==0 && J>0)
-				matchparams.mv_pred = MvMean((mv_data->mv1)[J-1][I],(mv_data->mv1)[J-1][I+1]);
-			else if (I>0 && J==0)
-				matchparams.mv_pred = MvMean((mv_data->mv1)[J][I-1],(mv_data->mv1)[J+1][I-1]);
-			else{
-				matchparams.mv_pred.x = 0;
-				matchparams.mv_pred.y = 0;
-			}			
-
-			matchparams.ref_data = ref1_updata;
-			matchparams.Init(encparams.LumaBParams(1),I>>1,J>>1);//divided by 2 as block separations are twice as big
-			(split1_mv_data->block_costs1)[Q][P] = FindBestMatch(matchparams);			
-			(split1_mv_data->mv1)[Q][P] = matchparams.best_mv;
-
-			if (num_refs>1)
-            {// do the same for the other reference
-
-				vect_list.clear();				
-				for ( int V=0 , L=J ; L<ybr && V<2 ; ++L , ++V )
-                    {
-					for ( int K=I , U=0 ; K<xbr && U<2 ; ++K , ++U )
-                    {
-						AddNewVlist(vect_list,(mv_data->mv2)[L][K],1,1);
-					}//K
-				}//L
-
-				if (I>0 && J>0)
-					matchparams.mv_pred = MvMedian((mv_data->mv2)[J][I-1],(mv_data->mv2)[J-1][I-1],
-							(mv_data->mv2)[J-1][I]);
-				else if (I==0 && J>0)
-					matchparams.mv_pred = MvMean((mv_data->mv2)[J-1][I],(mv_data->mv2)[J-1][I+1]);
-				else if (I>0 && J==0)
-					matchparams.mv_pred = MvMean((mv_data->mv2)[J][I-1],(mv_data->mv2)[J+1][I-1]);
-				else{
-					matchparams.mv_pred.x = 0;
-					matchparams.mv_pred.y = 0;
-				}
-
-				matchparams.ref_data=ref2_updata;
-  				//no need to init the matchparams, as already done above				
-				(split1_mv_data->block_costs2)[Q][P] = FindBestMatch(matchparams);
-				(split1_mv_data->mv2)[Q][P] = matchparams.best_mv;
-			}
-
-			(split1_mv_data->block_costs1)[Q][P].total*=factor2x2;
-			(split1_mv_data->block_costs2)[Q][P].total*=factor2x2;
-
-		}//I
-	}//J	
+            }// i
+        }// j
+      }
 
 }
 
-float ModeDecider::DoBlockDecn2x2(int xsubMB, int ysubMB){
- 	// decides on the best mode for each sub-MB 
 
-	const int xblock = xtl+xsubMB*2;//block position of
-	const int yblock = ytl+ysubMB*2;//TL 
+void ModeDecider::DoME(const int xpos , const int ypos , const int level)
+{
+    // Do motion estimation for a prediction unit using the 
+    // four vectors derived from the next level as a guide
 
-	float subMB_cost;
-	float min_subMB_cost;
-	float md_cost;
-	BMParams matchparams;
-	matchparams.pic_data = pic_data;
-	matchparams.Init(encparams.LumaBParams(1),xsubMBtl+xsubMB,ysubMBtl+ysubMB);
-	BlockDiffParams dparams(matchparams);
+    MEData& me_data = *(m_me_data_set[level]);
+    const MEData& guide_data = *(m_me_data_set[level+1]);
 
-   	//first check REF1
-	(split1_mv_data->mode)[ysubMB][xsubMB] = REF1_ONLY;
-	md_cost = ModeCost(xblock,yblock,REF1_ONLY)*0.36;//multiple determined experimentally----TBD-------------------------------
-	min_subMB_cost = (split1_mv_data->block_costs1)[ysubMB][xsubMB].total+md_cost;	
+    // The corresponding location of the guide data
+    const int guide_xpos = xpos<<1; 
+    const int guide_ypos = ypos<<1;
 
-	//next, calculate the cost if we were to code the block as intra
-	ValueType dc_pred = 128;
-	if (xblock>0 && yblock>0)
-		dc_pred = ((mv_data->dcY)[yblock][xblock-1]+(mv_data->dcY)[yblock-1][xblock]+(mv_data->dcY)[yblock-1][xblock-1])/3;
-	else if (xblock==0 && yblock>0)
-		dc_pred = (mv_data->dcY)[yblock-1][xblock];
-	else if (xblock>0 && yblock==0)
-		dc_pred = (mv_data->dcY)[yblock][xblock-1];	
+    // The location of the lowest level vectors
+    const int xblock = xpos << ( 2 - level); 
+    const int yblock = ypos << ( 2 - level);
 
-	intradiff->Diff(dparams,dc_pred,loc_lambda/factor2x2);
-	(split1_mv_data->block_intra_costs)[ysubMB][xsubMB] = dparams.intra_cost*factor2x2;
-	(split1_mv_data->dcY)[ysubMB][xsubMB] = dparams.dc;
-	md_cost = ModeCost(xblock,yblock,INTRA)*0.36;//multiple determined experimentally----TBD-------------------------------
-	subMB_cost = (split1_mv_data->block_intra_costs)[ysubMB][xsubMB]+md_cost;
+    // The list of potential candidate vectors
+    CandidateList cand_list;
 
-	if (subMB_cost<min_subMB_cost){
-		(split1_mv_data->mode)[ysubMB][xsubMB] = INTRA;
-		min_subMB_cost = subMB_cost;
-	}
+    // The lambda to use for motion estimation
+    float lambda = m_lambda / m_level_factor[level];
 
-//finally, calculate the costs if we have another reference
-	if (num_refs>1){
-		md_cost = ModeCost(xblock,yblock,REF2_ONLY)*0.36;//multiple determined experimentally----TBD-------------------------------
-		subMB_cost = (split1_mv_data->block_costs2)[ysubMB][xsubMB].total+md_cost;
+    // The predicting motion vector
+    MVector mv_pred;
 
-		if (subMB_cost<min_subMB_cost){
-			(split1_mv_data->mode)[ysubMB][xsubMB] = REF2_ONLY;
-			min_subMB_cost = subMB_cost;
-		}
+    for ( int j=0 ; j<2 ; ++j )
+    {
+        for (int i=0 ; i<2 ; ++i )
+        {
+            AddNewVlist( cand_list , guide_data.Vectors(1)[guide_ypos+j][guide_xpos+i] , 1 , 1 );
+        }// i
+    }// j
 
-		(split1_mv_data->block_bipred_costs)[ysubMB][xsubMB].mvcost = (split1_mv_data->block_costs1)[ysubMB][xsubMB].mvcost+
-			(split1_mv_data->block_costs2)[ysubMB][xsubMB].mvcost;
-		dparams.start_val = (split1_mv_data->block_bipred_costs)[ysubMB][xsubMB].mvcost;
-		bicheckdiff->Diff(dparams,(split1_mv_data->mv1)[ysubMB][xsubMB],(split1_mv_data->mv2)[ysubMB][xsubMB]);
-		(split1_mv_data->block_bipred_costs)[ysubMB][xsubMB] = dparams.cost;
-		(split1_mv_data->block_bipred_costs)[ysubMB][xsubMB].total*=factor2x2;
-		md_cost = ModeCost(xblock,yblock,REF1AND2)*0.36;//multiple determined experimentally----TBD-------------------------------		
-		subMB_cost = (split1_mv_data->block_bipred_costs)[ysubMB][xsubMB].total+md_cost;		
+    if (xblock>0 && yblock>0)
+        mv_pred = MvMedian( m_me_data_set[2]->Vectors(1)[yblock][xblock-1] ,
+                            m_me_data_set[2]->Vectors(1)[yblock-1][xblock-1],
+                              m_me_data_set[2]->Vectors(1)[yblock-1][xblock]);
+    else if (xblock==0 && yblock>0)
+        mv_pred = MvMean( m_me_data_set[2]->Vectors(1)[yblock-1][xblock],
+                          m_me_data_set[2]->Vectors(1)[yblock-1][xblock+1]);
+    else if (xblock>0 && yblock==0)
+        mv_pred = MvMean( m_me_data_set[2]->Vectors(1)[yblock][xblock-1],
+                          m_me_data_set[2]->Vectors(1)[yblock+1][xblock-1]);
+    else{
+        mv_pred.x = 0;
+        mv_pred.y = 0;
+    }
 
-		if (subMB_cost<min_subMB_cost){
-			(split1_mv_data->mode)[ysubMB][xsubMB] = REF1AND2;
-			min_subMB_cost = subMB_cost;			
-		}		
+    BlockMatcher my_bmatch1( *m_pic_data , *m_ref1_updata , m_encparams.LumaBParams(level) ,
+                                                     me_data.Vectors(1) , me_data.PredCosts(1) );
+    me_data.PredCosts(1)[ypos][xpos].total = 100000000.0f;
+    my_bmatch1.FindBestMatchSubp( xpos , ypos , cand_list, mv_pred, lambda );
 
-	}
-	return min_subMB_cost;
+    me_data.PredCosts(1)[ypos][xpos].total *= m_level_factor[level];
+    if (num_refs>1)
+    {//do the same for the other reference
+
+        cand_list.clear();                
+
+        for ( int j=0 ; j<2 ; ++j )
+        {
+            for (int i=0 ; i<2 ; ++i )
+            {
+                AddNewVlist( cand_list , guide_data.Vectors(2)[guide_ypos+j][guide_xpos+i] , 1 , 1 );
+            }// i
+        }// j
+
+        if (xblock>0 && yblock>0)
+            mv_pred = MvMedian( m_me_data_set[2]->Vectors(2)[yblock][xblock-1] ,
+                                             m_me_data_set[2]->Vectors(2)[yblock-1][xblock-1],
+                                               m_me_data_set[2]->Vectors(2)[yblock-1][xblock]);
+        else if (xblock==0 && yblock>0)
+            mv_pred = MvMean( m_me_data_set[2]->Vectors(2)[yblock-1][xblock],
+                                           m_me_data_set[2]->Vectors(2)[yblock-1][xblock+1]);
+        else if (xblock>0 && yblock==0)
+            mv_pred = MvMean( m_me_data_set[2]->Vectors(2)[yblock][xblock-1],
+                                           m_me_data_set[2]->Vectors(2)[yblock+1][xblock-1]);
+        else{
+             mv_pred.x = 0;
+             mv_pred.y = 0;
+        }
+
+        BlockMatcher my_bmatch2( *m_pic_data , *m_ref2_updata , m_encparams.LumaBParams(level) ,
+                                                     me_data.Vectors(2) , me_data.PredCosts(2) );
+        me_data.PredCosts(2)[ypos][xpos].total = 100000000.0f;
+        my_bmatch2.FindBestMatchSubp( xpos , ypos , cand_list, mv_pred, lambda );
+
+        me_data.PredCosts(2)[ypos][xpos].total *= m_level_factor[level];
+     }
 }
 
-float ModeDecider::DoCommonMode2x2(PredMode& predmode){
-	float MB_cost;
-	float best_2x2_cost;
-
-  	//start with the intra cost
-	MB_cost = ModeCost(xtl,ytl,INTRA)*0.13;//multiple determined experimentally----TBD-------------------------------	
-	for (int J=0;J<2;++J){
-		for (int I=0;I<2;++I){
-			MB_cost += (split1_mv_data->block_intra_costs)[J][I];			
-		}//I
-	}//J
-
-	predmode = INTRA;
-	best_2x2_cost = MB_cost;
-
-  	//next do ref1	
-	MB_cost = ModeCost(xtl,ytl,REF1_ONLY)*0.13;//multiple determined experimentally----TBD-------------------------------	
-	for (int J=0;J<2;++J){
-		for (int I=0;I<2;++I){
-			MB_cost += (split1_mv_data->block_costs1)[J][I].total;
-		}//I
-	}//J
-
-	if (MB_cost<best_2x2_cost){
-		predmode = REF1_ONLY;
-		best_2x2_cost = MB_cost;
-	}
 
 
-	if (num_refs>1){
-  		//next do ref2	
-		MB_cost = ModeCost(xtl,ytl,REF2_ONLY)*0.13;//multiple determined experimentally----TBD-------------------------------	
-		for (int J=0;J<2;++J){
-			for (int I=0;I<2;++I){
-				MB_cost += (split1_mv_data->block_costs2)[J][I].total;
-			}//I
-		}//J
+float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level )
+{
+    // For a given prediction unit (MB, subMB or block) find the best
+    // mode, given that the REF1 and REF2 motion estimation has
+    // already been done.
+
+    MEData& me_data = *( m_me_data_set[level] );
+
+    // Coords of the top-leftmost block belonging to this unit
+    const int xblock = xpos<<(2-level);
+    const int yblock = ypos<<(2-level);
+
+    const float loc_lambda = m_lambda / m_level_factor[level];
+
+    float unit_cost;
+    float mode_cost;
+    float min_unit_cost;
+ 
+    BlockDiffParams dparams;
+
+    dparams.SetBlockLimits( m_encparams.LumaBParams( level ) , *m_pic_data, xpos , ypos);
+
+     // First check REF1 costs //
+    /**************************/
+
+    mode_cost = ModeCost( xblock , yblock , REF1_ONLY)*m_mode_factor[level];
+    me_data.Mode()[ypos][xpos] = REF1_ONLY;
+    min_unit_cost = me_data.PredCosts(1)[ypos][xpos].total + mode_cost;
+
+    // Calculate the cost if we were to code the block as intra //
+    /************************************************************/
+
+    mode_cost = ModeCost( xblock , yblock , INTRA) * m_mode_factor[level];
+    m_intradiff->Diff( dparams , GetDCPred( xblock , yblock ) , loc_lambda);
+    me_data.DC( Y_COMP )[ypos][xpos] = dparams.DC();
+
+    me_data.IntraCosts()[ypos][xpos] = dparams.IntraCost()*m_level_factor[level];
+    unit_cost = me_data.IntraCosts()[ypos][xpos] + mode_cost;
+
+    if ( unit_cost<min_unit_cost )
+    {
+        me_data.Mode()[ypos][xpos] = INTRA;
+        min_unit_cost = dparams.IntraCost();
+    }
+
+    if (num_refs>1)
+    {
+       // Next check REF2 costs //
+       /*************************/
+
+        mode_cost = ModeCost( xblock , yblock , REF2_ONLY)*m_mode_factor[level];
+        unit_cost = me_data.PredCosts(2)[ypos][xpos].total + mode_cost;
+        if ( unit_cost<min_unit_cost )
+        {
+            me_data.Mode()[ypos][xpos] = REF2_ONLY;
+            min_unit_cost = unit_cost;
+        }
+
+        // Finally, calculate the cost if we were to use bi-predictions //
+        /****************************************************************/
+
+        mode_cost = ModeCost( xpos , ypos , REF1AND2 )*m_mode_factor[level];
+
+        me_data.BiPredCosts()[ypos][xpos].mvcost =
+                                       me_data.PredCosts(1)[ypos][xpos].mvcost+
+                                       me_data.PredCosts(2)[ypos][xpos].mvcost;
+
+        dparams.SetStartValue( me_data.BiPredCosts()[ypos][xpos].mvcost );
+        m_bicheckdiff->Diff(dparams , me_data.Vectors(1)[ypos][xpos] , me_data.Vectors(2)[ypos][xpos] );
+        me_data.BiPredCosts()[ypos][xpos] = dparams.Costs();
+        me_data.BiPredCosts()[ypos][xpos].total *= m_level_factor[level];
+        unit_cost = me_data.BiPredCosts()[ypos][xpos].total + mode_cost;
+
+        if ( unit_cost<min_unit_cost )
+        {
+            me_data.Mode()[ypos][xpos] = REF1AND2;
+            min_unit_cost = dparams.Costs().total;
+        }
+    }
+
+    return min_unit_cost;
+}
+
+float ModeDecider::DoCommonMode( PredMode& predmode , const int level)
+{
+    // For a given level, examine the costs in the constituent
+    // prediction units of the MB at that level and decide 
+    // whether there should be a common prediction mode or not.
+
+    const MEData& me_data = *( m_me_data_set[level] );
+
+    // The total cost for the MB for each possible prediction mode
+    OneDArray<float> MB_cost(4);
+    for ( int i=0 ; i<4 ; ++i)
+        MB_cost[i] = ModeCost( m_xmb_loc<<2 , m_ymb_loc , PredMode(i) )*m_mode_factor[0];
+
+    // The limits of the prediction units
+    const int xstart = m_xmb_loc <<level;
+    const int ystart = m_ymb_loc <<level;
+
+    const int xend = xstart + (1<<level);
+    const int yend = ystart + (1<<level);
+
+    for (int j=ystart ; j<yend ; ++j)
+    {
+        for (int i=xstart ; i<xend ; ++i)
+        {
+            MB_cost[INTRA] += me_data.IntraCosts()[j][i];
+            MB_cost[REF1_ONLY] += me_data.PredCosts(1)[j][i].total;
+            if ( num_refs>1 )
+            {
+                MB_cost[REF2_ONLY] += me_data.PredCosts(2)[j][i].total;
+                MB_cost[REF1AND2] += me_data.BiPredCosts()[j][i].total;
+            }
+        }// i
+    }// i
 
 
-		if (MB_cost<best_2x2_cost){
-			predmode = REF2_ONLY;
-			best_2x2_cost = MB_cost;
-		}
-  		//finally do ref 1 and 2	
-		MB_cost = ModeCost(xtl,ytl,REF1AND2)*0.13;//multiple determined experimentally----TBD-------------------------------	
-		for (int J=0;J<2;++J){
-			for (int I=0;I<2;++I){
-				MB_cost += (split1_mv_data->block_bipred_costs)[J][I].total;
-			}//I
-		}//J
+    // Find the minimum
+    predmode = INTRA;
+    if ( MB_cost[REF1_ONLY]<MB_cost[predmode] )
+        predmode = REF1_ONLY;
 
-		if (MB_cost<best_2x2_cost){
-			predmode = REF1AND2;
-			best_2x2_cost = MB_cost;
-		}
-	}
+    if ( num_refs>1)
+    {
+        if ( MB_cost[REF2_ONLY]<MB_cost[predmode] )
+            predmode = REF2_ONLY;
+        if ( MB_cost[REF1AND2]<MB_cost[predmode] )
+            predmode = REF1AND2;
+    }
+ 
+    return MB_cost[predmode];
+}
 
-	return best_2x2_cost;
+ValueType ModeDecider::GetDCPred( int xblock , int yblock )
+{
+    ValueType dc_pred = 128;
+
+//     if (xblock>0 && yblock>0)
+//     {
+//         dc_pred = ( (m_me_data_set[2]->DC( Y_COMP ))[yblock][xblock-1]+
+//                     (m_me_data_set[2]->DC( Y_COMP ))[yblock-1][xblock]+
+//                     (m_me_data_set[2]->DC( Y_COMP ))[yblock-1][xblock-1] )/3;
+//     }
+//     else if (xblock==0 && yblock>0)
+//         dc_pred = (m_me_data_set[2]->DC( Y_COMP ))[yblock-1][xblock];
+//     else if (xblock>0 && yblock==0)
+//         dc_pred = (m_me_data_set[2]->DC( Y_COMP ))[yblock][xblock-1];
+
+    return dc_pred;
+}
+
+float ModeDecider::ModeCost(const int xindex , const int yindex , 
+                 const PredMode predmode )
+{
+    // Computes the variation of the given mode, predmode, from its immediate neighbours
+    // Currently, includes branches to cope with blocks on the edge of the picture.
+    int i ,j;
+    float diff;
+    float var = 0.0;
+
+    i = xindex-1;
+    j = yindex;
+    if ( i>=0)
+    {
+        diff = static_cast<float>( m_me_data_set[2]->Mode()[j][i] - predmode );
+        var = std::abs(diff);
+    }
+
+    i = xindex-1;
+    j = yindex-1;
+    if ( i>=0 && j>=0)
+    {
+        diff = static_cast<float>( m_me_data_set[2]->Mode()[j][i] - predmode);
+        var += std::abs(diff);
+    }
+
+    i = xindex;
+    j = yindex-1;
+    if ( j>=0 )
+    {
+        diff = static_cast<float>( m_me_data_set[2]->Mode()[j][i] - predmode );
+        var += std::abs(diff);
+    }
+
+    return var*m_lambda;
 }

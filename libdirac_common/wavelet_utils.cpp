@@ -201,10 +201,18 @@ void WaveletTransform::VHSplit(const int xp, const int yp, const int xl, const i
     OneDArray<ValueType *> tmp_data(yl); 
     const int xl2 = xl/2; 
     const int yl2 = yl/2; 
-    register ValueType * line_data; 
-    register ValueType * col_data=new ValueType[yl];     
+    ValueType * line_data; 
+    ValueType * col_data=new ValueType[yl];     
 
+    // Positional variables
     int i,j,k,l; 
+  
+    // Objects to do lifting stages 
+    // (in revese order and type from synthesis)
+    const PredictStep< 6497 > predictA;
+    const PredictStep< 217 > predictB;
+    const UpdateStep< 3616 > updateA;
+    const UpdateStep< 1817 > updateB;
 
      //first do horizontal 
 
@@ -216,39 +224,40 @@ void WaveletTransform::VHSplit(const int xp, const int yp, const int xl, const i
     {
         line_data=new ValueType[xl]; 
 
+        // Copy data across to a temporary array, separating odd and even
         for (i = 0, k = xl2, l = 0;  i < xend; ++i, ++k, ++l)
         {
-            line_data[i]=pic_data[j+yp][l+xp]; 
-            line_data[k]=pic_data[j+yp][++l+xp];             
+            line_data[i] = pic_data[ j+yp ][ l+xp ]; 
+            line_data[k] = pic_data[ j+yp ][ ++l+xp ];             
         }//i
 
-        //first lifting stage
-        line_data[xl2] -= ValueType((6497*int(line_data[1]+line_data[0]))>>12); 
-        line_data[0]   -= ValueType((217*int(line_data[xl2]+line_data[xl2]))>>12); 
+        // First lifting stage
+ 
+        predictA.Filter( line_data[xl2] , line_data[1] , line_data[0] );
+        predictB.Filter( line_data[0] , line_data[xl2] , line_data[xl2] );
         
-        //main body
         for (i = 1, k = xl2+1; i < xend-1; ++i, ++k)
         {
-            line_data[k] -= ValueType((6497*int(line_data[i+1]+line_data[i]))>>12); 
-            line_data[i] -= ValueType((217*int(line_data[k-1]+line_data[k]))>>12); 
+            predictA.Filter( line_data[k] , line_data[i+1] , line_data[i] );
+            predictB.Filter( line_data[i] , line_data[k-1] , line_data[k] );
         }//i
         
-        line_data[xl-1] -= ValueType((6497*int(line_data[xend-1]+line_data[xend-1]))>>12); 
-        line_data[xend-1] -= ValueType((217*int(line_data[xl-2]+line_data[xl-1]))>>12); 
+        predictA.Filter( line_data[xl-1] , line_data[xend-1] , line_data[xend-1] );
+        predictB.Filter( line_data[xend-1] , line_data[xl-2] , line_data[xl-1] );
 
-         //second lifting stage
-        line_data[xl2] += ValueType((3616*int(line_data[1]+line_data[0]))>>12); 
-        line_data[0] += ValueType((1817*int(line_data[xl2]+line_data[xl2]))>>12); 
+         //second lifting stage 
+        updateA.Filter( line_data[xl2] , line_data[1] , line_data[0] );
+        updateB.Filter( line_data[0] , line_data[xl2]  ,line_data[xl2] );
         
         //main body
         for (i = 1, k = xl2+1;  i < xend-1; ++i,++k)
-        {
-            line_data[k] += ValueType((3616*int(line_data[i+1]+line_data[i]))>>12); 
-            line_data[i] += ValueType((1817*int(line_data[k-1]+line_data[k]))>>12); 
+        { 
+            updateA.Filter( line_data[k] , line_data[i+1] , line_data[i] );
+            updateB.Filter( line_data[i] , line_data[k-1] , line_data[k] );
         }
         
-        line_data[xl-1] += ValueType((3616*int(line_data[xend-1]+line_data[xend-1]))>>12); 
-        line_data[xend-1] += ValueType((1817*int(line_data[xl-2]+line_data[xl-1]))>>12); 
+        updateA.Filter( line_data[xl-1] , line_data[xend-1] , line_data[xend-1] );
+        updateB.Filter( line_data[xend-1] , line_data[xl-2] , line_data[xl-1] );
 
         tmp_data[j] = line_data; 
     }
@@ -266,41 +275,43 @@ void WaveletTransform::VHSplit(const int xp, const int yp, const int xl, const i
             col_data[k] = tmp_data[++l][i];             
         }//j
 
-           //first lifting stage
-        col_data[yl2] -= ValueType((6497*int(col_data[1]+col_data[0]))>>12); 
-        col_data[0] -= ValueType((217*int(col_data[yl2]+col_data[yl2]))>>12); 
+        // First lifting stage 
+        predictA.Filter( col_data[yl2] , col_data[1] , col_data[0] );
+        predictB.Filter( col_data[0] , col_data[yl2] , col_data[yl2] );
         
         //main body
         for (j = 1, k = yl2+1;  j < yend-1; ++j, ++k)
         {
-            col_data[k] -= ValueType((6497*int(col_data[j+1]+col_data[j]))>>12); 
-            col_data[j] -= ValueType((217*int(col_data[k-1]+col_data[k]))>>12); 
+            predictA.Filter( col_data[k] , col_data[j+1] , col_data[j] );
+            predictB.Filter( col_data[j] , col_data[k-1] , col_data[k] ); 
         }//j
         
-        col_data[yl-1] -= ValueType((6497*int(col_data[yend-1]+col_data[yend-1]))>>12); 
-        col_data[yend-1] -= ValueType((217*int(col_data[yl-2]+col_data[yl-1]))>>12);         
+        predictA.Filter( col_data[yl-1] , col_data[yend-1] , col_data[yend-1] );
+        predictB.Filter( col_data[yend-1] , col_data[yl-2] , col_data[yl-1] );        
 
         //second lifting stage
-        col_data[yl2] += ValueType((3616*int(col_data[1]+col_data[0]))>>12); 
-        col_data[0] += ValueType((1817*int(col_data[yl2]+col_data[yl2]))>>12); 
+        updateA.Filter( col_data[yl2] , col_data[1] , col_data[0] );
+        updateB.Filter( col_data[0] , col_data[yl2] , col_data[yl2] );
         
         for (j = 1,k = yl2+1;  j < yend-1; ++j, ++k)
         {
-            col_data[k]+=ValueType((3616*int(col_data[j+1]+col_data[j]))>>12);     
-            col_data[j]+=ValueType((1817*int(col_data[k-1]+col_data[k]))>>12); 
+            updateA.Filter( col_data[k] , col_data[j+1] , col_data[j] );
+            updateB.Filter( col_data[j] , col_data[k-1] , col_data[k]);
         }//j
         
-        col_data[yl-1]+=ValueType((3616*int(col_data[yend-1]+col_data[yend-1]))>>12); 
-        col_data[yend-1]+=ValueType((1817*int(col_data[yl-2]+col_data[yl-1]))>>12); 
+        updateA.Filter( col_data[yl-1] , col_data[yend-1] , col_data[yend-1] );
+        updateB.Filter( col_data[yend-1] , col_data[yl-2] , col_data[yl-1] );
 
+        // Copy the data back into the original array
         for (j=0, k=yl2;  j < yend; ++j, ++k)
         {
-            pic_data[j+yp][i+xp]=col_data[j]; 
-            pic_data[k+yp][i+xp]=col_data[k]; 
+            pic_data[ j+yp ][ i+xp ] = col_data[j]; 
+            pic_data[ k+yp ][ i+xp ] = col_data[k]; 
         }//i
 
     }
     
+    // Tidy up
     delete [] col_data;
     
     for (int j=0; j<yl; ++j)
@@ -308,53 +319,68 @@ void WaveletTransform::VHSplit(const int xp, const int yp, const int xl, const i
 
 }
 
-
 void WaveletTransform::VHSynth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data){    
 
-    register ValueType* line_data=new ValueType[xl]; 
-    register ValueType* col_data;     
+    ValueType* line_data = new ValueType[xl]; 
+    ValueType* col_data;     
     OneDArray<ValueType*> tmp_data(xl); 
 
-    const int xl2=xl/2; 
-    const int yl2=yl/2; 
+    const int xl2 = xl/2; 
+    const int yl2 = yl/2; 
     int i,j,k,l,m; //positional variables
+
+    // set up lifting objects
+    const PredictStep< 1817 > predictA;
+    const PredictStep< 3616 > predictB;
+
+    const UpdateStep< 217 > updateA;
+    const UpdateStep< 6497 > updateB;
 
     //first do vertical synth//
     ///////////////////////////
 
-    int xend=xl;     
+    int xend=xl;
     int yend=yl2; 
 
-    for (i=0;  i<xend; ++i){        
-        col_data=new ValueType[yl]; 
-        for (j=0,k=yl2; j<yl2; ++j,++k){
-            col_data[j]=pic_data[j+yp][i+xp];     
-            col_data[k]=pic_data[k+yp][i+xp];             
+    for (i=0;  i<xend; ++i)
+    {        
+        // copy a column of data into a temp array
+        col_data = new ValueType[yl];
+        for ( j=0 , k=yl2 ; j<yl2 ; ++j , ++k)
+        {
+            col_data[j] = pic_data[ j+yp ][ i+xp ];     
+            col_data[k] = pic_data[ k+yp ][ i+xp ];             
         }
 
-        //first lifting stage
-        col_data[yend-1] -= ValueType((1817*int(col_data[yl-2]+col_data[yl-1]))>>12); 
-        col_data[yl-1] -= ValueType((3616*int(col_data[yend-1]+col_data[yend-1]))>>12); 
-        for (j=yend-2,k=yl-2;  j>=1; --j,--k){//main body
-            col_data[j] -= ValueType((1817*int(col_data[k-1]+col_data[k]))>>12); 
-            col_data[k] -= ValueType((3616*int(col_data[j+1]+col_data[j]))>>12); 
-        }//j
-        col_data[0] -= ValueType((1817*int(col_data[yl2]+col_data[yl2]))>>12); 
-        col_data[yl2] -= ValueType((3616*int(col_data[1]+col_data[0]))>>12); 
+        // First lifting stage
+        predictA.Filter( col_data[yend-1] , col_data[yl-2] , col_data[yl-1] );
+        predictB.Filter( col_data[yl-1] , col_data[yend-1] , col_data[yend-1] );
 
-          //second lifting stage
-        col_data[yend-1]+=ValueType((217*int(col_data[yl-2]+col_data[yl-1]))>>12); 
-        col_data[yl-1]+=ValueType((6497*int(col_data[yend-1]+col_data[yend-1]))>>12);             
-        for (j=yend-2,k=yl-2;  j>=1; --j,--k){//main body
-            col_data[j]+=ValueType((217*int(col_data[k-1]+col_data[k]))>>12); 
-            col_data[k]+=ValueType((6497*int(col_data[j+1]+col_data[j]))>>12); 
-        }//j
-        col_data[0]+=ValueType((217*int(col_data[yl2]+col_data[yl2]))>>12);     
-        col_data[yl2]+=ValueType((6497*int(col_data[1]+col_data[0]))>>12); 
+        for ( j=yend-2 , k=yl-2 ; j>=1 ; --j , --k ) 
+        {
+            predictA.Filter( col_data[j] , col_data[k-1] , col_data[k] );
+            predictB.Filter( col_data[k] , col_data[j+1] , col_data[j] );
+        }// j
 
-        tmp_data[i]=col_data;     
+        predictA.Filter( col_data[0] , col_data[yl2] , col_data[yl2] );
+        predictB.Filter( col_data[yl2] , col_data[1] , col_data[0] );
+ 
+       // Second lifting stage
+        updateA.Filter( col_data[yend-1] , col_data[yl-2] , col_data[yl-1] );
+        updateB.Filter( col_data[yl-1] , col_data[yend-1] , col_data[yend-1] );
 
-    }
+        for ( j=yend-2 , k=yl-2 ; j>=1; --j , --k )
+        {
+            updateA.Filter( col_data[j] , col_data[k-1] , col_data[k] );
+            updateB.Filter( col_data[k] , col_data[j+1] , col_data[j] );
+        }// j
+
+        updateA.Filter( col_data[0] , col_data[yl2] , col_data[yl2] );
+        updateB.Filter( col_data[yl2] , col_data[1] , col_data[0] );
+
+        tmp_data[i] = col_data;
+
+    }// i
 
      //next do horizontal//    
      //////////////////////
@@ -362,51 +388,68 @@ void WaveletTransform::VHSynth(const int xp, const int yp, const int xl, const i
     xend=xl2;     
     yend=yl; 
 
-    for (j=0;  j<yend; ++j){
+    for ( j=0 ; j<yend ; ++j )
+    {
 
-        for (i=0,k=xl2; i<xl2; ++i,++k){
-            line_data[i]=tmp_data[i][j]; 
-            line_data[k]=tmp_data[k][j]; 
+        for ( i=0 , k=xl2 ; i<xl2; ++i , ++k )
+        {
+            line_data[i] = tmp_data[i][j]; 
+            line_data[k] = tmp_data[k][j]; 
         }        
 
-        //first lifting stage
-        line_data[xend-1] -= ValueType((1817*int(line_data[xl-2]+line_data[xl-1]))>>12); 
-        line_data[xl-1] -= ValueType((3616*int(line_data[xend-1]+line_data[xend-1]))>>12);                         
-        for (i=xend-2,k=xl-2;  i>=1; --i,--k){//main body
-            line_data[i] -= ValueType((1817*int(line_data[k-1]+line_data[k]))>>12); 
-            line_data[k] -= ValueType((3616*int(line_data[i+1]+line_data[i]))>>12); 
-        }
-        line_data[0] -= ValueType((1817*int(line_data[xl2]+line_data[xl2]))>>12); 
-        line_data[xl2] -= ValueType((3616*int(line_data[1]+line_data[0]))>>12); 
+        // First lifting stage
+        predictA.Filter( line_data[xend-1] , line_data[xl-2] , line_data[xl-1] );
+        predictB.Filter( line_data[xl-1] , line_data[xend-1] , line_data[xend-1] );                         
 
-           //second lifting stage
-        line_data[xend-1] += ValueType((217*int(line_data[xl-2]+line_data[xl-1]))>>12);     
-        line_data[xl-1] += ValueType((6497*int(line_data[xend-1]+line_data[xend-1]))>>12); 
-        for (i=xend-2,k=xl-2;  i>=1; --i,--k){//main body
-            line_data[i] += ValueType((217*int(line_data[k-1]+line_data[k]))>>12); 
-            line_data[k] += ValueType((6497*int(line_data[i+1]+line_data[i]))>>12); 
-        }//i
-        line_data[0] += ValueType((217*int(line_data[xl2]+line_data[xl2]))>>12); 
-        line_data[xl2] += ValueType((6497*int(line_data[1]+line_data[0]))>>12);     
+        for ( i=xend-2 , k=xl-2 ; i>=1; --i , --k )
+        {
+            predictA.Filter( line_data[i] , line_data[k-1] , line_data[k] );
+            predictB.Filter( line_data[k] , line_data[i+1] , line_data[i] );
+        }// i
 
-        if (j<yl2){
-            l=2*j; 
-            for (i=0,k=xl2,m=0; i<xl2; ++i,++k,m=m+2){
-                pic_data[l][m] = line_data[i]; 
-                pic_data[l][m+1] = line_data[k]; 
-            }
-        }
-        else{
-            l=2*j-yl+1; 
-            for (i=0,k=xl2,m=0; i<xl2; ++i,++k, m=m+2){
-                pic_data[l+yp][m+xp]=line_data[i]; 
-                pic_data[l+yp][m+1+xp]=line_data[k]; 
-            }
+        predictA.Filter( line_data[0] , line_data[xl2] , line_data[xl2] );
+        predictB.Filter( line_data[xl2] , line_data[1] , line_data[0] );
 
-        }
+         // Second lifting stage 
+        updateA.Filter( line_data[xend-1] , line_data[xl-2] , line_data[xl-1] );
+        updateB.Filter( line_data[xl-1] , line_data[xend-1] , line_data[xend-1] );                         
+
+        for ( i=xend-2 , k=xl-2 ; i>=1 ; --i,--k)
+        {
+            updateA.Filter( line_data[i] , line_data[k-1] , line_data[k] );
+            updateB.Filter( line_data[k] , line_data[i+1] , line_data[i] );
+        }// i 
+    
+        updateA.Filter( line_data[0] , line_data[xl2] , line_data[xl2] );
+        updateB.Filter( line_data[xl2] , line_data[1] , line_data[0] );
+
+         // Copy data back into the original array
+         if ( j<yl2 )
+         {
+             l = 2*j; 
+             for ( i=0 , k=xl2 ,m=0 ; i<xl2 ; ++i , ++k , m=m+2 )
+             {
+                 pic_data[l][m] = line_data[i]; 
+                 pic_data[l][m+1] = line_data[k]; 
+             }// i
+         }
+         else
+         {
+             l = 2*j - yl + 1; 
+             for ( i=0 , k=xl2 , m=0; i<xl2 ; ++i , ++k , m=m+2 )
+             {
+                 pic_data[l+yp][m+xp] = line_data[i]; 
+                 pic_data[l+yp][m+1+xp] = line_data[k]; 
+             }// i
+
+         }
     }
+
+    // Tidy up
     delete[] line_data; 
-    for (int i=0; i<xl; ++i)
+
+    // This deletes all the allocated col_data's
+    for ( int i=0 ; i<xl ; ++i )
         delete[] tmp_data[i]; 
 
 }

@@ -49,53 +49,67 @@ class PicArray;
 //! The SubpelRefine class takes pixel-accurate motion vectors and refines them to 1/8-pixel accuracy
 /*!
     The SubpelRefine class takes pixel-accurate motion vectors and refines them to 1/8-pixel accuracy. It uses references
-	upconverted by a factor of 2 in each dimension, with the remaining precision gained by doing linear interpolation
-	between values on-the-fly.
+    upconverted by a factor of 2 in each dimension, with the remaining precision gained by doing linear interpolation
+    between values on-the-fly.
  */
-class SubpelRefine{
+class SubpelRefine
+{
 
 public:
     //! Constructor
     /*!
-		The constructor initialises the encoder parameters.
-		/param	cp	the parameters used for controlling encoding
+        The constructor initialises the encoder parameters.
+        /param    cp    the parameters used for controlling encoding
      */
-	SubpelRefine(EncoderParams& cp);
+    SubpelRefine(const EncoderParams& cp);
 
-	//! Destructor
-	~SubpelRefine(){}
+    //! Destructor
+    ~SubpelRefine(){}
 
-	//! Does the actual sub-pixel refinement
+    //! Does the actual sub-pixel refinement
     /*!
-		Does the actual sub-pixel refinement.
-		/param	my_buffer	the buffer of pictures being used
-		/param	frame_num	the frame number on which motion estimation is being performed
-		/param	mvd	the motion vector data, into which the results will be written
+        Does the actual sub-pixel refinement.
+        /param    my_buffer    the buffer of pictures being used
+        /param    frame_num    the frame number on which motion estimation is being performed
+        /param    mvd    the motion vector data, into which the results will be written
      */
-	void DoSubpel(const FrameBuffer& my_buffer,int frame_num, MvData& mvd);
+    void DoSubpel( const FrameBuffer& my_buffer , int frame_num , MEData& me_data );
 
 private:
-	SubpelRefine(const SubpelRefine& cpy);//private, body-less copy constructor: this class should not be copied
-	SubpelRefine& operator=(const SubpelRefine& rhs);//private, body-less assignment=: this class should not be assigned
+    //! Private, body-less copy constructor: this class should not be copied
+    SubpelRefine( const SubpelRefine& cpy );
 
-	//member variables
-	EncoderParams encparams;
-	const PicArray* up1_data;
-	const PicArray* up2_data;
-	MvData* mv_data;
-	int num_refs;//the number of reference frames
+    //! Private, body-less assignment=: this class should not be assigned
+    SubpelRefine& operator=( const SubpelRefine& rhs );
 
-	OneDArray<ImageCoords> nshift;
-	float factor2x2,factor1x1;
-	float lambda;
-	int xmb_loc,ymb_loc;//coords of the MB
-	int xtl,ytl;//block coords of TL block
-	int xbr,ybr;//block coords of the TL block in the next MB to the bottom right
-	BMParams matchparams;
+    //! Match a picture from its (upconverted) reference, and record the block mvs
+    void MatchPic(const PicArray& pic_data , const PicArray& refup_data , MEData& me_data ,
+                             int ref_id);
 
-	//functions
-	void DoBlock(int xblock,int yblock);
-	MVector GetPred(int xblock,int yblock,const MvArray& mvarray);
+    //! Match an individual block
+    void DoBlock(const int xblock , const int yblock , 
+                 BlockMatcher& my_bmatch, MvArray& mv_array, 
+                 TwoDArray<MvCostData>& block_costs );
+
+    //! Get a prediction for a block MV from the neighbouring blocks
+    MVector GetPred( int xblock , int yblock , const MvArray& mvarray );
+
+    //member variables
+
+    //! A local reference to the encoder params
+    const EncoderParams& m_encparams;
+
+    //! The Lagrangian parameter to use in motion estimation    
+    float m_lambda;
+
+    //! The list of candidate vectors being tested
+    CandidateList m_cand_list;
+
+    //! The relative coords of the set of neighbours used to generate MV predictions
+    OneDArray<ImageCoords> m_nshift;
+
+
+
 };
 
 #endif

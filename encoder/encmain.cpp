@@ -44,6 +44,11 @@
 #include <libdirac_common/pic_io.h>
 #include <libdirac_common/cmd_line.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <unistd.h>
+
 using namespace std;
 
 
@@ -142,6 +147,15 @@ int main (int argc, char* argv[]){
 
 		strncpy(bit_name,output_name,84);
 		strcat(bit_name,".drc");
+
+        // attempt to create a directory for MvData
+        char dir_path[120];
+        strcpy(dir_path, output.c_str());
+        strcat(dir_path, "_mvdata");
+        encparams.SetOutputPath(dir_path);
+        std::cerr<<std::endl<<"Creating file "<<dir_path;
+        std::ofstream out(dir_path, std::ios::out);
+        out.close();
 
 		//Now do the options
 		//Start with quantisation factors

@@ -67,21 +67,16 @@ public:
 	void Compress(PicArray & pic_data);
 
 private:
-	//! Copy constructor is private and body-less
-	/*!
-		Copy constructor is private and body-less. This class should not be copied.
-
-	*/
+	//! Copy constructor is private and body-less. This class should not be copied.
 	CompCompressor(const CompCompressor& cpy);
 
-	//! Assignment = is private and body-less
-	/*!
-		Assignment = is private and body-less. This class should not be assigned.
-
-	*/
+	//! Assignment = is private and body-less. This class should not be assigned.
 	CompCompressor& operator=(const CompCompressor& rhs);
 
 	void GenQuantList();
+
+    void SelectQuantisers( PicArray& pic_data , SubbandList& bands ,
+                           OneDArray<unsigned int>& est_counts );
 
 	int SelectQuant(PicArray& pic_data,SubbandList& bands,int band_num);
 

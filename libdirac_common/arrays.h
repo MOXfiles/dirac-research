@@ -287,7 +287,7 @@ public:
     /*!
         The constructor creates an array of width /param len0 and length /param len1.
      */    
-    TwoDArray(const int height,const int width){Init(height , width);}
+    TwoDArray( const int height , const int width ){Init(height , width);}
 
     //! Destructor
     /*!
@@ -342,7 +342,7 @@ public:
     const int LastX() const { return m_last_x; } 
 
     //! Returns the index of the first element of a column
-    const int LastY() const { return m_last_y; } 
+    const int LastY() const { return m_last_y; }
 
 private:
     //! Initialise the array
@@ -365,6 +365,37 @@ private:
 
 //public member functions//
 ///////////////////////////
+
+//! A function for extracting data from an array into an ostream
+template <class T >
+std::ostream & operator<< (std::ostream & stream, TwoDArray<T> & array)
+{
+    for (int j=0 ; j<array.LengthY() ; ++j)
+    {
+        for (int i=0 ; i<array.LengthX() ; ++i)
+        {
+            stream << array[j][i] << " ";
+        }// i
+        stream << std::endl;
+    }// j
+
+    return stream;
+}
+
+//! A function for inserting data into an array from an istream
+template <class T >
+std::istream & operator>> (std::istream & stream, TwoDArray<T> & array)
+{
+    for (int j=0 ; j<array.LengthY() ; ++j)
+    {
+        for (int i=0 ; i<array.LengthX() ; ++i)
+        {
+            stream >> array[j][i];
+        }// i
+    }// j
+
+    return stream;
+}
 
 template <class T>
 TwoDArray<T>::TwoDArray(const TwoDArray<T>& Cpy)

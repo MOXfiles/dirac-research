@@ -2,7 +2,7 @@ INCLUDES = -I$(top_srcdir)
 
 h_sources = comp_compress.h frame_compress.h quality_monitor.h seq_compress.h
 
-cpp_sources = comp_compress.cpp frame_compress.cpp quality_monitor.cpp seq_compress.cpp 
+cpp_sources = comp_compress.cpp frame_compress.cpp quality_monitor.cpp seq_compress.cpp
 
 lib_LIBRARIES = libdirac_encoder.a
 
@@ -12,3 +12,4 @@ library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
 
 DEFS = -I. -I$(srcdir)
+

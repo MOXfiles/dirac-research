@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author)
+* Contributor(s): Thomas Davies (Original Author), Chris Bowley
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -42,6 +42,8 @@
 
 #include <libdirac_common/motion.h>
 #include <cmath>
+
+using namespace std;
 
 //motion compensation stuff//
 /////////////////////////////
@@ -76,9 +78,12 @@ void ArithHalfSubtractObj::DoArith(ValueType &lhs, const CalcValueType rhs, cons
 //to them. This function facilitates the calculations
 float RaisedCosine(float t, float B)
 {
-    if(std::abs(t)>(B+1.0)/2.0) return 0.0f;
-    else if(std::abs(t)<(1.0-B)/2.0) return 1.0f;
-    else return(0.5*(1.0+std::cos(3.141592654*(std::abs(t)-(1.0-B)/2.0)/B)));
+    if(std::abs(t)>(B+1.0)/2.0) 
+        return 0.0f;
+    else if(std::abs(t)<(1.0-B)/2.0) 
+        return 1.0f;
+    else 
+        return( 0.5 * ( 1.0 + std::cos( 3.141592654 * ( std::abs(t)-(1.0-B)/2.0 )/B ) ) );
 }
 
 //Calculates a weighting block.
@@ -155,7 +160,7 @@ void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, TwoDArray<Cal
     //later using a right shift of ten.
     float g;
     for(int y = 0; y < bparams.Yblen(); ++y)
-        {
+    {
         for(int x = 0; x < bparams.Xblen(); ++x)
             {
             g = floor((CalcArray[y][x]*1024)+0.5);
@@ -187,3 +192,161 @@ void FlipY(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, T
         }// y
     }// x
 }
+
+//Motion vector and Motion Estimation structures//
+//////////////////////////////////////////////////
+
+MvData::MvData( const int xnumMB, const int ynumMB , 
+                const int xnumblocks, const int ynumblocks , const int num_refs ):
+    m_vectors( Range(1 , num_refs) ),
+    m_modes( ynumblocks , xnumblocks ),
+    m_dc( 3 ),
+    m_mb_split( ynumMB , xnumMB ),
+    m_mb_common( ynumMB , xnumMB )
+{
+
+    InitMvData();
+}
+
+MvData::MvData( const int xnumMB , const int ynumMB , const int num_refs ):
+    m_vectors( Range(1 , num_refs) ),
+    m_modes( 4*ynumMB , 4*xnumMB ),
+    m_dc( 3 ),
+    m_mb_split( ynumMB , xnumMB ),
+    m_mb_common( ynumMB , xnumMB )
+{
+    InitMvData();
+}
+
+void MvData::InitMvData()
+{
+    // Create the arrays of vectors
+     for ( int i=m_vectors.First() ; i<=m_vectors.Last() ; ++i )
+         m_vectors[i] = new MvArray( Mode().LengthY() , Mode().LengthX() );
+
+     // Create the arrays of dc values
+     for ( int i=0 ; i<3 ; ++i )
+         m_dc[i] = new TwoDArray<ValueType>( Mode().LengthY() , Mode().LengthX() );
+}
+
+MvData::~MvData()
+{
+   // Delete the arrays of vectors
+    for ( int i=m_vectors.First() ; i<=m_vectors.Last() ; ++i )
+        delete m_vectors[i];
+
+     // Delete the arrays of dc values
+     for ( int i=0 ; i<3 ; ++i )
+         delete m_dc[i];
+}
+
+
+
+ MEData::MEData(const int xnumMB , const int ynumMB ,
+                const int xnumblocks , const int ynumblocks , const int num_refs ):
+     MvData( xnumMB , ynumMB , xnumblocks , ynumblocks , num_refs ),
+     m_pred_costs( Range( 1 , num_refs ) ),
+     m_intra_costs( ynumblocks , xnumblocks ),
+     m_bipred_costs( ynumblocks , xnumblocks ),
+     m_MB_costs( ynumMB , xnumMB )
+{
+    InitMEData();
+}
+
+ MEData::MEData( const int xnumMB , const int ynumMB ,  const int num_refs ):
+     MvData( xnumMB , ynumMB , num_refs ),
+     m_pred_costs( Range( 1 , num_refs ) ),
+     m_intra_costs( 4*ynumMB , 4*xnumMB ),
+     m_bipred_costs( 4*ynumMB , 4*xnumMB ),
+     m_MB_costs( ynumMB , xnumMB )
+{
+    InitMEData();
+
+}
+
+void MEData::InitMEData()
+{
+   // Create the arrays of prediction costs
+    for ( int i=m_pred_costs.First() ; i<=m_pred_costs.Last() ; ++i )
+        m_pred_costs[i] = new TwoDArray<MvCostData>( Mode().LengthY() , Mode().LengthX() );
+}
+
+MEData::~MEData()
+{
+    // Delete the arrays of prediction costs
+     for ( int i=m_pred_costs.First() ; i<=m_pred_costs.Last() ; ++i )
+         delete m_pred_costs[i];
+}
+
+//! Overloaded operator<< for MvCostData
+/*!
+    Only writes SAD value to stream
+*/
+std::ostream & operator<< (std::ostream & stream, MvCostData & cost)
+{
+    stream << cost.SAD;
+
+    return stream;
+}
+
+//! Overloaded operator>> for MvCostData
+/*!
+    Only reads SAD value from stream
+*/
+std::istream & operator>> (std::istream & stream, MvCostData & cost)
+{
+    stream >> cost.SAD;
+
+    return stream;
+}
+
+//! Overloaded operator>> for PredMode
+/*!
+    No operator<< is specified as enumeration is written as integers
+    operator>> required to specify PredMode input
+*/
+std::istream & operator>> (std::istream & stream, PredMode & mode)
+{
+    int temp;
+    stream >> temp;
+    mode = (PredMode)temp;
+
+    return stream;
+}
+
+// Overriden extractor operator for reading MvData data members
+istream &operator>> (istream & stream, MEData & me_data)
+{
+    stream.ignore(1000, '\n');
+    
+    // input reference-independent information
+    stream >> me_data.MBSplit() >> me_data.Mode();
+
+    for (int i=1; i<=me_data.m_pred_costs.Length(); ++i)
+    {
+        // input reference information
+        stream >> me_data.Vectors(i) >> me_data.PredCosts(i);
+    }
+
+    return stream;
+}
+
+// Overriden operator for output of MvData member data (to file)
+ostream &operator<< (ostream & stream, MEData & me_data)
+{
+    // output macroblock and moition vector array dimensions
+    stream << me_data.MBSplit().LengthY() << " " << me_data.MBSplit().LengthX() << " ";
+    stream << me_data.Vectors(1).LengthY() << " " << me_data.Vectors(1).LengthX();
+
+    // output reference-independent information
+    stream << endl << endl << me_data.MBSplit() << std::endl << me_data.Mode();
+    
+    for (int i=1; i<=me_data.m_pred_costs.Length(); ++i)
+    {
+        // output reference information
+        stream << endl << me_data.Vectors(i) << std::endl << me_data.PredCosts(i) << std::endl;
+    }
+    
+    return stream;
+}
+

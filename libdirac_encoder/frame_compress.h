@@ -39,8 +39,9 @@
 #ifndef _FRAME_COMPRESS_H_
 #define _FRAME_COMPRESS_H_
 
-#include "libdirac_common/frame_buffer.h"
-#include "libdirac_common/common.h"
+#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/common.h>
+#include <libdirac_common/motion.h>
 
 class MvData;
 
@@ -88,6 +89,12 @@ private:
 
 	//! Write the frame compression header
 	void WriteFrameHeader(const FrameParams& fparams);
+
+    //! Called if verbosity is on to make a report of the bytes written
+    void MakeFrameReport();
+
+    //! Write frame motion data
+    void WriteMotionData(int, const FrameParams &, MEData &, const FrameSort &);
 
 	//member variables
 	EncoderParams& m_encparams;

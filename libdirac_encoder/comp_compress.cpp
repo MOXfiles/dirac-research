@@ -59,12 +59,18 @@ CompCompressor::CompCompressor( EncoderParams& encp,const FrameParams& fp)
 
 void CompCompressor::Compress(PicArray& pic_data)
 {
+
     //need to transform, select quantisers for each band, and then compress each component in turn
     m_csort=pic_data.CSort();	
     const int depth=4;
     unsigned int num_band_bits;
-    unsigned int est_band_bits;//estimated number of band bits
+
+    // A pointer to an object  for coding the subband data
     BandCodec* bcoder;
+
+    // A pointer to an object for outputting the subband data
+    UnitOutputManager* band_op;
+
     const size_t CONTEXTS_REQUIRED = 24;
 
 	Subband node;
@@ -89,65 +95,59 @@ void CompCompressor::Compress(PicArray& pic_data)
 
 	SubbandList& bands=wtransform.BandList();
 
-	unsigned int old_total_bytes=m_encparams.BitsOut().GetTotalBytes();
-	unsigned int old_total_head_bytes=m_encparams.BitsOut().GetTotalHeadBytes();	
-	unsigned int total_bytes;
-	unsigned int total_head;
-
-    //generate all the quantisation data
+    // Generate all the quantisation data
 	GenQuantList();
-	for (int b=bands.Length() ; b>=1 ; --b )
-	{
 
-		est_band_bits=SelectQuant(pic_data , bands , b);
-		GolombCode( m_encparams.BitsOut().Header() , bands(b).Qf(0) );
+    // Choose all the quantisers
+    OneDArray<unsigned int> estimated_bits( Range( 1 , bands.Length() ) );
+    SelectQuantisers( pic_data , bands , estimated_bits );  
+
+    // Loop over all the bands (from DC to HF) quantising and coding them
+    for (int b=bands.Length() ; b>=1 ; --b )
+	{
+        band_op = & m_encparams.BitsOut().FrameOutput().BandOutput( m_csort , b );
+
+		GolombCode( band_op->Header() , bands(b).Qf(0) );
 
 		if (bands(b).Qf(0) != -1)
-		{//if not skipped			
+		{   // If not skipped ...
 
-			bands(b).SetQf(0,m_qflist[bands(b).Qf(0)]);
+			bands(b).SetQf( 0 , m_qflist[bands(b).Qf(0)] );
 
- 			//pick the right codec according to the frame type and subband
+ 			// Pick the right codec according to the frame type and subband
 			if (b >= bands.Length())
             {
 				if ( m_fsort == I_frame && b == bands.Length() )
-					bcoder=new IntraDCBandCodec( &(m_encparams.BitsOut().Data() ) , CONTEXTS_REQUIRED , bands);
+					bcoder=new IntraDCBandCodec( &( band_op->Data() ) , CONTEXTS_REQUIRED , bands);
 				else
-					bcoder=new LFBandCodec( &(m_encparams.BitsOut().Data() ) ,CONTEXTS_REQUIRED, bands , b);
+					bcoder=new LFBandCodec( &( band_op->Data() ) ,CONTEXTS_REQUIRED, bands , b);
 			}
 			else
-				bcoder=new BandCodec( &(m_encparams.BitsOut().Data() ) , CONTEXTS_REQUIRED , bands , b);
+				bcoder=new BandCodec( &( band_op->Data() ) , CONTEXTS_REQUIRED , bands , b);
 
-			num_band_bits=bcoder->Compress(pic_data);
+			num_band_bits = bcoder->Compress(pic_data);
 
- 			//update the entropy correction factors
-			m_encparams.EntropyFactors().Update(b , m_fsort , m_csort , est_band_bits , num_band_bits);
+ 			// Update the entropy correction factors
+            m_encparams.EntropyFactors().Update(b , m_fsort , m_csort , estimated_bits[b] , num_band_bits);
 
-			//Write the length of the data chunk into the header, and flush everything out to file
-			UnsignedGolombCode( m_encparams.BitsOut().Header() , num_band_bits);
-			m_encparams.BitsOut().WriteToFile();
+			// Write the length of the data chunk into the header, and flush everything out to file
+			UnsignedGolombCode( band_op->Header() , num_band_bits);
 
 			delete bcoder;			
 		}
 		else
-		{
-			m_encparams.BitsOut().WriteToFile();
+		{   // ... skipped
+
 			if (b == bands.Length() && m_fsort == I_frame)
-				SetToVal(pic_data,bands(b),2692);
+				SetToVal( pic_data , bands(b) , 2692 );
 			else
-				SetToVal(pic_data,bands(b),0);
+				SetToVal( pic_data , bands(b) , 0 );
 		}		
 	}//b
 
-	total_bytes=m_encparams.BitsOut().GetTotalBytes();
-	total_head=m_encparams.BitsOut().GetTotalHeadBytes();
-
-	if (m_encparams.Verbose())
-	{
-		std::cerr<<std::endl<<"Total component bits="<<(total_bytes-old_total_bytes)*8;
-		std::cerr<<", of which "<<(total_head-old_total_head_bytes)*8<<" were header.";
-	}
+    // Transform back into the picture domain
 	wtransform.Transform( BACKWARD , pic_data );
+
 }
 
 void CompCompressor::GenQuantList()
@@ -217,6 +217,16 @@ void CompCompressor::GenQuantList()
 	m_qflist[59]=27554;	m_qfinvlist[59]=4;		m_offset[59]=10333;	
 }
 
+
+
+void CompCompressor::SelectQuantisers( PicArray& pic_data , SubbandList& bands ,
+                                                 OneDArray<unsigned int>& est_counts )
+{
+    // Select all the quantizers
+    for ( int b=bands.Length() ; b>=1 ; --b )
+        est_counts[b] = SelectQuant( pic_data , bands , b );
+}
+
 int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int band_num)
 {
 
@@ -226,9 +236,8 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 	//May be able to short-circuit searching in future by setting this
 	int qf_start_idx=12;
 
-	if (band_num==bands.Length()){
+	if (band_num==bands.Length())
 		AddSubAverage(pic_data,node.Xl(),node.Yl(),SUBTRACT);
-	}
 
 	int min_idx;
 	double bandmax=PicAbsMax(pic_data,node.Xp(),node.Yp(),node.Xl(),node.Yl());
@@ -267,7 +276,8 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 	
 		return 0;		
 	}
-	else{
+	else
+    {
 		for ( int q=0 ; q<costs.Length() ; q++)
         {
 			error_total[q] = 0.0;			

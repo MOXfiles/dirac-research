@@ -40,6 +40,7 @@
 #ifndef _BIT_MANAGER_H_
 #define _BIT_MANAGER_H_
 
+#include <libdirac_common/arrays.h>
 #include <cstring>
 #include <vector>
 #include <iostream>
@@ -47,6 +48,10 @@
 ////////////////////////////////////////////////
 //--------------Bit output stuff--------------//
 ////////////////////////////////////////////////
+
+class UnitOutputManager;
+class FrameOutputManager;
+class SequenceOutputManager;
 
 //! Class for managing bit- and byte-oriented output.
 /*!
@@ -57,13 +62,18 @@
 */
 class BasicOutputManager
 {
+    // Data cannot be written to file directly, only by other o/p classes
+    friend class UnitOutputManager;
+    friend class FrameOutputManager;
+    friend class SequenceOutputManager;
+
     public:
         //! Constructor
         /*!
         Constructor requires an ostream object pointer.
         /param OutData the output stream object pointer
         */
-        BasicOutputManager(std::ostream* OutData );
+        BasicOutputManager(std::ostream* out_data );
 
         //Copy constructor is default shallow copy
 
@@ -102,12 +112,6 @@ class BasicOutputManager
         */   
         void OutputBytes(char* str_array,int num);
 
-        //! Write all data to file.
-        /*!
-        Dump the internal data cache to the internal ostream object.
-        */   
-        void WriteToFile();    // Write the buffer to the file 
-
         //! Return the number of bytes last output to file.
         /*!
         Return the number of bytes last output to file.
@@ -128,32 +132,43 @@ class BasicOutputManager
         int m_output_mask;           //Used to set individual bit within the current header byte
 
         //functions  
-        void InitOutputStream();    //Initialise the output stream.
-        void FlushOutput();         //Clean out any remaining output bits to the buffer
+
+        //! Write all data to file.
+        /*!
+        Dump the internal data cache to the internal ostream object.
+        */   
+        void WriteToFile();
+
+        //Initialise the output stream.
+        void InitOutputStream();
+
+        //Clean out any remaining output bits to the buffer
+        void FlushOutput();
 };
 
 //! A class for handling data output, including headers.
 /*!
 A class for handling data output, including headers and reordering.
 */
-class BitOutputManager
+class UnitOutputManager
 {
+    // Only the FrameOutputManager can make this class write data to file
+    friend class FrameOutputManager;
 
     public:
         //! Constructor.
         /*!
-        Constructor wraps around a pointer to an ostream object, and initialises 
-        /param header a BasicOutputManager object to handle the header
-        /param data a BasicOutputManager object to handle the data
+        Constructor wraps around a pointer to an ostream object, and initialises
+        two BasicOutputManager objects for header and data
         */
-        BitOutputManager(std::ostream* out_data ); 
+        UnitOutputManager(std::ostream* out_data ); 
 
         //Copy constructor is default shallow copy
 
         //Operator= is default shallow=
 
         //! Destructor
-        ~BitOutputManager(){}
+        ~UnitOutputManager(){}
 
         //! Handles the header bits.
         /*!
@@ -167,43 +182,207 @@ class BitOutputManager
         */
         BasicOutputManager& Data(){return m_data;}
 
+        //! Returns the total number of bytes written in the last unit coded.
+        /*!
+        Returns the total number of bytes written in the last unit coded - header + data.
+        */
+        const size_t GetUnitBytes() const {return m_unit_bytes;}
+
+        //! Returns the total number of header bytes written in the last unit coded. 
+        const size_t GetUnitHeaderBytes() const {return m_unit_head_bytes;}
+
+    private:
+        // basic output managers for the header and data
+        BasicOutputManager m_header,m_data;
+ 
+        // total number of bytes written in the last unit coded 
+        size_t m_unit_bytes;
+
+        // number of data bytes for the last unit coded
+        size_t m_unit_data_bytes;
+
+        // number of data bytes for the last unit coded
+        size_t m_unit_head_bytes;
+
+        // functions
+
         //! Writes the bit caches to file.
         /*!
         Writes the header bits to the ostream, followed by the data bits.
         */
         void WriteToFile();
+};
 
-        //! Returns the total number of bytes written in the last unit coded.
-        /*!
-        Returns the total number of bytes written in the last unit coded - header + data.
-        */
-        size_t GetUnitBytes() const {return m_unit_bytes;}
+class FrameOutputManager
+{
+public:
 
-        //! Returns the total number of data bytes written in the last unit coded.
-        size_t GetUnitDataBytes() const {return m_unit_data_bytes;}
+    // Only the SequenceOutputManager can make this class write data to file
+    friend class SequenceOutputManager;
 
-        //! Returns the total number of header bytes written in the last unit coded. 
-        size_t GetUnitHeadBytes() const {return m_unit_head_bytes;}
+    //! Constructor
+    /*
+        Constructs a class which manages output for an entire frame.
+        \param  out_data  pointer to the output stream 
+        \param  num_bands  the number of subbands per component
+    */
+    FrameOutputManager( std::ostream* out_data , const int num_bands=13 ); 
 
-        //! Returns the total number of bytes written to date (header and data). 
-        size_t GetTotalBytes() const {return m_total_bytes;}
+    //! Destructor
+    ~FrameOutputManager();
 
-        //! Returns the total number of header bytes written to date. 
-        size_t GetTotalHeadBytes() const {return m_total_head_bytes;}
+    //! Set the number of bands there will be in a component
+    void SetNumBands( const int num_bands );
 
-        //! Returns the total number of data bytes written to date.
-        size_t GetTotalDataBytes() const {return m_total_data_bytes;}
+    //! Get an output manager for a subband
+    /*!
+        Get an output manager for a subband.
+        \param  csort  the component (Y, U or V)
+        \param  band_num  the number of the subband
+    */
+    UnitOutputManager& BandOutput( const int csort , const int band_num );
 
-    private:
-        //basic output managers for the header and data
-        BasicOutputManager m_header,m_data;
+    //! Get an output manager for a subband
+    /*!
+        Get an output manager for a subband.
+        \param  csort  the component (Y, U or V)
+        \param  band_num  the number of the subband
+    */
+    const UnitOutputManager& BandOutput( const int csort , const int band_num ) const;
 
-        size_t m_total_bytes;     //total number of bytes written to date- sum of:
-        size_t m_total_data_bytes; //1) total number of data bytes written to date
-        size_t m_total_head_bytes; //and 2) total number of header bytes written to date
-        size_t m_unit_bytes;      //total number of bytes written in the last unit coded - sum of: 
-        size_t m_unit_data_bytes;  //1) number of data bytes for the last unit coded
-        size_t m_unit_head_bytes;  //and 2) number of data bytes for the last unit coded
+    //! Get an output manager for MV data
+    /*!
+        Get an output manager for MV data
+    */
+    UnitOutputManager& MVOutput(){ return m_mv_data; }
+
+    //! Get an output manager for MV data
+    /*!
+        Get an output manager for MV data
+    */
+    const UnitOutputManager& MVOutput() const { return m_mv_data; }
+
+    //! Get an output manager for the frame header
+    BasicOutputManager& HeaderOutput(){ return m_frame_header; }
+
+    //! Return the number of bytes used for each component
+    const size_t ComponentBytes( const int comp_num ) const { return m_comp_bytes[comp_num];}
+
+    //! Return the number of header bytes used for each component
+    const size_t ComponentHeadBytes( const int comp_num ) const { return m_comp_hdr_bytes[comp_num];}
+
+    //! Return the number of motion vector bytes used
+    const size_t MVBytes() const { return m_mv_bytes;}
+
+    //! Return the number of motion vector header bytes used
+    const size_t MVHeadBytes() const { return m_mv_hdr_bytes;}
+
+    //! Return the number of bytes used for the whole frame
+    const size_t FrameBytes() const { return m_total_bytes;}
+
+    //! Return the number of header bytes used throughout the frame
+    const size_t FrameHeadBytes() const { return m_header_bytes;}
+
+private:
+
+    // Array of subband outputs, 1 for each component and subband
+    TwoDArray< UnitOutputManager* > m_data_array;
+
+    // Motion vector output
+    UnitOutputManager m_mv_data;
+
+    // Frame header output
+    BasicOutputManager m_frame_header;
+
+    // The total number of frame bytes
+    size_t m_total_bytes;
+
+    // The total number of header bytes
+    size_t m_header_bytes;
+
+    // The total number of MV header bytes
+    size_t m_mv_hdr_bytes; 
+
+    // The total number of MV bytes
+    size_t m_mv_bytes; 
+
+    // The total number of bytes in each component
+    OneDArray< size_t > m_comp_bytes;
+
+    // The total number of header bytes in each component
+    OneDArray< size_t > m_comp_hdr_bytes;
+
+    // A copy of a pointer to the output stream
+    std::ostream* m_out_stream;
+
+    // Functions
+
+    //! Initialise the band data
+    void Init( const int num_bands );
+
+    //! Destroy data
+    void Wrapup();
+
+    //! Write all the frame data to file
+    void WriteToFile();
+};
+
+class SequenceOutputManager
+{
+public:
+    //! Constructor
+    SequenceOutputManager( std::ostream* out_data );
+
+    //! Return a reference to the output for a single frame
+    FrameOutputManager& FrameOutput(){ return m_frame_op_mgr; }
+
+    //! Return a reference to the output for a single frame
+    BasicOutputManager& HeaderOutput(){ return m_seq_header; }
+
+    //! Write the sequence header
+    void WriteSeqHeaderToFile();
+
+    //! Write all the frame data to file
+    void WriteFrameData();
+
+    //! Return the total number of bytes used for the sequence
+    const size_t SequenceBytes() { return m_total_bytes; } 
+
+    //! Return the total number of header bytes used throughout the sequence
+    const size_t SequenceHeadBytes() { return m_header_bytes; } 
+
+    //! Return the total number bytes used for MVs
+    const size_t MVBytes() { return m_mv_bytes; }
+
+    //! Return the total number bytes used for a component
+    const size_t ComponentBytes( const int comp_num ) { return m_comp_bytes[comp_num]; }
+  
+
+private:
+
+    // The frame output manager
+    FrameOutputManager m_frame_op_mgr;
+
+    // Output manager for the sequence header
+    BasicOutputManager m_seq_header;
+
+    // The total number of bytes in each component
+    OneDArray< size_t > m_comp_bytes;
+
+    // The total number of header bits in each component
+    OneDArray< size_t > m_comp_hdr_bytes;
+
+    // The number of MV header bytes
+    size_t m_mv_hdr_bytes;
+
+    // The total number of MV bytes
+    size_t m_mv_bytes;
+
+    // The total number of bytes written so far
+    size_t m_total_bytes;
+
+    // The total number of header bytes written so far
+    size_t m_header_bytes;
 };
 
 ///////////////////////////////////////////////

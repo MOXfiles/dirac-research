@@ -68,12 +68,12 @@ void QualityMonitor::ResetAll()
     m_last_wpsnr = m_target_wpsnr;
 
     // set defaults for the model
-    m_slope[I_frame] = -4.6;
-    m_slope[L1_frame] = -4.6;
-    m_slope[L2_frame] = -4.6;
-    m_offset[I_frame] = 42.0,
-    m_offset[L1_frame] = 42.0;
-    m_offset[L2_frame] = 42.0;
+     m_slope[I_frame] = -4.0;
+     m_slope[L1_frame] = -4.0;
+     m_slope[L2_frame] = -4.0;
+     m_offset[I_frame] = 38.5,
+     m_offset[L1_frame] = 43.3;
+     m_offset[L2_frame] = 43.3;
 
     for (size_t fsort=0; fsort<3; ++fsort)
     {
@@ -83,7 +83,8 @@ void QualityMonitor::ResetAll()
     // set a default ratio for the motion estimation lambda
     // Exact value TBD - will incorporate stuff about blocks and so on
     // Also need to think about how this can be adapted for sequences for more or less motion 
-    m_me_ratio = 0.05;
+
+    m_me_ratio = 0.005;
 
  	// set up the Lagrangian parameters
     for (size_t fsort=0; fsort<3; ++fsort)
@@ -147,8 +148,8 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame,
 		offset = current_wpsnr - ( log10(current_lambda) * slope );
 
         // Update the default values using a simple recursive filter
-        m_slope[fsort] = (3.0*m_slope[fsort] + slope)/4.0;
-        m_offset[fsort] = (3.0*m_offset[fsort] + offset)/4.0;
+        m_slope[fsort] = (9.0*m_slope[fsort] + slope)/10.0;
+        m_offset[fsort] = (9.0*m_offset[fsort] + offset)/10.0;
         m_slope[fsort] = std::min( std::max( -10.0 , m_slope[fsort] ), -0.1);
 
     }
@@ -168,16 +169,16 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame,
 void QualityMonitor::CalcNewLambdas(const FrameSort fsort, const double slope, const double wpsnr_diff )
 {	
 
-    if ( encparams.Lambda(fsort) <= 1000001.0 && std::abs(wpsnr_diff/slope <2.0) )
-        encparams.SetLambda(fsort, encparams.Lambda(fsort) *
-                            std::pow( (double)10.0, wpsnr_diff/slope ) );
-    else
-        encparams.SetLambda(fsort, 1000000.0);
+     if ( encparams.Lambda(fsort) <= 100001.0 && std::abs(wpsnr_diff/slope <2.0) )
+         encparams.SetLambda(fsort, encparams.Lambda(fsort) *
+                             std::pow( (double)10.0, wpsnr_diff/slope ) );
+     else
+         encparams.SetLambda(fsort, 100000.0);
 
-    if (fsort == L1_frame)
-		encparams.SetL1MELambda( encparams.L1Lambda() * m_me_ratio );
-    else if (fsort == L2_frame)
-		encparams.SetL2MELambda( encparams.L2Lambda() * m_me_ratio );
+     if (fsort == L1_frame)
+ 		encparams.SetL1MELambda( encparams.L1Lambda() * m_me_ratio );
+     else if (fsort == L2_frame)
+ 		encparams.SetL2MELambda( encparams.L2Lambda() * m_me_ratio );
 
 }
 

@@ -175,7 +175,8 @@ enum MvCtxAliases
     separate classes for input/output picture data, difference picture data, and wavelet coefficient
     data. Currently PicArray is used for all of these. TJD 13 April 2004.
  */
-class PicArray: public TwoDArray<ValueType>{
+class PicArray: public TwoDArray<ValueType>
+{
 public:
     //! Default constructor
     /*!
@@ -313,6 +314,11 @@ public:
 
     //! Sets the block vertical separation
     void SetYbsep( int ybsep ){ m_ybsep = ybsep; m_yoffset = (m_yblen-m_ybsep)/2;}
+
+    // overloaded stream operators
+    friend std::ostream & operator<< (std::ostream &, OLBParams &);
+    friend std::istream & operator>> (std::istream &, OLBParams &);
+    
 
 private:
 
@@ -514,7 +520,8 @@ private:
 /*!
     Parameters used throughout both the encoder and the decoder
 */
-class CodecParams{
+class CodecParams
+{
 public:
 
     //! Default constructor 
@@ -609,7 +616,8 @@ private:
 /*!
     Parameters for the encoding process, derived from CodecParams.
  */
-class EncoderParams: public CodecParams{
+class EncoderParams: public CodecParams
+{
     //codec params plus parameters relating solely to the operation of the encoder
 
 public:
@@ -634,6 +642,7 @@ public:
     const float Lambda(const FrameSort& fsort) const;
     const float L1MELambda() const {return m_L1_me_lambda;}
     const float L2MELambda() const {return m_L2_me_lambda;}
+    const char * OutputPath() const {return m_output_path;}
 
     //! Return a reference to the entropy factors
     const EntropyCorrector& EntropyFactors() const {return *m_ent_correct;}
@@ -642,9 +651,11 @@ public:
     EntropyCorrector& EntropyFactors() {return *m_ent_correct;}
 
     //!Return a reference to the bit output class
-    const BitOutputManager& BitsOut() const {return *m_bit_out;}
+//    const BitOutputManager& BitsOut() const {return *m_bit_out;}
+    const SequenceOutputManager& BitsOut() const {return *m_bit_out;}
     //!Return a reference to the bit output class - we need to output, so non-const
-    BitOutputManager& BitsOut() {return *m_bit_out;}
+//    BitOutputManager& BitsOut() {return *m_bit_out;}
+    SequenceOutputManager& BitsOut() {return *m_bit_out;}
 
     // ... and Sets
     void SetQf(const float qfac){m_qf=qfac;}
@@ -659,12 +670,14 @@ public:
     void SetLambda(const FrameSort& fsort, const float l);
     void SetL1MELambda(const float l){m_L1_me_lambda=l;}
     void SetL2MELambda(const float l){m_L2_me_lambda=l;}
+    void SetOutputPath(const char * op){strcpy(m_output_path, op);}
 
     //! Sets the entropy factors - TBD: set this up in a constructor and pass encoder params around entirely by reference
     void SetEntropyFactors(EntropyCorrector* entcorrect){m_ent_correct=entcorrect;}
 
     //! Sets the bit output - TBD: set this up in a constructor and pass encoder params around entirely by reference
-    void SetBitsOut(BitOutputManager* bo){m_bit_out=bo;}
+//    void SetBitsOut(BitOutputManager* bo){m_bit_out=bo;}
+    void SetBitsOut( SequenceOutputManager* so ){ m_bit_out=so; }
 
 private:
     //! Quality factor (between 0 and 10)
@@ -698,7 +711,11 @@ private:
     EntropyCorrector* m_ent_correct;
 
     //! Pointer to object for managing bitstream output
-    BitOutputManager* m_bit_out;
+//    BitOutputManager* m_bit_out;
+    SequenceOutputManager* m_bit_out;   
+ 
+    //! Output file path
+    char m_output_path[100];
 };
 
 //! Parameters for the decoding process

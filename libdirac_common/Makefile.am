@@ -18,3 +18,7 @@ library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)
 library_include_HEADERS = $(h_sources)
 
 DEFS = -I. -I$(srcdir)
+
+if OVERLAY
+DEFS += -DOVERLAY=1
+endif

@@ -148,7 +148,7 @@ int main(int argc, char* argv[]) {
 
 		if (verbose){
 			std::cerr<<"Time per frame: "<<diff/double(CLOCKS_PER_SEC*sparams.Zl());
-			std::cerr<<std::endl<<"Finished decoding";
+			std::cerr<<std::endl<<"Finished decoding\n";
 		}
 
 		return EXIT_SUCCESS;

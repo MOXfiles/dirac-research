@@ -123,8 +123,15 @@ private:
 	*/
 	void WriteStreamHeader();	
 
-		//! Uses the GOP parameters to convert frame numbers in coded order to display order.
-	int CodedToDisplay(int fnum);
+	//! Uses the GOP parameters to convert frame numbers in coded order to display order.
+    /*!
+         Uses the GOP parameters to convert frame numbers in coded order to display order
+        \param  fnum  the frame number in coded order
+    */
+	int CodedToDisplay(const int fnum);
+
+    //! Make a report on the coding results to screen
+    void MakeSequenceReport(); 
 
 	//! Completion flag, returned via the Finished method.
 	bool m_all_done;

@@ -37,7 +37,7 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-#include "libdirac_common/common.h"
+#include <libdirac_common/common.h>
 #include <algorithm>
 
 
@@ -156,6 +156,24 @@ OLBParams::OLBParams(const int xblen, int const yblen, int const xbsep, int cons
     m_yoffset( (yblen-ybsep)/2 )
 {}
 
+std::ostream & operator<< (std::ostream & stream, OLBParams & params)
+{
+    stream << params.Ybsep() << " " << params.Xbsep();
+
+    return stream;
+}
+
+std::istream & operator>> (std::istream & stream, OLBParams & params)
+{
+    int temp;
+    stream >> temp;
+    params.SetYbsep(temp);
+    stream >> temp;
+    params.SetXbsep(temp);
+
+    return stream;
+}
+
 // Codec params functions
 
 CodecParams::CodecParams():
@@ -169,6 +187,8 @@ CodecParams::CodecParams():
     m_lbparams(3),
     m_cbparams(3)
 {}
+
+
 
 void CodecParams::SetBlockSizes(const OLBParams& olbparams , ChromaFormat cformat)
 {
