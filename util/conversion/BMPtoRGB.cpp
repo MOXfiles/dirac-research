@@ -40,6 +40,7 @@ Utility for converting 24 bit bitmap (.bmp) files to raw RGB format.
 Raw RGB format is simply a sequence of byte triples representing the
 red, green and blue components of each pixel.
 
+Original author: Tim Borer
 /*****************************************************************/
 
 #include <stdlib.h> //Contains EXIT_SUCCESS, EXIT_FAILURE
@@ -68,9 +69,9 @@ using namespace dirac_vu;
 //Define a function to construct a file name from
 //a prefix, frame number and file extension.
 string makeFileName(const string& prefix,
-					const string& postfix,
+                    const string& postfix,
                     int noDigits,
-					int frameNumber) {
+                    int frameNumber) {
     ostringstream out;
     out << prefix;
     out << setfill('0') << setw(noDigits) << frameNumber;
@@ -97,25 +98,25 @@ int main(int argc, char * argv[] ) {
     int firstFrame = atoi(argv[4]);
     int frames = atoi(argv[5]);
 
-	//Set standard input and standard output to binary mode.
-	//Only relevant for Windows (*nix is always binary)
+    //Set standard input and standard output to binary mode.
+    //Only relevant for Windows (*nix is always binary)
     if ( setstdoutmode(std::ios_base::binary) == -1 ) {
         cerr << "Error: could not set standard output to binary mode" << endl;
         return EXIT_FAILURE; }
 
-	for (int frame = firstFrame; frame<(firstFrame+frames); ++frame) {
+    for (int frame = firstFrame; frame<(firstFrame+frames); ++frame) {
 
         ifstream input;
-	    string fileName;
+        string fileName;
 
         //Open input file in binary mode.
-		fileName = makeFileName(prefix, postfix, noDigits, frame);
-		input.open(fileName.c_str(), ios_base::in|ios_base::binary);
-		if (!input) {
-			cerr << "Error: failed to open input file " << fileName << endl;
-			return 0; }
-		else
-			clog << "Processing frame " << fileName << "\r";
+        fileName = makeFileName(prefix, postfix, noDigits, frame);
+        input.open(fileName.c_str(), ios_base::in|ios_base::binary);
+        if (!input) {
+            cerr << "Error: failed to open input file " << fileName << endl;
+            return 0; }
+        else
+            clog << "Processing frame " << fileName << "\r";
 
         //Read bitmap header
         BitmapHeader header;
@@ -129,7 +130,7 @@ int main(int argc, char * argv[] ) {
         const int height = header.height();
         const int inBufferSize = header.lineBufferSize();
         unsigned char *lineBuffer = new unsigned char[inBufferSize];
-		unsigned char *RGBArray = new unsigned char[3*height*width];
+        unsigned char *RGBArray = new unsigned char[3*height*width];
 
         //Start reading at bottom (bitmaps are stored upside down!)
         std::streambuf& inbuf = *(input.rdbuf());
@@ -140,7 +141,7 @@ int main(int argc, char * argv[] ) {
             int bufferOffset = 0;
             int RGBOffset = 3*line*width;
             unsigned char R, G, B;
-		    for (register int pixel=0; pixel<width; ++pixel) {
+            for (register int pixel=0; pixel<width; ++pixel) {
                 
                 //Read RGB values
                 B = lineBuffer[bufferOffset++];
@@ -152,7 +153,7 @@ int main(int argc, char * argv[] ) {
                 RGBArray[RGBOffset++] = G;
                 RGBArray[RGBOffset++] = B;
 
-		    } //end pixel loop
+            } //end pixel loop
         } //end line loop
 
         input.close(); //End reading input frame
@@ -170,6 +171,6 @@ int main(int argc, char * argv[] ) {
 
     } //end frame loop
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 

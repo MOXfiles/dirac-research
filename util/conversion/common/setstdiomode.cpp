@@ -19,6 +19,7 @@
 * All Rights Reserved.
 *
 * Contributor(s):
+* Tim Borer (Original author)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -44,29 +45,29 @@ namespace dirac_vu { //dirac video utilities namespace
 #include <fcntl.h>  //Contains definition of _O_BINARY
 
 int setstdinmode(std::ios_base::openmode mode) {
-	int winMode;
-	if ((mode&std::ios_base::binary)==std::ios_base::binary) winMode=_O_BINARY;
-	else winMode=_O_TEXT;
+    int winMode;
+    if ((mode&std::ios_base::binary)==std::ios_base::binary) winMode=_O_BINARY;
+    else winMode=_O_TEXT;
     //Set standard input and standard output to binary mode.
-	return _setmode(_fileno( stdin ), winMode );
+    return _setmode(_fileno( stdin ), winMode );
 }
 
 int setstdoutmode(std::ios_base::openmode mode) {
-	int winMode;
-	if ((mode&std::ios_base::binary)==std::ios_base::binary) winMode=_O_BINARY;
-	else winMode=_O_TEXT;
+    int winMode;
+    if ((mode&std::ios_base::binary)==std::ios_base::binary) winMode=_O_BINARY;
+    else winMode=_O_TEXT;
     //Set standard input and standard output to binary mode.
-	return _setmode(_fileno( stdout ), winMode );
+    return _setmode(_fileno( stdout ), winMode );
 }
 
 #else
 
 int setstdinmode(std::ios_base::openmode) {
-	return 0;
+    return 0;
 }
 
 int setstdoutmode(std::ios_base::openmode) {
-	return 0;
+    return 0;
 }
 
 #endif

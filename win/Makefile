@@ -5,7 +5,7 @@
 CPP = cl
 CPPFLAGS = /Ox /EHsc /I.. /nologo
 
-all : libraries encoder decoder
+all : libraries encoder decoder conversion
 
 libraries : DiracCommon.lib DiracMotionEst.lib DiracDecoder.lib DiracEncoder.lib 
 
@@ -13,13 +13,18 @@ encoder : DiracEncoder.exe
 
 decoder : DiracDecoder.exe
 
+conversion : BMPtoRGB.exe RGBtoBMP.exe RGBtoUYVY.exe RGBtoYUV411.exe \
+             RGBtoYUV420.exe RGBtoYUV422.exe RGBtoYUV444.exe UYVYtoRGB.exe \
+             YUV411toRGB.exe YUV420toRGB.exe YUV422toRGB.exe YUV444toRGB.exe
+
 clean :
 	-del *.obj
 	-del *.lib
 	-del *.exe
 
-DiracCommon.lib : band_codec.obj bit_manager.obj common.obj frame.obj golomb.obj gop.obj \
-		mot_comp.obj motion.obj mv_codec.obj pic_io.obj upconvert.obj wavelet_utils.obj cmd_line.obj
+DiracCommon.lib : band_codec.obj bit_manager.obj common.obj frame.obj \
+	golomb.obj frame_buffer.obj mot_comp.obj motion.obj mv_codec.obj \
+	pic_io.obj upconvert.obj wavelet_utils.obj cmd_line.obj
 	lib /out:$@ /nologo $**
 
 band_codec.obj : ..\libdirac_common\band_codec.cpp
@@ -37,7 +42,7 @@ frame.obj : ..\libdirac_common\frame.cpp
 golomb.obj : ..\libdirac_common\golomb.cpp
 	$(CPP) $(CPPFLAGS) /c $**
 
-gop.obj : ..\libdirac_common\gop.cpp
+frame_buffer.obj : ..\libdirac_common\frame_buffer.cpp
 	$(CPP) $(CPPFLAGS) /c $**
 
 mot_comp.obj : ..\libdirac_common\mot_comp.cpp
@@ -118,3 +123,84 @@ DiracEncoder.exe : encmain.obj DiracEncoder.lib DiracMotionEst.lib DiracCommon.l
 
 DiracDecoder.exe : decmain.obj DiracDecoder.lib DiracCommon.lib
 	link /out:DiracDecoder.exe /nologo $**
+
+
+bitmap.obj : ..\util\conversion\common\bitmap.cpp
+	$(CPP) $(CPPFLAGS) /c $**
+
+setstdiomode.obj : ..\util\conversion\common\setstdiomode.cpp
+	$(CPP) $(CPPFLAGS) /c $**
+
+
+BMPtoRGB.obj : ..\util\conversion\BMPtoRGB.cpp
+	$(CPP) $(CPPFLAGS) /I ..\util\conversion\common /c /c $**
+
+RGBtoBMP.obj : ..\util\conversion\RGBtoBMP.cpp
+	$(CPP) $(CPPFLAGS) /I ..\util\conversion\common /c /c $**
+
+RGBtoUYVY.obj : ..\util\conversion\RGBtoUYVY.cpp
+	$(CPP) $(CPPFLAGS) /I ..\util\conversion\common /c /c $**
+
+RGBtoYUV411.obj : ..\util\conversion\RGBtoYUV411.cpp
+	$(CPP) $(CPPFLAGS) /I ..\util\conversion\common /c /c $**
+
+RGBtoYUV420.obj : ..\util\conversion\RGBtoYUV420.cpp
+	$(CPP) $(CPPFLAGS) /I ..\util\conversion\common /c /c $**
+
+RGBtoYUV422.obj : ..\util\conversion\RGBtoYUV422.cpp
+	$(CPP) $(CPPFLAGS) /I ..\util\conversion\common /c /c $**
+
+RGBtoYUV444.obj : ..\util\conversion\RGBtoYUV444.cpp
+	$(CPP) $(CPPFLAGS) /I ..\util\conversion\common /c /c $**
+
+UYVYtoRGB.obj : ..\util\conversion\UYVYtoRGB.cpp
+	$(CPP) $(CPPFLAGS) /I ..\util\conversion\common /c /c $**
+
+YUV411toRGB.obj : ..\util\conversion\YUV411toRGB.cpp
+	$(CPP) $(CPPFLAGS) /I ..\util\conversion\common /c /c $**
+
+YUV420toRGB.obj : ..\util\conversion\YUV420toRGB.cpp
+	$(CPP) $(CPPFLAGS) /I ..\util\conversion\common /c /c $**
+
+YUV422toRGB.obj : ..\util\conversion\YUV422toRGB.cpp
+	$(CPP) $(CPPFLAGS) /I ..\util\conversion\common /c /c $**
+
+YUV444toRGB.obj : ..\util\conversion\YUV444toRGB.cpp
+	$(CPP) $(CPPFLAGS) /I ..\util\conversion\common /c /c $**
+
+
+BMPtoRGB.exe : BMPtoRGB.obj setstdiomode.obj bitmap.obj
+		link /out:BMPtoRGB.exe /nologo $**
+
+RGBtoBMP.exe : RGBtoBMP.obj setstdiomode.obj bitmap.obj
+		link /out:RGBtoBMP.exe /nologo $**
+
+RGBtoUYVY.exe : RGBtoUYVY.obj setstdiomode.obj bitmap.obj
+		link /out:RGBtoUYVY.exe /nologo $**
+
+RGBtoYUV411.exe : RGBtoYUV411.obj setstdiomode.obj bitmap.obj
+		link /out:RGBtoYUV411.exe /nologo $**
+
+RGBtoYUV420.exe : RGBtoYUV420.obj setstdiomode.obj bitmap.obj
+		link /out:RGBtoYUV420.exe /nologo $**
+
+RGBtoYUV422.exe : RGBtoYUV422.obj setstdiomode.obj bitmap.obj
+		link /out:RGBtoYUV422.exe /nologo $**
+
+RGBtoYUV444.exe : RGBtoYUV444.obj setstdiomode.obj bitmap.obj
+		link /out:RGBtoYUV444.exe /nologo $**
+
+UYVYtoRGB.exe : UYVYtoRGB.obj setstdiomode.obj bitmap.obj
+		link /out:UYVYtoRGB.exe /nologo $**
+
+YUV411toRGB.exe : YUV411toRGB.obj setstdiomode.obj bitmap.obj
+		link /out:YUV411toRGB.exe /nologo $**
+
+YUV420toRGB.exe : YUV420toRGB.obj setstdiomode.obj bitmap.obj
+		link /out:YUV420toRGB.exe /nologo $**
+
+YUV422toRGB.exe : YUV422toRGB.obj setstdiomode.obj bitmap.obj
+		link /out:YUV422toRGB.exe /nologo $**
+
+YUV444toRGB.exe : YUV444toRGB.obj setstdiomode.obj bitmap.obj
+		link /out:YUV444toRGB.exe /nologo $**

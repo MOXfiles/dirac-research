@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-06-08 16:03:15  timborer
+* Files updated so that code compiles under Windows
+* (previously broken under Windows).
+* Colour matrix coefficients corrected in video conversion utilities
+* Video conversion utilites now build with the rest of the code.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -182,7 +188,7 @@ protected:
 //public functions//
 ////////////////////
 inline void MvDataCodec::InitContexts(){
-	for (uint I=0; I<ContextList.size();++I)
+	for (unsigned int I=0; I<ContextList.size();++I)
 		ContextList[I].SetCounts(1,1);	
 }
 
@@ -327,9 +333,9 @@ inline unsigned int MvDataCodec::MBSplitPrediction(const TwoDArray<MBData>& mbda
 inline bool MvDataCodec::MBCBModePrediction(const TwoDArray<MBData>& mbdata) const {	
 	std::vector<unsigned int> nbrs;
 	if (mb_xp>0 && mb_yp>0){
-		nbrs.push_back(uint(mbdata[mb_yp-1][mb_xp].common_ref));
-		nbrs.push_back(uint(mbdata[mb_yp-1][mb_xp-1].common_ref));
-		nbrs.push_back(uint(mbdata[mb_yp][mb_xp-1].common_ref));
+		nbrs.push_back((unsigned int)(mbdata[mb_yp-1][mb_xp].common_ref));
+		nbrs.push_back((unsigned int)(mbdata[mb_yp-1][mb_xp-1].common_ref));
+		nbrs.push_back((unsigned int)(mbdata[mb_yp][mb_xp-1].common_ref));
 		return bool(GetMean(nbrs));	
 	}
 	else if (mb_xp>0 && mb_yp==0) return mbdata[mb_yp][mb_xp-1].common_ref;
@@ -340,14 +346,14 @@ inline bool MvDataCodec::MBCBModePrediction(const TwoDArray<MBData>& mbdata) con
 inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray<PredMode>& preddata) const {
 	std::vector<unsigned int> nbrs;
 	if (b_xp>0 && b_yp>0){
-		nbrs.push_back(uint(preddata[b_yp-1][b_xp]));
-		nbrs.push_back(uint(preddata[b_yp-1][b_xp-1]));
-		nbrs.push_back(uint(preddata[b_yp][b_xp-1]));
+		nbrs.push_back((unsigned int)(preddata[b_yp-1][b_xp]));
+		nbrs.push_back((unsigned int)(preddata[b_yp-1][b_xp-1]));
+		nbrs.push_back((unsigned int)(preddata[b_yp][b_xp-1]));
 		return GetMean(nbrs);	
 	}
 	else if (b_xp>0 && b_yp==0) return preddata[b_yp][b_xp-1];
 	else if (b_xp==0 && b_yp>0) return preddata[b_yp-1][b_xp];
-	else return uint(REF1_ONLY);
+	else return (unsigned int)(REF1_ONLY);
 }
 
 inline MVector MvDataCodec::Mv1Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const {

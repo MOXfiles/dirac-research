@@ -48,6 +48,7 @@ as a sequence of bytes, followed by the U component followed by the V
 component. That is the colour component are multiplexed framewise,
 rather than pixel wise or in some other way.
 
+Original author: Tim Borer
 /*****************************************************************/
 
 #include <stdlib.h> //Contains EXIT_SUCCESS, EXIT_FAILURE
@@ -68,7 +69,7 @@ int main(int argc, char * argv[] ) {
         cout << "\"RGBtoYUV444\" command line format is:" << endl;
         cout << "    Argument 1: width (pixels) e.g. 720" << endl;
         cout << "    Argument 2: height (lines) e.g. 576" << endl;
-        cout << "    Argument 333333333333333333333333333333333: number of frames e.g. 3" << endl;
+        cout << "    Argument 3: number of frames e.g. 3" << endl;
         cout << "    Example: RGBtoYUV444 720 576 3" << endl;
         cout << "        converts 3 frames, of 720x576 pixels on stdin to stdout" << endl;
         return EXIT_SUCCESS; }
@@ -78,8 +79,8 @@ int main(int argc, char * argv[] ) {
     int height = atoi(argv[2]);
     int frames = atoi(argv[3]);
 
-	//Set standard input and standard output to binary mode.
-	//Only relevant for Windows (*nix is always binary)
+    //Set standard input and standard output to binary mode.
+    //Only relevant for Windows (*nix is always binary)
     if ( setstdinmode(std::ios_base::binary) == -1 ) {
         cerr << "Error: could not set standard input to binary mode" << endl;
         return EXIT_FAILURE; }
@@ -87,69 +88,69 @@ int main(int argc, char * argv[] ) {
         cerr << "Error: could not set standard output to binary mode" << endl;
         return EXIT_FAILURE; }
 
-	//Allocate memory for input and output line buffers.
-	//Conversion takes place a line at a time
+    //Allocate memory for input and output line buffers.
+    //Conversion takes place a line at a time
     const int inBufferSize = 3*height*width;
-	unsigned char *RGBBuffer = new unsigned char[inBufferSize];
+    unsigned char *RGBBuffer = new unsigned char[inBufferSize];
     const int outBufferSize = height*width;
     unsigned char *YBuffer = new unsigned char[outBufferSize];
     unsigned char *UBuffer = new unsigned char[outBufferSize];
     unsigned char *VBuffer = new unsigned char[outBufferSize];
-	int R, G, B;
-	int Y, U, V;
+    int R, G, B;
+    int Y, U, V;
 
-	//Create references for input and output stream buffers.
-	//IO is via stream buffers for efficiency
+    //Create references for input and output stream buffers.
+    //IO is via stream buffers for efficiency
     std::streambuf& inbuf = *(cin.rdbuf());
     std::streambuf& outbuf = *(cout.rdbuf());
 
-	for (int frame=0; frame<frames; ++frame) {
+    for (int frame=0; frame<frames; ++frame) {
 
-		clog << "Processing frame " << frame << "\r";
-			
-		//Read frames of RGB
-		if ( inbuf.sgetn(reinterpret_cast<char*>(RGBBuffer), inBufferSize) < inBufferSize ) {
-			cerr << "Error: failed to read frame " << (frame+1) << endl;
-			return EXIT_FAILURE; }
+        clog << "Processing frame " << frame << "\r";
+            
+        //Read frames of RGB
+        if ( inbuf.sgetn(reinterpret_cast<char*>(RGBBuffer), inBufferSize) < inBufferSize ) {
+            cerr << "Error: failed to read frame " << (frame+1) << endl;
+            return EXIT_FAILURE; }
 
-		for (int line=0; line<height; ++line) {
-			int RGBBufferIndex = 3*width*line;
-			int YUVBufferIndex = width*line;
-			for (int pixel=0; pixel<width; ++pixel) {
+        for (int line=0; line<height; ++line) {
+            int RGBBufferIndex = 3*width*line;
+            int YUVBufferIndex = width*line;
+            for (int pixel=0; pixel<width; ++pixel) {
 
-				R = RGBBuffer[RGBBufferIndex++];
-				G = RGBBuffer[RGBBufferIndex++];
-				B = RGBBuffer[RGBBufferIndex++];
+                R = RGBBuffer[RGBBufferIndex++];
+                G = RGBBuffer[RGBBufferIndex++];
+                B = RGBBuffer[RGBBufferIndex++];
 
                 //Convert RGB to YUV
-				Y = (( 72*R + 141*G +  27*B + 128)>>8)+ 16;
-				U = ((-42*R -  81*G + 123*B + 128)>>8)+128;
-				V = ((123*R - 103*G -  20*B + 128)>>8)+128;
+                Y = (( 66*R + 129*G +  25*B + 128)>>8)+ 16;
+                U = ((-38*R -  74*G + 112*B + 128)>>8)+128;
+                V = ((112*R -  94*G -  18*B + 128)>>8)+128;
 
                 //Clip YUV values
                 YBuffer[YUVBufferIndex] = static_cast<unsigned char>( (Y<0) ? 0 : ((Y>255) ? 255 : Y) );
                 UBuffer[YUVBufferIndex] = static_cast<unsigned char>( (U<0) ? 0 : ((U>255) ? 255 : U) );
                 VBuffer[YUVBufferIndex++] = static_cast<unsigned char>( (V<0) ? 0 : ((V>255) ? 255 : V) );
-			}
-		}
+            }
+        }
 
-		//Write frames of Y then U then V components
-		if ( outbuf.sputn(reinterpret_cast<char*>(YBuffer), outBufferSize) < outBufferSize ) {
-			cerr << "Error: failed to write Y component of frame " << frame << endl;
-			return EXIT_FAILURE; }
-		if ( outbuf.sputn(reinterpret_cast<char*>(UBuffer), outBufferSize) < outBufferSize ) {
-			cerr << "Error: failed to write U component of frame " << frame << endl;
-			return EXIT_FAILURE; }
-		if ( outbuf.sputn(reinterpret_cast<char*>(VBuffer), outBufferSize) < outBufferSize ) {
-			cerr << "Error: failed to write V component of frame " << frame << endl;
-			return EXIT_FAILURE; }
-	}
+        //Write frames of Y then U then V components
+        if ( outbuf.sputn(reinterpret_cast<char*>(YBuffer), outBufferSize) < outBufferSize ) {
+            cerr << "Error: failed to write Y component of frame " << frame << endl;
+            return EXIT_FAILURE; }
+        if ( outbuf.sputn(reinterpret_cast<char*>(UBuffer), outBufferSize) < outBufferSize ) {
+            cerr << "Error: failed to write U component of frame " << frame << endl;
+            return EXIT_FAILURE; }
+        if ( outbuf.sputn(reinterpret_cast<char*>(VBuffer), outBufferSize) < outBufferSize ) {
+            cerr << "Error: failed to write V component of frame " << frame << endl;
+            return EXIT_FAILURE; }
+    }
 
-	delete [] VBuffer;
-	delete [] UBuffer;
-	delete [] YBuffer;
-	delete [] RGBBuffer;
+    delete [] VBuffer;
+    delete [] UBuffer;
+    delete [] YBuffer;
+    delete [] RGBBuffer;
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 

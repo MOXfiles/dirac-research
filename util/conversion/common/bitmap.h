@@ -80,6 +80,7 @@ BGRTriple:           3 bytes
     green:           1 byte
     red:             1 byte
 
+Original author: Tim Borer
 /**********************************************************************/
 
 #ifndef dirac_utilities_bitmap
@@ -89,9 +90,9 @@ BGRTriple:           3 bytes
 
 namespace dirac_vu { //dirac video utilities namespace
 
-	class BitmapHeader {
+    class BitmapHeader {
     public:
-		BitmapHeader() {}                   //used for reading bitmaps
+        BitmapHeader() {}                   //used for reading bitmaps
         BitmapHeader(int x, int y): w(x), h(y) {}
         int width() const {
             return w; }
@@ -105,7 +106,7 @@ namespace dirac_vu { //dirac video utilities namespace
         int lineBufferSize() const {
             return 4*((3*w + 3)/4); }
         friend std::ostream& operator<<(std::ostream& stream,
-								        const BitmapHeader& header) {
+                                        const BitmapHeader& header) {
             return header.putTo(stream); }
         friend std::istream& operator>>(std::istream& stream,
                                         BitmapHeader& header) {

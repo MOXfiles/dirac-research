@@ -49,6 +49,7 @@ format the U and V colour components are subsampled 2:1 horizontally.
 The output raw RGB format is simply a sequence of byte triples representing the
 red, green and blue components of each pixel.
 
+Original author: Tim Borer
 /*****************************************************************/
 
 #include <stdlib.h> //Contains EXIT_SUCCESS, EXIT_FAILURE
@@ -81,8 +82,8 @@ int main(int argc, char * argv[] ) {
     int height = atoi(argv[2]);
     int frames = atoi(argv[3]);
 
-	//Set standard input and standard output to binary mode.
-	//Only relevant for Windows (*nix is always binary)
+    //Set standard input and standard output to binary mode.
+    //Only relevant for Windows (*nix is always binary)
     if ( setstdinmode(std::ios_base::binary) == -1 ) {
         cerr << "Error: could not set standard input to binary mode" << endl;
         return EXIT_FAILURE; }
@@ -90,82 +91,82 @@ int main(int argc, char * argv[] ) {
         cerr << "Error: could not set standard output to binary mode" << endl;
         return EXIT_FAILURE; }
 
-	//Allocate memory for input and output buffers.
+    //Allocate memory for input and output buffers.
     const int RGBBufferSize = 3*height*width;
-	unsigned char *RGBBuffer = new unsigned char[RGBBufferSize];
+    unsigned char *RGBBuffer = new unsigned char[RGBBufferSize];
     const int YUVBufferSize = height*width*2;
     unsigned char *YUVBuffer = new unsigned char[YUVBufferSize];
 
-	//Define some working variables and arrays
+    //Define some working variables and arrays
     //Define buffers for filtering (width+2 to allow filtering edges)
     unsigned char *YLine = new unsigned char[width];
     unsigned char *ULine = (new unsigned char[width+2])+1;
     unsigned char *VLine = (new unsigned char[width+2])+1;
-	fill_n(&ULine[-1], width+2, 128);
-	fill_n(&VLine[-1], width+2, 128);
-	int R, G, B;
-	int Y, U, V;
+    fill_n(&ULine[-1], width+2, 128);
+    fill_n(&VLine[-1], width+2, 128);
+    int R, G, B;
+    int Y, U, V;
 
-	//Create references for input and output stream buffers.
-	//IO is via stream buffers for efficiency
+    //Create references for input and output stream buffers.
+    //IO is via stream buffers for efficiency
     std::streambuf& inbuf = *(cin.rdbuf());
     std::streambuf& outbuf = *(cout.rdbuf());
 
-	for (int frame=0; frame<frames; ++frame) {
+    for (int frame=0; frame<frames; ++frame) {
 
-		clog << "Processing frame " << (frame+1) << "\r";
+        clog << "Processing frame " << (frame+1) << "\r";
 
-		//Read frames of YUV
-		if ( inbuf.sgetn(reinterpret_cast<char*>(YUVBuffer), YUVBufferSize) < YUVBufferSize ) {
-			cerr << "Error: failed to read frame " << frame << endl;
-			return EXIT_FAILURE; }
+        //Read frames of YUV
+        if ( inbuf.sgetn(reinterpret_cast<char*>(YUVBuffer), YUVBufferSize) < YUVBufferSize ) {
+            cerr << "Error: failed to read frame " << frame << endl;
+            return EXIT_FAILURE; }
 
-		for (int line=0; line<height; ++line) {
+        for (int line=0; line<height; ++line) {
 
-			//Unpack YUV into separate line buffers
-			int YUVIndex = width*line*2;
-			for (int pixel=0; pixel<width; pixel+=2) {
-				ULine[pixel] = YUVBuffer[YUVIndex++];
-				YLine[pixel] = YUVBuffer[YUVIndex++];
-				VLine[pixel] = YUVBuffer[YUVIndex++];
-				YLine[pixel+1] = YUVBuffer[YUVIndex++];
-			}
+            //Unpack YUV into separate line buffers
+            int YUVIndex = width*line*2;
+            for (int pixel=0; pixel<width; pixel+=2) {
+                ULine[pixel] = YUVBuffer[YUVIndex++];
+                YLine[pixel] = YUVBuffer[YUVIndex++];
+                VLine[pixel] = YUVBuffer[YUVIndex++];
+                YLine[pixel+1] = YUVBuffer[YUVIndex++];
+            }
 
-			int RGBBufferIndex = 3*width*line;
-			for (int pixel=0; pixel<width; ++pixel) {
+            int RGBBufferIndex = 3*width*line;
+            for (int pixel=0; pixel<width; ++pixel) {
 
-				//Filter UV
-				Y = YLine[pixel]-16;
-				U = ((ULine[pixel-1]+2*ULine[pixel]+ULine[pixel+1]+1)>>1)-256;
-				V = ((VLine[pixel-1]+2*VLine[pixel]+VLine[pixel+1]+1)>>1)-256;
+                //Filter UV
+                Y = YLine[pixel]-16;
+                U = ((ULine[pixel-1]+2*ULine[pixel]+ULine[pixel+1]+1)>>1)-256;
+                V = ((VLine[pixel-1]+2*VLine[pixel]+VLine[pixel+1]+1)>>1)-256;
 
-				//Matrix YUV to RGB
-				R = ((256*Y         + 371*V + 128)>>8);
-				G = ((256*Y -  91*U - 191*V + 128)>>8);
-				B = ((256*Y + 473*U         + 128)>>8);
+                //Matrix YUV to RGB
+                R = ((298*Y         + 409*V + 128)>>8);
+                G = ((298*Y - 100*U - 208*V + 128)>>8);
+                B = ((298*Y + 516*U         + 128)>>8);
 
-				//Clip RGB Values
-				RGBBuffer[RGBBufferIndex++] =
-					static_cast<unsigned char>( (R<0) ? 0 : ((R>255) ? 255 : R) );
-				RGBBuffer[RGBBufferIndex++] =
-					static_cast<unsigned char>( (G<0) ? 0 : ((G>255) ? 255 : G) );
-				RGBBuffer[RGBBufferIndex++] =
-					static_cast<unsigned char>( (B<0) ? 0 : ((B>255) ? 255 : B) );
-			}
-		}
-			
-		//Write frames of RGB
-		if ( outbuf.sputn(reinterpret_cast<char*>(RGBBuffer), RGBBufferSize) < RGBBufferSize ) {
-			cerr << "Error: failed to write frame " << frame << endl;
-			return EXIT_FAILURE; }
-	}
+                //Clip RGB Values
+                RGBBuffer[RGBBufferIndex++] =
+                    static_cast<unsigned char>( (R<0) ? 0 : ((R>255) ? 255 : R) );
+                RGBBuffer[RGBBufferIndex++] =
+                    static_cast<unsigned char>( (G<0) ? 0 : ((G>255) ? 255 : G) );
+                RGBBuffer[RGBBufferIndex++] =
+                    static_cast<unsigned char>( (B<0) ? 0 : ((B>255) ? 255 : B) );
+            }
+        }
+            
+        //Write frames of RGB
+        if ( outbuf.sputn(reinterpret_cast<char*>(RGBBuffer), RGBBufferSize) < RGBBufferSize ) {
+            cerr << "Error: failed to write frame " << frame << endl;
+            return EXIT_FAILURE; }
+    }
 
-	delete [] (&VLine[-1]);
-	delete [] (&ULine[-1]);
-	delete [] YLine;
-	delete [] YUVBuffer;
-	delete [] RGBBuffer;
+    delete [] (&VLine[-1]);
+    delete [] (&ULine[-1]);
+    delete [] YLine;
+    delete [] YUVBuffer;
+    delete [] RGBBuffer;
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 

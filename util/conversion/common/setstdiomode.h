@@ -54,6 +54,7 @@ then the stdio and cin/out streams are set to binary mode (on Windows OS).
 Return value: as _setmode function for Windows (-1 indicates error)
               0 for *nix (always succeeds)
 
+Original author: Tim Borer
 /*****************************************************************/
 
 #ifndef dirac_utilities_setstdiomode
@@ -63,8 +64,8 @@ Return value: as _setmode function for Windows (-1 indicates error)
 
 namespace dirac_vu { //dirac video utilities namespace
 
-	int setstdinmode(std::ios_base::openmode);
-	int setstdoutmode(std::ios_base::openmode);
+    int setstdinmode(std::ios_base::openmode);
+    int setstdoutmode(std::ios_base::openmode);
 
 }  // end namespace dirac_vu
 

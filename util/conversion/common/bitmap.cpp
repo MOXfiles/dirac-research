@@ -19,6 +19,7 @@
 * All Rights Reserved.
 *
 * Contributor(s):
+* Tim Borer (Original Author)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -89,10 +90,10 @@ namespace dirac_vu { //dirac video utilities namespace
 
     std::ostream& BitmapHeader::putTo(std::ostream& output) const {
         //Define variables for bitmap parameters
-		const char signature[2] = { 'B', 'M' };
+        const char signature[2] = { 'B', 'M' };
         const int dataOffset = 54;
         const int fileSize = dataOffset + height()*lineBufferSize();
-		const int reserved = 0;
+        const int reserved = 0;
         const int size = 40;
         const int planes = 1;
         const int bitCount = 24;
@@ -104,9 +105,9 @@ namespace dirac_vu { //dirac video utilities namespace
         //Define buffer to read bytes into.
         const int bufferSize = 54;
         char buffer[bufferSize];
-		//Write header parameters into buffer
-		*buffer = signature[0];
-		*(buffer+1) = signature[1];
+        //Write header parameters into buffer
+        *buffer = signature[0];
+        *(buffer+1) = signature[1];
         write4bytes(buffer+2, fileSize);
         write4bytes(buffer+6, reserved);
         write4bytes(buffer+10, dataOffset);

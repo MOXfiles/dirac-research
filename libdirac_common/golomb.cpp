@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-06-08 16:03:15  timborer
+* Files updated so that code compiles under Windows
+* (previously broken under Windows).
+* Colour matrix coefficients corrected in video conversion utilities
+* Video conversion utilites now build with the rest of the code.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -80,7 +86,7 @@ void UnsignedGolombCode(BasicOutputManager& bitman, const unsigned int val){
 		val2>>=1;
 		M++;		
 	}
-	info=abs(val)-(1<<M)+1;
+	info=val-(1<<M)+1;
 
 	//add length M+1 prefix
 	for (unsigned int I=1;I<=M;++I){
@@ -94,7 +100,7 @@ void UnsignedGolombCode(BasicOutputManager& bitman, const unsigned int val){
 
 }
 void UnsignedGolombCode(std::vector<bool>& bitvec, const unsigned int val){
-	unsigned int M;
+	unsigned int M=0;
 	unsigned int info;
 	unsigned int val2=val;
 
@@ -104,7 +110,7 @@ void UnsignedGolombCode(std::vector<bool>& bitvec, const unsigned int val){
 		val2>>=1;
 		M++;		
 	}
-	info=abs(val)-(1<<M)+1;
+	info=val-(1<<M)+1;
 
 	//add length M+1 prefix
 	for (unsigned int I=1;I<=M;++I){

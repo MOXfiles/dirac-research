@@ -49,6 +49,7 @@ component. That is the colour component are multiplexed framewise,
 rather than pixel wise or in some other way. In YUV422 format the
 U and V colour components are subsampled 2:1 horizontally.
 
+Original author: Tim Borer
 /*****************************************************************/
 
 #include <stdlib.h> //Contains EXIT_SUCCESS, EXIT_FAILURE
@@ -79,8 +80,8 @@ int main(int argc, char * argv[] ) {
     int height = atoi(argv[2]);
     int frames = atoi(argv[3]);
 
-	//Set standard input and standard output to binary mode.
-	//Only relevant for Windows (*nix is always binary)
+    //Set standard input and standard output to binary mode.
+    //Only relevant for Windows (*nix is always binary)
     if ( setstdinmode(std::ios_base::binary) == -1 ) {
         cerr << "Error: could not set standard input to binary mode" << endl;
         return EXIT_FAILURE; }
@@ -88,91 +89,91 @@ int main(int argc, char * argv[] ) {
         cerr << "Error: could not set standard output to binary mode" << endl;
         return EXIT_FAILURE; }
 
-	//Allocate memory for input and output buffers.
+    //Allocate memory for input and output buffers.
     const int inBufferSize = 3*height*width;
-	unsigned char *RGBBuffer = new unsigned char[inBufferSize];
+    unsigned char *RGBBuffer = new unsigned char[inBufferSize];
     const int YBufferSize = height*width;
     const int UVBufferSize = height*width/2;
     unsigned char *YBuffer = new unsigned char[YBufferSize];
     unsigned char *UBuffer = new unsigned char[UVBufferSize];
     unsigned char *VBuffer = new unsigned char[UVBufferSize];
 
-	//Define some working variables and arrays
+    //Define some working variables and arrays
     //Define buffers for filtering (width+2 to allow filtering edges)
     unsigned char *ULine = (new unsigned char[width+2])+1;
     unsigned char *VLine = (new unsigned char[width+2])+1;
     ULine[-1]=ULine[width]=128;
     VLine[-1]=VLine[width]=128;
-	int R, G, B;
-	int Y, U, V;
+    int R, G, B;
+    int Y, U, V;
 
-	//Create references for input and output stream buffers.
-	//IO is via stream buffers for efficiency
+    //Create references for input and output stream buffers.
+    //IO is via stream buffers for efficiency
     std::streambuf& inbuf = *(cin.rdbuf());
     std::streambuf& outbuf = *(cout.rdbuf());
 
-	for (int frame=0; frame<frames; ++frame) {
+    for (int frame=0; frame<frames; ++frame) {
 
-		clog << "Processing frame " << (frame+1) << "\r";
-			
-		//Read frames of RGB
-		if ( inbuf.sgetn(reinterpret_cast<char*>(RGBBuffer), inBufferSize) < inBufferSize ) {
-			cerr << "Error: failed to read frame " << frame << endl;
-			return EXIT_FAILURE; }
+        clog << "Processing frame " << (frame+1) << "\r";
+            
+        //Read frames of RGB
+        if ( inbuf.sgetn(reinterpret_cast<char*>(RGBBuffer), inBufferSize) < inBufferSize ) {
+            cerr << "Error: failed to read frame " << frame << endl;
+            return EXIT_FAILURE; }
 
-		for (int line=0; line<height; ++line) {
-			int RGBIndex = 3*width*line;
-			int YIndex = width*line;
-			int UVIndex = width*line/2;
+        for (int line=0; line<height; ++line) {
+            int RGBIndex = 3*width*line;
+            int YIndex = width*line;
+            int UVIndex = width*line/2;
 
-			for (int pixel=0; pixel<width; ++pixel) {
+            for (int pixel=0; pixel<width; ++pixel) {
 
-				R = RGBBuffer[RGBIndex++];
-				G = RGBBuffer[RGBIndex++];
-				B = RGBBuffer[RGBIndex++];
+                R = RGBBuffer[RGBIndex++];
+                G = RGBBuffer[RGBIndex++];
+                B = RGBBuffer[RGBIndex++];
 
                 //Convert RGB to YUV
-				Y = (( 72*R + 141*G +  27*B + 128)>>8)+ 16;
-				U = ((-42*R -  81*G + 123*B + 128)>>8)+128;
-				V = ((123*R - 103*G -  20*B + 128)>>8)+128;
+                Y = (( 66*R + 129*G +  25*B + 128)>>8)+ 16;
+                U = ((-38*R -  74*G + 112*B + 128)>>8)+128;
+                V = ((112*R -  94*G -  18*B + 128)>>8)+128;
 
                 //Clip Y ready for output & copy UV ready for filtering
                 YBuffer[YIndex++] = static_cast<unsigned char>( (Y<0) ? 0 : ((Y>255) ? 255 : Y) );
                 ULine[pixel] = U;
                 VLine[pixel] = V;
-			}
+            }
 
-			for (int pixel=0; pixel<width; pixel+=2) {
+            for (int pixel=0; pixel<width; pixel+=2) {
 
-				//Filter line
-				U = ((ULine[pixel-1]+2*ULine[pixel]+ULine[pixel+1]+2)>>2);
-				V = ((VLine[pixel-1]+2*VLine[pixel]+VLine[pixel+1]+2)>>2);
+                //Filter line
+                U = ((ULine[pixel-1]+2*ULine[pixel]+ULine[pixel+1]+2)>>2);
+                V = ((VLine[pixel-1]+2*VLine[pixel]+VLine[pixel+1]+2)>>2);
 
-				//Clip and copy UV to output buffer
-				UBuffer[UVIndex] = static_cast<unsigned char>( (U<0) ? 0 : ((U>255) ? 255 : U) );
-				VBuffer[UVIndex++] = static_cast<unsigned char>( (V<0) ? 0 : ((V>255) ? 255 : V) );
-			}
-		}
+                //Clip and copy UV to output buffer
+                UBuffer[UVIndex] = static_cast<unsigned char>( (U<0) ? 0 : ((U>255) ? 255 : U) );
+                VBuffer[UVIndex++] = static_cast<unsigned char>( (V<0) ? 0 : ((V>255) ? 255 : V) );
+            }
+        }
 
-		//Write frames of Y then U then V components
-		if ( outbuf.sputn(reinterpret_cast<char*>(YBuffer), YBufferSize) < YBufferSize ) {
-			cerr << "Error: failed to write Y component of frame " << frame << endl;
-			return EXIT_FAILURE; }
-		if ( outbuf.sputn(reinterpret_cast<char*>(UBuffer), UVBufferSize) < UVBufferSize ) {
-			cerr << "Error: failed to write U component of frame " << frame << endl;
-			return EXIT_FAILURE; }
-		if ( outbuf.sputn(reinterpret_cast<char*>(VBuffer), UVBufferSize) < UVBufferSize ) {
-			cerr << "Error: failed to write V component of frame " << frame << endl;
-			return EXIT_FAILURE; }
-	}
+        //Write frames of Y then U then V components
+        if ( outbuf.sputn(reinterpret_cast<char*>(YBuffer), YBufferSize) < YBufferSize ) {
+            cerr << "Error: failed to write Y component of frame " << frame << endl;
+            return EXIT_FAILURE; }
+        if ( outbuf.sputn(reinterpret_cast<char*>(UBuffer), UVBufferSize) < UVBufferSize ) {
+            cerr << "Error: failed to write U component of frame " << frame << endl;
+            return EXIT_FAILURE; }
+        if ( outbuf.sputn(reinterpret_cast<char*>(VBuffer), UVBufferSize) < UVBufferSize ) {
+            cerr << "Error: failed to write V component of frame " << frame << endl;
+            return EXIT_FAILURE; }
+    }
 
-	delete [] (&VLine[-1]);
-	delete [] (&ULine[-1]);
-	delete [] VBuffer;
-	delete [] UBuffer;
-	delete [] YBuffer;
-	delete [] RGBBuffer;
+    delete [] (&VLine[-1]);
+    delete [] (&ULine[-1]);
+    delete [] VBuffer;
+    delete [] UBuffer;
+    delete [] YBuffer;
+    delete [] RGBBuffer;
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 

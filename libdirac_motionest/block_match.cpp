@@ -38,7 +38,13 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-06-08 16:03:16  timborer
+* Files updated so that code compiles under Windows
+* (previously broken under Windows).
+* Colour matrix coefficients corrected in video conversion utilities
+* Video conversion utilites now build with the rest of the code.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -99,7 +105,7 @@ MvCostData FindBestMatch(BMParams& matchparams){
    	//first test the first in each of the lists to choose which lists to pursue
 	dparams.cost.total=100000000.0f;//initialise so that we choose a valid vector to start with!
 	dparams.best_mv=vect_list[0][0];
-	for (uint L=0;L<vect_list.size();++L){
+	for (unsigned int L=0;L<vect_list.size();++L){
 		temp_mv=vect_list[L][0];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 		if (matchparams.up_conv){
@@ -139,9 +145,9 @@ MvCostData FindBestMatch(BMParams& matchparams){
    	//Ok, now we know which lists to pursue. Just go through all of them
 	int lnum;
 
-	for (uint N=0;N<list_nums.size();++N){
+	for (unsigned int N=0;N<list_nums.size();++N){
 		lnum=list_nums[N];
-		for (uint I=1;I<vect_list[lnum].size();++I){//start at 1 since did 0 above
+		for (unsigned int I=1;I<vect_list[lnum].size();++I){//start at 1 since did 0 above
 			temp_mv=vect_list[lnum][I];
 			dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 			if (matchparams.up_conv){
@@ -207,7 +213,7 @@ void FindBestMatchSubp(BMParams& matchparams,const MVector& pel_mv,MvCostData& b
 	AddNewVlist(vect_list,dparams.best_mv,1,1,4);	//creates a list of all 1/2-pel vectors neighbouring
   													//pel_mv but not pel_mv itself. Will search this.	
  	//Next, go through list 1, which is 1/2-pel offsets
-	for (uint I=0;I<vect_list[list_idx].size();++I){
+	for (unsigned int I=0;I<vect_list[list_idx].size();++I){
 		temp_mv=vect_list[list_idx][I];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 		if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
@@ -223,7 +229,7 @@ void FindBestMatchSubp(BMParams& matchparams,const MVector& pel_mv,MvCostData& b
  	//next, the 1/4-pel offsets
 	AddNewVlist(vect_list,dparams.best_mv,1,1,2);
 	list_idx++;
-	for (uint I=0;I<vect_list[list_idx].size();++I){
+	for (unsigned int I=0;I<vect_list[list_idx].size();++I){
 		temp_mv=vect_list[list_idx][I];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 		if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
@@ -240,7 +246,7 @@ void FindBestMatchSubp(BMParams& matchparams,const MVector& pel_mv,MvCostData& b
 	AddNewVlist(vect_list,dparams.best_mv,1,1,1);
 
 	list_idx++;
-	for (uint I=0;I<vect_list[list_idx].size();++I){
+	for (unsigned int I=0;I<vect_list[list_idx].size();++I){
 		temp_mv=vect_list[list_idx][I];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 		if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
@@ -257,7 +263,7 @@ void FindBestMatchSubp(BMParams& matchparams,const MVector& pel_mv,MvCostData& b
 	AddNewVlist(vect_list,matchparams.mv_pred,1,1,1);
 	if (vect_list.size()>4){//we might not have successfully added anything
 		list_idx++;
-		for (uint I=0;I<vect_list[list_idx].size();++I){
+		for (unsigned int I=0;I<vect_list[list_idx].size();++I){
 			temp_mv=vect_list[list_idx][I];
 			dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
 			if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
@@ -289,7 +295,7 @@ ValueType GetVar(const MVector& predmv,const MVector& mv){
 ValueType GetVar(const std::vector<MVector>& pred_list,const MVector& mv){
 	ValueType sum=0;
 	MVector diff;
-	for (uint I=0;I<pred_list.size();++I){
+	for (unsigned int I=0;I<pred_list.size();++I){
 		diff.x=mv.x-pred_list[I].x;
 		diff.y=mv.y-pred_list[I].y;
 		sum+=Norm1(diff);
@@ -421,7 +427,7 @@ void AddNewVlistD(vector<vector<MVector> >& vect_list, const MVector& mv, int xr
 void AddVect(vector<vector<MVector> >& vect_list,const MVector& mv,int list_num){
 
 	bool is_in_list=false;	
-	uint L=0;uint I;	
+	unsigned int L=0;unsigned int I;	
 	while(!is_in_list && L<vect_list.size()){
 		I=0;		
 		while(!is_in_list && I<vect_list[L].size()){		

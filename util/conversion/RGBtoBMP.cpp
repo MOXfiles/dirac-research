@@ -41,6 +41,7 @@ file in raw RGB format, to a sequence of multiple .BMP files.
 Raw RGB format is simply a sequence of byte triples representing the
 red, green and blue components of each pixel.
 
+Original author: Tim Borer
 /*****************************************************************/
 
 #include <stdlib.h> //Contains EXIT_SUCCESS, EXIT_FAILURE
@@ -69,9 +70,9 @@ using namespace dirac_vu;
 //Define a function to construct a file name from
 //a prefix, frame number and file extension.
 string makeFileName(const string& prefix,
-					const string& postfix,
+                    const string& postfix,
                     int noDigits,
-					int frameNumber) {
+                    int frameNumber) {
     ostringstream out;
     out << prefix;
     out << setfill('0') << setw(noDigits) << frameNumber;
@@ -93,8 +94,8 @@ int main(int argc, char * argv[] ) {
         cout << "        converts stdin into files foo060.BMP to foo067.BMP" << endl;
         return EXIT_SUCCESS; }
 
-	//Set standard input to binary mode.
-	//Only relevant for Windows (*nix is always binary)
+    //Set standard input to binary mode.
+    //Only relevant for Windows (*nix is always binary)
     if ( setstdinmode(std::ios_base::binary) == -1 ) {
         cerr << "Error: could not set standard input to binary mode" << endl;
         return EXIT_FAILURE; }
@@ -108,17 +109,17 @@ int main(int argc, char * argv[] ) {
     const int width = atoi(argv[6]);
     const int height = atoi(argv[7]);
 
-	//Create bitmap header and allocate memory for input (frame) and
-	//output (line) buffers.
+    //Create bitmap header and allocate memory for input (frame) and
+    //output (line) buffers.
     const int inBufferSize = 3*height*width;
-	unsigned char *RGBArray = new unsigned char[inBufferSize];
-	const BitmapHeader header(width, height);
+    unsigned char *RGBArray = new unsigned char[inBufferSize];
+    const BitmapHeader header(width, height);
     const int outBufferSize = header.lineBufferSize();
     unsigned char *lineBuffer = new unsigned char[outBufferSize];
 
-	for (int frame = firstFrame; frame<(firstFrame+frames); ++frame) {
+    for (int frame = firstFrame; frame<(firstFrame+frames); ++frame) {
 
-		//Read next RGB input frame
+        //Read next RGB input frame
         std::streambuf& inbuf = *(cin.rdbuf());
         if ( int y=(inbuf.sgetn(reinterpret_cast<char*>(RGBArray), inBufferSize)) < inBufferSize ) {
             cerr << "Error: failed to read frame " << frame << endl;
@@ -126,29 +127,29 @@ int main(int argc, char * argv[] ) {
 
         //Open output file in binary mode.
         ofstream output;
-	    string fileName;
-		fileName = makeFileName(prefix, postfix, noDigits, frame);
-		output.open(fileName.c_str(), ios_base::out|ios_base::binary);
-		if (!output) {
-			cerr << "Error: failed to open output file " << fileName << endl;
-			return 0; }
-		else
-			clog << "Processing frame " << fileName << "\r";
+        string fileName;
+        fileName = makeFileName(prefix, postfix, noDigits, frame);
+        output.open(fileName.c_str(), ios_base::out|ios_base::binary);
+        if (!output) {
+            cerr << "Error: failed to open output file " << fileName << endl;
+            return 0; }
+        else
+            clog << "Processing frame " << fileName << "\r";
 
-		//Write bitmap header
+        //Write bitmap header
         output << header;
         if (!output) {
             cerr << "Error: failed to write bitmap header for frame" << frame << endl;
             return EXIT_FAILURE; }
 
-		//Write pixel data line by line
-		//(starting at the botom of the frame because bitmaps are stored upside down!)
+        //Write pixel data line by line
+        //(starting at the botom of the frame because bitmaps are stored upside down!)
         std::streambuf& outbuf = *(output.rdbuf());
         for (int line=(height-1); line>=0; --line) {
             int bufferOffset = 0;
             int RGBOffset = 3*line*width;
             unsigned char R, G, B;
-		    for (register int pixel=0; pixel<width; ++pixel) {
+            for (register int pixel=0; pixel<width; ++pixel) {
 
                 //read RGB values
                 R = RGBArray[RGBOffset++];
@@ -160,7 +161,7 @@ int main(int argc, char * argv[] ) {
                 lineBuffer[bufferOffset++] = G;
                 lineBuffer[bufferOffset++] = R;
 
-		    } //end pixel loop
+            } //end pixel loop
             if ( (outbuf.sputn(reinterpret_cast<char*>(lineBuffer), outBufferSize)) < outBufferSize ) {
                 cerr << "Error: failed to write line " << line << ", frame " << frame << endl;
                 return EXIT_FAILURE; }
@@ -173,6 +174,6 @@ int main(int argc, char * argv[] ) {
     delete [] RGBArray;
     delete [] lineBuffer;
 
-	return EXIT_SUCCESS;
+    return EXIT_SUCCESS;
 }
 
