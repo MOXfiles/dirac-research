@@ -40,14 +40,15 @@
 #include <iostream>
 
 #include "dirac_assertions.h"
+using namespace dirac;
 
+namespace dirac
+{
 void dirac_assert( const char *p_fname, int line_number, const char *p_mess )
 {
     dirac_report( p_fname, line_number, p_mess );
-#ifdef DIRAC_DEBUG
     // dump core
     abort ();
-#endif
 }
 
 void dirac_report( const char *p_fname, int line_number, const char *p_mess )
@@ -61,4 +62,5 @@ void dirac_report( const char *p_fname, int line_number, const char *p_mess )
 
     std::cerr << errMess << " in file " << p_fname << " at line " << line_number << std::endl;
 }
+} // namespace dirac
 
