@@ -106,6 +106,9 @@ dnl Generates Makefile's, configuration files and scripts
 dnl -----------------------------------------------
 
 AC_OUTPUT(Makefile dirac.pc \
+          util/Makefile \
+          util/conversion/Makefile \
+          util/conversion/common/Makefile \
           doc/Makefile \
           libdirac_common/Makefile \
           libdirac_motionest/Makefile \
