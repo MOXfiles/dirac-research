@@ -1,1 +1,1 @@
-SUBDIRS = conversion 
+SUBDIRS = instrumentation conversion
