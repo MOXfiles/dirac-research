@@ -20,7 +20,7 @@
  * Portions created by the Initial Developer are Copyright (C) 2004.
  * All Rights Reserved.
  *
- * Contributor(s): Chris Bowley (Original Author) and Marc Servais.
+ * Contributor(s): Chris Bowley (Original Author)
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -91,6 +91,15 @@ namespace dirac
     
         //! DEBUG OUTPUT MODE
         bool m_debug;
+
+		// Outlier Rejection Methods:
+		int OutlierReject_Edge(int, ModelAffine&, TestGlobalMotionModel&, int);
+		int OutlierReject_SAD(int, ModelAffine&, TestGlobalMotionModel&, int);
+		int OutlierReject_LocalMean(int, ModelAffine&, TestGlobalMotionModel&, int);
+		int OutlierReject_Intensity(int, ModelAffine&, TestGlobalMotionModel&, int);
+		int OutlierReject_Value(int, ModelAffine&, TestGlobalMotionModel&, int);
+		int OutlierReject_Outlier(int, ModelAffine&, TestGlobalMotionModel&, int);
+
     };
 }
 
