@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-12 01:57:46  chaoticcoyote
+* Revision 1.3  2004-05-11 14:17:58  tjdwave
+* Removed dependency on XParam CLI library for both encoder and decoder.
+*
+* Revision 1.2  2004/04/12 01:57:46  chaoticcoyote
 * Fixed problem Intel C++ had in finding xparam headers on Linux
 * Solved Segmentation Fault bug in pic_io.cpp
 *
@@ -56,83 +59,113 @@
 #include "libdirac_common/common.h"
 #include "libdirac_decoder/seq_decompress.h"
 #include "libdirac_common/pic_io.h"
+#include "libdirac_common/cmd_line.h"
 #include <string>
-#include "xparam.h"
 #include <ctime>
 
-using xParam::iParamVar;
-using xParam::Val;
+using namespace std;
+
+static void display_help()
+{
+	cout << "\nDIRAC wavelet video decoder.";
+	cout << "\n";
+	cout << "\nUsage: progname -<flag1> <flag_val> ... <input1> <intput2> ...";
+	cout << "\nIn case of multiple assignment to the same parameter, the last holds.";
+	cout << "\n";
+	cout << "\nName    Type   I/O Default Value Description";
+	cout << "\n====    ====   === ============= ===========                                       ";
+	cout << "\ninput   string  I  [ required ]  Input file name";
+	cout << "\noutput  string  I  [ required ]  Output file name";
+	cout << "\nverbose bool    I  false         Verbose mode";
+	cout << endl;
+}
+
 
 int main(int argc, char* argv[]) {
 
 /******************************************************************/
 
 	 /********** create params object to handle command line parameter parsing*********/
-	xParam::ParamSet ps;
+	command_line args(argc,argv);
 
  	//the variables we'll read parameters into
 	char input_name[84];							// char arrays used for file names
 	char output_name[84];
 	char bit_name[84];								//output name for the bitstream	
-
 	std::string input,output;	
-	bool verbose;	
 
-	 	//now set up the parameter set with these variables
-	try 
-	{	
-		ps<< "DIRAC wavelet video decoder."
-		<< iParamVar(input,		"input			!Input file name")
-		<< iParamVar(output,	"output			!Output file name")
-		<< iParamVar(verbose,	"verbose		!Verbose mode",Val(false));
+	//bool to record whether we're verbose or not
+	bool verbose=false;	
 
-		ps.input(argc,argv);
-	}
-	catch(xParam::Error e) 
+	if (argc<3)//need at least 3 arguments - the program name, an input and an output
 	{
-		std::cerr << "Error: " << e.what() << std::endl;
-		std::cerr << "Aborting." << std::endl;
-		exit(EXIT_FAILURE); 
+		display_help();	
 	}
+	else//carry on!
+	{
+		//now set up the parameter set with these variables
+		//Do required inputs
 
-	for (size_t i=0;i<input.length();i++) input_name[i]=input[i];
-	input_name[input.length()] = '\0';
-	for (size_t i=0;i<output.length();i++) output_name[i]=output[i];
-	output_name[output.length()] = '\0';
+		if (args.get_inputs().size()==2){
+			input=args.get_inputs()[0];
+			output=args.get_inputs()[1];			
+		}		
+		//check we have real inputs
+		if ((input.length() == 0) || (output.length() ==0))
+		{
+			display_help();
+			exit(1);
+		}
 
+		for (size_t i=0;i<input.length();i++) input_name[i]=input[i];
+		input_name[input.length()] = '\0';
+		for (size_t i=0;i<output.length();i++) output_name[i]=output[i];
+		output_name[output.length()] = '\0';
 
-	strncpy(bit_name,input_name,84);	
-	strcat(bit_name,".drc");
+		strncpy(bit_name,input_name,84);	
+		strcat(bit_name,".drc");
+
+		//next check for options		
+		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
+			opt != args.get_options().end(); ++opt)
+		{
+			if (opt->m_name == "verbose" && opt->m_value=="true")
+			{
+				verbose=true;
+			}	
+
+		}//opt
+
 
 /******************************************************************/
-	//read the stream data in and get the sequence data out
-
-	std::ifstream infile(bit_name,std::ios::in | std::ios::binary);
-	SequenceDecompressor mydecompress(&infile,verbose);
-	SeqParams& sparams=mydecompress.GetSeqParams();	
+		//read the stream data in and get the sequence data out
+		std::ifstream infile(bit_name,std::ios::in | std::ios::binary);
+		SequenceDecompressor mydecompress(&infile,verbose);
+		SeqParams& sparams=mydecompress.GetSeqParams();	
 
 /******************************************************************/
-	//set up the ouput pictures
+		//set up the ouput pictures
 
-	PicOutput myoutputpic(output_name,sparams);
-	myoutputpic.WritePicHeader();
+		PicOutput myoutputpic(output_name,sparams);
+		myoutputpic.WritePicHeader();
 
 /******************************************************************/
 	//do the decoding loop
 
-	mydecompress.DecompressNextFrame();
-	clock_t start_t, stop_t;
+		mydecompress.DecompressNextFrame();
+		clock_t start_t, stop_t;
 
-	start_t=clock();
-	for (int I=0;I<sparams.zl;++I)
-		myoutputpic.WriteNextFrame(mydecompress.DecompressNextFrame());
-	stop_t=clock();
+		start_t=clock();
+		for (int I=0;I<sparams.zl;++I)
+			myoutputpic.WriteNextFrame(mydecompress.DecompressNextFrame());
+		stop_t=clock();
 
-	double diff=double(stop_t-start_t);
-	std::cout<<"Time per frame: "<<diff/double(CLOCKS_PER_SEC*37);
+		double diff=double(stop_t-start_t);
+		std::cout<<"Time per frame: "<<diff/double(CLOCKS_PER_SEC*37);
 
-	infile.close();
+		infile.close();
 
-	if (verbose)
-		std::cerr<<std::endl<<"Finished decoding";	
+		if (verbose)
+			std::cerr<<std::endl<<"Finished decoding";	
+	}//?argc
 }

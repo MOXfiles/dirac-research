@@ -39,39 +39,39 @@
 // Standard C++
 #include <string>
 #include <vector>
-using namespace std;
 
 // a very simple command-line parser
 class command_line
 {
 public:
-    struct option
-    {
-        string m_name;
-        string m_value;
+	struct option
+	{
+		std::string m_name;
+		std::string m_value;
 
-        option(const string & a_name)
-          : m_name(a_name), m_value("")
-        {
+		option(const std::string & a_name)
+		: m_name(a_name), m_value("")
+		{
             // nada
-        }
-    };
+		}
+	};
 
-    command_line(int argc, char * argv[]);
+	//! Constructor
+	command_line(int argc, char * argv[]);
 
-    const vector<option> & get_options() const
-    {
-        return m_options;
-    }
+	const std::vector<option> & get_options() const
+	{
+		return m_options;
+	}
 
-    const vector<string> & get_inputs() const
-    {
-        return m_inputs;
-    }
+	const std::vector<std::string> & get_inputs() const
+	{
+		return m_inputs;
+	}
 
 private:
-    vector<option> m_options;
-    vector<string> m_inputs;
+	std::vector<option> m_options;
+	std::vector<std::string> m_inputs;
 };
 
 #endif

@@ -34,33 +34,33 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include "cmd_line.h"
+using namespace std;
 
 command_line::command_line(int argc, char * argv[])
-  : m_options(),
-    m_inputs()
+: m_options(),
+m_inputs()
 {
-    bool option_active = false;
-    vector<option>::iterator active_option;
-    
-    for (int i = 1; i < argc; ++i)
-    {
-        // is it an option?
-        if ((strlen(argv[i]) > 1) && (argv[i][0] == '-'))
-        {
-            m_options.push_back(option(string(&argv[i][1])));
-            active_option = m_options.end();
-            --active_option;
-            option_active = true;
-        }
-        else
-        {
-            if (option_active)
-                active_option->m_value = string(argv[i]);
-            else
-                m_inputs.push_back(string(argv[i]));
-                
-            option_active = false;
-        }
-    }
-}
+	bool option_active = false;
+	vector<option>::iterator active_option;
 
+	for (int i = 1; i < argc; ++i)
+	{
+        // is it an option?
+		if ((strlen(argv[i]) > 1) && (argv[i][0] == '-'))
+		{
+			m_options.push_back(option(string(&argv[i][1])));
+			active_option = m_options.end();//??
+			--active_option;
+			option_active = true;
+		}
+		else
+		{
+			if (option_active)
+				active_option->m_value = string(argv[i]);
+			else
+				m_inputs.push_back(string(argv[i]));
+
+			option_active = false;
+		}
+	}
+}

@@ -1,4 +1,4 @@
-Release notes for Dirac Version 0.1.0
+Release notes for Dirac Version 0.3.0
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For instructions on how to build/install, see the end of this file.
@@ -32,26 +32,25 @@ the codec can be found at http://www.bbc.co.uk/rd/projects/dirac.
 
 3. Building and installing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-To install from a tar.gz distribution:
-
-  1. Run ./configure, with some options if you wish. The standard
-     options are documented in the INSTALL file.  The only interesting
-     one is the usual --prefix=/where/you/want/it/installed.
-
-  2. Do "make".
-
-  3. Do "make install", possibly as root if the destination permissions
-     require that.
-
-NB. To run the example coder and decoder programs requires the XParam library
-for command-line handling to be installed. This may be obtained from
-http://xparam.sourceforge.net. The configure script does not check for the
-presence of XParam as yet - be warned!
+Instructions are provided in dirac_build_howto.txt. Generic instructions
+for building Unix tarball distributions are given in the INSTALL file.
 
 4. Running the example programs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-4.1 File formats
+4.1 Command-line parameters
+
+At the moment there is a very simple command-line parser class which is 
+used in all the executables. The general procedure for running a program
+is to type:
+
+prog_name -<flag_name> flag_val ... param1 param2 ...
+
+In other words, options are prefixed by a dash and all options take values.
+This includes boolean options. Parameters (like filenames) are not prefixed 
+by a dash. We hope to fix this and support boolean options properly soon.
+
+4.2 File formats
 
 The example coder and decoder use a temporary file format which consists of
 raw 8-bit planar YUV data together with a header file. This means that data
@@ -78,19 +77,20 @@ interlaced, and has a frame-rate of 15Hz.
 
 Solution
 
-make_header output=test xl=352 yl=288 zl=260 cformat=format422 framerate=15 interlace=false
+make_header -xl 352 -yl 288 -zl 260 -cformat format422 -framerate 15 -interlace false output
 
 This writes test.hdr with the right parameters.
 
-XParam allows for parameters to be abbreviated, so one could also have written
+WARNING: Dirac currently does not support all frame sizes. The encoder or decoder may
+crash if there is not an integral number of macroblocks in each component of a frame,
+as well as being divisible by 16 to support a 4-level wavelet transform. This
+deficiency will be remedied soon. See below for advice on block sizes.
 
-make_header o=test xl=352 yl=288 zl=260 cf=format422 fr=15 i=false
-
-4.2 Encoding
+4.3 Encoding
 
 There are a large number of parameters that can be used to run the encoder,
-all of which are listed below, and which are set using the same XParam
-notation as for make_header. However, things are simplified by using presets
+all of which are listed below, and which are set using the same conventions
+as for make_header. However, things are simplified by using presets
 for different applications. These set such things as block sizes and overlaps
 for motion estimation and compensation (the codec used overlapped blocks),
 and psychovisual weighting. They also define the context in which other parameters
@@ -108,7 +108,7 @@ Simple coding example. Code an SD sequence to high quality.
 
 Solution.
 
-dirac_encoder SD576=true qf=20 i=test o=test_out
+dirac_encoder -SD576 true -qf 20 test test_out
 
 will read test.yuv and test.hdr as input, and output a compressed bitstream test_out.drc
 as well as locally-decoded files test_out.yuv and test_out.hdr.
@@ -139,16 +139,20 @@ NB: qf, Iqf etc are not really a quality factor, but rate-distortion trade-off
 parameters, and so setting them to particular values doesn't guarantee a given
 quality.
 
-4.3 Decoding
+Block separations must currently be set so that an integral number of macroblocks fits
+into the frame horizontally and vertically. A macroblock is a 4x4 set of blocks,
+so 4xblen must divide the frame width and 4yblen the frame height. 
+
+4.4 Decoding
 
 Decoding is much simpler. Just point the decoder input at the bitstream and the
 output to a file:
 
-dirac_decoder verbose=true i=test_enc o=test_dec
+dirac_decoder -verbose true test_enc test_dec
 
 will decode into test_dec.{yuv,hdr} with running commentary.
 
 Thomas Davies
 (dirac@rd.bbc.co.uk)
 
-10 March 2004
+11 May 2004

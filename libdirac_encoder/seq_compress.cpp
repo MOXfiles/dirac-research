@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.4  2004-05-11 14:17:59  tjdwave
+* Removed dependency on XParam CLI library for both encoder and decoder.
+*
+* Revision 1.3  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -72,17 +75,17 @@
 #include <iostream>
 
 SequenceCompressor::SequenceCompressor(PicInput* pin, EncoderParams& encp)
-  : all_done(false),
-    picIn(pin),
-    sparams(picIn->GetSeqParams()),
-	encparams(encp),
-    my_gop(encparams),
-    current_display_fnum(0),
-    current_code_fnum(0),
-    delay(1),
-	last_frame_read(-1)
+: all_done(false),
+picIn(pin),
+sparams(picIn->GetSeqParams()),
+encparams(encp),
+my_gop(encparams),
+current_display_fnum(0),
+current_code_fnum(0),
+delay(1),
+last_frame_read(-1)
 {
-    WriteStreamHeader();
+	WriteStreamHeader();
 }
 
 Frame& SequenceCompressor::CompressNextFrame(){

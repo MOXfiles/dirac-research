@@ -50,7 +50,12 @@ explains the meaning of the version digits.
 
 Windows
 -------
-The Dirac distribution includes files for contructing the software using
-Microsoft's Developer Studio.NET.
+The Windows distribution may be built from the command line using nmake.
+The makefile can be found in the 'win' directory:
 
-[Pending]
+	c:\...\Dirac\win> nmake /f Makefile
+
+(It may be necessary to edit the path environment variable to include
+nmake.exe and lib.exe.)
+
+This will create libraries and executables in the 'win' directory.

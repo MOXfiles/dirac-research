@@ -1,4 +1,2 @@
-This directory should contain the header files and compiled static library
-for the Xparams library:
-
-    http://xparam.sourceforge.net
+Xparam libray is no longer required to build Dirac.
+(Version 0.3.0 11May 2004).

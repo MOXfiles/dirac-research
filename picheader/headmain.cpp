@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-05-11 14:17:59  tjdwave
+* Removed dependency on XParam CLI library for both encoder and decoder.
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -51,32 +54,40 @@
 #include <fstream>
 #include <cmath>
 #include <string>
-#include <xparam.h>
-#include <xparam_extend.h>
+#include "libdirac_common/cmd_line.h"
 #include "libdirac_common/common.h"
 
 //This program writes a header file given command-line parameters, for use
 //with raw planar YUV data for input to the Dirac encoder.
 
-using namespace xParam;
+using namespace std;
 
 void WritePicHeader(SeqParams& sparams,std::ofstream* op_head_ptr);
 
-PARAM_BEGIN_REG
-	PARAM_ENUM(ChromaFormat);
-PARAM_ENUM_VAL(Yonly);
-PARAM_ENUM_VAL(format422);
-PARAM_ENUM_VAL(format444);
-PARAM_ENUM_VAL(format420);
-PARAM_ENUM_VAL(format411);
-PARAM_ENUM_VAL(formatNK);
-PARAM_END_REG
+static void display_help()
+{
+	cout << "\nDIRAC wavelet video decoder.";
+	cout << "\n";
+	cout << "\nUsage: progname -<flag1> <flag_val> ... <input1> <intput2> ...";
+	cout << "\nIn case of multiple assignment to the same parameter, the last holds.";
+	cout << "\n";
+	cout << "\nName          Type   I/O Default Value Description";
+	cout << "\n====          ====   === ============= ===========                                       ";
+	cout << "\noutput        string  I  [ required ]  Output file name";
+	cout << "\ncformat       string  I  format420     Chroma format";
+	cout << "\nxl            ulong   I  352           Width in pixels";
+	cout << "\nyl            ulong   I  288           Height in pixels";
+	cout << "\nzl            ulong   I  37            Length in frames";
+	cout << "\nframerate     ulong   I  12            Frame rate in Hz"; 
+	cout << "\ninterlace     bool    I  false         Interlace";
+	cout << "\ntopfieldfirst bool    I  true          Top Field First (set if interlaced)";
+	cout << endl;
+}	
 
-
-	int main( int argc, char *argv[] )
+int main( int argc, char *argv[] )
 {
 	 /********** create params object to handle command line parameter parsing*********/
-	xParam::ParamSet ps;
+	command_line args(argc,argv);
 
  	//the variables we'll read parameters into
 	char output_name[84];
@@ -84,39 +95,87 @@ PARAM_END_REG
 	SeqParams sparams;
 
  	//now set up the parameter set with these variables
-	try
+
+	if (argc<2)//need at least 2 arguments - the program name, and an output
 	{
-		ps<< "make_header"
-		<< iParamVar(output,				"output			!Output file name")
-		<< iParamVar(sparams.cformat,		"cformat		!Chroma format",			Val(format420))
-		<< iParamVar(sparams.xl,			"xl				!Width in pixels",			Val(352))
-		<< iParamVar(sparams.yl,			"yl				!Height in pixels", 		Val(288))
-		<< iParamVar(sparams.zl,			"zl				!Length", 					Val(37))
-		<< iParamVar(sparams.framerate,		"framerate		!Framerate(Hz)",			Val(12))
-		<< iParamVar(sparams.interlace,		"interlace		!Separation of L1 frames",	Val(false))
-		<< iParamVar(sparams.topfieldfirst,	"topfieldfirst	!Number of L1 frames",		Val(true));
-
-		ps.input(argc,argv);
+		display_help();	
 	}
-	catch(xParam::Error e)
+	else//carry on!
 	{
-		std::cerr << "Error: " << e.what() << std::endl;
-		std::cerr << "Aborting." << std::endl;
-		exit(EXIT_FAILURE);
+	//start with the output file
+		if (args.get_inputs().size()==1){
+			output=args.get_inputs()[0];			
+		}		
+		//check we have real inputs
+		if (output.length() ==0)
+		{
+			display_help();
+			exit(1);
+		}
+		for (size_t i=0;i<output.length();i++) output_name[i]=output[i];
+		output_name[output.length()] = '\0';
+		strcat(output_name,".hdr");
+
+		std::ofstream* op_head_ptr=new std::ofstream(output_name,std::ios::out | std::ios::binary);	//header output
+
+		//now do the options
+
+		//set defaults. To do: set up in constructor
+		sparams.cformat=format420;
+		sparams.xl=352;
+		sparams.yl=288;
+		sparams.zl=37;
+		sparams.interlace=false;
+		sparams.topfieldfirst=true;
+		sparams.framerate=13;
+
+		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
+			opt != args.get_options().end(); ++opt)	{	
+			if (opt->m_name == "cformat")
+			{
+				if (opt->m_value=="format420"){
+					sparams.cformat=format420;
+				}
+				else if (opt->m_value=="format422"){
+					sparams.cformat=format422;
+				}
+				else if (opt->m_value=="format411"){
+					sparams.cformat=format411;
+				}
+				else if (opt->m_value=="format444"){
+					sparams.cformat=format444;
+				}
+				else if (opt->m_value=="Yonly"){
+					sparams.cformat=Yonly;
+				}
+			}
+			else if (opt->m_name == "xl"){
+				sparams.xl=strtoul(opt->m_value.c_str(),NULL,10);
+			}
+			else if (opt->m_name == "yl"){
+				sparams.yl=strtoul(opt->m_value.c_str(),NULL,10);
+			}
+			else if (opt->m_name == "zl"){
+				sparams.zl=strtoul(opt->m_value.c_str(),NULL,10);
+			}
+			else if (opt->m_name == "interlace" && opt->m_value=="true"){
+				sparams.interlace=true;
+			}
+			else if (opt->m_name == "topfieldfirst" && opt->m_value=="false"){
+				sparams.topfieldfirst=false;
+			}
+			else if (opt->m_name == "framerate"){
+				sparams.framerate=strtoul(opt->m_value.c_str(),NULL,10);
+			}
+		}//opt
+
+		WritePicHeader(sparams,op_head_ptr);
+		op_head_ptr->close();
+
+		return 0;
 	}
 
-	for (size_t i=0;i<output.length();i++) output_name[i]=output[i];
-	output_name[output.length()] = '\0';
-
-	strcat(output_name,".hdr");
-
-	std::ofstream* op_head_ptr=new std::ofstream(output_name,std::ios::out | std::ios::binary);	//header output
-	WritePicHeader(sparams,op_head_ptr);
-	op_head_ptr->close();
-
-	return 0;
 }
-
 void WritePicHeader(SeqParams& sparams,std::ofstream* op_head_ptr){//write a human-readable picture header as separate file
 
 	int head_data[7];
@@ -135,10 +194,10 @@ void WritePicHeader(SeqParams& sparams,std::ofstream* op_head_ptr){//write a hum
 	head_data[4]=sparams.interlace;
 
 	//top-field first or not (only relevant if interlaced)
-	head_data[5]=sparams.topfieldfirst;
+	head_data[5]=sparams.topfieldfirst;;
 
 	//frame-rate code (needed for display)
-	head_data[6]=sparams.framerate;
+	head_data[6]=sparams.framerate;;
 
 	if (*op_head_ptr){
 		op_head_ptr->write((char*) &head_data,sizeof head_data);

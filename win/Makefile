@@ -19,8 +19,8 @@ clean :
 	-del *.exe
 
 DiracCommon.lib : band_codec.obj bit_manager.obj common.obj frame.obj golomb.obj gop.obj \
-		mot_comp.obj motion.obj mv_codec.obj pic_io.obj upconvert.obj wavelet_utils.obj
-	lib /out:$@ $**
+		mot_comp.obj motion.obj mv_codec.obj pic_io.obj upconvert.obj wavelet_utils.obj cmd_line.obj
+	lib /out:$@ /nologo $**
 
 band_codec.obj : ..\libdirac_common\band_codec.cpp
 	$(CPP) $(CPPFLAGS) /c $**
@@ -58,9 +58,12 @@ upconvert.obj  : ..\libdirac_common\upconvert.cpp
 wavelet_utils.obj : ..\libdirac_common\wavelet_utils.cpp
 	$(CPP) $(CPPFLAGS) /c $**
 	
+cmd_line.obj : ..\libdirac_common\cmd_line.cpp
+	$(CPP) $(CPPFLAGS) /c $**
+	
 DiracMotionEst.lib : block_match.obj downconvert.obj me_mode_decn.obj me_subpel.obj \
                         me_utils.obj motion_estimate.obj
-	lib /out:$@ $**
+	lib /out:$@ /nologo $**
 
 block_match.obj : ..\libdirac_motionest\block_match.cpp
 	$(CPP) $(CPPFLAGS) /c $**
@@ -81,7 +84,7 @@ motion_estimate.obj : ..\libdirac_motionest\motion_estimate.cpp
 	$(CPP) $(CPPFLAGS) /c $**
 
 DiracDecoder.lib : comp_decompress.obj frame_decompress.obj seq_decompress.obj
-	lib /out:$@ $**
+	lib /out:$@ /nologo $**
 
 comp_decompress.obj : ..\libdirac_decoder\comp_decompress.cpp
 	$(CPP) $(CPPFLAGS) /c $**
@@ -93,7 +96,7 @@ seq_decompress.obj : ..\libdirac_decoder\seq_decompress.cpp
 	$(CPP) $(CPPFLAGS) /c $**
 
 DiracEncoder.lib : comp_compress.obj frame_compress.obj seq_compress.obj
-	lib /out:$@ $**
+	lib /out:$@ /nologo $**
 
 comp_compress.obj : ..\libdirac_encoder\comp_compress.cpp
 	$(CPP) $(CPPFLAGS) /c $**
@@ -105,13 +108,13 @@ seq_compress.obj : ..\libdirac_encoder\seq_compress.cpp
 	$(CPP) $(CPPFLAGS) /c $**
         
 encmain.obj : ..\encoder\encmain.cpp
-	$(CPP) $(CPPFLAGS) /GR /Ixparam /c $**
+	$(CPP) $(CPPFLAGS) /c $**
     
 decmain.obj : ..\decoder\decmain.cpp
-	$(CPP) $(CPPFLAGS) /GR /Ixparam /c $**
+	$(CPP) $(CPPFLAGS) /c $**
 
-DiracEncoder.exe : encmain.obj xparam\xparam.lib DiracEncoder.lib DiracMotionEst.lib DiracCommon.lib
-	link /out:DiracEncoder.exe $**
+DiracEncoder.exe : encmain.obj DiracEncoder.lib DiracMotionEst.lib DiracCommon.lib
+	link /out:DiracEncoder.exe /nologo $**
 
-DiracDecoder.exe : decmain.obj xparam\xparam.lib DiracDecoder.lib DiracCommon.lib
-	link /out:DiracDecoder.exe $**
+DiracDecoder.exe : decmain.obj DiracDecoder.lib DiracCommon.lib
+	link /out:DiracDecoder.exe /nologo $**

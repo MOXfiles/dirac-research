@@ -1,11 +1,3 @@
-Before the executable programs can be built, you must acquire and
-build the Xparam library
-
-    http://xparam.sourceforge.net
-
-Place the Xparam header files and compiled static library (xparam.lib)
-in the xparam directory before using nmake to build Dirac.
-
 This makefile was tested with the free (as in cost) distribution of
 Microsoft C++, which can be downloaded from:
 
