@@ -1,10 +1,13 @@
 Dirac-0.3.0
 ===========
+  - Added conversion utilities for going to and from RGB and 
+     various YUV formats, plus bitmaps
   - Fixed serious artifacts when frame dimensions are not multiples of 32
   - Performance speed up writing output to disk
   - Changed .hdr format from binary to text for cross-platform interoperability
   - Added autotest framework with simple colour-bars test
-  - Added MPlayer and ImageMagick examples to README
+  - Added format conversion, MPlayer and ImageMagick examples to README
+  - Added decoder support for arbitrary temporal prediction structures
   - Added support for I-frame only coding
   - Added support for coding with a single initial I-frame
   - Extended code documentation to all major classes
