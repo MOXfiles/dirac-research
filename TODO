@@ -1,54 +1,9 @@
 TO DO
 ~~~~~
 
-Last updated 18 August 2004
+Last updated 29 Nov 2004
 
-The list covers both software and algorithmic issues, and is in no particular
-order. See also the website at www.bbc.co.uk/rd/projects/dirac/. If you'd like
-to help us fix these, contact us through dirac@rd.bbc.co.uk.
+The most current list can be found at
+http://dirac.sourceforge.net/todo.html
 
--- [Ongoing]. Documentation for bitstream structure and format. A draft bitstream
-   spec is in preparation and will be released soon.
-
--- [Ongoing]. Documentation of encoder and decoder algorithms and software.
-[The algorithm documentation is now available on www.bbc.co.uk/rd/projects/dirac/.]
-
--- Interlace coding tools, for motion estimation and compensation in particular.
-
--- Support for constant-quality encoding - adaptation of frame Lagrangian
- parameters to hit a quality target. We have a rudimentary form in release 0.4.0
- which is based on PSNR, but we need to have a better model of perceptual 
- quality.
-
--- Separable perceptual modelling module, for separate optimisation. 
-
--- Introduce support for frame skipping - bit stream flag + algorithms, decoder
- frame repetition, frame numbers and frame expiry times.
-[Flags are now in place, but functionality and encoder-side algorithms need
-definition.]
-
--- Speed-up improvements to motion compensation, motion estimation and other tools.
-   Generally, we could do with the code being regularly profiled so that we can
-   keep track of performance hotspots.
-
--- Global motion estimation and compensation.
-
--- Revise WaveletTransform, Subband and SubbandList classes, so that subband
- data is encapsulated by the Subband class rather than packed into a big array
- representing the whole transform. This should be neater but also faster for
- entropy coding since memory access for a particular subband will be more local.
-
--- Bit-depth refactoring to decouple bit-depths for input pictures, stored
- pictures (including upconverted),motion-compensated residuals and wavelet
- coefficients. Experiment with 8 bits only for stored and input pictures, which
- will speed up motion estimation, motion compensation, wavelet transforms and
- upconversion but may hit compression performance.
-
--- Further development of wavelet coefficient quantisation tools.
-
--- Optimise entropy coding context initialisations and resetting for compression
- efficiency
-
--- DirectShow filter for compressed file format. Require pull pin, buffering and
- multitheading. DirectShow filter for uncompressed file format.
-
+The list covers both software and algorithmic issues. 
