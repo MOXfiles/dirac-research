@@ -6,9 +6,9 @@ AT_CHECK([at_wrap make_header -xl 720 -yl 576 -zl 1 -cformat format420 -framerat
 
 # FIXME: Once the encoder stops reporting "Can't read component picture data"
 # FIXME: remove the [ignore] for stdout and stderr.
-AT_CHECK([at_wrap dirac_encoder -SD576 -qf 7 -num_L1 0 $abs_srcdir/colourbars_420 ../../colourbars_420_enc], 0, [ignore], [ignore])
+AT_CHECK([at_wrap dirac_encoder -SD576 -qf 7 -num_L1 0 $abs_srcdir/colourbars_420 ../../colourbars_420_enc], 0, [ignore])
 
-AT_CHECK([at_wrap dirac_decoder ../../colourbars_420_enc ../../colourbars_420_dec], 0, [ignore], [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../colourbars_420_enc ../../colourbars_420_dec], 0, [ignore])
 
 AT_CHECK([cmp ../../colourbars_420_enc.yuv ../../colourbars_420_dec.yuv])
 
