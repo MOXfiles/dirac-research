@@ -1,3 +1,163 @@
+2004-08-11 16:23  asuraparaju
+
+	* tests/Makefile.am: Deleting data files created by encode and
+	  decode operation durng cleanup.
+
+2004-08-11 15:53  asuraparaju
+
+	* decoder/decmain.cpp: Decoder modified to use the "C" interface.
+
+2004-08-11 15:53  asuraparaju
+
+	* encoder/encmain.cpp: Added support for cut-detection and intra
+	  frame insertion. Changed output structure to output frame by
+	  frame, and added recoding to exploit this.  Recoding takes place
+	  if quality is not within a range of the target quality.
+
+	  Replaced tabs with spaces.
+
+	  Updated data file extension
+
+2004-08-11 15:48  asuraparaju
+
+	* libdirac_encoder/: Makefile.am, frame_compress.cpp,
+	  frame_compress.h, quality_monitor.cpp, quality_monitor.h,
+	  seq_compress.cpp, seq_compress.h: Fixed the bug where all header
+	  files were being dumped into the same install directory. Now
+	  headers are copied into the <installdir>/dirac/<module>
+	  directory.
+
+	  Added support for cut-detection and intra frame insertion.
+	  Changed output structure to output frame by frame, and added
+	  recoding to exploit this.  Recoding takes place if quality is not
+	  within a range of the target quality.
+
+	  Writing frame start, sequence start and sequence end codes to
+	  bitstream.
+
+	  Modifications to build under WIN32
+
+2004-08-11 15:44  asuraparaju
+
+	* libdirac_decoder/: Makefile.am, frame_decompress.cpp,
+	  frame_decompress.h, seq_decompress.cpp, seq_decompress.h:
+	  Handling new "C" interface files.  Handling bitstream changes in
+	  frame and sequence decompress routines.  Fixed the bug where all
+	  header files were being dumped into the same install directory.
+	  Now headers are copied into the
+	  <installdir>/dirac/libdirac_decoder
+
+2004-08-11 15:40  asuraparaju
+
+	* libdirac_common/: Makefile.am, arith_codec.h, arrays.h,
+	  band_codec.cpp, band_codec.h, bit_manager.cpp, bit_manager.h,
+	  common.cpp, common.h, frame.cpp, frame.h, frame_buffer.cpp,
+	  mot_comp.cpp, motion.cpp, mv_codec.cpp, mv_codec.h, pic_io.cpp,
+	  pic_io.h: Renamed BitOutputManager to UnitOutputManager in
+	  bit_manager.* Modified bit_manager.* to handle modifications to
+	  bitstream.  Moved enumerated types common to the encoder, decoder
+	  and codec interfaces from common.h into common_types.h to avoid
+	  duplication of declarations.
+
+	  Added support for cut-detection and intra frame insertion.
+	  Changed output structure to output frame by frame, and added
+	  recoding to exploit this.  Recoding takes place if quality is not
+	  within a range of the target quality.
+
+	  Modifications to build under WIN32 Fixed icc compiler warning 522
+	  Fixed VC++ 2003 compiler warnings
+
+	  Fixed the bug where all header files were being dumped into the
+	  same install directory. Now headers are copied into the <install
+	  dir>/dirac/libdirac_common directory.
+
+2004-08-11 15:30  asuraparaju
+
+	* libdirac_motionest/: Makefile.am, me_mode_decn.cpp,
+	  me_subpel.cpp, motion_estimate.cpp, motion_estimate.h: Minor mods
+	  to improve motion estimation: no lambda-smoothing on
+	  pixel-accurate ME.  Fixed the bug where all header files were
+	  being dumped into the same install directory. Now headers are
+	  copied into the <install dir>/dirac/libdirac_motionest
+	  directory..
+
+2004-08-11 15:27  asuraparaju
+
+	* util/instrumentation/: Makefile.am, instrmain.cpp,
+	  process_sequence.cpp, process_sequence.h,
+	  libdirac_instrument/overlay.h: Restructured the code. Corrected
+	  header file path in instrmain.cpp.  Added a ProcessSequence
+	  class. File extension of motion vector instrumentation file
+	  changed from _mvdata to .imt
+
+2004-08-11 15:24  asuraparaju
+
+	* tests/: Makefile.am, colourbars.at: Deleting instrumentation
+	  files during clean up.  Ignoring stdout and stderr when running
+	  decoder.
+
+2004-08-11 15:23  asuraparaju
+
+	* win/Makefile: Fixed VC++ 2003 compile and link errors
+
+2004-08-11 15:21  asuraparaju
+
+	* libdirac_common/: dirac_assertions.cpp, dirac_assertions.h: Added
+	  functions for runtime testing in debug mode. Two new macros are
+	  defined.
+
+	  ASSERT( exp ) - if exp resolves to false, the program prints the
+	  line number and file where the assertion failure occured. In
+	  debug mode the program exits immediately dumping core.
+
+	  ASSERT( exp, mesg ) - if exp resolves to false, the program
+	  prints the line number, file name where the assertion failure
+	  occured and mesg. In debug mode the program exits immediately
+
+2004-08-11 15:20  asuraparaju
+
+	* libdirac_common/common_types.h: Moved enumerated types common to
+	  the encoder, decoder and codec interfaces from common.h into this
+	  file to avoid duplication of declarations.
+
+2004-08-11 15:16  asuraparaju
+
+	* libdirac_decoder/: decoder_types.h, dirac_cppparser.cpp,
+	  dirac_cppparser.h, dirac_parser.cpp, dirac_parser.h: These new
+	  files define the  "C" interface to the decoder. The bitstream has
+	  been modified to be able to parse it for decoding.
+
+	  BitStream Changes:
+
+	  The new dirac bit stream is as follows <sequence-start-code>
+	  <sequence header> <frame-start-code> <frame 1 data> .  .  .
+	  <frame-start-code> <frame n data> <sequence-end-code>
+
+	  Sequence start code: Each sequence begins with a 5 bytes start
+	  code 0x01 0x02 0x03 0x04 0xB3
+
+	  Frame start code: Each frame begins with a 5 bytes frame start
+	  code	0x01 0x02 0x03 0x04 0xB4
+
+	  Sequence End code: Each sequence ends with a 5 bytes sequence end
+	  code 0x01 0x02 0x03 0x04 0xB7
+
+	  Not a start code flag: If the arithmetic codec ouputs the start
+	  code prefix 0x01 0x02 0x03 0x04, 0xFF is inserted into the
+	  bitstream to flag that this is the output of the Arithmetic codec
+	  and not a start code.
+
+2004-08-11 14:27  asuraparaju
+
+	* configure.ac: Added a new option --enable-profile to include the
+	  profiling option -pg to them compile line. Setting up CXXFLAGS
+	  correctly for Intel compiler when the --enable-debug option is
+	  used.
+
+2004-08-11 14:26  asuraparaju
+
+	* README.release: A checklist for producing a new release
+
 2004-08-03 10:22  asuraparaju
 
 	* Makefile.am, configure.ac, dirac.pc.in, decoder/decmain.cpp,
