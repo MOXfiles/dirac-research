@@ -2,12 +2,12 @@ AUTOMAKE_OPTIONS = no-dependencies
 INCLUDES = -I$(top_srcdir)
 
 h_sources = arith_codec.h arrays.h band_codec.h bit_manager.h common.h \
-            context.h frame.h golomb.h gop.h mot_comp.h motion.h \
+            context.h frame.h golomb.h frame_buffer.h mot_comp.h motion.h \
             mv_codec.h pic_io.h upconvert.h wavelet_utils.h \
             cmd_line.h
 
 cpp_sources = band_codec.cpp bit_manager.cpp common.cpp frame.cpp \
-              golomb.cpp gop.cpp mot_comp.cpp motion.cpp \
+              golomb.cpp frame_buffer.cpp mot_comp.cpp motion.cpp \
               mv_codec.cpp pic_io.cpp upconvert.cpp wavelet_utils.cpp \
               cmd_line.cpp
 
