@@ -459,14 +459,14 @@ void WaveletTransform::VHSynth(const int xp, const int yp, const int xl, const i
 
 // Returns a perceptual noise weighting based on extending CCIR 959 values
 // assuming a two-d isotropic response. Also has a fudge factor of 20% for chroma
-float WaveletTransform::PerceptualWeight(float xf,float yf,CompSort cs)
+float WaveletTransform::PerceptualWeight( float xf , float yf , CompSort cs )
 {
-    double temp_val( xf*xf + yf*yf );
+    double freq_sqd( xf*xf + yf*yf );
 
-    if (cs != Y_COMP)
-        temp_val *= 1.2;
+    if ( cs != Y_COMP )
+        freq_sqd *= 1.2;
 
-    return 0.255 * std::pow( 1.0 + 0.2561*temp_val , 0.75) ;
+    return 0.255 * std::pow( 1.0 + 0.2561*freq_sqd , 0.75) ;
 
 }
 
@@ -481,8 +481,8 @@ void WaveletTransform::SetBandWeights (const float cpd,
     float xfreq, yfreq;
     float temp;
 
-    xlen=2*band_list(1).Xl();
-    ylen=2*band_list(1).Yl();
+    xlen = 2 * band_list(1).Xl();
+    ylen = 2 * band_list(1).Yl();
 
     if (cpd != 0.0)
     {
@@ -499,8 +499,8 @@ void WaveletTransform::SetBandWeights (const float cpd,
 
             if ( fsort != I_frame )
             {
-                xfreq /= 4.0;
-                yfreq /= 4.0;
+                xfreq /= 8.0;
+                yfreq /= 8.0;
             }
 
              if( csort != Y_COMP){
@@ -519,7 +519,7 @@ void WaveletTransform::SetBandWeights (const float cpd,
                  }
              }
 
-            temp = PerceptualWeight(xfreq,yfreq,csort);
+            temp = PerceptualWeight( xfreq , yfreq , csort );
 
             band_list(i).SetWt(temp);
 

@@ -123,24 +123,24 @@ void MotionCompensator::ReConfig()
     if(m_block_weights != NULL)
         delete[] m_block_weights;
 
-    //Create new weights array.
+    // Create new weights array.
     m_block_weights = new TwoDArray<CalcValueType>[9];
     for(int i = 0; i < 9; i++)
         m_block_weights[i] = *(new TwoDArray<CalcValueType>(  m_bparams.Yblen() , m_bparams.Xblen() ));
 
-    //We can create all nine weighting blocks by calculating values
-    //for four blocks and mirroring them to generate the others.
-    CreateBlock(m_bparams, false, false, m_block_weights[0]);
-    CreateBlock(m_bparams, false, true, m_block_weights[3]);
-    CreateBlock(m_bparams, true, false, m_block_weights[1]);
-    CreateBlock(m_bparams, true, true, m_block_weights[4]);
+    // We can create all nine weighting blocks by calculating values
+    // for four blocks and mirroring them to generate the others.
+    CreateBlock( m_bparams , false , false , m_block_weights[0] );
+    CreateBlock( m_bparams , false , true , m_block_weights[3] );
+    CreateBlock( m_bparams , true , false , m_block_weights[1] );
+    CreateBlock( m_bparams , true , true , m_block_weights[4] );
 
-    //Note order of flipping is important.    
-    FlipX(m_block_weights[3], m_bparams, m_block_weights[5]);
-    FlipX(m_block_weights[0], m_bparams, m_block_weights[2]);
-    FlipY(m_block_weights[0], m_bparams, m_block_weights[6]);
-    FlipX(m_block_weights[6], m_bparams, m_block_weights[8]);
-    FlipY(m_block_weights[1], m_bparams, m_block_weights[7]);
+    // Note order of flipping is important.    
+    FlipX( m_block_weights[3] , m_bparams , m_block_weights[5] );
+    FlipX( m_block_weights[0] , m_bparams , m_block_weights[2] );
+    FlipY( m_block_weights[0] , m_bparams , m_block_weights[6] );
+    FlipX( m_block_weights[6] , m_bparams , m_block_weights[8] );
+    FlipY( m_block_weights[1] , m_bparams , m_block_weights[7] );
 
 }
 
@@ -382,7 +382,7 @@ const ImageCoords& pos , const TwoDArray<CalcValueType>& wt_array , const ArithO
                          8
                          ) >> 4;
 
-                arith.DoArith( pic_data[c][l] , CalcValueType( temp ) , wt_array[wY][wX] );
+                arith.DoArith( pic_data[c][l] , CalcValueType(temp) , wt_array[wY][wX] );
 
             }//l
         }//c
@@ -405,11 +405,9 @@ void MotionCompensator::DCBlock( PicArray &pic_data ,const ValueType dc , const 
     const ImageCoords diff(start_pos.x - pos.x , start_pos.y - pos.y);
 
     //Quick process where we can just copy from the double size image.
+
     for(int c = start_pos.y, wY = diff.y; c < end_pos.y; ++c, ++wY)
-    {
         for(int l = start_pos.x, wX = diff.x; l < end_pos.x; ++l, ++wX)
-        {
             arith.DoArith( pic_data[c][l] , CalcValueType( dc ) , wt_array[wY][wX]);
-        }//l
-    }//c
+
 }

@@ -193,9 +193,9 @@ bool PicOutput::WriteComponent( const PicArray& pic_data , const CompSort& cs )
         {
             for (int i=0 ; i<xl ; ++i)
             {                
-                tempv=pic_data[j][i]+2;
-                tempv>>=2;
-                tempc[i]=(unsigned char) tempv;                
+                tempv = pic_data[j][i]+2;
+                tempv >>= 2;
+                tempc[i] = (unsigned char) tempv;                
             }//I
 
             m_op_pic_ptr->write((char*) tempc,xl);
@@ -331,7 +331,7 @@ void PicInput::Skip(const int num)
     else
        num_bytes = num_pels*3;
 
-    m_ip_pic_ptr->seekg( num*num_bytes , std::ios::beg );
+    m_ip_pic_ptr->seekg( num*num_bytes , std::ios::cur );
 }
 
 bool PicInput::End() const
