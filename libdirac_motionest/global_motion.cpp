@@ -20,7 +20,7 @@
  * Portions created by the Initial Developer are Copyright (C) 2004.
  * All Rights Reserved.
  *
- * Contributor(s): Chris Bowley (Original Author)
+ * Contributor(s): Chris Bowley (Original Author) and Marc Servais
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
