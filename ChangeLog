@@ -1,3 +1,18 @@
+2004-07-16 16:29  asuraparaju
+
+	* libdirac_encoder/quality_monitor.cpp: Fixed bug with model
+	  updating - limits of slope of linear model were inaccurate. Fixed
+	  bug with numerical stability of lambda re-calculation.
+	  Performance with cuts or shot-changes is still poor, however.
+
+2004-07-16 16:23  asuraparaju
+
+	* DCO.developers, README.developers: Added contents section. Added
+	  text about licensing and contribution.  Modified licensing
+	  requirements so that contributors contribute under Mozilla too.
+	  Added Developers Certificate of Origin, which developers are to
+	  sign before their work is included.
+
 2004-07-12 11:59  asuraparaju
 
 	* libdirac_common/arrays.h, libdirac_common/band_codec.cpp,
