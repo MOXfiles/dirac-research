@@ -275,22 +275,16 @@ int main (int argc, char* argv[]){
 
 
   /********************************************************************/
-         //next do picture file stuff
 
-           /* ------ open input files & get params -------- */
+        /* ------ open input files & get params -------- */
 
         PicInput myinputpic(input.c_str());
         myinputpic.ReadPicHeader();
 
-          /* ------- open output files and write the header -------- */
-
-        PicOutput myoutputpic(output.c_str(),myinputpic.GetSeqParams());
-        myoutputpic.WritePicHeader();
-
     /********************************************************************/
 
 
-           //set up all the block parameters so we have a self-consistent set
+        //set up all the block parameters so we have a self-consistent set
 
         encparams.SetBlockSizes( bparams , myinputpic.GetSeqParams().CFormat() );
 
@@ -305,6 +299,15 @@ int main (int argc, char* argv[]){
             end_pos = myinputpic.GetSeqParams().Zl()-1;
 
         myinputpic.Skip( start_pos );
+
+         /* ------- open output files and write the header -------- */
+
+        SeqParams out_sparams = myinputpic.GetSeqParams();
+        out_sparams.SetZl( end_pos - start_pos + 1 );
+
+        PicOutput myoutputpic(output.c_str() , out_sparams );
+        myoutputpic.WritePicHeader();
+
 
         SequenceCompressor seq_compressor(&myinputpic,&outfile,encparams);
         seq_compressor.CompressNextFrame();
