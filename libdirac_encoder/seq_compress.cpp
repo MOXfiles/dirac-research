@@ -304,8 +304,9 @@ void SequenceCompressor::MakeSequenceReport()
     std::cerr<<std::endl<<m_encparams.BitsOut().MVBytes() * 8<<" were motion vector data.";
 
     std::cerr<<std::endl<<std::endl<<"The resulting bit-rate at "<<m_pic_in->GetSeqParams().FrameRate()<<"Hz is ";
+
     std::cerr<<m_encparams.BitsOut().SequenceBytes() * 8 * ( m_pic_in->GetSeqParams().FrameRate() )
-                                                         / m_pic_in->GetSeqParams().Zl() <<" bits/sec.";
+                                                         /  m_current_code_fnum <<" bits/sec.";
     std::cerr<<std::endl;
 
 
