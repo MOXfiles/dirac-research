@@ -60,7 +60,7 @@ QualityMonitor::QualityMonitor(EncoderParams& encp,
 void QualityMonitor::ResetAll()
 {
     // set target WPSNRs
- 	m_target_wpsnr[I_frame] = 2.8 * encparams.Qf() +20 ;
+ 	m_target_wpsnr[I_frame] = 0.28 * encparams.Qf()* encparams.Qf() + 20.0 ;
 	m_target_wpsnr[L1_frame] = m_target_wpsnr[I_frame] - 1.5;
 	m_target_wpsnr[L2_frame] = m_target_wpsnr[I_frame] - 2.5;
 
@@ -91,6 +91,8 @@ void QualityMonitor::ResetAll()
         encparams.SetLambda( FrameSort(fsort), m_last_lambda[fsort] );
     }// fsort
 
+    encparams.SetL1MELambda( encparams.L1Lambda()*m_me_ratio );
+    encparams.SetL2MELambda( encparams.L2Lambda()*m_me_ratio );
 }
 
 void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame, float cpd)
@@ -106,8 +108,6 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame,
 	double current_lambda;
 	double current_wpsnr;
 
-	//parameters relating to the internal model
-	double slope, offset;
 
     //set up local parameters for the particular frame type
     current_lambda = encparams.Lambda(fsort);
@@ -131,41 +131,48 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame,
 	//ok, so we've got an actual WPSNR to use. We know the lambda used before and the resulting
 	//WPSNR then allows us to estimate the slope of the curve of WPSNR versus log of lambda
 
-	if ( std::abs(target_wpsnr - current_wpsnr)> 0.2 ) 
-	{//if we can adjust values in a stable way, do so
+	if ( std::abs(current_wpsnr - last_wpsnr)> 0.2 && 
+         std::abs(log10(current_lambda) - log10(last_lambda)) > 0.1 ) 
+	{// if we can adjust model accurately, do so
 
-        if ( std::abs(log10(current_lambda) - log10(last_lambda)) > 0.1 )
-        {
-            // If we can, calculate the slope of WPSNR versus log(lambda) from prior measurements
+        double slope, offset;
 
- 		    slope = (current_wpsnr - last_wpsnr)/( log10(current_lambda) - log10(last_lambda) );
+        // Calculate the slope of WPSNR versus log(lambda) from prior measurements
+ 	    slope = (current_wpsnr - last_wpsnr)/( log10(current_lambda) - log10(last_lambda) );
+ 
+        //Restrict so that the value isn't too extreme
+        slope = std::min( std::max( -10.0 , slope ), -0.1);
 
-  		    //calculate the resulting offset
-		    offset = current_wpsnr - ( log10(current_lambda) * slope );
+  		// Calculate the resulting offset
+		offset = current_wpsnr - ( log10(current_lambda) * slope );
 
-            //update the default values using a simple recursive filter
-            m_slope[fsort] = (9.0*m_slope[fsort] + slope)/10.0;
-            m_offset[fsort] = (9.0*m_offset[fsort] + offset)/10.0;
-            m_slope[fsort] = std::max( std::min(-9.0, m_slope[fsort]), -2.0);
+        // Update the default values using a simple recursive filter
+        m_slope[fsort] = (3.0*m_slope[fsort] + slope)/4.0;
+        m_offset[fsort] = (3.0*m_offset[fsort] + offset)/4.0;
+        m_slope[fsort] = std::min( std::max( -10.0 , m_slope[fsort] ), -0.1);
 
-          }
-        else
-        {// use default values
-            slope = m_slope[fsort];
-        }
+    }
 
-        // Update the lambdas as appropriate 
-        CalcNewLambdas(fsort, slope, current_wpsnr);
+    // If we need to adjust the lambdas, do so
+	if ( std::abs(current_wpsnr - target_wpsnr)> 0.2 )
+	{
+        // Update the lambdas as appropriate
+        float wpsnr_diff = m_target_wpsnr[fsort] - current_wpsnr;
 
-	}
+        CalcNewLambdas(fsort , m_slope[fsort] , wpsnr_diff );
+    }
+
 
 }
 
-void QualityMonitor::CalcNewLambdas(const FrameSort fsort, const double slope, const double actual_wpsnr)
+void QualityMonitor::CalcNewLambdas(const FrameSort fsort, const double slope, const double wpsnr_diff )
 {	
 
-    encparams.SetLambda(fsort, encparams.Lambda(fsort) *
-                        std::pow( (double)10.0, (m_target_wpsnr[fsort] - actual_wpsnr)/slope ) );
+    if ( encparams.Lambda(fsort) <= 1000001.0 && std::abs(wpsnr_diff/slope <2.0) )
+        encparams.SetLambda(fsort, encparams.Lambda(fsort) *
+                            std::pow( (double)10.0, wpsnr_diff/slope ) );
+    else
+        encparams.SetLambda(fsort, 1000000.0);
 
     if (fsort == L1_frame)
 		encparams.SetL1MELambda( encparams.L1Lambda() * m_me_ratio );
