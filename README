@@ -64,11 +64,11 @@ is to type:
 
 In other words, options are prefixed by a dash; some options take values, 
 while others are boolean options that enable specific features. For example:
-When running the encoder, the -qf options requires an numeric argument
+When running the encoder, the -qf options requires a numeric argument
 specifying the "quality factor" for encoding. The -verbose option enables
-detailed output, and does not require an argument.
+detailed output and does not require an argument.
 
-Running any program without argument will display a list of parameters and
+Running any program without arguments will display a list of parameters and
 options.
 
 4.2 File formats
@@ -120,12 +120,13 @@ To generate uncompressed video in a suitable format for encoding with Dirac,
 use the transcode utility (see http://zebra.fh-weingarten.de/~transcode/).
 
   This example uses a 720x576x50 DV source, and transcodes to 720x576 YUV in
-  4:2:0 chroma format.  Note that cascading codecs (DV + Dirac) is a bad idea.
+  4:2:0 chroma format.  Cascading codecs (DV + Dirac) is generally a bad idea
+  - use this only if you don't have any other source of uncompressed video.
 
     transcode -i source.dv -x auto,null --dv_yuy2_mode -k -V -y raw,null -o test.avi
     tcextract -i test.avi -x rgb > test.yuv
 
-    make_header -xl 720 -yl 576 -zl 50 -cformat format420 -framerate 25 -interlace false test
+    make_header -xl 720 -yl 576 -zl 50 -cformat format420 -framerate 25 -interlace true test
 
 
 4.3 Encoding
