@@ -182,8 +182,8 @@ int main (int argc, char* argv[]){
             }
             else if (opt->m_name == "HD720p" || opt->m_name == "HD720")
             {
-                encparams.SetL1Sep(6);
-                encparams.SetNumL1(3);
+                encparams.SetL1Sep(3);
+                encparams.SetNumL1(7);
                 bparams.SetXblen( 16 );
                 bparams.SetYblen( 16 );
                 bparams.SetXbsep( 10 );
