@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS = no-dependencies
 INCLUDES = -I$(top_srcdir)
 
 h_sources = setstdiomode.h bitmap.h

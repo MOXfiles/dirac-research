@@ -1,4 +1,3 @@
-AUTOMAKE_OPTIONS = no-dependencies
 bin_PROGRAMS = dirac_encoder
 
 dirac_encoder_SOURCES = encmain.cpp
