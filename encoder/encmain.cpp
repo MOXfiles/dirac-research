@@ -426,7 +426,7 @@ int main (int argc, char* argv[])
                //an output
     {
         display_help();
-		return (EXIT_SUCCESS);
+        return (EXIT_SUCCESS);
     }
 
    //Now do the options
@@ -688,8 +688,14 @@ int main (int argc, char* argv[])
     {
         outfile.write((char *)encoder->enc_buf.buffer, 
                       encoder->enc_buf.size);
+           std::cout << "The resulting bit-rate at "
+                  << (double)encoder->enc_ctx.seq_params.frame_rate.numerator/
+                      encoder->enc_ctx.seq_params.frame_rate.denominator
+                  << "Hz is " << encoder->enc_seqstats.bit_rate 
+                  << " bits/sec." << std::endl;
     }
 
+    
    WritePicHeader(outhdr, encoder);
    /********************************************************************/
 
