@@ -37,7 +37,6 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include <malloc.h>
 #include <string.h>
 #include <time.h>
 #include <libdirac_common/dirac_assertions.h>
@@ -127,16 +126,16 @@ static void WritePicHeader (dirac_decoder_t *decoder, FILE *fp)
 
 static void FreeFrameBuffer (dirac_decoder_t *decoder)
 {
-	ASSERT (decoder != NULL);
-	if (decoder->fbuf)
-	{
-		for (int i = 0; i < 3; i++)
-		{
-			if (decoder->fbuf->buf[i])
-				free(decoder->fbuf->buf[i]);
-			decoder->fbuf->buf[i] = 0;
-		}
-	}
+    ASSERT (decoder != NULL);
+    if (decoder->fbuf)
+    {
+        for (int i = 0; i < 3; i++)
+        {
+            if (decoder->fbuf->buf[i])
+                free(decoder->fbuf->buf[i]);
+            decoder->fbuf->buf[i] = 0;
+        }
+    }
 }
 
 static void DecodeDirac (const char *iname, const char *oname)
@@ -151,6 +150,7 @@ static void DecodeDirac (const char *iname, const char *oname)
     char infile_name[FILENAME_MAX];
     char outfile_hdr[FILENAME_MAX];
     char outfile_data[FILENAME_MAX];
+    DecoderState state = STATE_BUFFER;
 
     strncpy(infile_name, iname, sizeof(infile_name));
     strcat(infile_name, ".drc");
@@ -191,7 +191,6 @@ static void DecodeDirac (const char *iname, const char *oname)
     start_t=clock();
     do 
     {
-        DecoderState state;
         /* parse the input data */
         state = dirac_parse(decoder);
         
@@ -229,16 +228,16 @@ static void DecodeDirac (const char *iname, const char *oname)
                 decoder->seq_params.interlace ? "yes" : "no");
             }
 
-			FreeFrameBuffer(decoder);
+            FreeFrameBuffer(decoder);
 
-			buf[0] = buf[1] = buf[2] = 0;
+            buf[0] = buf[1] = buf[2] = 0;
 
             buf[0] = (unsigned char *)malloc (decoder->seq_params.width * decoder->seq_params.height);
-			if (decoder->seq_params.chroma != Yonly)
-			{
-            	buf[1] = (unsigned char *)malloc (decoder->seq_params.chroma_width * decoder->seq_params.chroma_height);
-            	buf[2] = (unsigned char *)malloc (decoder->seq_params.chroma_width * decoder->seq_params.chroma_height);
-			}
+            if (decoder->seq_params.chroma != Yonly)
+            {
+                buf[1] = (unsigned char *)malloc (decoder->seq_params.chroma_width * decoder->seq_params.chroma_height);
+                buf[2] = (unsigned char *)malloc (decoder->seq_params.chroma_width * decoder->seq_params.chroma_height);
+            }
             dirac_set_buf (decoder, buf, NULL);
 
             /* write the header file */
@@ -252,8 +251,8 @@ static void DecodeDirac (const char *iname, const char *oname)
             */
             if (verbose)
                 fprintf (stderr, "SEQUENCE_END\n");
-			
-			FreeFrameBuffer(decoder);
+            
+            FreeFrameBuffer(decoder);
             break;
         
         case STATE_PICTURE_START:
@@ -294,12 +293,12 @@ static void DecodeDirac (const char *iname, const char *oname)
         case STATE_INVALID:
             /* Invalid state. Stop all processing */
             fprintf (stderr, "Error processing file %s\n", iname);
-            return;
+            break;
 
         default:
             continue;
         }
-    } while (bytes > 0);
+    } while (bytes > 0 && state != STATE_INVALID);
     stop_t=clock();
 
     fprintf (stderr, "Time per frame: %g\n",
