@@ -52,7 +52,6 @@ AM_INIT_AUTOMAKE($PACKAGE, $VERSION, no-define)
 dnl -----------------------------------------------
 dnl Checks for required programs.
 dnl -----------------------------------------------
-
 AC_PROG_CXX
 AC_PROG_RANLIB
 AM_SANITY_CHECK
@@ -110,17 +109,50 @@ AC_CONFIG_TESTDIR([tests], [tests:picheader:encoder:decoder:unit_tests])
 AC_CONFIG_FILES([tests/Makefile])
 AM_MISSING_PROG([AUTOM4TE], [autom4te])
 
-
 dnl ----------------------------------------------
 dnl enable debug flags
 dnl -----------------------------------------------
-AC_MSG_CHECKING([whether extra debug flags are to used when compiling])
+AC_MSG_CHECKING([whether extra debug flags are to be used when compiling])
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [enable extra debug flags (no)]),
 [
 if test x"${enableval}" = x"yes" ; then
 	AC_MSG_RESULT(yes)
-	CXXFLAGS="-g -O0 -Wall -pedantic -Werror -Woverloaded-virtual"
-	AC_SUBST(CXXFLAGS)
+	CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
+	CXXFLAGS="-DDIRAC_DEBUG -g -O0 $CXXFLAGS"
+	case "$CXX" in
+	    g++)
+		    # report only errors and warnings as errors
+		    CXXFLAGS="$CXXFLAGS -pedantic -Wall -Werror -Woverloaded-virtual"
+		    ;;
+	    icc)
+		    # report only errors and warnings as errors
+		    CXXFLAGS="$CXXFLAGS -w1 -Werror" 
+		    ;;
+        *)
+		    # do nothing at the moment
+			;;
+    esac
+else
+	AC_MSG_RESULT(no)
+fi], [AC_MSG_RESULT(no)]
+)
+
+dnl ----------------------------------------------
+dnl enable profiling flags
+dnl -----------------------------------------------
+AC_MSG_CHECKING([whether gprof flags are to be used when compiling])
+AC_ARG_ENABLE(profile, AC_HELP_STRING([--enable-profile], [enable profile flags (no)]),
+[
+if test x"${enableval}" = x"yes" ; then
+	AC_MSG_RESULT(yes)
+	case "$CXX" in
+	    g++|icc)
+	        CXXFLAGS="$CXXFLAGS -pg"
+			;;
+        *)
+		    # do nothing
+			;;
+    esac
 else
 	AC_MSG_RESULT(no)
 fi], [AC_MSG_RESULT(no)]
