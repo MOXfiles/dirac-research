@@ -148,6 +148,9 @@ void Overlay::DoOverlay(const MEData & me_data)
     // create poitner to DrawOverlay object
     DrawOverlay * draw_overlay_ptr;
 
+    MvArray mv_diff( me_data.Vectors(m_oparams.Reference()).LengthY(),
+                     me_data.Vectors(m_oparams.Reference()).LengthX());
+
     // choose appropriate object dependent on command line option
     switch (m_oparams.Option())
     {
@@ -179,6 +182,68 @@ void Overlay::DoOverlay(const MEData & me_data)
 
         case pred_mode :
             draw_overlay_ptr = new DrawPredMode(m_frame, m_draw_params, me_data.Mode());
+            break;
+
+        case gm_arrows :
+            draw_overlay_ptr = new DrawMotionArrows(m_frame,
+                                                    m_draw_params,
+                                                    me_data.GlobalMotionVectors(m_oparams.Reference()),
+                                                    m_mv_scale);
+            break;
+
+        case gm_colour_arrows :
+            draw_overlay_ptr = new DrawMotionColourArrows(m_frame,
+                                                          m_draw_params,
+                                                          me_data.GlobalMotionVectors(m_oparams.Reference()),
+                                                          m_mv_scale,
+                                                          m_oparams.MvClip());
+            break;
+
+        case gm_colour :
+            draw_overlay_ptr = new DrawMotionColour(m_frame,
+                                                    m_draw_params,
+                                                    me_data.GlobalMotionVectors(m_oparams.Reference()),
+                                                    m_mv_scale,
+                                                    m_oparams.MvClip());
+
+            break;
+
+        case gm_diff_arrows :
+            
+            GlobalMotionDifference( me_data, mv_diff );
+            
+            draw_overlay_ptr = new DrawMotionArrows(m_frame,
+                                                    m_draw_params,
+                                                    mv_diff,
+                                                    m_mv_scale);
+            break;
+
+        case gm_diff_colour_arrows :
+
+            GlobalMotionDifference( me_data, mv_diff );
+            
+            draw_overlay_ptr = new DrawMotionColourArrows(m_frame,
+                                                          m_draw_params,
+                                                          mv_diff,
+                                                          m_mv_scale,
+                                                          m_oparams.MvClip());
+            break;
+
+        case gm_diff_colour :
+
+            GlobalMotionDifference( me_data, mv_diff );
+            
+            draw_overlay_ptr = new DrawMotionColour(m_frame,
+                                                    m_draw_params,
+                                                    mv_diff,
+                                                    m_mv_scale,
+                                                    m_oparams.MvClip());
+
+            break;
+
+        case gm_inliers :
+            draw_overlay_ptr = new DrawGMInliers(m_frame, m_draw_params, me_data.GlobalMotionInliers(m_oparams.Reference()));
+            
             break;
     }
     
@@ -317,5 +382,21 @@ void Overlay::PadFrame(const MEData & me_data)
         }
 
     }
+
+}
+
+void Overlay::GlobalMotionDifference(const MEData & me_data, MvArray & mv_diff)
+{
+    for (int y=0; y<mv_diff.LengthY(); ++y)
+    {
+        for (int x=0; x<mv_diff.LengthX(); ++x)
+        {
+            mv_diff[y][x].x = me_data.Vectors(m_oparams.Reference())[y][x].x
+                              - me_data.GlobalMotionVectors(m_oparams.Reference())[y][x].x;
+            mv_diff[y][x].y = me_data.Vectors(m_oparams.Reference())[y][x].y
+                              - me_data.GlobalMotionVectors(m_oparams.Reference())[y][x].y;
+        }
+    }
+
 
 }

@@ -49,12 +49,15 @@
 #include <util/instrumentation/libdirac_instrument/split_mode.h>
 #include <util/instrumentation/libdirac_instrument/pred_mode.h>
 #include <util/instrumentation/libdirac_instrument/overlay_symbols.h>
+#include <util/instrumentation/libdirac_instrument/gm_inliers.h>
 
 //! Enumeration of options for instrumentation overlay
 enum OverlayOption
 {
-    motion_arrows, motion_colour, motion_colour_arrows, split_mode, SAD, pred_mode
-    //global_motion_arrows, global_motion_colour, global_motion_colour_arrows, global_motion_difference
+    motion_arrows, motion_colour, motion_colour_arrows,
+    gm_arrows, gm_colour, gm_colour_arrows,
+    gm_diff_arrows, gm_diff_colour, gm_diff_colour_arrows,
+    gm_inliers, split_mode, SAD, pred_mode
 };
 
 //! Class holding instrumentation overlay information
@@ -168,6 +171,9 @@ private:
         macroblock (and motion vector block) size to be calculated
     */
     void PadFrame(const MEData &);
+
+    //! Remove global motion from block motion
+    void GlobalMotionDifference(const MEData &, MvArray &);
 
     //! Temporal scaling factor for motion vectors
     int m_mv_scale;

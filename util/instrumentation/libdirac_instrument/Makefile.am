@@ -1,8 +1,8 @@
 INCLUDES = -I$(top_srcdir) -I$(srcdir)
 
-h_sources = overlay.h draw_overlay.h motion_colour.h motion_arrows.h motion_colour_arrows.h sad.h pred_mode.h split_mode.h overlay_symbols.h
+h_sources = overlay.h draw_overlay.h motion_colour.h motion_arrows.h motion_colour_arrows.h sad.h pred_mode.h split_mode.h overlay_symbols.h gm_inliers.h
 
-cpp_sources = overlay.cpp draw_overlay.cpp motion_colour.cpp motion_arrows.cpp motion_colour_arrows.cpp sad.cpp pred_mode.cpp split_mode.cpp overlay_symbols.cpp
+cpp_sources = overlay.cpp draw_overlay.cpp motion_colour.cpp motion_arrows.cpp motion_colour_arrows.cpp sad.cpp pred_mode.cpp split_mode.cpp overlay_symbols.cpp gm_inliers.cpp
 
 lib_LIBRARIES = libdirac_instrument.a
 

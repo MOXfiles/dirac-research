@@ -62,10 +62,13 @@ static void DisplayHelp()
     cout << "\nsplit_mode           bool    I  false         Display macroblock splitting mode";
     cout << "\nsad                  bool    I  false         Display block SAD values";
     cout << "\npred_mode            bool    I  false         Display block prediction mode";
+    cout << "\nglobal_inliers       bool    I  false         Display global motion inlier mask";
     cout << "\n";
     cout << "\nno_bg                bool    I  false         Display over grey background";
     cout << "\nno_legend            bool    I  false         Do not display colour legend";
     cout << "\n";
+    cout << "\nglobal               bool    I  false         Display global motion";
+    cout << "\nglobal_diff          bool    I  false         Display global motion error";    
     cout << "\nclip                 int     I  25 / 10000    Clip for max value motion vector / SAD overlays";
     cout << "\nref                  int     I  1             Reference frame";
     cout << "\nstart                int     I  0             Frame number at which process starts";
@@ -104,7 +107,10 @@ int main (int argc, char* argv[])
     bool_opts.insert("split_mode");
     bool_opts.insert("sad");
     bool_opts.insert("pred_mode");    
-
+    bool_opts.insert("global");
+    bool_opts.insert("global_diff");
+    bool_opts.insert("global_inliers");
+    
     // parse command line options
     CommandLine args(argc,argv,bool_opts);
 
@@ -143,9 +149,6 @@ int main (int argc, char* argv[])
             else if (opt->m_name == "motion_colour")
                 oparams.SetOption(motion_colour);
 
-            else if (opt->m_name == "motion_arrows")
-                oparams.SetOption(motion_arrows);
-
             else if (opt->m_name == "split_mode")
                 oparams.SetOption(split_mode);
 
@@ -155,6 +158,9 @@ int main (int argc, char* argv[])
             else if (opt->m_name == "pred_mode")
                 oparams.SetOption(pred_mode);
 
+            else if (opt->m_name == "global_inliers")
+                oparams.SetOption(gm_inliers);
+
             if (opt->m_name == "no_bg")
                 oparams.SetBackground(false);
 
@@ -163,6 +169,34 @@ int main (int argc, char* argv[])
 
             if (opt->m_name == "verbose")
                 verbose = true;
+
+            if (opt->m_name == "global")
+            {
+                if (oparams.Option() == motion_arrows)
+                    oparams.SetOption(gm_arrows);
+                    
+                if (oparams.Option() == motion_colour_arrows)
+                    oparams.SetOption(gm_colour_arrows);
+                    
+                if (oparams.Option() == motion_colour)
+                    oparams.SetOption(gm_colour);
+            }
+            
+            if (opt->m_name == "global_diff")
+            {
+                if (oparams.Option() == motion_arrows
+                    || oparams.Option() == gm_arrows)
+                    oparams.SetOption(gm_diff_arrows);
+                    
+                if (oparams.Option() == motion_colour_arrows
+                    || oparams.Option() == gm_colour_arrows)
+                    oparams.SetOption(gm_diff_colour_arrows);
+                    
+                if (oparams.Option() == motion_colour
+                    || oparams.Option() == gm_colour)
+                    oparams.SetOption(gm_diff_colour);
+            }
+            
         }
 
         // parameters
