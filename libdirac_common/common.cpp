@@ -39,6 +39,7 @@
 
 #include <libdirac_common/common.h>
 #include <algorithm>
+using namespace dirac;
 
 
 //PicArray functions
@@ -156,6 +157,8 @@ OLBParams::OLBParams(const int xblen, int const yblen, int const xbsep, int cons
     m_yoffset( (yblen-ybsep)/2 )
 {}
 
+namespace dirac
+{
 std::ostream & operator<< (std::ostream & stream, OLBParams & params)
 {
     stream << params.Ybsep() << " " << params.Xbsep();
@@ -181,6 +184,8 @@ std::istream & operator>> (std::istream & stream, OLBParams & params)
 //     params.SetXblen(temp);
     
     return stream;
+}
+
 }
 
 // Codec params functions
@@ -231,19 +236,24 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
 
     m_lbparams[2] = olbparams;
     
-    //check the separations aren't too small
+    // Check the separations aren't too small
     m_lbparams[2].SetXbsep( std::max(m_lbparams[2].Xbsep() , 4) );
     m_lbparams[2].SetYbsep( std::max(m_lbparams[2].Ybsep() , 4) );
+
+    // Check the lengths aren't too big (100% is max roll-off)
+    m_lbparams[2].SetXblen( std::min(m_lbparams[2].Xbsep()*2 , m_lbparams[2].Xblen()) );
+    m_lbparams[2].SetYblen( std::min(m_lbparams[2].Ybsep()*2 , m_lbparams[2].Yblen()) );
     
-    //check there's sufficient overlap    
+    // Check overlap is divisible by 2
+    if (( m_lbparams[2].Xblen() - m_lbparams[2].Xbsep() )%2 != 0)
+        m_lbparams[2].SetXblen( m_lbparams[2].Xblen()-1 );
+    if (( m_lbparams[2].Yblen() - m_lbparams[2].Ybsep() )%2 != 0)
+        m_lbparams[2].SetYblen( m_lbparams[2].Yblen()-1 );
+
+    // Check there's now sufficient overlap  
     m_lbparams[2].SetXblen( std::max(m_lbparams[2].Xbsep()+2 , m_lbparams[2].Xblen()) );
     m_lbparams[2].SetYblen( std::max(m_lbparams[2].Ybsep()+2 , m_lbparams[2].Yblen()) );
-    
-    //check overlap is divisible by 2
-    if (( m_lbparams[2].Xblen() - m_lbparams[2].Xbsep() )%2 != 0)
-        m_lbparams[2].SetXblen( m_lbparams[2].Xblen()+1 );
-    if (( m_lbparams[2].Yblen() - m_lbparams[2].Ybsep() )%2 != 0)
-        m_lbparams[2].SetYblen( m_lbparams[2].Yblen()+1 );
+
 
     // If the overlapped blocks don't work for the chroma format, we have to iterate
     if ( (m_lbparams[2].Xbsep()%xcfactor != 0) || (m_lbparams[2].Ybsep()%ycfactor != 0) )
@@ -344,13 +354,49 @@ void EncoderParams::SetLambda(const FrameSort& fsort, const float l)
 SeqParams::SeqParams():
     m_xl(0),
     m_yl(0),
-    m_zl(0),
     m_cformat(format422),
     m_interlace(false),
     m_topfieldfirst(true),
     m_framerate(12)
 {}
 
+int SeqParams::ChromaWidth() const
+{
+    switch (m_cformat)
+    {
+    case Yonly:
+        return 0;
+    case format411:
+        return m_xl/4;
+
+    case format420:
+    case format422:
+        return m_xl/2;
+
+    case format444:
+    default:
+        return m_xl;
+    }
+}
+
+int SeqParams::ChromaHeight() const
+{
+    switch (m_cformat)
+    {
+    case Yonly:
+        return 0;
+        return m_yl;
+
+    case format420:
+        return m_yl/2;
+
+    case format422:
+    case format444:
+    case format411:
+    default:
+        return m_yl;
+    }
+}
 //FrameParams functions
 
 // Default constructor
