@@ -529,65 +529,54 @@ void WaveletTransform::SetBandWeights (const float cpd,
         // (should really relate this to the frame rate)
         band_list( band_list.Length() ).SetWt(band_list(13).Wt()/6.0);
 
-         //make sure dc is always the lowest weight
-         float min_weight=band_list(band_list.Length()).Wt();
-         for(int I=1;I<=band_list.Length()-1;I++ )
-         {
-             min_weight = ((min_weight>band_list(I).Wt()) ? band_list(I).Wt() : min_weight);
-         }        
-         band_list(band_list.Length()).SetWt(min_weight);
+        //make sure dc is always the lowest weight
+        float min_weight=band_list(band_list.Length()).Wt();
+        for(int I=1;I<=band_list.Length()-1;I++ )
+            min_weight = ((min_weight>band_list(I).Wt()) ? band_list(I).Wt() : min_weight);
+        band_list(band_list.Length()).SetWt(min_weight);
 
-         //now normalize weights so that white noise is always weighted the same
+        // now normalize weights so that white noise is always weighted the same
 
-          //overall factor to ensure that white noise ends up with the same RMS, whatever the weight
-          double overall_factor=0.0;
-          //fraction of the total number of samples belonging to each subband
-          double subband_fraction;    
+        // overall factor to ensure that white noise ends up with the same RMS, whatever the weight
+        double overall_factor=0.0;
+        // fraction of the total number of samples belonging to each subband
+        double subband_fraction;    
 
-          for( int i=1 ; i<=band_list.Length() ; i++ )
-          {
-              subband_fraction = 1.0/((double) band_list(i).Scale() * band_list(i).Scale());
-              overall_factor += subband_fraction/( band_list(i).Wt() * band_list(i).Wt() );
-          }
-          overall_factor = std::sqrt( overall_factor );
+        for( int i=1 ; i<=band_list.Length() ; i++ )
+        {
+            subband_fraction = 1.0/((double) band_list(i).Scale() * band_list(i).Scale());
+            overall_factor += subband_fraction/( band_list(i).Wt() * band_list(i).Wt() );
+        }
+        overall_factor = std::sqrt( overall_factor );
 
         //go through and normalise
 
-        for( int i=13 ; i>0 ; i-- )
-        {
+        for( int i=band_list.Length() ; i>0 ; i-- )
             band_list(i).SetWt( band_list(i).Wt() * overall_factor);
-        }    
 
     }
     else
     {//cpd=0 so set all weights to 1
         for( int i=1 ; i<=band_list.Length() ; i++ )
-        {
             band_list(i).SetWt(1.0);        
-        }    
     }
 
     //Finally, adjust to compensate for the absence of scaling in the transform
     //Factor used to compensate:
     const double alpha(1.149658203);    
-    for ( int i=1 ; i<band_list.Length() ; ++i )
+    for ( int i=1 ; i<=band_list.Length() ; ++i )
     {
         depth=band_list(i).Depth();
 
         if ( band_list(i).Xp() == 0 && band_list(i).Yp() == 0)
-        {
             temp=std::pow(alpha,2*depth);
-        } 
         else if ( band_list(i).Xp() != 0 && band_list(i).Yp() != 0)
-        {
             temp=std::pow(alpha,2*(depth-2));
-        }
-        else {
+        else
             temp=std::pow(alpha,2*(depth-1));
-        }
 
         band_list(i).SetWt(band_list(i).Wt()/temp);
 
-    }//I        
+    }// i        
 
 }    
