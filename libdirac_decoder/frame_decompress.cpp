@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author), 
+*                 Scott R Ladd
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -39,6 +41,7 @@
 //Decompression of frames
 /////////////////////////
 
+#include <libdirac_common/dirac_assertions.h>
 #include <libdirac_common/bit_manager.h>
 #include <libdirac_decoder/frame_decompress.h>
 #include <libdirac_decoder/comp_decompress.h>
@@ -53,150 +56,169 @@ using std::vector;
 FrameDecompressor::FrameDecompressor(DecoderParams& decp, ChromaFormat cf)
 : 
 m_decparams(decp),
-m_cformat(cf)
+m_cformat(cf),
+m_fparams(0)
 {}
+
+FrameDecompressor::~FrameDecompressor()
+{
+    delete m_fparams;
+}
+
+bool FrameDecompressor::ReadFrameHeader(const FrameBuffer& my_buffer)
+{
+    m_fparams = new FrameParams (m_cformat , my_buffer.GetFParams().Xl(), my_buffer.GetFParams().Yl());
+     //Get the frame header (which includes the frame number)
+    m_read_header = ReadFrameHeader(*m_fparams);
+    return m_read_header;
+}
 
 bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 {
 
-	FrameParams fparams( m_cformat , my_buffer.GetFParams().Xl() , my_buffer.GetFParams().Yl() );
 
- 	//Get the frame header (which includes the frame number)
-	bool header_success=ReadFrameHeader(fparams);
+    if ( !(m_decparams.BitsIn().End())&& m_read_header )
+    {//if we've not finished the data, can proceed
+        ASSERT (my_buffer.GetFParams().Xl() == m_fparams->Xl());
+        ASSERT (my_buffer.GetFParams().Yl() == m_fparams->Yl());
 
-	if ( !(m_decparams.BitsIn().End()) && header_success )
-	{//if we've not finished the data, can proceed
+        if ( !m_skipped )
+        {//if we're not m_skipped then we can decode the rest of the frame
 
-		if ( !m_skipped )
-		{//if we're not m_skipped then we can decode the rest of the frame
+            if ( m_decparams.Verbose() )
+                std::cerr<<std::endl<<"Decoding frame "<<m_fparams->FrameNum()<<" in display order";        
 
-			if ( m_decparams.Verbose() )
-				std::cerr<<std::endl<<"Decoding frame "<<fparams.FrameNum()<<" in display order";		
+             //Add a frame into the buffer ready to receive the data        
+            my_buffer.PushFrame(*m_fparams);
+            Frame& my_frame = my_buffer.GetFrame(m_fparams->FrameNum());//Reference to the frame being decoded
+            FrameSort fsort = m_fparams->FSort();
+            MvData* mv_data;
+            unsigned int num_mv_bits;
 
- 			//Add a frame into the buffer ready to receive the data		
-			my_buffer.PushFrame(fparams);
-			Frame& my_frame = my_buffer.GetFrame(fparams.FrameNum());//Reference to the frame being decoded
-			FrameSort fsort = fparams.FSort();
-			MvData* mv_data;
-			unsigned int num_mv_bits;
+            if ( fsort != I_frame )
+            {//do all the MV stuff        
+                mv_data = new MvData( m_decparams.XNumMB() , m_decparams.YNumMB() );
 
-			if ( fsort != I_frame )
-			{//do all the MV stuff		
-				mv_data = new MvData( m_decparams.XNumMB() , m_decparams.YNumMB() );
+                 //decode mv data
+                if (m_decparams.Verbose())
+                    std::cerr<<std::endl<<"Decoding motion data ...";        
+                MvDataCodec my_mv_decoder( &m_decparams.BitsIn(), 50 , m_cformat );
+                my_mv_decoder.InitContexts();//may not be necessary
+                num_mv_bits = UnsignedGolombDecode( m_decparams.BitsIn() );
 
- 				//decode mv data
-				if (m_decparams.Verbose())
-					std::cerr<<std::endl<<"Decoding motion data ...";		
-				MvDataCodec my_mv_decoder( &m_decparams.BitsIn(), 50 , m_cformat );
-				my_mv_decoder.InitContexts();//may not be necessary
-				num_mv_bits = UnsignedGolombDecode( m_decparams.BitsIn() );
+                 //Flush to the end of the header for the MV bits            
+                m_decparams.BitsIn().FlushInput();
 
- 				//Flush to the end of the header for the MV bits			
-				m_decparams.BitsIn().FlushInput();
+                 //Decompress the MV bits
+                my_mv_decoder.Decompress( *mv_data , num_mv_bits );                
+            }
 
- 				//Decompress the MV bits
-				my_mv_decoder.Decompress( *mv_data , num_mv_bits );				
-			}
+               //decode components
+            CompDecompress( my_buffer,m_fparams->FrameNum() , Y_COMP );
+            if ( m_fparams->CFormat() != Yonly )
+            {
+                CompDecompress( my_buffer , m_fparams->FrameNum() , U_COMP );        
+                CompDecompress( my_buffer , m_fparams->FrameNum() , V_COMP );
+            }
 
- 	 	 	//decode components
-			CompDecompress( my_buffer,fparams.FrameNum() , Y_COMP );
-			if ( fparams.CFormat() != Yonly )
-			{
-				CompDecompress( my_buffer , fparams.FrameNum() , U_COMP );		
-				CompDecompress( my_buffer , fparams.FrameNum() , V_COMP );
-			}
+            if ( fsort != I_frame )
+            {//motion compensate to add the data back in if we don't have an I frame
+                MotionCompensator mycomp(m_decparams);
+                mycomp.SetCompensationMode(ADD);
+                mycomp.CompensateFrame(my_buffer , m_fparams->FrameNum() , *mv_data);        
+                delete mv_data;    
+            }
+            my_frame.Clip();
 
-			if ( fsort != I_frame )
-			{//motion compensate to add the data back in if we don't have an I frame
-				MotionCompensator mycomp(m_decparams);
-				mycomp.SetCompensationMode(ADD);
-				mycomp.CompensateFrame(my_buffer , fparams.FrameNum() , *mv_data);		
-				delete mv_data;	
-			}
-			my_frame.Clip();
+            if (m_decparams.Verbose())
+                std::cerr<<std::endl;        
 
-			if (m_decparams.Verbose())
-				std::cerr<<std::endl;		
+        }//?m_skipped,!End()
+        else if (m_skipped){
+         //TBD: decide what to return if we're m_skipped. Nearest frame in temporal order??    
 
-		}//?m_skipped,!End()
-		else if (m_skipped){
- 		//TBD: decide what to return if we're m_skipped. Nearest frame in temporal order??	
+        }
 
-		}
-
- 		//exit success
-		return true;
-	}
- 	//exit failure
-	return false;
+        m_read_header = false;
+         //exit success
+        return true;
+    }
+     //exit failure
+    return false;
 }
 
 void FrameDecompressor::CompDecompress(FrameBuffer& my_buffer, int fnum,CompSort cs)
 {
-	if ( m_decparams.Verbose() )
-		std::cerr<<std::endl<<"Decoding component data ...";
-	CompDecompressor my_compdecoder( m_decparams , my_buffer.GetFrame(fnum).GetFparams() );	
-	PicArray& comp_data=my_buffer.GetComponent( fnum , cs );
-	my_compdecoder.Decompress( comp_data );
+    if ( m_decparams.Verbose() )
+        std::cerr<<std::endl<<"Decoding component data ...";
+    CompDecompressor my_compdecoder( m_decparams , my_buffer.GetFrame(fnum).GetFparams() );    
+    PicArray& comp_data=my_buffer.GetComponent( fnum , cs );
+    my_compdecoder.Decompress( comp_data );
 }
 
 bool FrameDecompressor::ReadFrameHeader( FrameParams& fparams )
 {
 
-	if ( !m_decparams.BitsIn().End() )
-	{
- 		//read the frame number
-		int temp_int;
-		m_decparams.BitsIn().InputBytes((char*) &temp_int,4);
-		fparams.SetFrameNum(temp_int);
+    if ( !m_decparams.BitsIn().End() )
+    {
+        char frame_start[5];
+        for (int i=0;i<5;++i)
+        {
+            frame_start[i]=m_decparams.BitsIn().InputByte();    
+        }
+         //read the frame number
+        int temp_int;
 
-     	//read whether the frame is m_skipped or not
-		m_skipped=m_decparams.BitsIn().InputBit();
+        temp_int = (int)UnsignedGolombDecode( m_decparams.BitsIn() );
+        fparams.SetFrameNum(temp_int);
 
-		if (!m_skipped)
-		{
+         //read whether the frame is m_skipped or not
+        m_skipped=m_decparams.BitsIn().InputBit();
+
+        if (!m_skipped)
+        {
 
              //read the expiry time relative to the frame number
-			fparams.SetExpiryTime( int( UnsignedGolombDecode( m_decparams.BitsIn() ) ) );
+            fparams.SetExpiryTime( int( UnsignedGolombDecode( m_decparams.BitsIn() ) ) );
 
-         	//read the frame sort
-			fparams.SetFSort( FrameSort( UnsignedGolombDecode( m_decparams.BitsIn() ) ) );
+             //read the frame sort
+            fparams.SetFSort( FrameSort( UnsignedGolombDecode( m_decparams.BitsIn() ) ) );
 
-			if ( fparams.FSort() != I_frame ){
+            if ( fparams.FSort() != I_frame ){
 
- 				//if not an I-frame, read how many references there are
-				fparams.Refs().clear();
-				fparams.Refs().resize( UnsignedGolombDecode( m_decparams.BitsIn() ) );
+                 //if not an I-frame, read how many references there are
+                fparams.Refs().clear();
+                fparams.Refs().resize( UnsignedGolombDecode( m_decparams.BitsIn() ) );
 
-             	//for each reference, read the reference numbers
-				for ( size_t I = 0 ; I < fparams.Refs().size() ; ++I )
-				{
-					fparams.Refs()[I] = fparams.FrameNum() + GolombDecode( m_decparams.BitsIn() );
-				}//I
+                 //for each reference, read the reference numbers
+                for ( size_t I = 0 ; I < fparams.Refs().size() ; ++I )
+                {
+                    fparams.Refs()[I] = fparams.FrameNum() + GolombDecode( m_decparams.BitsIn() );
+                }//I
 
- 				//determine whether or not there is global motion vector data
-				m_use_global= m_decparams.BitsIn().InputBit();
+                 //determine whether or not there is global motion vector data
+                m_use_global= m_decparams.BitsIn().InputBit();
 
                  //determine whether or not there is block motion vector data
-				m_use_block_mv= m_decparams.BitsIn().InputBit();
+                m_use_block_mv= m_decparams.BitsIn().InputBit();
 
                  //if there is global but no block motion vector data, determine the prediction mode to use
- 				//for the whole frame
-				if ( m_use_global && !m_use_block_mv )
-					m_global_pred_mode= PredMode(UnsignedGolombDecode( m_decparams.BitsIn() ));
+                 //for the whole frame
+                if ( m_use_global && !m_use_block_mv )
+                    m_global_pred_mode= PredMode(UnsignedGolombDecode( m_decparams.BitsIn() ));
 
-			}//?is not an I frame
-		}//?m_skipped
+            }//?is not an I frame
+        }//?m_skipped
 
- 		//flush the header
-		m_decparams.BitsIn().FlushInput();
+         //flush the header
+        m_decparams.BitsIn().FlushInput();
 
- 		//exit success
-		return true;
-	}//?m_decparams.BitsIn().End()
-	else
-	{
- 		//exit failure	
-		return false;
-	}
+         //exit success
+        return true;
+    }//?m_decparams.BitsIn().End()
+    else
+    {
+         //exit failure    
+        return false;
+    }
 }

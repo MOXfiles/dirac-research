@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author),
+*                 Scott R Ladd,
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -56,60 +58,82 @@ public:
         the decompression process. It decodes motion data before decoding each
         component of the frame. 
 
-        \param  decp	decoder parameters
-		\param  cf		the chroma format of the frame being decompressed
+        \param  decp    decoder parameters
+        \param  cf      the chroma format of the frame being decompressed
     */
-	FrameDecompressor(DecoderParams& decp, ChromaFormat cf);
+    FrameDecompressor(DecoderParams& decp, ChromaFormat cf);
+
+    //! Destructor
+    /*!
+        Releases resources. 
+    */
+    ~FrameDecompressor();
 
     //! Decompress the next frame into the buffer
     /*!
         Decompresses the next frame from the stream and place at the end of a frame buffer.
-		Returns true if able to decode successfully, false otherwise
+        Returns true if able to decode successfully, false otherwise
 
         \param my_buffer   picture buffer into which the frame is placed
     */
-	bool Decompress(FrameBuffer& my_buffer);
+    bool Decompress(FrameBuffer& my_buffer);
+
+    //! Reads the header data
+    /*!
+        Reads the header data associated with decompressing the frame
+        \param my_buffer picture buffer from which frame dimensions are obtained
+    */
+    bool ReadFrameHeader(const FrameBuffer& my_buffer);
+
+    //! Returns the frame parameters of the current frame being decoded
+    const FrameParams& GetFrameParams() const{ return *m_fparams; }
 
 private:
-	//! Copy constructor is private and body-less
-	/*!
-		Copy constructor is private and body-less. This class should not be copied.
+    //! Copy constructor is private and body-less
+    /*!
+        Copy constructor is private and body-less. This class should not be copied.
 
-	*/
-	FrameDecompressor(const FrameDecompressor& cpy);
+    */
+    FrameDecompressor(const FrameDecompressor& cpy);
 
-	//! Assignment = is private and body-less
-	/*!
-		Assignment = is private and body-less. This class should not be assigned.
+    //! Assignment = is private and body-less
+    /*!
+        Assignment = is private and body-less. This class should not be assigned.
 
-	*/
-	FrameDecompressor& operator=(const FrameDecompressor& rhs);
+    */
+    FrameDecompressor& operator=(const FrameDecompressor& rhs);
 
-	//! Decodes component data	
-	void CompDecompress(FrameBuffer& my_buffer,int fnum, CompSort cs);
+    //! Decodes component data    
+    void CompDecompress(FrameBuffer& my_buffer,int fnum, CompSort cs);
 
-	//! Reads the header data associated with decompressing the frame
-	bool ReadFrameHeader(FrameParams& fparams);	//read the frame header data
+    //! Reads the header data associated with decompressing the frame
+    bool ReadFrameHeader(FrameParams& fparams);    //read the frame header data
 
-	//Member variables	
+    //Member variables    
 
-	//! Parameters for the decompression, as provided in constructor
-	DecoderParams& m_decparams;
+    //! Parameters for the decompression, as provided in constructor
+    DecoderParams& m_decparams;
 
-	//! Chroma format of the frame being decompressed
-	ChromaFormat m_cformat;
+    //! Chroma format of the frame being decompressed
+    ChromaFormat m_cformat;
 
-	//! An indicator which is true if the frame has been skipped, false otherwise
-	bool m_skipped;
+    //! An indicator which is true if the frame has been skipped, false otherwise
+    bool m_skipped;
 
-	//! An indicator that is true if we use global motion vectors, false otherwise
-	bool m_use_global;
+    //! An indicator that is true if we use global motion vectors, false otherwise
+    bool m_use_global;
 
-	//! An indicator that is true if we use block motion vectors, false otherwise
-	bool m_use_block_mv;
+    //! An indicator that is true if we use block motion vectors, false otherwise
+    bool m_use_block_mv;
 
-	//! Prediction mode to use if we only have global motion vectors
-	PredMode m_global_pred_mode;
+    //! Prediction mode to use if we only have global motion vectors
+    PredMode m_global_pred_mode;
+
+    //! Current Frame Parameters
+    FrameParams *m_fparams;
+
+    //! Read header successfully
+    bool m_read_header;
 
 };
 
