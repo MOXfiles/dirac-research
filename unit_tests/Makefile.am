@@ -10,6 +10,10 @@ dirac_unittest_SOURCES = utmain.cpp \
                          cppunit_testsuite.cpp \
 						 arrays_test.h \
 						 arrays_test.cpp \
+						 frames_test.h \
+						 frames_test.cpp \
+						 motion_comp_test.h \
+						 motion_comp_test.cpp \
                          wavelet_utils_test.h \
                          wavelet_utils_test.cpp
 if USE_MSVC
