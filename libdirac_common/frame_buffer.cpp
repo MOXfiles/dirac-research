@@ -37,6 +37,7 @@
 
 #include <libdirac_common/frame_buffer.h>
 #include <algorithm>
+using namespace dirac;
 
 //Simple constructor for general operation
 FrameBuffer::FrameBuffer(ChromaFormat cf,int xlen,int ylen): 
@@ -265,7 +266,7 @@ void FrameBuffer::PushFrame( const Frame& frame )
     m_fnum_map.insert(tmp_pair);
 }
 
-void FrameBuffer::PushFrame(PicInput* picin,const FrameParams& fp)
+void FrameBuffer::PushFrame(StreamPicInput* picin,const FrameParams& fp)
 {
     //Read a frame onto the top of the stack
 
@@ -273,7 +274,7 @@ void FrameBuffer::PushFrame(PicInput* picin,const FrameParams& fp)
     picin->ReadNextFrame( *(m_frame_data[m_frame_data.size()-1]) );
 }
 
-void FrameBuffer::PushFrame(PicInput* picin, unsigned int fnum)
+void FrameBuffer::PushFrame(StreamPicInput* picin, unsigned int fnum)
 {
    //Read a frame onto the top of the stack    
     SetFrameParams( fnum );
