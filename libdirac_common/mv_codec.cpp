@@ -45,7 +45,7 @@ using namespace dirac;
 MvDataCodec::MvDataCodec(BasicOutputManager* bits_out,
                          size_t number_of_contexts,
                          const ChromaFormat& cf)
-  : RangeCodec <MvData> (bits_out,number_of_contexts),
+  : ArithCodec <MvData> (bits_out,number_of_contexts),
     m_MB_count( 0 ),
     m_reset_num( 32 ),
     m_cformat(cf)
@@ -55,7 +55,7 @@ MvDataCodec::MvDataCodec(BasicOutputManager* bits_out,
 MvDataCodec::MvDataCodec(BitInputManager* bits_in,
                          size_t number_of_contexts,
                          const ChromaFormat& cf)
-  : RangeCodec <MvData> (bits_in,number_of_contexts),
+  : ArithCodec <MvData> (bits_in,number_of_contexts),
     m_MB_count( 0 ),
     m_reset_num( 32 ),
 	m_cformat(cf)
