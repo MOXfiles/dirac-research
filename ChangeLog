@@ -1,49 +1,394 @@
-2004-06-30 17:44 asuraparaju
+2004-07-06 12:26  asuraparaju
 
-   Included a coding style guidelines sub-section (Coding Style) in 
-   README.developers under the section 'Software Practices'. This
-   sub-section describes the coding guidelines for developers and is to be used
-   as a reference by developers while writing code and while peer-reviewing 
-   code.
+	* Makefile.am, README, encoder/encmain.cpp,
+	  libdirac_common/arith_codec.h, libdirac_common/common.cpp,
+	  libdirac_common/common.h, libdirac_common/frame.cpp,
+	  libdirac_common/frame_buffer.cpp, libdirac_common/frame_buffer.h,
+	  libdirac_common/mot_comp.cpp, libdirac_common/motion.cpp,
+	  libdirac_common/motion.h, libdirac_common/pic_io.cpp,
+	  libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/frame_decompress.h,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_encoder/Makefile.am, libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/quality_monitor.cpp,
+	  libdirac_encoder/quality_monitor.h,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_subpel.cpp,
+	  libdirac_motionest/me_utils.cpp,
+	  libdirac_motionest/motion_estimate.cpp, tests/colourbars.at:
+	  README: Removed discussion of Iqf, L1qf and L2qf. Added text
+	  explaining constant- quality encoding using -qf.
 
-   Removed the following CVS tags from all files
-   Author
-   Log
-   Revision
+	  Makefile.am: Changed order of make, so that utilities can use the
+	  common (and other) libraries.
 
-   Included the following CVS tags in all source and header files
-   Id
-   Name
+	  libdirac_common: Changed EncoderParams to include a quality
+	  parameter for constant-quality encoding. Changed perceptual
+	  weighting to use an extension of CCIR 959 weights, with extra
+	  weight for DC band, and lower weights for chroma bands.
 
-   Included a new configuration option, --enable-debug, in configure.ac. This
-   option turns on the flags '-Wall -pedantic -Werror' to trap warnings.
+	  Modified enumerated type CompSort to avoid name clashes by
+	  using longer names. Refactored OLBParams class to have private
+	  member variables and access functions.
 
-   Modified parameter classes in common.{h,cpp} to make member variables
-   private and accessible through class methods. Traced through codec.
+	  libdirac_encoder: Added QualityMonitor class to do
+	  constant-quality encoding. Class looks at difference between
+	  locally decoded and original frames and adjusts Lagrangian
+	  parameters appropriately. Simplified interface for encoding
+	  results, where a single quality parameter is specified.
 
-   Deleted context.h. The classes that were originally in this file have been 
-   integrated as nested classes into ArithCodec class in arith_codec.h
+	  libdirac_decoder: FrameDecompressor::Decompress now returns
+	  true upon success and false upon failure.
 
-   Fixed bug on QCIF coding. The number of downconversions during 
-   hierarchical motion estimation is now limited based on the size of the
-   picture
+	  encoder/encmain.cpp: Simplified interface for encoding
+	  results, where a single quality parameter is specified.
 
-   Changed decoder and encoder params to be references throughout frame and
-   component (de)compression rather than being copied.
+2004-06-30 17:53  asuraparaju
 
-   Code cleansed to follow coding standards specified in README.developers.
-   - Changed names of member variables to use m_ convention
-   - Used spaces to improve readability of code
-   - Accessing class member variables through accessor/mutator function rather
-     than directly
-   - Non-trivial member functions moved from headers to .cpp files
-   
-   Changes mainly in the following directories:
-   libdirac_common
-   libdirac_decoder
-   libdirac_encoder
+	* README.developers: Removed dollar signs around CVS tags which
+	  cause them to be expanded
 
-   Fixed g++ compiler warnings 
+2004-06-30 17:44  asuraparaju
+
+	* AUTHORS, README, README.developers, configure.ac,
+	  decoder/decmain.cpp, encoder/encmain.cpp,
+	  libdirac_common/Makefile.am, libdirac_common/arith_codec.h,
+	  libdirac_common/arrays.h, libdirac_common/band_codec.cpp,
+	  libdirac_common/band_codec.h, libdirac_common/bit_manager.cpp,
+	  libdirac_common/bit_manager.h, libdirac_common/cmd_line.cpp,
+	  libdirac_common/cmd_line.h, libdirac_common/common.cpp,
+	  libdirac_common/common.h, libdirac_common/context.h,
+	  libdirac_common/frame.cpp, libdirac_common/frame.h,
+	  libdirac_common/frame_buffer.cpp, libdirac_common/frame_buffer.h,
+	  libdirac_common/golomb.cpp, libdirac_common/golomb.h,
+	  libdirac_common/mot_comp.cpp, libdirac_common/mot_comp.h,
+	  libdirac_common/motion.cpp, libdirac_common/motion.h,
+	  libdirac_common/mv_codec.cpp, libdirac_common/mv_codec.h,
+	  libdirac_common/pic_io.cpp, libdirac_common/pic_io.h,
+	  libdirac_common/upconvert.cpp, libdirac_common/upconvert.h,
+	  libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_decoder/comp_decompress.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/frame_decompress.h,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_decoder/seq_decompress.h,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/comp_compress.h,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/frame_compress.h,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h,
+	  libdirac_motionest/block_match.cpp,
+	  libdirac_motionest/block_match.h,
+	  libdirac_motionest/downconvert.cpp,
+	  libdirac_motionest/downconvert.h,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.cpp, libdirac_motionest/me_subpel.h,
+	  libdirac_motionest/me_utils.cpp, libdirac_motionest/me_utils.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/motion_estimate.h, picheader/headmain.cpp,
+	  util/conversion/BMPtoRGB.cpp, util/conversion/RGBtoBMP.cpp,
+	  util/conversion/RGBtoUYVY.cpp, util/conversion/RGBtoYUV411.cpp,
+	  util/conversion/RGBtoYUV420.cpp, util/conversion/RGBtoYUV422.cpp,
+	  util/conversion/RGBtoYUV444.cpp, util/conversion/UYVYtoRGB.cpp,
+	  util/conversion/YUV411toRGB.cpp, util/conversion/YUV420toRGB.cpp,
+	  util/conversion/YUV422toRGB.cpp, util/conversion/YUV444toRGB.cpp,
+	  util/conversion/common/bitmap.cpp,
+	  util/conversion/common/bitmap.h,
+	  util/conversion/common/setstdiomode.cpp,
+	  util/conversion/common/setstdiomode.h: 
+	  -  Included a coding style guidelines sub-section (Coding Style) in
+	     README.developers under the section 'Software Practices'. This  
+	     sub-section describes the coding guidelines for developers and is to
+	     be used as a reference by developers while writing code and while
+	     peer-reviewing code.
+
+	  -  Removed the following CVS tags from all files
+	     Author
+	     Log
+	     Revision
+
+	  -  Included the following CVS tags in all source and header files
+	     Id
+	     Name
+
+	  -  Included a new configuration option, --enable-debug, in
+	     configure.ac. This option turns on the flags '-Wall -pedantic
+	     -Werror' to trap warnings. 
+	  -  Modified parameter classes in common.{h,cpp} to make member
+	     variables private and accessible through class methods. Traced
+	     through codec.
+
+	  -  Deleted context.h. The classes that were originally in this
+	     file have been integrated as nested classes into ArithCodec
+	     class in arith_codec.h
+
+	  -  Fixed bug on QCIF coding. The number of downconversions during
+	     hierarchical motion estimation is now limited based on the
+	     size of the picture
+
+	  -  Changed decoder and encoder params to be references throughout
+	     frame and component (de)compression rather than being copied.
+
+	  -  Code cleansed to follow coding standards specified in
+	     README.developers.
+	     - Changed names of member variables to use m_ convention
+	     - Used spaces to improve readability of code
+	     - Accessing class member variables through accessor/mutator
+	       function rather than directly
+	     - Non-trivial member functions moved from headers to .cpp files
+
+	     Changes mainly in the following directories:
+	     libdirac_common
+	     libdirac_decoder
+	     libdirac_encoder
+
+	  -  Fixed g++ compiler warnings
+
+2004-06-22 11:10  asuraparaju
+
+	* libdirac_common/wavelet_utils.h: Modified doxygen comments to
+	  match the declaration of member function SetBandWeights in class
+	  WaveletTransform.
+
+2004-06-22 11:08  asuraparaju
+
+	* encoder/encmain.cpp: Fixed compilation errors caused by trying to
+	  access non-existent cformat data member in class EncoderParams.
+
+2004-06-18 16:58  tjdwave
+
+	* libdirac_common/common.cpp, libdirac_common/common.h,
+	  libdirac_common/frame.cpp, libdirac_common/mot_comp.cpp,
+	  libdirac_common/mot_comp.h, libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/frame_decompress.h,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_common/motion.cpp, libdirac_common/motion.h: Removed
+	  chroma format parameter cformat from CodecParams and derived
+	  classes to avoid duplication. Made consequential minor mods to
+	  seq_{de}compress and frame_{de}compress code.  Revised motion
+	  compensation to use built-in arrays for weighting matrices and to
+	  enforce their const-ness.  Removed unnecessary memory
+	  (de)allocations from Frame class copy constructor and assignment
+	  operator.
+
+2004-06-16 17:06  asuraparaju
+
+	* decoder/Makefile.am, encoder/Makefile.am,
+	  libdirac_common/Makefile.am, libdirac_decoder/Makefile.am,
+	  libdirac_encoder/Makefile.am, libdirac_motionest/Makefile.am,
+	  util/conversion/Makefile.am, util/conversion/common/Makefile.am:
+	  Enable dependency tracking by removing the macro AUTOMAKE_OPTIONS
+	  = no-dependencies from Makefile.am
+
+2004-06-16 09:25  tjdwave
+
+	* doc/algorithm/: algorithm.htm, toc.htm: Corrected link in TOC.
+	  Put correct date in main page.
+
+2004-06-08 17:18  timborer
+
+	* NEWS: Updated release notes for version 0.3.1
+
+2004-06-08 17:03  timborer
+
+	* configure.ac, libdirac_common/golomb.cpp,
+	  libdirac_common/mv_codec.h, libdirac_motionest/block_match.cpp,
+	  util/conversion/BMPtoRGB.cpp, util/conversion/RGBtoBMP.cpp,
+	  util/conversion/RGBtoUYVY.cpp, util/conversion/RGBtoYUV411.cpp,
+	  util/conversion/RGBtoYUV420.cpp, util/conversion/RGBtoYUV422.cpp,
+	  util/conversion/RGBtoYUV444.cpp, util/conversion/UYVYtoRGB.cpp,
+	  util/conversion/YUV411toRGB.cpp, util/conversion/YUV420toRGB.cpp,
+	  util/conversion/YUV422toRGB.cpp, util/conversion/YUV444toRGB.cpp,
+	  util/conversion/common/bitmap.cpp,
+	  util/conversion/common/bitmap.h,
+	  util/conversion/common/setstdiomode.cpp,
+	  util/conversion/common/setstdiomode.h, win/Makefile: Files
+	  updated so that code compiles under Windows (previously broken
+	  under Windows).  Colour matrix coefficients corrected in video
+	  conversion utilities Video conversion utilites now build with the
+	  rest of the code.
+
+2004-06-03 14:07  stuart_hc
+
+	* README.developers: Added Profiling & optimisation section.
+
+2004-05-28 16:05  tjdwave
+
+	* NEWS, TODO: Added information about picture format conversion
+	  utilities. Removed frame padding from the TODO list.
+
+2004-05-28 15:58  tjdwave
+
+	* README: Added text on how to use the conversion utilities to
+	  provide test material for Dirac.
+
+2004-05-28 15:27  tjdwave
+
+	* util/conversion/: BMPtoRGB.cpp, Makefile.am, RGBtoBMP.cpp,
+	  RGBtoUYVY.cpp, RGBtoYUV411.cpp, RGBtoYUV420.cpp, RGBtoYUV422.cpp,
+	  RGBtoYUV444.cpp, UYVYtoRGB.cpp, YUV411toRGB.cpp, YUV420toRGB.cpp,
+	  YUV422toRGB.cpp, YUV444toRGB.cpp: Initial commit of command-line
+	  tools for converting between uncompressed picture formats. All
+	  conversions use uncompressed RGB as an intermediate format.
+	  There is a known bug with the colour matrixing which applies a
+	  gain when going from YUV to RGB and back again. This will be
+	  fixed in a subsequent release.
+
+2004-05-28 15:18  tjdwave
+
+	* util/conversion/common/: bitmap.cpp, bitmap.h, setstdiomode.cpp,
+	  setstdiomode.h: Initial commit. Common tools for handling BMP
+	  headers and stdio handling for Windows.
+
+2004-05-28 15:15  tjdwave
+
+	* util/conversion/common/Makefile.am: Initial commit. Builds common
+	  library for use by all the conversion routines.
+
+2004-05-28 15:14  tjdwave
+
+	* util/conversion/Makefile.am: Initial commit. Builds file
+	  conversion utilities.
+
+2004-05-28 15:12  tjdwave
+
+	* util/Makefile.am: Added Makefile to build utility subdirectories.
+
+2004-05-28 15:10  tjdwave
+
+	* Makefile.am, configure.ac: Updated to add utilities directory.
+
+2004-05-27 14:58  asuraparaju
+
+	* configure.ac, doc/Makefile.am, doc/algorithm/Makefile.am,
+	  doc/api/Makefile.am, doc/programmers/Makefile.am: Corrected API
+	  and programmer doc build and installation.  Added algorithm doc
+	  install (from CVS only - not distribution).
+
+2004-05-27 13:21  stuart_hc
+
+	* README.developers: Prevent unintended expansion of Id and Log
+	  in description of keywords.
+
+2004-05-27 13:14  stuart_hc
+
+	* README.developers: Added section on the testsuite and on binary
+	  files.
+
+2004-05-27 09:02  tjdwave
+
+	* doc/programmers/: programmers_guide.dvi, programmers_guide.log:
+	  Removed LaTeX-generated .dvi and .log files from CVS control.
+
+2004-05-27 09:00  tjdwave
+
+	* doc/: algorithm/algorithm.htm, algorithm/var_size.htm,
+	  algorithm/wlt_transform.htm, programmers/programmers_guide.dvi,
+	  programmers/programmers_guide.log: Updated docs to take into
+	  account that Dirac does edge-padding, not padding with black, in
+	  order to avoid significant artefacts at low bit-rate.
+
+2004-05-26 17:01  tjdwave
+
+	* configure.ac, doc/Makefile.am, doc/faq.htm,
+	  doc/algorithm/algorithm.htm, doc/algorithm/block_data.htm,
+	  doc/algorithm/intra_pred.htm, doc/algorithm/intro.htm,
+	  doc/algorithm/mb_structs.htm, doc/algorithm/mot_est.htm,
+	  doc/algorithm/mot_est_and_comp.htm,
+	  doc/algorithm/mv_coding_arch.htm,
+	  doc/algorithm/mv_data_coding.htm, doc/algorithm/mv_data_pred.htm,
+	  doc/algorithm/mv_entropy_code.htm, doc/algorithm/olb_mc.htm,
+	  doc/algorithm/overall_arch.htm, doc/algorithm/parent_child.htm,
+	  doc/algorithm/quantisation.htm, doc/algorithm/rdo.htm,
+	  doc/algorithm/rdo_mot_est.htm, doc/algorithm/subband_rdo.htm,
+	  doc/algorithm/temporal_prediction_structures.htm,
+	  doc/algorithm/toc.htm, doc/algorithm/transform_coding.htm,
+	  doc/algorithm/transform_coding_arch.htm,
+	  doc/algorithm/var_size.htm, doc/algorithm/wlt_coeff_coding.htm,
+	  doc/algorithm/wlt_transform.htm, doc/algorithm/figs/DC.jpg,
+	  doc/algorithm/figs/DCSAD.jpg, doc/algorithm/figs/braces.jpg,
+	  doc/algorithm/figs/d.jpg, doc/algorithm/figs/eqA.jpg,
+	  doc/algorithm/figs/eqB.jpg, doc/algorithm/figs/eqC.jpg,
+	  doc/algorithm/figs/eqD.jpg, doc/algorithm/figs/eqE.jpg,
+	  doc/algorithm/figs/eqF.jpg, doc/algorithm/figs/eqG.jpg,
+	  doc/algorithm/figs/eqH.jpg, doc/algorithm/figs/eqI.jpg,
+	  doc/algorithm/figs/eqJ.jpg, doc/algorithm/figs/fig1.jpg,
+	  doc/algorithm/figs/fig10.jpg, doc/algorithm/figs/fig12.jpg,
+	  doc/algorithm/figs/fig13.jpg, doc/algorithm/figs/fig14.jpg,
+	  doc/algorithm/figs/fig15.jpg, doc/algorithm/figs/fig16.jpg,
+	  doc/algorithm/figs/fig17.jpg, doc/algorithm/figs/fig18.jpg,
+	  doc/algorithm/figs/fig19.jpg, doc/algorithm/figs/fig2.jpg,
+	  doc/algorithm/figs/fig20.jpg, doc/algorithm/figs/fig21.jpg,
+	  doc/algorithm/figs/fig22.jpg, doc/algorithm/figs/fig23.jpg,
+	  doc/algorithm/figs/fig24.jpg, doc/algorithm/figs/fig26.jpg,
+	  doc/algorithm/figs/fig27.jpg, doc/algorithm/figs/fig3.jpg,
+	  doc/algorithm/figs/fig4.jpg, doc/algorithm/figs/fig5.jpg,
+	  doc/algorithm/figs/fig6.jpg, doc/algorithm/figs/fig7.bmp,
+	  doc/algorithm/figs/fig7.jpg, doc/algorithm/figs/fig8.jpg,
+	  doc/algorithm/figs/fig9.jpg, doc/algorithm/figs/fp.jpg,
+	  doc/algorithm/figs/m.jpg, doc/algorithm/figs/nhood.jpg,
+	  doc/algorithm/figs/nhoodresidue.jpg, doc/algorithm/figs/p.jpg,
+	  doc/algorithm/figs/p2.jpg, doc/algorithm/figs/t.jpg,
+	  doc/algorithm/figs/two.jpg, doc/algorithm/figs/var.jpg,
+	  doc/algorithm/figs/vtilda.jpg, doc/algorithm/figs/vw.jpg,
+	  doc/api/Makefile.am, doc/api/dirac_api.doxygen,
+	  doc/api/dirac_api.doxygen.in, doc/api/dirac_api_foot.html,
+	  doc/api/dirac_api_head.html,
+	  doc/api/libdirac_encoder_api.doxygen,
+	  doc/api/libdirac_encoder_api_foot.html,
+	  doc/api/libdirac_encoder_api_head.html,
+	  doc/programmers/Makefile.am,
+	  doc/programmers/programmers_guide.aux,
+	  doc/programmers/programmers_guide.dvi,
+	  doc/programmers/programmers_guide.log,
+	  doc/programmers/programmers_guide.tex: Added algorithm
+	  documentation and FAQ. Changed name of Scott Ladd's programmers
+	  guide to programmers_guide.tex from dirac_algor.tex to clarify
+	  purpose. Created individual subdirectories for algorithm, api and
+	  programmers guide docs. Modified make files and configure.ac
+	  appropriately.
+
+2004-05-26 16:44  tjdwave
+
+	* doc/: dirac_algor.tex, dirac_api.doxygen, dirac_api.doxygen.in,
+	  dirac_api_foot.html, dirac_api_head.html,
+	  libdirac_encoder_api.doxygen, libdirac_encoder_api_foot.html,
+	  libdirac_encoder_api_head.html: Removed old documentation
+	  structure. New doc structure to be put in place.
+
+2004-05-26 16:18  tjdwave
+
+	* libdirac_decoder/seq_decompress.cpp: Corrected behaviour at end
+	  of stream, so that decoder freezes on the last frame.
+
+2004-05-26 15:33  tjdwave
+
+	* libdirac_encoder/comp_compress.cpp,
+	  libdirac_common/band_codec.cpp,
+	  libdirac_decoder/comp_decompress.cpp: Updated default DC
+	  prediction value to take into account the removal of scaling from
+	  the wavelet transform.
+
+2004-05-26 15:31  tjdwave
+
+	* libdirac_common/wavelet_utils.h: Added doxygen comments to
+	  describe how perceptual weighting now incorporates scaling
+	  factors from the scaling.
 
 2004-05-24 12:03  tjdwave
 
