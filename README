@@ -79,57 +79,97 @@ options.
 The example coder and decoder use a temporary file format which consists of
 raw 8-bit planar YUV data together with a header file. This means that data
 is stored bytewise, with a frame of Y followed by a frame of U followed by
-a frame of V, all scanned in the usual raster order. The header records the
+a frame of V, all scanned in the usual raster order. 
+
+Other file formats are supported by means of conversion utilities that
+may be found in the subdirectory util/conversion. These will convert to
+and from raw RGB format, and support all the standard raw YUV formats as
+well as bitmaps. Raw RGB can be obtained as an output from standard conversion
+utilities such as ImageMagick.
+
+Once a raw YUV file has been made, in order to run the codec, a header must
+be constructed. The header records such picture information as: the
 picture dimensions, which are taken to be those of the luminance or Y
 component, and other metadata. The other metadata consists of the chroma
 format, the frame rate in Hertz, a flag indicating interlace and, if interlace,
-a flag indicating whether the interlace is top-field first. The interlace flags
-are currently ignored as no special coding tools have been developed. The chroma
+a flag indicating whether the interlace is top-field first. The chroma 
 format setting records whether the video is sampled 4:4:4, 4:2:2, 4:1:1 or 4:2:0,
 and is essential. The frame rate setting is used to calculate bit-rate for the
 encoder, and display rate for the decoder, and if omitted a rate of 12Hz is assumed.
 
-Raw YUV is commonly used in video codec standardisation processes, although
-the chroma format is often restricted to 4:2:0. The provision of an additional
-header file is unusual, however. For this reason the make_header tool is provided.
-This writes a header file with the appropriate parameters input from the command
-line.
+The header file is made using the make_header tool in subdirectory 
+picheader/make_header. It's in text format so can also be edited manually.
 
 Example.
-  Write a header to accompany a raw data file test.yuv. The video has
-  dimensions 352 x 288 pixels x 260 frames long, is in 4:2:0 format and not
-  interlaced, and has a frame-rate of 15Hz.
+  Compress an image sequence of 100 frames of 352x288 video in tiff format.
 
-  Solution
-    make_header -xl 352 -yl 288 -zl 260 -cformat format420 -framerate 15 -interlace output
+  Step 1.
 
-  This writes test.hdr with the corresponding parameters.
+  Use your favourite conversion routine to produce a single raw RGB file of 
+  all the data. If your routine converts frame-by-frame then you will
+  need to concatenate the output.
 
-Viewing and playback utilities for uncompressed video include MPlayer and
-ImageMagick's display command.
+  Step 2.
 
-  Continuing the 352x288 4:2:0 example above, to display a single frame
-  with ImageMagick use the following.  Use <spacebar> to see subsequent frames.
+  Convert from RGB to the YUV format of your choice. For example, to do
+  420, type
 
-    display -size 352x288 test.yuv
+  RGBtoYUV420 <file.rgb >file.yuv 352 288 100
 
-  To playback the uncompressed video use the following MPlayer command:
+  Note that this uses stdin and stdout to read and write the data.
 
-    mplayer -fps 15 -rawvideo on:size=152064:w=352:h=288 test.yuv
+  Step 3.
 
-  (at the time of writing MPlayer could not playback 4:2:2 or 4:4:4 YUV data)
+  Make the appropriate header to accompany the raw data file:
 
-To generate uncompressed video in a suitable format for encoding with Dirac,
-use the transcode utility (see http://zebra.fh-weingarten.de/~transcode/).
+  make_header -xl 720 -yl 576 -zl 100 -cformat format420 -framerate 25 -interlace file
+
+  This writes file.hdr with the corresponding parameters.
+
+  Step 4.
+
+  Run the encoder. This will produce a locally decoded output in the
+  same format.
+
+  Step 5.
+
+  Convert back to RGB.
+
+  YUV420toRGB <file.yuv >file.rgb 352 288 100
+
+  Step 6.
+
+  Use your favourite conversion utility to convert to the format of your
+  choice.
+
+You can also use the transcode utility to convert data to and from Dirac's
+native formats (see http://zebra.fh-weingarten.de/~transcode/):
 
   This example uses a 720x576x50 DV source, and transcodes to 720x576 YUV in
   4:2:0 chroma format.  Cascading codecs (DV + Dirac) is generally a bad idea
   - use this only if you don't have any other source of uncompressed video.
 
-    transcode -i source.dv -x auto,null --dv_yuy2_mode -k -V -y raw,null -o test.avi
-    tcextract -i test.avi -x rgb > test.yuv
+    transcode -i source.dv -x auto,null --dv_yuy2_mode -k -V -y raw,null -o file.avi
+    tcextract -i test.avi -x rgb > file.yuv
 
-    make_header -xl 720 -yl 576 -zl 50 -cformat format420 -framerate 25 -interlace test
+    make_header -xl 720 -yl 576 -zl 50 -cformat format420 -framerate 25 -interlace file
+
+Viewing and playback utilities for uncompressed video include MPlayer and
+ImageMagick's display command.
+
+  Continuing the 352x288 4:2:0 example above, to display a single frame
+  of raw YUV with ImageMagick use the following (use <spacebar> to see
+  subsequent frames):
+
+    display -size 352x288 test.yuv
+
+  Raw YUV 420 data can also be played back in MPlayer - use the following 
+  MPlayer command:
+
+    mplayer -fps 15 -rawvideo on:size=152064:w=352:h=288 test.yuv
+
+  (at the time of writing MPlayer could not playback 4:2:2 or 4:4:4 YUV data)
+
 
 4.3 Encoding
 
