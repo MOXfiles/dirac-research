@@ -180,6 +180,12 @@ void CompCompressor::SetupCodeBlocks( SubbandList& bands )
     int xregions;
     int yregions;
 
+    // The minimum x and y dimensions of a block
+    const int min_dim( 4 );
+  
+    // The maximum number of regions horizontally and vertically
+    int max_xregion, max_yregion;
+
     for (int band_num = 1; band_num<=bands.Length() ; ++band_num)
     {
         if ( band_num < bands.Length()-6 )
@@ -197,8 +203,16 @@ void CompCompressor::SetupCodeBlocks( SubbandList& bands )
         }
         else if (band_num < bands.Length()-3)
         {
-            xregions = 8;
-            yregions = 6;
+            if (m_fsort != I_frame )
+            {
+                xregions = 8;
+                yregions = 6;
+            }
+            else
+            {
+                xregions = 1;
+                yregions = 1;
+            }
         }
         else
         {
@@ -206,7 +220,11 @@ void CompCompressor::SetupCodeBlocks( SubbandList& bands )
             yregions = 1;
         }
 
-        bands( band_num ).SetNumBlocks( yregions , xregions );
+        max_xregion = bands( band_num ).Xl() / min_dim;
+        max_yregion = bands( band_num ).Yl() / min_dim;
+
+        bands( band_num ).SetNumBlocks( std::min( yregions , max_yregion ), 
+                                        std::min( xregions , max_xregion ) );
 
     }// band_num
         
