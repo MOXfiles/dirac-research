@@ -42,6 +42,8 @@
 #include <libdirac_common/dirac_assertions.h>
 #include <libdirac_decoder/dirac_parser.h>
 
+using namespace dirac;
+
 int verbose = 0;
 int skip = 0;
 
@@ -118,10 +120,9 @@ static void WritePicHeader (dirac_decoder_t *decoder, FILE *fp)
     fprintf (fp, "%d\n", decoder->seq_params.chroma);
     fprintf (fp, "%d\n", decoder->seq_params.width);
     fprintf (fp, "%d\n", decoder->seq_params.height);
-    fprintf (fp, "%d\n", decoder->seq_params.num_frames);
     fprintf (fp, "%d\n", decoder->seq_params.interlace);
     fprintf (fp, "%d\n", decoder->seq_params.topfieldfirst);
-    fprintf (fp, "%d\n", decoder->seq_params.frame_rate);
+    fprintf (fp, "%d\n", decoder->seq_params.frame_rate.numerator);
 }
 
 static void FreeFrameBuffer (dirac_decoder_t *decoder)
@@ -150,7 +151,7 @@ static void DecodeDirac (const char *iname, const char *oname)
     char infile_name[FILENAME_MAX];
     char outfile_hdr[FILENAME_MAX];
     char outfile_data[FILENAME_MAX];
-    DecoderState state = STATE_BUFFER;
+    dirac_decoder_state_t state = STATE_BUFFER;
 
     strncpy(infile_name, iname, sizeof(infile_name));
     strcat(infile_name, ".drc");
@@ -216,16 +217,16 @@ static void DecodeDirac (const char *iname, const char *oname)
 
             if (verbose)
             {
-                fprintf (stderr, "SEQUENCE : width=%d height=%d chroma=%s chroma_width=%d chroma_height=%d num_frames=%d frame_rate=%d, interlace=%s topfieldfirst=%s\n", 
+                fprintf (stderr, "SEQUENCE : width=%d height=%d chroma=%s chroma_width=%d chroma_height=%d frame_rate=%f, interlace=%s topfieldfirst=%s\n", 
                 decoder->seq_params.width,
                 decoder->seq_params.height,
                 chroma2string(decoder->seq_params.chroma),
                 decoder->seq_params.chroma_width,
                 decoder->seq_params.chroma_height,
-                decoder->seq_params.num_frames,
-                decoder->seq_params.frame_rate,
+                (float)decoder->seq_params.frame_rate.numerator/
+                decoder->seq_params.frame_rate.denominator,
                 decoder->seq_params.interlace ? "yes" : "no",
-                decoder->seq_params.interlace ? "yes" : "no");
+                decoder->seq_params.topfieldfirst ? "yes" : "no");
             }
 
             FreeFrameBuffer(decoder);

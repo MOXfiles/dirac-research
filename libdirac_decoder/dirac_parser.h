@@ -38,7 +38,7 @@
 #ifndef DIRAC_PARSER_H
 #define DIRAC_PARSER_H
 
-#include <libdirac_common/common_types.h>
+#include <libdirac_common/dirac_types.h>
 #include <libdirac_decoder/decoder_types.h>
 
 /*! \file
@@ -56,7 +56,7 @@
  decoder_handle = dirac_decoder_init();
  do
  {
-     state = dirac_parse (decoder);
+     dirac_decoder_state_t state = dirac_parse (decoder);
      switch (state)
      {
      case STATE_BUFFER:
@@ -105,55 +105,13 @@
 extern "C" {
 #endif
 
-typedef ChromaFormat dirac_chroma_t;
-typedef FrameSort dirac_frame_type_t;
-
-/*! Structure that holds the sequence parameters */
-typedef struct
-{
-    /*! numper of pixels per line */
-    int width;
-    /*! number of lines per frame */
-    int height;
-    /*! total number of frame in sequence */
-    int num_frames;
-    /*! chroma type */
-    dirac_chroma_t chroma;
-    /*! numper of pixels of chroma per line */
-    int chroma_width;
-    /*! number of lines of chroma per frame */
-    int chroma_height;
-    /*! frame rate */
-    int frame_rate;
-    /*! interlace flag: 0 - progressive; 1 - interlaced */
-    int interlace;
-    /*! top field comes first : 0 - false; 1 - true */
-    int topfieldfirst;
-} dirac_seqparams_t;
-
-/*! Structure that holds the frame parameters */
-typedef struct
-{
-    /*! frame type */
-    dirac_frame_type_t ftype;
-    /*! frame number in decoded order */
-    int fnum;
-} dirac_frameparams_t;
-
-/*! Structure that holds the frame buffers into which data is written */
-typedef struct
-{
-    /*! buffers to hold the luma and chroma data */
-    unsigned char  *buf[3];
-    /*! user data */
-    void  *id;
-} dirac_framebuf_t;
+typedef DecoderState dirac_decoder_state_t;
 
 /*! Structure that holds the information returned by the parser */
 typedef struct 
 {
     /*! parser state */
-    DecoderState state;
+    dirac_decoder_state_t state;
     /*! sequence parameters */
     dirac_seqparams_t seq_params;
     /*! frame parameters */
@@ -175,13 +133,13 @@ typedef struct
     \param  verbose boolean flag to set verbose output
     \return decoder handle
 */
-dirac_decoder_t *dirac_decoder_init(int verbose);
+extern DllExport dirac_decoder_t *dirac_decoder_init(int verbose);
 
 /*!
     Release the decoder resources
     \param decoder  Decoder object
 */
-void dirac_decoder_close(dirac_decoder_t *decoder);
+extern DllExport void dirac_decoder_close(dirac_decoder_t *decoder);
 
 /*!
     Parses the data in the input buffer. This function returns the 
@@ -205,7 +163,7 @@ void dirac_decoder_close(dirac_decoder_t *decoder);
     \return         Decoder state
 
 */
-DecoderState dirac_parse (dirac_decoder_t *decoder);
+extern DllExport dirac_decoder_state_t dirac_parse (dirac_decoder_t *decoder);
 
 /*!
     Copy data into internal buffer
@@ -213,7 +171,7 @@ DecoderState dirac_parse (dirac_decoder_t *decoder);
     \param start    Start of data
     \param end      End of data
 */
-void dirac_buffer (dirac_decoder_t *decoder, unsigned char *start, unsigned char *end);
+extern DllExport void dirac_buffer (dirac_decoder_t *decoder, unsigned char *start, unsigned char *end);
 
 /*!
     Set the output buffer into which the decoder copies the decoded data
@@ -221,14 +179,14 @@ void dirac_buffer (dirac_decoder_t *decoder, unsigned char *start, unsigned char
     \param buf      Array of char buffers to hold luma and chroma data
     \param id       User data
 */
-void dirac_set_buf (dirac_decoder_t *decoder, unsigned char *buf[3], void *id);
+extern DllExport void dirac_set_buf (dirac_decoder_t *decoder, unsigned char *buf[3], void *id);
 
 /*!
     Skip the next frame to be decoded
     \param decoder  Decoder object
     \param skip     Value 0 - decode next frame; 1 - skip next frame
 */
-void dirac_skip(dirac_decoder_t *decoder, int skip);
+extern DllExport void dirac_skip(dirac_decoder_t *decoder, int skip);
 
 #ifdef __cplusplus
 }

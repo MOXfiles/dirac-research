@@ -40,12 +40,13 @@
 #include <libdirac_decoder/dirac_cppparser.h>
 #include <libdirac_decoder/dirac_parser.h>
 #include <libdirac_common/frame.h>
+using namespace dirac;
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-dirac_decoder_t *dirac_decoder_init(int verbose)
+extern DllExport dirac_decoder_t *dirac_decoder_init(int verbose)
 {
     dirac_decoder_t* decoder = new dirac_decoder_t;
     memset (decoder, 0, sizeof(dirac_decoder_t));
@@ -60,7 +61,7 @@ dirac_decoder_t *dirac_decoder_init(int verbose)
     return decoder;
 }
 
-void dirac_decoder_close(dirac_decoder_t *decoder)
+extern DllExport void dirac_decoder_close(dirac_decoder_t *decoder)
 {
     TEST (decoder != NULL);
     TEST (decoder->parser != NULL);
@@ -75,7 +76,7 @@ void dirac_decoder_close(dirac_decoder_t *decoder)
     decoder = NULL;
 }
 
-void dirac_buffer (dirac_decoder_t *decoder, unsigned char *start, unsigned char *end)
+extern DllExport void dirac_buffer (dirac_decoder_t *decoder, unsigned char *start, unsigned char *end)
 {
     TEST (decoder != NULL);
     TEST (decoder->parser != NULL);
@@ -94,7 +95,6 @@ static void set_sequence_params (const  DiracParser * const parser, dirac_decode
 
     seq_params->width = sparams.Xl();
     seq_params->height = sparams.Yl();
-    seq_params->num_frames = sparams.Zl();
 
     ///TODO: how do we sync definition of Chroma in dirac_parser.cpp 
     // with Chroma is common.h
@@ -122,7 +122,10 @@ static void set_sequence_params (const  DiracParser * const parser, dirac_decode
 
    }
 
-    seq_params->frame_rate = sparams.FrameRate();
+    // NOTE: frame rate will be replaced by a struct holding numerator
+    //       and denominator values.
+    seq_params->frame_rate.numerator = sparams.FrameRate();
+    seq_params->frame_rate.denominator = 1;
     seq_params->interlace = sparams.Interlace() ? 1 : 0;
     seq_params->topfieldfirst = sparams.TopFieldFirst() ? 1 : 0;
 }
@@ -203,7 +206,7 @@ static void set_frame_params (const FrameParams& my_frame_params,  dirac_decoder
     return;
 }
 
-DecoderState dirac_parse (dirac_decoder_t *decoder)
+extern DllExport dirac_decoder_state_t dirac_parse (dirac_decoder_t *decoder)
 {
     TEST (decoder != NULL);
     TEST (decoder->parser != NULL);
@@ -243,7 +246,7 @@ DecoderState dirac_parse (dirac_decoder_t *decoder)
     return decoder->state;
 }
 
-void dirac_skip (dirac_decoder_t *decoder, int skip)
+extern DllExport void dirac_skip (dirac_decoder_t *decoder, int skip)
 {
     TEST (decoder != NULL);
     TEST (decoder->parser != NULL);
@@ -253,7 +256,7 @@ void dirac_skip (dirac_decoder_t *decoder, int skip)
 }
 
 
-void dirac_set_buf (dirac_decoder_t *decoder, unsigned char *buf[3], void *id)
+extern DllExport void dirac_set_buf (dirac_decoder_t *decoder, unsigned char *buf[3], void *id)
 {
     TEST (decoder != NULL);
     TEST (decoder->fbuf != NULL);
