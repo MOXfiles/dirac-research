@@ -51,83 +51,107 @@
 #include <libdirac_common/upconvert.h>
 #include <libdirac_common/motion.h>
 
-class FrameBuffer;
-class Frame;
-
-//! Motion compensator class. 
-/*!
-    Motion compensator class, for doing motion compensation with two references and overlapped blocks,
-    using raised-cosine roll-off.
- */
-class MotionCompensator
+namespace dirac
 {
+    class FrameBuffer;
+    class Frame;
 
-public:
-    //! Constructor.
+    //! Motion compensator class. 
     /*!
-        Constructor initialises using codec parameters.
+        Motion compensator class, for doing motion compensation with two 
+        references and overlapped blocks, using raised-cosine roll-off.
      */
-    MotionCompensator( const CodecParams &cp );
-    //! Destructor
-    ~MotionCompensator();
+    class MotionCompensator
+    {
 
-    //! Toggles the MC mode
-    void SetCompensationMode( AddOrSub a_or_s ) { add_or_sub = a_or_s; }
+    public:
+        //! Constructor.
+        /*!
+            Constructor initialises using codec parameters.
+         */
+        MotionCompensator( const CodecParams &cp , const AddOrSub direction  );
+        //! Destructor
+        ~MotionCompensator();
 
-    //! Compensate a frame
-    /*!
-        Perform motion compensated addition/subtraction on a frame using parameters
-        /param    fnum    number of frame in the frame buffer to be compensated
-        /param    my_buffer    the FrameBuffer object containing the frame and the reference frames
-`       /param    mv_data    the motion vector data
-     */
-    void CompensateFrame( FrameBuffer& my_buffer , int fnum , const MvData& mv_data );
+        //! Compensate a frame
+        /*!
+            Perform motion compensated addition/subtraction on a frame using 
+            parameters
+            /param    fnum    number of frame in the frame buffer to be compensated
+            /param    my_buffer    the FrameBuffer object containing the frame and the reference frames
+    `       /param    mv_data    the motion vector data
+         */
+        void CompensateFrame( FrameBuffer& my_buffer , int fnum , const MvData& mv_data );
 
-private:
-    //private, body-less copy constructor: this class should not be copied
-    MotionCompensator( const MotionCompensator& cpy );
-    //private, body-less assignment=: this class should not be assigned
-    MotionCompensator& operator=( const MotionCompensator& rhs );
+    private:
+        //private, body-less copy constructor: this class should not be copied
+        MotionCompensator( const MotionCompensator& cpy );
+        //private, body-less assignment=: this class should not be assigned
+        MotionCompensator& operator=( const MotionCompensator& rhs );
 
-    //functions
+        //functions
 
-    //! Motion-compensate a component
-    void CompensateComponent( Frame& picframe , const Frame& ref1frame , const Frame& ref2frame ,
-        const MvData& mv_data , const CompSort cs);
+        //! Motion-compensate a component
+        void CompensateComponent( Frame& picframe , const Frame& ref1frame , 
+            const Frame& ref2frame ,
+            const MvData& mv_data , const CompSort cs);
 
-    //! Motion-compensate an individual block
-    void CompensateBlock( PicArray& pic_data , const PicArray& refup_data , const MVector& Vec ,
-        const ImageCoords& Pos , const TwoDArray<CalcValueType>& Weights , const ArithObj& arith );
+        //! Motion-compensate an individual block
+        void CompensateBlock( TwoDArray<CalcValueType>& pic_data , 
+            const PicArray& refup_data , const MVector& Vec ,
+            const ImageCoords& Pos , const TwoDArray<CalcValueType>& Weights );
 
-    //! DC-compensate an individual block
-    void DCBlock( PicArray &pic_data , const ValueType dc , const ImageCoords& Pos , 
-        const TwoDArray<CalcValueType>& Weights ,const ArithObj& arith);
+        //! DC-compensate an individual block
+        void DCBlock( TwoDArray<CalcValueType> &pic_data , const ValueType dc ,
+            const ImageCoords& Pos , const TwoDArray<CalcValueType>& Weights);
 
-    //! Recalculate the weight matrix and store other key block related parameters.
-    void ReConfig();
+        //! Recalculate the weight matrix and store other key block related parameters.
+        void ReConfig();
 
-private:
-    //variables    
+        // Overlapping blocks are acheived by applying a 2D raised cosine shape
+        // to them. This function facilitates the calculations
+        float RaisedCosine(float t, float B);
 
-    //! The codec parameters
-    CodecParams m_cparams;
+        //! Calculates a weighting block.
+        /*! 
+            Params defines the block parameters so the relevant weighting 
+            arrays can be created.  FullX and FullY refer to whether the 
+            weight should be adjusted for the edge of an image.  eg. 1D 
+            Weighting shapes in x direction
+              FullX true        FullX false
+                ***           ********
+              *     *                  *
+             *       *                  *
+           *           *                  *
+        */
+        void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, TwoDArray<CalcValueType>& WeightArray);
 
-    //! The chroma format
-    ChromaFormat m_cformat;
-    bool luma_or_chroma;    //true if we're doing luma, false if we're coding chroma
+        //! Flips the values in an array in the x direction
+        void FlipX(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, TwoDArray<CalcValueType>& Flipped);
 
-    // Particular arithmetic objects
-    const ArithAddObj m_add;                    
-    const ArithSubtractObj m_subtract;        
-    const ArithHalfSubtractObj m_subtracthalf;
-    const ArithHalfAddObj m_addhalf;          
-    
-    AddOrSub add_or_sub;                    
+        //! Flips the values in an array in the y direction.
+        void FlipY(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, TwoDArray<CalcValueType>& Flipped);
 
-    //Image and block information
-    OLBParams m_bparams;
-    TwoDArray<CalcValueType>* m_block_weights;
+    private:
+        //variables    
 
-};
+        //! The codec parameters
+        CodecParams m_cparams;
+
+        //! The chroma format
+        ChromaFormat m_cformat;
+        bool luma_or_chroma;    //true if we're doing luma, false if we're coding chroma  
+        
+        // A marker saying whether we're doing MC addition or subtraction
+        AddOrSub m_add_or_sub;                    
+
+        // Block information
+        OLBParams m_bparams;
+        TwoDArray<CalcValueType>* m_block_weights;
+        TwoDArray<CalcValueType>* m_half_block_weights;
+
+    };
+
+} // namespace dirac
 
 #endif

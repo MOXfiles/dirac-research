@@ -40,6 +40,7 @@
 
 #include <libdirac_common/bit_manager.h>
 #include <libdirac_common/common.h>
+using namespace dirac;
 
 using std::vector;
 
@@ -387,9 +388,8 @@ bool BitInputManager::InputBit(int& count, const int max_count)
         count++;
         return InputBit();
     }
-    else{
+    else
         return false;
-    }
 }
 
 char BitInputManager::InputByte()

@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Richard Felton (Original Author), Thomas Davies
+* Contributor(s): Richard Felton (Original Author), 
+*                 Thomas Davies,
+*                 Steve Bearcroft
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -39,6 +41,7 @@
 #include <libdirac_common/mot_comp.h>
 #include <libdirac_common/motion.h>
 #include <libdirac_common/frame_buffer.h>
+using namespace dirac;
 
 using std::vector;
 
@@ -51,13 +54,14 @@ using std::vector;
 //motion estimation. Creates the necessary arithmetic objects and
 //calls ReConfig to create weighting blocks to fit the values within
 //m_cparams.
-MotionCompensator::MotionCompensator( const CodecParams &cp ): 
+MotionCompensator::MotionCompensator( const CodecParams &cp , const AddOrSub direction ): 
     m_cparams(cp),
     luma_or_chroma(true),
-    add_or_sub(SUBTRACT)
+    m_add_or_sub( direction )
 {
     //Configure weighting blocks for the first time
     m_block_weights = NULL;
+    m_half_block_weights = NULL;
     ReConfig();
 }
 
@@ -66,6 +70,7 @@ MotionCompensator::~MotionCompensator(){
 
     //Tidy up the pointers
     delete[] m_block_weights;
+    delete[] m_half_block_weights;
 }
 
 //Called to perform motion compensated addition/subtraction on an entire frame.
@@ -94,6 +99,7 @@ void MotionCompensator::CompensateFrame(FrameBuffer& my_buffer,int fnum,const Mv
              const Frame& ref1frame=my_buffer.GetFrame(ref1_idx);
              const Frame& ref2frame=my_buffer.GetFrame(ref2_idx);
 
+             luma_or_chroma = true;                
              //now do all the components
              CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , Y_COMP);
 
@@ -124,40 +130,59 @@ void MotionCompensator::ReConfig()
     if(m_block_weights != NULL)
         delete[] m_block_weights;
 
+    if(m_half_block_weights != NULL)
+        delete[] m_half_block_weights;
+
     // Create new weights array.
     m_block_weights = new TwoDArray<CalcValueType>[9];
+    m_half_block_weights = new TwoDArray<CalcValueType>[9];
     for(int i = 0; i < 9; i++)
+    {
         m_block_weights[i].Resize(  m_bparams.Yblen() , m_bparams.Xblen() );
-
+        m_half_block_weights[i].Resize(  m_bparams.Yblen() , m_bparams.Xblen() );
+    }
     // We can create all nine weighting blocks by calculating values
     // for four blocks and mirroring them to generate the others.
-    CreateBlock( m_bparams , false , false , m_block_weights[0] );
-    CreateBlock( m_bparams , false , true , m_block_weights[3] );
-    CreateBlock( m_bparams , true , false , m_block_weights[1] );
-    CreateBlock( m_bparams , true , true , m_block_weights[4] );
+    CreateBlock( m_bparams , false , false , m_half_block_weights[0] );
+    CreateBlock( m_bparams , false , true , m_half_block_weights[3] );
+    CreateBlock( m_bparams , true , false , m_half_block_weights[1] );
+    CreateBlock( m_bparams , true , true , m_half_block_weights[4] );
 
     // Note order of flipping is important.    
-    FlipX( m_block_weights[3] , m_bparams , m_block_weights[5] );
-    FlipX( m_block_weights[0] , m_bparams , m_block_weights[2] );
-    FlipY( m_block_weights[0] , m_bparams , m_block_weights[6] );
-    FlipX( m_block_weights[6] , m_bparams , m_block_weights[8] );
-    FlipY( m_block_weights[1] , m_bparams , m_block_weights[7] );
+    FlipX( m_half_block_weights[3] , m_bparams , m_half_block_weights[5] );
+    FlipX( m_half_block_weights[0] , m_bparams , m_half_block_weights[2] );
+    FlipY( m_half_block_weights[0] , m_bparams , m_half_block_weights[6] );
+    FlipX( m_half_block_weights[6] , m_bparams , m_half_block_weights[8] );
+    FlipY( m_half_block_weights[1] , m_bparams , m_half_block_weights[7] );
 
+    for( int k = 0; k < 9; k++)
+    {
+        for ( int j =m_half_block_weights[k].FirstY(); j <= m_half_block_weights[k].LastY(); j++)
+        {
+            for ( int i =m_half_block_weights[k].FirstX(); i <= m_half_block_weights[k].LastX(); i++)
+            {
+                m_block_weights[k][j][i] = m_half_block_weights[k][j][i] << 1;
+            }// i
+        }// j
+    }// k
 }
 
 void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1frame, const Frame& ref2frame,
     const MvData& mv_data,const CompSort cs)
 {
-
     // Set up references to pictures and references
-    PicArray& pic_data = picframe.Data( cs );
+    PicArray& pic_data_out = picframe.Data( cs );
+
     const PicArray& ref1up = ref1frame.UpData( cs );
     const PicArray& ref2up = ref2frame.UpData( cs );
+
+    // Set up another picture which will contain the MC data, which
+    // we'll add or subtract to pic_data_out
+    TwoDArray<CalcValueType> pic_data(pic_data_out.LengthY(), pic_data_out.LengthX() , 0);
 
     // Factors to compensate for subsampling of chroma
     int xscale_factor = 1;
     int yscale_factor = 1;
-
 
     if ( cs != Y_COMP )
     {
@@ -178,7 +203,6 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
         }
 
     } 
-
 
     // Reference to the relevant DC array
     const TwoDArray<ValueType>& dcarray = mv_data.DC( cs );
@@ -262,36 +286,20 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 
             if(block_mode == REF1_ONLY)
             {
-                if(add_or_sub == ADD) 
-                    CompensateBlock(pic_data, ref1up, mv1, pos, m_block_weights[wgt_idx], m_add);
-                else
-                    CompensateBlock(pic_data, ref1up, mv1, pos, m_block_weights[wgt_idx], m_subtract);
+                CompensateBlock(pic_data, ref1up, mv1, pos, m_block_weights[wgt_idx]);
             }
             else if (block_mode == REF2_ONLY)
             {                
-                if(add_or_sub == ADD)
-                    CompensateBlock(pic_data, ref2up, mv2, pos, m_block_weights[wgt_idx],m_add);
-                else 
-                    CompensateBlock(pic_data, ref2up, mv2, pos, m_block_weights[wgt_idx], m_subtract);
+                CompensateBlock(pic_data, ref2up, mv2, pos, m_block_weights[wgt_idx]);
             }
             else if(block_mode == REF1AND2)
             {
-                if(add_or_sub == ADD){
-                    CompensateBlock(pic_data, ref1up, mv1, pos, m_block_weights[wgt_idx], m_addhalf);
-                    CompensateBlock(pic_data, ref2up, mv2, pos, m_block_weights[wgt_idx], m_addhalf);                    
-                }
-                else
-                {
-                    CompensateBlock(pic_data, ref1up, mv1, pos, m_block_weights[wgt_idx], m_subtracthalf);
-                    CompensateBlock(pic_data, ref2up, mv2, pos, m_block_weights[wgt_idx], m_subtracthalf);
-                }
+                CompensateBlock(pic_data, ref1up, mv1, pos, m_half_block_weights[wgt_idx]);
+                CompensateBlock(pic_data, ref2up, mv2, pos, m_half_block_weights[wgt_idx]);                    
             }
             else
             {//we have a DC block.
-                if(add_or_sub == ADD)
-                    DCBlock(pic_data, dc,pos, m_block_weights[wgt_idx], m_add);
-                else
-                    DCBlock(pic_data, dc,pos, m_block_weights[wgt_idx], m_subtract);
+                DCBlock(pic_data, dc,pos, m_block_weights[wgt_idx]);
             }
 
             //Increment the block horizontal position
@@ -299,39 +307,58 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 
         }//xblock
 
-        // Okay, we've done all the actual blocks. Now if the picture is further padded
-        // we need to set the padded values to zero beyond the last block in the row,
-        // for all the picture lines in the block row. Need only do this when we're
-        // subtracting.
-        if (add_or_sub==SUBTRACT)
-        {
-
-            for ( int y=yblock*m_bparams.Ybsep() ; y<(yblock+1)*m_bparams.Ybsep() ; ++y )
-                for (int x=( m_cparams.XNumBlocks()*m_bparams.Xbsep() ); x<pic_data.LengthX() ; ++x )
-                    pic_data[y][x] = 0;
-
-        }//?add_or_sub
-
         //Increment the block vertical position
         pos.y += m_bparams.Ybsep();
 
     }//yblock
 
-    // Finally, now we've done all the blocks, we must set all padded lines below 
-    // the last row equal to 0, if we're subtracting
-    if (add_or_sub == SUBTRACT)
+    if ( m_add_or_sub == SUBTRACT)
     {
+        int x_end_data = std::min(pic_data.LastX(), m_cparams.XNumBlocks()*m_bparams.Xbsep() );
+        int y_end_data = std::min(pic_data.LastY(), m_cparams.YNumBlocks()*m_bparams.Ybsep() );
 
+        for ( int i =pic_data.FirstY(); i <= y_end_data; i++)
+        {
+            for ( int j =pic_data.FirstX(); j <= x_end_data; ++j)
+            {
+                pic_data_out[i][j] -= static_cast<ValueType>( (pic_data[i][j] + 1024) >> 11 );
+            }
+ 
+            // Okay, we've done all the actual blocks. Now if the picture is further padded
+            // we need to set the padded values to zero beyond the last block in the row,
+            // for all the picture lines in the block row. Need only do this when we're
+            // subtracting.
+
+            for (int j=( m_cparams.XNumBlocks()*m_bparams.Xbsep() ); j<pic_data.LengthX() ; ++j )
+            {
+                pic_data_out[i][j] = 0;
+            }
+        }
+        // Finally, now we've done all the blocks, we must set all padded lines below 
+        // the last row equal to 0, if we're subtracting
         for ( int y=m_cparams.YNumBlocks()*m_bparams.Ybsep() ; y<pic_data.LengthY() ; ++y )
+        {
             for ( int x=0 ; x<pic_data.LengthX() ; ++x )
-                pic_data[y][x] = 0;
+            {
+                pic_data_out[y][x] = 0;
+            }
 
-    }//?add_or_sub
-
+        }
+    }
+    else
+    {
+        for ( int i =pic_data.FirstY(); i <= pic_data.LastY(); i++)
+        {
+            for ( int j =pic_data.FirstX(); j <= pic_data.LastX(); j++)
+            {
+                pic_data_out[i][j] += static_cast<ValueType>( (pic_data[i][j] + 1024) >> 11 );
+            }
+        }
+    }
 }
 
-void MotionCompensator::CompensateBlock( PicArray &pic_data , const PicArray &refup_data , const MVector &mv , 
-const ImageCoords& pos , const TwoDArray<CalcValueType>& wt_array , const ArithObj& arith )
+void MotionCompensator::CompensateBlock( TwoDArray<CalcValueType> &pic_data , const PicArray &refup_data , const MVector &mv , 
+const ImageCoords& pos , const TwoDArray<CalcValueType>& wt_array )
 {
 
     //Coordinates in the image being written to.
@@ -376,9 +403,6 @@ const ImageCoords& pos , const TwoDArray<CalcValueType>& wt_array , const ArithO
     else if( ref_start.y + ((end_pos.y - start_pos.y)<<1 ) >= refYlen)
         do_bounds_checking = true;
 
-    //Temporary Variable.
-    CalcValueType temp;
-
      if( !do_bounds_checking )
      {
          for(int c = start_pos.y, wY = diff.y, uY = ref_start.y; c < end_pos.y; ++c, ++wY, uY += 2)
@@ -386,15 +410,12 @@ const ImageCoords& pos , const TwoDArray<CalcValueType>& wt_array , const ArithO
              for(int l = start_pos.x, wX = diff.x, uX = ref_start.x; l < end_pos.x; ++l, ++wX, uX += 2)
              {
 
-                 temp = ( TLweight * refup_data[uY][uX] +
+                 pic_data[c][l] += (( TLweight * refup_data[uY][uX] +
                           TRweight * refup_data[uY][uX+1] +
                           BLweight * refup_data[uY+1][uX] +
                           BRweight * refup_data[uY+1][uX+1] +
                           8
-                          ) >> 4;
-
-                 arith.DoArith( pic_data[c][l] , CalcValueType(temp) , wt_array[wY][wX] );
-
+                          ) >> 4) * wt_array[wY][wX];
              }//l
          }//c
      }
@@ -409,15 +430,12 @@ const ImageCoords& pos , const TwoDArray<CalcValueType>& wt_array , const ArithO
                 l < end_pos.x; ++l, ++wX, uX += 2,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen))
             {
 
-                temp = ( TLweight * refup_data[BuY][BuX] +
+                pic_data[c][l] += (( TLweight * refup_data[BuY][BuX] +
                          TRweight * refup_data[BuY][BuX1]  +
                          BLweight * refup_data[BuY1][BuX]+
                          BRweight * refup_data[BuY1][BuX1] +
                          8
-                         ) >> 4;
-
-                arith.DoArith( pic_data[c][l] , CalcValueType(temp) , wt_array[wY][wX] );
-
+                         ) >> 4) * wt_array[wY][wX];
             }//l
         }//c
 
@@ -425,8 +443,8 @@ const ImageCoords& pos , const TwoDArray<CalcValueType>& wt_array , const ArithO
 
 }
 
-void MotionCompensator::DCBlock( PicArray &pic_data ,const ValueType dc , const ImageCoords& pos ,
-    const TwoDArray<CalcValueType>& wt_array , const ArithObj& arith)
+void MotionCompensator::DCBlock( TwoDArray<CalcValueType> &pic_data ,const ValueType dc , const ImageCoords& pos ,
+    const TwoDArray<CalcValueType>& wt_array)
 {
 
     //Coordinates in the image being written to.
@@ -441,7 +459,139 @@ void MotionCompensator::DCBlock( PicArray &pic_data ,const ValueType dc , const 
     //Quick process where we can just copy from the double size image.
 
     for(int c = start_pos.y, wY = diff.y; c < end_pos.y; ++c, ++wY)
+    {
         for(int l = start_pos.x, wX = diff.x; l < end_pos.x; ++l, ++wX)
-            arith.DoArith( pic_data[c][l] , CalcValueType( dc ) , wt_array[wY][wX]);
+        {
+            pic_data[c][l] += dc * wt_array[wY][wX];
+        }
+    }
+}
 
+//Overlapping blocks are acheived by applying a 2D raised cosine shape
+//to them. This function facilitates the calculations
+float MotionCompensator::RaisedCosine(float t, float B)
+{
+    if(std::abs(t)>(B+1.0)/2.0) 
+        return 0.0f;
+    else if(std::abs(t)<(1.0-B)/2.0) 
+        return 1.0f;
+    else 
+        return( 0.5 * ( 1.0 + std::cos( 3.141592654 * ( std::abs(t)-(1.0-B)/2.0 )/B ) ) );
+}
+
+//Calculates a weighting block.
+//bparams defines the block parameters so the relevant weighting arrays can be created.
+//FullX and FullY refer to whether the weight should be adjusted for the edge of an image.
+//eg. 1D Weighting shapes in x direction
+
+//  FullX true        FullX false
+//     ***           ********
+//   *     *                  *
+//  *       *                  *
+//*           *                  *
+
+void MotionCompensator::CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, TwoDArray<CalcValueType>& WeightArray)
+{
+    // Create temporary arrays
+    OneDArray<CalcValueType> HWts( WeightArray.LengthX() );
+    OneDArray<CalcValueType> VWts( WeightArray.LengthY() );
+
+    // Calculation variables
+    float rolloffX = (float(bparams.Xblen()+1)/float(bparams.Xbsep())) - 1;
+    float rolloffY = (float(bparams.Yblen()+1)/float(bparams.Ybsep())) - 1;
+    float val;
+
+    // Window in the x direction
+    for(int x = 0; x < bparams.Xblen(); ++x)
+    {
+        val = (float(x) - (float(bparams.Xblen()-1)/2.0))/float(bparams.Xbsep());
+        HWts[x] = static_cast<CalcValueType>( 32.0 * RaisedCosine(val,rolloffX) );
+        HWts[x] = std::max( HWts[x] , 1 );
+        HWts[x] = std::min( HWts[x] , 32 );
+    }// x
+
+    // Window in the y direction
+    for(int y = 0; y < bparams.Yblen(); ++y)
+    {
+        val = (float(y) - (float(bparams.Yblen()-1)/2.0))/float(bparams.Ybsep());
+        VWts[y] = static_cast<CalcValueType>( 32.0 * RaisedCosine(val,rolloffY) );
+        VWts[y] = std::max( VWts[y] , 1 );
+        VWts[y] = std::min( VWts[y] , 32 );
+    }// y
+
+    // Rationalise to avoid rounding errors
+    for(int x = HWts.Last(); x > HWts.Last()-bparams.Xoffset(); --x)
+    {
+        if (HWts[x] + HWts[HWts.Last()-(x-bparams.Xbsep())] > 32)
+            HWts[HWts.Last()-(x-bparams.Xbsep())] = 32-HWts[x];
+            
+        else if (HWts[x] + HWts[HWts.Last()-(x-bparams.Xbsep())] < 32)
+            HWts[x] = 32-HWts[HWts.Last()-(x-bparams.Xbsep())];
+    }// x 
+
+    // Now reflect or pad, as appropriate
+    if (!FullX)
+    {
+        for( int x = 0; x < (bparams.Xblen()>>1) ; ++x)
+            HWts[x] = 32;
+    }
+    else
+    {
+        for( int x = 0; x < (bparams.Xblen()>>1); ++x)
+            HWts[x] = HWts[HWts.Last()-x];
+    }
+
+    // Rationalise to avoid rounding errors
+    for(int y = VWts.Last(); y > VWts.Last()-bparams.Yoffset(); --y)
+    {
+        if (VWts[y] + VWts[VWts.Last()-(y-bparams.Ybsep())] > 32)
+            VWts[VWts.Last()-(y-bparams.Ybsep())] = 32-VWts[y];
+        else if (VWts[y] + VWts[VWts.Last()-(y-bparams.Ybsep())] < 32)
+            VWts[y] = 32-VWts[VWts.Last()-(y-bparams.Ybsep())];
+    }// x 
+
+    // Reflect or pad, as appropriate
+    if (!FullY)
+    {
+        for( int y = 0 ; y < (bparams.Yblen()>>1); ++y)
+            VWts[y] = 32;
+    }
+    else
+    {
+        for( int y = 0 ; y < (bparams.Yblen()>>1); ++y)
+            VWts[y] = VWts[VWts.Last()-y];
+    }
+
+    for(int y = 0; y < bparams.Yblen(); ++y)
+    {
+        for(int x = 0; x < bparams.Xblen(); ++x)
+        {
+            WeightArray[y][x] = VWts[y] * HWts[x];
+        }// x
+    }// y
+
+}
+
+//Flips the values in an array in the x direction.
+void MotionCompensator::FlipX(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, TwoDArray<CalcValueType>& Flipped)
+{
+    for(int x = 0; x < bparams.Xblen(); ++x)
+    {
+        for(int y = 0; y < bparams.Yblen(); ++y)
+        {
+            Flipped[y][x] = Original[y][(bparams.Xblen()-1) - x];
+        }// y
+    }// x
+}
+
+//Flips the values in an array in the y direction.
+void MotionCompensator::FlipY(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, TwoDArray<CalcValueType>& Flipped)
+{
+    for(int x = 0; x < bparams.Xblen(); ++x)
+    {
+        for(int y = 0; y < bparams.Yblen(); ++y)
+        {
+            Flipped[y][x] = Original[(bparams.Yblen()-1) - y][x];
+        }// y
+    }// x
 }
