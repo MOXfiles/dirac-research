@@ -13,11 +13,11 @@ GENERIC_LIBRARY_NAME=Dirac
 
 #release versioning
 GENERIC_MAJOR_VERSION=0
-GENERIC_MINOR_VERSION=1
+GENERIC_MINOR_VERSION=2
 GENERIC_MICRO_VERSION=0
 
 #shared library versioning
-GENERIC_LIBRARY_VERSION=0:1:0
+GENERIC_LIBRARY_VERSION=0:2:0
 #                       | | |
 #                +------+ | +---+
 #                |        |     |
