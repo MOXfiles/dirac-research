@@ -120,7 +120,7 @@ bool QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
     target_quality = m_target_quality[fsort];
 
     // Get the quality of the current frame
-	current_quality = QualityVal( ld_frame.Ydata() , orig_frame.Ydata() , 0.0);
+	current_quality = QualityVal( ld_frame.Ydata() , orig_frame.Ydata() , 0.0 , fsort );
 
     // Copy current data into memory for last frame data
     m_last_lambda[fsort] = m_encparams.Lambda(fsort);
@@ -148,17 +148,15 @@ bool QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
         {
             // Update the default values using a simple recursive filter ...
             m_slope[fsort] = (3.0*m_slope[fsort] + slope)/4.0;
-            m_offset[fsort] = (3.0*m_offset[fsort] + offset)/4.0;
-            m_slope[fsort] = std::min( std::max( -10.0 , m_slope[fsort] ), -0.1);
+            m_offset[fsort] = (3.0*m_offset[fsort] + offset)/4.0;            
         }
         else
         {
             // .. unless we're recoding a frame for the first time            
-            m_slope[fsort] = slope;
-            m_offset[fsort] = offset;
-            m_slope[fsort] = std::min( std::max( -10.0 , m_slope[fsort] ), -0.1);
+            m_slope[fsort] = (m_slope[fsort] + slope)/2.0;
+            m_offset[fsort] = (m_offset[fsort] + offset)/2.0;
         }
-
+        m_slope[fsort] = std::min( std::max( -10.0 , m_slope[fsort] ), -1.5);
     }
 
     // If we need to adjust the lambdas, do so
@@ -167,7 +165,7 @@ bool QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
         // Update the lambdas as appropriate
         float quality_diff = m_target_quality[fsort] - current_quality;
 
-        CalcNewLambdas(fsort , m_slope[fsort] , quality_diff );
+        CalcNewLambdas(fsort , std::min( m_slope[fsort] , -1.0 ), quality_diff );
     }
 
     // if we have a large difference in quality, recode)
@@ -179,11 +177,13 @@ bool QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
 
 void QualityMonitor::CalcNewLambdas(const FrameSort fsort, const double slope, const double quality_diff )
 {	
-     if ( m_encparams.Lambda(fsort) <= 100001.0 && std::abs(quality_diff/slope <2.0) )
-         m_encparams.SetLambda(fsort, m_encparams.Lambda(fsort) *
-                             std::pow( (double)10.0, quality_diff/slope ) );
-     else
+     const double clipped_quality_ratio = std::min( 2.0 , std::max( quality_diff/slope , -2.0 ) );
+
+     if ( m_encparams.Lambda(fsort) > 100001.0 && clipped_quality_ratio > 0.0 )
          m_encparams.SetLambda(fsort, 100000.0);
+     else
+         m_encparams.SetLambda(fsort, m_encparams.Lambda(fsort) *
+                             std::pow( (double)10.0, clipped_quality_ratio ) );
 
      if (fsort == L1_frame)
  		m_encparams.SetL1MELambda( std::sqrt(m_encparams.L1Lambda()) * m_me_ratio );
@@ -192,9 +192,19 @@ void QualityMonitor::CalcNewLambdas(const FrameSort fsort, const double slope, c
 
 }
 
-double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& orig_data , double cpd)
+double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& orig_data , double cpd , const FrameSort fsort)
 {
-    TwoDArray<long double> diff_array(3,4);
+    // The number of regions to look at in assessing quality
+    int xregions( 4 );
+    int yregions( 3 );
+
+    if ( fsort == I_frame )
+    {
+        xregions = 1;
+        yregions = 1;
+    }
+
+    TwoDArray<long double> diff_array( yregions , xregions);
 	long double diff;
 
     OneDArray<int> xstart( diff_array.LengthX() );
