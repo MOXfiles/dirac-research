@@ -33,12 +33,20 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
+
 /*
 *
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-11 14:17:59  tjdwave
+* Revision 1.5  2004-05-12 16:06:20  tjdwave
+*
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.4  2004/05/11 14:17:59  tjdwave
 * Removed dependency on XParam CLI library for both encoder and decoder.
 *
 * Revision 1.3  2004/04/11 22:50:46  chaoticcoyote
@@ -63,29 +71,102 @@
 *
 */
 
-/////////////////////////////////////////
-//-------------------------------------//
-//Class to manage compressing sequences//
-//-------------------------------------//
-/////////////////////////////////////////
-
 #include "libdirac_encoder/seq_compress.h"
 #include "libdirac_encoder/frame_compress.h"
 #include "libdirac_common/golomb.h"
-#include <iostream>
 
-SequenceCompressor::SequenceCompressor(PicInput* pin, EncoderParams& encp)
-: all_done(false),
-picIn(pin),
-sparams(picIn->GetSeqParams()),
+SequenceCompressor::SequenceCompressor(PicInput* pin,std::ofstream* outfile, const EncoderParams& encp)
+:all_done(false),
+just_finished(true),
 encparams(encp),
-my_gop(encparams),
-current_display_fnum(0),
+picIn(pin),
 current_code_fnum(0),
-delay(1),
-last_frame_read(-1)
+show_fnum(-1),last_frame_read(-1),
+delay(1)
 {
+	encparams.EntCorrect=new EntropyCorrector(4);
+	encparams.BIT_OUT=new BitOutputManager(outfile);
 	WriteStreamHeader();
+
+	//We have to set up the block parameters and file padding. This needs to take into
+	//account both blocks for motion compensation and also wavelet transforms
+
+	//Amount of horizontal padding for Y,U and V components
+	int xpad_luma,xpad_chroma;
+	//Amount of vertical padding for Y,U and V components
+	int ypad_luma,ypad_chroma;
+	//scaling factors for chroma based on chroma format
+	int x_chroma_fac,y_chroma_fac;
+
+
+	//First, we need to have sufficient padding to take account of the blocksizes.
+	//It's sufficient to check for chroma
+
+	const SeqParams& sparams=picIn->GetSeqParams();
+	if (sparams.cformat==format411){
+		x_chroma_fac=4; y_chroma_fac=1;
+	}
+	else if (sparams.cformat==format420){
+		x_chroma_fac=2; y_chroma_fac=2;
+	}
+	else if (sparams.cformat==format422){
+		x_chroma_fac=2; y_chroma_fac=1;
+	}
+	else{
+		x_chroma_fac=1; y_chroma_fac=1;
+	}
+
+	int xl_chroma=sparams.xl/x_chroma_fac;
+	int yl_chroma=sparams.yl/y_chroma_fac;
+
+	//make sure we have enough macroblocks to cover the pictures
+	encparams.X_NUM_MB=xl_chroma/encparams.ChromaBParams(0).XBSEP;
+	encparams.Y_NUM_MB=yl_chroma/encparams.ChromaBParams(0).YBSEP;
+	if (encparams.X_NUM_MB*encparams.ChromaBParams(0).XBSEP<xl_chroma){
+		encparams.X_NUM_MB++;
+		xpad_chroma=encparams.X_NUM_MB*encparams.ChromaBParams(0).XBSEP-xl_chroma;
+	}
+	else
+		xpad_chroma=0;
+
+	if (encparams.Y_NUM_MB*encparams.ChromaBParams(0).YBSEP<yl_chroma){
+		encparams.Y_NUM_MB++;
+		ypad_chroma=encparams.Y_NUM_MB*encparams.ChromaBParams(0).YBSEP-yl_chroma;
+	}
+	else
+		ypad_chroma=0;
+
+	//Now we have an integral number of macroblocks in a picture and we set the number of blocks
+	encparams.X_NUMBLOCKS=4*encparams.X_NUM_MB;
+	encparams.Y_NUMBLOCKS=4*encparams.Y_NUM_MB;
+
+	//Next we work out the additional padding due to the wavelet transform
+	//For the moment, we'll fix the transform depth to be 4, so we need divisibility by 16.
+	//In the future we'll want arbitrary transform depths. It's sufficient to check for
+	//chroma only
+
+	int xpad_len=xl_chroma+xpad_chroma;
+	int ypad_len=yl_chroma+ypad_chroma;
+	if (xpad_len%16!=0)
+		xpad_chroma=((xpad_len/16)+1)*16-xl_chroma;
+	if (ypad_len%16!=0)
+		ypad_chroma=((ypad_len/16)+1)*16-yl_chroma;
+
+	xpad_luma=xpad_chroma*x_chroma_fac;
+	ypad_luma=ypad_chroma*y_chroma_fac;
+
+
+	//Set the resulting padding values
+	picIn->SetPadding(xpad_luma,ypad_luma);
+
+	//Set up the frame buffer with the PADDED picture sizes
+	my_buffer=new FrameBuffer(encparams.cformat,encparams.NUM_L1,encparams.L1_SEP,sparams.xl+xpad_luma,sparams.yl+ypad_luma);
+}
+
+SequenceCompressor::~SequenceCompressor(){
+	delete encparams.BIT_OUT;
+	delete encparams.EntCorrect;
+	delete my_buffer;
 }
 
 Frame& SequenceCompressor::CompressNextFrame(){
@@ -97,66 +178,61 @@ Frame& SequenceCompressor::CompressNextFrame(){
 	//the frames out. It's up to the calling function to do something with the decoded frames as they
 	//come out - write them to screen or to file, or whatever. TJD 13Feb04.
 
-	FrameCompressor my_fcoder(encparams);
-	int fnum;
-	int zpos;
-	int old_total_bits;
-	int total_bits;
+	//current_fnum is the number of the current frame being coded in display order
+	//current_code_fnum is the number of the current frame in coding order. This function increments
+	//current_code_fnum by 1 each time and works out what the number is in display order.
+	//show_fnum is the index of the frame number that can be shown when current_fnum has been coded.
+	//Var delay is the delay caused by reordering (as distinct from buffering)
 
-	//set which frame to code
-	fnum=my_gop.CodedToDisplay(current_code_fnum);
-	zpos=my_gop.GopNumber()*my_gop.GetLength()+fnum;
+	int old_total_bits,total_bits;
+	current_display_fnum=CodedToDisplay(current_code_fnum);
 
-	//read in the data if necessary
-	if (zpos<sparams.zl){	
-		for (int I=last_frame_read+1;I<=fnum;++I){
+	if (current_code_fnum!=0)//if we're not at the beginning, clean the buffer
+		my_buffer->Clean(show_fnum);
+
+	show_fnum=std::max(current_code_fnum-delay,0);
+
+	//read in the data if necessary and if we can
+
+	for (int I=last_frame_read+1;I<=int(current_display_fnum);++I){
 			//read from the last frame read to date to the current frame to be coded
 			//(which may NOT be the next frame in display order)
-			my_gop.GetFrame(fnum).Init();			
-			picIn->ReadNextFrame(my_gop.GetFrame(I));
-			last_frame_read=I;
-		}//I		
-	}
-	else
-		all_done=true;
+		if (!picIn->End())
+			my_buffer->PushFrame(picIn,I);
+		else
+			all_done=true;
+		last_frame_read=I;
+	}//I
 
-	if (!all_done){//we haven't coded everything
-
+	if (!all_done){//we haven't coded everything, so compress the next frame
+		old_total_bits=encparams.BIT_OUT->GetTotalBytes()*8;
+		//set up the frame compression
+		FrameCompressor my_fcoder(encparams);
 		if (encparams.VERBOSE){
-			std::cerr<<std::endl<<std::endl;
-			std::cerr<<"Coding frame "<<my_gop.GopNumber()*my_gop.GetLength()+current_code_fnum;
-			std::cerr<<" (gop number "<<my_gop.GopNumber()<<"), ";
-			std::cerr<<zpos<<" in display order";
+			std::cerr<<std::endl<<std::endl<<"Compressing frame "<<current_code_fnum<<", ";
+			std::cerr<<current_display_fnum<<" in display order";
 		}
 
-		old_total_bits=encparams.BIT_OUT->GetTotalBytes()*8;
-		my_fcoder.Compress(my_gop,fnum);
+		//compress the frame
+		my_fcoder.Compress(*my_buffer,current_display_fnum);
+
 		total_bits=encparams.BIT_OUT->GetTotalBytes()*8;
 		if (encparams.VERBOSE)
 			std::cerr<<std::endl<<std::endl<<"Total bits for frame="<<(total_bits-old_total_bits)<<std::endl;
-
-		//set which frame to display
-		current_display_fnum=current_code_fnum-delay;
-		if (current_display_fnum<0){		
-			if (my_gop.GopNumber()>0)
-				current_display_fnum+=my_gop.GetLength();
-			else
-				current_display_fnum=0;
-		}
-
-		current_code_fnum++;
-		if (current_code_fnum>my_gop.GetLength()){
-			current_code_fnum=1;
-			my_gop.IncrementGopNum();
-			last_frame_read=0;
-		}
 	}
-	else{//we have coded everything, but we may not have displayed everything
-		current_display_fnum=DIRAC_MIN(current_code_fnum-delay,my_gop.GetLength());
-		current_code_fnum++;
+	else{
+		int total_bits=encparams.BIT_OUT->GetTotalBytes()*8;
+		if (encparams.VERBOSE && just_finished){
+			std::cerr<<std::endl<<std::endl<<"Finished encoding.";
+			std::cerr<<"Total bits for sequence="<<total_bits;
+			std::cerr<<", of which "<<encparams.BIT_OUT->GetTotalHeadBytes()*8<<" were header.";
+			std::cerr<<std::endl<<"Resulting bit-rate at "<<picIn->GetSeqParams().framerate<<"Hz is ";
+			std::cerr<<total_bits*(picIn->GetSeqParams().framerate)/picIn->GetSeqParams().zl<<" bits/sec.";
+		}
+		just_finished=false;
 	}
-
-	return my_gop.GetFrame(current_display_fnum);
+	current_code_fnum++;
+	return my_buffer->GetFrame(show_fnum);
 }
 
 void SequenceCompressor::WriteStreamHeader(){
@@ -164,29 +240,37 @@ void SequenceCompressor::WriteStreamHeader(){
 
    	//begin with the ID of the codec
 	((encparams.BIT_OUT)->header).OutputBytes("KW-DIRAC");
-
    	//picture dimensions
-	GolombCode((encparams.BIT_OUT)->header,encparams.sparams.xl);
-	GolombCode((encparams.BIT_OUT)->header,encparams.sparams.yl);
-	GolombCode((encparams.BIT_OUT)->header,encparams.sparams.zl);
+	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) picIn->GetSeqParams().xl);
+	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) picIn->GetSeqParams().yl);
+	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) picIn->GetSeqParams().zl);
 	//picture rate
-	GolombCode((encparams.BIT_OUT)->header,encparams.sparams.framerate);
-
+	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) picIn->GetSeqParams().framerate);
     //block parameters
-	GolombCode((encparams.BIT_OUT)->header,encparams.LumaBParams(2).XBLEN);	
-	GolombCode((encparams.BIT_OUT)->header,encparams.LumaBParams(2).YBLEN);
-	GolombCode((encparams.BIT_OUT)->header,encparams.LumaBParams(2).XBSEP);
-	GolombCode((encparams.BIT_OUT)->header,encparams.LumaBParams(2).YBSEP);
-
+	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) encparams.LumaBParams(2).XBLEN);
+	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) encparams.LumaBParams(2).YBLEN);
+	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) encparams.LumaBParams(2).XBSEP);
+	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) encparams.LumaBParams(2).YBSEP);
+	//also send the number of blocks horizontally and vertically
+	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) encparams.X_NUMBLOCKS);
+	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) encparams.Y_NUMBLOCKS);
     //chroma format
-	GolombCode((encparams.BIT_OUT)->header,int(encparams.sparams.cformat));
-
-    //GOP parameters
-	GolombCode((encparams.BIT_OUT)->header,encparams.NUM_L1);
-	GolombCode((encparams.BIT_OUT)->header,encparams.L1_SEP);
-
+	UnsignedGolombCode((encparams.BIT_OUT)->header,(unsigned int) encparams.cformat);
     //interlace marker
-	GolombCode((encparams.BIT_OUT)->header,int(encparams.sparams.interlace));
+	((encparams.BIT_OUT)->header).OutputBit(encparams.interlace);
 
 	encparams.BIT_OUT->WriteToFile();
 }
+
+int SequenceCompressor::CodedToDisplay(int fnum){
+	int div;
+	if (fnum==0)
+		return 0;
+	else if ((fnum-1)% encparams.L1_SEP==0){//we have L1 or subsequent I frames
+		div=(fnum-1)/encparams.L1_SEP;
+		return fnum+encparams.L1_SEP-1;
+	}
+	else//we have L2 frames
+		return fnum-1;
+}
+

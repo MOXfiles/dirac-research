@@ -38,7 +38,14 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-05-11 14:17:59  tjdwave
+* Revision 1.3  2004-05-12 16:05:51  tjdwave
+*
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.2  2004/05/11 14:17:59  tjdwave
 * Removed dependency on XParam CLI library for both encoder and decoder.
 *
 * Revision 1.1.1.1  2004/03/11 17:45:43  timborer
@@ -78,11 +85,11 @@ static void display_help()
 	cout << "\nxl            ulong   I  352           Width in pixels";
 	cout << "\nyl            ulong   I  288           Height in pixels";
 	cout << "\nzl            ulong   I  37            Length in frames";
-	cout << "\nframerate     ulong   I  12            Frame rate in Hz"; 
+	cout << "\nframerate     ulong   I  12            Frame rate in Hz";
 	cout << "\ninterlace     bool    I  false         Interlace";
 	cout << "\ntopfieldfirst bool    I  true          Top Field First (set if interlaced)";
 	cout << endl;
-}	
+}
 
 int main( int argc, char *argv[] )
 {
@@ -98,14 +105,14 @@ int main( int argc, char *argv[] )
 
 	if (argc<2)//need at least 2 arguments - the program name, and an output
 	{
-		display_help();	
+		display_help();
 	}
 	else//carry on!
 	{
 	//start with the output file
 		if (args.get_inputs().size()==1){
-			output=args.get_inputs()[0];			
-		}		
+			output=args.get_inputs()[0];
+		}
 		//check we have real inputs
 		if (output.length() ==0)
 		{
@@ -130,7 +137,7 @@ int main( int argc, char *argv[] )
 		sparams.framerate=13;
 
 		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
-			opt != args.get_options().end(); ++opt)	{	
+			opt != args.get_options().end(); ++opt)	{
 			if (opt->m_name == "cformat")
 			{
 				if (opt->m_value=="format420"){

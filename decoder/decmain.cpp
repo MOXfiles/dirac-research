@@ -33,12 +33,20 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
+
 /*
 *
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-11 14:17:58  tjdwave
+* Revision 1.4  2004-05-12 16:04:20  tjdwave
+*
+* Done general code tidy, implementing copy constructors, assignment= and const
+* correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
+* Added support for frame padding so that arbitrary block sizes and frame
+* dimensions can be supported.
+*
+* Revision 1.3  2004/05/11 14:17:58  tjdwave
 * Removed dependency on XParam CLI library for both encoder and decoder.
 *
 * Revision 1.2  2004/04/12 01:57:46  chaoticcoyote
@@ -80,36 +88,30 @@ static void display_help()
 	cout << endl;
 }
 
-
 int main(int argc, char* argv[]) {
 
-/******************************************************************/
+	/******************************************************************/
 
 	 /********** create params object to handle command line parameter parsing*********/
 	command_line args(argc,argv);
-
- 	//the variables we'll read parameters into
 	char input_name[84];							// char arrays used for file names
 	char output_name[84];
-	char bit_name[84];								//output name for the bitstream	
-	std::string input,output;	
-
-	//bool to record whether we're verbose or not
-	bool verbose=false;	
+	char bit_name[84];								//output name for the bitstream
+	string input,output;
+	bool verbose=false;
 
 	if (argc<3)//need at least 3 arguments - the program name, an input and an output
 	{
-		display_help();	
+		display_help();
 	}
 	else//carry on!
 	{
 		//now set up the parameter set with these variables
 		//Do required inputs
-
 		if (args.get_inputs().size()==2){
 			input=args.get_inputs()[0];
-			output=args.get_inputs()[1];			
-		}		
+			output=args.get_inputs()[1];
+		}
 		//check we have real inputs
 		if ((input.length() == 0) || (output.length() ==0))
 		{
@@ -122,50 +124,51 @@ int main(int argc, char* argv[]) {
 		for (size_t i=0;i<output.length();i++) output_name[i]=output[i];
 		output_name[output.length()] = '\0';
 
-		strncpy(bit_name,input_name,84);	
+		strncpy(bit_name,input_name,84);
 		strcat(bit_name,".drc");
 
-		//next check for options		
+		//next check for options
 		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
 			opt != args.get_options().end(); ++opt)
 		{
 			if (opt->m_name == "verbose" && opt->m_value=="true")
 			{
 				verbose=true;
-			}	
+			}
 
 		}//opt
 
+	 /******************************************************************/
+	 	//read the stream data in and get the sequence data out
 
-/******************************************************************/
-		//read the stream data in and get the sequence data out
 		std::ifstream infile(bit_name,std::ios::in | std::ios::binary);
 		SequenceDecompressor mydecompress(&infile,verbose);
-		SeqParams& sparams=mydecompress.GetSeqParams();	
+		SeqParams& sparams=mydecompress.GetSeqParams();
 
-/******************************************************************/
-		//set up the ouput pictures
+	 /******************************************************************/
+	 	//set up the ouput pictures
 
 		PicOutput myoutputpic(output_name,sparams);
 		myoutputpic.WritePicHeader();
 
-/******************************************************************/
-	//do the decoding loop
-
-		mydecompress.DecompressNextFrame();
+ /******************************************************************/
+	 	//do the decoding loop
 		clock_t start_t, stop_t;
-
 		start_t=clock();
+		mydecompress.DecompressNextFrame();
 		for (int I=0;I<sparams.zl;++I)
 			myoutputpic.WriteNextFrame(mydecompress.DecompressNextFrame());
 		stop_t=clock();
 
 		double diff=double(stop_t-start_t);
-		std::cout<<"Time per frame: "<<diff/double(CLOCKS_PER_SEC*37);
-
 		infile.close();
 
-		if (verbose)
-			std::cerr<<std::endl<<"Finished decoding";	
-	}//?argc
+		if (verbose){
+			std::cerr<<"Time per frame: "<<diff/double(CLOCKS_PER_SEC*sparams.zl);
+			std::cerr<<std::endl<<"Finished decoding";
+		}
+
+		return EXIT_SUCCESS;
+	}//?sufficient arguments
 }
+
