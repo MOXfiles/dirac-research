@@ -58,7 +58,7 @@ The following options are available:
 
 Example: For colour motion vector arrows with a clip value of 50, using reference 2 guides:
 
-        util/dirac_instrumentation ~/pictures/in ~/pictures/out -motion_colour_arrows -clip 50 -ref 2
+        util/instrumentation/dirac_instrumentation ~/pictures/in ~/pictures/out -motion_colour_arrows -clip 50 -ref 2
 
 
 3. Operation
