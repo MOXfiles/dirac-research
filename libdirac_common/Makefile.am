@@ -17,14 +17,15 @@ cpp_sources = band_codec.cpp bit_manager.cpp common.cpp \
 if USE_MSVC
 noinst_LIBRARIES = libdirac_common.a
 libdirac_common_a_AR = link.exe -lib /out:libdirac_common.a $(libdirac_common_a_OBJECTS) ; echo
+libdirac_common_a_SOURCES = $(h_sources) $(cpp_sources)
 else
 libdirac_common_a_AR = ar crv
 noinst_LTLIBRARIES = libdirac_common.la
+libdirac_common_la_SOURCES = $(h_sources) $(cpp_sources)
+libdirac_common_la_CXXFLAGS = $(AM_CXXFLAGS)
 endif
 
-libdirac_common_a_SOURCES = $(h_sources) $(cpp_sources)
 
-libdirac_common_la_SOURCES = $(h_sources) $(cpp_sources)
 
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)/libdirac_common
 library_include_HEADERS = common_types.h dirac_types.h 

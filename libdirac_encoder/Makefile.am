@@ -25,6 +25,7 @@ libdirac_encoder_a_LIBADD = \
                $(top_builddir)/libdirac_common/libdirac_common.a
 
 libdirac_encoder_la_SOURCES = $(h_sources) $(cpp_sources)
+libdirac_encoder_la_CXXFLAGS = $(AM_CXXFLAGS)
 libdirac_encoder_la_LIBADD = \
          $(top_builddir)/libdirac_motionest/libdirac_motionest.la \
          $(top_builddir)/libdirac_common/libdirac_common.la

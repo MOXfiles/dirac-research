@@ -18,6 +18,7 @@ endif
 libdirac_motionest_a_SOURCES = $(h_sources) $(cpp_sources)
 
 libdirac_motionest_la_SOURCES = $(h_sources) $(cpp_sources)
+libdirac_motionest_la_CXXFLAGS = $(AM_CXXFLAGS)
 
 
 if USE_MSVC

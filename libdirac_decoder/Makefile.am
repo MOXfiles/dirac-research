@@ -21,6 +21,7 @@ libdirac_decoder_a_LIBADD = \
                $(top_builddir)/libdirac_common/libdirac_common.a
 
 libdirac_decoder_la_SOURCES = $(h_sources) $(cpp_sources)
+libdirac_decoder_la_CXXFLAGS = $(AM_CXXFLAGS)
 
 libdirac_decoder_la_LIBADD = $(top_builddir)/libdirac_common/libdirac_common.la
 

@@ -16,7 +16,9 @@ libdirac_instrument_a_AR = ar crv
 endif
 
 libdirac_instrument_a_SOURCES = $(h_sources) $(cpp_sources)
+
 libdirac_instrument_la_SOURCES = $(h_sources) $(cpp_sources)
+libdirac_instrument_la_CXXFLAGS = $(AM_CXXFLAGS)
 
 if USE_MSVC
 CLEANFILES = *.pdb *.ilk
