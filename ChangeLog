@@ -1,3 +1,343 @@
+2005-02-17 13:05  asuraparaju
+
+	* NEWS: Included Dirac 0.5.1 release notes
+
+2005-02-17 13:05  asuraparaju
+
+	* README.release: Included Dirac Directshow filter and Mplayer
+	  patch to checklist
+
+2005-02-17 13:03  asuraparaju
+
+	* README.developers: Modified MMX optimisation implementation
+	  guidelines to use Intrinsics. Included notes on conducting
+	  end-to-end test using 'make check' and create_dirac_testfile.pl
+
+2005-02-17 13:02  asuraparaju
+
+	* README: Included notes on how to enable MMX optimisations and how
+	  to use the data generation script create_dirac_testfile.pl
+
+2005-02-17 12:23  asuraparaju
+
+	* picheader/headmain.cpp: Not returning an exit code when usage
+	  info is displayed.
+
+2005-02-17 12:22  asuraparaju
+
+	* tests/create_dirac_testfile.pl: Fix compilation errors.
+
+2005-02-17 12:21  asuraparaju
+
+	* tests/Makefile.am: Include scrip create_dirac_testfile.pl in
+	  install list to bin directory
+
+2005-02-16 17:52  asuraparaju
+
+	* libdirac_common/bit_manager.h: the bitstream has changed. So
+	  updated bitstream version so that an error is reported if
+	  attempting to decode	older versions of Dirac files.
+
+2005-02-16 17:48  asuraparaju
+
+	* extras/patches/: MPlayer-1.0pre6a_dirac-0.5.x.patch,
+	  README_MPlayer-1.0pre6a_dirac-0.5.x_patch: Mplayer 1.0pre6a patch
+	  to enable Dirac support in MPlayer
+
+2005-02-16 17:42  asuraparaju
+
+	* extras/dirac_dshow/src/diracsplitter/: DiracSplitter.cpp,
+	  DiracSplitter.def: Dirac direct show filter files
+
+2005-02-16 17:40  asuraparaju
+
+	* extras/dirac_dshow/src/basesplitter/: BaseSplitterFileEx.cpp,
+	  BaseSplitterFileEx.h: Direct show filter files
+
+2005-02-16 17:19  asuraparaju
+
+	* extras/dirac_dshow/: DiracSplitter.sln, INSTALL,
+	  README.developers, include/IChapterInfo.h,
+	  include/IKeyFrameInfo.h, include/moreuuids.h,
+	  include/matroska/matroska.h, include/winddk/devioctl.h,
+	  include/winddk/ntddcdrm.h, include/winddk/ntddstor.h,
+	  src/basesplitter/AsyncReader.cpp, src/basesplitter/AsyncReader.h,
+	  src/basesplitter/BaseSplitter.cpp,
+	  src/basesplitter/BaseSplitter.h,
+	  src/basesplitter/BaseSplitterFile.cpp,
+	  src/basesplitter/BaseSplitterFile.h,
+	  src/basesplitter/basesplitter.vcproj,
+	  src/basesplitter/stdafx.cpp, src/basesplitter/stdafx.h,
+	  src/diracsplitter/DiracSplitter.h,
+	  src/diracsplitter/DiracSplitter.rc,
+	  src/diracsplitter/DiracSplitter.vcproj,
+	  src/diracsplitter/DiracSplitterFile.cpp,
+	  src/diracsplitter/DiracSplitterFile.h,
+	  src/diracsplitter/resource.h, src/diracsplitter/stdafx.cpp,
+	  src/diracsplitter/stdafx.h, src/dsutil/DSUtil.cpp,
+	  src/dsutil/DSUtil.h, src/dsutil/MediaTypes.cpp,
+	  src/dsutil/MediaTypes.h, src/dsutil/NullRenderers.cpp,
+	  src/dsutil/NullRenderers.h, src/dsutil/a_yuv2rgb.asm,
+	  src/dsutil/a_yuvtable.asm, src/dsutil/convert_a.asm,
+	  src/dsutil/dsutil.vcproj, src/dsutil/stdafx.cpp,
+	  src/dsutil/stdafx.h, src/dsutil/text.cpp, src/dsutil/text.h,
+	  src/dsutil/vd.cpp, src/dsutil/vd.h, src/switcher/AudioSwitcher.h,
+	  src/switcher/StreamSwitcher.h: Patches and DirectShow filter
+	  related files
+
+2005-02-15 11:39  asuraparaju
+
+	* win32/VS2003/: dirac.sln, ConversionUtils/ConversionUtils.vcproj,
+	  ConversionUtils/BMPtoRGB/BMPtoRGB.vcproj,
+	  ConversionUtils/RGBtoBMP/RGBtoBMP.vcproj,
+	  ConversionUtils/RGBtoUYVY/RGBtoUYVY.vcproj,
+	  ConversionUtils/RGBtoYUV411/RGBtoYUV411.vcproj,
+	  ConversionUtils/RGBtoYUV420/RGBtoYUV420.vcproj,
+	  ConversionUtils/RGBtoYUV422/RGBtoYUV422.vcproj,
+	  ConversionUtils/RGBtoYUV444/RGBtoYUV444.vcproj,
+	  ConversionUtils/UYVYtoRGB/UYVYtoRGB.vcproj,
+	  ConversionUtils/YUV411toRGB/YUV411toRGB.vcproj,
+	  ConversionUtils/YUV420toRGB/YUV420toRGB.vcproj,
+	  ConversionUtils/YUV422toRGB/YUV422toRGB.vcproj,
+	  ConversionUtils/YUV444toRGB/YUV444toRGB.vcproj,
+	  ConversionUtils/libconv_common/libconv_common.vcproj,
+	  DecodeDirac/DecodeDirac.vcproj, DiracDecoder/DiracDecoder.vcproj,
+	  DiracDecoder/libdirac_decoder/libdirac_decoder.vcproj,
+	  DiracEncoder/DiracEncoder.vcproj,
+	  DiracEncoder/libdirac_encoder/libdirac_encoder.vcproj,
+	  EncodeDirac/EncodeDirac.vcproj, Everything/Everything.vcproj,
+	  InstrumentDirac/InstrumentDirac.vcproj,
+	  InstrumentDirac/libdirac_instrument/libdirac_instrument.vcproj,
+	  MakeHeader/MakeHeader.vcproj,
+	  libdirac_common/libdirac_common.vcproj,
+	  libdirac_motionest/libdirac_motionest.vcproj: Added new targets
+	  for building with MMX optimisation enabled.
+
+2005-02-15 11:38  asuraparaju
+
+	* configure.ac: Update release id to 0.5.1. Added flag to enable
+	  MMX optimisation and test for checking if MMX optimising is
+	  available. Default opt level changed to -O3 for g++ and icc.
+	  Added extra optimisation flags when compiling with g++.  Fixed
+	  cppunit availability check to report linker errors so that shared
+	  library mismatches are trapped.
+
+2005-02-15 11:33  asuraparaju
+
+	* encoder/encmain.cpp: Modified error messages to output more
+	  information.
+
+2005-02-15 11:31  asuraparaju
+
+	* tests/: Makefile.am, create_dirac_testfile.pl, samples.at,
+	  testsuite.at: A new script to generate dirac test data of
+	  different chroma formats from source RGB format input data. A new
+	  testcase, samples.at, which looks for Dirac test data in the
+	  directory specified by the env variable DIRAC_INPUT_DATA_DIR.
+	  The script and testcase are useful to run end-to-end tests using
+	  all input formats supported by Dirac.
+
+2005-02-15 11:21  asuraparaju
+
+	* libdirac_motionest/: Makefile.am, me_utils.cpp, me_utils_mmx.cpp,
+	  me_utils_mmx.h: Using MMX to compute block differences. Applied a
+	  modified version of patch 1081743.
+
+2005-02-15 11:15  asuraparaju
+
+	* libdirac_common/: band_codec.h, wavelet_utils.h: Fixed doxygen
+	  warnings
+
+2005-02-15 11:13  asuraparaju
+
+	* acinclude.m4: File containing user defined autoconf macro
+	  functions specific to Dirac project
+
+2005-02-08 14:02  tjdwave
+
+	* libdirac_common/arith_codec.h: Replaced delete with delete[] in
+	  destructor. Added clean-up in data reading so that the class can
+	  be re-used without causing a memory leak.
+
+2005-02-07 12:12  tjdwave
+
+	* libdirac_encoder/comp_compress.cpp,
+	  libdirac_decoder/comp_decompress.cpp: Fixed bug where blocks of
+	  coefficients with zero dimensions were being generated. There's
+	  now a minimum size of 4x4 coefficients for a code block.
+
+2005-02-02 15:29  asuraparaju
+
+	* libdirac_common/arith_codec.h, libdirac_common/band_codec.cpp,
+	  libdirac_common/mv_codec.cpp,
+	  libdirac_decoder/comp_decompress.cpp: Fixed g++ warnings when
+	  compiled in debug mode (i.e. configure with flag --enable-debug)
+
+2005-02-02 15:24  dirac_dev
+
+	*
+	  win32/VS2003/DiracEncoder/libdirac_encoder/libdirac_encoder.vcproj:
+	  Added quant_chooser.cpp/h
+
+2005-02-02 14:50  tjdwave
+
+	* libdirac_decoder/: comp_decompress.cpp, comp_decompress.h: Added
+	  support for multiple code blocks/quantisers. Added separate
+	  function for reading header.
+
+2005-02-02 14:49  tjdwave
+
+	* libdirac_encoder/Makefile.am: Modded to add quant_chooser.{cpp,h}
+
+2005-02-02 14:47  tjdwave
+
+	* libdirac_encoder/: comp_compress.cpp, comp_compress.h,
+	  quality_monitor.cpp, quality_monitor.h: Removed quantiser
+	  selection from comp_compress to another class.
+
+2005-02-02 14:46  tjdwave
+
+	* libdirac_encoder/: quant_chooser.cpp, quant_chooser.h: Modified
+	  author details.
+
+2005-02-02 14:44  tjdwave
+
+	* libdirac_encoder/: quant_chooser.cpp, quant_chooser.h: Added
+	  classes to handle selecting quantisers. These allow a single
+	  quantiser per subband to be chosen, or alternatively one for each
+	  code block.
+
+2005-02-02 14:42  tjdwave
+
+	* libdirac_common/: band_codec.cpp, common.cpp, mv_codec.cpp,
+	  wavelet_utils.cpp, arith_codec.h, band_codec.h, common.h,
+	  mv_codec.h, wavelet_utils.h: Modified wavelet coeff coding to
+	  code blocks of coefficients. with skip flags if all coefficients
+	  are zero. Wavelet coefficient coding has reduced use of class
+	  member variables for clarity. The arithmetic coding and decoding
+	  engines have been modified to improve speed and code
+	  organisation. The decoder now reads in all the data before
+	  beginning decoding. Coding of motion vector data has been tidied,
+	  and modified to accommodate changes in the arithmetic coding
+	  engine. Block prediction modes are now coded slightly
+	  differently, which improves compression performance.
+
+2005-01-24 16:58  tjdwave
+
+	* libdirac_common/common.h, libdirac_common/mv_codec.cpp,
+	  libdirac_common/mv_codec.h, libdirac_motionest/me_mode_decn.cpp:
+	  Changed prediction of block modes to be bitwise - bit 0 indicates
+	  the presence of a Ref1 MV, and bit 1 indicated the presence of a
+	  Ref2 MV. This is also reflected in selecting modes in motion
+	  estimation.
+
+2005-01-24 16:06  tjdwave
+
+	* libdirac_motionest/me_mode_decn.cpp: Re-instituted bi-directional
+	  prediction, inadvertently commented out.
+
+2005-01-24 14:43  tjdwave
+
+	* libdirac_motionest/: block_match.cpp, block_match.h,
+	  me_subpel.cpp: Made local motion vector variance a member
+	  function of the block matcher, and made the cut-off limits depend
+	  on the picture size. This improves performance at HD by 4% or so.
+
+2005-01-18 19:13  mservais
+
+	* libdirac_motionest/global_motion.h: Testing CVS (Marc)
+
+2005-01-18 18:20  mservais
+
+	* libdirac_motionest/global_motion.h: Testing CVS (Marc)
+
+2005-01-18 17:42  mservais
+
+	* libdirac_motionest/global_motion.cpp: Marc: Testing that CVS
+	  works OK
+
+2005-01-12 17:50  asuraparaju
+
+	* libdirac_motionest/global_motion.h: Forgot to add this file with
+	  the earlier lot of global motion files
+
+2005-01-12 16:18  asuraparaju
+
+	* win32/VS2003/libdirac_motionest/libdirac_motionest.vcproj: Added
+	  global motion related files to the project
+
+2005-01-12 15:30  asuraparaju
+
+	* libdirac_motionest/: Makefile.am, filter_weighted_local.cpp,
+	  filter_weighted_local.h, global_motion.cpp, model_affine.cpp,
+	  model_affine.h, model_global_motion.cpp, model_global_motion.h,
+	  model_projective.cpp, model_projective.h, motion_estimate.cpp,
+	  refine_motion_vector_field.cpp, refine_motion_vector_field.h,
+	  reject_edge.cpp, reject_edge.h, reject_intensity.cpp,
+	  reject_intensity.h, reject_local.cpp, reject_local.h,
+	  reject_motion_vector_outliers.cpp,
+	  reject_motion_vector_outliers.h, reject_outlier.cpp,
+	  reject_outlier.h, reject_sad.cpp, reject_sad.h, reject_value.cpp,
+	  reject_value.h, test_global_motion_model.cpp,
+	  test_global_motion_model.h, test_mv_sad.cpp, test_mv_sad.h:
+	  Global motion estimation related new files and mods to existing
+	  files
+
+2004-12-22 11:59  tjdwave
+
+	* libdirac_motionest/block_match.cpp: Fixed bug with assigning
+	  costs to lists of vectors, reported by Eric Rannaud.
+
+2004-12-10 15:28  asuraparaju
+
+	* libdirac_common/Makefile.am, libdirac_decoder/Makefile.am,
+	  libdirac_encoder/Makefile.am, libdirac_motionest/Makefile.am,
+	  util/instrumentation/libdirac_instrument/Makefile.am: Fixed bug
+	  1081435.
+
+2004-12-10 15:21  asuraparaju
+
+	* decoder/Makefile.am, encoder/Makefile.am, picheader/Makefile.am,
+	  util/instrumentation/Makefile.am: Link in math library, libm, if
+	  required.
+
+2004-12-10 15:20  asuraparaju
+
+	* tests/colourbars.at: Not ignoring standard error so that errors
+	  are trapped when running the test suite.
+
+2004-12-10 15:18  asuraparaju
+
+	* encoder/encmain.cpp: Print the bitrate to standard output even
+	  when not in verbose mode.
+
+2004-12-10 15:16  asuraparaju
+
+	* libdirac_encoder/comp_compress.cpp: Included Peter Meerwald in
+	  list of contributors
+
+2004-12-10 15:13  asuraparaju
+
+	* libdirac_encoder/comp_compress.cpp: Fixed errors reported by
+	  MIPSpro 7.4 C++ compiler. Applied patch 1081664 which improves
+	  encoding speed by 10-15%.
+
+2004-12-10 15:04  asuraparaju
+
+	* configure.ac: Added check to see if math library, libm, needs to
+	  be linked. Added test to check for C++ header files that are not
+	  included in old versions of C++ compilers. Applied patch 1081730.
+
+2004-12-10 14:59  asuraparaju
+
+	* bootstrap: Exit with a failure message if automake fails.
+
+2004-12-01 16:21  asuraparaju
+
+	* win32/VS2003/MakeHeader/MakeHeader.vcproj: MakeHeader.exe now is
+	  correctly being created in win32/VS2003/bin/<build-type>
+	  directory.
+
 2004-12-01 14:40  asuraparaju
 
 	* NEWS: Included 0.5.0 release notes
