@@ -52,108 +52,103 @@ void WritePicHeader(SeqParams& sparams,std::ofstream* op_head_ptr);
 
 static void display_help()
 {
-	cout << "\nDIRAC wavelet video decoder.";
-	cout << "\n";
-	cout << "\nUsage: progname -<flag1> [<flag_val>] ... <input1> <intput2> ...";
-	cout << "\nIn case of multiple assignment to the same parameter, the last holds.";
-	cout << "\n";
-	cout << "\nName          Type   I/O Default Value Description";
-	cout << "\n====          ====   === ============= ===========                                       ";
-	cout << "\noutput        string  I  [ required ]  Output file name";
-	cout << "\ncformat       string  I  format420     Chroma format";
-	cout << "\nxl            ulong   I  352           Width in pixels";
-	cout << "\nyl            ulong   I  288           Height in pixels";
-	cout << "\nzl            ulong   I  37            Length in frames";
-	cout << "\nframerate     ulong   I  12            Frame rate in Hz";
-	cout << "\ninterlace     bool    I  false         Interlace";
-	cout << "\ntopfieldfirst bool    I  true          Top Field First (set if interlaced)";
-	cout << endl;
+    cout << "\nDIRAC wavelet video decoder.";
+    cout << "\n";
+    cout << "\nUsage: progname -<flag1> [<flag_val>] ... <input1> <intput2> ...";
+    cout << "\nIn case of multiple assignment to the same parameter, the last holds.";
+    cout << "\n";
+    cout << "\nName          Type   I/O Default Value Description";
+    cout << "\n====          ====   === ============= ===========                                       ";
+    cout << "\noutput        string  I  [ required ]  Output file name";
+    cout << "\ncformat       string  I  format420     Chroma format";
+    cout << "\nxl            ulong   I  352           Width in pixels";
+    cout << "\nyl            ulong   I  288           Height in pixels";
+    cout << "\nzl            ulong   I  37            Length in frames";
+    cout << "\nframerate     ulong   I  12            Frame rate in Hz";
+    cout << "\ninterlace     bool    I  false         Interlace";
+    cout << "\ntopfieldfirst bool    I  true          Top Field First (set if interlaced)";
+    cout << endl;
 }
 
 int main( int argc, char *argv[] )
 {
-	 /********** create params object to handle command line parameter parsing*********/
-	set<string> bool_opts;
-	bool_opts.insert("interlace");
-	bool_opts.insert("topfieldfirst");
+     /********** create params object to handle command line parameter parsing*********/
+    set<string> bool_opts;
+    bool_opts.insert("interlace");
+    bool_opts.insert("topfieldfirst");
 
-	CommandLine args(argc,argv,bool_opts);
+    CommandLine args(argc,argv,bool_opts);
 
- 	//the variables we'll read parameters into
-	char output_name[84];
-	std::string output;
-	SeqParams sparams;
+     //the variables we'll read parameters into
+    std::string output;
+    SeqParams sparams;
 
- 	//now set up the parameter set with these variables
+     //now set up the parameter set with these variables
 
-	//need at least 2 arguments - the program name, and an output
-	if (argc < 2)
-	{
-		display_help();
-		exit(1);
-	}
+    //need at least 2 arguments - the program name, and an output
+    if (argc < 2)
+    {
+        display_help();
+        exit(1);
+    }
 
-	//start with the output file
-	if (args.GetInputs().size()==1){
-		output=args.GetInputs()[0];
-	}
+    //start with the output file
+    if (args.GetInputs().size()==1){
+        output=args.GetInputs()[0];
+    }
 
-	//check we have real inputs
-	if (output.length() ==0)
-	{
-		display_help();
-		exit(1);
-	}
-	for (size_t i=0;i<output.length();i++)
-		output_name[i]=output[i];
-	output_name[output.length()] = '\0';
+    //check we have real inputs
+    if (output.length() ==0)
+    {
+        display_help();
+        exit(1);
+    }
+    //now do the options
 
-	//now do the options
+    //set defaults. To do: set up in constructor
+    sparams.SetCFormat(format420);
+    sparams.SetXl(352);
+    sparams.SetYl(288);
+    sparams.SetZl(37);
+    sparams.SetInterlace(false);
+    sparams.SetTopFieldFirst(true);
+    sparams.SetFrameRate(13);
 
-	//set defaults. To do: set up in constructor
-	sparams.SetCFormat(format420);
-	sparams.SetXl(352);
-	sparams.SetYl(288);
-	sparams.SetZl(37);
-	sparams.SetInterlace(false);
-	sparams.SetTopFieldFirst(true);
-	sparams.SetFrameRate(13);
+    for (vector<CommandLine::option>::const_iterator opt = args.GetOptions().begin();
+        opt != args.GetOptions().end();
+        ++opt)
+    {
+        if (opt->m_name == "cformat")
+        {
+            if (opt->m_value=="format420")
+                sparams.SetCFormat( format420 );
+            else if (opt->m_value=="format422")
+                sparams.SetCFormat( format422 );
+            else if (opt->m_value=="format411")
+                sparams.SetCFormat( format411 );
+            else if (opt->m_value=="format444")
+                sparams.SetCFormat( format444 );
+            else if (opt->m_value=="Yonly")
+                sparams.SetCFormat( Yonly );
+        }
+        else if (opt->m_name == "xl")
+            sparams.SetXl( strtoul(opt->m_value.c_str(),NULL,10) );
+        else if (opt->m_name == "yl")
+            sparams.SetYl( strtoul(opt->m_value.c_str(),NULL,10) );    
+        else if (opt->m_name == "zl")
+            sparams.SetZl( strtoul(opt->m_value.c_str(),NULL,10) );    
+        else if (opt->m_name == "interlace" && opt->m_value=="true")
+            sparams.SetInterlace( true );    
+        else if (opt->m_name == "topfieldfirst" && opt->m_value=="false")
+            sparams.SetTopFieldFirst( false );
+        else if (opt->m_name == "framerate")
+            sparams.SetFrameRate( strtoul(opt->m_value.c_str(),NULL,10) );
 
-	for (vector<CommandLine::option>::const_iterator opt = args.GetOptions().begin();
-		opt != args.GetOptions().end();
-		++opt)
-	{
-		if (opt->m_name == "cformat")
-		{
-			if (opt->m_value=="format420")
-				sparams.SetCFormat( format420 );
-			else if (opt->m_value=="format422")
-				sparams.SetCFormat( format422 );
-			else if (opt->m_value=="format411")
-				sparams.SetCFormat( format411 );
-			else if (opt->m_value=="format444")
-				sparams.SetCFormat( format444 );
-			else if (opt->m_value=="Yonly")
-				sparams.SetCFormat( Yonly );
-		}
-		else if (opt->m_name == "xl")
-			sparams.SetXl( strtoul(opt->m_value.c_str(),NULL,10) );
-		else if (opt->m_name == "yl")
-			sparams.SetYl( strtoul(opt->m_value.c_str(),NULL,10) );	
-		else if (opt->m_name == "zl")
-			sparams.SetZl( strtoul(opt->m_value.c_str(),NULL,10) );	
-		else if (opt->m_name == "interlace" && opt->m_value=="true")
-			sparams.SetInterlace( true );	
-		else if (opt->m_name == "topfieldfirst" && opt->m_value=="false")
-			sparams.SetTopFieldFirst( false );
-		else if (opt->m_name == "framerate")
-			sparams.SetFrameRate( strtoul(opt->m_value.c_str(),NULL,10) );
+    }//opt
 
-	}//opt
+    // Open just the header file for output
+    PicOutput header(output.c_str(), sparams, true);
+    header.WritePicHeader();
 
-	// Open just the header file for output
-	PicOutput header(output_name, sparams, true);
-	header.WritePicHeader();
-
-	return 0;
+    return 0;
 }
