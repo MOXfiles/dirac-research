@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.5  2004-06-18 15:58:36  tjdwave
+* Revision 1.6  2004-06-22 10:10:05  asuraparaju
+* Modified doxygen comments to match the declaration of member function
+* SetBandWeights in class WaveletTransform.
+*
+* Revision 1.5  2004/06/18 15:58:36  tjdwave
 * Removed chroma format parameter cformat from CodecParams and derived
 * classes to avoid duplication. Made consequential minor mods to
 * seq_{de}compress and frame_{de}compress code.
@@ -258,8 +262,9 @@ public:
 		(weight noise less at higher spatial frequencies) and the scaling needed for the 
 		wavelet transform. 
 
-		\param	encparams	the encoder parameters
-		\param	fparams	the frame parameters, such as the frame sort (I, L1 or L2)
+		\param	cpd		perceptual weights cycles per degree
+		\param	fsort	frame sort (I, L1 or L2)
+		\param	cformat	Chroma format type
 		\param	csort	the component type (Y, U or V)  
 	*/
 	void SetBandWeights(float cpd ,FrameSort fsort , ChromaFormat cformat , CompSort csort);
