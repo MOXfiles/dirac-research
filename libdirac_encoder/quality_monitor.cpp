@@ -208,6 +208,7 @@ double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& or
 
     TwoDArray<long double> diff_array( yregions , xregions);
 	long double diff;
+    ValueType filt_orig, filt_coded;
 
     OneDArray<int> xstart( diff_array.LengthX() );
     OneDArray<int> xend( diff_array.LengthX() );
@@ -216,27 +217,30 @@ double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& or
 
     for ( int i=0 ; i<xstart.Length() ; ++i)
     { 
-        xstart[i] =( i * m_true_xl )/xstart.Length();
-        xend[i] = ( (i+1) * m_true_xl )/xstart.Length();
+        xstart[i] =( i * (m_true_xl-2) )/xstart.Length()+1;
+        xend[i] = ( (i+1) * (m_true_xl-2) )/xstart.Length()+1;
     }
 
     for ( int i=0 ; i<ystart.Length() ; ++i)
     { 
-        ystart[i] =( i * m_true_yl )/ystart.Length();
-        yend[i] = ( (i+1) * m_true_yl )/ystart.Length();
+        ystart[i] =( i * (m_true_yl-2) )/ystart.Length()+1;
+        yend[i] = ( (i+1) * (m_true_yl-2) )/ystart.Length()+1;
     }
 
-    for ( int q=0 ; q<diff_array.LengthY() ; ++q )
+    for ( int q=0 ; q<diff_array.LengthY() ; q++ )
     { 
-        for ( int p=0 ; p<diff_array.LengthX() ; ++p )
+        for ( int p=0 ; p<diff_array.LengthX() ; p++ )
         { 
             diff_array[q][p] = 0.0;
 
-            for (int j=ystart[q]; j<yend[q]; ++j)
+            for (int j=ystart[q]; j<yend[q]; j++)
             {
-                for (int i=xstart[p]; i<xend[p]; ++i)
+                for (int i=xstart[p]; i<xend[p]; i++)
                 {
-                    diff = static_cast<long double> ( coded_data[j][i] - orig_data[j][i] );
+                    filt_coded = Filter( coded_data , i , j );
+                    filt_orig = Filter( orig_data , i , j );
+
+                    diff = static_cast<long double> ( filt_coded - filt_orig );
  
                     diff *= diff;
                     diff *= diff;
@@ -266,4 +270,13 @@ double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& or
     }// q
 
 	return static_cast<double> ( 10.0 * std::log10( 255.0*255.0 / worst_diff ) );	
+}
+
+ValueType QualityMonitor::Filter( const PicArray& data , const int xpos , const int ypos ) const
+{
+    return (
+            int(data[ypos-1][xpos-1]) +6*int(data[ypos-1][xpos]) + int(data[ypos-1][xpos+1]) + 
+            6*int(data[ypos][xpos-1]) + 36*int(data[ypos][xpos]) + 6*int(data[ypos][xpos+1]) + 
+            int(data[ypos+1][xpos-1]) +6*int(data[ypos+1][xpos]) + int(data[ypos+1][xpos+1]) +
+            32 )>>6;
 }

@@ -39,9 +39,9 @@
 #ifndef _COMP_COMPRESS_H_
 #define _COMP_COMPRESS_H_
 
-#include "libdirac_common/arrays.h"
-#include "libdirac_common/wavelet_utils.h"
-#include "libdirac_common/common.h"
+#include <libdirac_common/arrays.h>
+#include <libdirac_common/wavelet_utils.h>
+#include <libdirac_common/common.h>
 
 namespace dirac
 {
@@ -77,32 +77,42 @@ namespace dirac
         //! Assignment = is private and body-less. This class should not be assigned.
         CompCompressor& operator=(const CompCompressor& rhs);
 
-        void GenQuantList();
+        void SelectQuantisers( PicArray& pic_data , 
+                               SubbandList& bands ,
+                               OneDArray<unsigned int>& est_counts,
+                               const bool using_multi_quants );
 
-        void SelectQuantisers( PicArray& pic_data , SubbandList& bands ,
-                               OneDArray<unsigned int>& est_counts );
+        int SelectMultiQuants( PicArray& pic_data , 
+                               SubbandList& bands , 
+                               const int band_num );
 
-        int SelectQuant(PicArray& pic_data,SubbandList& bands,int band_num);
+        //! Write the header data of the subband to the output
+        /* 
+            Write the header data of the subband to the output. This includes
+            whether the subband is skipped (if yes, there's no more data),
+            the subband quantiser index, whether multiple quantisers are used.
+            \param output_mgr the output buffer
+            \param node the subband metadata
+            \param num_band_bytes the length of the subband data in bytes
 
-        ValueType PicAbsMax(const PicArray& pic_data,int xp, int yp ,int xl ,int yl) const;
+        */
+        void WriteBandHeader( BasicOutputManager& output_mgr , const Subband& node ,
+                              const int num_band_bytes );
 
-        ValueType PicAbsMax(const PicArray& pic_data) const;
+        void SetupCodeBlocks( SubbandList& bands );
 
         void SetToVal(PicArray& pic_data,const Subband& node,ValueType val);
 
         void AddSubAverage(PicArray& pic_data,int xl,int yl,AddOrSub dirn);
 
-        //member variables
+        // member variables
         EncoderParams& m_encparams;
         const FrameParams& m_fparams;
         const FrameSort& m_fsort;    
         const ChromaFormat& m_cformat;
         CompSort m_csort;
-        OneDArray<int> m_qflist;
-        OneDArray<int> m_qfinvlist;
-        OneDArray<int> m_offset;
-        float m_lambda;
 
+        float m_lambda;
     };
 
 } // namespace dirac

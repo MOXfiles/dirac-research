@@ -86,6 +86,8 @@ namespace dirac
                                            double cpd , 
                                            const FrameSort fsort );
 
+        ValueType Filter( const PicArray& data , const int xpos , const int ypos ) const;
+
         //member variables//
         ////////////////////
 
