@@ -89,6 +89,12 @@ dnl -----------------------------------------------
 AC_HEADER_STDC
 AC_HEADER_STDBOOL
 
+dnl -------------------------------------------------------------------------
+dnl Indirectly checking if the compiler is useable
+dnl -------------------------------------------------------------------------
+AC_LANG_PUSH(C++)
+AC_CHECK_HEADER(streambuf,[], [AC_MSG_ERROR(["Unsupported Compiler version"])])
+AC_LANG_POP(C++)
 dnl ** We probably need this line, but not now
 dnl AC_CHECK_HEADERS(stdint.h unistd.h fcntl.h)
 
@@ -159,7 +165,7 @@ AC_LANG_PUSH(C++)
 if test x"${enableval}" = x"yes" ; then
 	AC_MSG_RESULT(yes)
 	case "$CXX" in
-	    g++)
+	    g++*)
 			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
 			CXXFLAGS="-DDIRAC_DEBUG -g -O0 $CXXFLAGS"
 			SAVE_CXXFLAGS=$CXXFLAGS;
@@ -205,7 +211,7 @@ AC_ARG_ENABLE(profile, AC_HELP_STRING([--enable-profile], [enable profile flags 
 if test x"${enableval}" = x"yes" ; then
 	AC_MSG_RESULT(yes)
 	case "$CXX" in
-	    g++|icc)
+	    g++*|icc)
 	        CXXFLAGS="$CXXFLAGS -pg"
 			;;
         *)
@@ -255,6 +261,14 @@ if test x"$VALGRIND" != "x" ; then
 	fi
 fi
 
+dnl -----------------------------------------------
+dnl Check if we need mathlib
+dnl -----------------------------------------------
+AC_LANG_PUSH(C++)
+AC_SUBST([CONFIG_MATH_LIB],[])
+AC_MSG_CHECKING([whether we need to link math lib])
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <cmath>]], [[double lw = std::pow(2.0, 2.0);]])],[AC_MSG_RESULT(no)], [CONFIG_MATH_LIB="-lm";AC_MSG_RESULT(yes)])
+AC_LANG_POP(C++)
 dnl -----------------------------------------------
 dnl Generates Makefile's, configuration files and scripts
 dnl -----------------------------------------------
