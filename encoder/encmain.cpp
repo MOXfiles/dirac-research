@@ -180,7 +180,7 @@ int main (int argc, char* argv[]){
                 encparams.SetCPD(20.0f);
 
             }
-            else if (opt->m_name == "HD720p")
+            else if (opt->m_name == "HD720p" || opt->m_name == "HD720")
             {
                 encparams.SetL1Sep(6);
                 encparams.SetNumL1(3);
@@ -275,16 +275,18 @@ int main (int argc, char* argv[]){
 
 
   /********************************************************************/
+         //next do picture file stuff
 
-        /* ------ open input files & get params -------- */
+           /* ------ open input files & get params -------- */
 
         PicInput myinputpic(input.c_str());
         myinputpic.ReadPicHeader();
 
+
     /********************************************************************/
 
 
-        //set up all the block parameters so we have a self-consistent set
+           //set up all the block parameters so we have a self-consistent set
 
         encparams.SetBlockSizes( bparams , myinputpic.GetSeqParams().CFormat() );
 
@@ -300,13 +302,10 @@ int main (int argc, char* argv[]){
 
         myinputpic.Skip( start_pos );
 
-         /* ------- open output files and write the header -------- */
-
-
-
         SequenceCompressor seq_compressor(&myinputpic,&outfile,encparams);
         seq_compressor.CompressNextFrame();
-        
+          
+          /* ------- open output files -------- */
         int frames_written = 0;
         SeqParams out_sparams = myinputpic.GetSeqParams();
         PicOutput myoutputpic(output.c_str() , out_sparams );
@@ -319,8 +318,8 @@ int main (int argc, char* argv[]){
                 frames_written++;
             }
         }//I
+        // Write the header
         myoutputpic.GetSeqParams().SetZl( frames_written );
-
         myoutputpic.WritePicHeader();
 
    /********************************************************************/
