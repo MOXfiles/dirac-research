@@ -39,7 +39,9 @@
 // Standard C++
 #include <string>
 #include <vector>
+#include <set>
 
+// structure for defining the nature of options
 // a very simple command-line parser
 class command_line
 {
@@ -57,7 +59,7 @@ public:
 	};
 
 	//! Constructor
-	command_line(int argc, char * argv[]);
+	command_line(int argc, char * argv[], const std::set<std::string> & bool_opts);
 
 	const std::vector<option> & get_options() const
 	{
@@ -68,10 +70,17 @@ public:
 	{
 		return m_inputs;
 	}
+    
+    // convenience property
+	size_t count() const
+	{
+        return m_options.size();
+	}
 
 private:
-	std::vector<option> m_options;
+	std::vector<option>      m_options;
 	std::vector<std::string> m_inputs;
+    const std::set<std::string> & m_bool_opts;
 };
 
 #endif

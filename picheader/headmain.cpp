@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-14 17:25:43  stuart_hc
+* Revision 1.5  2004-05-19 17:39:34  chaoticcoyote
+* Modified command line parser to correctly handle boolean options
+*
+* Revision 1.4  2004/05/14 17:25:43  stuart_hc
 * Replaced binary header files with ASCII text format to achieve cross-platform interoperability.
 * Rearranged PicOutput constructor to permit code reuse from picheader/headmain.cpp
 *
@@ -99,7 +102,11 @@ static void display_help()
 int main( int argc, char *argv[] )
 {
 	 /********** create params object to handle command line parameter parsing*********/
-	command_line args(argc,argv);
+	set<string> bool_opts;
+	bool_opts.insert("interlace");
+	bool_opts.insert("topfieldfirst");
+    
+	command_line args(argc,argv,bool_opts);
 
  	//the variables we'll read parameters into
 	char output_name[84];

@@ -36,9 +36,10 @@
 #include "cmd_line.h"
 using namespace std;
 
-command_line::command_line(int argc, char * argv[])
-: m_options(),
-m_inputs()
+command_line::command_line(int argc, char * argv[], const set<string> & bool_opts)
+  : m_options(),
+    m_inputs(),
+    m_bool_opts(bool_opts)
 {
 	bool option_active = false;
 	vector<option>::iterator active_option;
@@ -48,10 +49,16 @@ m_inputs()
         // is it an option?
 		if ((strlen(argv[i]) > 1) && (argv[i][0] == '-'))
 		{
-			m_options.push_back(option(string(&argv[i][1])));
-			active_option = m_options.end();//??
+            // store new key
+            string opt_key = string(&argv[i][1]);
+			m_options.push_back(option(opt_key));
+            
+            // active option is now last in list
+			active_option = m_options.end();
 			--active_option;
-			option_active = true;
+            
+            // check option list to see if we're looking for an argument
+			option_active = (m_bool_opts.find(opt_key) == m_bool_opts.end());
 		}
 		else
 		{

@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.6  2004-05-18 07:46:13  tjdwave
+* Revision 1.7  2004-05-19 17:39:34  chaoticcoyote
+* Modified command line parser to correctly handle boolean options
+*
+* Revision 1.6  2004/05/18 07:46:13  tjdwave
 * Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
 *
 * Revision 1.5  2004/05/12 16:03:32  tjdwave
@@ -50,7 +53,10 @@
 * Revision 1.4  2004/05/11 14:17:58  tjdwave
 * Removed dependency on XParam CLI library for both encoder and decoder.
 * $Log$
-* Revision 1.6  2004-05-18 07:46:13  tjdwave
+* Revision 1.7  2004-05-19 17:39:34  chaoticcoyote
+* Modified command line parser to correctly handle boolean options
+*
+* Revision 1.6  2004/05/18 07:46:13  tjdwave
 * Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
 *
 * Revision 1.5  2004/05/12 16:03:32  tjdwave
@@ -124,7 +130,16 @@ int main (int argc, char* argv[]){
 
 		 /********** create params object to handle command line parameter parsing*********/
 	//To do: put parsing in a different function/constructor.
-	command_line args(argc,argv);
+    
+    // create a list of boolean options
+	set<string> bool_opts;
+	bool_opts.insert("verbose");
+	bool_opts.insert("stream");
+	bool_opts.insert("HD720p");
+	bool_opts.insert("HD1080");
+	bool_opts.insert("SD576");
+    
+	command_line args(argc,argv,bool_opts);
 
 	//the variables we'll read parameters into
 	EncoderParams encparams;
@@ -174,7 +189,7 @@ int main (int argc, char* argv[]){
 			input=args.get_inputs()[0];
 			output=args.get_inputs()[1];
 		}
-
+        
 		//check we have real inputs
 		if ((input.length() == 0) || (output.length() ==0))
 		{
@@ -231,7 +246,7 @@ int main (int argc, char* argv[]){
 		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
 			opt != args.get_options().end(); ++opt)
 		{
-			if (opt->m_name == "stream" && opt->m_value=="true")
+			if (opt->m_name == "stream")
 			{
 				encparams.L1_SEP=3;
 				encparams.NUM_L1=11;
@@ -248,7 +263,7 @@ int main (int argc, char* argv[]){
 
 				factor3=250.0;
 			}
-			else if (opt->m_name == "HD720p" && opt->m_value=="true")
+			else if (opt->m_name == "HD720p")
 			{
 				encparams.L1_SEP=6;
 				encparams.NUM_L1=3;
@@ -266,7 +281,7 @@ int main (int argc, char* argv[]){
 
 				factor3 = 2000.0;
 			}
-			else if (opt->m_name == "HD1080" && opt->m_value=="true")
+			else if (opt->m_name == "HD1080")
 			{
 				encparams.L1_SEP=3;
 				encparams.NUM_L1=3;
@@ -285,7 +300,7 @@ int main (int argc, char* argv[]){
 
 				factor3 = 100.0;
 			}
-			else if (opt->m_name == "SD576" && opt->m_value=="true")
+			else if (opt->m_name == "SD576")
 			{
 				encparams.L1_SEP=3;
 				encparams.NUM_L1=3;
@@ -337,7 +352,7 @@ int main (int argc, char* argv[]){
 			{
 				encparams.CPD = strtoul(opt->m_value.c_str(),NULL,10);
 			}
-			else if (opt->m_name == "verbose" && opt->m_value=="true")
+			else if (opt->m_name == "verbose")
 			{
 				encparams.VERBOSE = true;
 			}

@@ -39,7 +39,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.5  2004-05-14 17:27:13  stuart_hc
+* Revision 1.6  2004-05-19 17:39:34  chaoticcoyote
+* Modified command line parser to correctly handle boolean options
+*
+* Revision 1.5  2004/05/14 17:27:13  stuart_hc
 * Added better error checking.
 *
 * Revision 1.4  2004/05/12 16:04:20  tjdwave
@@ -96,7 +99,12 @@ int main(int argc, char* argv[]) {
 	/******************************************************************/
 
 	 /********** create params object to handle command line parameter parsing*********/
-	command_line args(argc,argv);
+    // create a list of boolean options
+	set<string> bool_opts;
+	bool_opts.insert("verbose");
+    
+	command_line args(argc,argv,bool_opts);
+    
 	char input_name[84];							// char arrays used for file names
 	char output_name[84];
 	char bit_name[84];								//output name for the bitstream
