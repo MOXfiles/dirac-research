@@ -1,10 +1,10 @@
 # $Id$
 #
 
-TESTSUITE_AT = testsuite.at colourbars.at unittests.at
+TESTSUITE_AT = testsuite.at colourbars.at unittests.at samples.at
 TESTSUITE = $(srcdir)/testsuite
 
-EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4 colourbars_420.yuv
+EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4 colourbars_420.yuv create_dirac_testfile.pl
 
 DISTCLEANFILES = atconfig $(check_SCRIPTS)
 
