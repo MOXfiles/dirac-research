@@ -89,7 +89,7 @@ int main( int argc, char *argv[] )
     if (argc < 2)
     {
         display_help();
-        exit(1);
+        exit(0);
     }
 
     //start with the output file
