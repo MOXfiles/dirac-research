@@ -54,11 +54,11 @@
 #include <libdirac_common/bit_manager.h>
 #include <vector>
 
-#ifdef _WIN32 // define types for Windows
+#ifdef _MSC_VER // define types for MSVC compiler on Windows
     typedef unsigned short    uint16_t;
     typedef unsigned _int32    uint32_t;
 #else // include header file for types for Linux
-    #include <stdint.h>
+    #include <inttypes.h>
 #endif
 
 //! Abstract binary arithmetic coding class
