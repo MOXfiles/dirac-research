@@ -1,3 +1,75 @@
+2004-09-10 14:05  asuraparaju
+
+	* NEWS: Included 0.4.2 release notes
+
+2004-09-10 14:04  asuraparaju
+
+	* configure.ac: Updated release id to 0.4.2
+
+2004-09-10 12:34  asuraparaju
+
+	* libdirac_common/pic_io.h, encoder/encmain.cpp: Ensure that the
+	  number of frame in the output pic header is set to the number of
+	  frames written to the file.
+
+2004-09-10 11:06  asuraparaju
+
+	* Makefile.am: Only Makefile and README from win directory are now
+	  included in distribution
+
+2004-09-09 15:48  asuraparaju
+
+	* util/instrumentation/: process_sequence.cpp,
+	  libdirac_instrument/draw_overlay.cpp,
+	  libdirac_instrument/draw_overlay.h,
+	  libdirac_instrument/overlay.cpp, libdirac_instrument/overlay.h:
+	  Fixed bug with handling reference 2 when only one reference frame
+	  is available
+
+2004-09-09 15:43  asuraparaju
+
+	* util/instrumentation/libdirac_instrument/split_mode.cpp: Fix
+	  writng beyond end of array bug which caused the diagnostics tool
+	  to crash when using split_mode.
+
+2004-09-09 15:42  asuraparaju
+
+	* util/instrumentation/README: Correct pathname to diagnostic tool
+
+2004-09-09 15:41  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: Fixed bug with bit-rate being
+	  miscalculated when only a section of the sequence is encoded.
+
+2004-09-09 15:40  asuraparaju
+
+	* libdirac_encoder/frame_compress.cpp: Restored mod which outputs
+	  array dimensions for instrumentation output.
+
+2004-09-09 15:39  asuraparaju
+
+	* libdirac_common/wavelet_utils.cpp: Fixed bug with setting DC band
+	  perceptual weight.
+
+2004-09-09 15:39  asuraparaju
+
+	* encoder/encmain.cpp: Fixed bug with setting length of output
+	  sequence when coding a section of picture.
+
+2004-09-09 15:38  asuraparaju
+
+	* decoder/decmain.cpp: Print average frame decode time to stdout
+	  instead of stderr so that stderr can be monitored for errors in
+	  tests
+
+2004-09-09 15:37  asuraparaju
+
+	* configure.ac: Add diagnostic tool to test path
+
+2004-09-09 15:36  asuraparaju
+
+	* README.release: Add testing diagnostic tool to release checklist
+
 2004-08-26 12:05  asuraparaju
 
 	* NEWS: Included 0.4.1 release notes
