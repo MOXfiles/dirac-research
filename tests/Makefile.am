@@ -1,13 +1,19 @@
+# $Id$
+#
+
 TESTSUITE_AT = testsuite.at colourbars.at unittests.at
 TESTSUITE = $(srcdir)/testsuite
 
 EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4 colourbars_420.yuv
 
-DISTCLEANFILES = atconfig
+DISTCLEANFILES = atconfig $(check_SCRIPTS)
 
-CLEANFILES = *enc.imt *enc.drc *enc.hdr *enc.yuv *dec.yuv *dec.hdr
+CLEANFILES = *enc.imt *enc.drc *enc.hdr *enc.yuv *dec.yuv *dec.hdr *instr.yuv *instr.hdr
 
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
+
+# scripts needed only when running make check
+check_SCRIPTS = at_wrap
 
 $(srcdir)/package.m4: $(top_srcdir)/configure.ac
 	{					\
@@ -35,7 +41,13 @@ clean-local:
 check-local: atconfig $(TESTSUITE)
 	$(SHELL) $(TESTSUITE);
 
+check-valgrind: check-local
+	env AT_EXEC_OPTS='valgrind -q --tool=memcheck --leak-check=yes' $(SHELL) $(TESTSUITE);
+
 installcheck-local:
 	if test -f $(TESTSUITE); then \
 		$(SHELL) $(TESTSUITE) AUTOTEST_PATH=$(exec_prefix)/bin; \
 	fi
+
+valgrind-check: atconfig $(TESTSUITE)
+	$(SHELL) $(TESTSUITE) AT_EXEC_OPTS="$(VALGRIND) -q --error-limit=no --num-callers=50"
