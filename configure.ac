@@ -53,8 +53,23 @@ dnl -----------------------------------------------
 dnl Checks for required programs.
 dnl -----------------------------------------------
 AC_PROG_CXX
-AC_PROG_RANLIB
 AM_SANITY_CHECK
+
+dnl -------------------------------------------------------------------------
+dnl Check if compiling using MS VC++ compiler in msys environment on Windows
+dnl -------------------------------------------------------------------------
+use_msvc=no
+case "$CXX" in
+		cl*|CL*)
+		CXXFLAGS="-nologo -W1 -EHsc"
+		RANLIB="echo"
+		use_msvc=yes
+		;;
+	*)
+		AC_PROG_RANLIB
+		;;
+esac
+AM_CONDITIONAL(USE_MSVC, test x"$use_msvc" = "xyes")
 
 dnl -----------------------------------------------
 dnl Checks for required headers
@@ -131,10 +146,10 @@ AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [enable extra debug flags 
 AC_LANG_PUSH(C++)
 if test x"${enableval}" = x"yes" ; then
 	AC_MSG_RESULT(yes)
-	CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
-	CXXFLAGS="-DDIRAC_DEBUG -g -O0 $CXXFLAGS"
 	case "$CXX" in
 	    g++)
+			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
+			CXXFLAGS="-DDIRAC_DEBUG -g -O0 $CXXFLAGS"
 			SAVE_CXXFLAGS=$CXXFLAGS;
 			AC_MSG_CHECKING([whether -Wno-long-double is supported])
 			CXXFLAGS="$CXXFLAGS -Wno-long-double"
@@ -144,8 +159,17 @@ if test x"${enableval}" = x"yes" ; then
 		    CXXFLAGS="$CXXFLAGS -pedantic -Wall -Werror -Woverloaded-virtual"
 		    ;;
 	    icc)
+			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
+			CXXFLAGS="-DDIRAC_DEBUG -g -O0 $CXXFLAGS"
 		    # report only errors and warnings as errors
 		    CXXFLAGS="$CXXFLAGS -w1 -Werror" 
+		    ;;
+	    cl*|CL*)
+		    # -Od turn off optimisation, -Z7 turn on debugging info
+			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
+			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[a-z]]*//g'`
+			CXXFLAGS=`echo $CXXFLAGS | sed 's/-W[[0-9]]*//g'`
+		    CXXFLAGS="$CXXFLAGS -Od -Z7 -W2" 
 		    ;;
         *)
 		    # do nothing at the moment
@@ -184,9 +208,16 @@ dnl -----------------------------------------------
 AC_LANG_PUSH(C++)
 dnl need to determine how to run AC_CHECK_LIB on a c++ library
 dnl Until then just use AC_CHECK_HEADER by itself
-dnl AC_CHECK_HEADER([cppunit/Asserter.h],
-dnl     [AC_CHECK_LIB([cppunit], [CppUnit::Exception], [HAVE_CPPUNIT="true"], [HAVE_CPPUNIT="false"], [ -ldl ])], [HAVE_CPPUNIT="false"])
-AC_CHECK_HEADER([cppunit/Asserter.h],[HAVE_CPPUNIT="true"], [HAVE_CPPUNIT="false"])
+dnl AC_CHECK_HEADER([cppunit/TestRunner.h],
+dnl     [AC_CHECK_LIB([cppunit], [main], [HAVE_CPPUNIT="true"], [HAVE_CPPUNIT="false"], [ -ldl ])], [HAVE_CPPUNIT="false"])
+AC_CHECK_HEADER([cppunit/TestRunner.h],[HAVE_CPPUNIT="true"], [HAVE_CPPUNIT="false"])
+	if test $HAVE_CPPUNIT = "true"; then
+		AC_MSG_CHECKING([whether unit tests code will compile and link])
+		SAVE_LIBS=$LIBS
+		LIBS="$LIBS -lcppunit -ldl"
+		AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <cppunit/TestRunner.h>]], [[CPPUNIT_NS::TestRunner runner;]])],[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no); HAVE_CPPUNIT="false"])
+		LIBS=$SAVE_LIBS
+	fi
 AM_CONDITIONAL(HAVE_CPPUNIT, $HAVE_CPPUNIT)
 AC_LANG_POP(C++)
 
