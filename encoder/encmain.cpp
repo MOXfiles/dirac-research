@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.9  2004-05-24 15:59:30  tjdwave
+* Revision 1.10  2004-06-22 10:08:20  asuraparaju
+* Fixed compilation errors caused by trying to access non-existent cformat data
+* member in class EncoderParams.
+*
+* Revision 1.9  2004/05/24 15:59:30  tjdwave
 * Changed CLI names and functions to house style.
 *
 * Revision 1.8  2004/05/20 12:37:33  tjdwave
@@ -370,7 +374,6 @@ int main (int argc, char* argv[]){
 
 		PicInput myinputpic(input_name);
 		myinputpic.ReadPicHeader();
-		encparams.cformat=myinputpic.GetSeqParams().cformat;
 
   		/* ------- open output files and write the header -------- */
 
@@ -381,7 +384,7 @@ int main (int argc, char* argv[]){
 
 
 	//set up all the block parameters so we have a self-consistent set
-		encparams.SetBlockSizes(bparams);
+		encparams.SetBlockSizes(bparams, myinputpic.GetSeqParams().cformat);
 	//Finally, do the motion estimation Lagrangian parameters
   	//factor1 normalises the Lagrangian ME factors to take into account different overlaps
 		const OLBParams& bparams2=encparams.LumaBParams(2);//in case we've changed them
