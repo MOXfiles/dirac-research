@@ -1,1 +1,16 @@
-No news yet.
+Version 0.2.0 features:
+
+- initial 'programmer's guide' documentation
+
+- doxygen documentation of major classes
+
+Version 0.3.0 features:
+
+- contains support for arbitrary picture and block sizes 
+
+- encoder supports I-frame only coding
+
+- encoder supports coding with a single initial I-frame 
+  for file transfer ('infinitely' long GOP)
+
+- doxygen documentation of nearly all classes
