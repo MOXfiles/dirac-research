@@ -1,0 +1,88 @@
+Dirac developer practices
+=========================
+
+Sourceforge Developers forum
+----------------------------
+The Developers forum is where Dirac core developers plan and coordinate
+changes to Dirac.  All API changes, new features and implementation
+difficulties are announced and discussed here.
+
+Examples of changes which should be announced in the Developers forum:
+
+  - Pic API change: return bool instead of void for ReadNextFrame
+  - Pic API change: most methods can now throw ErrorState objects
+
+Changes which are small in scope and unlikely to affect developers
+should not be announced on the forum.  Changes which touch
+many files can fall into this category - for example
+
+  - Fixed inconsistent CRLF line-endings to be LF.
+  - Fixed "use of uninitialised variable" cases found by gcc.
+  - Fixed memory leak in all instantiations of Pic (found by valgrind).
+  - Add feature test for stdint.h to be portable to Solaris.
+
+Developers should 'monitor' the forums by going to the forum page and
+clicking 'Monitor this forum'.  Any new message will then be emailed
+to their username@users.sourceforge.net email address.  E.g.
+  http://sourceforge.net/forum/forum.php?forum_id=353620
+
+
+Mailing lists
+--------------
+Developers should subscribe to the dirac-announce and dirac-commits
+mailing lists.
+
+
+CVS log messages
+----------------
+Always indicate why the change is necessary in addition to a succinct summary
+of what as changed.  As the number of developers increases it becomes
+increasingly difficult for developers to understand the changes going on in
+areas they are not familiar with.  If the changes relate to an API change
+developers may not realise this if it is not mentioned in the log message.
+
+E.g.
+  Bad
+  ---
+  - Added gamma parameter
+  - Replace stricmp with strcasecmp
+
+  Good
+  ----
+  - Added gamma parameter to record more accurate data on source material
+  - Enhanced portability: stricmp replaced by strcasecmp (the POSIX standard) 
+
+
+Source code style
+-----------------
+Portability
+  Dirac aims to be as portable as possible and to that end follows the following
+  standards:
+    POSIX 1003.1 standard for system interfaces
+    ISO C99
+    ISO C++ (1998)
+  The only exception to this practice is for the Microsoft Visual C++ compiler
+  which continues to fall short of all the above standards.  Where MS VC++
+  is incompatible with the standard, experiment if often necessary to find
+  an alternative usage which works under MS VC++.
+
+Source code formatting
+  Dirac source code uses TABs with a spacing of 4.
+
+Naming practice
+  Class and function names start with a capital then use lowercase with multi-
+  word names using a capital for each new word.  E.g. MultiWordName
+
+  Local variables are lowercase and use underscores to separate words.
+
+  Class member variables are lowercase with a leading underscore.
+
+(inspired by http://docs.kde.org/en/3.2/kdemultimedia/artsbuilder/coding-standards.html)
+
+
+Line-endings
+------------
+All source code and documentation will have LF line-endings, include makefiles
+and scripts.  The only exception will be for .dsp and .dsw (and any other
+WIN32 specific) files which will not function under MS VC++ unless they use
+CR-LF line-endings.
