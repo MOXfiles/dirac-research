@@ -39,14 +39,15 @@
 #include <libdirac_common/frame.h>
 
 ProcessSequence::ProcessSequence(OverlayParams & oparams, PicInput & inputpic, PicOutput & outputpic,
-                                 std::ifstream & in, bool verbose, int buffer)
+                                 std::ifstream & in, bool verbose, int buffer, SeqParams & seqparams)
 :
     m_oparams(oparams),
     m_inputpic(inputpic),
     m_outputpic(outputpic),
     m_verbose(verbose),
     m_data_in(in),
-    m_data_array(buffer)
+    m_data_array(buffer),
+    m_seqparams(seqparams)
 {
 
 }
@@ -115,7 +116,7 @@ void ProcessSequence::AddFrameEntry()
         if (m_verbose) std::cerr << std::endl << "Reading intra frame " << m_data_fnum << " data";
 
         m_data_array[new_index].me_data = 0;
-        m_data_array[new_index].frame_params = m_inputpic.GetSeqParams();
+        m_data_array[new_index].frame_params = m_seqparams;
         m_data_array[new_index].frame_params.SetFrameNum(m_data_fnum);
         m_data_array[new_index].frame_params.SetFSort(I_frame);
 
@@ -140,7 +141,7 @@ void ProcessSequence::AddFrameEntry()
         int ref = -1;
 
         // create frame motion data array entry
-        m_data_array[new_index].frame_params = m_inputpic.GetSeqParams();
+        m_data_array[new_index].frame_params = m_seqparams;
 
         // read reference frame information from top of file
         m_data_in >> total_refs;
@@ -172,8 +173,8 @@ void ProcessSequence::AddFrameEntry()
             m_data_array[new_index].frame_params.SetFSort(L1_frame);
 
         // read motion vector data
-        m_data_in >> *m_data_array[new_index].me_data; // overloaded operator>> defined in libdirac_common/motion.cpp
-
+        m_data_in >> *m_data_array[new_index].me_data; // overloaded operator>> defined in libdirac_common/motion.cpp      
+        
         if (m_verbose)
         {
             std::cerr << std::endl << "Writing to array position ";

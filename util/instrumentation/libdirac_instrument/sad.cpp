@@ -63,16 +63,16 @@ void DrawSad::DrawBlock(int j, int i)
     // if intra, draw white box round block
     if (m_mode[j][i]==INTRA)
     {
-        for (int ypx=0; ypx<8; ++ypx)
+        for (int ypx=0; ypx<m_draw_params.MvYBlockY(); ++ypx)
         {
-            m_frame.Ydata()[(j*8)+ypx][(i*8)] = 1000;
-            m_frame.Ydata()[(j*8)+ypx][(i*8)+7] = 1000;
+            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())+ypx][(i*m_draw_params.MvYBlockX())] = 1000;
+            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())+ypx][(i*m_draw_params.MvYBlockX())+m_draw_params.MvYBlockX()-1] = 1000;
         }// ypx
 
-        for (int xpx=0; xpx<8; ++xpx)
+        for (int xpx=0; xpx<m_draw_params.MvYBlockX(); ++xpx)
         {
-            m_frame.Ydata()[(j*8)][(i*8)+xpx] = 1000;
-            m_frame.Ydata()[(j*8)+7][(i*8)+xpx] = 1000;
+            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())][(i*m_draw_params.MvYBlockX())+xpx] = 1000;
+            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())+m_draw_params.MvYBlockY()-1][(i*m_draw_params.MvYBlockX())+xpx] = 1000;
         }// xpx
     }
 }

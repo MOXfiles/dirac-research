@@ -59,7 +59,7 @@ class ProcessSequence
 public :
 
     //! Constructor
-    ProcessSequence(OverlayParams &, PicInput &, PicOutput &, std::ifstream &, bool, int);
+    ProcessSequence(OverlayParams &, PicInput &, PicOutput &, std::ifstream &, bool, int, SeqParams &);
 
     //! Destructor
     ~ProcessSequence() {}
@@ -108,6 +108,9 @@ private :
 
     //! Read input frame data signal
     bool used_frame_data;
+
+    //! Output sequence parameters
+    SeqParams & m_seqparams;
 
 };
 

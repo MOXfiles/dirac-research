@@ -61,7 +61,7 @@ void DrawMotionColour::DrawBlock(int j, int i)
 // draws colour wheel legend
 void DrawMotionColour::DrawLegend()
 {
-    int y_start = m_frame.Ydata().LastY()-30;
+    int y_start = m_draw_params.PicY()-31;
     
     for (int ypx=y_start+1, y=-15; ypx<=y_start+30; ++ypx, y+=m_draw_params.ChromaFactorY())
     {
@@ -76,7 +76,8 @@ void DrawMotionColour::DrawLegend()
     }
 
     // colour in the rectangle
-    for (int ypx=m_frame.Udata().LastY(), y=15; ypx>m_frame.Udata().LastY()-(30/m_draw_params.ChromaFactorY());
+    for (int ypx=(m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1, y=15;
+         ypx>(m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(30/m_draw_params.ChromaFactorY());
          --ypx, y-=m_draw_params.ChromaFactorY())
     {
         for (int xpx=40/m_draw_params.ChromaFactorX(), x=20; xpx>=0; --xpx, x-=m_draw_params.ChromaFactorX())
@@ -107,5 +108,5 @@ void DrawMotionColour::DrawLegend()
     }
 
     // display the clip value
-    DrawValue(m_mv_clip, m_frame.Ydata().LastY()-46, 0);
+    DrawValue(m_mv_clip, m_draw_params.PicY()-47, 0);
 }

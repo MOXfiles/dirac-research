@@ -52,108 +52,68 @@ DrawMotionColourArrows::~DrawMotionColourArrows()
 // manages call to DrawMotionArrows::DrawArrow() and colours motion vector blocks
 void DrawMotionColourArrows::DrawBlock(int j, int i)
 {
-    // if motion vectors are divisible by 4 and are smaller than 16 pixels
-    if ( (m_draw_params.MvYBlockY() % 4 == 0) && (m_draw_params.MvYBlockY() <= 16) )
+    // reset
+    m_blocks_per_arrow_y = 0;
+    m_blocks_per_arrow_x = 0;
+
+    int group_x = 0;
+    int group_y = 0;
+
+    // build group of motion vector blocks larger than 16 x 16
+    while (group_x < 16)
     {
-        m_blocks_per_arrow = 16 / m_draw_params.MvYBlockY();
-
-        if ( (j==0 || (j % m_blocks_per_arrow)==0 ) && ( (i==0 || (i % m_blocks_per_arrow)==0 ) ) )
-        {
-            DrawArrow(j, i, j, i);
-
-            // find average motion vector for block group
-            int x_sum = 0, y_sum = 0;
-
-            for (int y=j; y<j+m_blocks_per_arrow; ++y)
-            {
-                for (int x=i; x<i+m_blocks_per_arrow; ++x)
-                {
-                    x_sum += m_mv[y][x].x;
-                    y_sum -= m_mv[y][x].y;
-                }
-            }
-
-            double x_avg = x_sum / (m_blocks_per_arrow * m_blocks_per_arrow * m_mv_scale);
-            double y_avg = y_sum / (m_blocks_per_arrow * m_blocks_per_arrow * m_mv_scale);
-            double power = (1000 / m_mv_clip) * std::sqrt((x_avg*x_avg)+(y_avg*y_avg));
-            
-            int U = 0, V = 0;
-            GetPowerUV((int)power, U, V);
-
-            for (int y=j; y<j+m_blocks_per_arrow; ++y)
-            {
-                for (int x=i; x<i+m_blocks_per_arrow; ++x)
-                {
-                    DrawMvBlockUV(y, x, U+512, V+512);
-                }
-            }
-
-        }   
+        group_x += m_draw_params.MvYBlockX();
+        ++m_blocks_per_arrow_x;
     }
-    // if motion vectors are divisible by 16 and are larger than 16 (unlikely!)
-    else if ( (m_draw_params.MvYBlockY() % 16 == 0) && (m_draw_params.MvYBlockY() > 16) )
+    while (group_y < 16)
     {
-        m_arrows_per_block = m_draw_params.MvYBlockY() / 16;
+        group_y += m_draw_params.MvYBlockY();
+         ++m_blocks_per_arrow_y;
+    }
 
-        for (int y=j; y<j+m_arrows_per_block; ++y)
+    // calculate offset for TL corner of arrow
+    int offset_x = 0;
+    int offset_y = 0;
+
+    if (group_x != 16)
+        offset_x = int( (group_x - 16) / 2 );
+    if (group_y != 16)
+        offset_y = int( (group_y - 16) / 2 );
+
+    // draw arrow if this block is TL corner of arrow
+    if ( (j == 0 || (j % m_blocks_per_arrow_y) == 0) && ((i == 0 || (i % m_blocks_per_arrow_x) == 0 )) &&
+        (j*m_draw_params.MvYBlockY()+offset_y+15 <= m_frame.Ydata().LengthY()) &&
+        (i*m_draw_params.MvYBlockX()+offset_x+15 <= m_frame.Ydata().LengthX()) )
+    {
+        DrawArrow(j, i, (j*m_draw_params.MvYBlockY())+offset_y, (i*m_draw_params.MvYBlockX())+offset_x);
+
+        // find average motion vector for block group
+        int x_sum = 0, y_sum = 0;
+
+        for (int y=j; y<j+m_blocks_per_arrow_y; ++y)
         {
-            for (int x=i; x<i+m_arrows_per_block; ++x)
+            for (int x=i; x<i+m_blocks_per_arrow_x; ++x)
             {
-                DrawArrow(y, x, y, x);
+                x_sum += m_mv[y][x].x;
+                y_sum -= m_mv[y][x].y;
+            }
+        }
 
-                int U = 0, V = 0;
-                double power = (1000 / m_mv_clip) * std::sqrt(((double)m_mv[y][x].x*(double)m_mv[y][x].x) +
-                                                              ((double)m_mv[y][x].y*(double)m_mv[y][x].y));
-                GetPowerUV((int)power, U, V);
+        double x_avg = x_sum / (m_blocks_per_arrow_y * m_blocks_per_arrow_y * m_mv_scale);
+        double y_avg = y_sum / (m_blocks_per_arrow_x * m_blocks_per_arrow_x * m_mv_scale);
+        double power = (1000 / m_mv_clip) * std::sqrt((x_avg*x_avg)+(y_avg*y_avg));
+
+        int U = 0, V = 0;
+        GetPowerUV((int)power, U, V);
+
+        for (int y=j; y<j+m_blocks_per_arrow_y; ++y)
+        {
+            for (int x=i; x<i+m_blocks_per_arrow_x; ++x)
+            {
                 DrawMvBlockUV(y, x, U+512, V+512);
             }
         }
     }
-    // if motion vectors do not divide into a single arrow (or vice versa)
-    else
-    {
-        int m_blocks_per_arrow = 0;
-        while (m_blocks_per_arrow <= 16)
-            m_blocks_per_arrow += m_draw_params.MvYBlockY();
-
-        // calculate offset for TL corner of arrow
-        int block_group_size = m_blocks_per_arrow * m_draw_params.MvYBlockY();
-        int offset = int( (block_group_size - 16) / 2 );
-
-        if ( (j==0 || (j % m_blocks_per_arrow)==0 ) && ( (i==0 || (i % m_blocks_per_arrow)==0 ) ) )
-        {
-            DrawArrow(j, i, j+offset, i+offset);
-
-            // find average motion vector for block group
-            int x_sum = 0, y_sum = 0;
-
-            for (int y=j; y<j+m_blocks_per_arrow; ++y)
-            {
-                for (int x=i; x<i+m_blocks_per_arrow; ++x)
-                {
-                    x_sum += m_mv[y][x].x;
-                    y_sum -= m_mv[y][x].y;
-                }
-            }
-
-            double x_avg = x_sum / (m_blocks_per_arrow * m_blocks_per_arrow * m_mv_scale);
-            double y_avg = y_sum / (m_blocks_per_arrow * m_blocks_per_arrow * m_mv_scale);
-            double power = (1000 / m_mv_clip) * std::sqrt((x_avg*x_avg)+(y_avg*y_avg));
-
-            int U = 0, V = 0;
-            GetPowerUV((int)power, U, V);
-
-            for (int y=j; y<j+m_blocks_per_arrow; ++y)
-            {
-                for (int x=i; x<i+m_blocks_per_arrow; ++x)
-                {
-                    DrawMvBlockUV(y, x, U+512, V+512);
-                }
-            }
-        }
-    }
-
-
 }
 
 // draws power bar colour legend

@@ -69,7 +69,7 @@ void DrawSplitMode::DrawBlock(int j, int i)
 void DrawSplitMode::DrawLegend()
 {
     // blank background
-    for (int ypx=m_frame.Ydata().LastY()-48; ypx<=m_frame.Ydata().LastY(); ++ypx)
+    for (int ypx=m_draw_params.PicY()-49; ypx<m_draw_params.PicY(); ++ypx)
     {
         for (int xpx=7; xpx>=0; --xpx)
             m_frame.Ydata()[ypx][xpx]=500; // grey
@@ -78,35 +78,28 @@ void DrawSplitMode::DrawLegend()
     int U=0, V=0;
 
     GetPowerUV(800, U, V); // mode 2
-    DrawBlockUV(m_frame.Udata().LastY()-(48/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV(m_frame.Udata().LastY()-(40/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(48/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(40/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
     
     GetPowerUV(400, U, V); // mode 1
-    DrawBlockUV(m_frame.Udata().LastY()-(32/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV(m_frame.Udata().LastY()-(24/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(32/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(24/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
     
     GetPowerUV(0, U, V); // mode 0
-    DrawBlockUV(m_frame.Udata().LastY()-(16/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV(m_frame.Udata().LastY()-(8/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(16/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(8/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
 
     // black horizontal lines
     for (int xpx=15; xpx>=0; --xpx)
     {
-        m_frame.Ydata()[m_frame.Ydata().LastY()-48][xpx]=0;
-        m_frame.Ydata()[m_frame.Ydata().LastY()-32][xpx]=0;
-        m_frame.Ydata()[m_frame.Ydata().LastY()-16][xpx]=0;
+        m_frame.Ydata()[m_draw_params.PicY()-49][xpx]=0;
+        m_frame.Ydata()[m_draw_params.PicY()-33][xpx]=0;
+        m_frame.Ydata()[m_draw_params.PicY()-17][xpx]=0;
     }
 
     // draw '2 1 0' label
-    for (int digit=m_frame.Ydata().LastY()-47; digit<m_frame.Ydata().LastY(); digit+=16)
-    {
-        if (digit==m_frame.Ydata().LastY()-47)
-            DrawCharacter(m_symbols.Number2(), digit, 8);
-        else if (digit==m_frame.Ydata().LastY()-31)
-            DrawCharacter(m_symbols.Number1(), digit, 8);
-        else if (digit==m_frame.Ydata().LastY()-15)
-            DrawCharacter(m_symbols.Number0(), digit, 8);
-    }
-
+    DrawCharacter(m_symbols.Number2(), m_draw_params.PicY()-48, 8);
+    DrawCharacter(m_symbols.Number1(), m_draw_params.PicY()-32, 8);
+    DrawCharacter(m_symbols.Number0(), m_draw_params.PicY()-15, 8);
 }
 

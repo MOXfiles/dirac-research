@@ -71,7 +71,7 @@ void DrawPredMode::DrawBlock(int j, int i)
 void DrawPredMode::DrawLegend()
 {
     // blank background
-    for (int ypx=m_frame.Ydata().LastY()-64; ypx<=m_frame.Ydata().LastY(); ++ypx)
+    for (int ypx=m_draw_params.PicY()-65; ypx<m_draw_params.PicY(); ++ypx)
     {
         for (int xpx=7; xpx>=0; --xpx)
             m_frame.Ydata()[ypx][xpx]=500;
@@ -80,27 +80,27 @@ void DrawPredMode::DrawLegend()
     int U=0, V=0;
     
     GetPowerUV(400, U, V); // intra
-    DrawBlockUV(m_frame.Udata().LastY()-(64/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV(m_frame.Udata().LastY()-(56/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(64/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(56/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
 
     GetPowerUV(1000, U, V); // ref 1
-    DrawBlockUV(m_frame.Udata().LastY()-(48/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV(m_frame.Udata().LastY()-(40/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);    
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(48/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(40/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);    
 
     GetPowerUV(200, U, V); // ref 2
-    DrawBlockUV(m_frame.Udata().LastY()-(32/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV(m_frame.Udata().LastY()-(24/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(32/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(24/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
 
     GetPowerUV(0, U, V); // ref 1 and 2
-    DrawBlockUV(m_frame.Udata().LastY()-(16/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV(m_frame.Udata().LastY()-(8/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(16/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(8/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
 
     // black horizontal lines
     for (int xpx=15; xpx>=0; --xpx)
     {
-        m_frame.Ydata()[m_frame.Ydata().LastY()-64][xpx]=0;
-        m_frame.Ydata()[m_frame.Ydata().LastY()-48][xpx]=0;
-        m_frame.Ydata()[m_frame.Ydata().LastY()-32][xpx]=0;
+        m_frame.Ydata()[m_draw_params.PicY()-65][xpx]=0;
+        m_frame.Ydata()[m_draw_params.PicY()-49][xpx]=0;
+        m_frame.Ydata()[m_draw_params.PicY()-33][xpx]=0;
     }
 
     for (int xpx=31; xpx>=0; --xpx)
@@ -109,15 +109,16 @@ void DrawPredMode::DrawLegend()
     }
 
     // draw labels
-    DrawCharacter(m_symbols.LetterI(), m_frame.Ydata().LastY()-63, 8);
-    DrawCharacter(m_symbols.Number1(), m_frame.Ydata().LastY()-47, 8);
-    DrawCharacter(m_symbols.Number2(), m_frame.Ydata().LastY()-31, 8);
-    DrawCharacter(m_symbols.Number1(), m_frame.Ydata().LastY()-15, 8);
-    DrawCharacter(m_symbols.SymbolPlus(), m_frame.Ydata().LastY()-15, 16);
-    DrawCharacter(m_symbols.Number2(), m_frame.Ydata().LastY()-15, 24);
+    DrawCharacter(m_symbols.LetterI(), m_draw_params.PicY()-64, 8);
+    DrawCharacter(m_symbols.Number1(), m_draw_params.PicY()-48, 8);
+    DrawCharacter(m_symbols.Number2(), m_draw_params.PicY()-32, 8);
+    DrawCharacter(m_symbols.Number1(), m_draw_params.PicY()-16, 8);
+    DrawCharacter(m_symbols.SymbolPlus(), m_draw_params.PicY()-16, 16);
+    DrawCharacter(m_symbols.Number2(), m_draw_params.PicY()-16, 24);
 
     // blank background
-    for (int ypx=m_frame.Udata().LastY()-(16/m_draw_params.ChromaFactorY()); ypx<=m_frame.Udata().LastY(); ++ypx)
+    for (int ypx=(m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(16/m_draw_params.ChromaFactorY());
+        ypx<=m_frame.Udata().LastY(); ++ypx)
     {
         // no chrominance
         for (int xpx=(32/m_draw_params.MvYBlockX())-1; xpx>=(16/m_draw_params.ChromaFactorX()); --xpx)

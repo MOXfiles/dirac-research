@@ -54,6 +54,7 @@ public :
         Calls DrawOverlay constructor
     */    
     DrawMotionArrows(Frame &, DrawFrameMotionParams &, const MvArray &, int);
+
     //! Destructor
     ~DrawMotionArrows();
 
@@ -65,18 +66,23 @@ public :
         
     //! Manages drawing of motion vector arrows
     void DrawBlock(int, int);
+    
     //! Does nothing, no legend for overlay
     /*
         Base class function required to be overridden
     */
     void DrawLegend();
+    
 protected :
     //! Draws a single 16 x 16 pixel arrow
     void DrawArrow(int, int, int, int);
+    
     //! Temporal motion vector scaling
     int m_mv_scale;
-    //! Number of blocks per arrow or arrows per block
-    int m_blocks_per_arrow, m_arrows_per_block;
+    
+    //! Number of blocks per arrow
+    int m_blocks_per_arrow_y, m_blocks_per_arrow_x;
+    
     //! Reference to motion vector data for particular reference
     const MvArray & m_mv;
 };

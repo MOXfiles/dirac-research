@@ -43,8 +43,8 @@ DrawMotionArrows::DrawMotionArrows(Frame & frame, DrawFrameMotionParams & draw_p
 :
     DrawOverlay(frame, draw_params),
     m_mv_scale(mv_scale),
-    m_blocks_per_arrow(0),
-    m_arrows_per_block(0),
+    m_blocks_per_arrow_y(0),
+    m_blocks_per_arrow_x(0),
     m_mv(mv)
 {}
 
@@ -65,38 +65,40 @@ void DrawMotionArrows::DrawBlock(int j, int i)
         }
     }
 
-    // if motion vectors are divisible by 4 and are smaller than 16 pixels
-    if ( (m_draw_params.MvYBlockY() % 4 == 0) && (m_draw_params.MvYBlockY() <= 16) )
-    {
-        m_blocks_per_arrow = 16 / m_draw_params.MvYBlockY();
+    // reset
+    m_blocks_per_arrow_y = 0;
+    m_blocks_per_arrow_x = 0;
 
-        if ( (j==0 || (j % m_blocks_per_arrow)==0 ) && ( (i==0 || (i % m_blocks_per_arrow)==0 ) ) )
-            DrawArrow(j, i, j, i);
+    int group_x = 0;
+    int group_y = 0;
+
+    // build group of motion vector blocks larger than 16 x 16
+    while (group_x < 16)
+    {
+        group_x += m_draw_params.MvYBlockX();
+        ++m_blocks_per_arrow_x;
     }
-    // if motion vectors are divisible by 16 and are larger than 16 (unlikely!)
-    else if ( (m_draw_params.MvYBlockY() % 16 == 0) && (m_draw_params.MvYBlockY() > 16) )
+    while (group_y < 16)
     {
-        m_arrows_per_block = m_draw_params.MvYBlockY() / 16;
-
-        for (int y=j; y<j+m_arrows_per_block; ++y)
-        {
-            for (int x=i; x<i+m_arrows_per_block; ++x)
-                DrawArrow(y, x, y, x);
-        }
+        group_y += m_draw_params.MvYBlockY();
+         ++m_blocks_per_arrow_y;
     }
-    // if motion vectors do not divide into a single arrow (or vice versa)
-    else
+
+    // calculate offset for TL corner of arrow
+    int offset_x = 0;
+    int offset_y = 0;
+            
+    if (group_x != 16)
+        offset_x = int( (group_x - 16) / 2 );
+    if (group_y != 16)
+        offset_y = int( (group_y - 16) / 2 );
+
+    // draw arrow if this block is TL corner of arrow
+    if ( (j == 0 || (j % m_blocks_per_arrow_y) == 0) && ((i == 0 || (i % m_blocks_per_arrow_x) == 0 )) &&
+        (j*m_draw_params.MvYBlockY()+offset_y+15 <= m_frame.Ydata().LengthY()) &&
+        (i*m_draw_params.MvYBlockX()+offset_x+15 <= m_frame.Ydata().LengthX()) )
     {
-        int m_blocks_per_arrow = 0;
-        while (m_blocks_per_arrow <= 16)
-            m_blocks_per_arrow += m_draw_params.MvYBlockY();
-
-        // calculate offset for TL corner of arrow
-        int block_group_size = m_blocks_per_arrow * m_draw_params.MvYBlockY();
-        int offset = int( (block_group_size - 16) / 2 );
-
-        if ( (j==0 || (j % m_blocks_per_arrow)==0 ) && ( (i==0 || (i % m_blocks_per_arrow)==0 ) ) )
-            DrawArrow(j, i, j+offset, i+offset);
+        DrawArrow(j, i, (j*m_draw_params.MvYBlockY())+offset_y, (i*m_draw_params.MvYBlockX())+offset_x);
     }
 }
 
@@ -107,17 +109,17 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
     int x_sum = 0, y_sum = 0;
 
     // loop over motion vector group
-    for (int y=j; y<j+m_blocks_per_arrow; ++y)
+    for (int y=j; y<j+m_blocks_per_arrow_y; ++y)
     {
-        for (int x=i; x<i+m_blocks_per_arrow; ++x)
+        for (int x=i; x<i+m_blocks_per_arrow_x; ++x)
         {
             x_sum += m_mv[y][x].x;
             y_sum -= m_mv[y][x].y;
         }
     }
 
-    double x_avg = x_sum / (m_blocks_per_arrow * m_blocks_per_arrow * m_mv_scale);
-    double y_avg = y_sum / (m_blocks_per_arrow * m_blocks_per_arrow * m_mv_scale);
+    double x_avg = x_sum / (m_blocks_per_arrow_x * m_blocks_per_arrow_x * m_mv_scale);
+    double y_avg = y_sum / (m_blocks_per_arrow_y * m_blocks_per_arrow_y * m_mv_scale);
 
     // get absolute angle
     double angle = std::atan(std::abs(x_avg) / std::abs(y_avg)) * (360 / 6.82);
@@ -189,7 +191,7 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
         {
             for (int xpx=0; xpx<16; ++xpx)
             {
-                m_frame.Ydata()[(8*y_pos)+ypx][(8*x_pos) + xpx] += m_symbols.Arrow()[ypx][15-xpx] * 1024;
+                m_frame.Ydata()[(y_pos)+ypx][(x_pos) + xpx] += m_symbols.Arrow()[ypx][15-xpx] * 1024;
             }// xpx
         }// ypx
     }
@@ -199,7 +201,7 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
         {
             for (int xpx=0; xpx<16; ++xpx)
             {
-                m_frame.Ydata()[(8*y_pos) + ypx][(8*x_pos) + xpx] += m_symbols.Arrow()[15-ypx][xpx] * 1024;
+                m_frame.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[15-ypx][xpx] * 1024;
             }// xpx
         }// ypx
     }
@@ -209,7 +211,7 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
         {
             for (int xpx=0; xpx<16; ++xpx)
             {
-                m_frame.Ydata()[(8*y_pos) + ypx][(8*x_pos) + xpx] += m_symbols.Arrow()[15-ypx][15-xpx] * 1024;
+                m_frame.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[15-ypx][15-xpx] * 1024;
             }// xpx
         }// ypx
     }
@@ -219,7 +221,7 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
         {
             for (int xpx=0; xpx<16; ++xpx)
             {
-                m_frame.Ydata()[(8*y_pos) + ypx][(8*x_pos) + xpx] += m_symbols.Arrow()[ypx][xpx] * 1024;
+                m_frame.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[ypx][xpx] * 1024;
             }// xpx
         }// ypx
     }

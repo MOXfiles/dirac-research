@@ -71,6 +71,12 @@ public :
     //! Returns chroma - luma horizontal sample ratio
     const int ChromaFactorX() const {return m_chroma_factor_x;}
 
+    //! Returns original picture height
+    const int PicY() const {return m_pic_y;}
+
+    //! Returns original picture width
+    const int PicX() const {return m_pic_x;}
+
     //! Sets...
     //! Set luma motion vector block height    
     void SetMvYBlockY(int y) {m_mv_Y_block_y=y;}
@@ -89,6 +95,12 @@ public :
     
     //! Set chroma - luma horizontal sample ratio
     void SetChromaFactorX(int x) {m_chroma_factor_x=x;}
+
+    //! Set original picture height
+    void SetPicY(int y) {m_pic_y=y;}
+
+    //! Set original picture width
+    void SetPicX(int x) {m_pic_x=x;}
     
 private :
 
@@ -100,6 +112,9 @@ private :
     
     //! Chroma - luma sample ratio
     int m_chroma_factor_y, m_chroma_factor_x;
+
+    //! Original picture dimensions
+    int m_pic_y, m_pic_x;
 };
 
 //! Base class for block overlay objects
@@ -158,7 +173,7 @@ protected :
     //! Colours motion vector block referenced by motion vector
     void DrawMvBlockUV(int, int, int, int);
     
-    //! Colours motion vector block referenced by TL chroma pixel
+    //! Colours an 8x8 block referenced by TL chroma pixel
     void DrawBlockUV(int, int, int, int);
     
     //! Frame data

@@ -107,7 +107,7 @@ void DrawOverlay::GetPowerUV(int power, int & U, int & V)
 void DrawOverlay::DrawPowerBar(int min, int max)
 {
     // loop over rows
-    for (int ypx=40; ypx<=m_frame.Ydata().LastY(); ++ypx)
+    for (int ypx=40; ypx<m_draw_params.PicY(); ++ypx)
     {
         // black line
         m_frame.Ydata()[ypx][5]=0;
@@ -117,11 +117,11 @@ void DrawOverlay::DrawPowerBar(int min, int max)
     }
 
     // draw colour on line by line basis
-    for (int ypx=40/m_draw_params.ChromaFactorY(); ypx<=m_frame.Udata().LastY(); ++ypx)
+    for (int ypx=40/m_draw_params.ChromaFactorY(); ypx<(m_draw_params.PicY()/m_draw_params.ChromaFactorY()); ++ypx)
     {
         // find equivalent power value
-        double power = (1000 * ((m_frame.Udata().LastY()+1) - (40/m_draw_params.ChromaFactorY()) - ypx) /
-                        (m_frame.Udata().LastY()-(40/m_draw_params.ChromaFactorY())+1));
+        double power = (1000 * (((m_draw_params.PicY()/m_draw_params.ChromaFactorY())) - (40/m_draw_params.ChromaFactorY()) - ypx) /
+                        (m_draw_params.PicY()/m_draw_params.ChromaFactorY())-(40/m_draw_params.ChromaFactorY()));
 
         // get U V values for power
         int U=0, V=0;
@@ -135,7 +135,7 @@ void DrawOverlay::DrawPowerBar(int min, int max)
     }
 
     // draw min and max labels
-    DrawValue(min, m_frame.Ydata().LastY()-15, 0);
+    DrawValue(min, m_draw_params.PicY()-16, 0);
     DrawValue(max, 40, 8);
     DrawCharacter(m_symbols.SymbolGreater(), 40, 0);
 }
@@ -291,13 +291,13 @@ void DrawOverlay::DrawMvBlockUV(int ymv, int xmv, int U, int V)
     }// ypx
 }
 
-// colours a single block, referenced by TL chroma pixel
+// colours an 8x8 block, referenced by TL chroma pixel
 void DrawOverlay::DrawBlockUV(int ypx, int xpx, int U, int V)
 {
     // loop over chroma samples in block
-    for (int y=ypx; y<ypx+m_draw_params.MvUVBlockY(); ++y)
+    for (int y=ypx; y<ypx+(8/m_draw_params.ChromaFactorY()); ++y)
     {
-        for (int x=xpx; x<xpx+m_draw_params.MvUVBlockX(); ++x)
+        for (int x=xpx; x<xpx+(8/m_draw_params.ChromaFactorX()); ++x)
         {
             m_frame.Udata()[y][x]=U;
             m_frame.Vdata()[y][x]=V;

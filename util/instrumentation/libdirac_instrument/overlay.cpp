@@ -88,6 +88,10 @@ void Overlay::ProcessFrame(const MEData & me_data, const OLBParams & block_param
     m_draw_params.SetMvYBlockX(block_params.Xbsep());
     m_draw_params.SetMvUVBlockY(block_params.Ybsep()/m_draw_params.ChromaFactorY());
     m_draw_params.SetMvUVBlockX(block_params.Xbsep()/m_draw_params.ChromaFactorX());
+    m_draw_params.SetPicY(m_frame.Ydata().LengthY());
+    m_draw_params.SetPicX(m_frame.Ydata().LengthX());
+
+    //std::cerr<<std::endl<<"Pic: "<<m_draw_params.PicY()<<" "<<m_draw_params.PicX();
 
     PadFrame(me_data);
 
@@ -271,15 +275,21 @@ void Overlay::PadFrame(const MEData & me_data)
     // if there is not an integer number of macroblocks horizontally, pad until there is
     if (m_frame.Ydata().LengthX() % me_data.MBSplit().LengthX() != 0)
     {
-        while (frame_x % me_data.MBSplit().LengthX() != 0)
-            frame_x+=m_draw_params.MvYBlockX();
+        do
+        {
+            ++frame_x;
+        }
+        while (frame_x % me_data.MBSplit().LengthX() != 0);       
     }
 
     // if there is not an integer number of macroblocks vertically, pad until there is
     if (m_frame.Ydata().LengthX() % me_data.MBSplit().LengthY() != 0)
     {
-        while (frame_y % me_data.MBSplit().LengthY() != 0)
-            frame_y+=m_draw_params.MvYBlockY();
+        do
+        {
+            ++frame_y;
+        }
+        while (frame_y % me_data.MBSplit().LengthY() != 0);
     }
 
     // if padding was required in either horizontal or vertical, adjust frame size and reload component data

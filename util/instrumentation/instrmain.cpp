@@ -218,7 +218,14 @@ int main (int argc, char* argv[])
     PicInput inputpic(input.c_str());
     inputpic.ReadPicHeader();
 
-    PicOutput outputpic(output.c_str(), inputpic.GetSeqParams());
+    // if the input sequence is Y only, make the ouput sequence 4:2:0
+    SeqParams seqparams = inputpic.GetSeqParams();
+    if (seqparams.CFormat() == Yonly)
+    {
+        seqparams.SetCFormat( format420 );
+    }
+    
+    PicOutput outputpic(output.c_str(), seqparams);
     outputpic.WritePicHeader();
     
     // read motion data from file
@@ -238,7 +245,7 @@ int main (int argc, char* argv[])
     if (verbose) cerr << " ... ok" << endl << "Processing sequence...";
     
     // *** process the sequence ***
-    ProcessSequence process(oparams, inputpic, outputpic, in, verbose, buffer);
+    ProcessSequence process(oparams, inputpic, outputpic, in, verbose, buffer, seqparams);
     process.DoSequence(start, stop);
     if (verbose) cerr << endl << "Done sequence." << endl;
 	return 0;
