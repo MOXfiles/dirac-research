@@ -38,8 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-03-29 01:52:08  chaoticcoyote
+* Added Doxygen comments
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -54,15 +57,40 @@
 #include "libdirac_common/common.h"
 class MvData;
 
+//! Compress a single image frame
+/*!
+    This class decompresses a single frame at a time, using parameters supplied at
+    its construction. FrameDecompressor is used by SequenceDecompressor.
+*/
 class FrameDecompressor{
 public:
+    //! Constructor
+    /*!
+        Creates a FrameDecompressor with specific set of parameters the control
+        the decompression process. It encodes motion data before encoding each
+        component of the frame. 
+        
+        \param  decp    decoder parameters
+    */
 	FrameDecompressor(DecoderParams& decp): decparams(decp){}
+
+    //! Decompress a specific frame within a group of pictures (GOP)
+    /*!
+        Decompresses a specified frame within a group of pictures. 
+        
+        \param my_gop   group of pictures in which the frame resides
+        \param fnum     frame number to compress
+    */
 	void Decompress(Gop& my_gop, int fnum);
 
 private:
+    //! Parameters for the decompression, as provided in constructor
 	DecoderParams decparams;
+
+    //! Motion vector data
 	MvData* mv_data;
 
+    //! Decodes component data
 	void CompDecompress(Gop& my_gop, int fnum, CompSort cs);
 };
 
