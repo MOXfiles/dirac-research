@@ -39,52 +39,57 @@
 #define _MOTION_ARROWS_H_
 
 #include <util/instrumentation/libdirac_instrument/draw_overlay.h>
-
-//! Class to carry out the overlay of motion vectors represented by arrows
-/*
-    Sub-class of DrawOverlay.
-    16 x 16 pixel arrows used to represent motion vectors
-    Each arrow may represent a number of motion vectors, in which case their mean is used
-*/
-class DrawMotionArrows : public DrawOverlay
+namespace dirac_instr
 {
-public :
-    //! Constructor
-    /*
-        Calls DrawOverlay constructor
-    */    
-    DrawMotionArrows(Frame &, DrawFrameMotionParams &, const MvArray &, int);
 
-    //! Destructor
-    ~DrawMotionArrows();
-
-    ////////////////////////////////////////////////////////////
-    //                                                        //
-    //    Assumes default copy constructor and assignment =   //
-    //                                                        //
-    ////////////////////////////////////////////////////////////
-        
-    //! Manages drawing of motion vector arrows
-    void DrawBlock(int, int);
-    
-    //! Does nothing, no legend for overlay
+    //! Class to carry out the overlay of motion vectors represented by arrows
     /*
-        Base class function required to be overridden
+        Sub-class of DrawOverlay.
+        16 x 16 pixel arrows used to represent motion vectors
+        Each arrow may represent a number of motion vectors, in which case
+        their mean is used
     */
-    void DrawLegend();
-    
-protected :
-    //! Draws a single 16 x 16 pixel arrow
-    void DrawArrow(int, int, int, int);
-    
-    //! Temporal motion vector scaling
-    int m_mv_scale;
-    
-    //! Number of blocks per arrow
-    int m_blocks_per_arrow_y, m_blocks_per_arrow_x;
-    
-    //! Reference to motion vector data for particular reference
-    const MvArray & m_mv;
-};
+    class DrawMotionArrows : public DrawOverlay
+    {
+    public :
+        //! Constructor
+        /*
+            Calls DrawOverlay constructor
+        */    
+        DrawMotionArrows(Frame &, DrawFrameMotionParams &, const MvArray &, int);
+
+        //! Destructor
+        ~DrawMotionArrows();
+
+        ////////////////////////////////////////////////////////////
+        //                                                        //
+        //    Assumes default copy constructor and assignment =   //
+        //                                                        //
+        ////////////////////////////////////////////////////////////
+            
+        //! Manages drawing of motion vector arrows
+        void DrawBlock(int, int);
+        
+        //! Does nothing, no legend for overlay
+        /*
+            Base class function required to be overridden
+        */
+        void DrawLegend();
+        
+    protected :
+        //! Draws a single 16 x 16 pixel arrow
+        void DrawArrow(int, int, int, int);
+        
+        //! Temporal motion vector scaling
+        int m_mv_scale;
+        
+        //! Number of blocks per arrow
+        int m_blocks_per_arrow_y, m_blocks_per_arrow_x;
+        
+        //! Reference to motion vector data for particular reference
+        const MvArray & m_mv;
+    };
+
+} // namespace dirac_instr
 
 #endif

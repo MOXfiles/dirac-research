@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <util/instrumentation/libdirac_instrument/gm_inliers.h>
+using namespace dirac_instr;
 
 // constructor
 DrawGMInliers::DrawGMInliers(Frame & frame, DrawFrameMotionParams & draw_params, const TwoDArray<int> & inliers)

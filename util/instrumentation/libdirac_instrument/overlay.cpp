@@ -36,6 +36,9 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <util/instrumentation/libdirac_instrument/overlay.h>
+using namespace dirac_instr;
+
+// using namespace dirac;
 
 // constructor
 Overlay::Overlay (const OverlayParams & overlayparams, Frame & frame)
@@ -146,7 +149,7 @@ void Overlay::DoOverlay(const MEData & me_data)
     // In order to create a new overlay, sub-class DrawOverlay and override DrawBlock() and DrawLegend() functions
 
     // create poitner to DrawOverlay object
-    DrawOverlay * draw_overlay_ptr;
+    DrawOverlay * draw_overlay_ptr = NULL;
 
     MvArray mv_diff( me_data.Vectors(m_oparams.Reference()).LengthY(),
                      me_data.Vectors(m_oparams.Reference()).LengthX());
@@ -289,6 +292,8 @@ void Overlay::DoOverlay(const MEData & me_data)
         else
             draw_overlay_ptr->DrawReferenceNumber(m_oparams.Reference(), m_ref);
     }
+    if (draw_overlay_ptr)
+        delete draw_overlay_ptr;
 }
 
 // calculates the resolution factor between chroma and luma samples
@@ -370,6 +375,18 @@ void Overlay::PadFrame(const MEData & me_data)
             {
                 m_frame.Ydata()[j][i]=Ydata[j][i];
             }
+            // pad the columns on the rhs using the edge value
+            for (int i=Ydata.LengthX(); i <  m_frame.Ydata().LengthX(); ++i)
+                m_frame.Ydata()[j][i] = m_frame.Ydata()[j][Ydata.LengthX()-1];
+        }
+        // do the padded lines using the last true line
+        for (int j=Ydata.LengthY(); j<m_frame.Ydata().LengthY(); ++j)
+        {
+            //std::cerr << "Processing row " << j  << std::endl;
+            for (int i=0; i <  m_frame.Ydata().LengthX(); ++i)
+            {
+                m_frame.Ydata()[j][i] = m_frame.Ydata()[Ydata.LengthY()-1][i];
+            }
         }
         
         for (int j=0; j<Udata.LengthY(); ++j)
@@ -378,6 +395,22 @@ void Overlay::PadFrame(const MEData & me_data)
             {
                 m_frame.Udata()[j][i]=Udata[j][i];
                 m_frame.Vdata()[j][i]=Vdata[j][i];
+            }
+            // pad the columns on the rhs using the edge value
+            for (int i=Udata.LengthX(); i <  m_frame.Udata().LengthX(); ++i)
+            {
+                m_frame.Udata()[j][i] = m_frame.Udata()[j][Udata.LengthX()-1];
+                m_frame.Vdata()[j][i] = m_frame.Vdata()[j][Udata.LengthX()-1];
+            }
+        }
+        // do the padded lines using the last true line
+        for (int j=Udata.LengthY(); j<m_frame.Udata().LengthY(); ++j)
+        {
+            //std::cerr << "Processing row " << j  << std::endl;
+            for (int i=0; i <  m_frame.Udata().LengthX(); ++i)
+            {
+                m_frame.Udata()[j][i] = m_frame.Udata()[Udata.LengthY()-1][i];
+                m_frame.Vdata()[j][i] = m_frame.Vdata()[Udata.LengthY()-1][i];
             }
         }
 

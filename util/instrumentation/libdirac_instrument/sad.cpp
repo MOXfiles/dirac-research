@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <util/instrumentation/libdirac_instrument/sad.h>
+using namespace dirac_instr;
 
 // constructor
 DrawSad::DrawSad(Frame & frame, DrawFrameMotionParams & draw_params, const TwoDArray<MvCostData> & cost, const TwoDArray<PredMode> & mode, 
@@ -61,7 +62,7 @@ void DrawSad::DrawBlock(int j, int i)
     DrawMvBlockUV(j, i, U+500, V+500);
 
     // if intra, draw white box round block
-    if (m_mode[j][i]==INTRA)
+    if (m_mode[j][i]==dirac::INTRA)
     {
         for (int ypx=0; ypx<m_draw_params.MvYBlockY(); ++ypx)
         {

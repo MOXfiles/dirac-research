@@ -40,40 +40,45 @@
 
 #include <util/instrumentation/libdirac_instrument/draw_overlay.h>
 
-//! Class to carry out overlay of motion vectors using colour
-/*
-    Sub-class of DrawOverlay.
-    Represents motion vectors as colour: direction by colour, size by intensity
-    Full deflection given as command-line option (-clip n)
-*/
-class DrawMotionColour : public DrawOverlay
+namespace dirac_instr
 {
-public :
-    //! Constructor
+    //! Class to carry out overlay of motion vectors using colour
     /*
-        Calls DrawOverlay constructor
+        Sub-class of DrawOverlay.
+        Represents motion vectors as colour: direction by colour, size by
+        intensity
+        Full deflection given as command-line option (-clip n)
     */
-    DrawMotionColour(Frame &, DrawFrameMotionParams &, const MvArray &, int, int);
-    //! Destructor
-    ~DrawMotionColour();
+    class DrawMotionColour : public DrawOverlay
+    {
+    public :
+        //! Constructor
+        /*
+            Calls DrawOverlay constructor
+        */
+        DrawMotionColour(Frame &, DrawFrameMotionParams &, const MvArray &, int, int);
+        //! Destructor
+        ~DrawMotionColour();
 
-    ////////////////////////////////////////////////////////////
-    //                                                        //
-    //    Assumes default copy constructor and assignment =   //
-    //                                                        //
-    ////////////////////////////////////////////////////////////    
+        ////////////////////////////////////////////////////////////
+        //                                                        //
+        //    Assumes default copy constructor and assignment =   //
+        //                                                        //
+        ////////////////////////////////////////////////////////////    
 
-    //! Colours a particular motion vector block appropriately
-    void DrawBlock(int, int);
-    //! Draws colour wheel legend
-    void DrawLegend();
-private :
-    //! Temporal motion vector scaling
-    int m_mv_scale;
-    //! Maximum motion vector size represented
-    int m_mv_clip;
-    //! Reference to motion vector data for particular reference
-    const MvArray & m_mv;
-};
+        //! Colours a particular motion vector block appropriately
+        void DrawBlock(int, int);
+        //! Draws colour wheel legend
+        void DrawLegend();
+    private :
+        //! Temporal motion vector scaling
+        int m_mv_scale;
+        //! Maximum motion vector size represented
+        int m_mv_clip;
+        //! Reference to motion vector data for particular reference
+        const MvArray & m_mv;
+    };
+
+} // namespace dirac_instr
 
 #endif

@@ -38,157 +38,166 @@
 #ifndef _BLOCK_OVERLAY_H_
 #define _BLOCK_OVERLAY_H_
 
-#define NO_REF -1
 
 #include <libdirac_common/motion.h>
 #include <libdirac_common/frame.h>
+using dirac::Frame;
+using dirac::PicArray;
+using dirac::MvArray;
+
 #include <util/instrumentation/libdirac_instrument/overlay_symbols.h>
 
-//! Class encapsulating parameters for drawing the frame
-class DrawFrameMotionParams
+namespace dirac_instr
 {
-public :
+#define NO_REF -1
 
-    //! Default constuctor, does nothing
-    DrawFrameMotionParams() {}
+    //! Class encapsulating parameters for drawing the frame
+    class DrawFrameMotionParams
+    {
+    public :
 
-    //! Default destructor, does nothing
-    ~DrawFrameMotionParams() {}
-    //! Gets...
-    //! Returns luma motion vector block height
-    const int MvYBlockY() const {return m_mv_Y_block_y;}
-    
-    //! Returns luma motion vector block width
-    const int MvYBlockX() const {return m_mv_Y_block_x;}
+        //! Default constuctor, does nothing
+        DrawFrameMotionParams() {}
 
-    //! Returns chroma motion vector height
-    const int MvUVBlockY() const {return m_mv_UV_block_y;}
+        //! Default destructor, does nothing
+        ~DrawFrameMotionParams() {}
+        //! Gets...
+        //! Returns luma motion vector block height
+        const int MvYBlockY() const {return m_mv_Y_block_y;}
+        
+        //! Returns luma motion vector block width
+        const int MvYBlockX() const {return m_mv_Y_block_x;}
 
-    //! Returns chroma motion vector width
-    const int MvUVBlockX() const {return m_mv_UV_block_x;}
+        //! Returns chroma motion vector height
+        const int MvUVBlockY() const {return m_mv_UV_block_y;}
 
-    //! Returns chroma - luma vertical smaple ratio
-    const int ChromaFactorY() const {return m_chroma_factor_y;}
-    
-    //! Returns chroma - luma horizontal sample ratio
-    const int ChromaFactorX() const {return m_chroma_factor_x;}
+        //! Returns chroma motion vector width
+        const int MvUVBlockX() const {return m_mv_UV_block_x;}
 
-    //! Returns original picture height
-    const int PicY() const {return m_pic_y;}
+        //! Returns chroma - luma vertical smaple ratio
+        const int ChromaFactorY() const {return m_chroma_factor_y;}
+        
+        //! Returns chroma - luma horizontal sample ratio
+        const int ChromaFactorX() const {return m_chroma_factor_x;}
 
-    //! Returns original picture width
-    const int PicX() const {return m_pic_x;}
+        //! Returns original picture height
+        const int PicY() const {return m_pic_y;}
 
-    //! Sets...
-    //! Set luma motion vector block height    
-    void SetMvYBlockY(int y) {m_mv_Y_block_y=y;}
-    
-    //! Set luma motion vector block width
-    void SetMvYBlockX(int x) {m_mv_Y_block_x=x;}
-    
-    //! Set chroma motion vector block height
-    void SetMvUVBlockY(int y) {m_mv_UV_block_y=y;}
-    
-    //! Set chroma motion vector block width
-    void SetMvUVBlockX(int x) {m_mv_UV_block_x=x;}
-    
-    //! Set chroma - luma vertical sample ratio
-    void SetChromaFactorY(int y) {m_chroma_factor_y=y;}
-    
-    //! Set chroma - luma horizontal sample ratio
-    void SetChromaFactorX(int x) {m_chroma_factor_x=x;}
+        //! Returns original picture width
+        const int PicX() const {return m_pic_x;}
 
-    //! Set original picture height
-    void SetPicY(int y) {m_pic_y=y;}
+        //! Sets...
+        //! Set luma motion vector block height    
+        void SetMvYBlockY(int y) {m_mv_Y_block_y=y;}
+        
+        //! Set luma motion vector block width
+        void SetMvYBlockX(int x) {m_mv_Y_block_x=x;}
+        
+        //! Set chroma motion vector block height
+        void SetMvUVBlockY(int y) {m_mv_UV_block_y=y;}
+        
+        //! Set chroma motion vector block width
+        void SetMvUVBlockX(int x) {m_mv_UV_block_x=x;}
+        
+        //! Set chroma - luma vertical sample ratio
+        void SetChromaFactorY(int y) {m_chroma_factor_y=y;}
+        
+        //! Set chroma - luma horizontal sample ratio
+        void SetChromaFactorX(int x) {m_chroma_factor_x=x;}
 
-    //! Set original picture width
-    void SetPicX(int x) {m_pic_x=x;}
-    
-private :
+        //! Set original picture height
+        void SetPicY(int y) {m_pic_y=y;}
 
-    //! Motion vector block dimensions - luma
-    int m_mv_Y_block_y, m_mv_Y_block_x;
-    
-    //! Motion vector block dimensions - chroma
-    int m_mv_UV_block_y, m_mv_UV_block_x;
-    
-    //! Chroma - luma sample ratio
-    int m_chroma_factor_y, m_chroma_factor_x;
+        //! Set original picture width
+        void SetPicX(int x) {m_pic_x=x;}
+        
+    private :
 
-    //! Original picture dimensions
-    int m_pic_y, m_pic_x;
-};
+        //! Motion vector block dimensions - luma
+        int m_mv_Y_block_y, m_mv_Y_block_x;
+        
+        //! Motion vector block dimensions - chroma
+        int m_mv_UV_block_y, m_mv_UV_block_x;
+        
+        //! Chroma - luma sample ratio
+        int m_chroma_factor_y, m_chroma_factor_x;
 
-//! Base class for block overlay objects
-/*
-    Base class for block overlay objects with pure
-    virtual functions to define sub-class interface
-*/
-class DrawOverlay
-{
-public :
-    //! Constructor
-    DrawOverlay(Frame &, DrawFrameMotionParams &);
-    
-    //! Destructor
-    virtual ~DrawOverlay();
-    
-    //! Carries out overlay for single block
-    virtual void DrawBlock(int, int)=0;
-    
-    //! Draws overlay legend
-    virtual void DrawLegend()=0;
+        //! Original picture dimensions
+        int m_pic_y, m_pic_x;
+    };
 
-    ////////////////////////////////////////////////////////////
-    //                                                        //
-    //    Assumes default copy constructor and assignment =   //
-    //                                                        //
-    ////////////////////////////////////////////////////////////
+    //! Base class for block overlay objects
+    /*
+        Base class for block overlay objects with pure
+        virtual functions to define sub-class interface
+    */
+    class DrawOverlay
+    {
+    public :
+        //! Constructor
+        DrawOverlay(Frame &, DrawFrameMotionParams &);
+        
+        //! Destructor
+        virtual ~DrawOverlay();
+        
+        //! Carries out overlay for single block
+        virtual void DrawBlock(int, int)=0;
+        
+        //! Draws overlay legend
+        virtual void DrawLegend()=0;
 
-    //! Draws frame numbers for both references
-    void DrawReferenceNumbers(int, int);
-    
-    //! Draws frame number for chosen reference
-    void DrawReferenceNumber(int, int);
-    
-    //! Draws current frame number
-    void DrawFrameNumber(int);
-    
-    //! Draws a character / number / symbol
-    void DrawCharacter(const PicArray &, int, int);
+        ////////////////////////////////////////////////////////////
+        //                                                        //
+        //    Assumes default copy constructor and assignment =   //
+        //                                                        //
+        ////////////////////////////////////////////////////////////
 
-    //! Returns reference to symbols object
-    const OverlaySymbols & Symbols() const {return m_symbols;}
-    
-protected :
+        //! Draws frame numbers for both references
+        void DrawReferenceNumbers(int, int);
+        
+        //! Draws frame number for chosen reference
+        void DrawReferenceNumber(int, int);
+        
+        //! Draws current frame number
+        void DrawFrameNumber(int);
+        
+        //! Draws a character / number / symbol
+        void DrawCharacter(const PicArray &, int, int);
+
+        //! Returns reference to symbols object
+        const OverlaySymbols & Symbols() const {return m_symbols;}
+        
+    protected :
 
 
-    //! Calculates U and V for particular value normalised to 1000
-    void GetPowerUV(int, int &, int &);
-    
-    //! Draws power bar legend with given limits
-    void DrawPowerBar(int, int);
-    
-    //! Draws value
-    void DrawValue(int, int, int);
-    
-    //! Colours motion vector block referenced by motion vector
-    void DrawMvBlockUV(int, int, int, int);
-    
-    //! Colours an 8x8 block referenced by TL chroma pixel
-    void DrawBlockUV(int, int, int, int);
-    
-    //! Frame data
-    Frame & m_frame;
-    
-    //! Block parameters and chroma scaling
-    DrawFrameMotionParams & m_draw_params;
-    
-    //! Symbols
-    OverlaySymbols m_symbols;
-    
-private :
+        //! Calculates U and V for particular value normalised to 1000
+        void GetPowerUV(int, int &, int &);
+        
+        //! Draws power bar legend with given limits
+        void DrawPowerBar(int, int);
+        
+        //! Draws value
+        void DrawValue(int, int, int);
+        
+        //! Colours motion vector block referenced by motion vector
+        void DrawMvBlockUV(int, int, int, int);
+        
+        //! Colours an 8x8 block referenced by TL chroma pixel
+        void DrawBlockUV(int, int, int, int);
+        
+        //! Frame data
+        Frame & m_frame;
+        
+        //! Block parameters and chroma scaling
+        DrawFrameMotionParams & m_draw_params;
+        
+        //! Symbols
+        OverlaySymbols m_symbols;
+        
+    private :
 
-};
+    };
+
+} // namespace dirac_instr
 
 #endif

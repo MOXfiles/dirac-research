@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <util/instrumentation/libdirac_instrument/pred_mode.h>
+using namespace dirac_instr;
 
 // constructor
 DrawPredMode::DrawPredMode(Frame & frame, DrawFrameMotionParams & draw_params, const TwoDArray<PredMode> & mode)
@@ -54,13 +55,13 @@ void DrawPredMode::DrawBlock(int j, int i)
     int power = 0, U = 0, V = 0;
 
     // get prediction mode
-    if (m_mode[j][i] == INTRA)
+    if (m_mode[j][i] == dirac::INTRA)
         power=400; // red
-    else if (m_mode[j][i] == REF1_ONLY)
+    else if (m_mode[j][i] == dirac::REF1_ONLY)
         power=1000; // blue
-    else if (m_mode[j][i] == REF2_ONLY)
+    else if (m_mode[j][i] == dirac::REF2_ONLY)
         power=200; // yellow
-    else if (m_mode[j][i] == REF1AND2)
+    else if (m_mode[j][i] == dirac::REF1AND2)
         power=0; // green
 
     GetPowerUV(power, U, V);

@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include "overlay_symbols.h"
+using namespace dirac_instr;
 
 OverlaySymbols::OverlaySymbols()
  :

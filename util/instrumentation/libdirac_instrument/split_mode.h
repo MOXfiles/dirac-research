@@ -39,32 +39,38 @@
 #define _SPLIT_MODE_H_
 
 #include <util/instrumentation/libdirac_instrument/draw_overlay.h>
+using dirac::TwoDArray;
+using dirac::Frame;
 
-// Class to carry out overlay of macroblock splitting mode
-/*
-    Sub-class of DrawOverlay.
-*/
-class DrawSplitMode : public DrawOverlay
+namespace dirac_instr
 {
-public :
-    //! Constructor
+    // Class to carry out overlay of macroblock splitting mode
     /*
-        Calls DrawOverlay constructor
+        Sub-class of DrawOverlay.
     */
-    DrawSplitMode(Frame &, DrawFrameMotionParams &, const TwoDArray<int> &);
-    
-    //! Destructor
-    ~DrawSplitMode();
+    class DrawSplitMode : public DrawOverlay
+    {
+    public :
+        //! Constructor
+        /*
+            Calls DrawOverlay constructor
+        */
+        DrawSplitMode(Frame &, DrawFrameMotionParams &, const TwoDArray<int> &);
+        
+        //! Destructor
+        ~DrawSplitMode();
 
-    //! Colours a single block according to split mode
-    void DrawBlock(int, int);
-    
-    //! Displays colour legend
-    void DrawLegend();
-    
-private :
+        //! Colours a single block according to split mode
+        void DrawBlock(int, int);
+        
+        //! Displays colour legend
+        void DrawLegend();
+        
+    private :
 
-    const TwoDArray<int> & m_mode;
-};
+        const TwoDArray<int> & m_mode;
+    };
+
+} // namespace dirac_instr
 
 #endif

@@ -38,7 +38,6 @@
 #ifndef __OVERLAY_H__
 #define __OVERLAY_H__
 
-#define NO_REF -1
 
 #include <libdirac_common/common.h>
 #include <libdirac_common/motion.h>
@@ -51,145 +50,156 @@
 #include <util/instrumentation/libdirac_instrument/overlay_symbols.h>
 #include <util/instrumentation/libdirac_instrument/gm_inliers.h>
 
-//! Enumeration of options for instrumentation overlay
-enum OverlayOption
+using dirac::MEData;
+using dirac::OLBParams;
+
+namespace dirac_instr
 {
-    motion_arrows, motion_colour, motion_colour_arrows,
-    gm_arrows, gm_colour, gm_colour_arrows,
-    gm_diff_arrows, gm_diff_colour, gm_diff_colour_arrows,
-    gm_inliers, split_mode, SAD, pred_mode
-};
+#define NO_REF -1
 
-//! Class holding instrumentation overlay information
-class OverlayParams
-{
-public:
+    //! Enumeration of options for instrumentation overlay
+    enum OverlayOption
+    {
+        motion_arrows, motion_colour, motion_colour_arrows,
+        gm_arrows, gm_colour, gm_colour_arrows,
+        gm_diff_arrows, gm_diff_colour, gm_diff_colour_arrows,
+        gm_inliers, split_mode, SAD, pred_mode
+    };
 
-    ////////////////////////////////////////////////////////////
-    //                                                        //
-    //    Assumes default constructor, copy constructor       //
-    //    and assignment =                                    //
-    //                                                        //
-    ////////////////////////////////////////////////////////////
-    
-    //! Get functions...
-    //! Returns instrumentation command line option
-    const OverlayOption Option() const {return m_option;}
+    //! Class holding instrumentation overlay information
+    class OverlayParams
+    {
+    public:
 
-    //! Returns which reference is to be used
-    const int Reference() const {return m_ref;}
+        ////////////////////////////////////////////////////////////
+        //                                                        //
+        //    Assumes default constructor, copy constructor       //
+        //    and assignment =                                    //
+        //                                                        //
+        ////////////////////////////////////////////////////////////
+        
+        //! Get functions...
+        //! Returns instrumentation command line option
+        const OverlayOption Option() const {return m_option;}
 
-    //! Returns true if input frame background is used, false if grey
-    const int Background() const {return m_bg;}
+        //! Returns which reference is to be used
+        const int Reference() const {return m_ref;}
 
-    //! Returns true if colour legend is displayed
-    const int Legend() const {return m_legend;}
+        //! Returns true if input frame background is used, false if grey
+        const int Background() const {return m_bg;}
 
-    //! Returns clip value for motion vectors
-    const int MvClip() const {return m_mv_clip;}
+        //! Returns true if colour legend is displayed
+        const int Legend() const {return m_legend;}
 
-    //! Returns clip value for sad
-    const int SADClip() const {return m_sad_clip;}
-    
-    //! Set functions...
-    //! Set type of instrumentation
-    void SetOption(OverlayOption o) {m_option=o;}
+        //! Returns clip value for motion vectors
+        const int MvClip() const {return m_mv_clip;}
 
-    //! Set which reference frame is to be used
-    void SetReference(int r) {m_ref=r;}
+        //! Returns clip value for sad
+        const int SADClip() const {return m_sad_clip;}
+        
+        //! Set functions...
+        //! Set type of instrumentation
+        void SetOption(OverlayOption o) {m_option=o;}
 
-    //! Set whether input frame or grey is used as background
-    void SetBackground(bool b) {m_bg=b;}
+        //! Set which reference frame is to be used
+        void SetReference(int r) {m_ref=r;}
 
-    //! Set display of colour legend
-    void SetLegend(bool l) {m_legend=l;}
+        //! Set whether input frame or grey is used as background
+        void SetBackground(bool b) {m_bg=b;}
 
-    //! Set clip for motion vectors
-    void SetMvClip(int c) {m_mv_clip=c;}
+        //! Set display of colour legend
+        void SetLegend(bool l) {m_legend=l;}
 
-    //! Set clip for sad
-    void SetSADClip(int c) {m_sad_clip=c;}
-    
-private:
-    //! Instrumentation command line option
-    OverlayOption m_option;
+        //! Set clip for motion vectors
+        void SetMvClip(int c) {m_mv_clip=c;}
 
-    //! Reference frame
-    int m_ref;
+        //! Set clip for sad
+        void SetSADClip(int c) {m_sad_clip=c;}
+        
+    private:
+        //! Instrumentation command line option
+        OverlayOption m_option;
 
-    //! Background - original luma or mid-grey
-    bool m_bg;
+        //! Reference frame
+        int m_ref;
 
-    //! Instrumentation legend off
-    bool m_legend;
+        //! Background - original luma or mid-grey
+        bool m_bg;
 
-    //! Motion vector clip value
-    int m_mv_clip;
+        //! Instrumentation legend off
+        bool m_legend;
 
-    //! SAD clip value
-    int m_sad_clip;
-};
+        //! Motion vector clip value
+        int m_mv_clip;
 
-//! Class managing instrumentation overlay
-class Overlay
-{
-public:
-    //! constructor
-    Overlay(const OverlayParams &, Frame &);
+        //! SAD clip value
+        int m_sad_clip;
+    };
 
-    //! Destructor
-    ~Overlay();
+    //! Class managing instrumentation overlay
+    class Overlay
+    {
+    public:
+        //! constructor
+        Overlay(const OverlayParams &, Frame &);
 
-    ////////////////////////////////////////////////////////////
-    //                                                        //
-    //    Assumes default copy constructor and assignment =   //
-    //                                                        //
-    ////////////////////////////////////////////////////////////
+        //! Destructor
+        ~Overlay();
 
-    void ProcessFrame(const MEData &, const OLBParams &);
+        ////////////////////////////////////////////////////////////
+        //                                                        //
+        //    Assumes default copy constructor and assignment =   //
+        //                                                        //
+        ////////////////////////////////////////////////////////////
 
-    void ProcessFrame();
-    
-private:
+        void ProcessFrame(const MEData &, const OLBParams &);
 
-    //! Manages overlay based on command-line option
-    /*
-        Main overlay is carried out on a motion vector block by block basis
-    */
-    void DoOverlay(const MEData &);
+        void ProcessFrame();
+        
+    private:
 
-    //! Calculates chroma sample factors
-    /*
-        Difference picture formats use different chroma resolutions with respect to luma
-    */
-    void CalculateFactors(const ChromaFormat &);
+        //! Manages overlay based on command-line option
+        /*
+            Main overlay is carried out on a motion vector block by block basis
+        */
+        void DoOverlay(const MEData &);
 
-    //! Calculates if frame requires padding
-    /*
-        Frames must have an integer number of macroblocks, more macroblocks may have been used
-        during encoding and hence the frame must be padded now in order for the correct
-        macroblock (and motion vector block) size to be calculated
-    */
-    void PadFrame(const MEData &);
+        //! Calculates chroma sample factors
+        /*
+            Difference picture formats use different chroma resolutions with
+            respect to luma
+        */
+        void CalculateFactors(const ChromaFormat &);
 
-    //! Remove global motion from block motion
-    void GlobalMotionDifference(const MEData &, MvArray &);
+        //! Calculates if frame requires padding
+        /*
+            Frames must have an integer number of macroblocks, more
+            macroblocks may have been used during encoding and hence the frame
+            must be padded now in order for the correct macroblock (and motion
+            vector block) size to be calculated
+        */
+        void PadFrame(const MEData &);
 
-    //! Temporal scaling factor for motion vectors
-    int m_mv_scale;
+        //! Remove global motion from block motion
+        void GlobalMotionDifference(const MEData &, MvArray &);
 
-    //! Local copy of reference offset
-    int m_ref;
+        //! Temporal scaling factor for motion vectors
+        int m_mv_scale;
 
-    //! Overlay parameters
-    const OverlayParams m_oparams;
+        //! Local copy of reference offset
+        int m_ref;
 
-    //! Local reference to frame
-    Frame & m_frame;
+        //! Overlay parameters
+        const OverlayParams m_oparams;
 
-    //! Parameters for drawing frame overlays
-    DrawFrameMotionParams m_draw_params;
-};
+        //! Local reference to frame
+        Frame & m_frame;
+
+        //! Parameters for drawing frame overlays
+        DrawFrameMotionParams m_draw_params;
+    };
+
+} // namespace dirac_instr
 
 #endif
 

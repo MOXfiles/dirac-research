@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <util/instrumentation/libdirac_instrument/motion_colour_arrows.h>
+using namespace dirac_instr;
 
 // constructor
 DrawMotionColourArrows::DrawMotionColourArrows(Frame & frame, DrawFrameMotionParams & draw_params,

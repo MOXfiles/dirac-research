@@ -39,70 +39,75 @@
 #define _OVERLAY_SYMBOLS_H_
 
 #include "libdirac_common/common.h"
+using dirac::PicArray;
 
-class OverlaySymbols
+namespace dirac_instr
 {
-public :
-    OverlaySymbols();
-    ~OverlaySymbols();
+    class OverlaySymbols
+    {
+    public :
+        OverlaySymbols();
+        ~OverlaySymbols();
 
-    // access functions
-    const PicArray & Arrow0() const {return m_arrow_0;}
-    const PicArray & Arrow7_5() const {return m_arrow_7_5;}
-    const PicArray & Arrow15() const {return m_arrow_15;}
-    const PicArray & Arrow22_5() const {return m_arrow_22_5;}
-    const PicArray & Arrow30() const {return m_arrow_30;}
-    const PicArray & Arrow37_5() const {return m_arrow_37_5;}
-    const PicArray & Arrow45() const {return m_arrow_45;}
-    const PicArray & Arrow52_5() const {return m_arrow_52_5;}
-    const PicArray & Arrow60() const {return m_arrow_60;}
-    const PicArray & Arrow67_5() const {return m_arrow_67_5;}
-    const PicArray & Arrow75() const {return m_arrow_75;}
-    const PicArray & Arrow82_5() const {return m_arrow_82_5;}
-    const PicArray & Arrow90() const {return m_arrow_90;}
-    const PicArray & ArrowNull() const {return m_arrow_null;}
+        // access functions
+        const PicArray & Arrow0() const {return m_arrow_0;}
+        const PicArray & Arrow7_5() const {return m_arrow_7_5;}
+        const PicArray & Arrow15() const {return m_arrow_15;}
+        const PicArray & Arrow22_5() const {return m_arrow_22_5;}
+        const PicArray & Arrow30() const {return m_arrow_30;}
+        const PicArray & Arrow37_5() const {return m_arrow_37_5;}
+        const PicArray & Arrow45() const {return m_arrow_45;}
+        const PicArray & Arrow52_5() const {return m_arrow_52_5;}
+        const PicArray & Arrow60() const {return m_arrow_60;}
+        const PicArray & Arrow67_5() const {return m_arrow_67_5;}
+        const PicArray & Arrow75() const {return m_arrow_75;}
+        const PicArray & Arrow82_5() const {return m_arrow_82_5;}
+        const PicArray & Arrow90() const {return m_arrow_90;}
+        const PicArray & ArrowNull() const {return m_arrow_null;}
 
-    const PicArray & Number0() const {return m_number_0;}
-    const PicArray & Number1() const {return m_number_1;}
-    const PicArray & Number2() const {return m_number_2;}
-    const PicArray & Number3() const {return m_number_3;}
-    const PicArray & Number4() const {return m_number_4;}
-    const PicArray & Number5() const {return m_number_5;}
-    const PicArray & Number6() const {return m_number_6;}
-    const PicArray & Number7() const {return m_number_7;}
-    const PicArray & Number8() const {return m_number_8;}
-    const PicArray & Number9() const {return m_number_9;}
+        const PicArray & Number0() const {return m_number_0;}
+        const PicArray & Number1() const {return m_number_1;}
+        const PicArray & Number2() const {return m_number_2;}
+        const PicArray & Number3() const {return m_number_3;}
+        const PicArray & Number4() const {return m_number_4;}
+        const PicArray & Number5() const {return m_number_5;}
+        const PicArray & Number6() const {return m_number_6;}
+        const PicArray & Number7() const {return m_number_7;}
+        const PicArray & Number8() const {return m_number_8;}
+        const PicArray & Number9() const {return m_number_9;}
 
-    const PicArray & SymbolPlus() const {return m_symbol_plus;}
-    const PicArray & SymbolMinus() const {return m_symbol_minus;}
-    const PicArray & SymbolGreater() const {return m_symbol_greater;}
-    const PicArray & SymbolColon() const {return m_symbol_colon;}
-    const PicArray & SymbolNull() const {return m_symbol_null;}
+        const PicArray & SymbolPlus() const {return m_symbol_plus;}
+        const PicArray & SymbolMinus() const {return m_symbol_minus;}
+        const PicArray & SymbolGreater() const {return m_symbol_greater;}
+        const PicArray & SymbolColon() const {return m_symbol_colon;}
+        const PicArray & SymbolNull() const {return m_symbol_null;}
 
-    const PicArray & LetterF() const {return m_letter_f;}
-    const PicArray & LetterI() const {return m_letter_i;}
-    const PicArray & LetterR() const {return m_letter_r;}
+        const PicArray & LetterF() const {return m_letter_f;}
+        const PicArray & LetterI() const {return m_letter_i;}
+        const PicArray & LetterR() const {return m_letter_r;}
 
-    const PicArray & Arrow() const {return m_arrow;}
-    void Arrow(const PicArray & arrow) {m_arrow=arrow;}
+        const PicArray & Arrow() const {return m_arrow;}
+        void Arrow(const PicArray & arrow) {m_arrow=arrow;}
 
-    const PicArray & Character() const {return m_character;}
-    void Character(const PicArray & character) {m_character=character;}
-    
-private :
-    //! Arrow arrays
-    PicArray m_arrow_0, m_arrow_7_5, m_arrow_15, m_arrow_22_5, m_arrow_30, m_arrow_37_5, m_arrow_45;
-    PicArray m_arrow_52_5, m_arrow_60, m_arrow_67_5, m_arrow_75, m_arrow_82_5, m_arrow_90, m_arrow_null;
-    PicArray & m_arrow;
-    
-    //! Number arrays
-    PicArray m_number_0, m_number_1, m_number_2, m_number_3, m_number_4, m_number_5, m_number_6, m_number_7, m_number_8, m_number_9;
-    PicArray m_symbol_null, m_symbol_plus, m_symbol_minus, m_symbol_greater, m_symbol_colon;
+        const PicArray & Character() const {return m_character;}
+        void Character(const PicArray & character) {m_character=character;}
+        
+    private :
+        //! Arrow arrays
+        PicArray m_arrow_0, m_arrow_7_5, m_arrow_15, m_arrow_22_5, m_arrow_30, m_arrow_37_5, m_arrow_45;
+        PicArray m_arrow_52_5, m_arrow_60, m_arrow_67_5, m_arrow_75, m_arrow_82_5, m_arrow_90, m_arrow_null;
+        PicArray & m_arrow;
+        
+        //! Number arrays
+        PicArray m_number_0, m_number_1, m_number_2, m_number_3, m_number_4, m_number_5, m_number_6, m_number_7, m_number_8, m_number_9;
+        PicArray m_symbol_null, m_symbol_plus, m_symbol_minus, m_symbol_greater, m_symbol_colon;
 
-    //! Letter arrays
-    PicArray m_letter_f, m_letter_i, m_letter_r;
+        //! Letter arrays
+        PicArray m_letter_f, m_letter_i, m_letter_r;
 
-    PicArray & m_character;
-};
+        PicArray & m_character;
+    };
+
+} // namespace dirac_instr
 
 #endif

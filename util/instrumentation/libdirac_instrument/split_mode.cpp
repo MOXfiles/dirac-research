@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <util/instrumentation/libdirac_instrument/split_mode.h>
+using namespace dirac_instr;
 
 // constructor
 DrawSplitMode::DrawSplitMode(Frame & frame, DrawFrameMotionParams & draw_params, const TwoDArray<int> & mode)

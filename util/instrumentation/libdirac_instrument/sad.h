@@ -39,46 +39,53 @@
 #define _SAD_H_
 
 #include <util/instrumentation/libdirac_instrument/draw_overlay.h>
+using dirac::TwoDArray;
+using dirac::MvCostData;
+using dirac::PredMode;
 
-//! Class to carry out overlay of SAD block values
-/*
-    Sub-class of DrawOverlay.
-*/
-class DrawSad : public DrawOverlay
+namespace dirac_instr
 {
-public :
-    //! Constructor
+    //! Class to carry out overlay of SAD block values
     /*
-        Calls DrawOverlay constructor
+        Sub-class of DrawOverlay.
     */
-    DrawSad(Frame &, DrawFrameMotionParams &, const TwoDArray<MvCostData> &, const TwoDArray<PredMode>&, int);
-    //! Destructor
-    ~DrawSad();
+    class DrawSad : public DrawOverlay
+    {
+    public :
+        //! Constructor
+        /*
+            Calls DrawOverlay constructor
+        */
+        DrawSad(Frame &, DrawFrameMotionParams &, const TwoDArray<MvCostData> &, const TwoDArray<PredMode>&, int);
+        //! Destructor
+        ~DrawSad();
 
-    ////////////////////////////////////////////////////////////
-    //                                                        //
-    //    Assumes default copy constructor and assignment =   //
-    //                                                        //
-    ////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////
+        //                                                        //
+        //    Assumes default copy constructor and assignment =   //
+        //                                                        //
+        ////////////////////////////////////////////////////////////
 
-    //! Colours a single motion vector block
-    /*
-        SAD value is represented by colour
-        Intra coding is also displayed using a white box
-    */
-    void DrawBlock(int, int);
-    
-    //! Draws power bar legend
-    void DrawLegend();
-    
-private :
-    //! Maximum SAD value represented
-    int m_scale;
-    
-    //! Cost array of blocks for chosen reference
-    const TwoDArray<MvCostData> & m_cost;
+        //! Colours a single motion vector block
+        /*
+            SAD value is represented by colour
+            Intra coding is also displayed using a white box
+        */
+        void DrawBlock(int, int);
+        
+        //! Draws power bar legend
+        void DrawLegend();
+        
+    private :
+        //! Maximum SAD value represented
+        int m_scale;
+        
+        //! Cost array of blocks for chosen reference
+        const TwoDArray<MvCostData> & m_cost;
 
-    const TwoDArray<PredMode> & m_mode;
-};
+        const TwoDArray<PredMode> & m_mode;
+    };
+
+} // namespace dirac_instr
 
 #endif

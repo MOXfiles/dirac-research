@@ -40,41 +40,45 @@
 
 #include <util/instrumentation/libdirac_instrument/motion_arrows.h>
 
-//! Class to carry out overlay of motion vectors as coloured arrows
-/*
-    Sub-classes DrawMotionArrows
-    Parent class carries out drawing of arrows, this class carries out
-    representing motion vector size using colour
-*/
-class DrawMotionColourArrows : public DrawMotionArrows
+namespace dirac_instr
 {
-public :
-    //! Constructor
+    //! Class to carry out overlay of motion vectors as coloured arrows
     /*
-        Calls DrawMotionArrows constructor
+        Sub-classes DrawMotionArrows
+        Parent class carries out drawing of arrows, this class carries out
+        representing motion vector size using colour
     */
-    DrawMotionColourArrows(Frame &, DrawFrameMotionParams &, const MvArray &, int, int);
-    
-    //! Destructor
-    ~DrawMotionColourArrows();
-
-    ////////////////////////////////////////////////////////////
-    //                                                        //
-    //    Assumes default copy constructor and assignment =   //
-    //                                                        //
-    ////////////////////////////////////////////////////////////
+    class DrawMotionColourArrows : public DrawMotionArrows
+    {
+    public :
+        //! Constructor
+        /*
+            Calls DrawMotionArrows constructor
+        */
+        DrawMotionColourArrows(Frame &, DrawFrameMotionParams &, const MvArray &, int, int);
         
-    //! Calls DrawMotionArrows::DrawArrow() then colours blocks
-    void DrawBlock(int, int);
-    
-    //! Draws power bar legend representing motion vector size
-    void DrawLegend();
-    
-private :
+        //! Destructor
+        ~DrawMotionColourArrows();
 
-    //! Clip value for maximum motion vector size
-    int m_mv_clip;
-    
-};
+        ////////////////////////////////////////////////////////////
+        //                                                        //
+        //    Assumes default copy constructor and assignment =   //
+        //                                                        //
+        ////////////////////////////////////////////////////////////
+            
+        //! Calls DrawMotionArrows::DrawArrow() then colours blocks
+        void DrawBlock(int, int);
+        
+        //! Draws power bar legend representing motion vector size
+        void DrawLegend();
+        
+    private :
+
+        //! Clip value for maximum motion vector size
+        int m_mv_clip;
+        
+    };
+
+} // namespace dirac_instr
 
 #endif

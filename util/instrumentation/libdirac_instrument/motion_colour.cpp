@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <util/instrumentation/libdirac_instrument/motion_colour.h>
+using namespace dirac_instr;
 
 // constructor
 DrawMotionColour::DrawMotionColour(Frame & frame, DrawFrameMotionParams & draw_params, const MvArray & mv,

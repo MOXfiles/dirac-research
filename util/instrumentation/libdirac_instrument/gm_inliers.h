@@ -39,32 +39,38 @@
 #define _GM_INLIERS_H_
 
 #include <util/instrumentation/libdirac_instrument/draw_overlay.h>
+using dirac::Frame;
+using dirac::TwoDArray;
 
-// Class to carry out overlay of global motion inlier mask
-/*
-    Sub-class of DrawOverlay.
-*/
-class DrawGMInliers : public DrawOverlay
+namespace dirac_instr
 {
-public :
-    //! Constructor
+    // Class to carry out overlay of global motion inlier mask
     /*
-        Calls DrawOverlay constructor
+        Sub-class of DrawOverlay.
     */
-    DrawGMInliers(Frame &, DrawFrameMotionParams &, const TwoDArray<int> &);
+    class DrawGMInliers : public DrawOverlay
+    {
+    public :
+        //! Constructor
+        /*
+            Calls DrawOverlay constructor
+        */
+        DrawGMInliers(Frame &, DrawFrameMotionParams &, const TwoDArray<int> &);
 
-    //! Destructor
-    ~DrawGMInliers();
+        //! Destructor
+        ~DrawGMInliers();
 
-    //! Colours a single block according to split mode
-    void DrawBlock(int, int);
+        //! Colours a single block according to split mode
+        void DrawBlock(int, int);
 
-    //! Displays colour legend
-    void DrawLegend();
+        //! Displays colour legend
+        void DrawLegend();
 
-private :
+    private :
 
-    const TwoDArray<int> & m_inliers;
-};
+        const TwoDArray<int> & m_inliers;
+    };
+
+} // namespace dirac_instr
 
 #endif

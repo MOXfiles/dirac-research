@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <util/instrumentation/libdirac_instrument/draw_overlay.h>
+using namespace dirac_instr;
 
 // constructor
 DrawOverlay::DrawOverlay(Frame & frame, DrawFrameMotionParams & draw_params)

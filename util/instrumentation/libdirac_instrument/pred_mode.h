@@ -39,35 +39,42 @@
 #define _PRED_MODE_H_
 
 #include <util/instrumentation/libdirac_instrument/draw_overlay.h>
+using dirac::TwoDArray;
+using dirac::PredMode;
 
-//! Class to carry out overlay of prediction mode
-/*
-    Sub-clas of DrawOverlay.
-    Displays which reference frame is used as prediction for block
-*/
-class DrawPredMode : public DrawOverlay
+namespace dirac_instr
 {
-public :
-
-    //! Constructor
+    //! Class to carry out overlay of prediction mode
     /*
-        Calls DrawOverlay constructor
+        Sub-clas of DrawOverlay.
+        Displays which reference frame is used as prediction for block
     */
-    DrawPredMode(Frame &, DrawFrameMotionParams &, const TwoDArray<PredMode> &);
+    class DrawPredMode : public DrawOverlay
+    {
+    public :
 
-    //! Destructor
-    ~DrawPredMode();
+        //! Constructor
+        /*
+            Calls DrawOverlay constructor
+        */
+        DrawPredMode(Frame &, DrawFrameMotionParams &, 
+                    const TwoDArray<PredMode> &);
 
-    //! Colours a motion vector block according to prediction
-    void DrawBlock(int, int);
+        //! Destructor
+        ~DrawPredMode();
 
-    //! Displays legend
-    void DrawLegend();
-    
-private :
+        //! Colours a motion vector block according to prediction
+        void DrawBlock(int, int);
 
-    // mode decision array
-    const TwoDArray<PredMode> & m_mode;
-};
+        //! Displays legend
+        void DrawLegend();
+        
+    private :
+
+        // mode decision array
+        const TwoDArray<PredMode> & m_mode;
+    };
+
+} // namespace dirac_instr
 
 #endif
