@@ -39,6 +39,8 @@
 
 #include <libdirac_common/frame.h>
 #include <libdirac_common/upconvert.h>
+using namespace dirac;
+
 #include <iostream>
 
 ///////////////
@@ -332,8 +334,8 @@ void Frame::ClipComponent(PicArray& pic_data)
     {
         for (int i=pic_data.FirstX() ; i<=pic_data.LastX() ; ++i)
         {
-            pic_data[j][i] = std::min( pic_data[j][i] , ValueType( 960 ) );
-            pic_data[j][i] = std::max( pic_data[j][i] , ValueType( 64 ) );
+            pic_data[j][i] = std::min( pic_data[j][i] , ValueType( 1020 ) );
+            pic_data[j][i] = std::max( pic_data[j][i] , ValueType( 0 ) );
         }// i        
     }// j
 }
