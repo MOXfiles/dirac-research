@@ -88,6 +88,9 @@ class PicOutput{
 
         //! Write the picture sequence header
         virtual bool WritePicHeader();
+        
+		//! Get the sequence parameters 
+        SeqParams& GetSeqParams() {return m_sparams;}
 
     protected:
 
@@ -134,6 +137,7 @@ class PicInput
 
         //! Skip n frames of input
         void Skip( const int n);
+
 
         //! Get the sequence parameters (got from the picture header)
         const SeqParams& GetSeqParams() const {return m_sparams;}

@@ -302,21 +302,26 @@ int main (int argc, char* argv[]){
 
          /* ------- open output files and write the header -------- */
 
-        SeqParams out_sparams = myinputpic.GetSeqParams();
-        out_sparams.SetZl( end_pos - start_pos + 1 );
-
-        PicOutput myoutputpic(output.c_str() , out_sparams );
-        myoutputpic.WritePicHeader();
 
 
         SequenceCompressor seq_compressor(&myinputpic,&outfile,encparams);
         seq_compressor.CompressNextFrame();
+        
+        int frames_written = 0;
+        SeqParams out_sparams = myinputpic.GetSeqParams();
+        PicOutput myoutputpic(output.c_str() , out_sparams );
 
         for (int z=start_pos ; z<=end_pos ; ++z)
         {
             if ( !seq_compressor.Finished() )
+            {
                 myoutputpic.WriteNextFrame( seq_compressor.CompressNextFrame() );
+                frames_written++;
+            }
         }//I
+        myoutputpic.GetSeqParams().SetZl( frames_written );
+
+        myoutputpic.WritePicHeader();
 
    /********************************************************************/
      //close the bitstream file
