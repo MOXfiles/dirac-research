@@ -447,7 +447,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
 
         // Finally, calculate the cost if we were to use bi-predictions //
         /****************************************************************/
-/*
+
         mode_cost = ModeCost( xpos , ypos , REF1AND2 )*m_mode_factor[level];
 
         me_data.BiPredCosts()[ypos][xpos].mvcost =
@@ -468,7 +468,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
             me_data.Mode()[ypos][xpos] = REF1AND2;
             min_unit_cost = unit_cost;
         }
-*/
+
     }
 
     return min_unit_cost;
