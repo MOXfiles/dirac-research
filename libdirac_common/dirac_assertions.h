@@ -49,7 +49,22 @@
 #undef ASSERTM
 #define ASSERTM(exp,text)        ERREXP(exp,dirac_assert,text)
 
-/* TODO: Add pre and post conditions if required */
+#undef TEST
+#undef TESTM
+#undef REPORT
+#undef REPORTM
+
+#ifdef DIRAC_DEBUG
+#define TEST(exp)               ASSERT(exp)
+#define TESTM(exp,text)         ASSERTM(exp,text)
+#define REPORT(exp)             ASSERT(exp)
+#define REPORTM(exp,text)       ASSERTM(exp,text)
+#else
+#define TEST(exp)
+#define TESTM(exp,text)
+#define REPORT(exp)             ERREXP(exp,dirac_report,NULL)
+#define REPORTM(exp,text)       ERREXP(exp,dirac_report,text)
+#endif
 
 
 /*! Print a message to standard error and abort if in debug mode */
