@@ -48,6 +48,7 @@
 #include <libdirac_common/mv_codec.h>
 #include <libdirac_common/golomb.h>
 #include <libdirac_common/bit_manager.h>
+#include <libdirac_common/dirac_assertions.h>
 #include <iostream>
 #include <sstream>
 
@@ -86,7 +87,8 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, int fnum )
         if ( fsort == L1_frame && is_a_cut )
         {
             my_frame.SetFrameSort( I_frame );
-//            std::cerr<<std::endl<<"Cut detected and I-frame inserted!";
+            if ( m_encparams.Verbose() )
+                std::cerr<<std::endl<<"Cut detected and I-frame inserted!";
         }
 
     }
@@ -137,15 +139,15 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, int fnum )
 
         }//?fsort
 
-         //code component data
+        //code component data
         my_compcoder.Compress( my_buffer.GetComponent( fnum , Y_COMP) );
-          if (cformat != Yonly)
-          {
-              my_compcoder.Compress( my_buffer.GetComponent( fnum , U_COMP) );
-              my_compcoder.Compress( my_buffer.GetComponent( fnum , V_COMP) );
-          }
+        if (cformat != Yonly)
+        {
+            my_compcoder.Compress( my_buffer.GetComponent( fnum , U_COMP) );
+            my_compcoder.Compress( my_buffer.GetComponent( fnum , V_COMP) );
+        }
 
-         //motion compensate again if necessary
+        //motion compensate again if necessary
         if ( fsort != I_frame )
         {
             MotionCompensator mycomp( m_encparams );
@@ -169,7 +171,28 @@ void FrameCompressor::WriteFrameHeader( const FrameParams& fparams )
     BasicOutputManager& frame_header_op = m_encparams.BitsOut().FrameOutput().HeaderOutput();
 
     // Write the frame start code
-    unsigned char frame_start[5] = { START_CODE_PREFIX_BYTE0, START_CODE_PREFIX_BYTE1, START_CODE_PREFIX_BYTE2, START_CODE_PREFIX_BYTE3, FRAME_START_CODE };
+    // FIXME: This code will change once bitstream changes take effect
+    unsigned char frame_start[5] = { START_CODE_PREFIX_BYTE0, START_CODE_PREFIX_BYTE1, START_CODE_PREFIX_BYTE2, START_CODE_PREFIX_BYTE3, IFRAME_START_CODE };
+
+    switch(fparams.FSort())
+    {
+    case I_frame:
+        frame_start[4] = IFRAME_START_CODE;
+        break;
+
+    case L1_frame:
+        frame_start[4] = L1FRAME_START_CODE;
+        break;
+
+    case L2_frame:
+        frame_start[4] = L2FRAME_START_CODE;
+         break;
+
+    default:
+         ASSERTM (false, "Frame type is I_frame or L1_frame or L2_frame");
+         break;
+    }
+
     frame_header_op.OutputBytes((char *)frame_start, 5);
 
     // Write the frame number
@@ -243,6 +266,9 @@ void FrameCompressor::WriteMotionData( const FrameBuffer& fbuffer , const int fn
 
         OLBParams block_params = m_encparams.LumaBParams(2);
         out << block_params << " ";
+        // output macroblock and motion vector array dimensions
+        out << m_me_data->MBSplit().LengthY() << " " << m_me_data->MBSplit().LengthX() << " ";
+        out << m_me_data->Vectors(1).LengthY() << " " << m_me_data->Vectors(1).LengthX();
         out << *m_me_data;
     }
     

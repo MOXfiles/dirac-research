@@ -89,6 +89,9 @@ private:
     //! The chroma format
     const ChromaFormat m_cformat;
 
+    const int m_true_xl;
+    const int m_true_yl;
+
     // target weighted PSNR values for each frame type
     OneDArray<double> m_target_wpsnr;
 

@@ -54,7 +54,7 @@ SequenceCompressor::SequenceCompressor( PicInput* pin ,
     m_delay(1),
     m_qmonitor( m_encparams , m_pic_in->GetSeqParams() )
 {
-    const SeqParams& sparams=m_pic_in->GetSeqParams();
+    const SeqParams& sparams = m_pic_in->GetSeqParams();
 
     //TBD: put into the constructor for EncoderParams
     m_encparams.SetEntropyFactors( new EntropyCorrector(4) );
@@ -138,7 +138,6 @@ SequenceCompressor::SequenceCompressor( PicInput* pin ,
 
     xpad_luma = xpad_chroma * x_chroma_fac;
     ypad_luma = ypad_chroma * y_chroma_fac;
-
 
     //Set the resulting padding values
     m_pic_in->SetPadding(xpad_luma,ypad_luma);
@@ -231,7 +230,6 @@ Frame& SequenceCompressor::CompressNextFrame()
 
             if ( recode && count<3 )
             {
-                std::cerr<<std::endl<<"Recoding!";
                 // Copy the original data back in
                 m_fbuffer->GetFrame( m_current_display_fnum ) = orig_frame;
                 // Reset the output
@@ -340,12 +338,17 @@ void SequenceCompressor::WriteStreamHeader()
 
         // Begin with the ID of the codec
      stream_header.OutputBytes("KW-DIRAC");
-    
-    unsigned char seq_start[5] = { START_CODE_PREFIX_BYTE0, START_CODE_PREFIX_BYTE1, START_CODE_PREFIX_BYTE2, START_CODE_PREFIX_BYTE3, SEQ_START_CODE };
+   
+    // FIXME: Using RAP code as sequence start code. This needs to be changed
+    // later
+    unsigned char seq_start[5] = { START_CODE_PREFIX_BYTE0, START_CODE_PREFIX_BYTE1, START_CODE_PREFIX_BYTE2, START_CODE_PREFIX_BYTE3, RAP_START_CODE };
     
     stream_header.OutputBytes((char *)seq_start, 5);
 
-        // Picture dimensions
+    // bit stream version
+    stream_header.OutputByte((char)BITSTREAM_VERSION);
+
+    // Picture dimensions
      UnsignedGolombCode( stream_header ,(unsigned int) m_pic_in->GetSeqParams().Xl() );
      UnsignedGolombCode( stream_header ,(unsigned int) m_pic_in->GetSeqParams().Yl() );
      UnsignedGolombCode( stream_header ,(unsigned int) m_pic_in->GetSeqParams().Zl() );

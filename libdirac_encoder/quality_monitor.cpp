@@ -45,7 +45,8 @@ QualityMonitor::QualityMonitor(EncoderParams& encp,
 :
     m_encparams(encp),
     m_cformat( sparams.CFormat() ),
-
+    m_true_xl( sparams.Xl() ),
+    m_true_yl( sparams.Yl() ),
     m_target_wpsnr(3),
     m_last_wpsnr(3),
     m_slope(3),
@@ -82,7 +83,7 @@ void QualityMonitor::ResetAll()
 
     // set a default ratio for the motion estimation lambda
     // Exact value TBD - will incorporate stuff about blocks and so on
-    // Also need to think about how this can be adapted for sequences for more or less motion 
+    // Also need to think about how this can be adapted for sequences with more or less motion 
 
     m_me_ratio = 0.005;
 
@@ -122,9 +123,6 @@ bool QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame)
     // TBD: Currently using unweighted PSNR since this seems to give a) more stable convergence and b) more bits allocated
     // to I frames at the expense of L1 and L2 frames, which is more efficient. Need to get a better measure, however.
 	current_wpsnr = WeightedPSNRDiff( ld_frame.Ydata() , orig_frame.Ydata() , 0.0);
-
-    if ( m_encparams.Verbose() )
-        std::cerr<<std::endl<<"Weighted PSNR for frame is "<<current_wpsnr<<" ; target is "<<target_wpsnr;
 
     // Copy current data into memory for last frame data
     m_last_lambda[fsort] = m_encparams.Lambda(fsort);
@@ -192,65 +190,20 @@ double QualityMonitor::WeightedPSNRDiff(const PicArray& pic1_data, const PicArra
     long double mean_square_diff = 0.0;
 	long double diff;
 
-	if ( cpd == 0.0 )
+	for (int j=0; j<m_true_yl; ++j)
 	{
-
- 		for (int j=0; j<pic1_data.LengthY(); ++j)
- 		{
- 			for (int i=0; i<pic1_data.LengthX(); ++i)
- 			{
- 				diff = (long double) ( pic1_data[j][i] - pic2_data[j][i]);
- 				diff *= diff;
- 				mean_square_diff += diff;
- 			}//i
- 		}//j
-
- 		mean_square_diff /= pic1_data.LengthX()*pic1_data.LengthY();
-
-	}
-	else
-	{
-		//we need to do the wavelet transform	
-		WaveletTransform wtransform(4);
-
-		PicArray diff_data( pic1_data );
-
-		for (int j=0; j<pic1_data.LengthY(); ++j)
+		for (int i=0; i<m_true_xl; ++i)
 		{
-			for (int i=0; i<pic1_data.LengthX(); ++i)
-			{
-				diff_data[j][i] -= pic2_data[j][i];
-			}//i
-		}//j
+			diff = static_cast<long double> ( pic1_data[j][i] - pic2_data[j][i]);
+			diff *= diff;
+			mean_square_diff += diff;
+		}//i
+	}//j
 
-		wtransform.Transform(FORWARD , diff_data);
-	    wtransform.SetBandWeights( cpd , I_frame , m_cformat , pic1_data.CSort() );
-
-		const SubbandList& bands=wtransform.BandList();
-		long double temp_val;
-
-		for ( int B=1 ; B<=bands.Length() ; ++B )
-		{
-
- 			//go through each subband, adding in weighted values
-			for ( int j=bands(B).Yp() ; j<bands(B).Yp()+bands(B).Yl() ; ++j)
-			{
-				for ( int i=bands(B).Xp() ; i<bands(B).Xp()+bands(B).Xl() ; ++i)
-				{
-					temp_val = (long double) diff_data[j][i];
-					temp_val /= bands(B).Wt();
-					temp_val *= temp_val;
-					mean_square_diff += temp_val;
-				}//i
-			}//j
-
-		}//B
-
-		mean_square_diff /= pic1_data.LengthX()*pic1_data.LengthY();
-	}
+	mean_square_diff /= pic1_data.LengthX()*pic1_data.LengthY();
 
     // now compensate for the fact that we've got two extra bits
     mean_square_diff /= 16.0;
 
-	return (double) 10.0*std::log10(255.0*255.0 / mean_square_diff);	
+	return static_cast<double> ( 10.0 * std::log10( 255.0*255.0 / mean_square_diff ) );	
 }
