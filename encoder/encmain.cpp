@@ -1,45 +1,57 @@
-/* ***** BEGIN LICENSE BLOCK *****
-*
-* Version: MPL 1.1/GPL 2.0/LGPL 2.1
-*
-* The contents of this file are subject to the Mozilla Public License
-* Version 1.1 (the "License"); you may not use this file except in compliance
-* with the License. You may obtain a copy of the License at
-* http://www.mozilla.org/MPL/
-*
-* Software distributed under the License is distributed on an "AS IS" basis,
-* WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
-* the specific language governing rights and limitations under the License.
-*
-* The Original Code is BBC Research and Development code.
-*
-* The Initial Developer of the Original Code is the British Broadcasting
-* Corporation.
-* Portions created by the Initial Developer are Copyright (C) 2004.
-* All Rights Reserved.
-*
-* Contributor(s):
-*
-* Alternatively, the contents of this file may be used under the terms of
-* the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
-* Public License Version 2.1 (the "LGPL"), in which case the provisions of
-* the GPL or the LGPL are applicable instead of those above. If you wish to
-* allow use of your version of this file only under the terms of the either
-* the GPL or LGPL and not to allow others to use your version of this file
-* under the MPL, indicate your decision by deleting the provisions above
-* and replace them with the notice and other provisions required by the GPL
-* or LGPL. If you do not delete the provisions above, a recipient may use
-* your version of this file under the terms of any one of the MPL, the GPL
-* or the LGPL.
-* ***** END LICENSE BLOCK ***** */
+ /* ***** BEGIN LICENSE BLOCK *****
+ *
+ * Version: MPL 1.1/GPL 2.0/LGPL 2.1
+ *
+ * The contents of this file are subject to the Mozilla Public License
+ * Version 1.1 (the "License"); you may not use this file except in compliance
+ * with the License. You may obtain a copy of the License at
+ * http://www.mozilla.org/MPL/
+ *
+ * Software distributed under the License is distributed on an "AS IS" basis,
+ * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
+ * the specific language governing rights and limitations under the License.
+ *
+ * The Original Code is BBC Research and Development code.
+ *
+ * The Initial Developer of the Original Code is the British Broadcasting
+ * Corporation.
+ * Portions created by the Initial Developer are Copyright (C) 2004.
+ * All Rights Reserved.
+ *
+ * Contributor(s):
+ *
+ * Alternatively, the contents of this file may be used under the terms of
+ * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
+ * Public License Version 2.1 (the "LGPL"), in which case the provisions of
+ * the GPL or the LGPL are applicable instead of those above. If you wish to
+ * allow use of your version of this file only under the terms of the either
+ * the GPL or LGPL and not to allow others to use your version of this file
+ * under the MPL, indicate your decision by deleting the provisions above
+ * and replace them with the notice and other provisions required by the GPL
+ * or LGPL. If you do not delete the provisions above, a recipient may use
+ * your version of this file under the terms of any one of the MPL, the GPL
+ * or the LGPL.
+ * ***** END LICENSE BLOCK ***** */
 
 /*
 *
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-11 14:17:58  tjdwave
+* Revision 1.5  2004-05-12 16:03:32  tjdwave
+*
+* Done general code tidy, implementing copy constructors, assignment= and const
+*  correctness for most classes. Replaced Gop class by FrameBuffer class throughout. Added support for frame padding so that arbitrary block sizes and frame
+*  dimensions can be supported.
+*
+* Revision 1.4  2004/05/11 14:17:58  tjdwave
 * Removed dependency on XParam CLI library for both encoder and decoder.
+* $Log$
+* Revision 1.5  2004-05-12 16:03:32  tjdwave
+*
+* Done general code tidy, implementing copy constructors, assignment= and const
+*  correctness for most classes. Replaced Gop class by FrameBuffer class throughout. Added support for frame padding so that arbitrary block sizes and frame
+*  dimensions can be supported.
 *
 * Revision 1.3  2004/05/10 04:41:48  chaoticcoyote
 * Updated dirac algorithm document
@@ -57,6 +69,7 @@
 * BBC Research and Development
 *
 */
+
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -67,6 +80,7 @@
 #include "libdirac_common/cmd_line.h"
 
 using namespace std;
+
 
 static void display_help()
 {
@@ -99,44 +113,41 @@ static void display_help()
 }
 
 int main (int argc, char* argv[]){
+	/*********************************************************************************/
+			/**********  command line parameter parsing*********/
 
-	 /********** create params object to handle command line parameter parsing*********/
+		 /********** create params object to handle command line parameter parsing*********/
 	//To do: put parsing in a different function/constructor.
 	command_line args(argc,argv);
 
- 	//the variables we'll read parameters into
-	char input_name[84];
-	char output_name[84];
-	char bit_name[84];
-	std::string input;	
-	std::string output;	
+	//the variables we'll read parameters into
+	EncoderParams encparams;
+	OLBParams bparams;
+	char input_name[84];//input name for pictures
+	char output_name[84];//output name for pictures
+	char bit_name[84];	//output name for the bitstream
+	string input,output;
 
-	//quantisation factors
-	float qf   =  0.0F;			
-	float Iqf  = 20.0F;			
-	float L1qf = 22.0F;
-	float L2qf = 24.0F;	
+	float qf(30);		//quality/quatisation factors. The higher the factor, the lower the quality
+	float Iqf(30);		//and the lower the bitrate
+	float L1qf(32);
+	float L2qf(34);
 
 	//factors for setting motion estimation parameters
 	float factor1 = 0.0F;
 	float factor2 = 0.0F;
 	float factor3 = 0.0F;
 
-	//encoder parameters
-	EncoderParams encparams;
-	//block size parameters
-	OLBParams bparams;
-
-	//Set default values. To do: set these in the constructor for the encoder parameters
+	//Set default values. To do: these should really be set in the constructor for the encoder parameters
 	//These default values assume a streaming preset.
 	encparams.L1_SEP =  3;
 	encparams.NUM_L1 = 11;
-	bparams.XBLEN=12;		
-	bparams.YBLEN=12;		
-	bparams.XBSEP=8;		
-	bparams.YBSEP=8;		
-	encparams.UFACTOR=3.0f;		
-	encparams.VFACTOR=1.75f;		
+	bparams.XBLEN=12;
+	bparams.YBLEN=12;
+	bparams.XBSEP=8;
+	bparams.YBSEP=8;
+	encparams.UFACTOR=3.0f;
+	encparams.VFACTOR=1.75f;
 	encparams.CPD=20.0f;
 	encparams.I_lambda=pow(10.0,(Iqf/12.0)-0.3);
 	encparams.L1_lambda=pow(10.0,((L1qf/9.0)-0.81));
@@ -147,16 +158,16 @@ int main (int argc, char* argv[]){
 
 	if (argc<3)//need at least 3 arguments - the program name, an input and an output
 	{
-		display_help();	
+		display_help();
 	}
 	else//carry on!
 	{
 		// parse command-line arguments
-		//Do required inputs				
+		//Do required inputs
 		if (args.get_inputs().size()==2){
 			input=args.get_inputs()[0];
-			output=args.get_inputs()[1];			
-		}		
+			output=args.get_inputs()[1];
+		}
 
 		//check we have real inputs
 		if ((input.length() == 0) || (output.length() ==0))
@@ -178,7 +189,7 @@ int main (int argc, char* argv[]){
 		strncpy(bit_name,output_name,84);
 		strcat(bit_name,".drc");
 
-		//now do the options
+		//Now do the options
 		//Start with quantisation factors
 		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
 			opt != args.get_options().end(); ++opt){
@@ -195,7 +206,7 @@ int main (int argc, char* argv[]){
 		//go over and override quantisation factors if they've been specifically defined for
 	   	//each frame type
 		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
-			opt != args.get_options().end(); ++opt)	{	
+			opt != args.get_options().end(); ++opt)	{
 			if (opt->m_name == "Iqf")
 			{
 				Iqf = atof(opt->m_value.c_str());
@@ -206,7 +217,7 @@ int main (int argc, char* argv[]){
 			}
 			else if (opt->m_name == "L2qf")
 			{
-				L2qf = atof(opt->m_value.c_str());	
+				L2qf = atof(opt->m_value.c_str());
 			}
 		}//opt
 
@@ -218,12 +229,12 @@ int main (int argc, char* argv[]){
 			{
 				encparams.L1_SEP=3;
 				encparams.NUM_L1=11;
-				bparams.XBLEN=12;		
-				bparams.YBLEN=12;		
-				bparams.XBSEP=8;		
-				bparams.YBSEP=8;		
-				encparams.UFACTOR=3.0f;		
-				encparams.VFACTOR=1.75f;		
+				bparams.XBLEN=12;
+				bparams.YBLEN=12;
+				bparams.XBSEP=8;
+				bparams.YBSEP=8;
+				encparams.UFACTOR=3.0f;
+				encparams.VFACTOR=1.75f;
 				encparams.CPD=20.0f;
 				encparams.I_lambda=pow(10.0,(Iqf/12.0)-0.3);
 				encparams.L1_lambda=pow(10.0,((L1qf/9.0)-0.81));
@@ -235,12 +246,12 @@ int main (int argc, char* argv[]){
 			{
 				encparams.L1_SEP=6;
 				encparams.NUM_L1=3;
-				bparams.XBLEN=16;		
-				bparams.YBLEN=16;		
-				bparams.XBSEP=10;		
+				bparams.XBLEN=16;
+				bparams.YBLEN=16;
+				bparams.XBSEP=10;
 				bparams.YBSEP=12;
-				encparams.UFACTOR=3.0f;	
-				encparams.VFACTOR=1.75f;		
+				encparams.UFACTOR=3.0f;
+				encparams.VFACTOR=1.75f;
 				encparams.CPD=20.0f;
 
 				encparams.I_lambda=pow(10.0,((Iqf/13.34)+0.12));
@@ -253,11 +264,11 @@ int main (int argc, char* argv[]){
 			{
 				encparams.L1_SEP=3;
 				encparams.NUM_L1=3;
-				bparams.XBLEN=20;		
-				bparams.YBLEN=20;		
-				bparams.XBSEP=16;		
-				bparams.YBSEP=16;		
-				encparams.UFACTOR=3.0f;		
+				bparams.XBLEN=20;
+				bparams.YBLEN=20;
+				bparams.XBSEP=16;
+				bparams.YBSEP=16;
+				encparams.UFACTOR=3.0f;
 				encparams.VFACTOR=1.75f;
 				encparams.CPD=32.0f;
 
@@ -272,15 +283,15 @@ int main (int argc, char* argv[]){
 			{
 				encparams.L1_SEP=3;
 				encparams.NUM_L1=3;
-				bparams.XBLEN=12;		
-				bparams.YBLEN=12;		
-				bparams.XBSEP=8;		
-				bparams.YBSEP=8;		
-				encparams.UFACTOR=3.0f;		
+				bparams.XBLEN=12;
+				bparams.YBLEN=12;
+				bparams.XBSEP=8;
+				bparams.YBSEP=8;
+				encparams.UFACTOR=3.0f;
 				encparams.VFACTOR=1.75f;
 				encparams.CPD=32.0f;
 
-				encparams.I_lambda=pow(10.0,((Iqf/8.9)-0.58));		
+				encparams.I_lambda=pow(10.0,((Iqf/8.9)-0.58));
 				encparams.L1_lambda=pow(10.0,((L1qf/9.7)+0.05));
 				encparams.L2_lambda=pow(10.0,((L2qf/9.7)+0.05));
 
@@ -290,7 +301,7 @@ int main (int argc, char* argv[]){
 
 		//now go over again and override presets with other values
 		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
-			opt != args.get_options().end(); ++opt)	
+			opt != args.get_options().end(); ++opt)
 		{
 			if (opt->m_name == "L1_sep")
 			{
@@ -326,81 +337,67 @@ int main (int argc, char* argv[]){
 			}
 		}//opt
 
- /********************************************************************/	
-    //next do picture file stuff
 
-  	/* ------ open input files & get params -------- */
+  /********************************************************************/
+	     //next do picture file stuff
+
+   		/* ------ open input files & get params -------- */
 
 		PicInput myinputpic(input_name);
 		myinputpic.ReadPicHeader();
-		encparams.sparams=myinputpic.GetSeqParams();
+		encparams.cformat=myinputpic.GetSeqParams().cformat;
 
- 	/* ------- open output files and write the header -------- */
+  		/* ------- open output files and write the header -------- */
 
-		PicOutput myoutputpic(output_name,encparams.sparams);
+		PicOutput myoutputpic(output_name,myinputpic.GetSeqParams());
 		myoutputpic.WritePicHeader();
 
- /********************************************************************/
-    // additional option manipulation
-		if (encparams.NUM_L1 > 0 && encparams.L1_SEP > 0)
-			encparams.GOP_LEN=(encparams.NUM_L1+1) * encparams.L1_SEP;
-		else
-		{
-			encparams.NUM_L1  = 0;
-			encparams.L1_SEP  = 0;
-			encparams.GOP_LEN = 1;
-		}
+	/********************************************************************/
 
-  	  	// set up the remaining codec parameters
-		encparams.SetBlockSizes(bparams);			//set up the block parameters
 
-	   	// Do the motion estimation Lagrangian parameters
-		// factor1 normalises the Lagrangian ME factors to take into account different overlaps
-		factor1 = float(bparams.XBLEN * bparams.YBLEN) / float(bparams.XBSEP*bparams.YBSEP);
+	//set up all the block parameters so we have a self-consistent set
+		encparams.SetBlockSizes(bparams);
+	//Finally, do the motion estimation Lagrangian parameters
+  	//factor1 normalises the Lagrangian ME factors to take into account different overlaps
+		const OLBParams& bparams2=encparams.LumaBParams(2);//in case we've changed them
+		factor1=float(bparams2.XBLEN*bparams2.YBLEN)/
+			float(bparams2.XBSEP*bparams2.YBSEP);
+     //factor2 normalises the Lagrangian ME factors to take into account the number of
+     //blocks in the picture. The more blocks there are, the more the MV field must be
+     //smoothed and hence the higher the ME lambda must be
+		int xnumblocks=myinputpic.GetSeqParams().xl/bparams2.XBSEP;
+		int ynumblocks=myinputpic.GetSeqParams().yl/bparams2.YBSEP;
+		factor2=sqrt(float(xnumblocks*ynumblocks));
+    //factor3 is an heuristic factor taking into account the different CPD values and picture sizes, since residues
+    //after motion compensation will have a different impact depending upon the perceptual weighting
+    //in the subsequent wavelet transform. This has to be tuned by hand. Probably varies with bit-rate too.
+		float ratio=factor1*factor2/factor3;
+		encparams.L1_ME_lambda=encparams.L1_lambda*ratio;
+		encparams.L2_ME_lambda=encparams.L2_lambda*ratio;
+		encparams.L1I_ME_lambda=encparams.L1I_lambda*ratio;
 
-   		// factor2 normalises the Lagrangian ME factors to take into account the number of
-   		// blocks in the picture. The more blocks there are, the more the MV field must be
-   		// smoothed and hence the higher the ME lambda must be
-		factor2 = sqrt(float(encparams.X_NUMBLOCKS*encparams.Y_NUMBLOCKS));
-
-   		// factor3 is an heuristic factor taking into account the different CPD values and picture sizes, since residues
-   		// after motion compensation will have a different impact depending upon the perceptual weighting
-   		// in the subsequent wavelet transform. This has to be tuned by hand. Probably varies with bit-rate too.
-
-		float ratio = factor1 * factor2 / factor3;
-		encparams.L1_ME_lambda  = encparams.L1_lambda*ratio;
-		encparams.L2_ME_lambda  = encparams.L2_lambda*ratio;
-		encparams.L1I_ME_lambda = encparams.L1I_lambda*ratio;
-		encparams.EntCorrect = new EntropyCorrector(4);	
-
-  /********************************************************************/	
-    	 //open the bitstream file	
+   /********************************************************************/
+      //open the bitstream file
 		std::ofstream outfile(bit_name,std::ios::out | std::ios::binary);	//bitstream output
-		encparams.BIT_OUT = new BitOutputManager(&outfile);	
 
-  /********************************************************************/	
-   		//do the work!!
-
-		SequenceCompressor seq_compressor(&myinputpic,encparams);
+   /********************************************************************/
+    	//do the work!!
+		SequenceCompressor seq_compressor(&myinputpic,&outfile,encparams);
 		seq_compressor.CompressNextFrame();
-		for (int I=0; I < encparams.sparams.zl; ++I){
-			myoutputpic.WriteNextFrame(seq_compressor.CompressNextFrame());	
+		for (int I=0;I<myinputpic.GetSeqParams().zl;++I){
+			if (!seq_compressor.Finished())
+				myoutputpic.WriteNextFrame(seq_compressor.CompressNextFrame());
 		}//I
 
-  /********************************************************************/		
+   /********************************************************************/
+ 	//close the bitstream file
+		outfile.close();
 
-		outfile.close(); 	//close file
-		int total_bits=encparams.BIT_OUT->GetTotalBytes()*8;
-		if (encparams.VERBOSE){
-			std::cerr<<std::endl<<std::endl<<"Finished encoding.";		
-			std::cerr<<"Total bits for sequence="<<total_bits;
-			std::cerr<<", of which "<<encparams.BIT_OUT->GetTotalHeadBytes()*8<<" were header.";
-			std::cerr<<std::endl<<"Resulting bit-rate at "<<encparams.sparams.framerate<<"Hz is ";
-			std::cerr<<total_bits*encparams.sparams.framerate/encparams.sparams.zl<<" bits/sec.";
-		}	
+		if (encparams.VERBOSE)
+			std::cerr<<std::endl<<"Finished encoding";
+		return EXIT_SUCCESS;
 
-		delete encparams.BIT_OUT;
-		delete encparams.EntCorrect;
 
-	}//?argc
+	}//?sufficient args?
 }
+
