@@ -342,10 +342,7 @@ bool PicInput::End() const
 bool PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
 {
     if (! *m_ip_pic_ptr)
-    {
-        std::cerr << "Can't read component from picture data" << std::endl;
         return false;
-    }
 
     //initially set up for 8-bit file input expanded to 10 bits for array output
 
