@@ -90,7 +90,7 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 
 	//MotionTypeDecider my_motion_type_dec;
     //int motion_choice = my_motion_type_dec.DoMotionTypeDecn( my_buffer , frame_num , me_data );
-	int motion_choice = 2; // Force choice here - USED FOR TESTING ONLY!
+	int motion_choice = 0; // Force choice here - USED FOR TESTING ONLY!
 	
 	if (motion_choice==0)
 		me_data.SetGlobalMotionFlags(0,0); // No Global Motion
