@@ -164,7 +164,7 @@ int main (int argc, char* argv[]){
         strcpy(dir_path, output.c_str());
         strcat(dir_path, ".imt");
         encparams.SetOutputPath(dir_path);
-        std::cerr<<std::endl<<"Creating file "<<dir_path;
+
         std::ofstream out(dir_path, std::ios::out);
         out.close();
 
@@ -190,7 +190,7 @@ int main (int argc, char* argv[]){
                 bparams.SetXblen( 12 );
                 bparams.SetYblen( 12 );
                 bparams.SetXbsep( 8 );
-                bparams.SetXbsep( 8 );
+                bparams.SetYbsep( 8 );
                 encparams.SetUFactor(3.0f);
                 encparams.SetVFactor(1.75f);
                 encparams.SetCPD(20.0f);
@@ -203,7 +203,7 @@ int main (int argc, char* argv[]){
                 bparams.SetXblen( 16 );
                 bparams.SetYblen( 16 );
                 bparams.SetXbsep( 10 );
-                bparams.SetXbsep( 12 );
+                bparams.SetYbsep( 12 );
                 encparams.SetUFactor(3.0f);
                 encparams.SetVFactor(1.75f);
                 encparams.SetCPD(20.0f);
@@ -215,7 +215,7 @@ int main (int argc, char* argv[]){
                 bparams.SetXblen( 20 );
                 bparams.SetYblen( 20 );
                 bparams.SetXbsep( 16 );
-                bparams.SetXbsep( 16 );
+                bparams.SetYbsep( 16 );
                 encparams.SetUFactor(3.0f);
                 encparams.SetVFactor(1.75f);
                 encparams.SetCPD(32.0f);
@@ -227,7 +227,7 @@ int main (int argc, char* argv[]){
                 bparams.SetXblen( 12 );
                 bparams.SetYblen( 12 );
                 bparams.SetXbsep( 8 );
-                bparams.SetXbsep( 8 );
+                bparams.SetYbsep( 8 );
                 encparams.SetUFactor(3.0f);
                 encparams.SetVFactor(1.75f);
                 encparams.SetCPD(32.0f);
@@ -316,13 +316,14 @@ int main (int argc, char* argv[]){
 
    /********************************************************************/
         //do the work!!
-        SequenceCompressor seq_compressor(&myinputpic,&outfile,encparams);
-        seq_compressor.CompressNextFrame();
 
         if ( end_pos == -1 )
             end_pos = myinputpic.GetSeqParams().Zl()-1;
 
         myinputpic.Skip( start_pos );
+
+        SequenceCompressor seq_compressor(&myinputpic,&outfile,encparams);
+        seq_compressor.CompressNextFrame();
 
         for (int z=start_pos ; z<=end_pos ; ++z)
         {
