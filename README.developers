@@ -336,6 +336,21 @@ IV. Testing with "make check"
   is being undertaken) this must be announced on the Developer Forum, and
   the fixing of the tests would be coordinated there.
 
+  Only one test file is included in the Dirac distribution. In order to run
+  end to end tests, it is necessary to have test Dirac using all supported
+  sizes and formats. The samples.at test case attempts to handle this by
+  running Dirac encoder/decoder/instrumentation tests on all input files in
+  the directory specified by the env variable DIRAC_INPUT_DATA_DIR.
+
+  Sample files in rgb format are available for download from the Dirac project
+  page on Sourceforge. The main Dirac distribution now includes a scripts
+  create_dirac_testfile.pl that converts an rgb file into all the planar
+  YUV formats supported by Dirac and creates the header files. The -use
+  option to this script display usage information. See Step 3 in section
+  4.2 (File Formats) of the README file for an example of how to use this
+  script.
+  
+
   Developers should also aim to have good test coverage especially when
   adding functionality.  When adding a new feature, expect to be asked
   "Where's the test?"
@@ -343,6 +358,7 @@ IV. Testing with "make check"
   A new target 'valgrind-check' has been included which uses valgrind, if 
   available, to check for memory leaks, uninitialised memory reads, invalid
   writes etc.
+
 
 7. Profiling & optimisation
 ---------------------------
@@ -352,28 +368,28 @@ being said, the Dirac maintainers would like to encourage profiling analysis
 and portable and modular optimisation.  Developers are encouraged to share
 their profiling analysis techniques and results.  The following guidelines
 should be followed:
+
   - Any optimisation patch must be accompanied by at least a summary of
     profile analysis and timing results for a range of video material.  There
-	must be sufficient information for other developers to reproduce the
-	results.
-  - A good example of modular and portable optimisations for MMX/SSE (x86),
-    ALTIVEC (PowerPC), VIS (SPARC) and Alpha can be found in libmpeg2's
-	motion compensation code:
-	  mpeg2dec/libmpeg2/motion_comp.c
-	  mpeg2dec/libmpeg2/motion_comp_alpha.c
-	  mpeg2dec/libmpeg2/motion_comp_altivec.c
-	  mpeg2dec/libmpeg2/motion_comp_mmx.c
-	  mpeg2dec/libmpeg2/motion_comp_vis.c
-  - For MMX/SSE/SSE2 optimisations developers must use a compiler-portable
-    macro approach such as that adopted by libmpeg2.  The Dirac maintainers
-	plan to use identical macro names to those found in
-	  http://cvs.sourceforge.net/viewcvs.py/libmpeg2/mpeg2dec/include/mmx.h
-	  http://cvs.sourceforge.net/viewcvs.py/libmpeg2/mpeg2dec/include/sse.h
+    must be sufficient information for other developers to reproduce the
+    results.
+
+  - The preferred method for introducing MMX/SSE/SSE2 optimisation is C/C++ 
+    intrinsics, since this is well supported by GNU C++, Intel C++ and (more or
+    less) MSVC.  See libdirac_motionest/me_utils_mmx.cpp.
+
+  - Developers should take extra care to check their optimisation produces 
+    indentical bitstream output for the encoder, or identical uncompressed
+    output for the decoder compared to the unoptimised version.
+
   - x86-specific optimisations need not be limited to MMX since SSE is
     readily available on PentiumIII and AMD Athlons.  SSE2 optimisation is
-	encouraged since it becoming more commonly available (on Pentium4,
-	Athlon64 and Opteron), but take care to use a portable 16byte memory
-	alignment technique.
+    encouraged since it becoming more commonly available (on Pentium4,
+    Athlon64 and Opteron), but take care to use a portable 16byte memory
+    alignment technique.
+
+  - MMX optimisation can be supported by adding --enable-mmx to ./configure
+    before building. This detects MMX availability and sets the macro HAVE_MMX.
 
 Profiling can be supported by adding the following parameter to ./configure
 before building:
