@@ -38,8 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.1  2004-03-11 17:45:43  timborer
-* Initial revision
+* Revision 1.2  2004-04-12 01:57:46  chaoticcoyote
+* Fixed problem Intel C++ had in finding xparam headers on Linux
+* Solved Segmentation Fault bug in pic_io.cpp
+*
+* Revision 1.1.1.1  2004/03/11 17:45:43  timborer
+* Initial import (well nearly!)
 *
 * Revision 0.1.0  2004/02/20 09:36:08  thomasd
 * Dirac Open Source Video Codec. Originally devised by Thomas Davies,
@@ -53,8 +57,8 @@
 #include <string>
 #include "libdirac_encoder/seq_compress.h"
 #include "libdirac_common/pic_io.h"
-#include <xparam.h>
-#include <xparam_extend.h>
+#include "xparam.h"
+#include "xparam_extend.h"
 
 using xParam::iParamVar;
 using xParam::Val;

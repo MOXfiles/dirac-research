@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-11 22:50:46  chaoticcoyote
+* Revision 1.3  2004-04-12 01:57:46  chaoticcoyote
+* Fixed problem Intel C++ had in finding xparam headers on Linux
+* Solved Segmentation Fault bug in pic_io.cpp
+*
+* Revision 1.2  2004/04/11 22:50:46  chaoticcoyote
 * Modifications to allow compilation by Visual C++ 6.0
 * Changed local for loop declarations into function-wide definitions
 * Replaced variable array declarations with new/delete of dynamic array
@@ -210,7 +214,7 @@ void PicInput::ReadComponent(PicArray& pic_data){
 	if (*ip_pic_ptr){
 
 		for (int J=pic_data.first(1);J<=pic_data.last(1);++J){
-			ip_pic_ptr->read((char*) &temp, sizeof temp);
+			ip_pic_ptr->read((char *)temp, pic_data.length(0));
 			for (int I=pic_data.first(0);I<=pic_data.last(0);++I){
 				pic_data[J][I]=(ValueType) temp[I];
 				pic_data[J][I]<<=2;
