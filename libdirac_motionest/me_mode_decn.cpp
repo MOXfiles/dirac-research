@@ -37,6 +37,8 @@
 
 #include <libdirac_motionest/me_mode_decn.h>
 #include <libdirac_common/frame_buffer.h>
+using namespace dirac;
+
 #include <algorithm>
 
 using std::vector;
@@ -66,7 +68,6 @@ ModeDecider::ModeDecider( const EncoderParams& encp):
 
     for (int i=0 ; i<=2 ; ++i)
         m_mode_factor[i] = 160.0*std::pow(0.8 , 2-i);
-//        m_mode_factor[i] = 0.0;
 }
 
 
@@ -345,15 +346,6 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
                                                      me_data.Vectors(1) , me_data.PredCosts(1) );
     me_data.PredCosts(1)[ypos][xpos].total = 100000000.0f;
     my_bmatch1.FindBestMatchSubp( xpos , ypos , cand_list, mv_pred, lambda );
-//
-//     for ( int j=0 ; j<2 ; ++j )
-//         for (int i=0 ; i<2 ; ++i )
-//             me_data.PredCosts(1)[ypos][xpos].SAD += 1000*Norm2( me_data.Vectors(1)[ypos][xpos] - 
-//                                                               guide_data.Vectors(1)[guide_ypos+j][guide_xpos+i]);
-//     me_data.PredCosts(1)[ypos][xpos].SetTotal( lambda );
-// //std::cerr<<std::endl<<"Lambda is "<<lambda;
-//
-
 
     if (num_refs>1)
     {//do the same for the other reference
@@ -387,15 +379,6 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
                                                      me_data.Vectors(2) , me_data.PredCosts(2) );
         me_data.PredCosts(2)[ypos][xpos].total = 100000000.0f;
         my_bmatch2.FindBestMatchSubp( xpos , ypos , cand_list, mv_pred, lambda );
-
-//
-//    for ( int j=0 ; j<2 ; ++j )
-//         for (int i=0 ; i<2 ; ++i )
-//             me_data.PredCosts(2)[ypos][xpos].SAD += 1000*Norm2( me_data.Vectors(2)[ypos][xpos] - 
-//                                                               guide_data.Vectors(2)[guide_ypos+j][guide_xpos+i]);
-//     me_data.PredCosts(2)[ypos][xpos].SetTotal( lambda );
-//
-
 
      }
 }
@@ -464,7 +447,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
 
         // Finally, calculate the cost if we were to use bi-predictions //
         /****************************************************************/
-
+/*
         mode_cost = ModeCost( xpos , ypos , REF1AND2 )*m_mode_factor[level];
 
         me_data.BiPredCosts()[ypos][xpos].mvcost =
@@ -485,6 +468,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
             me_data.Mode()[ypos][xpos] = REF1AND2;
             min_unit_cost = unit_cost;
         }
+*/
     }
 
     return min_unit_cost;
@@ -519,7 +503,7 @@ float ModeDecider::DoCommonMode( PredMode& predmode , const int level)
             if ( num_refs>1 )
             {
                 MB_cost[REF2_ONLY] += me_data.PredCosts(2)[j][i].total;
-                MB_cost[REF1AND2] += me_data.BiPredCosts()[j][i].total;
+//                MB_cost[REF1AND2] += me_data.BiPredCosts()[j][i].total;
             }
         }// i
     }// i
@@ -534,8 +518,8 @@ float ModeDecider::DoCommonMode( PredMode& predmode , const int level)
     {
         if ( MB_cost[REF2_ONLY]<MB_cost[predmode] )
             predmode = REF2_ONLY;
-        if ( MB_cost[REF1AND2]<MB_cost[predmode] )
-            predmode = REF1AND2;
+//         if ( MB_cost[REF1AND2]<MB_cost[predmode] )
+//             predmode = REF1AND2;
     }
  
     return MB_cost[predmode];

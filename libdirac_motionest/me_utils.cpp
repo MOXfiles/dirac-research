@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author)
+* Contributor(s): Thomas Davies (Original Author), Peter Meerwald (pmeerw@users.sourceforge.net)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -43,6 +43,8 @@
 
 #include <libdirac_motionest/me_utils.h>
 #include <libdirac_common/common.h>
+using namespace dirac;
+
 #include <algorithm>
 
 void BlockDiffParams::SetBlockLimits( const OLBParams& bparams ,
@@ -136,7 +138,7 @@ float SimpleBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv )
 
     ValueType diff;    
 
-    CalcValueType sum = 0;
+    CalcValueType sum( 0 );
 
     for (int j=dparams.Yp() ; j != dparams.Yp()+dparams.Yl() ; ++j )
     {
@@ -158,7 +160,7 @@ float BChkBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv )
 
     ValueType diff;
 
-    CalcValueType sum = 0;
+    CalcValueType sum( 0 );
 
     for ( int j=dparams.Yp() ; j!=dparams.Yp()+dparams.Yl() ; ++j )
     {
@@ -166,6 +168,7 @@ float BChkBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv )
         {
             diff = pic_data[j][i] - ref_data[BChk(j+mv.y , ymax)][BChk(i+mv.x , xmax)];
             sum += std::abs( diff );
+
         }// i
     }// j
     
@@ -177,7 +180,7 @@ float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
 
      //computes the cost if block is predicted by its dc component
 
-    int int_dc=0;
+    CalcValueType int_dc( 0 );
 
     for ( int j=dparams.Yp() ; j!=dparams.Yp()+dparams.Yl() ; ++j)
         for(int i=dparams.Xp(); i!=dparams.Xp()+dparams.Xl() ; ++i )
@@ -190,18 +193,19 @@ float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
 
     // Now compute the resulting SAD
     ValueType dc( dc_val<<2 );
-    float intra_cost = 0.0;
+    CalcValueType intra_cost( 0 );
 
     for (int j=dparams.Yp(); j!=dparams.Yp()+dparams.Yl() ; ++j)
         for( int i=dparams.Xp() ; i!=dparams.Xp()+dparams.Xl() ;++i )
-            intra_cost += static_cast<float>( std::abs( pic_data[j][i] - dc ) );
+            intra_cost += std::abs( pic_data[j][i] - dc );
     
-    return intra_cost;
+    return static_cast<float>( intra_cost );
 }
 
 float BiSimpleBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2){
 
-    CalcValueType sum = 0;
+    CalcValueType sum( 0 );
+
     ValueType diff;
 
     for ( int j=dparams.Yp(); j!=dparams.Yp()+dparams.Yl(); ++j )
@@ -210,6 +214,7 @@ float BiSimpleBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv
         {
             diff = pic_data[j][i]-( ( ref_data1[j+mv1.y][i+mv1.x] + 1 )>>1 );
             diff -= ( ( ref_data2[j+mv2.y][i+mv2.x] + 1 )>>1 );
+
             sum += std::abs( diff );
         }// i
     }// j
@@ -226,7 +231,7 @@ float BiBChkBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv1,
     const int xmax2 = ref_data2.LengthX();
     const int ymax2 = ref_data2.LengthY();
 
-    CalcValueType sum = 0;
+    CalcValueType sum( 0 );
 
     for ( int j=dparams.Yp() ; j!=dparams.Yp() + dparams.Yl() ; ++j )
     {
@@ -234,6 +239,7 @@ float BiBChkBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv1,
         {
             diff = pic_data[j][i]-( ( ref_data1[BChk(j+mv1.y , ymax1)][BChk(i+mv1.x , xmax1)] + 1 )>>1 );
             diff -= ( ( ref_data2[BChk(j+mv2.y , ymax2)][BChk(i+mv2.x , xmax2)] + 1 )>>1 );
+
             sum += std::abs( diff );       
         }// i
     }// j
@@ -266,9 +272,9 @@ float SimpleBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& mv
     const ValueType BLweight((4-rmdr.x)*rmdr.y);
     const ValueType BRweight(rmdr.x*rmdr.y);    
 
-    CalcValueType sum = 0;
+    CalcValueType sum( 0 );
 
-    ValueType temp;//Temporary Variable.    
+    ValueType temp;    
 
     for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
         for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
@@ -316,9 +322,9 @@ float BChkBlockDiffUp::Diff(  const BlockDiffParams& dparams, const MVector& mv 
     const ValueType    BLweight((4-rmdr.x)*rmdr.y);
     const ValueType    BRweight(rmdr.x*rmdr.y);    
 
-    CalcValueType sum = 0;
+    CalcValueType sum( 0 );
 
-    ValueType temp;//Temporary Variable.
+    ValueType temp;
 
     for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2)
     {
@@ -332,7 +338,7 @@ float BChkBlockDiffUp::Diff(  const BlockDiffParams& dparams, const MVector& mv 
                     8
                     )>>4;
 
-            sum += std::abs( pic_data[c][l] - temp );
+            sum += ( std::abs( pic_data[c][l] - temp ) );
         }//l
     }//c    
 
@@ -371,7 +377,7 @@ float BiSimpleBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& 
 
     CalcValueType temp;
 
-    CalcValueType sum = 0;
+    CalcValueType sum( 0 );
 
     for(int c = StartPos.y, uY1 = RefStart1.y,uY2=RefStart2.y; c < EndPos.y; ++c, uY1 += 2,uY2 += 2){
         for(int l = StartPos.x, uX1 = RefStart1.x,uX2=RefStart2.x; l < EndPos.x; ++l, uX1 += 2, uX2 += 2){
@@ -436,7 +442,7 @@ float BiBChkBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& mv
 
     CalcValueType temp;
 
-    CalcValueType sum = 0;
+    CalcValueType sum( 0 );
 
     for(int c = StartPos.y, uY1 = RefStart1.y,uY2=RefStart2.y; c < EndPos.y; ++c, uY1 += 2,uY2 += 2)
     {
