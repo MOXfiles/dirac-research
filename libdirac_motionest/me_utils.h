@@ -38,7 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:35  tjdwave
+* Revision 1.4  2004-05-24 12:38:55  tjdwave
+* Replaced spagetti code for linear interpolation in motion compensation
+* and motion estimation routines with simple loops. Code is much clearer,
+* although possibly slightly slower.
+*
+* Revision 1.3  2004/05/12 08:35:35  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -325,13 +330,12 @@ public:
 	//! Constructor
 	BlockDiffUp(){}
 	//! Constructor, initialising the reference and picture data
-	BlockDiffUp(const PicArray& ref,const PicArray& pic): BlockDiff(ref,pic){Init();}
+	BlockDiffUp(const PicArray& ref,const PicArray& pic): BlockDiff(ref,pic){}
 	//! Destructor
 	virtual ~BlockDiffUp(){}
 
 protected:
 	int InterpLookup[9][4];//A lookup table to simplify the 1/8 pixel accuracy code
-	void Init();
 private:
 	BlockDiffUp(const BlockDiffUp& cpy);			//private, bodyless copy-constructor: class and its 
 													//derivatives should not be copied

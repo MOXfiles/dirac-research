@@ -38,7 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-05-24 12:38:55  tjdwave
+* Replaced spagetti code for linear interpolation in motion compensation
+* and motion estimation routines with simple loops. Code is much clearer,
+* although possibly slightly slower.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -79,8 +84,8 @@ void BMParams::Init(const OLBParams& bparams,int M, int N){
 }
 void BMParams::Init(int M, int N){
 
-	int xpos=M*bp.XBSEP-bp.XOFFSET;
-	int ypos=N*bp.YBSEP-bp.YOFFSET;
+	const int xpos=M*bp.XBSEP-bp.XOFFSET;
+	const int ypos=N*bp.YBSEP-bp.YOFFSET;
 
 	xp=std::max(xpos,0);//TL corner of 
 	yp=std::max(ypos,0);//block to be matched
@@ -135,8 +140,8 @@ void SimpleBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv){
 
 void BChkBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv){
 
-	int xmax=ref_data->length(0);
-	int ymax=ref_data->length(1);
+	const int xmax=ref_data->length(0);
+	const int ymax=ref_data->length(1);
 	TwoDArray<ValueType> diff(dparams.xl,dparams.yl);
 	float sum=dparams.start_val;
 	for (int J=dparams.yp,L=0;J!=dparams.yp+dparams.yl;++J,++L){
@@ -219,8 +224,8 @@ void BiSimpleBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv1,const 
 void BiBChkBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2){
 
 	TwoDArray<ValueType> diff(dparams.xl,dparams.yl);
-	int xmax1=ref_data->length(0); int ymax1=ref_data->length(1);
-	int xmax2=ref_data2->length(0);	int ymax2=ref_data2->length(1);
+	const int xmax1=ref_data->length(0); int ymax1=ref_data->length(1);
+	const int xmax2=ref_data2->length(0);	int ymax2=ref_data2->length(1);
 
 	dparams.cost.mvcost=dparams.start_val;
 	dparams.cost.SAD=0.0;
@@ -241,139 +246,45 @@ void BiBChkBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv1,const MV
 	dparams.cost.total=dparams.cost.mvcost+dparams.cost.SAD;
 }
 
-void BlockDiffUp::Init(){
-	InterpLookup[0][0] = 9; InterpLookup[0][1] = 3; InterpLookup[0][2] = 3; InterpLookup[0][3] = 1;
-	InterpLookup[1][0] = 6; InterpLookup[1][1] = 6; InterpLookup[1][2] = 2; InterpLookup[1][3] = 2;
-	InterpLookup[2][0] = 3; InterpLookup[2][1] = 9; InterpLookup[2][2] = 1; InterpLookup[2][3] = 3;
-	InterpLookup[3][0] = 6; InterpLookup[3][1] = 2; InterpLookup[3][2] = 6; InterpLookup[3][3] = 2;
-	InterpLookup[4][0] = 4; InterpLookup[4][1] = 4; InterpLookup[4][2] = 4; InterpLookup[4][3] = 4;
-	InterpLookup[5][0] = 2; InterpLookup[5][1] = 6; InterpLookup[5][2] = 2; InterpLookup[5][3] = 6;
-	InterpLookup[6][0] = 3; InterpLookup[6][1] = 1; InterpLookup[6][2] = 9; InterpLookup[6][3] = 3;
-	InterpLookup[7][0] = 2; InterpLookup[7][1] = 2; InterpLookup[7][2] = 6; InterpLookup[7][3] = 6;
-	InterpLookup[8][0] = 1; InterpLookup[8][1] = 3; InterpLookup[8][2] = 3; InterpLookup[8][3] = 9;	
-}
-
 void SimpleBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv){
 
-	ImageCoords StartPos;//Coordinates in the image being written to
-	StartPos.x=dparams.xp;
-	StartPos.y=dparams.yp;
-	ImageCoords EndPos;	
-	EndPos.x=StartPos.x+dparams.xl;
-	EndPos.y=StartPos.y+dparams.yl;
+	//Coordinates in the image being written to
+	const ImageCoords StartPos(dparams.xp,dparams.yp);
+	const ImageCoords EndPos(StartPos.x+dparams.xl,StartPos.y+dparams.yl);
 
-	ImageCoords RefStart;
-	ValueType temp;//Temporary Variable.
- 	//Set up the start point in the reference image.
-	MVector roundvec,rmdr;
-	roundvec.x=mv.x>>2;//bit shift NB rounds negative
-	roundvec.y=mv.y>>2;//numbers DOWN, as required
-	rmdr.x=mv.x-(roundvec.x<<2);
-	rmdr.y=mv.y-(roundvec.y<<2);	
-	RefStart.x = (StartPos.x<<1) + roundvec.x;
-	RefStart.y = (StartPos.y<<1) + roundvec.y;	
+	//the rounded motion vectors, accurate to 1/2 pel
+	//NB: bitshift rounds negative numbers DOWN, as required	
+	const MVector roundvec(mv.x>>2,mv.y>>2);
+
+	//remainder, giving 1/8 pel accuracy, needed for linear interp
+	const MVector rmdr(mv.x-(roundvec.x<<2),mv.y-(roundvec.y<<2));
+
+	//Set up the start point in the reference image.	
+	const ImageCoords RefStart((StartPos.x<<1) + roundvec.x,(StartPos.y<<1) + roundvec.y);
+
+
+	//weights for doing linear interpolation, calculated from the remainder values
+
+	const ValueType	TLweight((4-rmdr.x)*(4-rmdr.y));
+	const ValueType	TRweight(rmdr.x*(4-rmdr.y));
+	const ValueType	BLweight((4-rmdr.x)*rmdr.y);
+	const ValueType	BRweight(rmdr.x*rmdr.y);	
 
 	float sum=dparams.start_val;
 
-	if((rmdr.x%4 == 0)&&(rmdr.y%4 == 0)){
- 		//Quick process where we can just copy from the double size image.
-		for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-			for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
-				sum+=abs((*pic_data)[c][l]-(*ref_data)[uY][uX]);
-			}
-		}
-	}
-	else if((rmdr.x%4 == 0)||(rmdr.y%4 == 0)){
- 		//Slower process where pixels are calculated from two other pixels
-		if(rmdr.x%4 == 0){
- 			//Can copy in x direction but need to interpolate in y
-			if(rmdr.y%2 == 0){
-				for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-					for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
-						temp = ((*ref_data)[uY][uX]+(*ref_data)[uY+1][uX] + 1)>>1;
-						sum+=abs((*pic_data)[c][l]-temp);
-					}
-				}
-			}
-			else{
+	ValueType temp;//Temporary Variable.	
 
- 				//Need to do 1/4, 3/4 weighting.
-				int F1, F2;
- 				//Decide which quarter of the y range we are in
-				if(rmdr.y%4 > 1){
-					F2 = 3; F1 = 1;
-				}
-				else{
-					F1 = 3; F2 = 1;
-				}
- 				//Interpolate in-between the pixels in the y direction.
-				for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-					for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
-						temp = (F1*(*ref_data)[uY][uX]+F2*(*ref_data)[uY+1][uX] + 2)>>2;
-						sum+=abs((*pic_data)[c][l]-temp);
-					}
-				}
-			}
-		}
-		else if(rmdr.y%4 == 0){
- 			//Can copy in y direction but need to interpolate in x
-			if(rmdr.x%2 == 0){
-				for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-					for(int l = StartPos.x,uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
-						temp = ((*ref_data)[uY][uX]+(*ref_data)[uY][uX+1] + 1)>>1;
-						sum+=abs((*pic_data)[c][l]-temp);
-					}
-				}
-			}
-			else{
- 				//Need to do 1/4, 3/4 weighting.
-				int F1, F2;
- 				//Decide which quarter of the x range we are in
-				if(rmdr.x%4 > 1){
-					F2 = 3; F1 = 1;
-				}
-				else{
-					F1 = 3; F2 = 1;
-				}
- 				//Interpolate in-between the pixels in the x direction.
-				for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-					for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
-						temp = (F1*(*ref_data)[uY][uX]+F2*(*ref_data)[uY][uX+1] + 2)>>2;
-						sum+=abs((*pic_data)[c][l]-temp);
-					}
-				}
-			}
-		}
-	}
-	else{
-		int PixLookup;//which of the nine centre points we're in
-		if(rmdr.x%2 == 0){
-			if(rmdr.y%2 == 0) PixLookup = 4;
-			if(rmdr.y%4 == 3) PixLookup = 7;
-			else PixLookup = 1;
-		}
-		else if (rmdr.x%4==1){
-			if(rmdr.y%2==0) PixLookup = 3;
-			if(rmdr.y%4 == 3) PixLookup = 6;
-			else PixLookup = 0;
-		}
-		else {//rmdr.x%4==3
-			if(rmdr.y%2==0) PixLookup = 5;
-			if(rmdr.y%4 == 3) PixLookup = 8;
-			else PixLookup = 2;
-		}
-		for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-			for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
+	for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
+		for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
+			temp = (TLweight*(*ref_data)[uY][uX] +
+					TRweight*(*ref_data)[uY][uX+1] +
+					BLweight*(*ref_data)[uY+1][uX] +
+					BRweight*(*ref_data)[uY+1][uX+1] +
+					8)>>4;
 
-				temp = (InterpLookup[PixLookup][0]*(*ref_data)[uY][uX] +
-						InterpLookup[PixLookup][1]*(*ref_data)[uY][uX+1] +
-						InterpLookup[PixLookup][2]*(*ref_data)[uY+1][uX] +
-						InterpLookup[PixLookup][3]*(*ref_data)[uY+1][uX+1] +
-						8)>>4;
-				sum+=abs((*pic_data)[c][l]-temp);
-			}
-		}
-	}
+			sum+=abs((*pic_data)[c][l]-temp);
+		}//l
+	}//c
 
 	if (sum<dparams.cost.total){
 		dparams.cost.total=sum;
@@ -384,141 +295,48 @@ void SimpleBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv){
 }
 
 void BChkBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv){
- 	//Same as SimpleBlockDiffUp, but with bounds-checking and edge extension.
-	ImageCoords StartPos;//Coordinates in the image being written to
-	StartPos.x=dparams.xp;
-	StartPos.y=dparams.yp;
-	ImageCoords EndPos;	
-	EndPos.x=StartPos.x+dparams.xl;
-	EndPos.y=StartPos.y+dparams.yl;
-	ImageCoords RefStart;
-	ValueType temp;//Temporary Variable
 
- 	//Set up the start point in the reference image.
-	MVector roundvec,rmdr;
-	roundvec.x=mv.x>>2;//bit shift NB rounds negative
-	roundvec.y=mv.y>>2;//numbers DOWN, as required
-	rmdr.x=mv.x-(roundvec.x<<2);
-	rmdr.y=mv.y-(roundvec.y<<2);	
-	RefStart.x=(StartPos.x<<1)+roundvec.x;
-	RefStart.y=(StartPos.y<<1)+roundvec.y;	
+	//the picture sizes
+	const int DoubleXdim=ref_data->length(0);
+	const int DoubleYdim=ref_data->length(1);
 
-	int DoubleXdim=ref_data->length(0);
-	int DoubleYdim=ref_data->length(1);
+	//Coordinates in the image being written to
+	const ImageCoords StartPos(dparams.xp,dparams.yp);
+	const ImageCoords EndPos(StartPos.x+dparams.xl,StartPos.y+dparams.yl);
+
+	//the rounded motion vectors, accurate to 1/2 pel
+	//NB: bitshift rounds negative numbers DOWN, as required	
+	const MVector roundvec(mv.x>>2,mv.y>>2);
+
+	//remainder, giving 1/8 pel accuracy, needed for linear interp
+	const MVector rmdr(mv.x-(roundvec.x<<2),mv.y-(roundvec.y<<2));
+
+	//Set up the start point in the reference image.	
+	const ImageCoords RefStart((StartPos.x<<1) + roundvec.x,(StartPos.y<<1) + roundvec.y);
+
+
+	//weights for doing linear interpolation, calculated from the remainder values
+
+	const ValueType	TLweight((4-rmdr.x)*(4-rmdr.y));
+	const ValueType	TRweight(rmdr.x*(4-rmdr.y));
+	const ValueType	BLweight((4-rmdr.x)*rmdr.y);
+	const ValueType	BRweight(rmdr.x*rmdr.y);	
+
 	float sum=dparams.start_val;
 
-	if((rmdr.x%4 == 0)&&(rmdr.y%4 == 0)){
- 		//Quick process where we can just copy from the double size image.
-		for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-			for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
-				sum+=abs((*pic_data)[c][l]-(*ref_data)[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)]);
-			}
-		}
-	}
-	else if((rmdr.x%4 == 0)||(rmdr.y%4 == 0)){
- 		//Slower process where pixels are calculated from two other pixels
-		if(rmdr.x%4 == 0){
- 			//Can copy in x direction but need to interpolate in y
-			if(rmdr.y%2 == 0){
-				for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-					for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
-						temp = ((*ref_data)[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)]+
-								(*ref_data)[BChk(uY+1,DoubleYdim)][BChk(uX,DoubleXdim)]+ 1)>>1;
-						sum+=abs((*pic_data)[c][l]-temp);
-					}
-				}
-			}
-			else{
- 				//Need to do 1/4, 3/4 weighting.
-				int F1, F2;
- 				//Decide which quarter of the y range we are in
-				if(rmdr.y%4 > 1){
-					F2 = 3; F1 = 1;
-				}
-				else{
-					F1 = 3; F2 = 1;
-				}
- 				//Interpolate in-between the pixels in the y direction.
-				for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-					for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
-						temp = (F1*(*ref_data)[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)]+
-								F2*(*ref_data)[BChk(uY+1,DoubleYdim)][BChk(uX,DoubleXdim)] + 2)>>2;
-						sum+=abs((*pic_data)[c][l]-temp);
-					}
-				}
-			}
-		}
-		else if(rmdr.y%4 == 0){
- 			//Can copy in x direction but need to interpolate in y
-			if(rmdr.x%2 == 0){
-				for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-					for(int l = StartPos.x,uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
-						temp = ((*ref_data)[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)]+
-								(*ref_data)[BChk(uY,DoubleYdim)][BChk(uX+1,DoubleXdim)] + 1)>>1;
-						sum+=abs((*pic_data)[c][l]-temp);
-					}
-				}
-			}
-			else{
- 				//Need to do 1/4, 3/4 weighting.
-				int F1, F2;
- 				//Decide which quarter of the x range we are in
-				if(rmdr.x%4 > 1){
-					F2 = 3; F1 = 1;
-				}
-				else{
-					F1 = 3; F2 = 1;
-				}
- 				//Interpolate in-between the pixels in the x direction.
-				for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-					for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
-						temp = (F1*(*ref_data)[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)]+
-								F2*(*ref_data)[BChk(uY,DoubleYdim)][BChk(uX+1,DoubleXdim)] + 2)>>2;
-						sum+=abs((*pic_data)[c][l]-temp);
-					}
-				}
-			}
-		}
-	}
-	else{
- 		//This is the slowest process of all - each pixel is calculated from
- 		//four others :(
- 		// A . . . B
- 		// . 0 1 2 .
- 		// . 3 4 5 .
- 		// . 6 7 8 .
- 		// C . . . D
- 		//Assuming that we are already in the correct quadrant....
- 		//Can easily figure out which number we are dealing with.
-		int PixLookup;
-		if(rmdr.x%2 == 0){
-			if(rmdr.y%2 == 0) PixLookup = 4;
-			if(rmdr.y%4 == 3) PixLookup = 7;
-			else PixLookup = 1;
-		}
-		else if (rmdr.x%4==1){
-			if(rmdr.y%2==0) PixLookup = 3;
-			if(rmdr.y%4 == 3) PixLookup = 6;
-			else PixLookup = 0;
-		}
-		else {//rmdr.x%4==3
-			if(rmdr.y%2==0) PixLookup = 5;
-			if(rmdr.y%4 == 3) PixLookup = 8;
-			else PixLookup = 2;
-		}
-		for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-			for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
+	ValueType temp;//Temporary Variable.
 
-				temp = (InterpLookup[PixLookup][0]*(*ref_data)[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)] +
-						InterpLookup[PixLookup][1]*(*ref_data)[BChk(uY,DoubleYdim)][BChk(uX+1,DoubleXdim)] +
-						InterpLookup[PixLookup][2]*(*ref_data)[BChk(uY+1,DoubleYdim)][BChk(uX,DoubleXdim)] +
-						InterpLookup[PixLookup][3]*(*ref_data)[BChk(uY+1,DoubleYdim)][BChk(uX+1,DoubleXdim)] +
-						8)>>4;
-				sum+=abs((*pic_data)[c][l]-temp);
-			}
-		}
-	}
+	for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
+		for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
+			temp = (TLweight*(*ref_data)[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)] +
+					TRweight*(*ref_data)[BChk(uY,DoubleYdim)][BChk(uX+1,DoubleXdim)] +
+					BLweight*(*ref_data)[BChk(uY+1,DoubleYdim)][BChk(uX,DoubleXdim)] +
+					BRweight*(*ref_data)[BChk(uY+1,DoubleYdim)][BChk(uX+1,DoubleXdim)] +
+					8)>>4;
 
+			sum+=abs((*pic_data)[c][l]-temp);
+		}//l
+	}//c	
 	if (sum<dparams.cost.total){
 		dparams.cost.total=sum;
 		dparams.cost.mvcost=dparams.start_val;			
@@ -529,265 +347,53 @@ void BChkBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv){
 
 void BiSimpleBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv1, const MVector& mv2){
 
-	ImageCoords StartPos;//Coordinates in the current image
-	StartPos.x=dparams.xp;
-	StartPos.y=dparams.yp;
-	ImageCoords EndPos;	
-	EndPos.x=StartPos.x+dparams.xl;
-	EndPos.y=StartPos.y+dparams.yl;
-	ImageCoords RefStart1;
-	ImageCoords RefStart2;
-	ValueType temp;//Temporary Variable.
+	//the start and end points in the current frame
+	const ImageCoords StartPos(dparams.xp,dparams.yp);//Coordinates in the current image
+	const ImageCoords EndPos(StartPos.x+dparams.xl,StartPos.y+dparams.yl);	
 
- 	//Set up the start point in the reference image.
-	MVector roundvec1,rmdr1;
-	MVector roundvec2,rmdr2;
-	roundvec1.x=mv1.x>>2;
-	roundvec1.y=mv1.y>>2;
-	roundvec2.x=mv2.x>>2;
-	roundvec2.y=mv2.y>>2;
-	rmdr1.x=mv1.x-(roundvec1.x<<2);
-	rmdr1.y=mv1.y-(roundvec1.y<<2);
-	rmdr2.x=mv2.x-(roundvec2.x<<2);
-	rmdr2.y=mv2.y-(roundvec2.y<<2);
-	RefStart1.x = (StartPos.x<<1) + roundvec1.x;
-	RefStart1.y = (StartPos.y<<1) + roundvec1.y;
-	RefStart2.x = (StartPos.x<<1) + roundvec2.x;
-	RefStart2.y = (StartPos.y<<1) + roundvec2.y;
+	//the motion vectors rounded to 1/2 pel accuracy
+	const MVector roundvec1(mv1.x>>2,mv1.y>>2);
+	const MVector roundvec2(mv2.x>>2,mv2.y>>2);
 
-	TwoDArray<ValueType> tempdiff(dparams.xl,dparams.yl);
+	//the remainders giving 1/8 pel accuracy	
+	const MVector rmdr1(mv1.x-(roundvec1.x<<2),mv1.y-(roundvec1.y<<2));
+	const MVector rmdr2(mv2.x-(roundvec2.x<<2),mv2.y-(roundvec2.y<<2));
 
-	//first subtract half-values from reference 1 and put into the temp array//
-	///////////////////////////////////////////////////////////////////////////
+	//the starting points of the reference blocks in the reference images, to 1/2 pel accuracy
+	const ImageCoords RefStart1((StartPos.x<<1) + roundvec1.x,(StartPos.y<<1) + roundvec1.y);
+	const ImageCoords RefStart2((StartPos.x<<1) + roundvec2.x,(StartPos.y<<1) + roundvec2.y);
 
-	if((rmdr1.x%4 == 0)&&(rmdr1.y%4 == 0)){
- 		//Quick process where we can just copy from the double size image.
-		for(int c = StartPos.y, uY = RefStart1.y,y=0; c < EndPos.y; ++c, uY += 2,++y){
-			for(int l = StartPos.x, uX = RefStart1.x,x=0; l < EndPos.x; ++l, uX += 2,++x){
-				temp=(*ref_data)[uY][uX];
-				temp++;
-				temp>>=1;
-				tempdiff[y][x]=(*pic_data)[c][l]-temp;
-			}
-		}
-	}
-	else if((rmdr1.x%4 == 0)||(rmdr1.y%4 == 0)){
- 		//Slower process where pixels are calculated from two other pixels
-		if(rmdr1.x%4 == 0){
- 			//Can copy in x direction but need to interpolate in y
-			if(rmdr1.y%2 == 0){
-				for(int c = StartPos.y, uY = RefStart1.y,y=0; c < EndPos.y; ++c, uY += 2,++y){
-					for(int l = StartPos.x, uX = RefStart1.x,x=0; l < EndPos.x; ++l, uX += 2,++y){
-						temp = ((*ref_data)[uY][uX]+(*ref_data)[uY+1][uX] + 1)>>1;
-						temp++;
-						temp>>=1;
-						tempdiff[y][x]=(*pic_data)[c][l]-temp;
-					}
-				}
-			}
-			else{
- 				//Need to do 1/4, 3/4 weighting.
-				int F1, F2;
- 				//Decide which quarter of the y range we are in
-				if(rmdr1.y%4 > 1){
-					F2 = 3; F1 = 1;
-				}
-				else{
-					F1 = 3; F2 = 1;
-				}
- 				//Interpolate in-between the pixels in the y direction.
-				for(int c = StartPos.y, uY = RefStart1.y,y=0; c < EndPos.y; ++c, uY += 2,++y){
-					for(int l = StartPos.x, uX = RefStart1.x,x=0; l < EndPos.x; ++l, uX += 2,++x){
-						temp = (F1*(*ref_data)[uY][uX]+F2*(*ref_data)[uY+1][uX] + 2)>>2;
-						temp++;
-						temp>>=1;
-						tempdiff[y][x]=(*pic_data)[c][l]-temp;
-					}
-				}
-			}
-		}
-		else if(rmdr1.y%4 == 0){
- 			//Can copy in y direction but need to interpolate in x
-			if(rmdr1.x%2 == 0){
-				for(int c = StartPos.y, uY = RefStart1.y,y=0; c < EndPos.y; ++c, uY += 2,++y){
-					for(int l = StartPos.x,uX = RefStart1.x,x=0; l < EndPos.x; ++l, uX += 2,++x){
-						temp = ((*ref_data)[uY][uX]+(*ref_data)[uY][uX+1] + 1)>>1;
-						temp++;
-						temp>>=1;
-						tempdiff[y][x]=(*pic_data)[c][l]-temp;
-					}
-				}
-			}
-			else{
- 				//Need to do 1/4, 3/4 weighting.
-				int F1, F2;
- 				//Decide which quarter of the x range we are in
-				if(rmdr1.x%4 > 1){
-					F2 = 3; F1 = 1;
-				}
-				else{
-					F1 = 3; F2 = 1;
-				}
- 				//Interpolate in-between the pixels in the x direction.
-				for(int c = StartPos.y, uY = RefStart1.y,y=0; c < EndPos.y; ++c, uY += 2,++y){
-					for(int l = StartPos.x, uX = RefStart1.x,x=0; l < EndPos.x; ++l, uX += 2,++x){
-						temp = (F1*(*ref_data)[uY][uX]+F2*(*ref_data)[uY][uX+1] + 2)>>2;
-						temp++;
-						temp>>=1;
-						tempdiff[y][x]=(*pic_data)[c][l]-temp;
-					}
-				}
-			}
-		}
-	}
-	else{
-		int PixLookup;//which of the nine centre points we're in
-		if(rmdr1.x%2 == 0){
-			if(rmdr1.y%2 == 0) PixLookup = 4;
-			if(rmdr1.y%4 == 3) PixLookup = 7;
-			else PixLookup = 1;
-		}
-		else if (rmdr1.x%4==1){
-			if(rmdr1.y%2==0) PixLookup = 3;
-			if(rmdr1.y%4 == 3) PixLookup = 6;
-			else PixLookup = 0;
-		}
-		else {//rmdr.x%4==3
-			if(rmdr1.y%2==0) PixLookup = 5;
-			if(rmdr1.y%4 == 3) PixLookup = 8;
-			else PixLookup = 2;
-		}
-		for(int c = StartPos.y, uY = RefStart1.y,y=0; c < EndPos.y; ++c, uY += 2,++y){
-			for(int l = StartPos.x, uX = RefStart1.x,x=0; l < EndPos.x; ++l, uX += 2,++x){
+	//weights for doing linear interpolation, calculated from the remainder values
+	const ValueType	TLweight1((4-rmdr1.x)*(4-rmdr1.y));
+	const ValueType	TRweight1(rmdr1.x*(4-rmdr1.y));
+	const ValueType	BLweight1((4-rmdr1.x)*rmdr1.y);
+	const ValueType	BRweight1(rmdr1.x*rmdr1.y);		
 
-				temp = (InterpLookup[PixLookup][0]*(*ref_data)[uY][uX] +
-						InterpLookup[PixLookup][1]*(*ref_data)[uY][uX+1] +
-						InterpLookup[PixLookup][2]*(*ref_data)[uY+1][uX] +
-						InterpLookup[PixLookup][3]*(*ref_data)[uY+1][uX+1] +
-						8)>>4;
-				temp++;
-				temp>>=1;
-				tempdiff[y][x]=(*pic_data)[c][l]-temp;
-			}
-		}
-	}
+	const ValueType	TLweight2((4-rmdr2.x)*(4-rmdr2.y));
+	const ValueType	TRweight2(rmdr2.x*(4-rmdr2.y));
+	const ValueType	BLweight2((4-rmdr2.x)*rmdr2.y);
+	const ValueType	BRweight2(rmdr2.x*rmdr2.y);		
 
-	//second, subtract half-values from reference 2 and do the sum//
-	////////////////////////////////////////////////////////////////
+	CalcValueType temp;
 
 	dparams.cost.mvcost=dparams.start_val;
+	dparams.cost.SAD=0;
 
-	if((rmdr2.x%4 == 0)&&(rmdr2.y%4 == 0)){
- 		//Quick process where we can just copy from the double size image.
-		for(int uY = RefStart2.y, y=0; y < dparams.yl; uY += 2,++y){
-			for(int uX = RefStart2.x, x=0; x < dparams.xl; uX += 2,++x){
-				temp=(*ref_data2)[uY][uX];
-				temp++;
-				temp>>=1;
-				dparams.cost.SAD+=abs(tempdiff[y][x]-temp);
-			}
-		}
-	}
-	else if((rmdr2.x%4 == 0)||(rmdr2.y%4 == 0)){
- 		//Slower process where pixels are calculated from two other pixels
-		if(rmdr2.x%4 == 0){
- 			//Can copy in x direction but need to interpolate in y
-			if(rmdr2.y%2 == 0){
-				for(int uY = RefStart2.y, y=0; y < dparams.yl; uY += 2,++y){
-					for(int uX = RefStart2.x, x=0; x < dparams.xl; uX += 2,++y){
-						temp = ((*ref_data2)[uY][uX]+(*ref_data2)[uY+1][uX] + 1)>>1;
-						temp++;
-						temp>>=1;
-						dparams.cost.SAD+=abs(tempdiff[y][x]-temp);
-					}
-				}
-			}
-			else{
- 				//Need to do 1/4, 3/4 weighting.
-				int F1, F2;
- 				//Decide which quarter of the y range we are in
-				if(rmdr2.y%4 > 1){
-					F2 = 3; F1 = 1;
-				}
-				else{
-					F1 = 3; F2 = 1;
-				}
- 				//Interpolate in-between the pixels in the y direction.
-				for(int uY = RefStart2.y, y=0; y < dparams.yl; uY += 2,++y){
-					for(int uX = RefStart2.x, x=0; x < dparams.xl; uX += 2,++x){
-						temp = (F1*(*ref_data2)[uY][uX]+F2*(*ref_data2)[uY+1][uX] + 2)>>2;
-						temp++;
-						temp>>=1;
-						dparams.cost.SAD+=abs(tempdiff[y][x]-temp);
-					}
-				}
-			}
-		}
-		else if(rmdr2.y%4 == 0){
- 			//Can copy in y direction but need to interpolate in x
-			if(rmdr2.x%2 == 0){
-				for(int uY = RefStart2.y, y=0; y < dparams.yl; uY += 2,++y){
-					for(int uX = RefStart2.x, x=0; x < dparams.xl; uX += 2,++x){
-						temp = ((*ref_data2)[uY][uX]+(*ref_data2)[uY][uX+1] + 1)>>1;
-						temp++;
-						temp>>=1;
-						dparams.cost.SAD+=abs(tempdiff[y][x]-temp);
-					}
-				}
-			}
-			else{
- 				//Need to do 1/4, 3/4 weighting.
-				int F1, F2;
- 				//Decide which quarter of the x range we are in
-				if(rmdr2.x%4 > 1){
-					F2 = 3; F1 = 1;
-				}
-				else{
-					F1 = 3; F2 = 1;
-				}
- 				//Interpolate in-between the pixels in the x direction.
-				for(int uY = RefStart2.y, y=0; y < dparams.yl; uY += 2,++y){
-					for(int uX = RefStart2.x, x=0; x < dparams.xl; uX += 2,++x){
-						temp = (F1*(*ref_data2)[uY][uX]+F2*(*ref_data2)[uY][uX+1] + 2)>>2;
-						temp++;
-						temp>>=1;
-						dparams.cost.SAD+=abs(tempdiff[y][x]-temp);
-					}
-				}
-			}
-		}
-	}
-	else{
-		int PixLookup;//which of the nine centre points we're in
-		if(rmdr2.x%2 == 0){
-			if(rmdr2.y%2 == 0) PixLookup = 4;
-			if(rmdr2.y%4 == 3) PixLookup = 7;
-			else PixLookup = 1;
-		}
-		else if (rmdr2.x%4==1){
-			if(rmdr2.y%2==0) PixLookup = 3;
-			if(rmdr2.y%4 == 3) PixLookup = 6;
-			else PixLookup = 0;
-		}
-		else {//rmdr.x%4==3
-			if(rmdr2.y%2==0) PixLookup = 5;
-			if(rmdr2.y%4 == 3) PixLookup = 8;
-			else PixLookup = 2;
-		}
-		for(int uY = RefStart2.y, y=0; y < dparams.yl; uY += 2,++y){
-			for(int uX = RefStart2.x, x=0; x < dparams.xl; uX += 2,++x){
+	for(int c = StartPos.y, uY1 = RefStart1.y,uY2=RefStart2.y; c < EndPos.y; ++c, uY1 += 2,uY2 += 2){
+		for(int l = StartPos.x, uX1 = RefStart1.x,uX2=RefStart2.x; l < EndPos.x; ++l, uX1 += 2, uX2 += 2){
+			temp=(TLweight1*(*ref_data)[uY1][uX1] +
+					TRweight1*(*ref_data)[uY1][uX1+1] +
+					BLweight1*(*ref_data)[uY1+1][uX1] +
+					BRweight1*(*ref_data)[uY1+1][uX1+1]+16)>>5;
 
-				temp = (InterpLookup[PixLookup][0]*(*ref_data2)[uY][uX] +
-						InterpLookup[PixLookup][1]*(*ref_data2)[uY][uX+1] +
-						InterpLookup[PixLookup][2]*(*ref_data2)[uY+1][uX] +
-						InterpLookup[PixLookup][3]*(*ref_data2)[uY+1][uX+1] +
-						8)>>4;
-				temp++;
-				temp>>=1;
-				dparams.cost.SAD+=abs(tempdiff[y][x]-temp);
-			}
-		}
-	}	
+			temp+=(TLweight2*(*ref_data2)[uY2][uX2] +
+					TRweight2*(*ref_data2)[uY2][uX2+1] +
+					BLweight2*(*ref_data2)[uY2+1][uX2] +
+					BRweight2*(*ref_data2)[uY2+1][uX2+1]+16)>>5;
+
+			dparams.cost.SAD+=abs((*pic_data)[c][l]-temp);
+		}//l
+	}//c	
 
 	dparams.cost.total=dparams.cost.SAD+dparams.cost.mvcost;		
 }
@@ -795,274 +401,58 @@ void BiSimpleBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv1, con
 void BiBChkBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv1, const MVector& mv2){
 
 	//as above, but with bounds checking
-	int xmax1=ref_data->length(0); int ymax1=ref_data->length(1);
-	int xmax2=ref_data2->length(0);	int ymax2=ref_data2->length(1);	
+	const int xmax1=ref_data->length(0); 
+	const int ymax1=ref_data->length(1);
+	const int xmax2=ref_data2->length(0); 
+	const int ymax2=ref_data2->length(1);	
 
-	ImageCoords StartPos;//Coordinates in the current image
-	StartPos.x=dparams.xp;
-	StartPos.y=dparams.yp;
-	ImageCoords EndPos;	
-	EndPos.x=StartPos.x+dparams.xl;
-	EndPos.y=StartPos.y+dparams.yl;
-	ImageCoords RefStart1;
-	ImageCoords RefStart2;
-	ValueType temp;//Temporary Variable.
+		//the start and end points in the current frame
+	const ImageCoords StartPos(dparams.xp,dparams.yp);//Coordinates in the current image
+	const ImageCoords EndPos(StartPos.x+dparams.xl,StartPos.y+dparams.yl);	
 
- 	//Set up the start point in the reference image.
-	MVector roundvec1,rmdr1;
-	MVector roundvec2,rmdr2;
-	roundvec1.x=mv1.x>>2;
-	roundvec1.y=mv1.y>>2;
-	roundvec2.x=mv2.x>>2;
-	roundvec2.y=mv2.y>>2;
-	rmdr1.x=mv1.x-(roundvec1.x<<2);
-	rmdr1.y=mv1.y-(roundvec1.y<<2);
-	rmdr2.x=mv2.x-(roundvec2.x<<2);
-	rmdr2.y=mv2.y-(roundvec2.y<<2);
-	RefStart1.x = (StartPos.x<<1) + roundvec1.x;
-	RefStart1.y = (StartPos.y<<1) + roundvec1.y;
-	RefStart2.x = (StartPos.x<<1) + roundvec2.x;
-	RefStart2.y = (StartPos.y<<1) + roundvec2.y;
+	//the motion vectors rounded to 1/2 pel accuracy
+	const MVector roundvec1(mv1.x>>2,mv1.y>>2);
+	const MVector roundvec2(mv2.x>>2,mv2.y>>2);
 
-	TwoDArray<ValueType> tempdiff(dparams.xl,dparams.yl);
+	//the remainders giving 1/8 pel accuracy	
+	const MVector rmdr1(mv1.x-(roundvec1.x<<2),mv1.y-(roundvec1.y<<2));
+	const MVector rmdr2(mv2.x-(roundvec2.x<<2),mv2.y-(roundvec2.y<<2));
 
-	//first subtract half-values from reference 1 and put into the temp array//
-	///////////////////////////////////////////////////////////////////////////
+	//the starting points of the reference blocks in the reference images, to 1/2 pel accuracy
+	const ImageCoords RefStart1((StartPos.x<<1) + roundvec1.x,(StartPos.y<<1) + roundvec1.y);
+	const ImageCoords RefStart2((StartPos.x<<1) + roundvec2.x,(StartPos.y<<1) + roundvec2.y);
 
-	if((rmdr1.x%4 == 0)&&(rmdr1.y%4 == 0)){
- 		//Quick process where we can just copy from the double size image.
-		for(int c = StartPos.y, uY = RefStart1.y,y=0; c < EndPos.y; ++c, uY += 2,++y){
-			for(int l = StartPos.x, uX = RefStart1.x,x=0; l < EndPos.x; ++l, uX += 2,++x){
-				temp=(*ref_data)[BChk(uY,ymax1)][BChk(uX,xmax1)];
-				temp++;
-				temp>>=1;
-				tempdiff[y][x]=(*pic_data)[c][l]-temp;
-			}
-		}
-	}
-	else if((rmdr1.x%4 == 0)||(rmdr1.y%4 == 0)){
- 		//Slower process where pixels are calculated from two other pixels
-		if(rmdr1.x%4 == 0){
- 			//Can copy in x direction but need to interpolate in y
-			if(rmdr1.y%2 == 0){
-				for(int c = StartPos.y, uY = RefStart1.y,y=0; c < EndPos.y; ++c, uY += 2,++y){
-					for(int l = StartPos.x, uX = RefStart1.x,x=0; l < EndPos.x; ++l, uX += 2,++x){
-						temp = ((*ref_data)[BChk(uY,ymax1)][BChk(uX,xmax1)]+
-								(*ref_data)[BChk(uY+1,ymax1)][BChk(uX,xmax1)] + 1)>>1;
-						temp++;
-						temp>>=1;
-						tempdiff[y][x]=(*pic_data)[c][l]-temp;
-					}
-				}
-			}
-			else{
- 				//Need to do 1/4, 3/4 weighting.
-				int F1, F2;
- 				//Decide which quarter of the y range we are in
-				if(rmdr1.y%4 > 1){
-					F2 = 3; F1 = 1;
-				}
-				else{
-					F1 = 3; F2 = 1;
-				}
- 				//Interpolate in-between the pixels in the y direction.
-				for(int c = StartPos.y, uY = RefStart1.y,y=0; c < EndPos.y; ++c, uY += 2,++y){
-					for(int l = StartPos.x, uX = RefStart1.x,x=0; l < EndPos.x; ++l, uX += 2,++x){
-						temp = (F1*(*ref_data)[BChk(uY,ymax1)][BChk(uX,xmax1)]+
-								F2*(*ref_data)[BChk(uY+1,ymax1)][BChk(uX,xmax1)] + 2)>>2;
-						temp++;
-						temp>>=1;
-						tempdiff[y][x]=(*pic_data)[c][l]-temp;
-					}
-				}
-			}
-		}
-		else if(rmdr1.y%4 == 0){
- 			//Can copy in y direction but need to interpolate in x
-			if(rmdr1.x%2 == 0){
-				for(int c = StartPos.y, uY = RefStart1.y,y=0; c < EndPos.y; ++c, uY += 2,++y){
-					for(int l = StartPos.x,uX = RefStart1.x,x=0; l < EndPos.x; ++l, uX += 2,++x){
-						temp = ((*ref_data)[BChk(uY,ymax1)][BChk(uX,xmax1)]+
-								(*ref_data)[BChk(uY,ymax1)][BChk(uX+1,xmax1)] + 1)>>1;
-						temp++;
-						temp>>=1;
-						tempdiff[y][x]=(*pic_data)[c][l]-temp;
-					}
-				}
-			}
-			else{
- 				//Need to do 1/4, 3/4 weighting.
-				int F1, F2;
- 				//Decide which quarter of the x range we are in
-				if(rmdr1.x%4 > 1){
-					F2 = 3; F1 = 1;
-				}
-				else{
-					F1 = 3; F2 = 1;
-				}
- 				//Interpolate in-between the pixels in the x direction.
-				for(int c = StartPos.y, uY = RefStart1.y,y=0; c < EndPos.y; ++c, uY += 2,++y){
-					for(int l = StartPos.x, uX = RefStart1.x,x=0; l < EndPos.x; ++l, uX += 2,++x){
-						temp = (F1*(*ref_data)[BChk(uY,ymax1)][BChk(uX,xmax1)]+
-								F2*(*ref_data)[BChk(uY,ymax1)][BChk(uX+1,xmax1)] + 2)>>2;
-						temp++;
-						temp>>=1;
-						tempdiff[y][x]=(*pic_data)[c][l]-temp;
-					}
-				}
-			}
-		}
-	}
-	else{
-		int PixLookup;//which of the nine centre points we're in
-		if(rmdr1.x%2 == 0){
-			if(rmdr1.y%2 == 0) PixLookup = 4;
-			if(rmdr1.y%4 == 3) PixLookup = 7;
-			else PixLookup = 1;
-		}
-		else if (rmdr1.x%4==1){
-			if(rmdr1.y%2==0) PixLookup = 3;
-			if(rmdr1.y%4 == 3) PixLookup = 6;
-			else PixLookup = 0;
-		}
-		else {//rmdr.x%4==3
-			if(rmdr1.y%2==0) PixLookup = 5;
-			if(rmdr1.y%4 == 3) PixLookup = 8;
-			else PixLookup = 2;
-		}
-		for(int c = StartPos.y, uY = RefStart1.y,y=0; c < EndPos.y; ++c, uY += 2,++y){
-			for(int l = StartPos.x, uX = RefStart1.x,x=0; l < EndPos.x; ++l, uX += 2,++x){
+	//weights for doing linear interpolation, calculated from the remainder values
+	const ValueType	TLweight1((4-rmdr1.x)*(4-rmdr1.y));
+	const ValueType	TRweight1(rmdr1.x*(4-rmdr1.y));
+	const ValueType	BLweight1((4-rmdr1.x)*rmdr1.y);
+	const ValueType	BRweight1(rmdr1.x*rmdr1.y);		
 
-				temp = (InterpLookup[PixLookup][0]*(*ref_data)[BChk(uY,ymax1)][BChk(uX,xmax1)] +
-						InterpLookup[PixLookup][1]*(*ref_data)[BChk(uY,ymax1)][BChk(uX+1,xmax1)] +
-						InterpLookup[PixLookup][2]*(*ref_data)[BChk(uY+1,ymax1)][BChk(uX,xmax1)] +
-						InterpLookup[PixLookup][3]*(*ref_data)[BChk(uY+1,ymax1)][BChk(uX+1,xmax1)] +
-						8)>>4;
-				temp++;
-				temp>>=1;
-				tempdiff[y][x]=(*pic_data)[c][l]-temp;
-			}
-		}
-	}
-	//second, subtract half-values from reference 2 and do the sum//
-	////////////////////////////////////////////////////////////////
+	const ValueType	TLweight2((4-rmdr2.x)*(4-rmdr2.y));
+	const ValueType	TRweight2(rmdr2.x*(4-rmdr2.y));
+	const ValueType	BLweight2((4-rmdr2.x)*rmdr2.y);
+	const ValueType	BRweight2(rmdr2.x*rmdr2.y);		
+
+	CalcValueType temp;
 
 	dparams.cost.mvcost=dparams.start_val;
+	dparams.cost.SAD=0;
 
-	if((rmdr2.x%4 == 0)&&(rmdr2.y%4 == 0)){
- 		//Quick process where we can just copy from the double size image.
-		for(int uY = RefStart2.y, y=0; y < dparams.yl; uY += 2,++y){
-			for(int uX = RefStart2.x, x=0; x < dparams.xl; uX += 2,++x){
-				temp=(*ref_data2)[BChk(uY,ymax2)][BChk(uX,xmax2)];
-				temp++;
-				temp>>=1;
-				dparams.cost.SAD+=abs(tempdiff[y][x]-temp);
-			}
-		}
-	}
-	else if((rmdr2.x%4 == 0)||(rmdr2.y%4 == 0)){
- 		//Slower process where pixels are calculated from two other pixels
-		if(rmdr2.x%4 == 0){
- 			//Can copy in x direction but need to interpolate in y
-			if(rmdr2.y%2 == 0){
-				for(int uY = RefStart2.y, y=0; y < dparams.yl; uY += 2,++y){
-					for(int uX = RefStart2.x, x=0; x < dparams.xl; uX += 2,++x){
-						temp = ((*ref_data2)[BChk(uY,ymax2)][BChk(uX,xmax2)]
-								+(*ref_data2)[BChk(uY+1,ymax2)][BChk(uX,xmax2)] + 1)>>1;
-						temp++;
-						temp>>=1;
-						dparams.cost.SAD+=abs(tempdiff[y][x]-temp);
-					}
-				}
-			}
-			else{
- 				//Need to do 1/4, 3/4 weighting.
-				int F1, F2;
- 				//Decide which quarter of the y range we are in
-				if(rmdr2.y%4 > 1){
-					F2 = 3; F1 = 1;
-				}
-				else{
-					F1 = 3; F2 = 1;
-				}
- 				//Interpolate in-between the pixels in the y direction.
-				for(int uY = RefStart2.y, y=0; y < dparams.yl; uY += 2,++y){
-					for(int uX = RefStart2.x, x=0; x < dparams.xl; uX += 2,++x){
-						temp = (F1*(*ref_data2)[BChk(uY,ymax2)][BChk(uX,xmax2)]+
-								F2*(*ref_data2)[BChk(uY+1,ymax2)][BChk(uX,xmax2)] + 2)>>2;
-						temp++;
-						temp>>=1;
-						dparams.cost.SAD+=abs(tempdiff[y][x]-temp);
-					}
-				}
-			}
-		}
-		else if(rmdr2.y%4 == 0){
- 			//Can copy in y direction but need to interpolate in x
-			if(rmdr2.x%2 == 0){
-				for(int uY = RefStart2.y, y=0; y < dparams.yl; uY += 2,++y){
-					for(int uX = RefStart2.x, x=0; x < dparams.xl; uX += 2,++x){
-						temp = ((*ref_data2)[BChk(uY,ymax2)][BChk(uX,xmax2)]+
-								(*ref_data2)[BChk(uY,ymax2)][BChk(uX+1,xmax2)] + 1)>>1;
-						temp++;
-						temp>>=1;
-						dparams.cost.SAD+=abs(tempdiff[y][x]-temp);
-					}
-				}
-			}
-			else{
- 				//Need to do 1/4, 3/4 weighting.
-				int F1, F2;
- 				//Decide which quarter of the x range we are in
-				if(rmdr2.x%4 > 1){
-					F2 = 3; F1 = 1;
-				}
-				else{
-					F1 = 3; F2 = 1;
-				}
- 				//Interpolate in-between the pixels in the x direction.
-				for(int uY = RefStart2.y, y=0; y < dparams.yl; uY += 2,++y){
-					for(int uX = RefStart2.x, x=0; x < dparams.xl; uX += 2,++x){
-						temp = (F1*(*ref_data2)[BChk(uY,ymax2)][BChk(uX,xmax2)]+
-								F2*(*ref_data2)[BChk(uY,ymax2)][BChk(uX+1,xmax2)] + 2)>>2;
-						temp++;
-						temp>>=1;
-						dparams.cost.SAD+=abs(tempdiff[y][x]-temp);
-					}
-				}
-			}
-		}
-	}
-	else{
-		int PixLookup;//which of the nine centre points we're in
-		if(rmdr2.x%2 == 0){
-			if(rmdr2.y%2 == 0) PixLookup = 4;
-			if(rmdr2.y%4 == 3) PixLookup = 7;
-			else PixLookup = 1;
-		}
-		else if (rmdr2.x%4==1){
-			if(rmdr2.y%2==0) PixLookup = 3;
-			if(rmdr2.y%4 == 3) PixLookup = 6;
-			else PixLookup = 0;
-		}
-		else {//rmdr.x%4==3
-			if(rmdr2.y%2==0) PixLookup = 5;
-			if(rmdr2.y%4 == 3) PixLookup = 8;
-			else PixLookup = 2;
-		}
-		for(int uY = RefStart2.y, y=0; y < dparams.yl; uY += 2,++y){
-			for(int uX = RefStart2.x, x=0; x < dparams.xl; uX += 2,++x){
+	for(int c = StartPos.y, uY1 = RefStart1.y,uY2=RefStart2.y; c < EndPos.y; ++c, uY1 += 2,uY2 += 2){
+		for(int l = StartPos.x, uX1 = RefStart1.x,uX2=RefStart2.x; l < EndPos.x; ++l, uX1 += 2, uX2 += 2){
+			temp=(TLweight1*(*ref_data)[BChk(uY1,ymax1)][BChk(uX1,xmax1)] +
+					TRweight1*(*ref_data)[BChk(uY1,ymax1)][BChk(uX1+1,xmax1)] +
+					BLweight1*(*ref_data)[BChk(uY1+1,ymax1)][BChk(uX1,xmax1)] +
+					BRweight1*(*ref_data)[BChk(uY1+1,ymax1)][BChk(uX1+1,xmax1)]+16)>>5;
 
-				temp = (InterpLookup[PixLookup][0]*(*ref_data2)[BChk(uY,ymax2)][BChk(uX,xmax2)] +
-						InterpLookup[PixLookup][1]*(*ref_data2)[BChk(uY,ymax2)][BChk(uX+1,xmax2)] +
-						InterpLookup[PixLookup][2]*(*ref_data2)[BChk(uY+1,ymax2)][BChk(uX,xmax2)] +
-						InterpLookup[PixLookup][3]*(*ref_data2)[BChk(uY+1,ymax2)][BChk(uX+1,xmax2)] +
-						8)>>4;
-				temp++;
-				temp>>=1;
-				dparams.cost.SAD+=abs(tempdiff[y][x]-temp);
-			}
-		}
-	}	
-	dparams.cost.total=dparams.cost.SAD+dparams.cost.mvcost;		
+			temp+=(TLweight2*(*ref_data2)[BChk(uY2,ymax2)][BChk(uX2,xmax2)] +
+					TRweight2*(*ref_data2)[BChk(uY2,ymax2)][BChk(uX2+1,xmax2)] +
+					BLweight2*(*ref_data2)[BChk(uY2+1,ymax2)][BChk(uX2,xmax2)] +
+					BRweight2*(*ref_data2)[BChk(uY2+1,ymax2)][BChk(uX2+1,xmax2)]+16)>>5;
+
+			dparams.cost.SAD+=abs((*pic_data)[c][l]-temp);
+		}//l
+	}//c	
+
+	dparams.cost.total=dparams.cost.SAD+dparams.cost.mvcost;
 }

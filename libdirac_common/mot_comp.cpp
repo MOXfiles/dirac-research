@@ -38,8 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-21 14:17:00  tjdwave
-* Fixed bug with erroneous linear interpolation for sub-pixel values.
+* Revision 1.5  2004-05-24 12:38:55  tjdwave
+* Replaced spagetti code for linear interpolation in motion compensation
+* and motion estimation routines with simple loops. Code is much clearer,
+* although possibly slightly slower.
 *
 * Revision 1.3  2004/05/19 09:16:48  tjdwave
 * Replaced zero-padding with edge-padding to eliminate colour-fringeing at low bitrates. Mod to set padded values to 0 when compensating frames.
@@ -75,24 +77,17 @@ using std::vector;
 //motion estimation. Creates the necessary arithmetic objects and
 //calls ReConfig to create weighting blocks to fit the values within
 //cparams.
-MotionCompensator::MotionCompensator(const CodecParams &cp): cparams(cp),luma_or_chroma(true), add_or_sub(SUBTRACT){
+MotionCompensator::MotionCompensator(const CodecParams &cp): 
+cparams(cp),
+luma_or_chroma(true),
+add_or_sub(SUBTRACT)
+{
 
 	//Arithmetic objects to avoid code duplication
 	add = new ArithAddObj;
 	subtract = new ArithSubtractObj;
 	addhalf = new ArithHalfAddObj;
 	subtracthalf = new ArithHalfSubtractObj;
-
-	//Lazy way of initialising the lookup table - must be a more consise way?
-	InterpLookup[0][0] = 9; InterpLookup[0][1] = 3; InterpLookup[0][2] = 3; InterpLookup[0][3] = 1;
-	InterpLookup[1][0] = 6; InterpLookup[1][1] = 6; InterpLookup[1][2] = 2; InterpLookup[1][3] = 2;
-	InterpLookup[2][0] = 3; InterpLookup[2][1] = 9; InterpLookup[2][2] = 1; InterpLookup[2][3] = 3;
-	InterpLookup[3][0] = 6; InterpLookup[3][1] = 2; InterpLookup[3][2] = 6; InterpLookup[3][3] = 2;
-	InterpLookup[4][0] = 4; InterpLookup[4][1] = 4; InterpLookup[4][2] = 4; InterpLookup[4][3] = 4;
-	InterpLookup[5][0] = 2; InterpLookup[5][1] = 6; InterpLookup[5][2] = 2; InterpLookup[5][3] = 6;
-	InterpLookup[6][0] = 3; InterpLookup[6][1] = 1; InterpLookup[6][2] = 9; InterpLookup[6][3] = 3;
-	InterpLookup[7][0] = 2; InterpLookup[7][1] = 2; InterpLookup[7][2] = 6; InterpLookup[7][3] = 6;
-	InterpLookup[8][0] = 1; InterpLookup[8][1] = 3; InterpLookup[8][2] = 3; InterpLookup[8][3] = 9;
 
 	//Configure weighting blocks for the first time
 	BlockWeights = NULL;
@@ -215,6 +210,7 @@ void MotionCompensator::CompensateComponent
 	PredMode block_mode;
 	ValueType dc;
 
+	//Coords of the top-left corner of a block
 	ImageCoords Pos;
 
 	//Set-up our blocksize and store the size of the image
@@ -227,13 +223,12 @@ void MotionCompensator::CompensateComponent
 	CalcValueType** WeightIndex;
 
 	//Loop over all the block rows
-	for(int yBlock = 0; yBlock < cparams.Y_NUMBLOCKS; ++yBlock){
 
+	Pos.y=-bparams.YOFFSET;
+	for(int yBlock = 0; yBlock < cparams.Y_NUMBLOCKS; ++yBlock){
+		Pos.x=-bparams.XOFFSET;
 		//loop over all the blocks in a row
-		for(int xBlock = 0; xBlock < cparams.X_NUMBLOCKS; ++xBlock){
-			//Calculate which part of the image we are writing to.
-			Pos.x = (xBlock * bparams.XBSEP) - bparams.XOFFSET;
-			Pos.y = (yBlock * bparams.YBSEP) - bparams.YOFFSET;
+		for(int xBlock = 0 ; xBlock < cparams.X_NUMBLOCKS; ++xBlock){
 
 			//Decide which weights to use.
 			if((xBlock != 0)&&(xBlock < cparams.X_NUMBLOCKS - 1)){
@@ -258,7 +253,7 @@ void MotionCompensator::CompensateComponent
 			block_mode=mode_array[yBlock][xBlock];
 			mv1=mv1array[yBlock][xBlock];
 			mv2=mv2array[yBlock][xBlock];
-			dc=dcarray[yBlock][xBlock]<<2;//DC is only given 8 bits
+			dc=dcarray[yBlock][xBlock]<<2;//DC is only given 8 bits, so need to shift to get 10-bit data
 			if(block_mode == REF1_ONLY){
 				if(add_or_sub==ADD) arith = add;
 				else arith = subtract;
@@ -280,6 +275,9 @@ void MotionCompensator::CompensateComponent
 				else arith = subtract;
 				DCBlock(pic_data, dc,Pos, WeightIndex);
 			}
+
+			//Increment the block horizontal position
+			Pos.x+=bparams.XBSEP;
 		}//xBlock
 		//Okay, we've done all the actual blocks. Now if the picture is further padded
 		//we need to set the padded values to zero beyond the last block in the row,
@@ -291,6 +289,9 @@ void MotionCompensator::CompensateComponent
 				}//x
 			}//y
 		}//?add_or_sum
+
+		//Increment the block vertical position
+		Pos.y+=bparams.YBSEP;
 	}//yBlock
 
 	//Finally, now we've done all the blocks, we must set all padded lines below the last row equal to 0
@@ -308,46 +309,33 @@ void MotionCompensator::CompensateBlock(PicArray &pic_data, const PicArray &refu
 const ImageCoords Pos, CalcValueType** Weights){
 
 	//Coordinates in the image being written to.
-	ImageCoords StartPos;
-	ImageCoords EndPos;
+	const ImageCoords StartPos(std::max(Pos.x,0),std::max(Pos.y,0));
+	const ImageCoords EndPos(std::min(Pos.x + xBlockSize,ImageWidth),std::min(Pos.y + yBlockSize,ImageHeight));
+
 	//The difference between the desired start point
 	//Pos and the actual start point StartPos.
-	ImageCoords Difference;
-	//Where to start in the upconverter image
-	ImageCoords RefStart;
-	//Temporary Variable.
-	ValueType temp;
+	const ImageCoords Difference(StartPos.x - Pos.x,StartPos.y - Pos.y);
 
-	//Firstly, check to see if Pos is inside the image.
-	//Lower bounds
-	if(Pos.x < 0) StartPos.x = 0;
-	else StartPos.x = Pos.x;
-	Difference.x = StartPos.x - Pos.x;
+	//Set up the start point in the reference image by rounding the motion vector
+	//NB: bit shift rounds negative values DOWN, as required
+	const MVector roundvec(Vec.x>>2,Vec.y>>2);
 
-	if(Pos.y < 0) StartPos.y = 0;
-	else StartPos.y = Pos.y;
-	Difference.y = StartPos.y - Pos.y;
+	//Get the remainder after rounding. NB rmdr values always 0,1,2 or 3
+	const MVector rmdr(Vec.x-(roundvec.x<<2),Vec.y-(roundvec.y<<2));
 
-	//Higher bounds - just need to set EndPos
-	EndPos.x = Pos.x + xBlockSize;
-	if(EndPos.x > ImageWidth) EndPos.x = ImageWidth;
-	EndPos.y = Pos.y + yBlockSize;
-	if(EndPos.y > ImageHeight) EndPos.y = ImageHeight;
+	//Where to start in the upconverted image
+	const ImageCoords RefStart((StartPos.x<<1) + roundvec.x,(StartPos.y<<1) + roundvec.y);
 
-	//Set up the start point in the reference image.
-	MVector roundvec,rmdr;
-
-	roundvec.x=Vec.x>>2;//bit shift NB rounds negative
-	roundvec.y=Vec.y>>2;//numbers DOWN, as required
-	rmdr.x=Vec.x-(roundvec.x<<2);
-	rmdr.y=Vec.y-(roundvec.y<<2);	
-	RefStart.x = (StartPos.x<<1) + roundvec.x;
-	RefStart.y = (StartPos.y<<1) + roundvec.y;
+	//weights for doing linear interpolation, calculated from the remainder values
+	const ValueType TLweight((4-rmdr.x)*(4-rmdr.y));
+	const ValueType TRweight(rmdr.x*(4-rmdr.y));
+	const ValueType BLweight((4-rmdr.x)*rmdr.y);
+	const ValueType BRweight(rmdr.x*rmdr.y);
 
 	//An additional stage to make sure the block to be copied does not fall outside
 	//the reference image.
-	int DoubleXdim = ImageWidth * 2;
-	int DoubleYdim = ImageHeight * 2;
+	const int DoubleXdim = ImageWidth * 2;
+	const int DoubleYdim = ImageHeight * 2;
 	bool DoBoundsChecking = false;
 
 	//Check if there are going to be any problems copying the block from
@@ -357,281 +345,56 @@ const ImageCoords Pos, CalcValueType** Weights){
 	if(RefStart.y < 0) DoBoundsChecking = true;
 	else if(RefStart.y + ((EndPos.y - StartPos.y)<<1) >= DoubleYdim) DoBoundsChecking = true;
 
-	//If we need to do bounds checking we can use an alternative version
-	//of the following routines and leave these optimised 'unsafe' ones.
+	//Temporary Variable.
+	CalcValueType temp;
+
 
 	if(!DoBoundsChecking){
-		if((rmdr.x%4 == 0)&&(rmdr.y%4 == 0)){
-		//Quick process where we can just copy from the double size image.
-			for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
-				for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
-					arith->DoArith(pic_data[c][l],CalcValueType(refup_data[uY][uX]),Weights[wY][wX]);
-				}
-			}
-		}
+		for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
+			for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
 
-		else if((rmdr.x%4 == 0)||(rmdr.y%4 == 0)){
+				temp = (TLweight*refup_data[uY][uX] +
+						TRweight*refup_data[uY][uX+1] +
+						BLweight*refup_data[uY+1][uX] +
+						BRweight*refup_data[uY+1][uX+1] +
+						8)>>4;
 
-			//Slower process where pixels are calculated from two other pixels
-			if(rmdr.x%4 == 0){
-			//Can copy in x direction but need to interpolate in y
-				if(rmdr.y%2 == 0){
-					for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
-						for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
-							temp = (refup_data[uY][uX]+refup_data[uY+1][uX] + 1)>>1;
-							arith->DoArith(pic_data[c][l],CalcValueType(temp),Weights[wY][wX]);
-						}
-					}
-				}
-				else{
-				//Need to do 1/4, 3/4 weighting.
-					int F1, F2;
-				//Decide which quarter of the y range we are in
-					if(rmdr.y%4 > 1){
-						F2 = 3;
-						F1 = 1;
-					}
-					else{
-						F1 = 3;
-						F2 = 1;
-					}
-				//Interpolate in-between the pixels in the y direction.
-					for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
-						for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
-							temp = (F1*refup_data[uY][uX]+F2*refup_data[uY+1][uX] + 2)>>2;
-							arith->DoArith(pic_data[c][l],CalcValueType(temp),Weights[wY][wX]);
-						}
-					}
-				}
-			}
-			else if(rmdr.y%4 == 0){
-			//Can copy in x direction but need to interpolate in y
-				if(rmdr.x%2 == 0){
-					for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
-						for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
-							temp = (refup_data[uY][uX]+refup_data[uY][uX+1] + 1)>>1;
-							arith->DoArith(pic_data[c][l],CalcValueType(temp),Weights[wY][wX]);
-						}
-					}
-				}
-				else{
-				//Need to do 1/4, 3/4 weighting.
-					int F1, F2;
-				//Decide which quarter of the y range we are in
-					if(rmdr.x%4 > 1){
-						F2 = 3;
-						F1 = 1;
-					}
-					else{
-						F1 = 3;
-						F2 = 1;
-					}
-				//Interpolate in-between the pixels in the y direction.
-					for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
-						for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
-							temp = (F1*refup_data[uY][uX]+F2*refup_data[uY][uX+1] + 2)>>2;
-							arith->DoArith(pic_data[c][l],CalcValueType(temp),Weights[wY][wX]);
-						}
-					}
-				}
-			}
-		}
-		else{
-		//This is the slowest process of all - each pixel is calculated from
-		//four others :(
-
-		// A . . . B
-		// . 0 1 2 .
-		// . 3 4 5 .
-		// . 6 7 8 .
-		// C . . . D
-
-		//Assuming that we are already in the correct quadrant....
-		//Can easily figure out which number we are dealing with.
-
-			int PixLookup;
-
-			if(rmdr.x%2 == 0){
-				if(rmdr.y%2 == 0) PixLookup = 4;
-				else if(rmdr.y%4 == 3) PixLookup = 7;
-				else PixLookup = 1;
-			}
-			else if (rmdr.x%4 == 1){
-				if(rmdr.y%2 == 0) PixLookup = 3;
-				else if(rmdr.y%4 == 3) PixLookup = 6;
-				else PixLookup = 0;
-			}
-			else{ //rmdr.x%4 ==3
-				if(rmdr.y%2 == 0) PixLookup = 5;
-				else if(rmdr.y%4 == 3) PixLookup = 8;
-				else PixLookup = 2;
-			}
-
-			for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
-				for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
-
-					temp = (InterpLookup[PixLookup][0]*refup_data[uY][uX] +
-							InterpLookup[PixLookup][1]*refup_data[uY][uX+1] +
-							InterpLookup[PixLookup][2]*refup_data[uY+1][uX] +
-							InterpLookup[PixLookup][3]*refup_data[uY+1][uX+1] +
-							8)>>4;
-					arith->DoArith(pic_data[c][l],CalcValueType(temp),Weights[wY][wX]);
-				}
-			}
-		}
+				arith->DoArith(pic_data[c][l],CalcValueType(temp),Weights[wY][wX]);
+			}//l
+		}//c
 	}
-
-	//These routines are similar to those above but perform bounds checking
-	//and edge extension.
 	else{
-		if((rmdr.x%4 == 0)&&(rmdr.y%4 == 0)){
-		//Quick process where we can just copy from the double size image.
-			for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
-				for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
-					arith->DoArith(pic_data[c][l],CalcValueType(refup_data[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)]),Weights[wY][wX]);
-				}
-			}
-		}
+     	//We're doing bounds checking because we'll fall off the edge of the reference otherwise.
 
-		else if((rmdr.x%4 == 0)||(rmdr.y%4 == 0)){
+		for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y,BuY=BChk(uY,DoubleYdim),BuY1=BChk(uY+1,DoubleYdim);
+			c < EndPos.y; ++c, ++wY, uY += 2,BuY=BChk(uY,DoubleYdim),BuY1=BChk(uY+1,DoubleYdim)){
+			for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x,BuX=BChk(uX,DoubleXdim),BuX1=BChk(uX+1,DoubleXdim);
+				l < EndPos.x; ++l, ++wX, uX += 2,BuX=BChk(uX,DoubleXdim),BuX1=BChk(uX+1,DoubleXdim)){
 
-		//Slower process where pixels are calculated from two other pixels
-			if(rmdr.x%4 == 0){
-			//Can copy in x direction but need to interpolate in y
-				if(rmdr.y%2 == 0){
-					for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
-						for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
-							temp = (refup_data[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)]+refup_data[BChk(uY+1,DoubleYdim)][BChk(uX,DoubleXdim)] + 1)>>1;
-							arith->DoArith(pic_data[c][l],CalcValueType(temp),Weights[wY][wX]);
-						}
-					}
-				}
-				else{
-				//Need to do 1/4, 3/4 weighting.
-					int F1, F2;
-				//Decide which quarter of the y range we are in
-					if(rmdr.y%4 > 1){
-						F2 = 3;
-						F1 = 1;
-					}
-					else{
-						F1 = 3;
-						F2 = 1;
-					}
-				//Interpolate in-between the pixels in the y direction.
-					for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
-						for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
-							temp = (F1*refup_data[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)]+F2*refup_data[BChk(uY+1,DoubleYdim)][BChk(uX,DoubleXdim)] + 2)>>2;
-							arith->DoArith(pic_data[c][l],CalcValueType(temp),Weights[wY][wX]);
-						}
-					}
-				}
-			}
-			else if(rmdr.y%4 == 0){
-			//Can copy in y direction but need to interpolate in x
-				if(rmdr.x%2 == 0){
-					for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
-						for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
-							temp = (refup_data[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)]+refup_data[BChk(uY,DoubleYdim)][BChk(uX+1,DoubleXdim)] + 1)>>1;
-							arith->DoArith(pic_data[c][l],CalcValueType(temp),Weights[wY][wX]);
-						}
-					}
-				}
-				else{
-				//Need to do 1/4, 3/4 weighting.
-					int F1, F2;
-				//Decide which quarter of the y range we are in
-					if(rmdr.x%4 > 1){
-						F2 = 3;
-						F1 = 1;
-					}
-					else{
-						F1 = 3;
-						F2 = 1;
-					}
-				//Interpolate in-between the pixels in the x direction.
-					for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
-						for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
-							temp = (F1*refup_data[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)]+F2*refup_data[BChk(uY,DoubleYdim)][BChk(uX+1,DoubleXdim)] + 2)>>2;
-							arith->DoArith(pic_data[c][l],CalcValueType(temp),Weights[wY][wX]);
-						}
-					}
-				}
-			}
-		}
-		else{
-		//This is the slowest process of all - each pixel is calculated from
-		//four others :(
+				temp = (TLweight*refup_data[BuY][BuX] +
+						TRweight*refup_data[BuY][BuX1]  +
+						BLweight*refup_data[BuY1][BuX]+
+						BRweight*refup_data[BuY1][BuX1] +
+						8)>>4;
+				arith->DoArith(pic_data[c][l],CalcValueType(temp),Weights[wY][wX]);
+			}//l
+		}//c
 
-		// A . . . B
-		// . 0 1 2 .
-		// . 3 4 5 .
-		// . 6 7 8 .
-		// C . . . D
-
-		//Assuming that we are already in the correct quadrant....
-		//Can easily figure out which number we are dealing with.
-
-			int PixLookup;
-
-			if(rmdr.x%2 == 0){
-				if(rmdr.y%2 == 0) PixLookup = 4;
-				else if(rmdr.y%4 == 3) PixLookup = 7;
-				else PixLookup = 1;
-			}
-			else if (rmdr.x%4 == 1){
-				if(rmdr.y%2 == 0) PixLookup = 3;
-				else if(rmdr.y%4 == 3) PixLookup = 6;
-				else PixLookup = 0;
-			}
-			else{ //rmdr.x%4 ==3
-				if(rmdr.y%2 == 0) PixLookup = 5;
-				else if(rmdr.y%4 == 3) PixLookup = 8;
-				else PixLookup = 2;
-			}
-
-			for(int c = StartPos.y, wY = Difference.y, uY = RefStart.y; c < EndPos.y; ++c, ++wY, uY += 2){
-				for(int l = StartPos.x, wX = Difference.x, uX = RefStart.x; l < EndPos.x; ++l, ++wX, uX += 2){
-					temp = (InterpLookup[PixLookup][0]*refup_data[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)] +
-							InterpLookup[PixLookup][1]*refup_data[BChk(uY,DoubleYdim)][BChk(uX+1,DoubleXdim)] +
-							InterpLookup[PixLookup][2]*refup_data[BChk(uY+1,DoubleYdim)][BChk(uX,DoubleXdim)] +
-							InterpLookup[PixLookup][3]*refup_data[BChk(uY+1,DoubleYdim)][BChk(uX+1,DoubleXdim)] +
-							8)>>4;
-					arith->DoArith(pic_data[c][l],CalcValueType(temp),Weights[wY][wX]);
-				}
-			}
-		}
 	}
+
 }
 
-
-void MotionCompensator::DCBlock(PicArray &pic_data,ValueType dc, ImageCoords Pos, CalcValueType** Weights){
+void MotionCompensator::DCBlock(PicArray &pic_data,const ValueType dc, const ImageCoords Pos, CalcValueType** Weights){
 
 	//Coordinates in the image being written to.
-	ImageCoords StartPos;
-	ImageCoords EndPos;
+	const ImageCoords StartPos(std::max(0,Pos.x),std::max(0,Pos.y));
+	const ImageCoords EndPos(std::min(Pos.x + xBlockSize,ImageWidth),std::min(Pos.y + yBlockSize,ImageHeight));
+
 	//The difference between the desired start point
 	//Pos and the actual start point StartPos.
-	ImageCoords Difference;
+	const ImageCoords Difference(StartPos.x - Pos.x,StartPos.y - Pos.y);
 
-	//Firstly, check to see if Pos is inside the image.
-	//Lower bounds
-	if(Pos.x < 0) StartPos.x = 0;
-	else StartPos.x = Pos.x;
-	Difference.x = StartPos.x - Pos.x;
-
-	if(Pos.y < 0) StartPos.y = 0;
-	else StartPos.y = Pos.y;
-	Difference.y = StartPos.y - Pos.y;
-
-	//Higher bounds - just need to set EndPos
-	EndPos.x = Pos.x + xBlockSize;
-	if(EndPos.x > ImageWidth) EndPos.x = ImageWidth;
-	EndPos.y = Pos.y + yBlockSize;
-	if(EndPos.y > ImageHeight) EndPos.y = ImageHeight;
-
-
-		//Quick process where we can just copy from the double size image.
+	//Quick process where we can just copy from the double size image.
 	for(int c = StartPos.y, wY = Difference.y; c < EndPos.y; ++c, ++wY){
 		for(int l = StartPos.x, wX = Difference.x; l < EndPos.x; ++l, ++wX){
 			arith->DoArith(pic_data[c][l],CalcValueType(dc),Weights[wY][wX]);

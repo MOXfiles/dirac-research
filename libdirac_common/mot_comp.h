@@ -38,7 +38,12 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-05-24 12:38:55  tjdwave
+* Replaced spagetti code for linear interpolation in motion compensation
+* and motion estimation routines with simple loops. Code is much clearer,
+* although possibly slightly slower.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -116,7 +121,6 @@ private:
 	//Do an individual block
 	void CompensateBlock(PicArray &pic_data, const PicArray &refup_data, const MVector &Vec, const ImageCoords Pos, CalcValueType** Weights);
 	void DCBlock(PicArray &pic_data,const ValueType dc, const ImageCoords Pos, CalcValueType** Weights);	
-	int InterpLookup[9][4];//A lookup table to simplify the 1/8 pixel accuracy code
 	void ReConfig();		//Recalculates the weight matrix and stores other key block related parameters.
 
 	//variables	
@@ -126,12 +130,12 @@ private:
 	ArithObj* add;			//Particular arith obj
 	ArithObj* subtract;		//ditto
 	ArithObj* subtracthalf;	//ditto
-	ArithObj* addhalf;		//ditto
-	CalcValueType*** BlockWeights;			//My weighting block to allow overlapping blocks
+	ArithObj* addhalf;		//dittoCalcValueType*** BlockWeights;			//My weighting block to allow overlapping blocks
 	AddOrSub add_or_sub;					//Motion compensated Addition/Subtraction flag
 
 	//Image and block information
 	OLBParams bparams;	//either luma or chroma block parameters
+	CalcValueType*** BlockWeights;
 	int	xBlockSize,yBlockSize;
 	int ImageWidth;
 	int ImageHeight;
