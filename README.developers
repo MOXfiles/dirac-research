@@ -222,6 +222,13 @@ II. Coding Style
    {
    }
 
+--  Use of Namespaces
+
+ - All core Dirac functionality must be in the namespace dirac.
+ - All other functionality must be defined in a namespace of its own. E.g.
+   conversion utilities are in the namespace dirac_vu, instrumentation utilities
+   are in the namespace dirac_instr.
+
 --  General naming standards
 
  - Local variables are lowercase and use underscores to separate words.
@@ -333,6 +340,9 @@ IV. Testing with "make check"
   adding functionality.  When adding a new feature, expect to be asked
   "Where's the test?"
 
+  A new target 'valgrind-check' has been included which uses valgrind, if 
+  available, to check for memory leaks, uninitialised memory reads, invalid
+  writes etc.
 
 7. Profiling & optimisation
 ---------------------------
@@ -368,16 +378,15 @@ should be followed:
 Profiling can be supported by adding the following parameter to ./configure
 before building:
 
-CXXFLAGS='-pg -Ox [other flags]'
+--enable-profile
 
-where x is the required level of optimisation. The code can then be profiled
-by, for example, gprof.
+The code can then be profiled by, for example, gprof.
 
 
 8. Line-endings
 ---------------
 All source code and documentation will have LF line-endings, include makefiles
-and scripts.  The only exception will be for .dsp and .dsw (and any other
+and scripts.  The only exception will be for .vcproj and .sln (and any other
 WIN32 specific) files which will not function under MS VC++ unless they use
 CR-LF line-endings.
 
@@ -393,5 +402,5 @@ using the add command or admin command:
   cvs add -kb fig1.jpg
   cvs admin -kb fig1.jpg  (for files already in CVS)
 
-MS VC++ project files, such as .dsp and .dsw, fall into this category since
+MS VC++ project files, such as .vcproj and .sln, fall into this category since
 they do not function if their line-endings are not CR-LF.
