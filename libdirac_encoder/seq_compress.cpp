@@ -39,7 +39,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.5  2004-05-12 16:06:20  tjdwave
+* Revision 1.6  2004-05-18 07:46:15  tjdwave
+* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
+*
+* Revision 1.5  2004/05/12 16:06:20  tjdwave
 *
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
@@ -195,12 +198,12 @@ Frame& SequenceCompressor::CompressNextFrame(){
 	//read in the data if necessary and if we can
 
 	for (int I=last_frame_read+1;I<=int(current_display_fnum);++I){
-			//read from the last frame read to date to the current frame to be coded
-			//(which may NOT be the next frame in display order)
-		if (!picIn->End())
-			my_buffer->PushFrame(picIn,I);
-		else
+		//read from the last frame read to date to the current frame to be coded
+		//(which may NOT be the next frame in display order)
+		my_buffer->PushFrame(picIn,I);
+		if (picIn->End()){//if we've read past the end, then should stop
 			all_done=true;
+		}
 		last_frame_read=I;
 	}//I
 
@@ -264,13 +267,17 @@ void SequenceCompressor::WriteStreamHeader(){
 
 int SequenceCompressor::CodedToDisplay(int fnum){
 	int div;
-	if (fnum==0)
-		return 0;
-	else if ((fnum-1)% encparams.L1_SEP==0){//we have L1 or subsequent I frames
-		div=(fnum-1)/encparams.L1_SEP;
-		return fnum+encparams.L1_SEP-1;
+	if (encparams.L1_SEP>0){//we have L1 and L2 frames
+		if (fnum==0)
+			return 0;
+		else if ((fnum-1)% encparams.L1_SEP==0){//we have L1 or subsequent I frames
+			div=(fnum-1)/encparams.L1_SEP;
+			return fnum+encparams.L1_SEP-1;
+		}
+		else//we have L2 frames
+			return fnum-1;
 	}
-	else//we have L2 frames
-		return fnum-1;
+	else{//we just have I-frames, so no re-ordering
+		return fnum;
+	}
 }
-

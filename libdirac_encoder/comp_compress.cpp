@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.5  2004-05-12 08:35:34  tjdwave
+* Revision 1.6  2004-05-18 07:46:15  tjdwave
+* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
+*
+* Revision 1.5  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -158,7 +161,10 @@ void CompCompressor::Compress(PicArray& pic_data){
 		}
 		else{
 			encparams.BIT_OUT->WriteToFile();
-			SetToZero(pic_data,bands(I));				
+			if (I==bands.Length() && fsort==I_frame)
+				SetToVal(pic_data,bands(I),8187);
+			else
+				SetToVal(pic_data,bands(I),0);
 		}		
 	}
 
@@ -242,6 +248,10 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 
 	Subband& node=bands(band_num);
 
+	//Point to start looking for quantisation factors in the qf list.
+	//Quantiser must be at least qflist[qf_start_idx-3]
+	int qf_start_idx=16;
+
 	if (band_num==bands.Length()){
 		AddSubAverage(pic_data,node.Xl(),node.Yl(),SUBTRACT);
 	}
@@ -273,7 +283,8 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 	int yl=node.Yl();
 	float vol;
 
-	if (bandmax==0){
+	if (bandmax<qflist[qf_start_idx-3]){
+		//coefficients are small so the subband can be skipped
 		node.SetQf(0,-1);//indicates that the subband is skipped
 		if (band_num==bands.Length()){
 			AddSubAverage(pic_data,node.Xl(),node.Yl(),ADD);
@@ -294,20 +305,12 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 		count1=int(vol);
 		for (int J=yp+1;J<yp+yl;J+=2){
 			for (int I=xp+((J-yp)%4)/2;I<xp+xl;I+=2){
-				//first do no quant at all i.e. divide by 1
-				val=pic_data[J][I];
 
-				abs_val=abs(val);
-				if (abs_val!=0){
-					count0[0]+=abs_val;
-					if (val>0.0)
-						countPOS[0]++;
-					else
-						countNEG[0]++;
-				}				
-				//now do real quantisation
-				quant_val=abs_val;				
-				for (int Q=4;Q<costs.length(0);Q+=4){
+				val=pic_data[J][I];
+				quant_val=abs(val);
+				abs_val=quant_val;
+
+				for (int Q=qf_start_idx;Q<costs.length(0);Q+=4){
 					quant_val>>=(Q/4);								
 					if (quant_val){
 						count0[Q]+=quant_val;
@@ -329,7 +332,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 		}//I
 
  		//do entropy calculation etc		
-		for (int Q=0;Q<costs.length(0);Q+=4){
+		for (int Q=qf_start_idx;Q<costs.length(0);Q+=4){
 			costs[Q].MSE=error_total[Q]/(vol*node.Wt()*node.Wt());
  		 	//calculate probabilities and entropy
 			p0=float(count0[Q])/float(count0[Q]+count1);
@@ -364,8 +367,8 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 			costs[Q].TOTAL=costs[Q].MSE+lambda*costs[Q].ENTROPY;
 		}
 		//find the qf with the lowest cost
-		min_idx=0;
-		for (int Q=0;Q<costs.length(0);Q+=4) {
+		min_idx=qf_start_idx;
+		for (int Q=qf_start_idx;Q<costs.length(0);Q+=4) {
 			if (costs[Q].TOTAL<costs[min_idx].TOTAL)
 				min_idx=Q;
 		}
@@ -554,12 +557,12 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 
 }
 
-ValueType CompCompressor::PicAbsMax(PicArray& pic_data){
+ValueType CompCompressor::PicAbsMax(const PicArray& pic_data) const{
 	//finds the maximum absolute value of the picture array
 	return PicAbsMax(pic_data,pic_data.lbound(0),pic_data.lbound(1),pic_data.length(0),pic_data.length(1));
 }
 
-ValueType CompCompressor::PicAbsMax(PicArray& pic_data,int xp, int yp ,int xl ,int yl){
+ValueType CompCompressor::PicAbsMax(const PicArray& pic_data,int xp, int yp ,int xl ,int yl) const{
 	int lbound0=std::max(pic_data.lbound(0),xp);	
 	int lbound1=std::max(pic_data.lbound(1),yp);	
 	int ubound0=std::min(pic_data.ubound(0),xp+xl-1);	
@@ -574,10 +577,10 @@ ValueType CompCompressor::PicAbsMax(PicArray& pic_data,int xp, int yp ,int xl ,i
 	return val;
 }
 
-void CompCompressor::SetToZero(PicArray& pic_data,Subband& node){
+void CompCompressor::SetToVal(PicArray& pic_data,const Subband& node,ValueType val){
 	for (int J=node.Yp();J<node.Yp()+node.Yl();++J){	
 		for (int I=node.Xp();I<node.Xp()+node.Xl();++I){
-			pic_data[J][I]=0;
+			pic_data[J][I]=val;
 		}
 	}
 }

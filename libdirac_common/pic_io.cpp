@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.5  2004-05-14 17:25:43  stuart_hc
+* Revision 1.6  2004-05-18 07:46:15  tjdwave
+* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
+*
+* Revision 1.5  2004/05/14 17:25:43  stuart_hc
 * Replaced binary header files with ASCII text format to achieve cross-platform interoperability.
 * Rearranged PicOutput constructor to permit code reuse from picheader/headmain.cpp
 *
@@ -75,7 +78,7 @@
 /**************************************Output***********************************/
 
 PicOutput::PicOutput(const char* output_name, const SeqParams& sp, bool write_header_only)
-						: sparams(sp)
+: sparams(sp)
 {
 	op_head_ptr = NULL;
 	op_pic_ptr = NULL;

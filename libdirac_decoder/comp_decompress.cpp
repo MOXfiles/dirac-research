@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-05-12 08:35:34  tjdwave
+* Revision 1.3  2004-05-18 07:46:15  tjdwave
+* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
+*
+* Revision 1.2  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -103,18 +106,21 @@ void CompDecompressor::Decompress(PicArray& pic_data){
 		}
 		else{
 			(decparams.BIT_IN)->FlushInput();
-			SetToZero(pic_data,bands(I));
+			if (I==bands.Length() && fsort==I_frame)
+				SetToVal(pic_data,bands(I),8187);
+			else
+				SetToVal(pic_data,bands(I),0);
 		}
 	}
 	wtransform.Transform(BACKWARD,pic_data);
 }
 
-void CompDecompressor::SetToZero(PicArray& pic_data,const Subband& node){
+void CompDecompressor::SetToVal(PicArray& pic_data,const Subband& node,ValueType val){
 	for (int J=node.Yp();J<node.Yp()+node.Yl();++J){	
 		for (int I=node.Xp();I<node.Xp()+node.Xl();++I){
-			pic_data[J][I]=0;
-		}//I
-	}//J
+			pic_data[J][I]=val;
+		}
+	}
 }
 
 void CompDecompressor::GenQuantList(){//generates the list of quantisers and inverse quantisers

@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-05-18 07:46:15  tjdwave
+* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -89,15 +92,6 @@ public:
     */
 	void Decompress(PicArray& pic_data);
 
-    //! Sets the data of a specific subband node to zero
-    /*!
-        Zeros the specific subband of a component's data
-
-        \param  pic_data    contains the component data
-        \param  node        subband node
-    */
-	void SetToZero(PicArray& pic_data,const Subband& node);
-
 private:
 	//! Copy constructor is private and body-less
 	/*!
@@ -112,6 +106,17 @@ private:
 
 	*/
 	CompDecompressor& operator=(const CompDecompressor& rhs);
+
+    //! Sets the data of a specific subband node to a given value
+    /*!
+		Sets the data of a specific subband node to a given value
+
+        \param  pic_data    contains the component data
+        \param  node        subband node
+		\param	val			the value to set
+    */
+	void SetToVal(PicArray& pic_data,const Subband& node,ValueType val);
+
 
     //! Generate the list of possible quantisers and inverse quantisers
 	void GenQuantList();

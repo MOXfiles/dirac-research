@@ -144,8 +144,11 @@ public:
 
 	//! Read a new frame into the buffer.
 	/*! 
-		Read a new frame into the buffer from \param picin. Frame parameters associated with the frame
+		Read a new frame into the buffer. Frame parameters associated with the frame
 		will be as given by the frame parameter object.
+
+		\param	picin	the picture input
+		\param	fp		the frame parameters to apply to the frame
 	*/	
 	void PushFrame(PicInput* picin,const FrameParams& fp);
 

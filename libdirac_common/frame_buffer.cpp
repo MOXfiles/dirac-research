@@ -48,7 +48,7 @@ FrameBuffer::FrameBuffer(ChromaFormat cf,int L1sep, int xlen, int ylen):
 fparams(cf,xlen,ylen),
 num_L1(0),
 L1_sep(L1sep),
-gop_len(0){}	
+gop_len(0){}
 
 //Constructor setting GOP parameters for use with a standard GOP
 FrameBuffer::FrameBuffer(ChromaFormat cf,int numL1,int L1sep,int xlen,int ylen): 
@@ -56,8 +56,16 @@ fparams(cf,xlen,ylen),
 num_L1(numL1),
 L1_sep(L1sep)
 {	
-	if (num_L1!=0) gop_len=(num_L1+1)*L1_sep;															
-	else gop_len=0;	
+	if (num_L1>0){//conventional GOP coding
+		gop_len=(num_L1+1)*L1_sep;
+	}
+	else if (num_L1==0){//I-frame only coding
+		gop_len=1;
+		L1_sep=0;
+	}
+	else{ //don't have a proper GOP, only an initial I-frame
+		gop_len=0;
+	}	
 }	
 
 //Copy constructor. Why anyone would need this I don't know.

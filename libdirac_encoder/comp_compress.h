@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-05-18 07:46:15  tjdwave
+* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -83,7 +86,7 @@ public:
     //! Compress a frame component
     /*!
         Compress a PicArray containing a frame component (Y, U, or V).
-        \param  pic_data    contains the component data to be compressed
+        \param  pic_data    the component data to be compressed
     */
 	void Compress(PicArray & pic_data);
 
@@ -114,9 +117,9 @@ private:
 
 	void GenQuantList();
 	int SelectQuant(PicArray& pic_data,SubbandList& bands,int band_num);
-	ValueType PicAbsMax(PicArray& pic_data,int xp, int yp ,int xl ,int yl);
-	ValueType PicAbsMax(PicArray& pic_data);
-	void SetToZero(PicArray& pic_data,Subband& node);
+	ValueType PicAbsMax(const PicArray& pic_data,int xp, int yp ,int xl ,int yl) const;
+	ValueType PicAbsMax(const PicArray& pic_data) const;
+	void SetToVal(PicArray& pic_data,const Subband& node,ValueType val);
 	void AddSubAverage(PicArray& pic_data,int xl,int yl,AddOrSub dirn);
 
 	void Init();

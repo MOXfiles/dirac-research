@@ -145,7 +145,12 @@ L1qf		: ditto for L1 frames
 L2qf		: ditto for remaining frames
 
 Modifying L1_sep and num_L1 allows for new GOP structures to be used, and should be
-entirely safe. Modifying the block parameters is strongly deprecated: it's likely
+entirely safe. There are two non-GOP modes that can also be used for encoding: 
+setting num_L1=0 gives I-frame only coding, and setting num_L1<0 will produce
+a sequence with infinitely many L1 frames i.e. with a single I frame at the
+beginning of the sequence. 
+
+Modifying the block parameters is strongly deprecated: it's likely
 to break the encoder as there are many constraints. Modifying cpd will not break
 anything, but will change the meaning of the various quality factors and will need
 each of Iqf, L1qf and L2qf set experimentally. Setting Iqf, L1qf and L2qf directly

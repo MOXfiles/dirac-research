@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.5  2004-05-12 16:03:32  tjdwave
+* Revision 1.6  2004-05-18 07:46:13  tjdwave
+* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
+*
+* Revision 1.5  2004/05/12 16:03:32  tjdwave
 *
 * Done general code tidy, implementing copy constructors, assignment= and const
 *  correctness for most classes. Replaced Gop class by FrameBuffer class throughout. Added support for frame padding so that arbitrary block sizes and frame
@@ -47,7 +50,10 @@
 * Revision 1.4  2004/05/11 14:17:58  tjdwave
 * Removed dependency on XParam CLI library for both encoder and decoder.
 * $Log$
-* Revision 1.5  2004-05-12 16:03:32  tjdwave
+* Revision 1.6  2004-05-18 07:46:13  tjdwave
+* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
+*
+* Revision 1.5  2004/05/12 16:03:32  tjdwave
 *
 * Done general code tidy, implementing copy constructors, assignment= and const
 *  correctness for most classes. Replaced Gop class by FrameBuffer class throughout. Added support for frame padding so that arbitrary block sizes and frame
@@ -337,6 +343,15 @@ int main (int argc, char* argv[]){
 			}
 		}//opt
 
+		//Now rationalise the GOP options
+		//this stuff should really be done in a constructor!
+		if (encparams.NUM_L1<0){//don't have a proper GOP
+			encparams.L1_SEP=std::max(1,encparams.L1_SEP);
+		}
+		else if (encparams.NUM_L1==0){//have I-frame only coding
+			encparams.L1_SEP=0;
+		}
+
 
   /********************************************************************/
 	     //next do picture file stuff
@@ -400,4 +415,3 @@ int main (int argc, char* argv[]){
 
 	}//?sufficient args?
 }
-
