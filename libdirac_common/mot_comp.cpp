@@ -127,7 +127,7 @@ void MotionCompensator::ReConfig()
     // Create new weights array.
     m_block_weights = new TwoDArray<CalcValueType>[9];
     for(int i = 0; i < 9; i++)
-        m_block_weights[i] = *(new TwoDArray<CalcValueType>(  m_bparams.Yblen() , m_bparams.Xblen() ));
+        m_block_weights[i].Resize(  m_bparams.Yblen() , m_bparams.Xblen() );
 
     // We can create all nine weighting blocks by calculating values
     // for four blocks and mirroring them to generate the others.
@@ -158,7 +158,7 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
     int xscale_factor = 1;
     int yscale_factor = 1;
 
-//
+
     if ( cs != Y_COMP )
     {
         if (m_cformat == format420)
@@ -179,7 +179,6 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 
     } 
 
-//
 
     // Reference to the relevant DC array
     const TwoDArray<ValueType>& dcarray = mv_data.DC( cs );
