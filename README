@@ -1,0 +1,154 @@
+Release notes for Dirac Version 0.1.0
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+For instructions on how to build/install, see the end of this file.
+
+1. Executive Summary
+~~~~~~~~~~~~~~~~~~~~
+
+Dirac is an open source video codec. It uses a traditional hybrid video codec
+architecture, but with the wavelet transform instead of the usual block transforms.
+Motion compensation uses overlapped blocks to reduce block artefacts that
+would upset the transform coding stage.
+
+Dirac can code just about any size of video, from streaming up to HD and beyond,
+although certain presets are defined for different applications and standards.
+These cover the parameters that need to be set for the encoder to work, such as
+block sizes and temporal prediction structures, which must otherwise be set by
+hand.
+
+Dirac is intended to develop into real coding and decoding software, capable of
+plugging into video processing applications and media players that need 
+compression. It is intended to develop into a simple set of reliable but effective 
+coding tools that work over a wide variety of content and formats, using well-understood
+compression techniques, in a clear and accessible software structure. It is not intended 
+as a demonstration or reference coder.
+
+2. Documentation
+~~~~~~~~~~~~~~~~
+
+A user guide and a guide to the software is in progress. More details on running
+the codec can be found at http://www.bbc.co.uk/rd/projects/dirac.
+
+3. Building and installing
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+To install from a tar.gz distribution:
+
+  1. Run ./configure, with some options if you wish. The standard
+     options are documented in the INSTALL file.  The only interesting
+     one is the usual --prefix=/where/you/want/it/installed.
+
+  2. Do "make".
+
+  3. Do "make install", possibly as root if the destination permissions
+     require that.
+
+NB. To run the example coder and decoder programs requires the XParam library
+for command-line handling to be installed. This may be obtained from
+http://xparam.sourceforge.net. The configure script does not check for the
+presence of XParam as yet - be warned!
+
+4. Running the example programs
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+4.1 File formats
+
+The example coder and decoder use a temporary file format which consists of
+raw 8-bit planar YUV data together with a header file. This means that data
+is stored bytewise, with a frame of Y followed by a frame of U followed by
+a frame of V, all scanned in the usual raster order. The header records the
+picture dimensions, which are taken to be those of the luminance or Y
+component, and other metadata. The other metadata consists of the chroma
+format, the frame rate in Hertz, a flag indicating interlace and, if interlace,
+a flag indicating whether the interlace is top-field first. The interlace flags
+are currently ignored as no special coding tools have been developed. The chroma
+format setting records whether the video is sampled 4:4:4, 4:2:2, 4:1:1 or 4:2:0,
+and is essential. The frame rate setting is used to calculate bit-rate for the
+encoder, and display rate for the decoder, and if omitted a rate of 12Hz is assumed.
+
+Raw YUV is commonly used in video codec standardisation processes, although
+the chroma format is often restricted to 4:2:0. The provision of an additional
+header file is unusual, however. For this reason the make_header tool is provided.
+This writes a header file with the appropriate parameters input from the command
+line. (NB, make_header also requires the XParam library).
+
+Example. Write a header to accompany a raw data file test.yuv. The video has
+dimensions 352 x 288 pixels x 260 frames long, is in 4:2:2 format and not
+interlaced, and has a frame-rate of 15Hz.
+
+Solution
+
+make_header output=test xl=352 yl=288 zl=260 cformat=format422 framerate=15 interlace=false
+
+This writes test.hdr with the right parameters.
+
+XParam allows for parameters to be abbreviated, so one could also have written
+
+make_header o=test xl=352 yl=288 zl=260 cf=format422 fr=15 i=false
+
+4.2 Encoding
+
+There are a large number of parameters that can be used to run the encoder,
+all of which are listed below, and which are set using the same XParam
+notation as for make_header. However, things are simplified by using presets
+for different applications. These set such things as block sizes and overlaps
+for motion estimation and compensation (the codec used overlapped blocks),
+and psychovisual weighting. They also define the context in which other parameters
+like quality factors, operate. The presets are:
+
+stream 	: for CIF and QCIF video
+SD576	: for standard definition video
+HD720p	: for 1280x720 High Definition progressive video
+HD1080	: for 1920/1440x1080 High Definition progressive video [not yet supported]
+
+The other useful parameter is the quality factor qf. This reduces quality the larger
+the value, and qf=30 gives moderate quality video.
+
+Simple coding example. Code an SD sequence to high quality.
+
+Solution.
+
+dirac_encoder SD576=true qf=20 i=test o=test_out
+
+will read test.yuv and test.hdr as input, and output a compressed bitstream test_out.drc
+as well as locally-decoded files test_out.yuv and test_out.hdr.
+
+Other parameters.
+
+verbose		: turn on verbosity (if you don't, you won't see the final bitrate!)
+L1_sep		: the separation between L1 frames (frames that are predicted but also
+			used as reference frames, like P frames in MPEG-2)
+num_L1		: the number of L1 frames before the next intra frame
+xblen		: the width of blocks used for motion compensation
+yblen		: the height of blocks used for motion compensation
+xbsep		: the horizontal separation between blocks. Always <xblen
+ybsep		: the vertical separation between blocks. Always <yblen
+cpd		: normalised viewing distance parameter, in cycles per degree.
+Iqf		: quality factor for Intra frames
+L1qf		: ditto for L1 frames
+L2qf		: ditto for remaining frames
+
+Modifying L1_sep and num_L1 allows for new GOP structures to be used, and should be
+entirely safe. Modifying the block parameters is strongly deprecated: it's likely
+to break the encoder as there are many constraints. Modifying cpd will not break
+anything, but will change the meaning of the various quality factors and will need
+each of Iqf, L1qf and L2qf set experimentally. Setting Iqf, L1qf and L2qf directly
+is very possible, and may be suitable for some sequences.
+
+NB: qf, Iqf etc are not really a quality factor, but rate-distortion trade-off
+parameters, and so setting them to particular values doesn't guarantee a given
+quality.
+
+4.3 Decoding
+
+Decoding is much simpler. Just point the decoder input at the bitstream and the
+output to a file:
+
+dirac_decoder verbose=true i=test_enc o=test_dec
+
+will decode into test_dec.{yuv,hdr} with running commentary.
+
+Thomas Davies
+(dirac@rd.bbc.co.uk)
+
+10 March 2004

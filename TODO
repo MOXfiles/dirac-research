@@ -1,0 +1,59 @@
+TO DO
+~~~~~
+
+Last updated 11 March 2004
+
+The list covers both software and algorithmic issues, and is in no particular
+order. See also the website at www.bbc.co.uk/rd/projects/dirac/. If you'd like
+to help us fix these, contact us through dirac@rd.bbc.co.uk.
+
+-- [Ongoing]. Documentation bitstream structure and format.
+
+-- [Ongoing]. Documentation of encoder and decoder algorithms and software.
+
+-- Interlace coding tools, for motion estimation and compensation in particular.
+
+-- Input picture padding to meet wavelet transform and block size constraints. 
+
+-- Remove Gop class and replace with a general FrameBuffer class with frame
+ header giving frame time and prediction parameters. Specify and document frame
+ header structure and supported tools.
+
+-- Support for constant-quality encoding - adaptation of frame Lagrangian
+ parameters to hit a quality target. Collation of perceptually-weighted noise.
+
+-- Separable perceptual modelling module, for separate optimisation.
+
+-- Introduce support for encoder-side intra frame insertion/cut detection.
+
+-- Introduce support for frame skipping - bit stream flag + algorithms, decoder
+ frame repetition, frame numbers and frame expiry times.
+
+-- Speed-up improvements to motion estimation.
+
+-- Global motion estimation and compensation.
+
+-- Revise WaveletTransform, Subband and SubbandList classes, so that subband
+ data is encapsulated by the Subband class rather than packed into a big array
+ representing the whole transform. This should be neater but also faster for
+ entropy coding since memory access for a particular subband will be more local.
+
+-- Bit-depth refactoring to decouple bit-depths for input pictures, stored
+ pictures (including upconverted),motion-compensated residuals and wavelet
+ coefficients. Experiment with 8 bits only for stored and input pictures, which
+ will speed up motion estimation, motion compensation, wavelet transforms and
+ upconversion but may hit compression performance.
+
+-- Further development of wavelet coefficient quantisation tools.
+
+-- Optimise entropy coding context initialisations and resetting for compression
+ efficiency
+
+-- DirectShow filter for compressed file format. Require pull pin, buffering and
+ multitheading.Integrate with MPlayer also.DirectShow filter for uncompressed
+ file format.
+
+-- Subclass picture IO classes to support uncompressed video as multiple
+ numbered files, supporting common image formats (dpx, tiff etc)
+
+-- make executables give help info when invoked with no parameters

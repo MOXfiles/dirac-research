@@ -1,0 +1,11 @@
+#!/bin/sh
+#
+# Extremely basic script to regenerate the autoconf files etc
+#
+# 11th March 2004 Copyright BBC
+
+aclocal
+libtoolize --force --copy
+aclocal
+automake -a --copy
+autoconf
