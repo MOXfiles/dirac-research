@@ -203,6 +203,12 @@
 				RelativePath="..\..\..\libdirac_motionest\downconvert.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_motionest\filter_weighted_local.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\global_motion.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_motionest\me_mode_decn.cpp">
 			</File>
 			<File
@@ -212,10 +218,49 @@
 				RelativePath="..\..\..\libdirac_motionest\me_utils.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_motionest\model_affine.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\model_global_motion.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\model_projective.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_motionest\motion_estimate.cpp">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_motionest\pixel_match.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\refine_motion_vector_field.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_edge.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_intensity.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_local.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_motion_vector_outliers.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_outlier.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_sad.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_value.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\test_global_motion_model.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\test_mv_sad.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -229,6 +274,12 @@
 				RelativePath="..\..\..\libdirac_motionest\downconvert.h">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_motionest\filter_weighted_local.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\global_motion.h">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_motionest\me_mode_decn.h">
 			</File>
 			<File
@@ -238,10 +289,49 @@
 				RelativePath="..\..\..\libdirac_motionest\me_utils.h">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_motionest\model_affine.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\model_global_motion.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\model_projective.h">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_motionest\motion_estimate.h">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_motionest\pixel_match.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\refine_motion_vector_field.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_edge.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_intensity.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_local.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_motion_vector_outliers.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_outlier.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_sad.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\reject_value.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\test_global_motion_model.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_motionest\test_mv_sad.h">
 			</File>
 		</Filter>
 		<Filter
