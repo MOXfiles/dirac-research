@@ -28,12 +28,12 @@ clean-local:
 	if test -f $(TESTSUITE); then \
 		$(SHELL) $(TESTSUITE) --clean; \
 		rm $(TESTSUITE); \
-		rm -f $(srcdir)/testpics/*enc*.drc; \
-		rm -f $(srcdir)/testpics/*enc*.yuv; \
-		rm -f $(srcdir)/testpics/*enc*.hdr; \
-		rm -f $(srcdir)/testpics/*enc*.imt; \
-		rm -f $(srcdir)/testpics/*dec*.yuv; \
-		rm -f $(srcdir)/testpics/*dec*.hdr; \
+		rm -f $(srcdir)/*enc*.drc; \
+		rm -f $(srcdir)/*enc*.yuv; \
+		rm -f $(srcdir)/*enc*.hdr; \
+		rm -f $(srcdir)/*enc*.imt; \
+		rm -f $(srcdir)/*dec*.yuv; \
+		rm -f $(srcdir)/*dec*.hdr; \
 	fi
 
 check-local: atconfig $(TESTSUITE)
