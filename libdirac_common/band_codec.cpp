@@ -50,7 +50,7 @@ BandCodec::BandCodec(BasicOutputManager* bits_out,
     m_xl(m_node.Xl()),
     m_yl(m_node.Yl()),
     m_vol(m_node.Xl()*m_node.Yl()),
-    m_reset_coeff_num(std::max(m_vol/32,50)),
+    m_reset_coeff_num( std::max( 25 , std::min(m_vol/32,800) ) ),
     m_cut_off_point(m_node.Scale()>>1)
 {
     if (m_node.Parent()!=0) 
@@ -70,7 +70,7 @@ BandCodec::BandCodec(BitInputManager* bits_in,
     m_xl(m_node.Xl()),
     m_yl(m_node.Yl()),
     m_vol(m_node.Xl()*m_node.Yl()),
-    m_reset_coeff_num(std::max(m_vol/32,50)),
+    m_reset_coeff_num( std::max( 25 , std::min(m_vol/32,800) ) ),
     m_cut_off_point(m_node.Scale()>>1)
 {
     if (m_node.Parent()!=0) m_pnode=band_list(m_node.Parent());
