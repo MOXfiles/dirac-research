@@ -285,6 +285,9 @@ int main (int argc, char* argv[]){
 
     /********************************************************************/
 
+        // set original frame dimensions - required by global motion algorithm
+        encparams.SetOrigXl( myinputpic.GetSeqParams().Xl() );
+        encparams.SetOrigYl( myinputpic.GetSeqParams().Yl() );
 
            //set up all the block parameters so we have a self-consistent set
 
