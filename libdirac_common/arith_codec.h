@@ -488,7 +488,7 @@ namespace dirac
     ArithCodec<T>::~ArithCodec()
     {
         if ( m_decode_data_ptr )
-            delete m_decode_data_ptr;
+            delete[] m_decode_data_ptr;
     }
 
     template<class T>
@@ -657,6 +657,9 @@ namespace dirac
     template<class T>
     void ArithCodec<T>::ReadAllData()
     {
+       if ( m_decode_data_ptr )
+           delete[] m_decode_data_ptr;
+
        m_decode_data_ptr = new char[m_max_count + 2];
        m_bit_input->InputBytes( m_decode_data_ptr , m_max_count );
 
