@@ -44,6 +44,9 @@ running the codec can be found at http://dirac.sourceforge.net/
     ./configure --enable-profile
         (to enable the g++ profiling flag -pg)
      OR
+    ./configure --enable-mmx
+        (to enable MMX optimisation)
+     OR
     ./configure --enable-debug --enable-profile
         (to enable extra debug compile options and profiling options)
      OR
@@ -53,7 +56,7 @@ running the codec can be found at http://dirac.sourceforge.net/
      libraries use
      ./configure --disable-shared
 
-	 To build shared libraries only use
+     To build shared libraries only use
      ./configure --disable-static
 
      make
@@ -91,13 +94,13 @@ running the codec can be found at http://dirac.sourceforge.net/
      a new MSYS shell window for the .profile to take effect.
 
      Change directory to the directory where Dirac was unpacked. By default 
-	 only the dynamic libraries are built.
+     only the dynamic libraries are built.
 
      ./configure CXX=cl --enable-debug
          (to enable extra debug compile options)
      OR
      ./configure CXX=cl --disable-shared
-	     (to build static libraries)
+         (to build static libraries)
      OR
      ./configure CXX=cl
      make
@@ -199,6 +202,7 @@ Example.
 
   Note that this uses stdin and stdout to read and write the data.
 
+
   Step 3.
 
   Make the appropriate header to accompany the raw data file:
@@ -206,6 +210,26 @@ Example.
   make_header -xl 720 -yl 576 -cformat format420 -framerate 25 -interlace file
 
   This writes file.hdr with the corresponding parameters.
+  
+  We have provided a script, create_test_data.pl to help convert rgb format 
+  files into all the input formats supported by Dirac and to create header
+  files. The command line arguments it supports can be listed using
+  
+  create_test_data.pl -use
+
+  Sample usage is
+  
+  create_test_data.pl -width=352 -height=288 -num_frames=100 -frame_rate=13 file.rgb
+ 
+  (This assumes that the RGBtoYUV utilies and the make_header script are in
+  a directory specified in PATH variable. If not in the path, then use
+  options -convutildir and -hdrutildir to set the directories where the script
+  can find the conversion and header utilities)
+
+  The scripts then outputs files in all chroma formats (Yonly, 411, 420, 422,
+  444) supported by Dirac and the corresponding header files to the current 
+  directory.
+
 
   Step 4.
 
