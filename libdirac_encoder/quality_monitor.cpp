@@ -58,7 +58,7 @@ QualityMonitor::QualityMonitor(EncoderParams& encp,
 
 void QualityMonitor::ResetAll()
 {
-    // set target WPSNRs
+    // set target qualities
  	m_target_quality[I_frame] = 0.28 * m_encparams.Qf()* m_encparams.Qf() + 20.0 ;
 	m_target_quality[L1_frame] = m_target_quality[I_frame] - 1.5;
 	m_target_quality[L2_frame] = m_target_quality[I_frame] - 2.5;
@@ -113,22 +113,21 @@ bool QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
 	double current_quality;
 
 
-    //set up local parameters for the particular frame type
+    // Set up local parameters for the particular frame type
     current_lambda = m_encparams.Lambda(fsort);
     last_lambda = m_last_lambda[fsort];
     last_quality = m_last_quality[fsort];
     target_quality = m_target_quality[fsort];
 
-    // TBD: Currently using unweighted PSNR since this seems to give a) more stable convergence and b) more bits allocated
-    // to I frames at the expense of L1 and L2 frames, which is more efficient. Need to get a better measure, however.
+    // Get the quality of the current frame
 	current_quality = QualityVal( ld_frame.Ydata() , orig_frame.Ydata() , 0.0);
 
     // Copy current data into memory for last frame data
     m_last_lambda[fsort] = m_encparams.Lambda(fsort);
     m_last_quality[fsort] = current_quality;
 
-	// ok, so we've got an actual WPSNR to use. We know the lambda used before and the resulting
-	// WPSNR then allows us to estimate the slope of the curve of WPSNR versus log of lambda
+	// Ok, so we've got an actual quality value to use. We know the lambda used before and the resulting
+	// quality then allows us to estimate the slope of the curve of quality versus log of lambda
 
 	if ( std::abs(current_quality - last_quality)> 0.2 && 
          std::abs(log10(current_lambda) - log10(last_lambda)) > 0.1 ) 
@@ -171,7 +170,7 @@ bool QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
         CalcNewLambdas(fsort , m_slope[fsort] , quality_diff );
     }
 
-    // if we have a large difference in WPSNR, recode)
+    // if we have a large difference in quality, recode)
     if ( std::abs( current_quality - target_quality )>1.5 )
         recode = true;
 
@@ -195,13 +194,13 @@ void QualityMonitor::CalcNewLambdas(const FrameSort fsort, const double slope, c
 
 double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& orig_data , double cpd)
 {
-    TwoDArray<long double> ms_diff(3,4);
+    TwoDArray<long double> diff_array(3,4);
 	long double diff;
 
-    OneDArray<int> xstart( ms_diff.LengthX() );
-    OneDArray<int> xend( ms_diff.LengthX() );
-    OneDArray<int> ystart( ms_diff.LengthY() );
-    OneDArray<int> yend( ms_diff.LengthX() );
+    OneDArray<int> xstart( diff_array.LengthX() );
+    OneDArray<int> xend( diff_array.LengthX() );
+    OneDArray<int> ystart( diff_array.LengthY() );
+    OneDArray<int> yend( diff_array.LengthX() );
 
     for ( int i=0 ; i<xstart.Length() ; ++i)
     { 
@@ -215,11 +214,11 @@ double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& or
         yend[i] = ( (i+1) * m_true_yl )/ystart.Length();
     }
 
-    for ( int q=0 ; q<ms_diff.LengthY() ; ++q )
+    for ( int q=0 ; q<diff_array.LengthY() ; ++q )
     { 
-        for ( int p=0 ; p<ms_diff.LengthX() ; ++p )
+        for ( int p=0 ; p<diff_array.LengthX() ; ++p )
         { 
-            ms_diff[q][p] = 0.0;
+            diff_array[q][p] = 0.0;
 
             for (int j=ystart[q]; j<yend[q]; ++j)
             {
@@ -229,28 +228,28 @@ double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& or
                     diff *= diff;
                     diff *= diff;
 
-                    ms_diff[q][p] += diff;
+                    diff_array[q][p] += diff;
                 }//i
             }//j
 
-            ms_diff[q][p] /= ( xend[p]-xstart[p] ) * ( yend[q]-ystart[q] );
-            ms_diff[q][p] = std::sqrt( ms_diff[q][p] );
+            diff_array[q][p] /= ( xend[p]-xstart[p] ) * ( yend[q]-ystart[q] );
+            diff_array[q][p] = std::sqrt( diff_array[q][p] );
 
             // now compensate for the fact that we've got two extra bits
-            ms_diff[q][p] /= 16.0;
+            diff_array[q][p] /= 16.0;
         }// p
     }// q
      
-    // return the worst quarter
-    long double worst_mse = ms_diff[0][0];
-    for ( int q=0 ; q<ms_diff.LengthY() ; ++q )
+    // return the worst area
+    long double worst_diff = diff_array[0][0];
+    for ( int q=0 ; q<diff_array.LengthY() ; ++q )
     { 
-        for ( int p=0 ; p<ms_diff.LengthX() ; ++p )
+        for ( int p=0 ; p<diff_array.LengthX() ; ++p )
         { 
-            if ( ms_diff[q][p] > worst_mse )          
-                worst_mse = ms_diff[q][p];
+            if ( diff_array[q][p] > worst_diff )          
+                worst_diff = diff_array[q][p];
         }// p
     }// q
 
-	return static_cast<double> ( 10.0 * std::log10( 255.0*255.0 / worst_mse ) );	
+	return static_cast<double> ( 10.0 * std::log10( 255.0*255.0 / worst_diff ) );	
 }

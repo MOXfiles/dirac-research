@@ -96,7 +96,7 @@ private:
     //! The true picture height, minus padding
     const int m_true_yl;
 
-    // target weighted PSNR values for each frame type
+    // target quality values for each frame type
     OneDArray<double> m_target_quality;
 
     // weighted PSNR values for last of each frame type
