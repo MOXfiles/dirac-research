@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Peter Meerwald (pmeerw@users.sourceforge.net)
+* Contributor(s): Thomas Davies (Original Author), 
+                  Peter Meerwald (pmeerw@users.sourceforge.net)
+                  Mike Ferenduros (mike_ferenzduros@users.sourceforge.net)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -271,9 +273,10 @@ namespace dirac
     /*!
         A template class to do two-d arrays, so that explicit memory 
         (de-)allocation is not required. Only zero-based arrays are 
-        currently supported so that access is fast. The array is viewed as a 
-        (vertical) array of (horizontal) arrays. Accessing elements along 
+        currently supported so that access is fast. Accessing elements along 
         a row is therefore much faster than accessing them along a column.
+        Rows are contiguous in memory, so array[y][x] is equivalent to
+        array[0][x+y*LengthX()].
      */
     template <class T> class TwoDArray
     {
@@ -381,8 +384,7 @@ namespace dirac
     TwoDArray<T>::TwoDArray( const int height , const int width , const T val)
     {
         Init( height , width );  
-        for (int j=0 ; j<m_length_y ; ++j)
-            std::fill_n( m_array_of_rows[j] , m_length_x , val);
+        std::fill_n( m_array_of_rows[0], m_length_x*m_length_y, val);
     }  
 
     template <class T>
@@ -401,8 +403,8 @@ namespace dirac
         else{
                 //based 2D arrays not yet supported    
         }
-        for (int j=0 ; j<m_length_y ; ++j) 
-            memcpy( m_array_of_rows[j] , (Cpy.m_array_of_rows)[j] , m_length_x * sizeof( T ) ); 
+
+        memcpy( m_array_of_rows[0] , (Cpy.m_array_of_rows)[0] , m_length_x * m_length_y * sizeof( T ) );
 
     }
 
@@ -429,8 +431,7 @@ namespace dirac
                     //based 2D arrays not yet supported
             }
 
-            for ( int j=0 ; j<m_length_y; ++j)
-                memcpy( m_array_of_rows[j] , (rhs.m_array_of_rows)[j] , m_length_x * sizeof( T ) ); 
+            memcpy( m_array_of_rows[0], (rhs.m_array_of_rows)[0], m_length_x * m_length_y * sizeof( T ) );
 
         }
 
@@ -466,11 +467,12 @@ namespace dirac
 
             if ( m_length_x>0 )
             {
-                // next, allocate all the rows
-                for (int j=0 ; j<m_length_y ; ++j)
-                {
-                    m_array_of_rows[j] = new T[ m_length_x ];
-                }// j
+                // Allocate the whole thing as a single big block
+                m_array_of_rows[0] = new T[ m_length_x * m_length_y ];
+
+                // Point the pointers
+                for (int j=1 ; j<m_length_y ; ++j)
+                    m_array_of_rows[j] = m_array_of_rows[0] + j * m_length_x;
             }
             else
             {
@@ -497,11 +499,7 @@ namespace dirac
         {
             if (m_length_x>0) 
             {
-                // deallocate each row
-                for (int j=0 ; j<m_length_y ; ++j)
-                {
-                    delete[]  m_array_of_rows[j];                
-                }// j
+                delete[] m_array_of_rows[0];
             }
 
             // deallocate the array of rows
