@@ -51,6 +51,14 @@ using namespace dirac;
 #include <vector>
 #include <iostream>
 
+using std::log;
+using std::floor;
+
+static inline double pow4 (double x)
+{
+    return x * x * x* x;
+}
+
 CompCompressor::CompCompressor( EncoderParams& encp,const FrameParams& fp)
 : m_encparams(encp),
   m_fparams(fp),
@@ -320,8 +328,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
                     if ( quant_val != 0)                    
                         error -= m_offset[q];
 
-                    error_total[q] +=  pow( static_cast<double>(error), 4.0 );
-
+                    error_total[q] +=  pow4( static_cast<double>(error) );
                 }// q
             }// i
         }// j
@@ -428,8 +435,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
                         if ( quant_val != 0 )                    
                             error -= m_offset[q];
 
-                        error_total[q] += pow( static_cast<double>(error), 4.0 );
-
+                        error_total[q] += pow4( static_cast<double>(error) );
                     }//end of if
                 }//q
             }//J
@@ -535,8 +541,7 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
                     if ( quant_val != 0 )                    
                         error -= m_offset[q];
 
-                    error_total[q] +=  pow( static_cast<double>(error), 4.0 );
-
+                    error_total[q] +=  pow4( static_cast<double>(error) );
                 }//q
             }//i
         }//j
