@@ -6,6 +6,6 @@ includedir=@includedir@
 Name: @GENERIC_LIBRARY_NAME@
 Description: The BBC Dirac Video Codec
 Version: @VERSION@
-Libs: -L${libdir} -l@GENERIC_LIBRARY_NAME@
-Cflags: -I${includedir}/@GENERIC_LIBRARY_NAME@ -I${libdir}/@GENERIC_LIBRARY_NAME@/include
+Libs: -L${libdir} -l@GENERIC_LIBRARY_NAME@_encoder -l@GENERIC_LIBRARY_NAME@_decoder -l@GENERIC_LIBRARY_NAME@_common
+Cflags: -I${includedir}/@GENERIC_LIBRARY_NAME@
 
