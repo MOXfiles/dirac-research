@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Revision 1.3  2004-04-11 22:54:13  chaoticcoyote
+* Additional comments
+*
+* Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
 * Boilerplate for Doxygen comments; testing ability to commit into SF CVS
 *
 * Revision 1.1.1.1  2004/03/11 17:45:43  timborer
@@ -71,29 +74,28 @@
 //! Abstract binary arithmetic coding class
 /*!
     This is an abtract binary arithmetic encoding class, used as the base
-    for concrete classes that encode motion vectors, handle subband residues,
-    and produce 
+    for concrete classes that encode motion vectors and subband residues.
     \param      T       a container (most probably, and array) type
  */
-template<class T>//T is container/array type
+template<class T>
 class ArithCodec{
-	//abstract binary arithmetic coding class
 public:
 
+    //! Input constructor
+    /*!
+        Creates an ArithCodec object to encode input based on a set of parameters.
+        \param      bits_in     source of bits to be encoded
+        \param      ctxs        
+     */
+	ArithCodec(BitInputManager* bits_in, std::vector<Context>& ctxs)
+        : bit_count(0),BitIP(bits_in),ContextList(ctxs){}	
+
     //! 
     /*!
 
      */
-	// Constructors	
-	ArithCodec(BitInputManager* bits_in, std::vector<Context>& ctxs):
-	bit_count(0),BitIP(bits_in),ContextList(ctxs){}	
-
-    //! 
-    /*!
-
-     */
-	ArithCodec(BasicOutputManager* bits_out, std::vector<Context>& ctxs):
-	bit_count(0),BitOP(bits_out),ContextList(ctxs){}	
+	ArithCodec(BasicOutputManager* bits_out, std::vector<Context>& ctxs)
+        : bit_count(0),BitOP(bits_out),ContextList(ctxs){}	
 
 
 

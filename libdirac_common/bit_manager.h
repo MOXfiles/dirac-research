@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-04-06 18:06:53  chaoticcoyote
+* Revision 1.3  2004-04-11 22:54:13  chaoticcoyote
+* Additional comments
+*
+* Revision 1.2  2004/04/06 18:06:53  chaoticcoyote
 * Boilerplate for Doxygen comments; testing ability to commit into SF CVS
 *
 * Revision 1.1.1.1  2004/03/11 17:45:43  timborer
@@ -153,8 +156,15 @@ public:
     /*!
         
      */
-	BitOutputManager(std::ostream* OutData ): header(OutData),data(OutData),total_bytes(0),total_data_bytes(0),
-	total_head_bytes(0),unit_bytes(0),unit_data_bytes(0),unit_head_bytes(0){}
+	BitOutputManager(std::ostream* OutData )
+        : header(OutData),
+          data(OutData),
+          total_bytes(0),
+          total_data_bytes(0),
+          total_head_bytes(0),
+          unit_bytes(0),
+          unit_data_bytes(0),
+          unit_head_bytes(0){}
 
     //! 
     /*!
