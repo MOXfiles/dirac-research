@@ -57,7 +57,7 @@ Frame::Frame(const FrameParams& fp):
     Init();
 }
 
-Frame::Frame(const Frame& cpy): 
+Frame::Frame( const Frame& cpy ): 
     m_fparams(cpy.m_fparams),
     m_Y_data(0),
     m_U_data(0),
@@ -66,7 +66,7 @@ Frame::Frame(const Frame& cpy):
     m_upU_data(0),
     m_upV_data(0)
 {
-    const ChromaFormat& cformat=m_fparams.CFormat();
+    const ChromaFormat& cformat = m_fparams.CFormat();
 
     //delete data to be overwritten
     ClearData();
@@ -108,10 +108,10 @@ Frame& Frame::operator=(const Frame& rhs)
         m_fparams=rhs.m_fparams;
         const ChromaFormat& cformat=m_fparams.CFormat();
 
-        //delete current data
+        // Delete current data
         ClearData();
 
-        //copy the data across        
+        // Copy the data across        
         m_Y_data= new PicArray( *(rhs.m_Y_data) );
 
         if ( rhs.m_upY_data != 0)
@@ -119,7 +119,6 @@ Frame& Frame::operator=(const Frame& rhs)
 
         if (cformat != Yonly)
         {
-
             m_U_data= new PicArray( *(rhs.m_U_data) );            
             if (rhs.m_upU_data!=0)
                 m_upU_data = new PicArray(*(rhs.m_upU_data) );

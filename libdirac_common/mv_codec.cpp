@@ -70,19 +70,19 @@ void MvDataCodec::InitContexts()
 //protected functions//
 ///////////////////////
 
-inline void MvDataCodec::Update(const int& context_num, const bool& Symbol)
-{    
-    m_context_list[context_num].IncrCount(Symbol,1); 
-    
-    if (m_context_list[context_num].Weight()  >= 1024)
-        Resize(context_num); 
-}
-
-inline void MvDataCodec::Resize(const int& context_num)
+inline void MvDataCodec::Resize(const int context_num)
 {
     m_context_list[context_num].HalveCounts();     
 }
 
+
+inline void MvDataCodec::Update( const bool symbol , const int context_num )
+{    
+    m_context_list[context_num].IncrCount( symbol , 1 ); 
+    
+    if ( m_context_list[context_num].Weight()  >= 1024 )
+        Resize( context_num ); 
+}
 inline void MvDataCodec::ResetAll() {}
 
 //coding functions//
@@ -645,7 +645,7 @@ void MvDataCodec::CodeDC(const MvData& in_data)
 //decoding functions//
 //////////////////////
 
-void MvDataCodec::DoWorkDecode( MvData& out_data, const int num_bits)
+void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 {
     int step,max; 
     int pstep,pmax;     

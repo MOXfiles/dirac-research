@@ -366,7 +366,7 @@ private:
 //public member functions//
 ///////////////////////////
 
-//! A function for extracting data from an array into an ostream
+//! A function for extracting array data
 template <class T >
 std::ostream & operator<< (std::ostream & stream, TwoDArray<T> & array)
 {
@@ -382,7 +382,7 @@ std::ostream & operator<< (std::ostream & stream, TwoDArray<T> & array)
     return stream;
 }
 
-//! A function for inserting data into an array from an istream
+//! A function for inserting array data
 template <class T >
 std::istream & operator>> (std::istream & stream, TwoDArray<T> & array)
 {

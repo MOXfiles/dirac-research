@@ -109,7 +109,8 @@ class PicOutput{
 /*!
     Class for reading picture data from a file.
  */
-class PicInput{
+class PicInput
+{
     public:
 
         //! Constructor
@@ -130,6 +131,9 @@ class PicInput{
 
         //! Read the picture header
         virtual bool ReadPicHeader();
+
+        //! Skip n frames of input
+        void Skip( const int n);
 
         //! Get the sequence parameters (got from the picture header)
         const SeqParams& GetSeqParams() const {return m_sparams;}

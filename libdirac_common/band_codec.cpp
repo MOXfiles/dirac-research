@@ -102,17 +102,17 @@ void BandCodec::ResetAll()
             m_context_list[c].HalveCounts();
 }
 
-void BandCodec::Resize(const int& context_num)
+void BandCodec::Resize(const int context_num)
 {
     m_context_list[context_num].HalveCounts();
 }
 
-void BandCodec::Update(const int& context_num, const bool& symbol)
+void BandCodec::Update( const bool symbol , const int context_num )
 {
     m_context_list[context_num].IncrCount(symbol,1);
     
-    if (m_context_list[context_num].Weight()>=1024)
-        Resize(context_num);
+    if ( m_context_list[context_num].Weight() >= 1024 )
+        Resize( context_num );
 }
 
 int BandCodec::ChooseContext(const PicArray& data) const{ return NZ_BIN5plus_CTX; }
@@ -146,16 +146,16 @@ void BandCodec::DoWorkCode(PicArray& in_data)
         for (m_xpos=m_xp,m_pxpos=m_pxp;m_xpos<m_xp+m_xl;++m_xpos,m_pxpos=((m_xpos-m_xp)>>1)+m_pxp)
         {
             if (m_xpos==m_xp)
-                m_nhood_sum = (m_ypos!=m_yp) ? abs(in_data[m_ypos-1][m_xpos]) : 0;
+                m_nhood_sum = (m_ypos!=m_yp) ? std::abs(in_data[m_ypos-1][m_xpos]) : 0;
             else
                 m_nhood_sum = (m_ypos!=m_yp) ? 
-                (abs(in_data[m_ypos-1][m_xpos]) + abs(in_data[m_ypos][m_xpos-1])) 
-               : abs(in_data[m_ypos][m_xpos-1]);
+                (std::abs(in_data[m_ypos-1][m_xpos]) + std::abs(in_data[m_ypos][m_xpos-1])) 
+               : std::abs(in_data[m_ypos][m_xpos-1]);
                 
-            m_parent_zero=bool(in_data[m_pypos][m_pxpos]);
-            val=in_data[m_ypos][m_xpos];
+            m_parent_notzero = static_cast<bool> ( in_data[m_pypos][m_pxpos] );
+            val = in_data[m_ypos][m_xpos];
             in_data[m_ypos][m_xpos]=0;
-            CodeVal(in_data,val);
+            CodeVal( in_data , val );
 
         }//m_xpos
     }//m_ypos    
@@ -174,31 +174,30 @@ void BandCodec::DoWorkCode(PicArray& in_data)
 #endif
 }
 
-void BandCodec::CodeVal(PicArray& in_data,ValueType& val)
+void BandCodec::CodeVal( PicArray& in_data , const ValueType val )
 {
-    int abs_val;
-    abs_val=abs(val);
-    abs_val*=m_qfinv;
-    abs_val>>=17;
+    int abs_val( std::abs(val) );
+    abs_val *= m_qfinv;
+    abs_val >>= 17;
 
-    for (int bin=1;bin<=abs_val;++bin)
-        EncodeSymbol(0,ChooseContext(in_data,bin));
+    for ( int bin=1 ; bin<=abs_val ; ++bin )
+        EncodeSymbol( 0 , ChooseContext( in_data , bin ) );
     
-    EncodeSymbol(1,ChooseContext(in_data,abs_val+1));
+    EncodeSymbol( 1 , ChooseContext( in_data , abs_val+1 ) );
 
-    if (abs_val)
+    if ( abs_val )
     {
-        abs_val*=m_qf;
-        in_data[m_ypos][m_xpos]=ValueType(abs_val);                
+        abs_val *= m_qf;
+        in_data[m_ypos][m_xpos] = static_cast<ValueType>( abs_val );                
         
-        if (val>0)
+        if ( val>0 )
         {
-            EncodeSymbol(1,ChooseSignContext(in_data));
+            EncodeSymbol( 1 , ChooseSignContext( in_data ) );
             in_data[m_ypos][m_xpos] += m_offset;
         }
         else
         {
-            EncodeSymbol(0,ChooseSignContext(in_data));
+            EncodeSymbol( 0 , ChooseSignContext(in_data) );
             in_data[m_ypos][m_xpos]  = -in_data[m_ypos][m_xpos];
             in_data[m_ypos][m_xpos] -= m_offset;
         }
@@ -243,13 +242,13 @@ void BandCodec::DoWorkDecode(PicArray& out_data, int num_bits)
         for (m_xpos = m_xp, m_pxpos = m_pxp; m_xpos < m_xp+m_xl; ++m_xpos, m_pxpos=((m_xpos-m_xp)>>1)+m_pxp)
         {
             if (m_xpos == m_xp)
-                m_nhood_sum=(m_ypos!=m_yp) ? abs(out_data[m_ypos-1][m_xpos]): 0;
+                m_nhood_sum=(m_ypos!=m_yp) ? std::abs(out_data[m_ypos-1][m_xpos]): 0;
             else
                 m_nhood_sum=(m_ypos!=m_yp) ? 
-                (abs(out_data[m_ypos-1][m_xpos]) + abs(out_data[m_ypos][m_xpos-1])) 
-              : abs(out_data[m_ypos][m_xpos-1]);
+                (std::abs(out_data[m_ypos-1][m_xpos]) + std::abs(out_data[m_ypos][m_xpos-1])) 
+              : std::abs(out_data[m_ypos][m_xpos-1]);
             
-            m_parent_zero=bool(out_data[m_pypos][m_pxpos]);            
+            m_parent_notzero = static_cast<bool>( out_data[m_pypos][m_pxpos] );            
             DecodeVal(out_data);            
         }//m_xpos
     }//m_ypos
@@ -276,9 +275,9 @@ void BandCodec::DecodeVal(PicArray& out_data)
     
     if (out_data[m_ypos][m_xpos])
     {
-        out_data[m_ypos][m_xpos]*=m_qf;
-        out_data[m_ypos][m_xpos]+=m_offset;
-        DecodeSymbol(bit,ChooseSignContext(out_data));
+        out_data[m_ypos][m_xpos] *= m_qf;
+        out_data[m_ypos][m_xpos] += m_offset;
+        DecodeSymbol( bit , ChooseSignContext(out_data) );
     }
     
     if (!bit)
@@ -296,7 +295,7 @@ void BandCodec::DecodeVal(PicArray& out_data)
 int BandCodec::ChooseContext(const PicArray& data, const int BinNumber) const
 {
     //condition on neighbouring values and parent values
-    if (!m_parent_zero && (m_pxp != 0 || m_pyp != 0))
+    if (!m_parent_notzero && (m_pxp != 0 || m_pyp != 0))
     {
         if (BinNumber == 1)
         {
@@ -381,7 +380,7 @@ void LFBandCodec::DoWorkCode(PicArray& in_data)
     //main coding function, using binarisation
     m_pxp = 0;
     m_pyp = 0;
-    m_parent_zero = false; //set parent to always be zero
+    m_parent_notzero = false; //set parent to always be zero
     ValueType val;
 
     m_qf     = m_node.Qf(0);
@@ -396,11 +395,11 @@ void LFBandCodec::DoWorkCode(PicArray& in_data)
         for ( m_xpos=m_xp ; m_xpos<m_xp+m_xl ; ++m_xpos )
         {
             if ( m_xpos == m_xp )
-                m_nhood_sum = (m_ypos!=m_yp) ? abs(in_data[m_ypos-1][m_xpos]) : 0;
+                m_nhood_sum = (m_ypos!=m_yp) ? std::abs(in_data[m_ypos-1][m_xpos]) : 0;
             else
                 m_nhood_sum = (m_ypos!=m_yp) ? 
-                (abs(in_data[m_ypos-1][m_xpos]) + abs(in_data[m_ypos][m_xpos-1])) 
-               : abs(in_data[m_ypos][m_xpos-1]);    
+                (std::abs(in_data[m_ypos-1][m_xpos]) + std::abs(in_data[m_ypos][m_xpos-1])) 
+               : std::abs(in_data[m_ypos][m_xpos-1]);    
             
             val = in_data[m_ypos][m_xpos];
             in_data[m_ypos][m_xpos] = 0;
@@ -413,7 +412,7 @@ void LFBandCodec::DoWorkDecode(PicArray& out_data, int num_bits)
 {
     m_pxp = 0;
     m_pyp = 0;
-    m_parent_zero = false;//set parent to always be zero    
+    m_parent_notzero = false;//set parent to always be zero    
     m_qf = m_node.Qf(0);
     m_offset = (3*m_qf+4)>>3;
     m_cut_off_point *= m_qf;
@@ -426,11 +425,11 @@ void LFBandCodec::DoWorkDecode(PicArray& out_data, int num_bits)
         for ( m_xpos=0 ; m_xpos<m_xp+m_xl; ++m_xpos )
         {
             if ( m_xpos == m_xp )
-                m_nhood_sum=(m_ypos!=m_yp) ? abs(out_data[m_ypos-1][m_xpos]) : 0;
+                m_nhood_sum=(m_ypos!=m_yp) ? std::abs(out_data[m_ypos-1][m_xpos]) : 0;
             else
                 m_nhood_sum=(m_ypos!=m_yp) ? 
-                (abs(out_data[m_ypos-1][m_xpos]) + abs(out_data[m_ypos][m_xpos-1])) 
-               : abs(out_data[m_ypos][m_xpos-1]);
+                (std::abs(out_data[m_ypos-1][m_xpos]) + std::abs(out_data[m_ypos][m_xpos-1])) 
+               : std::abs(out_data[m_ypos][m_xpos-1]);
 
             DecodeVal(out_data);            
         }//m_xpos
@@ -448,7 +447,7 @@ void IntraDCBandCodec::DoWorkCode(PicArray& in_data)
     m_pyp = 0;
 
     //set parent to always be zero
-    m_parent_zero = false;
+    m_parent_notzero = false;
     ValueType val;
     
     //residues after prediction, quantisation and inverse quant
@@ -467,11 +466,11 @@ void IntraDCBandCodec::DoWorkCode(PicArray& in_data)
         for (m_xpos = m_xp; m_xpos < m_xp + m_xl; ++m_xpos)
         {
              if (m_xpos == m_xp)
-                m_nhood_sum = (m_ypos!=m_yp) ? abs(pred_res[m_ypos-1][m_xpos]) : 0;
+                m_nhood_sum = (m_ypos!=m_yp) ? std::abs(pred_res[m_ypos-1][m_xpos]) : 0;
              else
                  m_nhood_sum = (m_ypos!=m_yp) ? 
-                               (abs(pred_res[m_ypos-1][m_xpos]) + abs(pred_res[m_ypos][m_xpos-1])) 
-                              : abs(pred_res[m_ypos][m_xpos-1]);
+                               (std::abs(pred_res[m_ypos-1][m_xpos]) + std::abs(pred_res[m_ypos][m_xpos-1])) 
+                              : std::abs(pred_res[m_ypos][m_xpos-1]);
           
             prediction = GetPrediction(in_data);            
             val = in_data[m_ypos][m_xpos]-prediction;
@@ -512,7 +511,7 @@ void IntraDCBandCodec::DoWorkDecode(PicArray& out_data, int num_bits)
 {
     m_pxp = 0;
     m_pyp = 0;
-    m_parent_zero = false; //set parent to always be zero
+    m_parent_notzero = false; //set parent to always be zero
 
     //residues after prediction, quantisation and inverse quant
     PicArray pred_res(m_yl , m_xl); 
@@ -529,11 +528,11 @@ void IntraDCBandCodec::DoWorkDecode(PicArray& out_data, int num_bits)
         for (m_xpos=0;m_xpos<m_xp+m_xl;++m_xpos)
         {
              if (m_xpos==m_xp)
-                 m_nhood_sum=(m_ypos!=m_yp) ? abs(pred_res[m_ypos - 1][m_xpos]) : 0;
+                 m_nhood_sum=(m_ypos!=m_yp) ? std::abs(pred_res[m_ypos - 1][m_xpos]) : 0;
              else
                  m_nhood_sum=(m_ypos!=m_yp) ? 
-                             (abs(pred_res[m_ypos - 1][m_xpos]) + abs(pred_res[m_ypos][m_xpos - 1]))
-                            : abs(pred_res[m_ypos][m_xpos-1]);
+                             (std::abs(pred_res[m_ypos - 1][m_xpos]) + std::abs(pred_res[m_ypos][m_xpos - 1]))
+                            : std::abs(pred_res[m_ypos][m_xpos-1]);
           
             DecodeVal(out_data);
              pred_res[m_ypos][m_xpos]=out_data[m_ypos][m_xpos];

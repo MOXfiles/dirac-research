@@ -297,8 +297,9 @@ void FrameBuffer::Clean(int fnum)
 }
 
 void FrameBuffer::SetFrameParams(unsigned int fnum)
-{    //set the frame parameters, given the GOP set-up and the frame number in display order
-    //This function can be ignored by setting the frame parameters directly if required
+{    
+    // Set the frame parameters, given the GOP set-up and the frame number in display order
+    // This function can be ignored by setting the frame parameters directly if required
 
     m_fparams.SetFrameNum( fnum );
     m_fparams.Refs().clear();    
@@ -310,29 +311,35 @@ void FrameBuffer::SetFrameParams(unsigned int fnum)
         {
             m_fparams.SetFSort( I_frame );
 
-            //expires after we've coded the next I frame
+            // I frame expires after we've coded the next I frame
             m_fparams.SetExpiryTime( m_gop_len );
         }
         else if (fnum % m_L1_sep == 0)
         {
             m_fparams.SetFSort( L1_frame );
-            m_fparams.Refs().push_back((fnum/m_gop_len)*m_gop_len);//ref the last I frame
 
-            if ((fnum-m_L1_sep) % m_gop_len>0)//we don't have the first L1 frame    
-                m_fparams.Refs().push_back(fnum-m_L1_sep);//other ref is the prior L1 frame
+            // Ref the previous I frame
+            m_fparams.Refs().push_back((fnum/m_gop_len)*m_gop_len);
 
-            //expires after the next L1 or I frame            
+            // if we don't have the first L1 frame ...
+            if ((fnum-m_L1_sep) % m_gop_len>0)
+                // ... other ref is the prior L1 frame
+                m_fparams.Refs().push_back(fnum-m_L1_sep);
+
+            // Expires after the next L1 or I frame            
             m_fparams.SetExpiryTime( m_L1_sep );
         }
         else
         {
             m_fparams.SetFSort( L2_frame );
+            // Refs are the next or previous I or L1 frame
             m_fparams.Refs().push_back((fnum/m_L1_sep)*m_L1_sep);
             m_fparams.Refs().push_back(((fnum/m_L1_sep)+1)*m_L1_sep);
 
-            m_fparams.SetExpiryTime( 1 );    //L2 frames could expire directly after being coded, but putting in a delay of 1
-                                        //allows for frame-skipping to be done, since the frame will still be around to
-                                        //be used if the next frame is skipped.
+            m_fparams.SetExpiryTime( 1 );  
+            // ( L2 frames could expire directly after being coded, but putting in a delay of 1
+            // allows for frame-skipping to be done, since the frame will still be around to
+            // be used if the next frame is skipped. )
         }
     }    
     else{        

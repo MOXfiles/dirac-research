@@ -38,14 +38,15 @@
 #ifndef _FRAME_H_
 #define _FRAME_H_
 
-#include "libdirac_common/common.h"
+#include <libdirac_common/common.h>
 
 //! A class for encapsulating all the data relating to a frame.
 /*!
     A class for encapsulating all the data relating to a frame - all the component data, 
     including upconverted data.
  */
-class Frame{
+class Frame
+{
 
 public:
 
@@ -53,7 +54,7 @@ public:
     /*!
         Constructor initialises the frame parameters and the data
      */    
-    Frame(const FrameParams& fp);
+    Frame( const FrameParams& fp );
 
     //! Copy constructor. Private as not currently used [may want to implement reference counting later.]
     Frame(const Frame& cpy);
@@ -62,11 +63,14 @@ public:
     virtual ~Frame();
 
     //! Assignment =. Private as not currently used [may want to implement reference counting later.]
-    Frame& operator=(const Frame& rhs);
+    Frame& operator=( const Frame& rhs );
 
     //gets and sets
     //! Gets the frame parameters
     const FrameParams& GetFparams() const {return m_fparams;}
+
+    //! Sets the frame sort
+    void SetFrameSort( const FrameSort fs ){m_fparams.SetFSort( fs ); }
 
     //! Returns the luma data array
     PicArray& Ydata() {return *m_Y_data;}

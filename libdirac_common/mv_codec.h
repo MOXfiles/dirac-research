@@ -112,11 +112,11 @@ private:
     void DecodeDC( MvData& out_data);    //decode the dc value of intra blocks    
 
     void DoWorkCode( MvData& in_data );
-    void DoWorkDecode(MvData& out_data, const int num_bits);
+    void DoWorkDecode(MvData& out_data, int num_bits);
 
     // Context stuff    
-    void Update(const int& context_num, const bool& Symbol);
-    void Resize(const int& context_num);
+    void Update( const bool symbol , const int context_num );
+    void Resize(const int context_num);
     void ResetAll();
 
     int ChooseContext(const MvData& data, const int BinNumber) const;

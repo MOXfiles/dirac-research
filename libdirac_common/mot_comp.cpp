@@ -157,8 +157,14 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
     const TwoDArray<ValueType>& dcarray = mv_data.DC(cs);
 
     // Set up references to the vectors
-    const MvArray& mv_array1 = mv_data.Vectors(1);
-    const MvArray& mv_array2 = mv_data.Vectors(2);
+    const int num_refs = picframe.GetFparams().Refs().size();
+    const MvArray* mv_array1; 
+    const MvArray* mv_array2;
+    mv_array1 = &mv_data.Vectors(1);
+    if (num_refs ==2 )
+        mv_array2 = &mv_data.Vectors(2);
+    else
+        mv_array2 = &mv_data.Vectors(1);
 
     ReConfig();//set all the weighting blocks up    
 
@@ -215,8 +221,8 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
             }
 
             block_mode = mv_data.Mode()[yblock][xblock];
-            mv1 = mv_array1[yblock][xblock];
-            mv2 = mv_array2[yblock][xblock];
+            mv1 = (*mv_array1)[yblock][xblock];
+            mv2 = (*mv_array2)[yblock][xblock];
             dc = dcarray[yblock][xblock]<<2;// DC is only given 8 bits, 
                                             // so need to shift to get 10-bit data
 

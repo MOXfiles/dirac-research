@@ -221,8 +221,9 @@ MvData::MvData( const int xnumMB , const int ynumMB , const int num_refs ):
 void MvData::InitMvData()
 {
     // Create the arrays of vectors
-     for ( int i=m_vectors.First() ; i<=m_vectors.Last() ; ++i )
+     for ( int i=m_vectors.First() ; i<=m_vectors.Last() ; ++i ){
          m_vectors[i] = new MvArray( Mode().LengthY() , Mode().LengthX() );
+     }
 
      // Create the arrays of dc values
      for ( int i=0 ; i<3 ; ++i )
@@ -232,8 +233,9 @@ void MvData::InitMvData()
 MvData::~MvData()
 {
    // Delete the arrays of vectors
-    for ( int i=m_vectors.First() ; i<=m_vectors.Last() ; ++i )
+    for ( int i=m_vectors.First() ; i<=m_vectors.Last() ; ++i ){
         delete m_vectors[i];
+    }
 
      // Delete the arrays of dc values
      for ( int i=0 ; i<3 ; ++i )
@@ -334,13 +336,13 @@ istream &operator>> (istream & stream, MEData & me_data)
 // Overriden operator for output of MvData member data (to file)
 ostream &operator<< (ostream & stream, MEData & me_data)
 {
-    // output macroblock and moition vector array dimensions
+    // output macroblock and motion vector array dimensions
     stream << me_data.MBSplit().LengthY() << " " << me_data.MBSplit().LengthX() << " ";
     stream << me_data.Vectors(1).LengthY() << " " << me_data.Vectors(1).LengthX();
 
     // output reference-independent information
     stream << endl << endl << me_data.MBSplit() << std::endl << me_data.Mode();
-    
+
     for (int i=1; i<=me_data.m_pred_costs.Length(); ++i)
     {
         // output reference information
@@ -349,4 +351,3 @@ ostream &operator<< (ostream & stream, MEData & me_data)
     
     return stream;
 }
-

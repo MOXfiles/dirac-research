@@ -315,6 +315,25 @@ bool PicInput::ReadPicHeader()
     return true;
 }
 
+void PicInput::Skip(const int num)
+{
+    const int num_pels = m_sparams.Xl()*m_sparams.Yl();
+    int num_bytes;
+ 
+    const ChromaFormat cf = m_sparams.CFormat();
+
+    if ( cf == Yonly)
+        num_bytes = num_pels;
+    else if ( cf == format411 || cf == format420 )
+       num_bytes = (num_pels*3)/2;
+    else if ( cf == format422 )
+       num_bytes = num_pels*2;
+    else
+       num_bytes = num_pels*3;
+
+    m_ip_pic_ptr->seekg( num*num_bytes , std::ios::beg );
+}
+
 bool PicInput::End() const
 {
     return m_ip_pic_ptr->eof();

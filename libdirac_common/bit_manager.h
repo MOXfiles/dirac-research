@@ -23,6 +23,7 @@
 * Contributor(s): Thomas Davies (Original Author),
 *                 Robert Scott Ladd,
 *                 Tim Borer
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -44,6 +45,23 @@
 #include <cstring>
 #include <vector>
 #include <iostream>
+
+//! Bitstream codes
+//! Prefix for all start codes
+const unsigned int START_CODE_PREFIX = 0x01020304;
+const unsigned int START_CODE_PREFIX_BYTE0 = (START_CODE_PREFIX >> 24) & 0xFF;
+const unsigned int START_CODE_PREFIX_BYTE1 = (START_CODE_PREFIX >> 16) & 0xFF;
+const unsigned int START_CODE_PREFIX_BYTE2 = (START_CODE_PREFIX >>  8) & 0xFF;
+const unsigned int START_CODE_PREFIX_BYTE3 = START_CODE_PREFIX & 0xFF;
+
+//! Sequence start code
+const unsigned char SEQ_START_CODE = 0xB3;
+//! Frame start code
+const unsigned char FRAME_START_CODE = 0xB4;
+//! Sequence end code
+const unsigned char SEQ_END_CODE = 0xB7;
+//! Not a start code but part of data
+const unsigned char NOT_START_CODE = 0xFF;
 
 ////////////////////////////////////////////////
 //--------------Bit output stuff--------------//
@@ -144,6 +162,13 @@ class BasicOutputManager
 
         //Clean out any remaining output bits to the buffer
         void FlushOutput();
+        
+        //! Write an ignore code
+        /*!
+        Write a skip interpret start prefix  byte out to the internal data 
+        cache.
+        */
+        void OutputSkipInterpretStartPrefixByte();
 };
 
 //! A class for handling data output, including headers.
@@ -254,16 +279,16 @@ public:
     /*!
         Get an output manager for MV data
     */
-    UnitOutputManager& MVOutput(){ return m_mv_data; }
+    UnitOutputManager& MVOutput(){ return *m_mv_data; }
 
     //! Get an output manager for MV data
     /*!
         Get an output manager for MV data
     */
-    const UnitOutputManager& MVOutput() const { return m_mv_data; }
+    const UnitOutputManager& MVOutput() const { return *m_mv_data; }
 
     //! Get an output manager for the frame header
-    BasicOutputManager& HeaderOutput(){ return m_frame_header; }
+    BasicOutputManager& HeaderOutput(){ return *m_frame_header; }
 
     //! Return the number of bytes used for each component
     const size_t ComponentBytes( const int comp_num ) const { return m_comp_bytes[comp_num];}
@@ -289,10 +314,10 @@ private:
     TwoDArray< UnitOutputManager* > m_data_array;
 
     // Motion vector output
-    UnitOutputManager m_mv_data;
+    UnitOutputManager* m_mv_data;
 
     // Frame header output
-    BasicOutputManager m_frame_header;
+    BasicOutputManager* m_frame_header;
 
     // The total number of frame bytes
     size_t m_total_bytes;
@@ -320,8 +345,11 @@ private:
     //! Initialise the band data
     void Init( const int num_bands );
 
-    //! Destroy data
-    void Wrapup();
+    //! Reset all the data
+    void Reset();
+
+    //! Delete all the data
+    void DeleteAll();
 
     //! Write all the frame data to file
     void WriteToFile();
@@ -339,11 +367,20 @@ public:
     //! Return a reference to the output for a single frame
     BasicOutputManager& HeaderOutput(){ return m_seq_header; }
 
+    //! Return a reference to the output for the sequence trailer
+    BasicOutputManager& TrailerOutput(){ return m_seq_end; }
+
+    //! Reset the frame data without outputting
+    void ResetFrame(){ m_frame_op_mgr.Reset(); }
+
     //! Write the sequence header
     void WriteSeqHeaderToFile();
 
     //! Write all the frame data to file
     void WriteFrameData();
+
+    //! Write the sequence trailer
+    void WriteSeqTrailerToFile();
 
     //! Return the total number of bytes used for the sequence
     const size_t SequenceBytes() { return m_total_bytes; } 
@@ -356,7 +393,10 @@ public:
 
     //! Return the total number bytes used for a component
     const size_t ComponentBytes( const int comp_num ) { return m_comp_bytes[comp_num]; }
-  
+
+    //! Reset the frame data
+    void ResetFrameData();
+
 
 private:
 
@@ -365,6 +405,9 @@ private:
 
     // Output manager for the sequence header
     BasicOutputManager m_seq_header;
+
+    // Output manager for the sequence end
+    BasicOutputManager m_seq_end;
 
     // The total number of bytes in each component
     OneDArray< size_t > m_comp_bytes;
@@ -383,6 +426,9 @@ private:
 
     // The total number of header bytes written so far
     size_t m_header_bytes;
+
+    // The total number of trailer bytes written so far
+    size_t m_trailer_bytes;
 };
 
 ///////////////////////////////////////////////
@@ -435,6 +481,7 @@ class BitInputManager
         char m_current_byte;     // Char used for temporary storage of ip bits
         int m_input_bits_left;    // The number of bits left withint the current input byte being decoded
 
+        unsigned int m_shift;     //used to check if start code is detected
         //functions 
         void InitInputStream(); // Initialise the input stream
 };

@@ -23,6 +23,7 @@
 * Contributor(s): Thomas Davies (original author),
 *                 Robert Scott Ladd,
 *                 Tim Borer
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -38,6 +39,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_common/bit_manager.h>
+#include <libdirac_common/common.h>
 
 using std::vector;
 
@@ -63,6 +65,20 @@ void BasicOutputManager::InitOutputStream()
     m_buffer.clear();
 }
 
+void BasicOutputManager::OutputSkipInterpretStartPrefixByte()
+{
+    size_t buf_size = m_buffer.size();
+    if (buf_size >=4 && 
+        m_buffer[buf_size-1] == (char)START_CODE_PREFIX_BYTE3 &&
+        m_buffer[buf_size-2] == (char)START_CODE_PREFIX_BYTE2 && 
+        m_buffer[buf_size-3] == (char)START_CODE_PREFIX_BYTE1 &&
+        m_buffer[buf_size-4] == (char)START_CODE_PREFIX_BYTE0)
+    {
+        m_buffer.push_back((char)NOT_START_CODE);
+        std::cerr << "Wrote ignore code " << std::endl;
+    }
+}
+
 void BasicOutputManager::OutputBit(const bool& bit )
 {
     m_current_byte |= (bit ? (m_output_mask):0);
@@ -75,6 +91,7 @@ void BasicOutputManager::OutputBit(const bool& bit )
         // If a whole byte has been written, write out
         m_output_mask = 0x80;
         m_buffer.push_back(m_current_byte);
+        OutputSkipInterpretStartPrefixByte();
         m_current_byte = 0;
     }    
 }
@@ -88,7 +105,8 @@ void BasicOutputManager::OutputBit(const bool& bit, int& count)
 void BasicOutputManager::OutputByte(const char& byte)
 {
     FlushOutput();
-    m_buffer.push_back( byte );    
+    m_buffer.push_back( byte );
+    OutputSkipInterpretStartPrefixByte();
 }
 
 void BasicOutputManager::OutputBytes( char* str_array )
@@ -155,8 +173,6 @@ void UnitOutputManager::WriteToFile()
 
 FrameOutputManager::FrameOutputManager( std::ostream* out_data , int num_bands ) :
     m_data_array( 3 , num_bands ),
-    m_mv_data( out_data ),
-    m_frame_header( out_data ),
     m_comp_bytes( 3 ),
     m_comp_hdr_bytes( 3 ),
     m_out_stream( out_data )
@@ -166,23 +182,23 @@ FrameOutputManager::FrameOutputManager( std::ostream* out_data , int num_bands )
 
 FrameOutputManager::~FrameOutputManager()
 {
-    Wrapup();
+    DeleteAll();
 }
 
 void FrameOutputManager::WriteToFile()
 {
 
     // Write out the frame header
-    m_frame_header.WriteToFile();
-    m_total_bytes = m_frame_header.GetNumBytes();
-    m_header_bytes = m_frame_header.GetNumBytes();
+    m_frame_header->WriteToFile();
+    m_total_bytes = m_frame_header->GetNumBytes();
+    m_header_bytes = m_frame_header->GetNumBytes();
 
     // Write out the motion vector data
-    m_mv_data.WriteToFile();
+    m_mv_data->WriteToFile();
 
     // after writing to file, get the number of bytes written
-    m_mv_hdr_bytes = m_mv_data.GetUnitHeaderBytes();
-    m_mv_bytes = m_mv_data.GetUnitBytes();
+    m_mv_hdr_bytes = m_mv_data->GetUnitHeaderBytes();
+    m_mv_bytes = m_mv_data->GetUnitBytes();
 
     m_total_bytes += m_mv_bytes;
     m_header_bytes += m_mv_hdr_bytes;
@@ -223,33 +239,41 @@ const UnitOutputManager& FrameOutputManager::BandOutput( const int csort , const
 
 // Frame stuff
 
-void FrameOutputManager::SetNumBands( const int num_bands )
-{
-    const int num_comps = m_data_array.LengthY();
-    
-    // Delete the data that's already there
-    Wrapup();
-
-    // Resize
-    m_data_array.Resize( num_comps , num_bands );
-
-    // Put in new data objects
-    Init( num_bands );
-}
 
 void FrameOutputManager::Init( int num_bands )
 {
+    // Initialise output for the frame header
+    m_frame_header = new BasicOutputManager( m_out_stream );
+
+    // Initialise output for the MV data
+    m_mv_data = new UnitOutputManager( m_out_stream );
+
+    // Initialise subband outputs
     for ( int c=0 ; c<3 ; ++c)
         for ( int b=0 ; b<num_bands ; ++b)
             m_data_array[c][b] = new UnitOutputManager( m_out_stream );
 }
 
-void FrameOutputManager::Wrapup()
+void FrameOutputManager::Reset()
 {
+    const int num_bands = m_data_array.LengthX();
+    DeleteAll();
+    Init( num_bands );
+}   
+
+void FrameOutputManager::DeleteAll()
+{
+    // Delete subband outputs
     for ( int c=0 ; c<3 ; ++c)
-        for ( int b=0 ; b<m_data_array.LengthX() ; ++b)
+        for ( int b=0 ; b<m_data_array.LengthX() ; ++b )
             delete m_data_array[c][b];
-}
+
+    // Delete MV data op
+    delete m_mv_data;
+
+    // Delete frame header op
+    delete m_frame_header;
+}   
 
 
 // Sequence stuff //
@@ -257,12 +281,14 @@ void FrameOutputManager::Wrapup()
 SequenceOutputManager::SequenceOutputManager( std::ostream* out_data ):
     m_frame_op_mgr( out_data ),
     m_seq_header( out_data ),
+    m_seq_end( out_data ),
     m_comp_bytes( 3 ),
     m_comp_hdr_bytes( 3 ),
     m_mv_hdr_bytes(0),
     m_mv_bytes(0),
     m_total_bytes(0),
-    m_header_bytes(0)
+    m_header_bytes(0),
+    m_trailer_bytes(0)
 
 {
     for (int c=0 ; c<3 ; ++c )
@@ -300,6 +326,13 @@ void SequenceOutputManager::WriteSeqHeaderToFile()
     m_total_bytes += m_seq_header.GetNumBytes();
 }
 
+void SequenceOutputManager::WriteSeqTrailerToFile()
+{
+    m_seq_end.WriteToFile();
+    m_trailer_bytes += m_seq_end.GetNumBytes();
+    m_total_bytes += m_seq_end.GetNumBytes();
+}
+
 ////////////////
 //Input stuff//
 ////////////////
@@ -314,6 +347,7 @@ BitInputManager::BitInputManager(std::istream* in_data ):
 
 void BitInputManager::InitInputStream()
 {
+    m_shift = 0xffffffff;
     m_input_bits_left = 0;
 }
 
@@ -325,6 +359,13 @@ bool BitInputManager::InputBit()
     {
         m_ip_ptr->read(&m_current_byte,1);
         m_input_bits_left = 8;
+        if (m_shift == START_CODE_PREFIX && (unsigned char)m_current_byte == NOT_START_CODE)
+        {
+            std::cerr << "Ignoring byte " << std::endl;
+            m_ip_ptr->read(&m_current_byte,1);
+            m_shift = 0xffffffff;
+        }
+        m_shift = (m_shift << 8) | m_current_byte;
     }
 
     m_input_bits_left--;

@@ -82,7 +82,7 @@ public:
     void InitContexts();
 
 protected:
-    void CodeVal(PicArray& in_data, ValueType& val);//code an individual value
+    void CodeVal(PicArray& in_data, const ValueType val);//code an individual value
     void DecodeVal(PicArray& out_data);//decode an individual value
 
 private:
@@ -90,8 +90,8 @@ private:
     virtual void DoWorkCode(PicArray& in_data);                    //overridden from the base class
     virtual void DoWorkDecode(PicArray& in_data, int num_bits); //ditto
 
-    void Update(const int& context_num, const bool& symbol);
-    void Resize(const int& context_num);
+    void Update( const bool symbol , const int context_num );
+    void Resize(const int context_num);
     void ResetAll();
     
     int ChooseContext(const PicArray& data, const int bin_number) const;
@@ -141,8 +141,8 @@ protected:
     //! position of the parent coefficient
     int m_pxpos, m_pypos;
     
-    //! TODO: description
-    bool m_parent_zero;
+    //! True if the parent of a coeff is not zero
+    bool m_parent_notzero;
     
     //! used in selecting a context
     ValueType m_cut_off_point;
