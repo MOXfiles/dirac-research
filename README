@@ -38,8 +38,14 @@ the codec can be found at http://www.bbc.co.uk/rd/projects/dirac.
 
   GNU/Linux, Unix, MacOS X, Cygwin, Mingw
   ---------------------------------------
-     ./configure --enable-debug
-	    (to enable g++ compile options -Wall -pedantic)
+    ./configure --enable-debug
+        (to enable extra debug compile options)
+     OR
+    ./configure --enable-profile
+        (to enable the g++ profiling flag -pg)
+     OR
+    ./configure --enable-debug --enable-profile
+        (to enable extra debug compile options and profiling options)
      OR
      ./configure
      make
@@ -192,8 +198,9 @@ HD1080	: for 1920/1440x1080 High Definition progressive video [not yet supported
 The other useful parameter is the quality factor qf. This is a number from 0 to 10.
 The higher the number, the better the quality. The encoder attempts to adapt the
 encoding process to produce constant quality across the sequence. (Due to variations
-in the content, it may not exactly achieve this, particularly at first where it
-is guessing the right parameters to use, and may get them very wrong.)
+in the content, it may not exactly achieve this, particularly as the quality
+metric is just PSNR - Peak Signal to Noise Ratio, which doesn't exactly match
+subjective perceptions of quality.)
 
 Simple coding example. Code an SD sequence to high quality.
 
@@ -207,6 +214,8 @@ as well as locally-decoded files test_out.yuv and test_out.hdr.
 Other parameters.
 
 verbose		: turn on verbosity (if you don't, you won't see the final bitrate!)
+start           : code from this frame number
+stop            : code up until this frame number
 L1_sep		: the separation between L1 frames (frames that are predicted but also
 			used as reference frames, like P frames in MPEG-2)
 num_L1		: the number of L1 frames before the next intra frame
@@ -215,6 +224,9 @@ yblen		: the height of blocks used for motion compensation
 xbsep		: the horizontal separation between blocks. Always <xblen
 ybsep		: the vertical separation between blocks. Always <yblen
 cpd		: normalised viewing distance parameter, in cycles per degree.
+
+Using -start and -stop allows a small section to be coded, rather than the whole
+thing.
 
 Modifying L1_sep and num_L1 allows for new GOP structures to be used, and should be
 entirely safe. There are two non-GOP modes that can also be used for encoding: 
