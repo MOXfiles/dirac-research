@@ -404,7 +404,7 @@ void MEData::FindTransitions( TwoDArray<bool>& trans_map , const int ref_num )
     for ( int j=1 ; j<mv_array.LengthY()-1 ; ++j )
     {
         val_array[j][0] = 0.0;
-        val_array[j][val_array.LastY()] = 0.0;
+        val_array[j][val_array.LastX()] = 0.0;
         for ( int i=1 ; i<mv_array.LengthX()-1 ; ++i )
         {
             val_array[j][i] =0.0;
