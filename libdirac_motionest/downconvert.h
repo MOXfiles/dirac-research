@@ -71,13 +71,9 @@ private:
     DownConverter& operator=(const DownConverter& rhs);//private, body-less: class should not be assigned
 
     //Applies the filter to a single column
-    void RowLoop(int &colpos,const PicArray& old_data,PicArray& new_data);
+    void RowLoop(const int colpos , const PicArray& old_data , PicArray& new_data );
 
-    //Variables to keep the loops in check
-    int yOld;
-    int xOld;
-
-    ValueType* row_buffer;
+    ValueType* m_row_buffer;
 
     //Define filter parameters
     static const int Stage_I_Size = 6;
