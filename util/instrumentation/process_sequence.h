@@ -41,9 +41,21 @@
 #include <iostream>
 #include <fstream>
 #include <libdirac_common/common.h>
+using dirac::FrameParams;
+using dirac::OLBParams;
+using dirac::SeqParams;
+using dirac::OneDArray;
+
 #include <libdirac_common/motion.h>
+using dirac::MEData;
+
 #include <libdirac_common/pic_io.h>
+using dirac::FileStreamInput;
+using dirac::FileStreamOutput;
+
 #include <util/instrumentation/libdirac_instrument/overlay.h>
+using dirac_instr::OverlayParams;
+using dirac_instr::Overlay;
 
 //! Structure to hold motion data in array
 struct me_data_entry
@@ -59,7 +71,7 @@ class ProcessSequence
 public :
 
     //! Constructor
-    ProcessSequence(OverlayParams &, PicInput &, PicOutput &, std::ifstream &, bool, int, SeqParams &);
+    ProcessSequence(OverlayParams &, FileStreamInput &, FileStreamOutput &, std::ifstream &, bool, int, SeqParams &);
 
     //! Destructor
     ~ProcessSequence() {}
@@ -89,10 +101,10 @@ private :
     OverlayParams & m_oparams;
 
     //! Input picture
-    PicInput & m_inputpic;
+    FileStreamInput & m_inputpic;
 
     //! Output picture
-    PicOutput & m_outputpic;
+    FileStreamOutput & m_outputpic;
 
     //! True for user output during process
     bool m_verbose;

@@ -35,12 +35,16 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
+#include <limits>
 #include <util/instrumentation/process_sequence.h>
 #include <libdirac_common/frame.h>
+using namespace dirac;
 
-ProcessSequence::ProcessSequence(OverlayParams & oparams, PicInput & inputpic, PicOutput & outputpic,
-                                 std::ifstream & in, bool verbose, int buffer, SeqParams & seqparams)
-:
+ProcessSequence::ProcessSequence(OverlayParams & oparams, 
+                                 FileStreamInput & inputpic,
+                                 FileStreamOutput & outputpic,
+                                 std::ifstream & in, bool verbose, 
+                                 int buffer, SeqParams & seqparams) :
     m_oparams(oparams),
     m_inputpic(inputpic),
     m_outputpic(outputpic),
@@ -215,9 +219,8 @@ void ProcessSequence::DoSequence(int start, int stop)
         }
     }
 
-    // check stop value is less than sequence length
-    if (stop >= m_inputpic.GetSeqParams().Zl() || stop == -1)
-        stop = m_inputpic.GetSeqParams().Zl() - 1;
+    if ( stop == -1)
+        stop = INT_MAX;
 
     bool read_data_fnum;
     int data_next_fnum = -1;
@@ -277,6 +280,7 @@ void ProcessSequence::DoSequence(int start, int stop)
                                
             } while (m_data_fnum == data_next_fnum && !m_data_in.eof());
 
+
             // update data frame number
             m_data_fnum = data_next_fnum;
 
@@ -284,6 +288,8 @@ void ProcessSequence::DoSequence(int start, int stop)
             // if the data is not available, advise and exit
             if (!DoFrame())
             {
+                if (m_data_in.eof())
+                    break;
                 std::cerr << "Cannot find frame " << m_process_fnum << " motion data. ";
                 std::cerr << "Check buffer size. Exiting." << std::endl;
                 exit(EXIT_FAILURE);
