@@ -3,7 +3,7 @@ Dirac-0.3.0
   - Fixed serious artifacts when frame dimensions are not multiples of 32
   - Performance speed up writing output to disk
   - Changed .hdr format from binary to text for cross-platform interoperability
-  - Added autotest framework with simple colourbars test
+  - Added autotest framework with simple colour-bars test
   - Added MPlayer and ImageMagick examples to README
   - Added support for I-frame only coding
   - Added support for coding with a single initial I-frame
@@ -13,14 +13,10 @@ Dirac-0.2.0
 ===========
   - Fixed crash when frame dimensions are not multiples of 32
   - Removed dependency on XParam library
-  - Included algorithm and code documentation
+  - Removed libtool for faster compiles and ease of debugging
+  - Included doxygen documentation of major classes
+  - Initial "programmer's guide" documentation - doc/dirac_algor.tex
 
 Dirac-0.1.0
 ===========
   - Initial Sourceforge release.
-
-Version 0.2.0 features:
-
-- initial 'programmer's guide' documentation
-
-- doxygen documentation of major classes
