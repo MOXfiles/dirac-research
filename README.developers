@@ -106,7 +106,7 @@ Binary files in CVS
 -------------------
 CVS will modify files during checkin and checkout unless they are tagged as
 binary.  The modifications include translation of CR-LF <-> LF (depending on
-the OS of the CVS client) and expansion of CVS keywords such as $Id$ and $Log$.
+the OS of the CVS client) and expansion of CVS keywords such as $Id and $Log.
 
 Files which must not be modified in this way must be tagged as binary either
 using the add command or admin command:
