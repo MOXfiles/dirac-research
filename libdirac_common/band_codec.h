@@ -58,10 +58,10 @@ namespace dirac
         //! Constructor for encoding.
         /*!
             Creates a BandCodec object to encode subband data
-            /param    bits_out    the output for the encoded bits
-            /param    ctxs        the contexts used in the encoding process
-            /param    band_list    the set of all the subbands
-            /param     band_num    the number of the subband being coded 
+            \param    bits_out    the output for the encoded bits
+            \param    number_of_contexts   the contexts used in the encoding process
+            \param    band_list    the set of all the subbands
+            \param     band_num    the number of the subband being coded 
          */
         BandCodec(BasicOutputManager* bits_out,
                   size_t number_of_contexts,
@@ -71,10 +71,10 @@ namespace dirac
         //! Constructor for decoding.
         /*!
             Creates a BandCodec object to decode subband data.
-            /param    bits_in        the input for the encoded bits
-            /param    ctxs        the contexts used in the decoding process
-            /param    band_list    the set of all the subbands
-            /param     band_num    the number of the subband being decoded 
+            \param    bits_in        the input for the encoded bits
+            \param    number_of_contexts   the contexts used in the decoding process
+            \param    band_list    the set of all the subbands
+            \param     band_num    the number of the subband being decoded 
          */
         BandCodec(BitInputManager* bits_in,
                   size_t number_of_contexts,
@@ -169,10 +169,10 @@ namespace dirac
         //! Constructor for encoding
         /*!
             Creates a LFBandCodec object to encode subband data.
-            /param    bits_out    the output for the encoded bits
-            /param    ctxs        the contexts used in the encoding process
-            /param    band_list    the set of all the subbands
-            /param     band_num    the number of the subband being coded 
+            \param    bits_out           the output for the encoded bits
+            \param    number_of_contexts the contexts used in the encoding process
+            \param    band_list    the set of all the subbands
+            \param     band_num    the number of the subband being coded 
          */        
         LFBandCodec(BasicOutputManager* bits_out,
                     size_t number_of_contexts,
@@ -183,10 +183,10 @@ namespace dirac
         //! Constructor for decoding
         /*!
             Creates a LFBandCodec object to decode subband data.
-            /param    bits_in        the input for the encoded bits
-            /param    ctxs        the contexts used in the decoding process
-            /param    band_list    the set of all the subbands
-            /param     band_num    the number of the subband being decoded 
+            \param    bits_in        the input for the encoded bits
+            \param    number_of_contexts        the contexts used in the decoding process
+            \param    band_list    the set of all the subbands
+            \param     band_num    the number of the subband being decoded 
          */
         LFBandCodec(BitInputManager* bits_in,
                     size_t number_of_contexts,
@@ -223,10 +223,9 @@ namespace dirac
         /*!
             Creates a IntraDCBandCodec object to encode subband data, based on 
             parameters
-            /param    bits_out    the output for the encoded bits
-            /param    ctxs        the contexts used in the encoding process
-            /param    band_list    the set of all the subbands
-            /param     band_num    the number of the subband being coded 
+            \param    bits_out    the output for the encoded bits
+            \param    number_of_contexts the contexts used in the encoding process
+            \param    band_list    the set of all the subbands
          */
         IntraDCBandCodec(BasicOutputManager* bits_out,
                          size_t number_of_contexts,
@@ -237,10 +236,9 @@ namespace dirac
         /*!
             Creates a LFBandCodec object to decode subband data, based on 
             parameters
-            /param    bits_in        the input for the encoded bits
-            /param    ctxs        the contexts used in the decoding process
-            /param    band_list    the set of all the subbands
-            /param     band_num    the number of the subband being decoded 
+            \param    bits_in             the input for the encoded bits
+            \param    number_of_contexts  the contexts used in the decoding process
+            \param    band_list    the set of all the subbands
          */    
         IntraDCBandCodec(BitInputManager* bits_in,
                          size_t number_of_contexts,

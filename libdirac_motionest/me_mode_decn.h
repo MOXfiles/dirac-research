@@ -91,9 +91,9 @@ namespace dirac
         //! Does the actual mode decision
         /*!
             Does the mode decision
-            /param    my_buffer    the buffer of all the relevant frames
-            /param    frame_num    the frame number for which motion estimation is being done
-            /param    mvd    the motion vector data into which decisions will be written
+            \param    my_buffer    the buffer of all the relevant frames
+            \param    frame_num    the frame number for which motion estimation is being done
+            \param    me_data    the motion vector data into which decisions will be written
          */
         void DoModeDecn( const FrameBuffer& my_buffer , int frame_num , MEData& me_data);
 

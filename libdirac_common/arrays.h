@@ -104,7 +104,7 @@ namespace dirac
         /*!
             Range constructor produces an array with values indexed within the 
             range parameters.
-            /param    r    a range of indexing values.
+            \param    r    a range of indexing values.
          */        
         OneDArray(const Range& r);
 

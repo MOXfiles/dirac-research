@@ -69,9 +69,9 @@ namespace dirac
             Creates a sequence compressor, and prepares to begin compressing
             with the first frame.Sets up frame padding in the picture input if
             necesary
-            /param      pin     an input stream containing a sequence of frames
-            /param        outfile    an output stream for the compressed output
-            /param      encp    parameters for the encoding process
+            \param      pin     an input stream containing a sequence of frames
+            \param        outfile    an output stream for the compressed output
+            \param      encp    parameters for the encoding process
         */
         SequenceCompressor(StreamPicInput* pin, std::ostream* outfile, EncoderParams& encp);
 
@@ -85,7 +85,7 @@ namespace dirac
         /*!
             Load one frame of data into the Sequence Compressor. Sets
             m_all_done to true if no more data is available to be loaded.
-            /return             true - if frame load succeeded.
+            \return             true - if frame load succeeded.
                                 false - otherwise
         */
         bool LoadNextFrame();

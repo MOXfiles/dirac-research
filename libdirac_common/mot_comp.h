@@ -77,9 +77,9 @@ namespace dirac
         /*!
             Perform motion compensated addition/subtraction on a frame using 
             parameters
-            /param    fnum    number of frame in the frame buffer to be compensated
-            /param    my_buffer    the FrameBuffer object containing the frame and the reference frames
-    `       /param    mv_data    the motion vector data
+            \param    fnum    number of frame in the frame buffer to be compensated
+            \param    my_buffer    the FrameBuffer object containing the frame and the reference frames
+    `       \param    mv_data    the motion vector data
          */
         void CompensateFrame( FrameBuffer& my_buffer , int fnum , const MvData& mv_data );
 

@@ -261,9 +261,9 @@ namespace dirac
             //! Increment the count.
             /*!
                 Increment the count of Symbol by amnt.
-                /param    Symbol  the symbol whose count is to be 
+                \param    symbol  the symbol whose count is to be 
                                    incremented (false=0, true=1)
-                /param    amnt    the amount to increment by
+                \param    amnt    the amount to increment by
              */    
             void IncrCount(bool symbol, int amnt)
             {
@@ -379,7 +379,6 @@ namespace dirac
         void FlushDecoder(); 
     
         //! virtual decode-only functions    
-        /////////////////////////////// 
         virtual void DoWorkDecode(T & out_data, int num_bits)=0;    
     
         // core decode-only functions

@@ -83,7 +83,7 @@ namespace dirac
             //! Constructor
             /*!
                 Constructor, takes
-                /param sp the sequence parameters
+                \param sp the sequence parameters
              */  
             StreamPicOutput( const SeqParams& sp);
 
@@ -151,8 +151,8 @@ namespace dirac
 
                 //! Set the buffer variables
                 /*! Set the memory buffer variables
-                    /param   buffer      buffer to write data to
-                    /param   buffer_size size of output buffer
+                    \param   buffer      buffer to write data to
+                    \param   buffer_size size of output buffer
                 */
                 void SetMembufReference (unsigned char *buffer, int buffer_size)
                 {
@@ -217,9 +217,9 @@ namespace dirac
             //! Constructor
             /*!
                 Constructor, takes
-                /param output_name the name of the output file
-                /param sp the sequence parameters
-                /param write_header_only optionally write only the header
+                \param output_name the name of the output file
+                \param sp the sequence parameters
+                \param write_header_only optionally write only the header
              */  
             FileStreamOutput (const char* output_name,
               const SeqParams& sp,
@@ -257,8 +257,8 @@ namespace dirac
             //! Constructor
             /*!
                 Constructor, takes
-                /param ip_pic_ptr input stream to read from
-                /param sparams    Sequence parameters
+                \param ip_pic_ptr input stream to read from
+                \param sparams    Sequence parameters
              */
             StreamPicInput(std::istream *ip_pic_ptr, const SeqParams& sparams);
 
@@ -313,8 +313,8 @@ namespace dirac
 
             //! Set Memory buffer
             /*! Set the input memory buffer variables
-                /param    buf      Input Buffer to read data from
-                /param    buf_size Input buffer size
+                \param    buf      Input Buffer to read data from
+                \param    buf_size Input buffer size
             */
             void SetMembufReference (unsigned char *buf, int buf_size);
 
@@ -346,8 +346,8 @@ namespace dirac
 
                 //! Set Input Memory buffer variables
                 /*! Initialises the input memory buffer vars
-                    /param   buffer       Input memory buffer
-                    /param   buffer_size  Input memory buffer size
+                    \param   buffer       Input memory buffer
+                    \param   buffer_size  Input memory buffer size
                 */
                 void SetMembufReference (unsigned char *buffer, int buffer_size)
                 {
@@ -385,7 +385,7 @@ namespace dirac
             //! Constructor
             /*!
                 Constructor, takes
-                /param input_name the name of the input picture file
+                \param input_name the name of the input picture file
              */
             FileStreamInput (const char* input_name);
 

@@ -236,7 +236,7 @@ namespace dirac
         //! Constructor.
         /*!
         Constructs arrays of correction factors of size.
-        /param    depth    the depth of the wavelet transform.
+        \param    depth    the depth of the wavelet transform.
         */
         EntropyCorrector(int depth);
         
@@ -254,8 +254,11 @@ namespace dirac
         //! Update the correction factors.
         /*!
         Update the factors for a given subband, component and frame type.
-        /param    est_bits    the number of bits it was estimated would be used
-        /param    actual_bits    the number of bits that actually were used
+        \param    bandnum    the number of the subband to update
+        \param    fsort      frame type
+        \param    c          component type
+        \param    est_bits    the number of bits it was estimated would be used
+        \param    actual_bits    the number of bits that actually were used
          */    
         void Update(int bandnum, FrameSort fsort, CompSort c,int est_bits,int actual_bits);
         

@@ -62,8 +62,8 @@ namespace dirac
         //! A function to do the actual down-conversion 
         /*!
             A function to do the actual downconversion. 
-            /param    old_data    the picture data to be downconverted
-            /param    new_data    the resulting down-converted data. The array must be of the correct size.
+            \param    old_data    the picture data to be downconverted
+            \param    new_data    the resulting down-converted data. The array must be of the correct size.
          */
         void DoDownConvert(const PicArray& old_data, PicArray& new_data);
 

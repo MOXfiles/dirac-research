@@ -102,7 +102,7 @@ namespace dirac
             //! Constructor
             /*!
             Constructor requires an ostream object pointer.
-            /param OutData the output stream object pointer
+            \param out_data the output stream object pointer
             */
             BasicOutputManager(std::ostream* out_data );
 

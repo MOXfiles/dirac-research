@@ -62,7 +62,7 @@ namespace dirac
         //! Constructor
         /*!
             The constructor initialises the encoder parameters.
-            /param    cp    the parameters used for controlling encoding
+            \param    cp    the parameters used for controlling encoding
          */
         SubpelRefine(const EncoderParams& cp);
     
@@ -72,9 +72,9 @@ namespace dirac
         //! Does the actual sub-pixel refinement
         /*!
             Does the actual sub-pixel refinement.
-            /param    my_buffer    the buffer of pictures being used
-            /param    frame_num    the frame number on which motion estimation is being performed
-            /param    mvd    the motion vector data, into which the results will be written
+            \param    my_buffer    the buffer of pictures being used
+            \param    frame_num    the frame number on which motion estimation is being performed
+            \param    me_data    the motion vector data, into which the results will be written
          */
         void DoSubpel( const FrameBuffer& my_buffer , int frame_num , MEData& me_data );
     

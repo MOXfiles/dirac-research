@@ -62,21 +62,21 @@ namespace dirac
         //! Constructor
         /*!
             The constructor parameters are
-            /param    xpos    the xposition of the subband when packed into a big array with all the others
-            /param    ypos    the xposition of the subband
-            /param    xlen    the width of the subband
-            /param    ylen    the height of the subband
+            \param    xpos    the xposition of the subband when packed into a big array with all the others
+            \param    ypos    the xposition of the subband
+            \param    xlen    the width of the subband
+            \param    ylen    the height of the subband
          */    
         Subband(int xpos, int ypos, int xlen, int ylen);
 
         //! Constructor
         /*!
             The constructor parameters are
-            /param    xpos    the xposition of the subband when packed into a big array with all the others
-            /param    ypos    the xposition of the subband
-            /param    xlen    the width of the subband
-            /param    ylen    the height of the subband
-            /param    d        the depth of the subband in the wavelet transform
+            \param    xpos    the xposition of the subband when packed into a big array with all the others
+            \param    ypos    the xposition of the subband
+            \param    xlen    the width of the subband
+            \param    ylen    the height of the subband
+            \param    d        the depth of the subband in the wavelet transform
          */    
         Subband(int xpos, int ypos, int xlen, int ylen, int d);
 
@@ -273,8 +273,8 @@ namespace dirac
         //! Transforms the data to and from the wavelet domain
         /*!
             Transforms the data to and from the wavelet domain.
-            /param    d    the direction of the transform
-            /param    pic_data    the data to be transformed
+            \param    d    the direction of the transform
+            \param    pic_data    the data to be transformed
         */
         void Transform(const Direction d, PicArray& pic_data);
         

@@ -62,10 +62,9 @@ namespace dirac
         //! Constructor for encoding
             /*!
             Creates a MvDataCodec object to encode MV data, based on parameters
-            /param    bits_out    the output for the encoded bits
-            /param    ctxs        the contexts used in the encoding process
-            /param    cp            the coding/decoding parameter set
-            /param     cf            the chroma format
+            \param    bits_out    the output for the encoded bits
+            \param    number_of_contexts   the contexts used in the encoding process
+            \param     cf            the chroma format
          */    
         MvDataCodec(BasicOutputManager* bits_out,
                     size_t number_of_contexts,
@@ -74,10 +73,9 @@ namespace dirac
         //! Constructor for decoding
             /*!
             Creates a MvDataCodec object to encode MV data, based on parameters
-            /param    bits_in        the input for the encoded bits
-            /param    ctxs        the contexts used in the encoding process
-            /param    cp            the coding/decoding parameter set
-            /param     cf            the chroma format
+            \param    bits_in        the input for the encoded bits
+            \param    number_of_contexts  the contexts used in the encoding process
+            \param     cf            the chroma format
          */        
         MvDataCodec(BitInputManager* bits_in,
                     size_t number_of_contexts,

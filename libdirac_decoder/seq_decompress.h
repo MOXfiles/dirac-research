@@ -67,8 +67,8 @@ namespace dirac
         /*!
             Initializes the decompressor with an input stream and level of
             output detail.
-            /param  ip          input data stream containing a sequence of compressed images
-            /param  verbosity   when true, increases the amount of information displayed during decompression
+            \param  ip          input data stream containing a sequence of compressed images
+            \param  verbosity   when true, increases the amount of information displayed during decompression
          */
         SequenceDecompressor(std::istream * ip, bool verbosity);
 
@@ -115,7 +115,7 @@ namespace dirac
         /*!
             Returns the parameters used for this decompression run.
 
-            /return decompression parameters originally provide din the constructor.
+            \return decompression parameters originally provide din the constructor.
          */
         SeqParams & GetSeqParams() { return m_sparams; }
 

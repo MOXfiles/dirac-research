@@ -63,8 +63,8 @@ namespace dirac
         //! Upconvert the picture data
         /*!
             Upconvert the picture data, where the parameters are
-            /param    pic_data    is the original data
-            /param    up_data    is the upconverted data
+            \param    pic_data    is the original data
+            \param    up_data    is the upconverted data
          */
         void DoUpConverter(const PicArray& pic_data, PicArray& up_data);
 
