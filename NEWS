@@ -1,3 +1,9 @@
+Dirac-0.3.1
+===========
+  - Fixed compiling under Windows
+  - Video conversion utilites now build under Windows
+  - Colour conversion matrix coefficients corrected in conversion utilites
+
 Dirac-0.3.0
 ===========
   - Added conversion utilities for going to and from RGB and 
