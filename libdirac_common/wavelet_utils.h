@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-05-26 14:31:39  tjdwave
+* Added doxygen comments to describe how perceptual weighting now incorporates
+* scaling factors from the scaling.
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -237,6 +241,15 @@ public:
 	//! Returns the set of subbands
 	const SubbandList& BandList() const {return band_list;}
 	//! Sets the subband weights
+	/*!
+		Sets perceptual weights for the subbands. Takes into account both perceptual factors
+		(weight noise less at higher spatial frequencies) and the scaling needed for the 
+		wavelet transform. 
+
+		\param	encparams	the encoder parameters
+		\param	fparams	the frame parameters, such as the frame sort (I, L1 or L2)
+		\param	csort	the component type (Y, U or V)  
+	*/
 	void SetBandWeights (const EncoderParams& encparams,const FrameParams& fparams,const CompSort csort);
 
 private:
@@ -257,7 +270,5 @@ private:
 	void VHSynth(int xp, int yp, int xl, int yl, PicArray& pic_data);	
 
 };
-
-//void  SetBandWeights(const CodecParams& cparams,const FrameParams& fparams,const CompSort csort,SubbandList& bands);
 
 #endif
