@@ -35,6 +35,9 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
+#ifndef __OVERLAY_H__
+#define __OVERLAY_H__
+
 #include <libdirac_common/common.h>
 #include <libdirac_common/motion.h>
 #include <libdirac_common/frame.h>
@@ -179,3 +182,6 @@ private:
     //! Parameters for drawing frame overlays
     DrawFrameMotionParams m_draw_params;
 };
+
+#endif
+
