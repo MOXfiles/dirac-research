@@ -1,3 +1,124 @@
+2004-12-01 14:40  asuraparaju
+
+	* NEWS: Included 0.5.0 release notes
+
+2004-12-01 14:39  asuraparaju
+
+	* README: Updated Section 3 (Building and installing) to reflect
+	  changes to building the codec under UNIX-like envoroments and MS
+	  Windows. Added sub-section on how to build Dirac coder on MS
+	  Windows platform using MS VC++ .NET 2003. Updated make_header
+	  usage  in the File Formats suc-section. Update encoder app usage
+	  information.
+
+2004-12-01 14:35  asuraparaju
+
+	* README.developers: New sub-section on namespaces to be used in
+	  Dirac. Added note on new test target 'valgrind-check'
+
+2004-12-01 14:32  asuraparaju
+
+	* TODO: Replaced contents with link to the TODO list on Dirac
+	  homepage
+
+2004-12-01 14:13  timborer
+
+	* util/conversion/YUV420toRGB.cpp: Fixed bug 1050816.
+
+2004-11-29 12:54  asuraparaju
+
+	* libdirac_common/arith_codec.h, libdirac_common/arrays.h,
+	  libdirac_common/band_codec.h, libdirac_common/bit_manager.h,
+	  libdirac_common/common.h, libdirac_common/mot_comp.h,
+	  libdirac_common/mv_codec.h, libdirac_common/pic_io.h,
+	  libdirac_common/upconvert.h, libdirac_common/wavelet_utils.h,
+	  libdirac_decoder/seq_decompress.h,
+	  libdirac_encoder/seq_compress.h,
+	  libdirac_motionest/downconvert.h,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.h: Fix warnings reported by doxygen
+
+2004-11-26 13:36  asuraparaju
+
+	* unit_tests/: frames_test.cpp, frames_test.h,
+	  motion_comp_test.cpp, motion_comp_test.h: Unit test for Motion
+	  Compensation
+
+2004-11-26 13:36  asuraparaju
+
+	* unit_tests/Makefile.am: Added Motion compensation unit test
+	  related files to list of targets
+
+2004-11-26 13:28  asuraparaju
+
+	* configure.ac: Modified check for cppunit test framework to ensure
+	  that it can run without errors. This was required because unit
+	  tests fail when built with icc. This is a temporary measure until
+	  it is determined why unit tests fail when built with icc on
+	  linux.
+
+2004-11-26 13:23  asuraparaju
+
+	* AUTHORS: Updated list of contributors
+
+2004-11-26 13:22  asuraparaju
+
+	* Makefile.am: Removed win directory from distribution list as
+	  build with nmake is no longer supported. Added win32 to list of
+	  target subdirectories
+
+2004-11-26 13:13  asuraparaju
+
+	* win32/: Makefile.am, VS2003/Makefile.am, VS2003/dirac.sln,
+	  VS2003/ConversionUtils/ConversionUtils.vcproj,
+	  VS2003/ConversionUtils/BMPtoRGB/BMPtoRGB.vcproj,
+	  VS2003/ConversionUtils/RGBtoBMP/RGBtoBMP.vcproj,
+	  VS2003/ConversionUtils/RGBtoUYVY/RGBtoUYVY.vcproj,
+	  VS2003/ConversionUtils/RGBtoYUV411/RGBtoYUV411.vcproj,
+	  VS2003/ConversionUtils/RGBtoYUV420/RGBtoYUV420.vcproj,
+	  VS2003/ConversionUtils/RGBtoYUV422/RGBtoYUV422.vcproj,
+	  VS2003/ConversionUtils/RGBtoYUV444/RGBtoYUV444.vcproj,
+	  VS2003/ConversionUtils/UYVYtoRGB/UYVYtoRGB.vcproj,
+	  VS2003/ConversionUtils/YUV411toRGB/YUV411toRGB.vcproj,
+	  VS2003/ConversionUtils/YUV420toRGB/YUV420toRGB.vcproj,
+	  VS2003/ConversionUtils/YUV422toRGB/YUV422toRGB.vcproj,
+	  VS2003/ConversionUtils/YUV444toRGB/YUV444toRGB.vcproj,
+	  VS2003/ConversionUtils/libconv_common/libconv_common.vcproj,
+	  VS2003/DecodeDirac/DecodeDirac.vcproj,
+	  VS2003/DiracDecoder/DiracDecoder.vcproj,
+	  VS2003/DiracDecoder/libdirac_decoder/libdirac_decoder.vcproj,
+	  VS2003/DiracEncoder/DiracEncoder.vcproj,
+	  VS2003/DiracEncoder/libdirac_encoder/libdirac_encoder.vcproj,
+	  VS2003/EncodeDirac/EncodeDirac.vcproj,
+	  VS2003/Everything/Everything.vcproj,
+	  VS2003/InstrumentDirac/InstrumentDirac.vcproj,
+	  VS2003/InstrumentDirac/libdirac_instrument/libdirac_instrument.vcproj,
+	  VS2003/MakeHeader/MakeHeader.vcproj,
+	  VS2003/libdirac_common/libdirac_common.vcproj,
+	  VS2003/libdirac_motionest/libdirac_motionest.vcproj: Solution and
+	  Project files for building Dirac using MS Visual Studio 2003
+
+2004-11-25 13:42  asuraparaju
+
+	* decoder/decmain.cpp, encoder/encmain.cpp: Modified to use only
+	  public API and none of the C++ classes
+
+2004-11-25 13:41  asuraparaju
+
+	* libdirac_common/dirac_types.h: Turn off _declspec for non-windows
+	  builds and windows static builds
+
+2004-11-24 11:41  tjdwave
+
+	* doc/algorithm/rdo_mot_est.htm: Remaining mods to algorithmic
+	  docs.
+
+2004-11-24 11:27  tjdwave
+
+	* doc/algorithm/: algorithm.htm, const_qual.htm, intra_pred.htm,
+	  intro.htm, quantisation.htm, subband_rdo.htm: Mods to algorithm
+	  docs; intra_pred.htm removed.
+
 2004-11-22 14:15  asuraparaju
 
 	* AUTHORS: Updated list of contributors.
