@@ -1,3 +1,13 @@
+dirac-0.4.3
+===========
+  - Quality metric has changed from PSNR to one based on 4th powers of errors.
+    This results in pictures with more stable quality and fewer artefacts.
+  - Fixed bug with scaling motion vectors for non 4:4:4 formats.
+  - Fixed bug in encoder in downconverting a picture with odd valued dimensions
+  - Fixed bug in encoder in handling input with 4:1:1 chroma format.
+  - Fixed bug in diagnostics tool in handling input with 4:1:1 chroma format.
+  - Updated algorithm documentation
+
 dirac-0.4.2
 ===========
   - Fixed bugs in writing instrumentation data while encoding which
