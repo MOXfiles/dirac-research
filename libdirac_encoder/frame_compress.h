@@ -118,11 +118,14 @@ namespace dirac
         // True if we use global motion vectors, false otherwise
         bool m_use_global;
 
+        // True if we only use global motion vectors (and not block motion vectors), false otherwise
+        bool m_use_global_only;
+
         // True if we use block motion vectors, false otherwise
-        bool m_use_block_mv;
+        //bool m_use_block_mv;
         
         // Prediction mode to use if we only have global motion vectors
-        PredMode m_global_pred_mode;
+        //PredMode m_global_pred_mode;
         
         // True if motion estimation data is available
         bool m_medata_avail;

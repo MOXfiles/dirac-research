@@ -42,6 +42,7 @@
 #include <libdirac_motionest/me_subpel.h>
 #include <libdirac_motionest/me_mode_decn.h>
 #include <libdirac_motionest/global_motion.h>
+//#include <libdirac_motionest/me_motion_type_decn.h>
 using namespace dirac;
 
 #include <cmath>
@@ -68,21 +69,36 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
     SubpelRefine pelrefine( m_encparams );
     pelrefine.DoSubpel( my_buffer , frame_num , me_data );
 
-
     // Now find BEST global motion vectors
 	GlobalMotion globalMotion( my_buffer, me_data, frame_num, m_encparams );
-
 	for (unsigned int i=1; i<=my_buffer.GetFrame(frame_num).GetFparams().Refs().size(); ++i)
     {
         std::cerr<<std::endl<<"Global Motion, ref "<<i;
         globalMotion.ModelGlobalMotion(i);
     }
-    // Step3.
+
+	// Step3.
     // We now have to decide how each macroblock should be split 
     // and which references should be used, and so on.
 
     ModeDecider my_mode_dec( m_encparams );
     my_mode_dec.DoModeDecn( my_buffer , frame_num , me_data );
+
+	// Step4.
+	// Choose between global and block motion for each prediction unit.
+	// Alternatively, we may want to use Global Motion only. 
+
+	//MotionTypeDecider my_motion_type_dec;
+    //int motion_choice = my_motion_type_dec.DoMotionTypeDecn( my_buffer , frame_num , me_data );
+	int motion_choice = 2; // Force choice here - USED FOR TESTING ONLY!
+	
+	if (motion_choice==0)
+		me_data.SetGlobalMotionFlags(0,0); // No Global Motion
+	else if (motion_choice==1)
+		me_data.SetGlobalMotionFlags(1,1); // Only Global Motion
+	else 
+		me_data.SetGlobalMotionFlags(1,0); // Allow each Pred Unit to choose global/block motion
+	
 
     // Finally, although not strictly part of motion estimation,
     // we have to assign DC values for chroma components for

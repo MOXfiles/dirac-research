@@ -469,7 +469,8 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
             min_unit_cost = unit_cost;
         }
 */
-    }
+
+	}
 
     return min_unit_cost;
 }

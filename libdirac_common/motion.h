@@ -232,6 +232,9 @@ namespace dirac
         //! Destructor
         ~MvData();
 
+		//! Set the Global Motion Flags
+		void SetGlobalMotionFlags( bool use_global , bool use_global_only );
+
         //! Get the MVs for a reference
         MvArray& Vectors(const int ref_id){return *( m_vectors[ref_id] );}
 
@@ -277,6 +280,18 @@ namespace dirac
         //! Get the global motion model parameters
         const OneDArray<float>& GlobalMotionParameters(const int ref_id) const { return *( m_gm_params[ref_id] ); }
 
+		void GenerateGlobalMotionVectors();
+
+		bool m_use_global;		// should probably be private
+		bool m_use_global_only; // should probably be private
+
+        //! Get the blocks' global motion flags
+        //TwoDArray<PredMode>& BlockUseGlobal(){return m_block_use_global;}
+
+		// Quantisation (and Inverse Quantisation) of Global Motion Parameters:
+		void QuantiseGlobalMotionParameters();
+		void DequantiseGlobalMotionParameters();
+
     private:
         // Initialises the arrays of data
         void InitMvData();
@@ -301,6 +316,7 @@ namespace dirac
 
         // Global motion model parameters
         OneDArray< OneDArray<float>* > m_gm_params;
+
     };
 
     //! Class for all the motion estimation data
@@ -336,6 +352,8 @@ namespace dirac
 
         //! Destructor
         ~MEData();
+
+
 
         //! Get the block cost structures for each reference
         TwoDArray<MvCostData>& PredCosts(const int ref_id){ return *( m_pred_costs[ref_id] ); }

@@ -129,14 +129,18 @@ void RejectSAD::Reject(int & score)
         UpdateInliers(m_global_inliers, best_threshold);    // update global outlier array
         score = best_score;                                 // update cummulative score
         
-        if (m_debug)
+        /*
+		if (m_debug)
         {
             std::cerr << std::endl << "Reject SAD: Improved model, threshold = " << best_threshold;
             std::cerr << ", score = " << best_score;
         }
+		*/
     }
-    else
+    /*
+	else
         if (m_debug) std::cerr << std::endl << "Reject SAD: Failed to improve model";
+	*/
 }
 
 void RejectSAD::UpdateInliers(TwoDArray<int> & inliers, float threshold)

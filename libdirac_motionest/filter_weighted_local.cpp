@@ -438,12 +438,12 @@ void FilterWeightedLocal::Refine(MvFloatArray & gmv, int & score)
             }
         }
 
-        if (m_debug) std::cerr << std::endl << "Filter: Improved model";
+        //if (m_debug) std::cerr << std::endl << "Filter: Improved model";
     }
 
     else
     {
-        if (m_debug) std::cerr << std::endl << "Filter: Failed to improve model";
+        //if (m_debug) std::cerr << std::endl << "Filter: Failed to improve model";
 
         // update global motion vectors
         for (int j=0;j<gmv.LengthY();++j)

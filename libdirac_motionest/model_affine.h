@@ -70,7 +70,7 @@ namespace dirac
     
         //! Generates integer global motion vector field
         void GenerateGlobalMotionVectors(MvArray &, OneDArray<float> &);
-    
+  
     private :
         //! SHOW DEBUG OUTPUT
         bool m_debug;

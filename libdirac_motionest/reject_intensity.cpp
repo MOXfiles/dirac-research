@@ -112,10 +112,12 @@ void RejectIntensity::Reject(int & score)
         score = new_score;                                  // update cummulative score
         ResetInliers(m_global_inliers, m_internal_inliers); // update global inliers
 
-        if (m_debug) std::cerr << std::endl << "Reject intensity: Improved model";
+        //if (m_debug) std::cerr << std::endl << "Reject intensity: Improved model";
     }
 
-    else
+	/*
+	else
         if (m_debug) std::cerr << std::endl << "Reject intensity: Failed to improve model";
+	*/
 }
 

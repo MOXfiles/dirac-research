@@ -124,14 +124,11 @@ namespace dirac
         //! An indicator which is true if the frame has been skipped, false otherwise
         bool m_skipped;
 
-        //! An indicator that is true if we use global motion vectors, false otherwise
+        //! An indicator that is true if we use global motion vectors (not necessarily exclusively), false otherwise
         bool m_use_global;
 
-        //! An indicator that is true if we use block motion vectors, false otherwise
-        bool m_use_block_mv;
-
-        //! Prediction mode to use if we only have global motion vectors
-        PredMode m_global_pred_mode;
+		// True if we only use global motion vectors (and not block motion vectors), false otherwise
+        bool m_use_global_only;
 
         //! Current Frame Parameters
         FrameParams m_fparams;

@@ -168,7 +168,7 @@ void MotionCompensator::ReConfig()
 }
 
 void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1frame, const Frame& ref2frame,
-    const MvData& mv_data,const CompSort cs)
+    const MvData& mv_data, const CompSort cs)
 {
     // Set up references to pictures and references
     PicArray& pic_data_out = picframe.Data( cs );
@@ -211,12 +211,24 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
     const int num_refs = picframe.GetFparams().Refs().size();
     const MvArray* mv_array1; 
     const MvArray* mv_array2;
-    mv_array1 = &mv_data.Vectors(1);
+	if (mv_data.m_use_global_only)
+	    mv_array1 = &mv_data.GlobalMotionVectors(1); // Use Global Motion
+	else
+		mv_array1 = &mv_data.Vectors(1); // Use Block Motion Vector
     if (num_refs ==2 )
-        mv_array2 = &mv_data.Vectors(2);
-    else
-        mv_array2 = &mv_data.Vectors(1);
-
+	{
+        if (mv_data.m_use_global_only)
+			mv_array2 = &mv_data.GlobalMotionVectors(2); // Use Global Motion
+		else
+			mv_array2 = &mv_data.Vectors(2); // Use Block Motion Vector
+	}
+	else
+	{
+        if (mv_data.m_use_global_only)
+			mv_array2 = &mv_data.GlobalMotionVectors(1); // Use Global Motion
+		else
+			mv_array2 = &mv_data.Vectors(1); // Use Block Motion Vector
+	}
     ReConfig();//set all the weighting blocks up    
 
     //Blocks are listed left to right, line by line.

@@ -160,9 +160,12 @@ namespace dirac
         
         MB_CMODE_CTX,       //44    -context for MB common block mode
         MB_SPLIT_BIN1_CTX,  //45    -bin1, MB split mode vals
-        MB_SPLIT_BIN2_CTX   //46    -bin2, MB split mode vals. Bin 3 not required
-        
-    };
+        MB_SPLIT_BIN2_CTX,  //46    -bin2, MB split mode vals. Bin 3 not required
+
+		GLOBAL_MAG_Ac_CTX,	//47	-global motion: magnitude bins for "A-matrix" and "c-vector" parameters 	
+        GLOBAL_MAG_b_CTX,	//48	-global motion: magnitude bins for "b-vector" (translation) parameters 	
+		GLOBAL_SIGN_CTX		//49	-global motion: sign bin for all global motion parameters
+};
 
 
     //Classes used throughout the codec//

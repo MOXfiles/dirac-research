@@ -76,6 +76,7 @@ namespace dirac
         //! Generate float global motion vector field
         void GenerateGlobalMotionVectors(MvArray &,
                                          OneDArray<float> &);
+
     
     private :
     

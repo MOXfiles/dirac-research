@@ -96,7 +96,8 @@ namespace dirac
         MvDataCodec(const MvDataCodec& cpy);            //private, bodyless copy constructor: class should not be copied
         MvDataCodec& operator=(const MvDataCodec& rhs); //private, bodyless copy operator=: class should not be assigned
 
-        // coding functions    
+        // coding functions   
+		void CodeGlobalMotionParameters(const MvData& in_data);	//code the global motion parameters 
         void CodeMBSplit(const MvData& in_data);    //code the MB splitting mode
         void CodeMBCom(const MvData& in_data);    //code the MB common ref mode
         void CodePredmode(const MvData& in_data);    //code the block prediction mode
@@ -105,7 +106,8 @@ namespace dirac
         void CodeDC(const MvData& in_data);        //code the dc value of intra blocks
 
         // decoding functions
-        void DecodeMBSplit( MvData& out_data);    //decode the MB splitting mode
+		void DecodeGlobalMotionParameters( MvData& out_data);	//decode the global motion parameters 
+		void DecodeMBSplit( MvData& out_data);    //decode the MB splitting mode
         void DecodeMBCom( MvData& out_data);//decode the MB common ref mode
         void DecodePredmode(MvData& out_data);//decode the block prediction mode
         void DecodeMv1( MvData& out_data);    //decode the first motion vector
@@ -141,6 +143,10 @@ namespace dirac
         int ChooseYDCSignContext(const MvData& data) const;
         int ChooseUDCSignContext(const MvData& data) const;
         int ChooseVDCSignContext(const MvData& data) const;
+
+		// Global Motion Contexts: quite primitive - might want to update
+        int ChooseGlobalMotionMagContext(const MvData& data, const int param) const;
+        int ChooseGlobalMotionSignContext(const MvData& data, const int ref_num) const;
 
         //prediction stuff
         unsigned int MBSplitPrediction(const TwoDArray<int>& mbdata) const;

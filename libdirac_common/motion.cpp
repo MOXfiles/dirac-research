@@ -51,430 +51,511 @@ using namespace std;
 //////////////////////////////////////////////////
 
 MvData::MvData( const int xnumMB, const int ynumMB , 
-                const int xnumblocks, const int ynumblocks , const int num_refs ):
-    m_vectors( Range(1 , num_refs) ),
-    m_gm_vectors( Range(1 , num_refs) ),
-    m_modes( ynumblocks , xnumblocks ),
-    m_dc( 3 ),
-    m_mb_split( ynumMB , xnumMB ),
-    m_mb_common( ynumMB , xnumMB ),
-    m_gm_params( Range(1 , num_refs) )
+			   const int xnumblocks, const int ynumblocks , const int num_refs ):
+m_vectors( Range(1 , num_refs) ),
+m_gm_vectors( Range(1 , num_refs) ),
+m_modes( ynumblocks , xnumblocks ),
+m_dc( 3 ),
+m_mb_split( ynumMB , xnumMB ),
+m_mb_common( ynumMB , xnumMB ),
+m_gm_params( Range(1 , num_refs) )
 {
 
-    InitMvData();
+	InitMvData();
 }
 
 MvData::MvData( const int xnumMB , const int ynumMB , const int num_refs ):
-    m_vectors( Range(1 , num_refs) ),
-    m_gm_vectors( Range(1 , num_refs) ),
-    m_modes( 4*ynumMB , 4*xnumMB ),
-    m_dc( 3 ),
-    m_mb_split( ynumMB , xnumMB ),
-    m_mb_common( ynumMB , xnumMB ),
-    m_gm_params( Range(1 , num_refs) )
+m_vectors( Range(1 , num_refs) ),
+m_gm_vectors( Range(1 , num_refs) ),
+m_modes( 4*ynumMB , 4*xnumMB ),
+m_dc( 3 ),
+m_mb_split( ynumMB , xnumMB ),
+m_mb_common( ynumMB , xnumMB ),
+m_gm_params( Range(1 , num_refs) )
 {
-    InitMvData();
+	InitMvData();
 }
+
+
+void MvData::SetGlobalMotionFlags( bool use_global , bool use_global_only )
+{
+	m_use_global = use_global;
+	m_use_global_only = use_global_only;
+}
+
 
 void MvData::InitMvData()
 {
-    // Create the arrays of vectors
-     for ( int i=m_vectors.First() ; i<=m_vectors.Last() ; ++i ){
-         m_vectors[i] = new MvArray( Mode().LengthY() , Mode().LengthX() );
-         m_gm_vectors[i] = new MvArray( Mode().LengthY() , Mode().LengthX() );
-     }
+	// Create the arrays of vectors
+	for ( int i=m_vectors.First() ; i<=m_vectors.Last() ; ++i ){
+		m_vectors[i] = new MvArray( Mode().LengthY() , Mode().LengthX() );
+		m_gm_vectors[i] = new MvArray( Mode().LengthY() , Mode().LengthX() );
+	}
 
-    // create global motion parameter arrays
-    for ( int i=m_gm_params.First() ; i<=m_gm_params.Last() ; ++i ){
-         m_gm_params[i] = new OneDArray<float> ( 8 );
-    }
+	// create global motion parameter arrays
+	for ( int i=m_gm_params.First() ; i<=m_gm_params.Last() ; ++i )
+	{
+		m_gm_params[i] = new OneDArray<float> ( 8 );
+		for ( int j=0; j<8; j++ ) 
+			(*(m_gm_params[i]))[j] = 0.0; // Default Global Motion Parameters: All Zeros
+	}
 
-     // Create the arrays of dc values
-     for ( int i=0 ; i<3 ; ++i )
-         m_dc[i] = new TwoDArray<ValueType>( Mode().LengthY() , Mode().LengthX() );
+	// Create the arrays of dc values
+	for ( int i=0 ; i<3 ; ++i )
+		m_dc[i] = new TwoDArray<ValueType>( Mode().LengthY() , Mode().LengthX() );
 }
 
 MvData::~MvData()
 {
-   // Delete the arrays of vectors
-    for ( int i=m_vectors.First() ; i<=m_vectors.Last() ; ++i ){
-        delete m_vectors[i];
-        delete m_gm_vectors[i];
-    }
+	// Delete the arrays of vectors
+	for ( int i=m_vectors.First() ; i<=m_vectors.Last() ; ++i ){
+		delete m_vectors[i];
+		delete m_gm_vectors[i];
+	}
 
-     // delete array of global motion parameters
-     for ( int i=m_gm_params.First() ; i<=m_gm_params.Last() ; ++i ){
-         delete m_gm_params[i];
-     }
+	// delete array of global motion parameters
+	for ( int i=m_gm_params.First() ; i<=m_gm_params.Last() ; ++i ){
+		delete m_gm_params[i];
+	}
 
-     // Delete the arrays of dc values
-     for ( int i=0 ; i<3 ; ++i )
-         delete m_dc[i];
+	// Delete the arrays of dc values
+	for ( int i=0 ; i<3 ; ++i )
+		delete m_dc[i];
+}
+
+
+
+void MvData::GenerateGlobalMotionVectors()
+{
+	for ( int ref=m_gm_params.First() ; ref<=m_gm_params.Last() ; ref++ )
+	{
+		const MvArray& gmv = GlobalMotionVectors( ref );
+
+		const OneDArray<float>& params = GlobalMotionParameters( ref );
+
+		for (int j=0;j<gmv.LengthY();j++)
+		{
+			for (int i=0;i<gmv.LengthX();i++)
+			{
+				float x = (float)i + 0.5;
+				float y = (float)j + 0.5;
+
+				gmv[j][i].x = int( params[0] * x ) + int( params[1] * y );
+				gmv[j][i].x = int( params[2] * x ) + int( params[3] * y );
+				gmv[j][i].x += params[4];
+				gmv[j][i].y += params[5];
+				// ADD PROJECTIVE! 
+			}
+		}
+	}
+}
+
+
+
+void MvData::QuantiseGlobalMotionParameters() 
+{
+	for ( int i=m_gm_params.First() ; i<=m_gm_params.Last() ; ++i )
+	{
+		(*(m_gm_params[i]))[0] = floor( (*(m_gm_params[i]))[0] * 128 + 0.5 );
+		(*(m_gm_params[i]))[1] = floor( (*(m_gm_params[i]))[1] * 128 + 0.5 );
+		(*(m_gm_params[i]))[2] = floor( (*(m_gm_params[i]))[2] * 128 + 0.5 );
+		(*(m_gm_params[i]))[3] = floor( (*(m_gm_params[i]))[3] * 128 + 0.5 );
+		(*(m_gm_params[i]))[4] = floor( (*(m_gm_params[i]))[4] * 1 + 0.5 );
+		(*(m_gm_params[i]))[5] = floor( (*(m_gm_params[i]))[5] * 1 + 0.5 );
+		(*(m_gm_params[i]))[6] = floor( (*(m_gm_params[i]))[6] * 128 + 0.5 );
+		(*(m_gm_params[i]))[7] = floor( (*(m_gm_params[i]))[7] * 128 + 0.5 );
+	}
+}
+
+void MvData::DequantiseGlobalMotionParameters() 
+{
+	for ( int i=m_gm_params.First() ; i<=m_gm_params.Last() ; ++i )
+	{
+
+		(*(m_gm_params[i]))[0] /= 128; 
+		(*(m_gm_params[i]))[1] /= 128; 
+		(*(m_gm_params[i]))[2] /= 128; 
+		(*(m_gm_params[i]))[3] /= 128; 
+		(*(m_gm_params[i]))[4] /= 1; 
+		(*(m_gm_params[i]))[5] /= 1; 
+		(*(m_gm_params[i]))[6] /= 128; 
+		(*(m_gm_params[i]))[7] /= 128; 
+		/*	 
+		(*(m_gm_params[i]))[0] = 0; 
+		(*(m_gm_params[i]))[1] = 0; 
+		(*(m_gm_params[i]))[2] = 0; 
+		(*(m_gm_params[i]))[3] = 0; 
+		//(*(m_gm_params[i]))[4] = 0; 
+		//(*(m_gm_params[i]))[5] = 0; 
+		(*(m_gm_params[i]))[6] = 0; 
+		(*(m_gm_params[i]))[7] = 0; 
+		*/	
+	}
 }
 
 
 
 MEData::MEData(const int xnumMB , const int ynumMB ,
-                const int xnumblocks , const int ynumblocks , const int num_refs ):
-     MvData( xnumMB , ynumMB , xnumblocks , ynumblocks , num_refs ),
-     m_pred_costs( Range( 1 , num_refs ) ),
-     m_intra_costs( ynumblocks , xnumblocks ),
-     m_bipred_costs( ynumblocks , xnumblocks ),
-     m_MB_costs( ynumMB , xnumMB ),
-     m_lambda_map( ynumblocks , xnumblocks ),
-     m_inliers( Range( 1 , num_refs ) )
+			   const int xnumblocks , const int ynumblocks , const int num_refs ):
+MvData( xnumMB , ynumMB , xnumblocks , ynumblocks , num_refs ),
+m_pred_costs( Range( 1 , num_refs ) ),
+m_intra_costs( ynumblocks , xnumblocks ),
+m_bipred_costs( ynumblocks , xnumblocks ),
+m_MB_costs( ynumMB , xnumMB ),
+m_lambda_map( ynumblocks , xnumblocks ),
+m_inliers( Range( 1 , num_refs ) )
 {
-    InitMEData();
+	InitMEData();
 }
 
 MEData::MEData( const int xnumMB , const int ynumMB ,  const int num_refs ):
-     MvData( xnumMB , ynumMB , num_refs ),
-     m_pred_costs( Range( 1 , num_refs ) ),
-     m_intra_costs( 4*ynumMB , 4*xnumMB ),
-     m_bipred_costs( 4*ynumMB , 4*xnumMB ),
-     m_MB_costs( ynumMB , xnumMB ),
-     m_lambda_map( 4*ynumMB , 4*xnumMB ),
-     m_inliers( Range( 1 , num_refs ) )
+MvData( xnumMB , ynumMB , num_refs ),
+m_pred_costs( Range( 1 , num_refs ) ),
+m_intra_costs( 4*ynumMB , 4*xnumMB ),
+m_bipred_costs( 4*ynumMB , 4*xnumMB ),
+m_MB_costs( ynumMB , xnumMB ),
+m_lambda_map( 4*ynumMB , 4*xnumMB ),
+m_inliers( Range( 1 , num_refs ) )
 {
-    InitMEData();
+	InitMEData();
 
 }
 
 void MEData::InitMEData()
 {
-   // Create the arrays of prediction costs
-    for ( int i=m_pred_costs.First() ; i<=m_pred_costs.Last() ; ++i )
-        m_pred_costs[i] = new TwoDArray<MvCostData>( Mode().LengthY() , Mode().LengthX() );
+	// Create the arrays of prediction costs
+	for ( int i=m_pred_costs.First() ; i<=m_pred_costs.Last() ; ++i )
+		m_pred_costs[i] = new TwoDArray<MvCostData>( Mode().LengthY() , Mode().LengthX() );
 
-    // Create the arrays of vectors
-     for ( int i=m_inliers.First() ; i<=m_inliers.Last() ; ++i )
-         m_inliers[i] = new TwoDArray<int>( Mode().LengthY() , Mode().LengthX() );
+	// Create the arrays of vectors
+	for ( int i=m_inliers.First() ; i<=m_inliers.Last() ; ++i )
+		m_inliers[i] = new TwoDArray<int>( Mode().LengthY() , Mode().LengthX() );
 }
 
 void MEData::SetLambdaMap( const int num_refs , const float lambda )
 {
-    TwoDArray<bool> transition_map1( Mode().LengthY() , Mode().LengthX() );
-    TwoDArray<bool> transition_map2( Mode().LengthY() , Mode().LengthX() );
+	TwoDArray<bool> transition_map1( Mode().LengthY() , Mode().LengthX() );
+	TwoDArray<bool> transition_map2( Mode().LengthY() , Mode().LengthX() );
 
-    FindTransitions( transition_map1 , 1 );
+	FindTransitions( transition_map1 , 1 );
 
-    for ( int j=0 ; j<m_lambda_map.LengthY() ; j++)
-    {
-        for ( int i=0 ; i<m_lambda_map.LengthX() ; i++)
-        {
-            if ( transition_map1[j][i] )
-                m_lambda_map[j][i] = 0.0;
-            else
-                m_lambda_map[j][i] = lambda;
-            if ( i<4 || j<4 )
-                m_lambda_map[j][i] /= 5.0; 
-        }// i
-    }// j
+	for ( int j=0 ; j<m_lambda_map.LengthY() ; j++)
+	{
+		for ( int i=0 ; i<m_lambda_map.LengthX() ; i++)
+		{
+			if ( transition_map1[j][i] )
+				m_lambda_map[j][i] = 0.0;
+			else
+				m_lambda_map[j][i] = lambda;
+			if ( i<4 || j<4 )
+				m_lambda_map[j][i] /= 5.0; 
+		}// i
+	}// j
 
-    if ( num_refs > 1 )
-    {
-        FindTransitions( transition_map2 , 2 );
+	if ( num_refs > 1 )
+	{
+		FindTransitions( transition_map2 , 2 );
 
-        for ( int j=0 ; j<m_lambda_map.LengthY() ; j++)
-        {
-            for ( int i=0 ; i<m_lambda_map.LengthX() ; i++)
-            {
-                if ( transition_map1[j][i] || transition_map2[j][i] )
-                    m_lambda_map[j][i] = 0.0;
-                else
-                    m_lambda_map[j][i] = lambda;
-            }// i
-        }// j
-    }
+		for ( int j=0 ; j<m_lambda_map.LengthY() ; j++)
+		{
+			for ( int i=0 ; i<m_lambda_map.LengthX() ; i++)
+			{
+				if ( transition_map1[j][i] || transition_map2[j][i] )
+					m_lambda_map[j][i] = 0.0;
+				else
+					m_lambda_map[j][i] = lambda;
+			}// i
+		}// j
+	}
 
 }
 
 void MEData::SetLambdaMap( const int level , const TwoDArray<float>& l_map , const float wt )
 {
 
-    const int factor = 1<<(2-level);
-    int xstart , xend , ystart , yend;
- 
-    for (int j = 0 ; j<m_lambda_map.LengthY() ; ++j )
-    {
-        for (int i = 0 ; i<m_lambda_map.LengthX() ; ++i )
-        {
-            xstart = factor * i;
-            ystart = factor * j;
-            xend = factor * ( i + 1 );
-            yend = factor * ( j + 1 );
+	const int factor = 1<<(2-level);
+	int xstart , xend , ystart , yend;
 
-            m_lambda_map[j][i] = l_map[ystart][xstart];
+	for (int j = 0 ; j<m_lambda_map.LengthY() ; ++j )
+	{
+		for (int i = 0 ; i<m_lambda_map.LengthX() ; ++i )
+		{
+			xstart = factor * i;
+			ystart = factor * j;
+			xend = factor * ( i + 1 );
+			yend = factor * ( j + 1 );
 
-            for (int q = ystart ; q<yend ; ++q )
-                for (int p = xstart ; p<xend ; ++p )
-                      m_lambda_map[j][i] = std::max( l_map[q][p] , m_lambda_map[j][i] );
+			m_lambda_map[j][i] = l_map[ystart][xstart];
 
-           m_lambda_map[j][i] *= wt;
+			for (int q = ystart ; q<yend ; ++q )
+				for (int p = xstart ; p<xend ; ++p )
+					m_lambda_map[j][i] = std::max( l_map[q][p] , m_lambda_map[j][i] );
 
-        }// i
-    }// j
+			m_lambda_map[j][i] *= wt;
+
+		}// i
+	}// j
 
 }
 
 void MEData::FindTransitions( TwoDArray<bool>& trans_map , const int ref_num )
 {
-    const MvArray& mv_array = Vectors( ref_num );
+	const MvArray& mv_array = Vectors( ref_num );
 
-    // Start with a statistical approach - determine thresholds later
+	// Start with a statistical approach - determine thresholds later
 
-    // Compute mean and standard deviation of local motion vector variance //
-    /////////////////////////////////////////////////////////////////////////
+	// Compute mean and standard deviation of local motion vector variance //
+	/////////////////////////////////////////////////////////////////////////
 
-    long double total_cost = 0.0;
-    long double mean_cost;
- 
-    // first, mean
-    for ( int j=0 ; j<mv_array.LengthY() ; ++j )
-        for ( int i=0 ; i<mv_array.LengthX() ; ++i )
-            total_cost += PredCosts( ref_num )[j][i].SAD;
+	long double total_cost = 0.0;
+	long double mean_cost;
 
-    mean_cost = total_cost / 
-                   static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
+	// first, mean
+	for ( int j=0 ; j<mv_array.LengthY() ; ++j )
+		for ( int i=0 ; i<mv_array.LengthX() ; ++i )
+			total_cost += PredCosts( ref_num )[j][i].SAD;
 
-    // next , Standard Deviation
-    long double sd_cost = 0.0;
-    double diff;
-    
-    for ( int j=0 ; j<mv_array.LengthY() ; ++j )
-    {
-        for ( int i=0 ; i<mv_array.LengthX() ; ++i )
-        {
-            diff = PredCosts( ref_num )[j][i].SAD - mean_cost;
-            diff *= diff;
-            sd_cost += diff;
+	mean_cost = total_cost / 
+		static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
 
-        }// i
-    }// j
+	// next , Standard Deviation
+	long double sd_cost = 0.0;
+	double diff;
 
-    // Get the variance ...
-    sd_cost /= static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
+	for ( int j=0 ; j<mv_array.LengthY() ; ++j )
+	{
+		for ( int i=0 ; i<mv_array.LengthX() ; ++i )
+		{
+			diff = PredCosts( ref_num )[j][i].SAD - mean_cost;
+			diff *= diff;
+			sd_cost += diff;
 
-    // ... and then the SD
-    sd_cost = std::sqrt( sd_cost );
+		}// i
+	}// j
 
-    float threshold = static_cast<float>( mean_cost + 1.5*sd_cost );
+	// Get the variance ...
+	sd_cost /= static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
 
-    // now go through and mark those that go above the threshold
-    for ( int j=0 ; j<mv_array.LengthY() ; ++j )
-        for ( int i=0 ; i<mv_array.LengthX() ; ++i )
-            trans_map[j][i] = ( PredCosts( ref_num )[j][i].SAD >= threshold )? true : false;
+	// ... and then the SD
+	sd_cost = std::sqrt( sd_cost );
 
-//
-    // Next look at motion-vector costs
-    TwoDArray<double> val_array( mv_array.LengthY() , mv_array.LengthX() );
+	float threshold = static_cast<float>( mean_cost + 1.5*sd_cost );
 
-    // first, mean
-    total_cost = 0.0;
-    for ( int i=0 ; i<mv_array.LengthX() ; ++i )
-    {
-        val_array[0][i] = 0.0;
-        val_array[val_array.LastY()][i] = 0.0;
-    }// i
+	// now go through and mark those that go above the threshold
+	for ( int j=0 ; j<mv_array.LengthY() ; ++j )
+		for ( int i=0 ; i<mv_array.LengthX() ; ++i )
+			trans_map[j][i] = ( PredCosts( ref_num )[j][i].SAD >= threshold )? true : false;
 
-    for ( int j=1 ; j<mv_array.LengthY()-1 ; ++j )
-    {
-        val_array[j][0] = 0.0;
-        val_array[j][val_array.LastX()] = 0.0;
-        for ( int i=1 ; i<mv_array.LengthX()-1 ; ++i )
-        {
-            val_array[j][i] =0.0;
-            for (int q=-1 ; q<=1 ; ++q)
-                for (int p=-1 ; p<=1 ; ++p)
-                    val_array[j][i] = std::max( val_array[j][i] , (double)Norm1( mv_array[j+q][i+p] - mv_array[j][i] ) );
+	//
+	// Next look at motion-vector costs
+	TwoDArray<double> val_array( mv_array.LengthY() , mv_array.LengthX() );
 
-            total_cost += val_array[j][i];
+	// first, mean
+	total_cost = 0.0;
+	for ( int i=0 ; i<mv_array.LengthX() ; ++i )
+	{
+		val_array[0][i] = 0.0;
+		val_array[val_array.LastY()][i] = 0.0;
+	}// i
 
-        }// i
-    }// j
+	for ( int j=1 ; j<mv_array.LengthY()-1 ; ++j )
+	{
+		val_array[j][0] = 0.0;
+		val_array[j][val_array.LastX()] = 0.0;
+		for ( int i=1 ; i<mv_array.LengthX()-1 ; ++i )
+		{
+			val_array[j][i] =0.0;
+			for (int q=-1 ; q<=1 ; ++q)
+				for (int p=-1 ; p<=1 ; ++p)
+					val_array[j][i] = std::max( val_array[j][i] , (double)Norm1( mv_array[j+q][i+p] - mv_array[j][i] ) );
+
+			total_cost += val_array[j][i];
+
+		}// i
+	}// j
 
 
-    mean_cost = total_cost / 
-                   static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
+	mean_cost = total_cost / 
+		static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
 
-    // next , Standard Deviation
-    sd_cost = 0.0;
-    
-    for ( int j=1 ; j<mv_array.LengthY()-1 ; ++j )
-    {
-        for ( int i=1 ; i<mv_array.LengthX()-1 ; ++i )
-        {
-            diff = val_array[j][i] - mean_cost;
-            diff *= diff;
+	// next , Standard Deviation
+	sd_cost = 0.0;
 
-            sd_cost += diff;
+	for ( int j=1 ; j<mv_array.LengthY()-1 ; ++j )
+	{
+		for ( int i=1 ; i<mv_array.LengthX()-1 ; ++i )
+		{
+			diff = val_array[j][i] - mean_cost;
+			diff *= diff;
 
-        }// i
-    }// j
+			sd_cost += diff;
 
-    // Get the variance ...
-    sd_cost /= static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
+		}// i
+	}// j
 
-    // ... and then the SD
-    sd_cost = std::sqrt( sd_cost );
+	// Get the variance ...
+	sd_cost /= static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
 
-    threshold = static_cast<float>( mean_cost + 1.5*sd_cost );
+	// ... and then the SD
+	sd_cost = std::sqrt( sd_cost );
 
-    // now go through and mark those that go above the threshold
-    for ( int j=0 ; j<mv_array.LengthY() ; ++j )
-        for ( int i=0 ; i<mv_array.LengthX() ; ++i )
-//            trans_map[j][i] = ( val_array[j][i] >= threshold )? true : false;
-trans_map[j][i] = false;
+	threshold = static_cast<float>( mean_cost + 1.5*sd_cost );
 
-//     bool contains_trans;
+	// now go through and mark those that go above the threshold
+	for ( int j=0 ; j<mv_array.LengthY() ; ++j )
+		for ( int i=0 ; i<mv_array.LengthX() ; ++i )
+			//            trans_map[j][i] = ( val_array[j][i] >= threshold )? true : false;
+			trans_map[j][i] = false;
 
-//     for ( int j=0 ; j<mv_array.LengthY()/4 ; ++j )
-//     {
-//         for ( int i=0 ; i<mv_array.LengthX()/4 ; ++i )
-//         {     
-//             contains_trans = false;
-//             for ( int q=4*j ; q<4*(j+1) ; ++q )
-//             {
-//                 for ( int p=4*i ; p<4*(i+1) ; ++p )
-//                 {
-//                     if (trans_map[q][p])
-//                         contains_trans = true;
-//                 }// p
-//             }// q
-//             for ( int q=4*j ; q<4*(j+1) ; ++q )
-//                 for ( int p=4*i ; p<4*(i+1) ; ++p )
-//                     trans_map[q][p] = contains_trans;
+	//     bool contains_trans;
 
-//         }// i
-//     }// j
+	//     for ( int j=0 ; j<mv_array.LengthY()/4 ; ++j )
+	//     {
+	//         for ( int i=0 ; i<mv_array.LengthX()/4 ; ++i )
+	//         {     
+	//             contains_trans = false;
+	//             for ( int q=4*j ; q<4*(j+1) ; ++q )
+	//             {
+	//                 for ( int p=4*i ; p<4*(i+1) ; ++p )
+	//                 {
+	//                     if (trans_map[q][p])
+	//                         contains_trans = true;
+	//                 }// p
+	//             }// q
+	//             for ( int q=4*j ; q<4*(j+1) ; ++q )
+	//                 for ( int p=4*i ; p<4*(i+1) ; ++p )
+	//                     trans_map[q][p] = contains_trans;
 
-     
+	//         }// i
+	//     }// j
+
+
 }
 
 
 MEData::~MEData()
 {
-    // Delete the arrays of prediction costs
-     for ( int i=m_pred_costs.First() ; i<=m_pred_costs.Last() ; ++i )
-         delete m_pred_costs[i];
+	// Delete the arrays of prediction costs
+	for ( int i=m_pred_costs.First() ; i<=m_pred_costs.Last() ; ++i )
+		delete m_pred_costs[i];
 
-     for ( int i=m_inliers.First() ; i<=m_inliers.Last() ; ++i )
-        delete m_inliers[i];
+	for ( int i=m_inliers.First() ; i<=m_inliers.Last() ; ++i )
+		delete m_inliers[i];
 }
 
 namespace dirac
 {
-//! Overloaded operator<< for MvCostData
-/*!
-    Only writes SAD value to stream
-*/
-ostream & operator<< (ostream & stream, MvCostData & cost)
-{
-    stream << cost.SAD << " " << cost.mvcost;
+	//! Overloaded operator<< for MvCostData
+	/*!
+	Only writes SAD value to stream
+	*/
+	ostream & operator<< (ostream & stream, MvCostData & cost)
+	{
+		stream << cost.SAD << " " << cost.mvcost;
 
-    return stream;
-}
+		return stream;
+	}
 
-//! Overloaded operator>> for MvCostData
-/*!
-    Only reads SAD value from stream
-*/
-istream & operator>> (istream & stream, MvCostData & cost)
-{
-    stream >> cost.SAD >> cost.mvcost;
+	//! Overloaded operator>> for MvCostData
+	/*!
+	Only reads SAD value from stream
+	*/
+	istream & operator>> (istream & stream, MvCostData & cost)
+	{
+		stream >> cost.SAD >> cost.mvcost;
 
-    return stream;
-}
+		return stream;
+	}
 
-//! Overloaded operator>> for PredMode
-/*!
-    No operator<< is specified as enumeration is written as integers
-    operator>> required to specify PredMode input
-*/
-istream & operator>> (istream & stream, PredMode & mode)
-{
-    int temp;
-    stream >> temp;
-    mode = (PredMode)temp;
+	//! Overloaded operator>> for PredMode
+	/*!
+	No operator<< is specified as enumeration is written as integers
+	operator>> required to specify PredMode input
+	*/
+	istream & operator>> (istream & stream, PredMode & mode)
+	{
+		int temp;
+		stream >> temp;
+		mode = (PredMode)temp;
 
-    return stream;
-}
+		return stream;
+	}
 
-// Overriden extractor operator for reading MvData data members
-istream &operator>> (istream & stream, MEData & me_data)
-{
-    stream.ignore(1000, '\n');
-    
-    // input reference-independent information
-    stream >> me_data.MBSplit();
-    stream >> me_data.MBCommonMode();
-    stream >> me_data.MBCosts();
-    stream >> me_data.Mode();
-    stream >> me_data.IntraCosts();
+	// Overriden extractor operator for reading MvData data members
+	istream &operator>> (istream & stream, MEData & me_data)
+	{
+		stream.ignore(1000, '\n');
 
-    if (me_data.m_pred_costs.Length() > 1)
-        stream >> me_data.BiPredCosts();
+		// input reference-independent information
+		stream >> me_data.MBSplit();
+		stream >> me_data.MBCommonMode();
+		stream >> me_data.MBCosts();
+		stream >> me_data.Mode();
+		stream >> me_data.IntraCosts();
 
-    if (me_data.DC().Length() == 1)
-    {
-        stream >> me_data.DC( Y_COMP );
-    }
-    else if (me_data.DC().Length() == 3)
-    {
-        stream >> me_data.DC( Y_COMP );
-        stream >> me_data.DC( U_COMP );
-        stream >> me_data.DC( V_COMP );
-    }
+		if (me_data.m_pred_costs.Length() > 1)
+			stream >> me_data.BiPredCosts();
 
-    // input reference information
-    for (int i=1; i<=me_data.m_pred_costs.Length(); ++i)
-    {
-        stream >> me_data.Vectors(i);
-        stream >> me_data.PredCosts(i);
-        //stream >> me_data.GlobalMotionParameters(i);
-        //stream >> me_data.GlobalMotionVectors(i);
-        //stream >> me_data.GlobalMotionInliers(i);
-    }
+		if (me_data.DC().Length() == 1)
+		{
+			stream >> me_data.DC( Y_COMP );
+		}
+		else if (me_data.DC().Length() == 3)
+		{
+			stream >> me_data.DC( Y_COMP );
+			stream >> me_data.DC( U_COMP );
+			stream >> me_data.DC( V_COMP );
+		}
 
-    return stream;
-}
+		// input reference information
+		for (int i=1; i<=me_data.m_pred_costs.Length(); ++i)
+		{
+			stream >> me_data.Vectors(i);
+			stream >> me_data.PredCosts(i);
+			//stream >> me_data.GlobalMotionParameters(i);
+			//stream >> me_data.GlobalMotionVectors(i);
+			//stream >> me_data.GlobalMotionInliers(i);
+		}
 
-// Overriden operator for output of MvData member data (to file)
-ostream &operator<< (ostream & stream, MEData & me_data)
-{
-    // output reference-independent information
-    stream << endl << endl << me_data.MBSplit();
-    stream << endl << me_data.MBCommonMode();
-    stream << endl << me_data.MBCosts();
-    stream << endl << me_data.Mode();
-    stream << endl << me_data.IntraCosts() << endl;
+		return stream;
+	}
 
-    if (me_data.m_pred_costs.Length() > 1)
-        stream << me_data.BiPredCosts();
+	// Overriden operator for output of MvData member data (to file)
+	ostream &operator<< (ostream & stream, MEData & me_data)
+	{
+		// output reference-independent information
+		stream << endl << endl << me_data.MBSplit();
+		stream << endl << me_data.MBCommonMode();
+		stream << endl << me_data.MBCosts();
+		stream << endl << me_data.Mode();
+		stream << endl << me_data.IntraCosts() << endl;
 
-    // output component DC values
-    if (me_data.DC().Length() == 1)
-    {
-        stream << endl << me_data.DC( Y_COMP );
-    }
-    else if (me_data.DC().Length() == 3)
-    {
-        stream << endl << me_data.DC( Y_COMP );
-        stream << endl << me_data.DC( U_COMP );
-        stream << endl << me_data.DC( V_COMP );
-    }
+		if (me_data.m_pred_costs.Length() > 1)
+			stream << me_data.BiPredCosts();
 
-    // output reference information
-    for (int i=1; i<=me_data.m_pred_costs.Length(); ++i)
-    {
-        stream << endl << me_data.Vectors(i);
-        stream << endl << me_data.PredCosts(i) << endl;
-        //stream << endl << me_data.GlobalMotionParameters(i) << endl;
-        //stream << endl << me_data.GlobalMotionVectors(i) << endl;
-        //stream << endl << me_data.GlobalMotionInliers(i) << endl;
-    }
-    
-    return stream;
-}
+		// output component DC values
+		if (me_data.DC().Length() == 1)
+		{
+			stream << endl << me_data.DC( Y_COMP );
+		}
+		else if (me_data.DC().Length() == 3)
+		{
+			stream << endl << me_data.DC( Y_COMP );
+			stream << endl << me_data.DC( U_COMP );
+			stream << endl << me_data.DC( V_COMP );
+		}
+
+		// output reference information
+		for (int i=1; i<=me_data.m_pred_costs.Length(); ++i)
+		{
+			stream << endl << me_data.Vectors(i);
+			stream << endl << me_data.PredCosts(i) << endl;
+			//stream << endl << me_data.GlobalMotionParameters(i) << endl;
+			//stream << endl << me_data.GlobalMotionVectors(i) << endl;
+			//stream << endl << me_data.GlobalMotionInliers(i) << endl;
+		}
+
+		return stream;
+	}
 
 } // namespace dirac
