@@ -48,6 +48,7 @@
 #include <libdirac_common/mot_comp.h>
 #include <libdirac_common/mv_codec.h>
 #include <libdirac_common/golomb.h>
+using namespace dirac;
 
 #include <iostream>
 
@@ -122,8 +123,7 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 
             if ( fsort != I_frame )
             {//motion compensate to add the data back in if we don't have an I frame
-                MotionCompensator mycomp(m_decparams);
-                mycomp.SetCompensationMode(ADD);
+                MotionCompensator mycomp(m_decparams , ADD );
                 mycomp.CompensateFrame(my_buffer , m_fparams.FrameNum() , *mv_data);        
                 delete mv_data;    
             }
