@@ -36,7 +36,7 @@
 #include "cmd_line.h"
 using namespace std;
 
-command_line::command_line(int argc, char * argv[], const set<string> & bool_opts)
+CommandLine::CommandLine(int argc, char * argv[], const set<string> & bool_opts)
   : m_options(),
     m_inputs(),
     m_bool_opts(bool_opts)

@@ -43,7 +43,7 @@
 
 // structure for defining the nature of options
 // a very simple command-line parser
-class command_line
+class CommandLine
 {
 public:
 	struct option
@@ -59,20 +59,20 @@ public:
 	};
 
 	//! Constructor
-	command_line(int argc, char * argv[], const std::set<std::string> & bool_opts);
+	CommandLine(int argc, char * argv[], const std::set<std::string> & bool_opts);
 
-	const std::vector<option> & get_options() const
+	const std::vector<option> & GetOptions() const
 	{
 		return m_options;
 	}
 
-	const std::vector<std::string> & get_inputs() const
+	const std::vector<std::string> & GetInputs() const
 	{
 		return m_inputs;
 	}
     
     // convenience property
-	size_t count() const
+	size_t Count() const
 	{
         return m_options.size();
 	}
