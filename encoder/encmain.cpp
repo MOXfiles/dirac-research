@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.7  2004-05-19 17:39:34  chaoticcoyote
+* Revision 1.8  2004-05-20 12:37:33  tjdwave
+* Corrected help text for CLI.
+*
+* Revision 1.7  2004/05/19 17:39:34  chaoticcoyote
+* Restored make_debug.sh to it's proper function
 * Modified command line parser to correctly handle boolean options
 *
 * Revision 1.6  2004/05/18 07:46:13  tjdwave
@@ -52,18 +56,6 @@
 *
 * Revision 1.4  2004/05/11 14:17:58  tjdwave
 * Removed dependency on XParam CLI library for both encoder and decoder.
-* $Log$
-* Revision 1.7  2004-05-19 17:39:34  chaoticcoyote
-* Modified command line parser to correctly handle boolean options
-*
-* Revision 1.6  2004/05/18 07:46:13  tjdwave
-* Added support for I-frame only coding by setting num_L1 equal 0; num_L1 negative gives a single initial I-frame ('infinitely' many L1 frames). Revised quantiser selection to cope with rounding error noise.
-*
-* Revision 1.5  2004/05/12 16:03:32  tjdwave
-*
-* Done general code tidy, implementing copy constructors, assignment= and const
-*  correctness for most classes. Replaced Gop class by FrameBuffer class throughout. Added support for frame padding so that arbitrary block sizes and frame
-*  dimensions can be supported.
 *
 * Revision 1.3  2004/05/10 04:41:48  chaoticcoyote
 * Updated dirac algorithm document
@@ -98,14 +90,14 @@ static void display_help()
 {
 	cout << "\nDIRAC wavelet video coder.";
 	cout << "\n";
-	cout << "\nUsage: progname -<flag1> <flag_val> ... <input1> <input2> ...";
+	cout << "\nUsage: progname -<flag1> [<flag_val>] ... <input1> <input2> ...";
 	cout << "\nIn case of multiple assignment to the same parameter, the last holds.";
 	cout << "\n";
 	cout << "\nName    Type   I/O Default Value Description";
 	cout << "\n====    ====   === ============= ===========                                       ";
 	cout << "\ninput   string  I  [ required ]  Input file name";
 	cout << "\noutput  string  I  [ required ]  Output file name";
-	cout << "\nstream  bool    I  false         Use streaming compression presets";
+	cout << "\nstream  bool    I  true          Use streaming compression presets";
 	cout << "\nHD720p  bool    I  false         Use HD-720p compression presets";
 	cout << "\nHD1080  bool    I  false         Use HD-1080 compression presets";
 	cout << "\nSD576   bool    I  false         Use SD-576 compression presets";
@@ -116,10 +108,10 @@ static void display_help()
 	cout << "\nxbsep   ulong   I  0UL           Overlapping block horizontal separation";
 	cout << "\nybsep   ulong   I  0UL           Overlapping block vertical separation";
 	cout << "\ncpd     ulong   I  0UL           Perceptual weighting - vertical cycles per degree";
-	cout << "\nqf      float   I  0.0F          Overall quality factor";
-	cout << "\nIqf     float   I  20.0F         I-frame quality factor";
-	cout << "\nL1qf    float   I  22.0F         L1-frame quality factor";
-	cout << "\nL2qf    float   I  24.0F         L2-frame quality factor";
+	cout << "\nqf      float   I  0.0F          Overall quality factor (sets other quality factors)";
+	cout << "\nIqf     float   I  20.0F         I-frame quality factor (overrides -qf)";
+	cout << "\nL1qf    float   I  22.0F         L1-frame quality factor (overrides -qf)";
+	cout << "\nL2qf    float   I  24.0F         L2-frame quality factor (overrides -qf)";
 	cout << "\nverbose bool    I  false         Verbose mode";
 	cout << endl;
 }
@@ -130,7 +122,7 @@ int main (int argc, char* argv[]){
 
 		 /********** create params object to handle command line parameter parsing*********/
 	//To do: put parsing in a different function/constructor.
-    
+
     // create a list of boolean options
 	set<string> bool_opts;
 	bool_opts.insert("verbose");
@@ -138,7 +130,7 @@ int main (int argc, char* argv[]){
 	bool_opts.insert("HD720p");
 	bool_opts.insert("HD1080");
 	bool_opts.insert("SD576");
-    
+
 	command_line args(argc,argv,bool_opts);
 
 	//the variables we'll read parameters into
@@ -189,7 +181,7 @@ int main (int argc, char* argv[]){
 			input=args.get_inputs()[0];
 			output=args.get_inputs()[1];
 		}
-        
+
 		//check we have real inputs
 		if ((input.length() == 0) || (output.length() ==0))
 		{
