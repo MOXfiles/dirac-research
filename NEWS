@@ -1,3 +1,33 @@
+dirac-0.4.0
+===========
+  - Added constant quality encoding interface using PSNR
+     as the quality measure, and using multi-pass frame
+     coding
+  - Added Intra-frame insertion and cut detection
+  - Added C interface for the decoder application to allow
+     interfacing to player software. Refer to the api documentation
+     in dirac_parser.h.
+  - Implemented unique frame headers to facilitate bit-stream
+     parsing
+  - Added instrumentation output from encoder and an 
+     instrumentation display tool for visualising encoder
+     decisions to help with algorithmic development
+  - Cleansed and refactored numerous code files to add comments,
+     improve readability and modularity
+  - Added a unit testing framework based on cppunit for testing
+     classes 
+  - Fixed bug with vertical block separation always being set
+     to 8 pixels
+  - Added feature to encode only a section of input video rather
+     than the whole sequence
+  - Tweaked motion estimation parameters to improve performance,
+     mostly for higher-res pictures
+  - Included document describing the syntax of Dirac bitstream v0.1
+    in the doc directory.
+  - Fixed bug 1008694 (Out-of-tree building fails)
+  - Fixed header and pkconfig installation
+  - Update algorithm documentation
+
 Dirac-0.3.1
 ===========
   - Fixed compiling under Windows
