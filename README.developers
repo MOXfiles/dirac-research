@@ -10,15 +10,17 @@ Contents
 
 3. Mailing lists
 
-4. CVS log messages
+4. Using the CVS repository
 
-5. Software practices
+5. CVS log messages
 
-6. Profiling & optimisation
+6. Software practices
 
-7. Line-endings
+7. Profiling & optimisation
 
-8. Binary files in CVS
+8. Line-endings
+
+9. Binary files in CVS
 
 
 
@@ -92,7 +94,27 @@ mailing lists.  dirac-announce is used to announce new releases and
 dirac-commits is sent mail automatically for every commit.
 
 
-4. CVS log messages
+4. Using the CVS repository
+---------------------------
+
+The latest (but non-stable) version of the code can be downloaded direct
+from the Sourceforge repository using anonymous CVS. Instructions for 
+doing so can be found at the Dirac CVS page: 
+
+http://sourceforge.net/cvs/?group_id=102564 
+
+The Dirac codec module is called 'compress'.
+
+To compile the codec from the CVS sources, the configure script must be
+built using autotools. The required autotool operations have been
+collated in a bootstrap script - simply type 
+
+./bootstrap
+
+at the command prompt in the installation directory. Then follow the
+usual install instructions in the INSTALL document.
+
+5. CVS log messages
 -------------------
 Always indicate why the change is necessary in addition to a succinct summary
 of what as changed.  As the number of developers increases it becomes
@@ -113,7 +135,7 @@ E.g.
   - Enhanced portability: stricmp replaced by strcasecmp (the POSIX standard) 
 
 
-5. Software practices
+6. Software practices
 ---------------------
 I. Portability
   This project aims to be as portable as possible and to that end follows the
@@ -312,7 +334,7 @@ IV. Testing with "make check"
   "Where's the test?"
 
 
-6. Profiling & optimisation
+7. Profiling & optimisation
 ---------------------------
 Dirac is alpha software so developers cannot expect optimisation improvements
 to survive algorithm improvements or code refactoring and restructuring.  That
@@ -343,8 +365,16 @@ should be followed:
 	Athlon64 and Opteron), but take care to use a portable 16byte memory
 	alignment technique.
 
+Profiling can be supported by adding the following parameter to ./configure
+before building:
 
-7. Line-endings
+CXXFLAGS='-pg -Ox [other flags]'
+
+where x is the required level of optimisation. The code can then be profiled
+by, for example, gprof.
+
+
+8. Line-endings
 ---------------
 All source code and documentation will have LF line-endings, include makefiles
 and scripts.  The only exception will be for .dsp and .dsw (and any other
@@ -352,7 +382,7 @@ WIN32 specific) files which will not function under MS VC++ unless they use
 CR-LF line-endings.
 
 
-8. Binary files in CVS
+9. Binary files in CVS
 ----------------------
 CVS will modify files during checkin and checkout unless they are tagged as
 binary.  The modifications include translation of CR-LF <-> LF (depending on
