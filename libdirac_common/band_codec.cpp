@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.2  2004-05-12 08:35:33  tjdwave
+* Revision 1.3  2004-05-20 10:50:24  stuart_hc
+* Corrected CRLF line-endings to LF for consistency.
+*
+* Revision 1.2  2004/05/12 08:35:33  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
