@@ -265,6 +265,11 @@ void FrameCompressor::WriteMotionData( const FrameBuffer& fbuffer , const int fn
 
         OLBParams block_params = m_encparams.LumaBParams(2);
         out << block_params << " ";
+
+        // output macroblock and motion vector array dimensions
+        out << m_me_data->MBSplit().LengthY() << " " << m_me_data->MBSplit().LengthX() << " ";
+        out << m_me_data->Vectors(1).LengthY() << " " << m_me_data->Vectors(1).LengthX();
+
         out << *m_me_data;
     }
     
