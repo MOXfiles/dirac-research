@@ -38,54 +38,62 @@
 #ifndef _UPCONVERT_H_
 #define _UPCONVERT_H_
 
-#include "libdirac_common/common.h"
+#include <libdirac_common/common.h>
 
-//Optimised upconversion class - no array resizes.
-//Uses integer math - no floats!
-//
+namespace dirac
+{
+    //Optimised upconversion class - no array resizes.
+    //Uses integer math - no floats!
+    //
 
-//! Upconversion class
-/*!
-    Class to picture data by a factor of 2 in both dimensions
- */
-class UpConverter{
-
-public:
-
-    //! Constructor
-    UpConverter(){}
-    //! Destructor
-    ~UpConverter(){};
-
-    //! Upconvert the picture data
+    //! Upconversion class
     /*!
-        Upconvert the picture data, where the parameters are
-        /param    OldImage    is the original data
-        /param    NewImage    is the upconverted data
+        Class to upconvert data by a factor of 2 in both dimensions
      */
-    void DoUpConverter(const PicArray &OldImage, PicArray &NewImage);
+    class UpConverter
+    {
 
-private:
-    UpConverter(const UpConverter& cpy);//private body-less copy constructor: class should not be copied
-    UpConverter& operator=(const UpConverter& rhs);//private body-less assignment: class should not be assigned
+    public:
 
-    //Applies the filter to a row number 
-    //LinePos and its neighbour.
-    void rowLoop(PicArray &NewImage, int &LinePos);
+        //! Constructor
+        UpConverter(){}
+        //! Destructor
+        ~UpConverter(){};
 
-    //Variable to keep the loops in check
-    int xOld, yOld;
-    int xNew, yNew;
+        //! Upconvert the picture data
+        /*!
+            Upconvert the picture data, where the parameters are
+            /param    pic_data    is the original data
+            /param    up_data    is the upconverted data
+         */
+        void DoUpConverter(const PicArray& pic_data, PicArray& up_data);
 
-    //Define first set of filter parameters
-    static const int Stage_I_Size = 6;
-    static const int StageI_I = 167;
-    static const int StageI_II = -56; 
-    static const int StageI_III = 25;
-    static const int StageI_IV = -11; 
-    static const int StageI_V = 4;
-    static const int StageI_VI = -1;    
-    static const int Stage_I_Shift = 8;
-};
+    private:
+        //! Private body-less copy constructor: class should not be copied
+        UpConverter(const UpConverter& cpy);
+
+        //! Private body-less assignment: class should not be assigned
+        UpConverter& operator=(const UpConverter& rhs);
+
+        //! Applies the filter to a row and its successor 
+        void RowLoop(PicArray& up_data, const int row_num);
+
+    private:
+        //Variable to keep the loops in check
+        int xOld, yOld;
+        int xNew, yNew;
+
+        //Define first set of filter parameters
+        static const int Stage_I_Size = 6;
+        static const int StageI_I = 167;
+        static const int StageI_II = -56; 
+        static const int StageI_III = 25;
+        static const int StageI_IV = -11; 
+        static const int StageI_V = 4;
+        static const int StageI_VI = -1;    
+        static const int Stage_I_Shift = 8;
+    };
+
+} // namespace dirac
 
 #endif
