@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.8  2004-05-19 14:04:44  tjdwave
+* Revision 1.9  2004-05-24 15:53:55  tjdwave
+* Added error handling: IO functions now return boolean values.
+*
+* Revision 1.8  2004/05/19 14:04:44  tjdwave
 * Changed YUV output to output lines instead of bytes, according to patch provided by Malcolm Parsons
 *
 * Revision 1.7  2004/05/19 09:16:49  tjdwave
@@ -92,7 +95,7 @@ PicOutput::PicOutput(const char* output_name, const SeqParams& sp, bool write_he
 		OpenYUV(output_name);
 }
 
-void PicOutput::OpenHeader(const char* output_name)
+bool PicOutput::OpenHeader(const char* output_name)
 {
 	char output_name_hdr[FILENAME_MAX];
 
@@ -102,11 +105,14 @@ void PicOutput::OpenHeader(const char* output_name)
 	//header output
 	op_head_ptr = new std::ofstream(output_name_hdr,std::ios::out | std::ios::binary);
 
-	if (!(*op_head_ptr))
+	if (!(*op_head_ptr)){
 		std::cerr<<std::endl<<"Can't open output header file for output: "<<output_name_hdr<<std::endl;
+		return EXIT_FAILURE;	
+	}
+	return EXIT_SUCCESS;
 }
 
-void PicOutput::OpenYUV(const char* output_name)
+bool PicOutput::OpenYUV(const char* output_name)
 {
 	char output_name_yuv[FILENAME_MAX];
 
@@ -116,8 +122,11 @@ void PicOutput::OpenYUV(const char* output_name)
 	//picture output
 	op_pic_ptr = new std::ofstream(output_name_yuv,std::ios::out | std::ios::binary);
 
-	if (!(*op_pic_ptr))
+	if (!(*op_pic_ptr)){
 		std::cerr<<std::endl<<"Can't open output picture data file for output: "<<output_name_yuv<<std::endl;
+		return EXIT_FAILURE;	
+	}
+	return EXIT_SUCCESS;
 }
 
 PicOutput::~PicOutput()
@@ -135,10 +144,10 @@ PicOutput::~PicOutput()
 }
 
 //write a human-readable picture header as separate file
-void PicOutput::WritePicHeader()
+bool PicOutput::WritePicHeader()
 {
 	if (!op_head_ptr || !*op_head_ptr)
-		return;
+		return EXIT_FAILURE;
 
 // The obsolete header format will disappear in a future release
 #ifdef OBSOLETE_HEADER_FMT
@@ -173,18 +182,21 @@ void PicOutput::WritePicHeader()
 	*op_head_ptr << sparams.topfieldfirst << std::endl;
 	*op_head_ptr << sparams.framerate << std::endl;
 #endif
+	return EXIT_SUCCESS;
 }
 
-void PicOutput::WriteNextFrame(const Frame& myframe)
+bool PicOutput::WriteNextFrame(const Frame& myframe)
 {
-	WriteComponent(myframe.Ydata(),Y);
+	bool ret_val;
+	ret_val=WriteComponent(myframe.Ydata(),Y);
 	if (sparams.cformat!=Yonly){
-		WriteComponent(myframe.Udata(),U);
-		WriteComponent(myframe.Vdata(),V);
+		ret_val|=WriteComponent(myframe.Udata(),U);
+		ret_val|=WriteComponent(myframe.Vdata(),V);
 	}
+	return ret_val;
 }
 
-void PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs)
+bool PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs)
 {
 	//initially set up for 10-bit data input, rounded to 8 bits on file output
 	//This will throw out any padding to the right and bottom of a frame
@@ -226,10 +238,19 @@ void PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs)
 			op_pic_ptr->write((char*) tempc,xl);
 		}//J
 	}
-	else
+	else{
 		std::cerr<<std::endl<<"Can't open picture data file for writing";
 
+		//tidy up		
+		delete[] tempc;
+
+		//exit failure
+		return EXIT_SUCCESS;
+	}
+
 	delete[] tempc;
+	//exit success
+	return EXIT_FAILURE;
 }
 
 /**************************************Input***********************************/
@@ -270,20 +291,24 @@ void PicInput::SetPadding(const int xpd, const int ypd)
 	ypad=ypd;
 }
 
-void PicInput::ReadNextFrame(Frame& myframe)
+bool PicInput::ReadNextFrame(Frame& myframe)
 {
-	ReadComponent(myframe.Ydata(),Y);
+	//return value. Failure if one of the components can't be read,
+	//success otherwise/.
+	bool ret_val;
+	ret_val=ReadComponent(myframe.Ydata(),Y);
 	if (sparams.cformat!=Yonly){
-		ReadComponent(myframe.Udata(),U);
-		ReadComponent(myframe.Vdata(),V);
+		ret_val|=ReadComponent(myframe.Udata(),U);
+		ret_val|=ReadComponent(myframe.Vdata(),V);
 	}
+	return ret_val;
 }
 
 //read a picture header from a separate file
-void PicInput::ReadPicHeader()
+bool PicInput::ReadPicHeader()
 {
 	if (! *ip_head_ptr)
-		return;
+		return EXIT_FAILURE;
 
 // The obsolete header format will disappear in a future release
 #ifdef OBSOLETE_HEADER_FMT
@@ -303,6 +328,8 @@ void PicInput::ReadPicHeader()
 	*ip_head_ptr >> sparams.xl >> sparams.yl >> sparams.zl;
 	*ip_head_ptr >> sparams.interlace >> sparams.topfieldfirst >> sparams.framerate;
 #endif
+
+	return EXIT_SUCCESS;
 }
 
 bool PicInput::End() const
@@ -310,12 +337,12 @@ bool PicInput::End() const
 	return ip_pic_ptr->eof();
 }
 
-void PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
+bool PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
 {
 	if (! *ip_pic_ptr)
 	{
 		std::cerr<<"Can't read component from picture data"<<std::endl;
-		return;
+		return EXIT_FAILURE;
 	}
 
 	//initially set up for 8-bit file input expanded to 10 bits for array output
@@ -361,4 +388,6 @@ void PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
 		for (int I=0;I<pic_data.length(0);++I)
 			pic_data[J][I]=pic_data[yl-1][I];
 	}//J
+
+	return EXIT_SUCCESS;
 }

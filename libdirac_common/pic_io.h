@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-14 17:25:43  stuart_hc
+* Revision 1.5  2004-05-24 15:53:55  tjdwave
+* Added error handling: IO functions now return boolean values.
+*
+* Revision 1.4  2004/05/14 17:25:43  stuart_hc
 * Replaced binary header files with ASCII text format to achieve cross-platform interoperability.
 * Rearranged PicOutput constructor to permit code reuse from picheader/headmain.cpp
 *
@@ -103,10 +106,10 @@ public:
 	virtual ~PicOutput();
 
 	//! Write the next frame to the output
-	virtual void WriteNextFrame(const Frame& myframe);
+	virtual bool WriteNextFrame(const Frame& myframe);
 
 	//! Write the picture sequence header
-	virtual void WritePicHeader();
+	virtual bool WritePicHeader();
 
 protected:
 
@@ -115,13 +118,13 @@ protected:
 	std::ofstream* op_head_ptr;
 
 	//! Write a component to file
-	virtual void WriteComponent(const PicArray& pic_data, const CompSort& cs);
+	virtual bool WriteComponent(const PicArray& pic_data, const CompSort& cs);
 
 	//! Open picture's header file for output
-	virtual void PicOutput::OpenHeader(const char* output_name);
+	virtual bool PicOutput::OpenHeader(const char* output_name);
 
 	//! Open picture's YUV data file for output
-	virtual void PicOutput::OpenYUV(const char* output_name);
+	virtual bool PicOutput::OpenYUV(const char* output_name);
 };
 
 //! Picture input class
@@ -145,10 +148,10 @@ public:
 	void SetPadding(const int xpd, const int ypd);
 
 	//! Read the next frame from the file
-	virtual void ReadNextFrame(Frame& myframe);
+	virtual bool ReadNextFrame(Frame& myframe);
 
 	//! Read the picture header
-	virtual void ReadPicHeader();
+	virtual bool ReadPicHeader();
 
 	//! Get the sequence parameters (got from the picture header)
 	const SeqParams& GetSeqParams() const {return sparams;}
@@ -166,7 +169,7 @@ protected:
 	int xpad,ypad;
 
 	//! Read a component from the file
-	virtual void ReadComponent(PicArray& pic_data,const CompSort& cs);	
+	virtual bool ReadComponent(PicArray& pic_data,const CompSort& cs);	
 
 };
 
