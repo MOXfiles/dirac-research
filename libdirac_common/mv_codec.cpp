@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_common/mv_codec.h>
+
 using namespace dirac;
 
 //public functions//
@@ -45,20 +46,20 @@ MvDataCodec::MvDataCodec(BasicOutputManager* bits_out,
                          size_t number_of_contexts,
                          const ChromaFormat& cf)
   : ArithCodec <MvData> (bits_out,number_of_contexts),
-    m_cformat(cf)
-{
-    // nada
-}        
+    m_cformat(cf),
+    m_MB_count( 0 ),
+    m_reset_num( 32 )
+{}        
 
 // Constructor for decoding
 MvDataCodec::MvDataCodec(BitInputManager* bits_in,
                          size_t number_of_contexts,
                          const ChromaFormat& cf)
   : ArithCodec <MvData> (bits_in,number_of_contexts),
-    m_cformat(cf)
-{
-    // nada
-}    
+    m_cformat(cf),
+    m_MB_count( 0 ),
+    m_reset_num( 32 )
+{}    
 
 void MvDataCodec::InitContexts() 
 {
@@ -71,42 +72,27 @@ void MvDataCodec::InitContexts()
 //protected functions//
 ///////////////////////
 
-inline void MvDataCodec::Resize(const int context_num)
-{
-    m_context_list[context_num].HalveCounts();     
-}
-
-
 inline void MvDataCodec::Update( const bool symbol , const int context_num )
-{    
-    m_context_list[context_num].IncrCount( symbol , 1 ); 
+{
+    Context& ctx = m_context_list[context_num];
+
+    ctx.IncrCount( symbol );
     
-    if ( m_context_list[context_num].Weight()  >= 1024 )
-        Resize( context_num ); 
+    if ( ctx.Weight() >= 1024 )
+        ctx.HalveCounts();
 }
-inline void MvDataCodec::ResetAll() {}
+
+inline void MvDataCodec::ResetAll()
+{
+    for ( size_t c = 0; c < m_context_list.size(); ++c)
+        if ( m_context_list[c].Weight() > 16 )
+            m_context_list[c].HalveCounts();
+}
 
 //coding functions//
 ////////////////////
 
 //prediction functions
-
-//basic context functions
-
-inline int MvDataCodec::ChooseContext(const MvData& data, const int BinNumber) const
-{
-    return 0;
-}
-
-inline int MvDataCodec::ChooseContext(const MvData& data) const
-{
-    return 0;
-}
-
-inline int MvDataCodec::ChooseSignContext(const MvData& data) const
-{
-    return 0;
-}
 
 //proper context functions
 
@@ -244,18 +230,18 @@ inline unsigned int MvDataCodec::MBSplitPrediction(const TwoDArray<int> & split_
     
     std::vector < unsigned int >  nbrs;
     
-    if (mb_xp > 0 && mb_yp > 0)
+    if (m_mb_xp > 0 && m_mb_yp > 0)
     {
-        nbrs.push_back( split_data[mb_yp-1][mb_xp] ); 
-        nbrs.push_back( split_data[mb_yp-1][mb_xp-1] ); 
-        nbrs.push_back( split_data[mb_yp][mb_xp-1] ); 
+        nbrs.push_back( split_data[m_mb_yp-1][m_mb_xp] ); 
+        nbrs.push_back( split_data[m_mb_yp-1][m_mb_xp-1] ); 
+        nbrs.push_back( split_data[m_mb_yp][m_mb_xp-1] ); 
 
         result = GetMean(nbrs);     
     }
-    else if (mb_xp > 0 && mb_yp == 0)
-        result = split_data[mb_yp][mb_xp-1]; 
-    else if (mb_xp == 0 && mb_yp > 0)
-        result =  split_data[mb_yp-1][mb_xp]; 
+    else if (m_mb_xp > 0 && m_mb_yp == 0)
+        result = split_data[m_mb_yp][m_mb_xp-1]; 
+    else if (m_mb_xp == 0 && m_mb_yp > 0)
+        result =  split_data[m_mb_yp-1][m_mb_xp]; 
 
     return result; 
 }
@@ -265,18 +251,18 @@ inline bool MvDataCodec::MBCBModePrediction(const TwoDArray <bool> & cbm_data) c
     bool result = true;
     std::vector < unsigned int >  nbrs; 
     
-    if (mb_xp > 0 && mb_yp > 0)
+    if (m_mb_xp > 0 && m_mb_yp > 0)
     {
-        nbrs.push_back( (unsigned int)( cbm_data[mb_yp-1][mb_xp] ) ); 
-        nbrs.push_back( (unsigned int)( cbm_data[mb_yp-1][mb_xp-1] ) ); 
-        nbrs.push_back( (unsigned int)( cbm_data[mb_yp][mb_xp-1] ) ); 
+        nbrs.push_back( (unsigned int)( cbm_data[m_mb_yp-1][m_mb_xp] ) ); 
+        nbrs.push_back( (unsigned int)( cbm_data[m_mb_yp-1][m_mb_xp-1] ) ); 
+        nbrs.push_back( (unsigned int)( cbm_data[m_mb_yp][m_mb_xp-1] ) ); 
 
         result = bool(GetMean(nbrs));     
     }
-    else if (mb_xp > 0 && mb_yp == 0)
-        result = cbm_data[mb_yp][mb_xp-1]; 
-    else if (mb_xp == 0 && mb_yp > 0)
-        result = cbm_data[mb_yp-1][mb_xp]; 
+    else if (m_mb_xp > 0 && m_mb_yp == 0)
+        result = cbm_data[m_mb_yp][m_mb_xp-1]; 
+    else if (m_mb_xp == 0 && m_mb_yp > 0)
+        result = cbm_data[m_mb_yp-1][m_mb_xp]; 
     
     return result; 
 }
@@ -288,25 +274,25 @@ inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode 
     unsigned int num_ref1_nbrs( 0 ); 
     unsigned int num_ref2_nbrs( 0 );
     
-    if (b_xp > 0 && b_yp > 0)
+    if (m_b_xp > 0 && m_b_yp > 0)
     {
-        num_ref1_nbrs += ((unsigned int)( preddata[b_yp-1][b_xp] ) ) & 1; 
-        num_ref1_nbrs += ((unsigned int)( preddata[b_yp-1][b_xp-1] ) ) & 1; 
-        num_ref1_nbrs += ((unsigned int)( preddata[b_yp][b_xp-1] ) ) & 1;
+        num_ref1_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp] ) ) & 1; 
+        num_ref1_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp-1] ) ) & 1; 
+        num_ref1_nbrs += ((unsigned int)( preddata[m_b_yp][m_b_xp-1] ) ) & 1;
 
         result = num_ref1_nbrs>>1;
 
-        num_ref2_nbrs += ((unsigned int)( preddata[b_yp-1][b_xp] ) ) & 2; 
-        num_ref2_nbrs += ((unsigned int)( preddata[b_yp-1][b_xp-1] ) ) & 2; 
-        num_ref2_nbrs += ((unsigned int)( preddata[b_yp][b_xp-1] ) ) & 2; 
+        num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp] ) ) & 2; 
+        num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp-1] ) ) & 2; 
+        num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp][m_b_xp-1] ) ) & 2; 
         num_ref2_nbrs >>= 1;
 
         result ^= ( (num_ref2_nbrs>>1)<<1 );
     }
-    else if (b_xp > 0 && b_yp == 0)
-        result = (unsigned int)( preddata[0][b_xp-1] ); 
-    else if (b_xp == 0 && b_yp > 0)
-        result = (unsigned int)( preddata[b_yp-1][0] ); 
+    else if (m_b_xp > 0 && m_b_yp == 0)
+        result = (unsigned int)( preddata[0][m_b_xp-1] ); 
+    else if (m_b_xp == 0 && m_b_yp > 0)
+        result = (unsigned int)( preddata[m_b_yp-1][0] ); 
 
     return result; 
 }
@@ -318,34 +304,34 @@ inline MVector MvDataCodec::Mv1Prediction(const MvArray& mvarray,
     PredMode pmode;     
     MVector result; 
     
-    if (b_xp > 0 && b_yp > 0)
+    if (m_b_xp > 0 && m_b_yp > 0)
     {
-        pmode = preddata[b_yp-1][b_xp]; 
+        pmode = preddata[m_b_yp-1][m_b_xp]; 
         if (pmode == REF1_ONLY || pmode == REF1AND2) 
-            nbrs.push_back(mvarray[b_yp-1][b_xp]); 
+            nbrs.push_back(mvarray[m_b_yp-1][m_b_xp]); 
         
-        pmode = preddata[b_yp-1][b_xp-1]; 
+        pmode = preddata[m_b_yp-1][m_b_xp-1]; 
         if (pmode == REF1_ONLY || pmode == REF1AND2)
-            nbrs.push_back(mvarray[b_yp-1][b_xp-1]); 
+            nbrs.push_back(mvarray[m_b_yp-1][m_b_xp-1]); 
         
-        pmode = preddata[b_yp][b_xp-1]; 
+        pmode = preddata[m_b_yp][m_b_xp-1]; 
         if (pmode == REF1_ONLY || pmode == REF1AND2)        
-            nbrs.push_back(mvarray[b_yp][b_xp-1]); 
+            nbrs.push_back(mvarray[m_b_yp][m_b_xp-1]); 
         
         if (nbrs.size() > 0)
             result = MvMedian(nbrs); 
     }
-    else if (b_xp > 0 && b_yp == 0)
+    else if (m_b_xp > 0 && m_b_yp == 0)
     {
-        pmode = preddata[0][b_xp-1]; 
+        pmode = preddata[0][m_b_xp-1]; 
         if (pmode == REF1_ONLY || pmode == REF1AND2)
-            result = mvarray[0][b_xp-1]; 
+            result = mvarray[0][m_b_xp-1]; 
     }
-    else if (b_xp == 0 && b_yp > 0)
+    else if (m_b_xp == 0 && m_b_yp > 0)
     {
-        pmode = preddata[b_yp-1][0]; 
+        pmode = preddata[m_b_yp-1][0]; 
         if (pmode == REF1_ONLY || pmode == REF1AND2)
-            result = mvarray[b_yp-1][0]; 
+            result = mvarray[m_b_yp-1][0]; 
     }
 
     return result; 
@@ -358,34 +344,34 @@ inline MVector MvDataCodec::Mv2Prediction(const MvArray & mvarray,
     PredMode pmode; 
     MVector result; 
     
-    if (b_xp > 0 && b_yp > 0)
+    if (m_b_xp > 0 && m_b_yp > 0)
     {
-        pmode = preddata[b_yp-1][b_xp]; 
+        pmode = preddata[m_b_yp-1][m_b_xp]; 
         if (pmode == REF2_ONLY || pmode == REF1AND2)
-            nbrs.push_back(mvarray[b_yp-1][b_xp]); 
+            nbrs.push_back(mvarray[m_b_yp-1][m_b_xp]); 
         
-        pmode = preddata[b_yp-1][b_xp-1]; 
+        pmode = preddata[m_b_yp-1][m_b_xp-1]; 
         if (pmode == REF2_ONLY || pmode == REF1AND2)
-            nbrs.push_back(mvarray[b_yp-1][b_xp-1]); 
+            nbrs.push_back(mvarray[m_b_yp-1][m_b_xp-1]); 
         
-        pmode = preddata[b_yp][b_xp-1]; 
+        pmode = preddata[m_b_yp][m_b_xp-1]; 
         if (pmode == REF2_ONLY || pmode == REF1AND2)
-            nbrs.push_back(mvarray[b_yp][b_xp-1]); 
+            nbrs.push_back(mvarray[m_b_yp][m_b_xp-1]); 
         
         if (nbrs.size() > 0)
             result = MvMedian(nbrs); 
     }
-    else if (b_xp > 0 && b_yp == 0)
+    else if (m_b_xp > 0 && m_b_yp == 0)
     {
-        pmode = preddata[0][b_xp-1]; 
+        pmode = preddata[0][m_b_xp-1]; 
         if(pmode == REF2_ONLY || pmode == REF1AND2)
-            result = mvarray[0][b_xp-1]; 
+            result = mvarray[0][m_b_xp-1]; 
     }
-    else if (b_xp == 0 && b_yp > 0)
+    else if (m_b_xp == 0 && m_b_yp > 0)
     {
-        pmode = preddata[b_yp-1][0]; 
+        pmode = preddata[m_b_yp-1][0]; 
         if(pmode == REF2_ONLY || pmode == REF1AND2)
-            result = mvarray[b_yp-1][0]; 
+            result = mvarray[m_b_yp-1][0]; 
     }
 
     return result; 
@@ -398,34 +384,34 @@ inline ValueType MvDataCodec::DCPrediction(const TwoDArray < ValueType > & dcdat
     PredMode pmode;
     ValueType result = 128; 
     
-    if (b_xp > 0 && b_yp > 0)
+    if (m_b_xp > 0 && m_b_yp > 0)
     {
-        pmode = preddata[b_yp-1][b_xp]; 
+        pmode = preddata[m_b_yp-1][m_b_xp]; 
         if (pmode == INTRA) 
-            nbrs.push_back(int(dcdata[b_yp-1][b_xp])); 
+            nbrs.push_back(int(dcdata[m_b_yp-1][m_b_xp])); 
         
-        pmode = preddata[b_yp-1][b_xp-1]; 
+        pmode = preddata[m_b_yp-1][m_b_xp-1]; 
         if (pmode == INTRA)
-            nbrs.push_back(int(dcdata[b_yp-1][b_xp-1])); 
+            nbrs.push_back(int(dcdata[m_b_yp-1][m_b_xp-1])); 
         
-        pmode = preddata[b_yp][b_xp-1]; 
+        pmode = preddata[m_b_yp][m_b_xp-1]; 
         if (pmode == INTRA)        
-            nbrs.push_back(int(dcdata[b_yp][b_xp-1])); 
+            nbrs.push_back(int(dcdata[m_b_yp][m_b_xp-1])); 
         
         if (nbrs.size() > 0)
             result = ValueType(GetMean(nbrs));     
     }
-    else if (b_xp > 0 && b_yp == 0)
+    else if (m_b_xp > 0 && m_b_yp == 0)
     {
-        pmode = preddata[0][b_xp-1]; 
+        pmode = preddata[0][m_b_xp-1]; 
         if (pmode == INTRA)
-            result = dcdata[0][b_xp-1]; 
+            result = dcdata[0][m_b_xp-1]; 
     }
-    else if (b_xp == 0 && b_yp > 0)
+    else if (m_b_xp == 0 && m_b_yp > 0)
     {
-        pmode = preddata[b_yp-1][0]; 
+        pmode = preddata[m_b_yp-1][0]; 
         if (pmode == INTRA)
-            result = dcdata[b_yp-1][0]; 
+            result = dcdata[m_b_yp-1][0]; 
     }
 
     return result;
@@ -438,16 +424,14 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
     int pstep,pmax; 
     int split_depth; 
     bool common_ref; 
-
-    MB_count = 0; 
     
-    for (mb_yp = 0, mb_tlb_y = 0;  mb_yp < in_data.MBSplit().LengthY();  ++mb_yp, mb_tlb_y += 4)
+    for (m_mb_yp = 0, m_mb_tlb_y = 0;  m_mb_yp < in_data.MBSplit().LengthY();  ++m_mb_yp, m_mb_tlb_y += 4)
     {
-        for (mb_xp = 0,mb_tlb_x = 0; mb_xp < in_data.MBSplit().LengthX(); ++mb_xp,mb_tlb_x += 4)
+        for (m_mb_xp = 0,m_mb_tlb_x = 0; m_mb_xp < in_data.MBSplit().LengthX(); ++m_mb_xp,m_mb_tlb_x += 4)
         {
              //start with split mode
             CodeMBSplit(in_data); 
-            split_depth = in_data.MBSplit()[mb_yp][mb_xp]; 
+            split_depth = in_data.MBSplit()[m_mb_yp][m_mb_xp]; 
 
             step = 4  >>  (split_depth); 
             max = (1 << split_depth); 
@@ -464,43 +448,49 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
                 pstep = 4; 
                 pmax = 1; 
             }
-            common_ref = in_data.MBCommonMode()[mb_yp][mb_xp]; 
+            common_ref = in_data.MBCommonMode()[m_mb_yp][m_mb_xp]; 
 
 
             //do prediction modes            
-            for (b_yp = mb_tlb_y; b_yp < mb_tlb_y+4; b_yp += pstep)
-                for (b_xp = mb_tlb_x; b_xp < mb_tlb_x+4; b_xp += pstep)
+            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; m_b_yp += pstep)
+                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; m_b_xp += pstep)
                     CodePredmode(in_data); 
             
             step = 4 >> (split_depth);             
             
                //now do all the block mvs in the mb            
-            for (b_yp = mb_tlb_y; b_yp < mb_tlb_y+4; b_yp += step)
+            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; m_b_yp += step)
             {
-                for (b_xp = mb_tlb_x; b_xp < mb_tlb_x+4; b_xp += step)
+                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; m_b_xp += step)
                 {
-                    if (in_data.Mode()[b_yp][b_xp] == REF1_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
+                    if (in_data.Mode()[m_b_yp][m_b_xp] == REF1_ONLY || in_data.Mode()[m_b_yp][m_b_xp] == REF1AND2 )
                         CodeMv1(in_data); 
                     
-                    if (in_data.Mode()[b_yp][b_xp] == REF2_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
+                    if (in_data.Mode()[m_b_yp][m_b_xp] == REF2_ONLY || in_data.Mode()[m_b_yp][m_b_xp] == REF1AND2 )
                         CodeMv2(in_data); 
                     
-                    if(in_data.Mode()[b_yp][b_xp] == INTRA)
+                    if(in_data.Mode()[m_b_yp][m_b_xp] == INTRA)
                         CodeDC(in_data);                     
-                }//b_xp
-            }//b_yp    
+                }//m_b_xp
+            }//m_b_yp    
             
-            //TODO: Update all contexts here?
+            m_MB_count++;
+    
+            if (m_MB_count > m_reset_num)
+            {
+                 m_MB_count = 0;
+                 ResetAll();
+            }
             
-        }//mb_xp
-    }//mb_yp
+        }//m_mb_xp
+    }//m_mb_yp
 
 }
 
 
 void MvDataCodec::CodeMBSplit(const MvData& in_data)
 {
-    int val = in_data.MBSplit()[mb_yp][mb_xp] - MBSplitPrediction( in_data.MBSplit() ); 
+    int val = in_data.MBSplit()[m_mb_yp][m_mb_xp] - MBSplitPrediction( in_data.MBSplit() ); 
     
     if (val < 0)
         val += 3; //produce prediction mod 3    
@@ -519,7 +509,7 @@ void MvDataCodec::CodeMBSplit(const MvData& in_data)
 
 void MvDataCodec::CodeMBCom(const MvData& in_data)
 {
-    bool val = in_data.MBCommonMode()[mb_yp][mb_xp]; 
+    bool val = in_data.MBCommonMode()[m_mb_yp][m_mb_xp]; 
     
     if (val != MBCBModePrediction( in_data.MBCommonMode() ))
         EncodeSymbol( 1 , ChooseMBCContext( in_data ) ); 
@@ -531,7 +521,7 @@ void MvDataCodec::CodePredmode(const MvData& in_data)
 {
     // Xor with the prediction so we predict whether REF1 is used or REF2 is
     // used, separately
-    unsigned int residue = in_data.Mode()[b_yp][b_xp] ^ BlockModePrediction( in_data.Mode() ); 
+    unsigned int residue = in_data.Mode()[m_b_yp][m_b_xp] ^ BlockModePrediction( in_data.Mode() ); 
     
     // Code REF1 part of the prediction residue (ie the first bit)
     EncodeSymbol( residue & 1 , PMODE_BIT0_CTX );
@@ -546,7 +536,7 @@ void MvDataCodec::CodeMv1(const MvData& in_data )
     const MvArray& mv_array = in_data.Vectors(1);
     const MVector pred = Mv1Prediction( mv_array , in_data.Mode() ); 
 
-    const int valx = mv_array[b_yp][b_xp].x - pred.x; 
+    const int valx = mv_array[m_b_yp][m_b_xp].x - pred.x; 
     const int abs_valx = std::abs(valx); 
     
     for (int bin = 1;  bin  <= abs_valx;  ++bin)
@@ -557,7 +547,7 @@ void MvDataCodec::CodeMv1(const MvData& in_data )
     if (valx != 0)
         EncodeSymbol( ( (valx > 0)? 1 : 0) , ChooseREF1xSignContext( in_data ) ); 
 
-    const int valy = mv_array[b_yp][b_xp].y - pred.y;         
+    const int valy = mv_array[m_b_yp][m_b_xp].y - pred.y;         
     const int abs_valy = std::abs( valy );     
     
     for (int bin = 1; bin<=abs_valy ; ++bin )
@@ -574,7 +564,7 @@ void MvDataCodec::CodeMv2(const MvData& in_data)
     const MvArray& mv_array = in_data.Vectors(2);
     const MVector pred = Mv2Prediction( mv_array , in_data.Mode() );     
 
-    const int valx = mv_array[b_yp][b_xp].x - pred.x; 
+    const int valx = mv_array[m_b_yp][m_b_xp].x - pred.x; 
     const int abs_valx = abs(valx); 
     
     for (int bin = 1; bin <= abs_valx; ++bin)
@@ -585,7 +575,7 @@ void MvDataCodec::CodeMv2(const MvData& in_data)
     if (valx != 0)
         EncodeSymbol( ( (valx > 0)? 1 : 0) , ChooseREF2xSignContext( in_data ) ); 
 
-    const int valy = mv_array[b_yp][b_xp].y-pred.y; 
+    const int valy = mv_array[m_b_yp][m_b_xp].y-pred.y; 
     const int abs_valy = std::abs(valy);     
     
     for (int bin = 1; bin<=abs_valy; ++bin )
@@ -600,7 +590,7 @@ void MvDataCodec::CodeMv2(const MvData& in_data)
 void MvDataCodec::CodeDC(const MvData& in_data)
 {    
     //begin with Y DC value    
-    const ValueType valY = in_data.DC( Y_COMP )[b_yp][b_xp]
+    const ValueType valY = in_data.DC( Y_COMP )[m_b_yp][m_b_xp]
                            - DCPrediction( in_data.DC(Y_COMP) , in_data.Mode() ); 
     const ValueType abs_valY = std::abs( valY ); 
 
@@ -616,7 +606,7 @@ void MvDataCodec::CodeDC(const MvData& in_data)
     if (m_cformat != Yonly)
     {
         //continue with U and V DC values
-        const int valU =  in_data.DC(U_COMP)[b_yp][b_xp]
+        const int valU =  in_data.DC(U_COMP)[m_b_yp][m_b_xp]
                           - DCPrediction(in_data.DC( U_COMP ) , in_data.Mode()); 
         const int abs_valU = std::abs( valU ); 
 
@@ -628,7 +618,7 @@ void MvDataCodec::CodeDC(const MvData& in_data)
         if (valU != 0)
             EncodeSymbol( ( (valU > 0) ? 1 : 0) , ChooseUDCSignContext( in_data ) ); 
         
-        const int valV = in_data.DC( V_COMP )[b_yp][b_xp] 
+        const int valV = in_data.DC( V_COMP )[m_b_yp][m_b_xp] 
                          - DCPrediction( in_data.DC( V_COMP ) , in_data.Mode() ); 
         const int abs_valV = std::abs( valV ); 
 
@@ -645,7 +635,7 @@ void MvDataCodec::CodeDC(const MvData& in_data)
 //decoding functions//
 //////////////////////
 
-void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
+void MvDataCodec::DoWorkDecode( MvData& out_data)
 {
     int step,max; 
     int pstep,pmax;     
@@ -653,13 +643,13 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
     bool common_ref; 
     int xstart,ystart;     
 
-    for (mb_yp = 0,mb_tlb_y = 0; mb_yp < out_data.MBSplit().LengthY(); ++mb_yp,mb_tlb_y += 4)
+    for (m_mb_yp = 0,m_mb_tlb_y = 0; m_mb_yp < out_data.MBSplit().LengthY(); ++m_mb_yp,m_mb_tlb_y += 4)
     {
-        for (mb_xp = 0,mb_tlb_x = 0; mb_xp < out_data.MBSplit().LengthX(); ++mb_xp,mb_tlb_x += 4)
+        for (m_mb_xp = 0,m_mb_tlb_x = 0; m_mb_xp < out_data.MBSplit().LengthX(); ++m_mb_xp,m_mb_tlb_x += 4)
         {
              //start with split mode
             DecodeMBSplit( out_data ); 
-            split_depth = out_data.MBSplit()[mb_yp][mb_xp]; 
+            split_depth = out_data.MBSplit()[m_mb_yp][m_mb_xp]; 
             step =  4  >>  (split_depth); 
             max  = (1 << split_depth); 
 
@@ -672,24 +662,24 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
             }
             else
             {
-                out_data.MBCommonMode()[mb_yp][mb_xp] = true; 
+                out_data.MBCommonMode()[m_mb_yp][m_mb_xp] = true; 
                 pstep = 4; 
                 pmax = 1; 
             }
             
-            common_ref = out_data.MBCommonMode()[mb_yp][mb_xp]; 
+            common_ref = out_data.MBCommonMode()[m_mb_yp][m_mb_xp]; 
 
             // do prediction modes
-            for (b_yp = mb_tlb_y;  b_yp < mb_tlb_y + 4;  b_yp += pstep)
+            for (m_b_yp = m_mb_tlb_y;  m_b_yp < m_mb_tlb_y + 4;  m_b_yp += pstep)
             {                
-                for (b_xp = mb_tlb_x; b_xp < mb_tlb_x + 4;  b_xp += pstep)
+                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x + 4;  m_b_xp += pstep)
                 {
                     DecodePredmode(out_data); 
                     
                     // propagate throughout MB                
-                    for (int y = b_yp;  y < b_yp + pstep;  y++)
-                        for (int x = b_xp;  x < b_xp + pstep;  x++)
-                            out_data.Mode()[y][x] = out_data.Mode()[b_yp][b_xp];                                                         
+                    for (int y = m_b_yp;  y < m_b_yp + pstep;  y++)
+                        for (int x = m_b_xp;  x < m_b_xp + pstep;  x++)
+                            out_data.Mode()[y][x] = out_data.Mode()[m_b_yp][m_b_xp];                                                         
                 }
             }
 
@@ -698,37 +688,45 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
             {                
                 for (int i = 0; i < max; ++i)
                 {
-                    xstart = b_xp = mb_tlb_x + i * step; 
-                    ystart = b_yp = mb_tlb_y + j * step;                                             
+                    xstart = m_b_xp = m_mb_tlb_x + i * step; 
+                    ystart = m_b_yp = m_mb_tlb_y + j * step;                                             
                     
-                    if (out_data.Mode()[b_yp][b_xp] == REF1_ONLY || out_data.Mode()[b_yp][b_xp] == REF1AND2 )
+                    if (out_data.Mode()[m_b_yp][m_b_xp] == REF1_ONLY || out_data.Mode()[m_b_yp][m_b_xp] == REF1AND2 )
                         DecodeMv1( out_data ); 
                     
-                    if (out_data.Mode()[b_yp][b_xp] == REF2_ONLY || out_data.Mode()[b_yp][b_xp] == REF1AND2 )
+                    if (out_data.Mode()[m_b_yp][m_b_xp] == REF2_ONLY || out_data.Mode()[m_b_yp][m_b_xp] == REF1AND2 )
                         DecodeMv2( out_data ); 
                     
-                    if(out_data.Mode()[b_yp][b_xp] == INTRA)
+                    if(out_data.Mode()[m_b_yp][m_b_xp] == INTRA)
                         DecodeDC( out_data ); 
                     
                       //propagate throughout MB    
-                    for (b_yp = ystart; b_yp < ystart+step; b_yp++)
+                    for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
                     {
-                        for (b_xp = xstart; b_xp < xstart+step; b_xp++)
+                        for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
                         {                    
-                            out_data.Vectors(1)[b_yp][b_xp].x = out_data.Vectors(1)[ystart][xstart].x; 
-                            out_data.Vectors(1)[b_yp][b_xp].y = out_data.Vectors(1)[ystart][xstart].y; 
-                            out_data.Vectors(2)[b_yp][b_xp].x = out_data.Vectors(2)[ystart][xstart].x; 
-                            out_data.Vectors(2)[b_yp][b_xp].y = out_data.Vectors(2)[ystart][xstart].y; 
-                            out_data.DC( Y_COMP )[b_yp][b_xp] = out_data.DC( Y_COMP )[ystart][xstart]; 
-                            out_data.DC( U_COMP )[b_yp][b_xp] = out_data.DC( U_COMP )[ystart][xstart]; 
-                            out_data.DC( V_COMP )[b_yp][b_xp] = out_data.DC( V_COMP )[ystart][xstart]; 
-                        }//b_xp
-                    }//b_yp
+                            out_data.Vectors(1)[m_b_yp][m_b_xp].x = out_data.Vectors(1)[ystart][xstart].x; 
+                            out_data.Vectors(1)[m_b_yp][m_b_xp].y = out_data.Vectors(1)[ystart][xstart].y; 
+                            out_data.Vectors(2)[m_b_yp][m_b_xp].x = out_data.Vectors(2)[ystart][xstart].x; 
+                            out_data.Vectors(2)[m_b_yp][m_b_xp].y = out_data.Vectors(2)[ystart][xstart].y; 
+                            out_data.DC( Y_COMP )[m_b_yp][m_b_xp] = out_data.DC( Y_COMP )[ystart][xstart]; 
+                            out_data.DC( U_COMP )[m_b_yp][m_b_xp] = out_data.DC( U_COMP )[ystart][xstart]; 
+                            out_data.DC( V_COMP )[m_b_yp][m_b_xp] = out_data.DC( V_COMP )[ystart][xstart]; 
+                        }//m_b_xp
+                    }//m_b_yp
                 }//i                    
             }//j
 
-        }//mb_xp
-    }//mb_yp
+            m_MB_count++;
+    
+            if (m_MB_count > m_reset_num)
+            {
+                 m_MB_count = 0;
+                 ResetAll();
+            }
+
+        }//m_mb_xp
+    }//m_mb_yp
 
 }
 
@@ -740,27 +738,24 @@ void MvDataCodec::DecodeMBSplit(MvData& out_data)
 
     do
     {
-        DecodeSymbol( bit , ChooseMBSContext( out_data , bin ) ); 
+        bit = DecodeSymbol( ChooseMBSContext( out_data , bin ) ); 
         
-        if (!bit)
+        if ( !bit )
             val++; 
         
         bin++; 
     }
     while (!bit && val != 2);  
     
-    out_data.MBSplit()[mb_yp][mb_xp] = ( val + MBSplitPrediction( out_data.MBSplit() ) ) % 3;     
+    out_data.MBSplit()[m_mb_yp][m_mb_xp] = ( val + MBSplitPrediction( out_data.MBSplit() ) ) % 3;     
 }
 
 void MvDataCodec::DecodeMBCom( MvData& out_data )
-{
-    bool bit; 
-    DecodeSymbol( bit , ChooseMBCContext( out_data ) ); 
-    
-    if ( bit )
-        out_data.MBCommonMode()[mb_yp][mb_xp] = !MBCBModePrediction( out_data.MBCommonMode() ); 
+{    
+    if ( DecodeSymbol( ChooseMBCContext( out_data ) ) )
+        out_data.MBCommonMode()[m_mb_yp][m_mb_xp] = !MBCBModePrediction( out_data.MBCommonMode() ); 
     else
-        out_data.MBCommonMode()[mb_yp][mb_xp] = MBCBModePrediction( out_data.MBCommonMode() ); 
+        out_data.MBCommonMode()[m_mb_yp][m_mb_xp] = MBCBModePrediction( out_data.MBCommonMode() ); 
 }
 
 void MvDataCodec::DecodePredmode( MvData& out_data )
@@ -771,14 +766,14 @@ void MvDataCodec::DecodePredmode( MvData& out_data )
     
     // Decode REF1 part of the prediction residue (ie the first bit)
     bool bit;
-    DecodeSymbol( bit , PMODE_BIT0_CTX );
+    bit = DecodeSymbol( PMODE_BIT0_CTX );
     residue = (unsigned int) bit;
 
     // Decode REF2 part of the prediction residue (ie the second bit)
-    DecodeSymbol( bit , PMODE_BIT1_CTX );
+    bit = DecodeSymbol( PMODE_BIT1_CTX );
     residue |= ( (unsigned int) bit ) << 1;
     
-    out_data.Mode()[b_yp][b_xp] = PredMode( BlockModePrediction (out_data.Mode() ) ^ residue ); 
+    out_data.Mode()[m_b_yp][m_b_xp] = PredMode( BlockModePrediction (out_data.Mode() ) ^ residue ); 
 }
 
 void MvDataCodec::DecodeMv1( MvData& out_data )
@@ -790,7 +785,7 @@ void MvDataCodec::DecodeMv1( MvData& out_data )
     
     do
     {
-        DecodeSymbol( bit , ChooseREF1xContext( out_data , bin ) ); 
+        bit = DecodeSymbol( ChooseREF1xContext( out_data , bin ) ); 
         
         if ( !bit )
             val++; 
@@ -801,20 +796,18 @@ void MvDataCodec::DecodeMv1( MvData& out_data )
     
     if (val != 0)
     {
-        DecodeSymbol( bit , ChooseREF1xSignContext( out_data ) ); 
-        
-        if (!bit)
+        if ( !DecodeSymbol( ChooseREF1xSignContext( out_data ) ) )
             val = -val; 
     }
     
-    out_data.Vectors(1)[b_yp][b_xp].x = val + pred.x; 
+    out_data.Vectors(1)[m_b_yp][m_b_xp].x = val + pred.x; 
 
     val = 0; 
     bin = 1; 
     
     do
     {
-        DecodeSymbol( bit , ChooseREF1yContext( out_data , bin ) ); 
+        bit = DecodeSymbol( ChooseREF1yContext( out_data , bin ) ); 
         
         if ( !bit )
             val++; 
@@ -825,13 +818,11 @@ void MvDataCodec::DecodeMv1( MvData& out_data )
     
     if (val != 0)
     {
-        DecodeSymbol( bit , ChooseREF1ySignContext( out_data ) ); 
-        
-        if (!bit)
+        if ( !DecodeSymbol( ChooseREF1ySignContext( out_data ) )  )
             val = -val; 
     }
     
-    out_data.Vectors(1)[b_yp][b_xp].y = val + pred.y; 
+    out_data.Vectors(1)[m_b_yp][m_b_xp].y = val + pred.y; 
 }
 
 void MvDataCodec::DecodeMv2( MvData& out_data )
@@ -843,7 +834,7 @@ void MvDataCodec::DecodeMv2( MvData& out_data )
     
     do
     {
-        DecodeSymbol( bit , ChooseREF2xContext( out_data , bin ) ); 
+        bit = DecodeSymbol( ChooseREF2xContext( out_data , bin ) ); 
         
         if ( !bit )
             val++; 
@@ -854,20 +845,18 @@ void MvDataCodec::DecodeMv2( MvData& out_data )
     
     if (val != 0)
     {
-        DecodeSymbol( bit , ChooseREF2xSignContext( out_data ) ); 
-        
-        if (!bit)
+        if ( !DecodeSymbol( ChooseREF2xSignContext( out_data ) ) )
             val = -val; 
     }
     
-    out_data.Vectors(2)[b_yp][b_xp].x = val + pred.x; 
+    out_data.Vectors(2)[m_b_yp][m_b_xp].x = val + pred.x; 
 
     val = 0; 
     bin = 1; 
     
     do
     {
-        DecodeSymbol( bit , ChooseREF2yContext( out_data , bin ) ); 
+        bit = DecodeSymbol( ChooseREF2yContext( out_data , bin ) ); 
         
         if ( !bit )
             val++; 
@@ -878,13 +867,11 @@ void MvDataCodec::DecodeMv2( MvData& out_data )
     
     if (val != 0)
     {
-        DecodeSymbol( bit , ChooseREF2ySignContext( out_data ) ); 
-        
-        if ( !bit )
+        if ( !DecodeSymbol( ChooseREF2ySignContext( out_data ) )  )
             val = -val; 
     }
     
-    out_data.Vectors(2)[b_yp][b_xp].y = val + pred.y; 
+    out_data.Vectors(2)[m_b_yp][m_b_xp].y = val + pred.y; 
 }
 
 void MvDataCodec::DecodeDC( MvData& out_data )
@@ -896,7 +883,7 @@ void MvDataCodec::DecodeDC( MvData& out_data )
     
     do
     {
-        DecodeSymbol( bit , ChooseYDCContext( out_data , bin ) ); 
+        bit = DecodeSymbol( ChooseYDCContext( out_data , bin ) ); 
         
         if ( !bit )
             val++; 
@@ -907,13 +894,11 @@ void MvDataCodec::DecodeDC( MvData& out_data )
     
     if (val != 0)
     {
-        DecodeSymbol( bit , ChooseYDCSignContext( out_data ) ); 
-        
-        if (!bit)
+        if ( !DecodeSymbol( ChooseYDCSignContext( out_data ) )  )
             val = -val; 
     }
     
-    out_data.DC( Y_COMP )[b_yp][b_xp] = val + DCPrediction( out_data.DC( Y_COMP ) , out_data.Mode()); 
+    out_data.DC( Y_COMP )[m_b_yp][m_b_xp] = val + DCPrediction( out_data.DC( Y_COMP ) , out_data.Mode()); 
 
     if (m_cformat != Yonly)
     {
@@ -923,7 +908,7 @@ void MvDataCodec::DecodeDC( MvData& out_data )
         
         do
         {
-            DecodeSymbol( bit , ChooseUDCContext( out_data , bin ) ); 
+            bit = DecodeSymbol( ChooseUDCContext( out_data , bin ) ); 
             
             if (!bit)
                 val++; 
@@ -934,20 +919,18 @@ void MvDataCodec::DecodeDC( MvData& out_data )
         
         if (val != 0)
         {
-            DecodeSymbol( bit , ChooseUDCSignContext ( out_data ) ); 
-            
-            if (!bit)
+            if ( !DecodeSymbol( ChooseUDCSignContext ( out_data ) ) )
                 val = -val; 
         }
         
-        out_data.DC( U_COMP )[b_yp][b_xp] = val + DCPrediction( out_data.DC( U_COMP ) , out_data.Mode()); 
+        out_data.DC( U_COMP )[m_b_yp][m_b_xp] = val + DCPrediction( out_data.DC( U_COMP ) , out_data.Mode()); 
 
         val = 0; 
         bin = 1; 
         
         do
         {
-            DecodeSymbol( bit , ChooseVDCContext( out_data , bin ) ); 
+            bit = DecodeSymbol( ChooseVDCContext( out_data , bin ) ); 
             
             if ( !bit )
                 val++; 
@@ -958,12 +941,10 @@ void MvDataCodec::DecodeDC( MvData& out_data )
         
         if (val != 0)
         {
-            DecodeSymbol( bit , ChooseVDCSignContext( out_data ) ); 
-            
-            if ( !bit )
+            if ( !DecodeSymbol( ChooseVDCSignContext( out_data ) )  )
                 val = -val; 
         }
         
-        out_data.DC( V_COMP )[b_yp][b_xp] = val + DCPrediction( out_data.DC( V_COMP ) , out_data.Mode() ); 
+        out_data.DC( V_COMP )[m_b_yp][m_b_xp] = val + DCPrediction( out_data.DC( V_COMP ) , out_data.Mode() ); 
     }
 }

@@ -98,10 +98,7 @@ namespace dirac
         NZ_BIN4_CTX,        //14    -bin 4, parent is non-zero
         NZ_BIN5plus_CTX,    //15    -bins 5 plus, parent is non-zero
         
-        ZTz_CTX,            //16    -zerotree, neighbouring symbols are zerotree elements
-        ZTnz_CTX,           //17    -zerotree, neighbouring symbols are not zerotree elements
-        ZTzb_CTX,           //16    -zerotree, neighbouring symbols are zerotree elements
-        ZTnzb_CTX           //17    -zerotree, neighbouring symbols are not zerotree elements
+        BLOCK_SKIP_CTX      //16    - blocks are skipped
     };
 
     //! Contexts used for MV data coding
@@ -282,15 +279,15 @@ namespace dirac
         //! Constructor
         /*
             Constructor rationalises proposed parameters to allow suitable 
-            overlap and fit in with
-            chroma format
+            overlap and fit in with chroma format
             \param    xblen    the horizontal block length    
             \param    yblen    the vertical block length
             \param    xblen    the horizontal block separation
             \param    yblen    the vertical block separation
 
         */
-        OLBParams(const int xblen, int const yblen, int const xbsep, int const ybsep);
+        OLBParams(const int xblen, const int yblen, 
+                  const int xbsep, const int ybsep);
         
         // Gets ...
         
@@ -532,6 +529,12 @@ namespace dirac
         //! The frame number, in temporal order
         int m_fnum;        
     };
+
+//    //! Operator for inputting block parameters
+//    std::istream & operator>> (std::istream & stream, OLBParams & params);
+//
+//    //! Operator for outputting block parameters
+//    std::ostream & operator<< (std::ostream & stream, OLBParams & params);
 
 
     //! Parameters common to coder and decoder operation
@@ -852,6 +855,28 @@ namespace dirac
         else if(num >= max) return max-1;
         else return num;
     }
+
+    //! Class for encapsulating quantiser data
+    class QuantiserLists
+    {
+    public:
+        //! Default constructor
+        QuantiserLists();
+
+        inline int QuantFactor( const int index ) const {return m_qflist[index]; }
+        inline int InverseQuantFactor( const int index ) const {return m_qfinvlist[index]; }
+        inline int QuantOffset( const int index ) const {return m_offset[index]; }
+    
+
+    private:
+        OneDArray<int> m_qflist;
+        OneDArray<int> m_qfinvlist;
+        OneDArray<int> m_offset;
+
+    };
+
+    //! A constant list of the quantisers being used in Dirac
+    extern const QuantiserLists dirac_quantiser_lists;
 
 } // namespace dirac
 

@@ -51,10 +51,10 @@
 
 namespace dirac
 {
+
     //! Codes and decodes all the Motion Vector data
     /*!
-        Derived from the ArithCodec class, this codes and decodes all the 
-        motion vector data.
+        Derived from the ArithCodec class, this codes and decodes all the motion vector data.
      */
     class MvDataCodec: public ArithCodec<MvData>
     {
@@ -63,7 +63,7 @@ namespace dirac
             /*!
             Creates a MvDataCodec object to encode MV data, based on parameters
             \param    bits_out    the output for the encoded bits
-            \param    number_of_contexts   the contexts used in the encoding process
+            \param    number_of_contexts the number of contexts used
             \param     cf            the chroma format
          */    
         MvDataCodec(BasicOutputManager* bits_out,
@@ -71,10 +71,10 @@ namespace dirac
                     const ChromaFormat & cf);
 
         //! Constructor for decoding
-            /*!
+        /*!
             Creates a MvDataCodec object to encode MV data, based on parameters
             \param    bits_in        the input for the encoded bits
-            \param    number_of_contexts  the contexts used in the encoding process
+            \param    number_of_contexts the number of contexts used
             \param     cf            the chroma format
          */        
         MvDataCodec(BitInputManager* bits_in,
@@ -83,46 +83,63 @@ namespace dirac
 
         //! Initialises the contexts    
         void InitContexts();
-        
+    
     private:
-        int MB_count;
+
+        int m_MB_count;
+       const int m_reset_num;
+
         const ChromaFormat & m_cformat;
 
-        int b_xp, b_yp;            //position of current block
-        int mb_xp, mb_yp;        //position of current MB
-        int mb_tlb_x, mb_tlb_y;    //position of top-left block of current MB
+        // Position of current block
+        int m_b_xp, m_b_yp;
+        // Position of current MB
+        int m_mb_xp, m_mb_yp;
+        // Position of top-left block of current MB
+        int m_mb_tlb_x, m_mb_tlb_y;
+
+    private:
 
         // functions    
-        MvDataCodec(const MvDataCodec& cpy);            //private, bodyless copy constructor: class should not be copied
-        MvDataCodec& operator=(const MvDataCodec& rhs); //private, bodyless copy operator=: class should not be assigned
+        //! Private, bodyless copy constructor: class should not be copied
+        MvDataCodec(const MvDataCodec& cpy);
+        //! Private, bodyless copy operator=: class should not be assigned
+        MvDataCodec& operator=(const MvDataCodec& rhs);
 
         // coding functions    
-        void CodeMBSplit(const MvData& in_data);    //code the MB splitting mode
-        void CodeMBCom(const MvData& in_data);    //code the MB common ref mode
-        void CodePredmode(const MvData& in_data);    //code the block prediction mode
-        void CodeMv1(const MvData& in_data);        //code the first motion vector
-        void CodeMv2(const MvData& in_data);        //code the second motion vector
-        void CodeDC(const MvData& in_data);        //code the dc value of intra blocks
+        // Code the MB splitting mode
+        void CodeMBSplit(const MvData& in_data);
+        // Code the MB common ref mode
+        void CodeMBCom(const MvData& in_data);
+        // Code the block prediction mode
+        void CodePredmode(const MvData& in_data);
+        // Code the first motion vector
+        void CodeMv1(const MvData& in_data);
+        // Code the second motion vector
+        void CodeMv2(const MvData& in_data);
+        // Code the dc value of intra blocks
+        void CodeDC(const MvData& in_data);
 
         // decoding functions
-        void DecodeMBSplit( MvData& out_data);    //decode the MB splitting mode
-        void DecodeMBCom( MvData& out_data);//decode the MB common ref mode
-        void DecodePredmode(MvData& out_data);//decode the block prediction mode
-        void DecodeMv1( MvData& out_data);    //decode the first motion vector
-        void DecodeMv2( MvData& out_data);    //decode the second motion vector
-        void DecodeDC( MvData& out_data);    //decode the dc value of intra blocks    
+        // Decode the MB splitting mode
+        void DecodeMBSplit( MvData& out_data);
+        // Decode the MB common ref mode
+        void DecodeMBCom( MvData& out_data);
+        // Decode the block prediction mode
+        void DecodePredmode(MvData& out_data);
+        // Decode the first motion vector
+        void DecodeMv1( MvData& out_data);
+        // Decode the second motion vector
+        void DecodeMv2( MvData& out_data);
+        // Decode the dc value of intra blocks    
+        void DecodeDC( MvData& out_data);
 
         void DoWorkCode( MvData& in_data );
-        void DoWorkDecode(MvData& out_data, int num_bits);
+        void DoWorkDecode(MvData& out_data);
 
         // Context stuff    
         void Update( const bool symbol , const int context_num );
-        void Resize(const int context_num);
         void ResetAll();
-
-        int ChooseContext(const MvData& data, const int BinNumber) const;
-        int ChooseContext(const MvData& data) const;
-        int ChooseSignContext(const MvData& data) const;
 
         int ChooseMBSContext(const MvData& data, const int BinNumber) const;
         int ChooseMBCContext(const MvData& data) const;
@@ -150,6 +167,6 @@ namespace dirac
         ValueType DCPrediction(const TwoDArray<ValueType>& dcdata,const TwoDArray<PredMode>& preddata) const;
     };
 
-} // namespace dirac
+}// end namepace dirac
 
 #endif

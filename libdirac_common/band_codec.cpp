@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_common/band_codec.h>
+
 using namespace dirac;
 
 //! Constructor for encoding.
@@ -46,10 +47,6 @@ BandCodec::BandCodec(BasicOutputManager* bits_out,
     ArithCodec<PicArray>(bits_out,number_of_contexts),
     m_bnum(band_num),
     m_node(band_list(band_num)),
-    m_xp(m_node.Xp()),
-    m_yp(m_node.Yp()),
-    m_xl(m_node.Xl()),
-    m_yl(m_node.Yl()),
     m_vol(m_node.Xl()*m_node.Yl()),
     m_reset_coeff_num( std::max( 25 , std::min(m_vol/32,800) ) ),
     m_cut_off_point(m_node.Scale()>>1)
@@ -66,10 +63,6 @@ BandCodec::BandCodec(BitInputManager* bits_in,
     ArithCodec<PicArray>(bits_in,number_of_contexts),
     m_bnum(band_num),
     m_node(band_list(band_num)),
-    m_xp(m_node.Xp()),
-    m_yp(m_node.Yp()),
-    m_xl(m_node.Xl()),
-    m_yl(m_node.Yl()),
     m_vol(m_node.Xl()*m_node.Yl()),
     m_reset_coeff_num( std::max( 25 , std::min(m_vol/32,800) ) ),
     m_cut_off_point(m_node.Scale()>>1)
@@ -103,104 +96,134 @@ void BandCodec::ResetAll()
             m_context_list[c].HalveCounts();
 }
 
-void BandCodec::Resize(const int context_num)
-{
-    m_context_list[context_num].HalveCounts();
-}
-
 void BandCodec::Update( const bool symbol , const int context_num )
 {
-    m_context_list[context_num].IncrCount(symbol,1);
-    
-    if ( m_context_list[context_num].Weight() >= 1024 )
-        Resize( context_num );
-}
+    Context& ctx = m_context_list[context_num];
 
-int BandCodec::ChooseContext(const PicArray& data) const{ return NZ_BIN5plus_CTX; }
+    ctx.IncrCount( symbol );
+    
+    if ( ctx.Weight() >= 1024 )
+        ctx.HalveCounts();
+}
 
 //encoding function
 void BandCodec::DoWorkCode(PicArray& in_data)
 {
 
-    //main coding function, using binarisation
-    if (m_node.Parent()!=0)
+    const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
+
+    if (m_node.Parent() != 0)
     {
-        m_pxp=m_pnode.Xp(); m_pyp=m_pnode.Yp();
-        m_pxl=m_pnode.Xl(); m_pyl=m_pnode.Yl();
+        m_pxp = m_pnode.Xp();
+        m_pyp = m_pnode.Yp();
     }
     else
     {
-        m_pxp=0; m_pyp=0;
-        m_pxl=0; m_pyl=0;
+        m_pxp = 0;
+        m_pyp = 0;
+    }
+
+    // Now loop over the blocks and code
+    m_coeff_count = 0;
+    for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
+    {
+        for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
+        {
+            EncodeSymbol(block_list[j][i].Skipped() , BLOCK_SKIP_CTX );
+            if ( !block_list[j][i].Skipped() )
+                CodeCoeffBlock( block_list[j][i] , in_data );
+            else
+                SetToVal( block_list[j][i] , in_data , 0 );
+        }// i
+    }// j
+
+}
+
+void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data )
+{
+    //main coding function, using binarisation
+
+    const int xbeg = code_block.Xstart();
+    const int ybeg = code_block.Ystart();
+    const int xend = code_block.Xend();
+    const int yend = code_block.Yend();
+ 
+    int xpbeg;
+    int ypbeg;
+
+   if (m_node.Parent()!=0)
+    {
+        xpbeg = m_pnode.Xp() + ( ( code_block.Xstart()-m_node.Xp() )>>1 );
+        ypbeg = m_pnode.Yp() + ( ( code_block.Ystart()-m_node.Yp() )>>1 );
+    }
+    else
+    {
+        xpbeg = 0; 
+        ypbeg = 0;
     }
     
     ValueType val;
-    m_qf=m_node.Qf(0);
-    m_qfinv=(1<<17)/m_qf;
-    m_offset=(3*m_qf+4)>>3;    
-    m_cut_off_point*=m_qf;
 
-    m_coeff_count=0;
+    int qf_idx = code_block.QIndex();
 
-    for (m_ypos=m_yp,m_pypos=m_pyp;m_ypos<m_yp+m_yl;++m_ypos,m_pypos=((m_ypos-m_yp)>>1)+m_pyp)
+    if ( m_node.UsingMultiQuants() )
     {
-        for (m_xpos=m_xp,m_pxpos=m_pxp;m_xpos<m_xp+m_xl;++m_xpos,m_pxpos=((m_xpos-m_xp)>>1)+m_pxp)
+        // TBD: shoould code coefficient offset and adjust qf_idx 
+    }
+    m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
+    m_qfinv =  dirac_quantiser_lists.InverseQuantFactor( qf_idx );
+    m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
+
+    m_cut_off_point *= m_qf;
+
+    for ( int ypos=ybeg , m_pypos=ypbeg; ypos<yend ;++ypos , m_pypos=(( ypos-ybeg )>>1)+ypbeg)
+    {
+        for ( int xpos=xbeg , m_pxpos=xpbeg ; xpos<xend ;++xpos , m_pxpos=((xpos-xbeg)>>1)+xpbeg)
         {
-            if (m_xpos==m_xp)
-                m_nhood_sum = (m_ypos!=m_yp) ? std::abs(in_data[m_ypos-1][m_xpos]) : 0;
+
+            if ( xpos==m_node.Xp() )
+                m_nhood_sum = (ypos != m_node.Yp()) ? std::abs(in_data[ypos-1][xpos]) : 0;
             else
-                m_nhood_sum = (m_ypos!=m_yp) ? 
-                (std::abs(in_data[m_ypos-1][m_xpos]) + std::abs(in_data[m_ypos][m_xpos-1])) 
-               : std::abs(in_data[m_ypos][m_xpos-1]);
-                
+                m_nhood_sum = (ypos!=m_node.Yp()) ? 
+                (std::abs(in_data[ypos-1][xpos]) + std::abs(in_data[ypos][xpos-1])) 
+               : std::abs(in_data[ypos][xpos-1]);
+
             m_parent_notzero = static_cast<bool> ( in_data[m_pypos][m_pxpos] );
-            val = in_data[m_ypos][m_xpos];
-            in_data[m_ypos][m_xpos]=0;
-            CodeVal( in_data , val );
 
-        }//m_xpos
-    }//m_ypos    
+            CodeVal( in_data , xpos , ypos , in_data[ypos][xpos] );
 
-#if defined(VERBOSE_DEBUG)
-    // Show the symbol counts
-    cerr<<endl<<"Context counts";
-    
-    for (int c = 0; c < 16; ++c)
-         cerr << endl
-             << c
-             << ": Zero-"
-             << ContextList()[c].get_count0()
-             << ", One-"
-             << ContextList()[c].get_count1();
-#endif
+        }// xpos
+    }// ypos    
+
 }
 
-void BandCodec::CodeVal( PicArray& in_data , const ValueType val )
+void BandCodec::CodeVal( PicArray& in_data , const int xpos , const int ypos , const ValueType val )
 {
     int abs_val( std::abs(val) );
     abs_val *= m_qfinv;
     abs_val >>= 17;
 
     for ( int bin=1 ; bin<=abs_val ; ++bin )
-        EncodeSymbol( 0 , ChooseContext( in_data , bin ) );
-    
-    EncodeSymbol( 1 , ChooseContext( in_data , abs_val+1 ) );
+        EncodeSymbol( 0 , ChooseContext( bin ) );
 
+    EncodeSymbol( 1 , ChooseContext( abs_val+1 ) );
+
+    in_data[ypos][xpos] = 0;
     if ( abs_val )
     {
         abs_val *= m_qf;
-        in_data[m_ypos][m_xpos] = static_cast<ValueType>( abs_val );                
+        in_data[ypos][xpos] = static_cast<ValueType>( abs_val );                
         
         if ( val>0 )
         {
-            EncodeSymbol( 1 , ChooseSignContext( in_data ) );
-            in_data[m_ypos][m_xpos] += m_offset;
+            EncodeSymbol( 1 , ChooseSignContext( in_data , xpos , ypos ) );
+            in_data[ypos][xpos] += m_offset;
         }
         else
         {
-            EncodeSymbol( 0 , ChooseSignContext(in_data) );
-            in_data[m_ypos][m_xpos]  = -in_data[m_ypos][m_xpos];
-            in_data[m_ypos][m_xpos] -= m_offset;
+            EncodeSymbol( 0 , ChooseSignContext( in_data , xpos , ypos ) );
+            in_data[ypos][xpos]  = -in_data[ypos][xpos];
+            in_data[ypos][xpos] -= m_offset;
         }
     }
     
@@ -213,49 +236,97 @@ void BandCodec::CodeVal( PicArray& in_data , const ValueType val )
     }
 }
 
-void BandCodec::DoWorkDecode(PicArray& out_data, int num_bits)
+void BandCodec::DoWorkDecode( PicArray& out_data )
 {
+    bool skip;
 
-    if (m_node.Parent()!=0)
+    if (m_node.Parent() != 0)
     {
         m_pxp = m_pnode.Xp();
         m_pyp = m_pnode.Yp();
-        m_pxl = m_pnode.Xl();
-        m_pyl = m_pnode.Yl();
     }
     else
     {
         m_pxp = 0;
         m_pyp = 0;
-        m_pxl = 0;
-        m_pyl = 0;
-    }    
+    }
 
-    m_qf = m_node.Qf(0);
-    m_offset = (3 * m_qf + 4) >> 3;
+    const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
+
+    // Now loop over the blocks and decode
+    m_coeff_count = 0;
+    for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
+    {
+        for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
+        {
+            block_list[j][i].SetSkip( DecodeSymbol( BLOCK_SKIP_CTX ) );
+            if ( !block_list[j][i].Skipped() )
+                DecodeCoeffBlock( block_list[j][i] , out_data );
+            else
+                SetToVal( block_list[j][i] , out_data , 0 );
+
+        }// i
+    }// j
+
+}
+
+void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_data )
+{
+
+
+    const int xbeg = code_block.Xstart();
+    const int ybeg = code_block.Ystart();
+    const int xend = code_block.Xend();
+    const int yend = code_block.Yend();
+ 
+    int xpbeg;
+    int ypbeg;
+
+   if (m_node.Parent()!=0)
+    {
+        xpbeg = m_pnode.Xp() + ( ( code_block.Xstart()-m_node.Xp() )>>1 );
+        ypbeg = m_pnode.Yp() + ( ( code_block.Ystart()-m_node.Yp() )>>1 );
+    }
+    else
+    {
+        xpbeg = 0; 
+        ypbeg = 0;
+    }
+
+    int qf_idx = code_block.QIndex();
+
+    if ( m_node.UsingMultiQuants() )
+    {
+        // TBD: shoould decode coefficient offset and adjust qf_idx 
+    }
+
+    m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
+    m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
+
     m_cut_off_point *= m_qf;
 
     //Work
-    m_coeff_count=0;
     
-    for (m_ypos=m_yp,m_pypos=m_pyp;m_ypos<m_yp+m_yl;++m_ypos,m_pypos=((m_ypos-m_yp)>>1)+m_pyp)
-    {        
-        for (m_xpos = m_xp, m_pxpos = m_pxp; m_xpos < m_xp+m_xl; ++m_xpos, m_pxpos=((m_xpos-m_xp)>>1)+m_pxp)
+    for ( int ypos=ybeg , m_pypos=ypbeg; ypos<yend ;++ypos , m_pypos=(( ypos-ybeg )>>1)+ypbeg)
+    {
+        for ( int xpos=xbeg , m_pxpos=xpbeg ; xpos<xend ;++xpos,m_pxpos=((xpos-xbeg)>>1)+xpbeg)
         {
-            if (m_xpos == m_xp)
-                m_nhood_sum=(m_ypos!=m_yp) ? std::abs(out_data[m_ypos-1][m_xpos]): 0;
+            if (xpos == m_node.Xp())
+                m_nhood_sum=(ypos!=m_node.Yp()) ? std::abs(out_data[ypos-1][xpos]): 0;
             else
-                m_nhood_sum=(m_ypos!=m_yp) ? 
-                (std::abs(out_data[m_ypos-1][m_xpos]) + std::abs(out_data[m_ypos][m_xpos-1])) 
-              : std::abs(out_data[m_ypos][m_xpos-1]);
-            
+                m_nhood_sum=(ypos!=m_node.Yp()) ? 
+                (std::abs(out_data[ypos-1][xpos]) + std::abs(out_data[ypos][xpos-1])) 
+              : std::abs(out_data[ypos][xpos-1]);
+
             m_parent_notzero = static_cast<bool>( out_data[m_pypos][m_pxpos] );            
-            DecodeVal(out_data);            
-        }//m_xpos
-    }//m_ypos
+            DecodeVal( out_data , xpos , ypos );
+
+        }// xpos
+    }// ypos
 }
 
-void BandCodec::DecodeVal(PicArray& out_data)
+
+void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const int ypos )
 {
     ValueType val = 0;
     bool bit;
@@ -263,7 +334,7 @@ void BandCodec::DecodeVal(PicArray& out_data)
     
     do
     {
-        DecodeSymbol(bit,ChooseContext(out_data,bin));
+        bit = DecodeSymbol( ChooseContext( bin ) );
         
         if (!bit)
             val++;
@@ -272,17 +343,17 @@ void BandCodec::DecodeVal(PicArray& out_data)
     }
     while (!bit);            
 
-    out_data[m_ypos][m_xpos] = val;
+    out_data[ypos][xpos] = val;
     
-    if (out_data[m_ypos][m_xpos])
+    if ( out_data[ypos][xpos] )
     {
-        out_data[m_ypos][m_xpos] *= m_qf;
-        out_data[m_ypos][m_xpos] += m_offset;
-        DecodeSymbol( bit , ChooseSignContext(out_data) );
+        out_data[ypos][xpos] *= m_qf;
+        out_data[ypos][xpos] += m_offset;
+        bit = DecodeSymbol( ChooseSignContext( out_data , xpos , ypos ) );
     }
     
-    if (!bit)
-        out_data[m_ypos][m_xpos]=-out_data[m_ypos][m_xpos];
+    if ( !bit )
+        out_data[ypos][xpos] =- out_data[ypos][xpos];
 
     m_coeff_count++;
     
@@ -293,30 +364,31 @@ void BandCodec::DecodeVal(PicArray& out_data)
     }
 }
 
-int BandCodec::ChooseContext(const PicArray& data, const int BinNumber) const
+int BandCodec::ChooseContext( const int bin_number ) const
 {
     //condition on neighbouring values and parent values
+
     if (!m_parent_notzero && (m_pxp != 0 || m_pyp != 0))
     {
-        if (BinNumber == 1)
+        if (bin_number == 1)
         {
             if(m_nhood_sum == 0)
                 return Z_BIN1z_CTX;
             else
                 return Z_BIN1nz_CTX;
         }
-        else if(BinNumber == 2)
+        else if(bin_number == 2)
             return Z_BIN2_CTX;
-        else if(BinNumber == 3)
+        else if(bin_number == 3)
             return Z_BIN3_CTX;
-        else if(BinNumber == 4)
+        else if(bin_number == 4)
             return Z_BIN4_CTX;
         else
             return Z_BIN5plus_CTX;
     }
     else
     {
-        if (BinNumber == 1)
+        if (bin_number == 1)
         {
             if(m_nhood_sum == 0)
                 return NZ_BIN1z_CTX;
@@ -325,44 +397,44 @@ int BandCodec::ChooseContext(const PicArray& data, const int BinNumber) const
             else
                 return NZ_BIN1a_CTX;
         }
-        else if(BinNumber == 2)
+        else if(bin_number == 2)
             return NZ_BIN2_CTX;
-        else if(BinNumber == 3)
+        else if(bin_number == 3)
             return NZ_BIN3_CTX;
-        else if(BinNumber == 4)
+        else if(bin_number == 4)
             return NZ_BIN4_CTX;
         else
             return NZ_BIN5plus_CTX;
     }
 }
 
-int BandCodec::ChooseSignContext(const PicArray& data) const
+int BandCodec::ChooseSignContext( const PicArray& data , const int xpos , const int ypos ) const
 {    
-    if (m_yp == 0 && m_xp != 0)
+    if ( m_node.Yp()==0 && m_node.Xp()!=0 )
     {
         //we're in a vertically oriented subband
-        if (m_ypos == 0)
+        if (ypos == 0)
             return SIGN0_CTX;
         else
         {
-            if (data[m_ypos-1][m_xpos]>0)
+            if (data[ypos-1][xpos]>0)
                 return SIGN_POS_CTX;        
-            else if (data[m_ypos-1][m_xpos]<0)
+            else if (data[ypos-1][xpos]<0)
                 return SIGN_NEG_CTX;
             else
                 return SIGN0_CTX;
         }        
     }
-    else if (m_xp == 0 && m_yp != 0)
+    else if ( m_node.Xp()==0 && m_node.Yp()!=0 )
     {
         //we're in a horizontally oriented subband
-        if (m_xpos == 0)
+        if (xpos == 0)
             return SIGN0_CTX;
         else
         {
-            if ( data[m_ypos][m_xpos-1] > 0 )
+            if ( data[ypos][xpos-1] > 0 )
                 return SIGN_POS_CTX;                
-            else if ( data[m_ypos][m_xpos-1] < 0 )
+            else if ( data[ypos][xpos-1] < 0 )
                 return SIGN_NEG_CTX;
             else
                 return SIGN0_CTX;
@@ -372,70 +444,153 @@ int BandCodec::ChooseSignContext(const PicArray& data) const
         return SIGN0_CTX;
 }
 
+void BandCodec::SetToVal( const CodeBlock& code_block , PicArray& pic_data , const ValueType val)
+{
+    for (int j=code_block.Ystart() ; j<code_block.Yend() ; j++)
+    {
+        for (int i=code_block.Xstart() ; i<code_block.Xend() ; i++)
+        {
+            pic_data[j][i] = val;
+
+        }// i
+    }// j
+
+}
+
 //////////////////////////////////////////////////////////////////////////////////
 //Now for special class for LF bands (since we don't want/can't refer to parent)//
 //////////////////////////////////////////////////////////////////////////////////
 
 void LFBandCodec::DoWorkCode(PicArray& in_data)
 {
-    //main coding function, using binarisation
+
     m_pxp = 0;
     m_pyp = 0;
+
+    const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
+
+    // Now loop over the blocks and code
+    m_coeff_count = 0;
+    for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
+    {
+        for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
+        {
+            EncodeSymbol(block_list[j][i].Skipped() , BLOCK_SKIP_CTX );
+            if ( !block_list[j][i].Skipped() )
+                CodeCoeffBlock( block_list[j][i] , in_data );
+            else
+                SetToVal( block_list[j][i] , in_data , 0 );
+        }// i
+    }// j
+}
+
+void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data )
+{
+    //main coding function, using binarisation
+    const int xbeg = code_block.Xstart();
+    const int ybeg = code_block.Ystart();
+    const int xend = code_block.Xend();
+    const int yend = code_block.Yend();
+
     m_parent_notzero = false; //set parent to always be zero
     ValueType val;
 
-    m_qf     = m_node.Qf(0);
-    m_qfinv  = (1<<17)/m_qf;
-    m_offset = (3*m_qf+4)>>3;
-    m_cut_off_point*=m_qf;
+    int qf_idx = code_block.QIndex();
 
-    m_coeff_count = 0;
-    
-    for ( m_ypos=m_yp ; m_ypos<m_yp+m_yl ; ++m_ypos )
+    if ( m_node.UsingMultiQuants() )
+    {
+        // TBD: shoould code coefficient offset and adjust qf_idx 
+    }
+    m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
+    m_qfinv =  dirac_quantiser_lists.InverseQuantFactor( qf_idx );
+    m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
+
+    m_cut_off_point *= m_qf;
+
+    for ( int ypos=ybeg ; ypos<yend ; ++ypos )
     {        
-        for ( m_xpos=m_xp ; m_xpos<m_xp+m_xl ; ++m_xpos )
+        for ( int xpos=xbeg ; xpos<xend ; ++xpos )
         {
-            if ( m_xpos == m_xp )
-                m_nhood_sum = (m_ypos!=m_yp) ? std::abs(in_data[m_ypos-1][m_xpos]) : 0;
+            if ( xpos == m_node.Xp() )
+                m_nhood_sum = (ypos!=m_node.Yp()) ? std::abs(in_data[ypos-1][xpos]) : 0;
             else
-                m_nhood_sum = (m_ypos!=m_yp) ? 
-                (std::abs(in_data[m_ypos-1][m_xpos]) + std::abs(in_data[m_ypos][m_xpos-1])) 
-               : std::abs(in_data[m_ypos][m_xpos-1]);    
+                m_nhood_sum = (ypos!=m_node.Yp()) ? 
+                (std::abs(in_data[ypos-1][xpos]) + std::abs(in_data[ypos][xpos-1])) 
+               : std::abs(in_data[ypos][xpos-1]);    
             
-            val = in_data[m_ypos][m_xpos];
-            in_data[m_ypos][m_xpos] = 0;
-            CodeVal(in_data,val);            
-        }//m_xpos
-    }//m_ypos    
+            CodeVal( in_data , xpos , ypos , in_data[ypos][xpos] );
+
+        }//xpos
+    }//ypos    
 }
 
-void LFBandCodec::DoWorkDecode(PicArray& out_data, int num_bits)
+
+void LFBandCodec::DoWorkDecode(PicArray& out_data )
 {
+    bool skip;
+
     m_pxp = 0;
     m_pyp = 0;
+
+    const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
+
+    // Now loop over the blocks and decode
+    m_coeff_count = 0;
+    for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
+    {
+        for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
+        {
+            block_list[j][i].SetSkip( DecodeSymbol( BLOCK_SKIP_CTX ) );
+            if ( !block_list[j][i].Skipped() )
+                DecodeCoeffBlock( block_list[j][i] , out_data );
+            else
+                SetToVal( block_list[j][i] , out_data , 0 );
+        }// i
+    }// j
+
+}
+
+void LFBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_data )
+{
+
+    const int xbeg = code_block.Xstart();
+    const int ybeg = code_block.Ystart();
+    const int xend = code_block.Xend();
+    const int yend = code_block.Yend();
+
     m_parent_notzero = false;//set parent to always be zero    
-    m_qf = m_node.Qf(0);
-    m_offset = (3*m_qf+4)>>3;
+
+    int qf_idx = code_block.QIndex();
+
+    if ( m_node.UsingMultiQuants() )
+    {
+        // TBD: shoould decode coefficient offset and adjust qf_idx 
+    }
+
+    m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
+    m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
+
     m_cut_off_point *= m_qf;
 
     //Work
-    m_coeff_count = 0;
     
-    for ( m_ypos=m_yp ; m_ypos<m_yp+m_yl ; ++m_ypos )
+    for ( int ypos=ybeg ; ypos<yend ; ++ypos )
     {
-        for ( m_xpos=0 ; m_xpos<m_xp+m_xl; ++m_xpos )
+        for ( int xpos=xbeg ; xpos<xend; ++xpos )
         {
-            if ( m_xpos == m_xp )
-                m_nhood_sum=(m_ypos!=m_yp) ? std::abs(out_data[m_ypos-1][m_xpos]) : 0;
+            if ( xpos == m_node.Xp() )
+                m_nhood_sum=(ypos!=m_node.Yp()) ? std::abs(out_data[ypos-1][xpos]) : 0;
             else
-                m_nhood_sum=(m_ypos!=m_yp) ? 
-                (std::abs(out_data[m_ypos-1][m_xpos]) + std::abs(out_data[m_ypos][m_xpos-1])) 
-               : std::abs(out_data[m_ypos][m_xpos-1]);
+                m_nhood_sum=(ypos!=m_node.Yp()) ? 
+                (std::abs(out_data[ypos-1][xpos]) + std::abs(out_data[ypos][xpos-1])) 
+               : std::abs(out_data[ypos][xpos-1]);
 
-            DecodeVal(out_data);            
-        }//m_xpos
-    }//m_ypos
+            DecodeVal( out_data , xpos , ypos );
+
+        }// xpos
+    }// ypos
 }
+
 
 //////////////////////////////////////////////////////////////////////////////////
 //Finally,special class incorporating prediction for the DC band of intra frames//
@@ -443,118 +598,141 @@ void LFBandCodec::DoWorkDecode(PicArray& out_data, int num_bits)
 
 void IntraDCBandCodec::DoWorkCode(PicArray& in_data)
 {
-    //main coding function, using binarisation
+
     m_pxp = 0;
     m_pyp = 0;
+
+    // Residues after prediction, quantisation and inverse quantisation
+    m_dc_pred_res.Resize( m_node.Yl() , m_node.Xl() );
+
+    const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
+
+    // Now loop over the blocks and code. Note that DC blocks can't be skipped
+    m_coeff_count = 0;
+    for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
+    {
+        for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
+        {
+            CodeCoeffBlock( block_list[j][i] , in_data );
+        }// i
+    }// j
+}
+
+void IntraDCBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data)
+{
+    // Main coding function, using binarisation
+    const int xbeg = code_block.Xstart();
+    const int ybeg = code_block.Ystart();
+    const int xend = code_block.Xend();
+    const int yend = code_block.Yend();
 
     //set parent to always be zero
     m_parent_notzero = false;
     ValueType val;
     
-    //residues after prediction, quantisation and inverse quant
-    PicArray pred_res(m_yl , m_xl);
     ValueType prediction;
 
-    m_qf     = m_node.Qf(0);
-    m_qfinv  = (1<<17) / m_qf;
-    m_offset = (3*m_qf+4) >> 3;
+    // NB: always use a single quantiser for Intra DC band
+    const int qf_idx = code_block.QIndex();
+    m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
+    m_qfinv =  dirac_quantiser_lists.InverseQuantFactor( qf_idx );
+    m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
+
     m_cut_off_point *= m_qf;
-
-    m_coeff_count=0;
     
-    for (m_ypos=m_yp; m_ypos < m_yp + m_yl; ++m_ypos)
+    for ( int ypos=ybeg ; ypos < yend; ++ypos )
     {
-        for (m_xpos = m_xp; m_xpos < m_xp + m_xl; ++m_xpos)
+        for (int xpos = xbeg ; xpos < xend; ++xpos )
         {
-             if (m_xpos == m_xp)
-                m_nhood_sum = (m_ypos!=m_yp) ? std::abs(pred_res[m_ypos-1][m_xpos]) : 0;
+             if (xpos == m_node.Xp())
+                 m_nhood_sum = (ypos!=m_node.Yp()) ? std::abs(m_dc_pred_res[ypos-1][xpos]) : 0;
              else
-                 m_nhood_sum = (m_ypos!=m_yp) ? 
-                               (std::abs(pred_res[m_ypos-1][m_xpos]) + std::abs(pred_res[m_ypos][m_xpos-1])) 
-                              : std::abs(pred_res[m_ypos][m_xpos-1]);
+                 m_nhood_sum = (ypos!=m_node.Yp()) ? 
+                               (std::abs(m_dc_pred_res[ypos-1][xpos]) + std::abs(m_dc_pred_res[ypos][xpos-1])) 
+                              : std::abs(m_dc_pred_res[ypos][xpos-1]);
           
-            prediction = GetPrediction(in_data);            
-            val = in_data[m_ypos][m_xpos]-prediction;
-            in_data[m_ypos][m_xpos] = 0;
-            CodeVal(in_data,val);            
-            pred_res[m_ypos][m_xpos] = in_data[m_ypos][m_xpos];
-            in_data[m_ypos][m_xpos] += prediction;
-        }//m_xpos
-
-#if defined(VERBOSE_DEBUG)
-         cerr << endl
-             << "Val at "
-             << m_ypos
-             << " "
-             << m_xl-1
-             << " : "
-             << in_data[m_ypos][m_xl-1]
-             << endl 
-             << "Contexts at "
-             << m_ypos 
-             << " " 
-             << m_xl-1 
-             << " : ";
-             
-         for (int c=0;c<18;++c)
-             cerr << endl
-                 << c 
-                 << ": Zero "
-                 << ContextList()[c].get_count0()
-                 << ", One "
-                 << ContextList()[c].get_count1();    
-#endif
-            
-    }//m_ypos    
+            prediction = GetPrediction( in_data , xpos , ypos );            
+            val = in_data[ypos][xpos] - prediction;
+            CodeVal( in_data , xpos , ypos , val );            
+            m_dc_pred_res[ypos][xpos] = in_data[ypos][xpos];
+            in_data[ypos][xpos] += prediction;
+        }//xpos            
+    }//ypos    
 }
 
-void IntraDCBandCodec::DoWorkDecode(PicArray& out_data, int num_bits)
+
+void IntraDCBandCodec::DoWorkDecode(PicArray& out_data)
 {
+
     m_pxp = 0;
     m_pyp = 0;
+
+    m_dc_pred_res.Resize( m_node.Yl() , m_node.Xl() );
+
+    const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
+
+    // Now loop over the blocks and decode
+    m_coeff_count = 0;
+    for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
+    {
+        for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
+        {
+            DecodeCoeffBlock( block_list[j][i] , out_data );
+        }// i
+    }// j
+}
+
+void IntraDCBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_data)
+{
+    const int xbeg = code_block.Xstart();
+    const int ybeg = code_block.Ystart();
+    const int xend = code_block.Xend();
+    const int yend = code_block.Yend();
+
     m_parent_notzero = false; //set parent to always be zero
 
-    //residues after prediction, quantisation and inverse quant
-    PicArray pred_res(m_yl , m_xl); 
+    // NB: always use a single quantiser for Intra DC
+    const int qf_idx = code_block.QIndex();
+    m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
+    m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
 
-    m_qf = m_node.Qf(0);
-    m_offset = (3*m_qf+4)>>3;
     m_cut_off_point *= m_qf;
 
     //Work
-    m_coeff_count=0;
     
-    for (m_ypos=m_yp;m_ypos<m_yp+m_yl;++m_ypos)
+    for ( int ypos=ybeg ; ypos<yend ; ++ypos)
     {
-        for (m_xpos=0;m_xpos<m_xp+m_xl;++m_xpos)
+        for ( int xpos=xbeg ; xpos<xend ; ++xpos)
         {
-             if (m_xpos==m_xp)
-                 m_nhood_sum=(m_ypos!=m_yp) ? std::abs(pred_res[m_ypos - 1][m_xpos]) : 0;
+              if ( xpos==m_node.Xp() )
+                 m_nhood_sum=(ypos!=m_node.Yp()) ? std::abs(m_dc_pred_res[ypos - 1][xpos]) : 0;
              else
-                 m_nhood_sum=(m_ypos!=m_yp) ? 
-                             (std::abs(pred_res[m_ypos - 1][m_xpos]) + std::abs(pred_res[m_ypos][m_xpos - 1]))
-                            : std::abs(pred_res[m_ypos][m_xpos-1]);
-          
-            DecodeVal(out_data);
-             pred_res[m_ypos][m_xpos]=out_data[m_ypos][m_xpos];
-            out_data[m_ypos][m_xpos]+=GetPrediction(out_data);
-        }//m_xpos
-    }//m_ypos
+                 m_nhood_sum=(ypos!=m_node.Yp()) ? 
+                             (std::abs(m_dc_pred_res[ypos-1][xpos]) + std::abs(m_dc_pred_res[ypos][xpos-1]))
+                            : std::abs(m_dc_pred_res[ypos][xpos-1]);
+
+             DecodeVal( out_data , xpos , ypos );
+             m_dc_pred_res[ypos][xpos] = out_data[ypos][xpos];
+             out_data[ypos][xpos] += GetPrediction( out_data , xpos , ypos );
+
+        }//xpos
+    }//ypos
 }
 
-ValueType IntraDCBandCodec::GetPrediction(const PicArray& data) const
+
+ValueType IntraDCBandCodec::GetPrediction( const PicArray& data , const int xpos , const int ypos ) const
 {
-    if (m_ypos!=0)
+    if (ypos!=0)
     {
-        if (m_xpos!=0)
-            return (data[m_ypos][m_xpos - 1] + data[m_ypos - 1][m_xpos - 1] + data[m_ypos - 1][m_xpos]) / 3;
+        if (xpos!=0)
+            return (data[ypos][xpos - 1] + data[ypos - 1][xpos - 1] + data[ypos - 1][xpos]) / 3;
         else
-            return data[m_ypos - 1][0];
+            return data[ypos - 1][0];
     }
     else
     {
-        if(m_xpos!=0)
-            return data[0][m_xpos - 1];
+        if(xpos!=0)
+            return data[0][xpos - 1];
         else
             return 2692; // TODO: What does this mean? Literal constants like this are dangerous!
     }

@@ -41,9 +41,9 @@
 #include <algorithm>
 using namespace dirac;
 
+const dirac::QuantiserLists dirac::dirac_quantiser_lists;
 
 //PicArray functions
-
 PicArray::PicArray(int height, int width, CompSort cs):
     TwoDArray<ValueType>(height , width),
     m_csort(cs)
@@ -438,3 +438,71 @@ FrameParams::FrameParams(const SeqParams& sparams, const FrameSort& fs):
     m_fsort(fs),
     m_output(false)
 {}
+
+QuantiserLists::QuantiserLists()
+: 
+    m_qflist( 60 ), 
+    m_qfinvlist( 60 ) , 
+    m_offset( 60 )
+{
+    m_qflist[0]=1;        m_qfinvlist[0]=131072;    m_offset[0]=0;
+    m_qflist[1]=1;        m_qfinvlist[1]=131072;    m_offset[1]=0;
+    m_qflist[2]=1;        m_qfinvlist[2]=131072;    m_offset[2]=0;
+    m_qflist[3]=1;        m_qfinvlist[3]=131072;    m_offset[3]=0;
+    m_qflist[4]=2;        m_qfinvlist[4]=65536;        m_offset[4]=1;
+    m_qflist[5]=2;        m_qfinvlist[5]=65536;        m_offset[5]=1;
+    m_qflist[6]=2;        m_qfinvlist[6]=65536;        m_offset[6]=1;
+    m_qflist[7]=3;        m_qfinvlist[7]=43690;        m_offset[7]=1;
+    m_qflist[8]=4;        m_qfinvlist[8]=32768;        m_offset[8]=2;
+    m_qflist[9]=4;        m_qfinvlist[9]=32768;        m_offset[9]=2;
+    m_qflist[10]=5;        m_qfinvlist[10]=26214;    m_offset[10]=2;
+    m_qflist[11]=6;        m_qfinvlist[11]=21845;    m_offset[11]=2;
+    m_qflist[12]=8;        m_qfinvlist[12]=16384;    m_offset[12]=3;
+    m_qflist[13]=9;        m_qfinvlist[13]=14563;    m_offset[13]=3;
+    m_qflist[14]=11;        m_qfinvlist[14]=11915;    m_offset[14]=4;
+    m_qflist[15]=13;        m_qfinvlist[15]=10082;    m_offset[15]=5;
+    m_qflist[16]=16;        m_qfinvlist[16]=8192;        m_offset[16]=6;
+    m_qflist[17]=19;        m_qfinvlist[17]=6898;        m_offset[17]=7;
+    m_qflist[18]=22;        m_qfinvlist[18]=5957;        m_offset[18]=8;
+    m_qflist[19]=26;        m_qfinvlist[19]=5041;        m_offset[19]=10;
+    m_qflist[20]=32;        m_qfinvlist[20]=4096;        m_offset[20]=12;
+    m_qflist[21]=38;        m_qfinvlist[21]=3449;        m_offset[21]=14;
+    m_qflist[22]=45;        m_qfinvlist[22]=2912;        m_offset[22]=17;
+    m_qflist[23]=53;        m_qfinvlist[23]=2473;        m_offset[23]=20;
+    m_qflist[24]=64;        m_qfinvlist[24]=2048;        m_offset[24]=24;
+    m_qflist[25]=76;        m_qfinvlist[25]=1724;        m_offset[25]=29;
+    m_qflist[26]=90;        m_qfinvlist[26]=1456;        m_offset[26]=34;
+    m_qflist[27]=107;        m_qfinvlist[27]=1224;        m_offset[27]=40;
+    m_qflist[28]=128;        m_qfinvlist[28]=1024;        m_offset[28]=48;
+    m_qflist[29]=152;        m_qfinvlist[29]=862;        m_offset[29]=57;
+    m_qflist[30]=181;        m_qfinvlist[30]=724;        m_offset[30]=68;
+    m_qflist[31]=215;        m_qfinvlist[31]=609;        m_offset[31]=81;
+    m_qflist[32]=256;        m_qfinvlist[32]=512;        m_offset[32]=96;
+    m_qflist[33]=304;        m_qfinvlist[33]=431;        m_offset[33]=114;
+    m_qflist[34]=362;        m_qfinvlist[34]=362;        m_offset[34]=136;
+    m_qflist[35]=430;        m_qfinvlist[35]=304;        m_offset[35]=161;
+    m_qflist[36]=512;        m_qfinvlist[36]=256;        m_offset[36]=192;
+    m_qflist[37]=608;        m_qfinvlist[37]=215;        m_offset[37]=228;
+    m_qflist[38]=724;        m_qfinvlist[38]=181;        m_offset[38]=272;
+    m_qflist[39]=861;        m_qfinvlist[39]=152;        m_offset[39]=323;
+    m_qflist[40]=1024;    m_qfinvlist[40]=128;        m_offset[40]=384;
+    m_qflist[41]=1217;    m_qfinvlist[41]=107;        m_offset[41]=456;
+    m_qflist[42]=1448;    m_qfinvlist[42]=90;        m_offset[42]=543;
+    m_qflist[43]=1722;    m_qfinvlist[43]=76;        m_offset[43]=646;
+    m_qflist[44]=2048;    m_qfinvlist[44]=64;        m_offset[44]=768;
+    m_qflist[45]=2435;    m_qfinvlist[45]=53;        m_offset[45]=913;
+    m_qflist[46]=2896;    m_qfinvlist[46]=45;        m_offset[46]=1086;
+    m_qflist[47]=3444;    m_qfinvlist[47]=38;        m_offset[47]=1292;
+    m_qflist[48]=4096;    m_qfinvlist[48]=32;        m_offset[48]=1536;
+    m_qflist[49]=4870;    m_qfinvlist[49]=26;        m_offset[49]=1826;
+    m_qflist[50]=5792;    m_qfinvlist[50]=22;        m_offset[50]=2172;
+    m_qflist[51]=6888;    m_qfinvlist[51]=19;        m_offset[51]=2583;
+    m_qflist[52]=8192;    m_qfinvlist[52]=16;        m_offset[52]=3072;
+    m_qflist[53]=9741;    m_qfinvlist[53]=13;        m_offset[53]=3653;
+    m_qflist[54]=11585;    m_qfinvlist[54]=11;        m_offset[54]=4344;
+    m_qflist[55]=13777;    m_qfinvlist[55]=9;        m_offset[55]=5166;
+    m_qflist[56]=16384;    m_qfinvlist[56]=8;        m_offset[56]=6144;
+    m_qflist[57]=19483;    m_qfinvlist[57]=6;        m_offset[57]=7306;
+    m_qflist[58]=23170;    m_qfinvlist[58]=5;        m_offset[58]=8689;
+    m_qflist[59]=27554;    m_qfinvlist[59]=4;        m_offset[59]=10333;
+}

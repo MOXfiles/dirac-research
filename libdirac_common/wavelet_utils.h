@@ -44,12 +44,102 @@
 #include <cmath>
 #include <iostream>
 
+//utilities for subband and wavelet transforms
+//Includes fast transform using lifting
+
 namespace dirac
 {
-    //utilities for subband and wavelet transforms
-    //Includes fast transform using lifting
 
     class PicArray;
+    class Subband;
+
+    //! Class for encapsulating metadata concerning a block of coefficients in a subband
+    class CodeBlock
+    {
+
+    friend class Subband;
+
+    public:
+        //! Constructor
+        /*
+            Default constructor - sets all dimensions to zero
+        */
+        CodeBlock();
+
+        //! Constructor
+        /*
+            Initialise the code block
+            \param    xstart  the x-coord of the first coefficient in the block
+            \param    xend    one past the last coefficient, horizontally    
+            \param    ystart  the y-coord of the first coefficient in the block
+            \param    yend    one past the last coefficient, vertically    
+        */
+        CodeBlock( const int xstart , const int ystart , const int xend , const int yend);
+
+        //! Returns the horizontal start of the block
+        int Xstart() const { return m_xstart; }
+
+        //! Returns the vertical start of the block
+        int Ystart() const { return m_ystart; }
+    
+        //! Returns one past the last coefficient coord, horizontally
+        int Xend() const { return m_xend; }
+
+        //! Returns one past the last coefficient coord, vertically
+        int Yend() const { return m_yend; }
+
+        //! Returns the width of the code block
+        int Xl() const { return m_xl; }
+
+        //! Returns the height of the code block
+        int Yl() const { return m_yl; }
+
+        //! Returns the quantisation index associated to the code block
+        int QIndex() const{ return m_qindex; }
+
+        //! Returns the weight associated to the code block
+        float Wt() const { return m_wt; }
+
+        //! Returns true if the code-block is skipped, false if not
+        bool Skipped() const { return m_skipped; }
+
+        //! Sets the quantisation index 
+        void SetQIndex( const int qindex ){ m_qindex = qindex; }
+
+        //! Sets whether the code block is skipped or not
+        void SetSkip( bool skip ){ m_skipped = skip; }
+
+    private:
+
+        //! Initialise the code block
+        /*
+            Initialise the code block
+            \param    xstart  the x-coord of the first coefficient in the block
+            \param    xend    one past the last coefficient, horizontally    
+            \param    ystart  the y-coord of the first coefficient in the block
+            \param    yend    one past the last coefficient, vertically    
+        */
+        void Init( const int xstart , const int ystart , const int xend , const int yend );
+
+        //! Sets the perceptual weight (can only be done by friend class, eg Subband 
+        void SetWt( const float w ){ m_wt = w; }
+
+
+    private:
+
+        int m_xstart;
+        int m_ystart;
+        int m_xend;
+        int m_yend;
+        int m_xl;
+        int m_yl;
+
+        int m_qindex;
+        float m_wt;
+
+        bool m_skipped;
+    };
+
 
     //! Class encapsulating all the metadata relating to a wavelet subband
     class Subband
@@ -62,7 +152,8 @@ namespace dirac
         //! Constructor
         /*!
             The constructor parameters are
-            \param    xpos    the xposition of the subband when packed into a big array with all the others
+            xparam    xpos    the xposition of the subband when packed into a 
+                              big array with all the others
             \param    ypos    the xposition of the subband
             \param    xlen    the width of the subband
             \param    ylen    the height of the subband
@@ -72,7 +163,8 @@ namespace dirac
         //! Constructor
         /*!
             The constructor parameters are
-            \param    xpos    the xposition of the subband when packed into a big array with all the others
+            \param    xpos    the xposition of the subband when packed into a
+                              big array with all the others
             \param    ypos    the xposition of the subband
             \param    xlen    the width of the subband
             \param    ylen    the height of the subband
@@ -86,74 +178,113 @@ namespace dirac
         //Default (shallow) copy constructor and operator= used
 
         //! Return the width of the subband
-        int Xl() const {return xln;}
-        
+        int Xl() const {return m_xl;}
+    
         //! Return the horizontal position of the subband
-        int Xp() const {return xps;}
-        
+        int Xp() const {return m_xp;}
+    
         //! Return the height of the subband
-        int Yl() const {return yln;}
-        
+        int Yl() const {return m_yl;}
+    
         //! Return the vertical position of the subband
-        int Yp() const {return yps;}
-        
+        int Yp() const {return m_yp;}
+    
         //! Return the index of the maximum bit of the largest coefficient
-        int Max() const {return max_bit;}
-        
+        int Max() const {return m_max_bit;}
+    
         //! Return the subband perceptual weight
-        double Wt() const {return wgt;}
-        
+        double Wt() const {return m_wt;}
+    
         //! Return the depth of the subband in the transform
-        int Depth() const {return dpth;}
-        
+        int Depth() const {return m_depth;}
+    
         //! Return the scale of the subband, viewed as a subsampled version of the picture
-        int Scale() const {return (1<<dpth);}
-        
+        int Scale() const {return ( 1<<m_depth );}
+    
         //! Return a quantisation factor
-        int Qf(int n) const {return qfac[n];}
-        
-        //! Return the index of the parent subband
-        int Parent() const {return prt;}
-        
-        //! Return the indices of any child subbands
-        std::vector<int> Children() const {return childvec;}
-        
-        int Child(int n) const {return childvec[n];}
+        int QIndex() const {return m_qindex;}
 
-        // ... and sets
+        //! Return a flag indicating whether we have separate quantisers for each code block
+        bool UsingMultiQuants() const {return m_multi_quants; } 
+    
+        //! Return the index of the parent subband
+        int Parent() const {return m_parent;}
+    
+        //! Return the indices of any child subbands
+        const std::vector<int>& Children() const {return m_children;}
+
+        //! Return the index of a specific child band    
+        int Child(const int n) const {return m_children[n];}
+
+        //! Return the code blocks
+        TwoDArray<CodeBlock>& GetCodeBlocks(){ return m_code_block_array; } 
+
+        //! Return the code blocks
+        const TwoDArray<CodeBlock>& GetCodeBlocks() const { return m_code_block_array; } 
+
+        //! Returns true if subband is skipped, false if not
+        bool Skipped() const { return m_skipped; }
+    
         //! Set the perceptual weight
-        void SetQf(int n, int q)
-        {
-            if (n >= qfac.First() && n<=qfac.Last() )
-                qfac[n]=q;
-        }
-        
-        //! Set the perceptual weight
-        void SetWt(float w){wgt=w;}
-        
+        void SetWt( const float w );
+    
         //! Set the parent index
-        void SetParent(int p){prt=p;}
-        
+        void SetParent( const int p ){ m_parent=p; }
+    
         //! Set the subband depth
-        void SetDepth(int d){dpth=d;}
-        
+        void SetDepth( const int d ){ m_depth=d;}
+    
         //! Set the index of the maximum bit of the largest coefficient
-        void SetMax(int m){max_bit=m;};
-        
+        void SetMax( const int m ){ m_max_bit=m; };
+    
         //! Set the indices of the children of the subband
-        void SetChildren(std::vector<int>& clist){childvec=clist;}
-        
+        void SetChildren( const std::vector<int>& clist ){ m_children = clist; }
+    
         //! Add a child to the list of child subbands
-        void AddChild(int c){childvec.push_back(c);}
+        void AddChild( const int c ){ m_children.push_back(c); }
+
+        //! Set the number of (spatial) quantisers in the subband. Creates code block structure
+        void SetNumBlocks( const int ynum , const int xnum );
+
+        //! Set the quantisation index
+        void SetQIndex( const int idx){ m_qindex = idx; }
+
+        //! Set the number of (spatial) quantisers in the subband. Creates code block structure
+        void SetUsingMultiQuants( const bool multi){ m_multi_quants = multi; }
+
+        //! Set whether the subband is skipped or not
+        void SetSkip(const bool skip ){ m_skipped = skip; }
 
     private:
-        int xps,yps,xln,yln;        //subband bounds
-        double wgt;                    //perceptual weight for quantisation
-        int dpth;                    //depth in the transform
-        OneDArray<int> qfac;        //quantisers
-        int prt;                    //position of parent in a subband list
-        std::vector<int> childvec;    //positions of children in the subband list
-        int max_bit;                //position of the MSB of the largest absolute value
+        // subband bounds
+        int m_xp , m_yp , m_xl , m_yl; 
+
+        // perceptual weight for quantisation
+        double m_wt;
+
+        // depth in the transform
+        int m_depth;
+
+        // quantiser index
+        int m_qindex;
+
+        // position of parent in a subband list
+        int m_parent;
+
+        // positions of children in the subband list
+        std::vector<int> m_children;
+
+        // position of the MSB of the largest absolute value
+        int m_max_bit;              
+
+        // The code blocks
+        TwoDArray<CodeBlock> m_code_block_array;
+
+        // A flag indicating whether we're using one qf for each code block
+        bool m_multi_quants;
+
+        // Whether the subband is skipped or not
+        bool m_skipped;
     };
 
     //!    A class encapulating all the subbands produced by a transform
@@ -169,22 +300,43 @@ namespace dirac
         //Default (shallow) copy constructor and operator= used
         //! Initialise the list
         void Init(const int depth,const int xlen,const int ylen);
-        
+    
         //! Return the length of the subband list    
         int Length() const {return bands.size();}
-        
+    
         //! Return the subband at position n (1<=n<=length)
-        Subband& operator()(int n){return bands[n-1];}
-        
+        Subband& operator()(const int n){return bands[n-1];}
+    
         //! Return the subband at position n (1<=n<=length)    
-        const Subband& operator()(int n) const {return bands[n-1];}    
-        
+        const Subband& operator()(const int n) const {return bands[n-1];}    
+    
         //! Add a band to the list
-        void AddBand(Subband& b){bands.push_back(b);}
+        void AddBand(const Subband& b){bands.push_back(b);}
         
         //! Remove all the bands from the list    
         void Clear(){bands.clear();}
-        
+
+        //! Sets the subband weights
+        /*!
+            Sets perceptual weights for the subbands. Takes into account both perceptual factors
+            (weight noise less at higher spatial frequencies) and the scaling needed for the 
+            wavelet transform. 
+
+            \param    cpd    perctual factor - the number of cycles per degree
+            \param    fsort    the frame sort (I, L1 or L2)
+            \param    cformat    the chroma format
+            \param    csort    the component type (Y, U or V)  
+        */
+        void SetBandWeights (const float cpd, 
+                             const FrameSort& fsort,
+                             const ChromaFormat& cformat,
+                             const CompSort csort);
+    
+    private:
+
+        //! Given x and y spatial frequencies in cycles per degree, returns a weighting value
+        float PerceptualWeight( const float xf , const float yf , const CompSort cs);
+
     private:    
         std::vector<Subband> bands;
     };
@@ -216,8 +368,8 @@ namespace dirac
 
     template <int gain>
     inline void  PredictStep<gain>::Filter( ValueType& in_val, 
-                                                const ValueType& val1, 
-                                                const ValueType& val2) const
+                                            const ValueType& val1, 
+                                            const ValueType& val2) const
     {
         in_val -= static_cast< ValueType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
     }
@@ -251,22 +403,17 @@ namespace dirac
         in_val += static_cast< ValueType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
     }
 
-
-
-
-
     //! A class to do wavelet transforms
     /*!
-        A class to do forward and backward wavelet transforms by iteratively 
-        splitting or merging the lowest frequency band.
+        A class to do forward and backward wavelet transforms by iteratively splitting or merging the
+        lowest frequency band.
     */
     class WaveletTransform
     {
     public:
         //! Constructor
-        // WaveletTransform(WaveletTransformParams p);
         WaveletTransform(int d = 4, WltFilter f = DAUB);
-            
+        
         //! Destructor
         virtual ~WaveletTransform();
 
@@ -277,18 +424,18 @@ namespace dirac
             \param    pic_data    the data to be transformed
         */
         void Transform(const Direction d, PicArray& pic_data);
-        
+    
         //! Returns the set of subbands
         SubbandList& BandList(){return band_list;}
-        
+    
         //! Returns the set of subbands
         const SubbandList& BandList() const {return band_list;}
-        
+    
         //! Sets the subband weights
         /*!
-            Sets perceptual weights for the subbands. Takes into account both 
-            perceptual factors (weight noise less at higher spatial 
-            frequencies) and the scaling needed for the wavelet transform. 
+            Sets perceptual weights for the subbands. Takes into account both perceptual factors
+            (weight noise less at higher spatial frequencies) and the scaling needed for the 
+            wavelet transform. 
 
             \param    cpd    perctual factor - the number of cycles per degree
             \param    fsort    the frame sort (I, L1 or L2)
@@ -302,23 +449,23 @@ namespace dirac
 
     private:
         //other private variables    
-        // WaveletTransformParams params;
 
         SubbandList band_list;
 
         //! Depth of the transform
         int depth;
-        
+    
         //! The filter set to be used (only Daubechies supported at present)
         WltFilter filt_sort;    
 
+    private:
         //functions
         //!    Private, bodyless copy constructor: class should not be copied
         WaveletTransform(const WaveletTransform& cpy);
-        
+    
         //! Private, bodyless copy operator=: class should not be assigned
         WaveletTransform& operator=(const WaveletTransform& rhs);
-
+    
         //! Given x and y spatial frequencies in cycles per degree, returns a weighting value
         float PerceptualWeight(float xf,float yf,CompSort cs);
 
@@ -327,8 +474,9 @@ namespace dirac
 
         //! Synthesise a picture from 4 subbands
         void VHSynth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
-};
+  
+    };
 
-} // namespace dirac
+}// end namespace dirac
 
 #endif

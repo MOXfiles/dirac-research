@@ -43,13 +43,13 @@
 
 namespace dirac
 {
+
     //Subclasses the arithmetic codec to produce a coding/decoding tool for subbands
 
 
     //! A general class for coding and decoding wavelet subband data.
     /*!
-        A general class for coding and decoding wavelet subband data, deriving 
-        from the abstract ArithCodec class.
+        A general class for coding and decoding wavelet subband data, deriving from the abstract ArithCodec class.
      */
     class BandCodec: public ArithCodec<PicArray >
     {
@@ -59,7 +59,7 @@ namespace dirac
         /*!
             Creates a BandCodec object to encode subband data
             \param    bits_out    the output for the encoded bits
-            \param    number_of_contexts   the contexts used in the encoding process
+            \param    ctxs        the contexts used in the encoding process
             \param    band_list    the set of all the subbands
             \param     band_num    the number of the subband being coded 
          */
@@ -72,7 +72,7 @@ namespace dirac
         /*!
             Creates a BandCodec object to decode subband data.
             \param    bits_in        the input for the encoded bits
-            \param    number_of_contexts   the contexts used in the decoding process
+            \param    ctxs        the contexts used in the decoding process
             \param    band_list    the set of all the subbands
             \param     band_num    the number of the subband being decoded 
          */
@@ -85,29 +85,34 @@ namespace dirac
         void InitContexts();
 
     protected:
-        // Code an individual value
-        void CodeVal(PicArray& in_data, const ValueType val);
-        // Decode an individual value
-        void DecodeVal(PicArray& out_data);
+        //! Code an individual quantised value and perform inverse-quantisation
+        void CodeVal( PicArray& in_data , const int xpos , const int ypos , const ValueType val);
+
+        //! Decode an individual quantised value and perform inverse-quantisation
+        void DecodeVal(PicArray& out_data , const int xpos , const int ypos );
+
+        //! Set a code block area to a given value
+        void SetToVal( const CodeBlock& code_block , PicArray& pic_data , const ValueType val);
 
     private:
-        // Functions
+        //functions
         // Overridden from the base class
         virtual void DoWorkCode(PicArray& in_data);
-        // Overridden from the base class
-        virtual void DoWorkDecode(PicArray& in_data, int num_bits);
+        // Ditto
+        virtual void DoWorkDecode(PicArray& out_data);
+
+        virtual void CodeCoeffBlock(const CodeBlock& code_block , PicArray& in_data);
+        virtual void DecodeCoeffBlock(const CodeBlock& code_block , PicArray& out_data);
 
         void Update( const bool symbol , const int context_num );
-        void Resize(const int context_num);
         void ResetAll();
-        
-        int ChooseContext(const PicArray& data, const int bin_number) const;
-        int ChooseContext(const PicArray& data) const;
-        int ChooseSignContext(const PicArray& data) const;
+    
+        int ChooseContext( const int bin_number) const;
+        int ChooseSignContext(const PicArray& data , const int xpos , const int ypos ) const;
 
-        // Private, bodyless copy constructor: class should not be copied
+        //! Private, bodyless copy constructor: class should not be copied
         BandCodec(const BandCodec& cpy);
-        // Private, bodyless copy operator=: class should not be assigned
+        //! Private, bodyless copy operator=: class should not be assigned
         BandCodec& operator=(const BandCodec& rhs);
 
     protected:
@@ -116,51 +121,44 @@ namespace dirac
 
         //! the subband being coded
         const Subband m_node;
-        
-        //! dimensions of the subband
-        int m_xp, m_yp, m_xl, m_yl;
-        
-        //! position within the subband
-        int m_xpos, m_ypos;
-        
+    
         //! size of the subband
         int m_vol;
-        
+    
         //! the number of coefficients after which contexts are reset
         int m_reset_coeff_num;
-        
+    
         //! count of the coefficients since the last context reset
         int m_coeff_count;
-        
+    
         //! quantisation and inverse quantisation values
         int m_qf, m_qfinv;
-        
+    
         //! reconstruction point
         ValueType m_offset;
-        
+    
         //! sum of a neighbourhood of previously (de)coded values
         ValueType m_nhood_sum;
-        
+    
         //! the parent subband
         Subband m_pnode;
-        
+    
         //! coords of the parent subband
         int m_pxp, m_pyp, m_pxl, m_pyl;
-        
+    
         //! position of the parent coefficient
         int m_pxpos, m_pypos;
-        
+    
         //! True if the parent of a coeff is not zero
         bool m_parent_notzero;
-        
+    
         //! used in selecting a context
         ValueType m_cut_off_point;
     };
 
     //! A class specially for coding the LF subbands 
     /*!
-        A class specially for coding the LF subbands, where we don't want 
-        to/can't refer to the 
+        A class specially for coding the LF subbands, where we don't want to/can't refer to the 
         parent subband.
     */
     class LFBandCodec: public BandCodec
@@ -169,8 +167,8 @@ namespace dirac
         //! Constructor for encoding
         /*!
             Creates a LFBandCodec object to encode subband data.
-            \param    bits_out           the output for the encoded bits
-            \param    number_of_contexts the contexts used in the encoding process
+            \param    bits_out    the output for the encoded bits
+            \param    ctxs        the contexts used in the encoding process
             \param    band_list    the set of all the subbands
             \param     band_num    the number of the subband being coded 
          */        
@@ -184,7 +182,7 @@ namespace dirac
         /*!
             Creates a LFBandCodec object to decode subband data.
             \param    bits_in        the input for the encoded bits
-            \param    number_of_contexts        the contexts used in the decoding process
+            \param    ctxs        the contexts used in the decoding process
             \param    band_list    the set of all the subbands
             \param     band_num    the number of the subband being decoded 
          */
@@ -196,12 +194,16 @@ namespace dirac
 
     private:
         // Overridden from the base class
-        virtual void DoWorkCode(PicArray& InData);
-        // Overridden from the base class
-        virtual void DoWorkDecode(PicArray& OutData, int num_bits);
-        // Private, bodyless copy constructor: class should not be copied
+        void DoWorkCode(PicArray& in_data);
+        // Ditto
+        void DoWorkDecode(PicArray& out_data);
+
+        void CodeCoeffBlock(const CodeBlock& code_block , PicArray& in_data);
+        void DecodeCoeffBlock(const CodeBlock& code_block , PicArray& out_data);
+
+        //! Private, bodyless copy constructor: class should not be copied
         LFBandCodec(const LFBandCodec& cpy);
-        // Private, bodyless copy operator=: class should not be assigned
+        //! Private, bodyless copy operator=: class should not be assigned
         LFBandCodec& operator=(const LFBandCodec& rhs);
 
     };
@@ -213,19 +215,19 @@ namespace dirac
 
     //! A class specially for coding the DC subband of Intra frames 
     /*!
-        A class specially for coding the DC subband of Intra frames, using 
-        intra-band prediction of coefficients.
+        A class specially for coding the DC subband of Intra frames, using intra-band prediction 
+        of coefficients.
     */
     class IntraDCBandCodec: public BandCodec
     {
     public:
         //! Constructor for encoding
         /*!
-            Creates a IntraDCBandCodec object to encode subband data, based on 
-            parameters
+            Creates a IntraDCBandCodec object to encode subband data, based on parameters
             \param    bits_out    the output for the encoded bits
-            \param    number_of_contexts the contexts used in the encoding process
+            \param    ctxs        the contexts used in the encoding process
             \param    band_list    the set of all the subbands
+            \param     band_num    the number of the subband being coded 
          */
         IntraDCBandCodec(BasicOutputManager* bits_out,
                          size_t number_of_contexts,
@@ -234,11 +236,11 @@ namespace dirac
 
         //! Constructor for decoding
         /*!
-            Creates a LFBandCodec object to decode subband data, based on 
-            parameters
-            \param    bits_in             the input for the encoded bits
-            \param    number_of_contexts  the contexts used in the decoding process
+            Creates a LFBandCodec object to decode subband data, based on parameters
+            \param    bits_in        the input for the encoded bits
+            \param    ctxs        the contexts used in the decoding process
             \param    band_list    the set of all the subbands
+            \param     band_num    the number of the subband being decoded 
          */    
         IntraDCBandCodec(BitInputManager* bits_in,
                          size_t number_of_contexts,
@@ -246,19 +248,25 @@ namespace dirac
           : BandCodec(bits_in,number_of_contexts,band_list,band_list.Length()){}
 
     private:
-        // Overridden from the base class
-        virtual void DoWorkCode(PicArray& InData);
-        // Overridden from the base class
-        virtual void DoWorkDecode(PicArray& OutData, int num_bits);
+        void DoWorkCode(PicArray& in_data);                    //overridden from the base class
+        void DoWorkDecode(PicArray& out_data); //ditto
 
-        // Private, bodyless copy constructor: class should not be copied
-        IntraDCBandCodec(const IntraDCBandCodec& cpy);
-        // Private, bodyless copy operator=: class should not be assigned
+        void CodeCoeffBlock(const CodeBlock& code_block , PicArray& in_data);
+        void DecodeCoeffBlock(const CodeBlock& code_block , PicArray& out_data);
+
+        //! Private, bodyless copy constructor: class should not be copied
+        IntraDCBandCodec(const IntraDCBandCodec& cpy); 
+
+        //! Private, bodyless copy operator=: class should not be assigned
         IntraDCBandCodec& operator=(const IntraDCBandCodec& rhs);
 
-        // Prediction of a DC value from its previously coded neighbours
-        ValueType GetPrediction(const PicArray& Data) const;
+        //! Prediction of a DC value from its previously coded neighbours
+        ValueType GetPrediction(const PicArray& data , const int xpos , const int ypos ) const;
+
+    private:
+        PicArray m_dc_pred_res;
     };
 
-} // namespace dirac
+
+}// end namespace dirac
 #endif
