@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-12 08:35:34  tjdwave
+* Revision 1.5  2004-05-14 17:25:43  stuart_hc
+* Replaced binary header files with ASCII text format to achieve cross-platform interoperability.
+* Rearranged PicOutput constructor to permit code reuse from picheader/headmain.cpp
+*
+* Revision 1.4  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -70,34 +74,67 @@
 
 /**************************************Output***********************************/
 
-PicOutput::PicOutput(const char* output_name, const SeqParams& sp): sparams(sp){//constructor
+PicOutput::PicOutput(const char* output_name, const SeqParams& sp, bool write_header_only)
+						: sparams(sp)
+{
+	op_head_ptr = NULL;
+	op_pic_ptr = NULL;
 
-	char output_name_yuv[84];
-	char output_name_hdr[84];
-
-	strncpy(output_name_yuv,output_name,84);
-	strncpy(output_name_hdr,output_name,84);
-	strcat(output_name_yuv,".yuv");
-	strcat(output_name_hdr,".hdr");
-
-	op_head_ptr=new std::ofstream(output_name_hdr,std::ios::out | std::ios::binary);	//header output
-	op_pic_ptr=new std::ofstream(output_name_yuv,std::ios::out | std::ios::binary);	//picture output
-
-	if (!(*op_head_ptr))
-		std::cerr<<std::endl<<"Can't open output header file";
-	if (!(*op_pic_ptr))
-		std::cerr<<std::endl<<"Can't open output picture data file";
-}	
-
-PicOutput::~PicOutput(){//destructor
-	op_pic_ptr->close();		
-	op_head_ptr->close();
-	delete op_pic_ptr;
-	delete op_head_ptr;
+	OpenHeader(output_name);
+	if (! write_header_only)
+		OpenYUV(output_name);
 }
 
-void PicOutput::WritePicHeader(){//write a human-readable picture header as separate file
+void PicOutput::OpenHeader(const char* output_name)
+{
+	char output_name_hdr[FILENAME_MAX];
 
+	strncpy(output_name_hdr, output_name, sizeof(output_name_hdr));
+	strcat(output_name_hdr, ".hdr");
+
+	//header output
+	op_head_ptr = new std::ofstream(output_name_hdr,std::ios::out | std::ios::binary);
+
+	if (!(*op_head_ptr))
+		std::cerr<<std::endl<<"Can't open output header file for output: "<<output_name_hdr<<std::endl;
+}
+
+void PicOutput::OpenYUV(const char* output_name)
+{
+	char output_name_yuv[FILENAME_MAX];
+
+	strncpy(output_name_yuv,output_name, sizeof(output_name_yuv));
+	strcat(output_name_yuv,".yuv");
+
+	//picture output
+	op_pic_ptr = new std::ofstream(output_name_yuv,std::ios::out | std::ios::binary);
+
+	if (!(*op_pic_ptr))
+		std::cerr<<std::endl<<"Can't open output picture data file for output: "<<output_name_yuv<<std::endl;
+}
+
+PicOutput::~PicOutput()
+{
+	if (op_head_ptr && *op_head_ptr)
+	{
+		op_head_ptr->close();
+		delete op_head_ptr;
+	}
+	if (op_pic_ptr && *op_pic_ptr)
+	{
+		op_pic_ptr->close();
+		delete op_pic_ptr;
+	}
+}
+
+//write a human-readable picture header as separate file
+void PicOutput::WritePicHeader()
+{
+	if (!op_head_ptr || !*op_head_ptr)
+		return;
+
+// The obsolete header format will disappear in a future release
+#ifdef OBSOLETE_HEADER_FMT
 	int head_data[7];
 
 	//Write the chroma format
@@ -119,15 +156,20 @@ void PicOutput::WritePicHeader(){//write a human-readable picture header as sepa
 	//frame-rate code (needed for display)
 	head_data[6]=sparams.framerate;
 
-	if (*op_head_ptr){
-		op_head_ptr->write((char*) &head_data,sizeof head_data);
-	}
-	else
-		std::cerr<<std::endl<<"Can't open picture header file for writing";
-
+	op_head_ptr->write((char*) &head_data,sizeof head_data);
+#else
+	*op_head_ptr << sparams.cformat << std::endl;
+	*op_head_ptr << sparams.xl << std::endl;
+	*op_head_ptr << sparams.yl << std::endl;
+	*op_head_ptr << sparams.zl << std::endl;
+	*op_head_ptr << sparams.interlace << std::endl;
+	*op_head_ptr << sparams.topfieldfirst << std::endl;
+	*op_head_ptr << sparams.framerate << std::endl;
+#endif
 }
 
-void PicOutput::WriteNextFrame(const Frame& myframe){	
+void PicOutput::WriteNextFrame(const Frame& myframe)
+{
 	WriteComponent(myframe.Ydata(),Y);
 	if (sparams.cformat!=Yonly){
 		WriteComponent(myframe.Udata(),U);
@@ -135,7 +177,8 @@ void PicOutput::WriteNextFrame(const Frame& myframe){
 	}
 }
 
-void PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs){
+void PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs)
+{
 	//initially set up for 10-bit data input, rounded to 8 bits on file output
 	//This will throw out any padding to the right and bottom of a frame
 
@@ -161,19 +204,19 @@ void PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs){
 			xl=sparams.xl;
 			yl=sparams.yl;
 		}
-	}	
+	}
 
-	unsigned char tempc;	
+	unsigned char tempc;
 	ValueType tempv;
 
-	if (*op_pic_ptr){	
+	if (*op_pic_ptr){
 		for (int J=0;J<yl;++J){
 			for (int I=0;I<xl;++I){
 				tempv=pic_data[J][I]+2;
 				tempv>>=2;
 				tempc=(unsigned char) tempv;
 				op_pic_ptr->write((char*) &tempc,1);
-			}//I	
+			}//I
 		}//J
 	}
 	else
@@ -185,39 +228,41 @@ void PicOutput::WriteComponent(const PicArray& pic_data,const CompSort& cs){
 PicInput::PicInput(const char* input_name):
 xpad(0),
 ypad(0)
-{//constructor
+{
 
-	char input_name_yuv[84];
-	char input_name_hdr[84];
+	char input_name_yuv[FILENAME_MAX];
+	char input_name_hdr[FILENAME_MAX];
 
-	strncpy(input_name_yuv,input_name,84);
-	strncpy(input_name_hdr,input_name,84);
-	strcat(input_name_yuv,".yuv");
-	strcat(input_name_hdr,".hdr");
+	strncpy(input_name_yuv, input_name, sizeof(input_name_yuv));
+	strncpy(input_name_hdr, input_name, sizeof(input_name_hdr));
+	strcat(input_name_yuv, ".yuv");
+	strcat(input_name_hdr, ".hdr");
 
-	ip_head_ptr=new std::ifstream(input_name_hdr,std::ios::in | std::ios::binary);	//header output
-	ip_pic_ptr=new std::ifstream(input_name_yuv,std::ios::in | std::ios::binary);	//picture output	
+	ip_head_ptr = new std::ifstream(input_name_hdr,std::ios::in | std::ios::binary);	//header output
+	ip_pic_ptr = new std::ifstream(input_name_yuv,std::ios::in | std::ios::binary);	//picture output
 
 	if (!(*ip_head_ptr))
-		std::cerr<<std::endl<<"Can't open input header file";
+		std::cerr<<std::endl<<"Can't open input header file: "<<input_name_hdr<<std::endl;
 	if (!(*ip_pic_ptr))
-		std::cerr<<std::endl<<"Can't open input picture data file";	
+		std::cerr<<std::endl<<"Can't open input picture data file: "<<input_name_yuv<<std::endl;
 }
 
-PicInput::~PicInput(){//destructor
-	ip_pic_ptr->close();		
+PicInput::~PicInput()
+{
+	ip_pic_ptr->close();
 	ip_head_ptr->close();
 	delete ip_pic_ptr;
 	delete ip_head_ptr;
 }
 
-void PicInput::SetPadding(const int xpd, const int ypd){
+void PicInput::SetPadding(const int xpd, const int ypd)
+{
 	xpad=xpd;
 	ypad=ypd;
 }
 
-void PicInput::ReadNextFrame(Frame& myframe){
-
+void PicInput::ReadNextFrame(Frame& myframe)
+{
 	ReadComponent(myframe.Ydata(),Y);
 	if (sparams.cformat!=Yonly){
 		ReadComponent(myframe.Udata(),U);
@@ -225,30 +270,45 @@ void PicInput::ReadNextFrame(Frame& myframe){
 	}
 }
 
-void PicInput::ReadPicHeader(){//read a picture header from a separate file
+//read a picture header from a separate file
+void PicInput::ReadPicHeader()
+{
+	if (! *ip_head_ptr)
+		return;
 
+// The obsolete header format will disappear in a future release
+#ifdef OBSOLETE_HEADER_FMT
 	int head_data[7];
+	ip_head_ptr->read((char*) &head_data,sizeof head_data);
+	sparams.cformat=ChromaFormat(head_data[0]);
+	sparams.xl=head_data[1];
+	sparams.yl=head_data[2];
+	sparams.zl=head_data[3];
+	sparams.interlace=bool(head_data[4]);
+	sparams.topfieldfirst=bool(head_data[5]);
+	sparams.framerate=head_data[6];
+#else
+	int		int_cformat;
+	*ip_head_ptr >> int_cformat;
+	sparams.cformat = (ChromaFormat)int_cformat;
+	*ip_head_ptr >> sparams.xl >> sparams.yl >> sparams.zl;
+	*ip_head_ptr >> sparams.interlace >> sparams.topfieldfirst >> sparams.framerate;
+#endif
+}
 
-	if (*ip_head_ptr){
-		ip_head_ptr->read((char*) &head_data,sizeof head_data);
-		sparams.cformat=ChromaFormat(head_data[0]);
-		sparams.xl=head_data[1];
-		sparams.yl=head_data[2];
-		sparams.zl=head_data[3];
-		sparams.interlace=bool(head_data[4]);
-		sparams.topfieldfirst=bool(head_data[5]);
-		sparams.framerate=head_data[6];
+bool PicInput::End() const
+{
+	return ip_pic_ptr->eof();
+}
+
+void PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
+{
+	if (! *ip_pic_ptr)
+	{
+		std::cerr<<"Can't read component from picture data"<<std::endl;
+		return;
 	}
-	else
-		std::cerr<<std::endl<<"Can't open picture header file for reading";
 
-}
-
-bool PicInput::End() const {
-	return ip_pic_ptr->eof();	
-}
-
-void PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs){
 	//initially set up for 8-bit file input expanded to 10 bits for array output
 
 	int xl,yl;
@@ -276,25 +336,20 @@ void PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs){
 	}
 
 	unsigned char temp[xl];//array big enough for one line
-	if (*ip_pic_ptr){
-
-		for (int J=0;J<yl;++J){
-			ip_pic_ptr->read((char*) &temp, sizeof temp);
-			for (int I=0;I<xl;++I){
-				pic_data[J][I]=(ValueType) temp[I];
-				pic_data[J][I]<<=2;
-			}//I
-			//pad the columns on the rhs
-			for (int I=xl;I<pic_data.length(0);++I){
-				pic_data[J][I]=0;
-			}//I
-		}//J
-		//now do the padded lines		
-		for (int J=yl;J<pic_data.length(1);++J){
-			for (int I=0;I<pic_data.length(0);++I)
-				pic_data[J][I]=0;
-		}//J
-	}
-	else
-		std::cerr<<std::endl<<"Can't open picture data file for reading";
+	for (int J=0;J<yl;++J){
+		ip_pic_ptr->read((char*) &temp, sizeof(temp));
+		for (int I=0;I<xl;++I){
+			pic_data[J][I]=(ValueType) temp[I];
+			pic_data[J][I]<<=2;
+		}//I
+		//pad the columns on the rhs
+		for (int I=xl;I<pic_data.length(0);++I){
+			pic_data[J][I]=0;
+		}//I
+	}//J
+	//now do the padded lines
+	for (int J=yl;J<pic_data.length(1);++J){
+		for (int I=0;I<pic_data.length(0);++I)
+			pic_data[J][I]=0;
+	}//J
 }

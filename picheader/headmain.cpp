@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 16:05:51  tjdwave
+* Revision 1.4  2004-05-14 17:25:43  stuart_hc
+* Replaced binary header files with ASCII text format to achieve cross-platform interoperability.
+* Rearranged PicOutput constructor to permit code reuse from picheader/headmain.cpp
+*
+* Revision 1.3  2004/05/12 16:05:51  tjdwave
 *
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
@@ -63,6 +67,7 @@
 #include <string>
 #include "libdirac_common/cmd_line.h"
 #include "libdirac_common/common.h"
+#include "libdirac_common/pic_io.h"
 
 //This program writes a header file given command-line parameters, for use
 //with raw planar YUV data for input to the Dirac encoder.
@@ -103,113 +108,84 @@ int main( int argc, char *argv[] )
 
  	//now set up the parameter set with these variables
 
-	if (argc<2)//need at least 2 arguments - the program name, and an output
+	//need at least 2 arguments - the program name, and an output
+	if (argc < 2)
 	{
 		display_help();
+		exit(1);
 	}
-	else//carry on!
-	{
+
 	//start with the output file
-		if (args.get_inputs().size()==1){
-			output=args.get_inputs()[0];
-		}
-		//check we have real inputs
-		if (output.length() ==0)
+	if (args.get_inputs().size()==1){
+		output=args.get_inputs()[0];
+	}
+
+	//check we have real inputs
+	if (output.length() ==0)
+	{
+		display_help();
+		exit(1);
+	}
+	for (size_t i=0;i<output.length();i++)
+		output_name[i]=output[i];
+	output_name[output.length()] = '\0';
+
+	//now do the options
+
+	//set defaults. To do: set up in constructor
+	sparams.cformat=format420;
+	sparams.xl=352;
+	sparams.yl=288;
+	sparams.zl=37;
+	sparams.interlace=false;
+	sparams.topfieldfirst=true;
+	sparams.framerate=13;
+
+	for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
+		opt != args.get_options().end();
+		++opt)
+	{
+		if (opt->m_name == "cformat")
 		{
-			display_help();
-			exit(1);
+			if (opt->m_value=="format420"){
+				sparams.cformat=format420;
+			}
+			else if (opt->m_value=="format422"){
+				sparams.cformat=format422;
+			}
+			else if (opt->m_value=="format411"){
+				sparams.cformat=format411;
+			}
+			else if (opt->m_value=="format444"){
+				sparams.cformat=format444;
+			}
+			else if (opt->m_value=="Yonly"){
+				sparams.cformat=Yonly;
+			}
 		}
-		for (size_t i=0;i<output.length();i++) output_name[i]=output[i];
-		output_name[output.length()] = '\0';
-		strcat(output_name,".hdr");
+		else if (opt->m_name == "xl"){
+			sparams.xl=strtoul(opt->m_value.c_str(),NULL,10);
+		}
+		else if (opt->m_name == "yl"){
+			sparams.yl=strtoul(opt->m_value.c_str(),NULL,10);
+		}
+		else if (opt->m_name == "zl"){
+			sparams.zl=strtoul(opt->m_value.c_str(),NULL,10);
+		}
+		else if (opt->m_name == "interlace" && opt->m_value=="true"){
+			sparams.interlace=true;
+		}
+		else if (opt->m_name == "topfieldfirst" && opt->m_value=="false"){
+			sparams.topfieldfirst=false;
+		}
+		else if (opt->m_name == "framerate"){
+			sparams.framerate=strtoul(opt->m_value.c_str(),NULL,10);
+		}
+	}//opt
 
-		std::ofstream* op_head_ptr=new std::ofstream(output_name,std::ios::out | std::ios::binary);	//header output
+	// Open just the header file for output
+	PicOutput header(output_name, sparams, true);
+	header.WritePicHeader();
 
-		//now do the options
-
-		//set defaults. To do: set up in constructor
-		sparams.cformat=format420;
-		sparams.xl=352;
-		sparams.yl=288;
-		sparams.zl=37;
-		sparams.interlace=false;
-		sparams.topfieldfirst=true;
-		sparams.framerate=13;
-
-		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
-			opt != args.get_options().end(); ++opt)	{
-			if (opt->m_name == "cformat")
-			{
-				if (opt->m_value=="format420"){
-					sparams.cformat=format420;
-				}
-				else if (opt->m_value=="format422"){
-					sparams.cformat=format422;
-				}
-				else if (opt->m_value=="format411"){
-					sparams.cformat=format411;
-				}
-				else if (opt->m_value=="format444"){
-					sparams.cformat=format444;
-				}
-				else if (opt->m_value=="Yonly"){
-					sparams.cformat=Yonly;
-				}
-			}
-			else if (opt->m_name == "xl"){
-				sparams.xl=strtoul(opt->m_value.c_str(),NULL,10);
-			}
-			else if (opt->m_name == "yl"){
-				sparams.yl=strtoul(opt->m_value.c_str(),NULL,10);
-			}
-			else if (opt->m_name == "zl"){
-				sparams.zl=strtoul(opt->m_value.c_str(),NULL,10);
-			}
-			else if (opt->m_name == "interlace" && opt->m_value=="true"){
-				sparams.interlace=true;
-			}
-			else if (opt->m_name == "topfieldfirst" && opt->m_value=="false"){
-				sparams.topfieldfirst=false;
-			}
-			else if (opt->m_name == "framerate"){
-				sparams.framerate=strtoul(opt->m_value.c_str(),NULL,10);
-			}
-		}//opt
-
-		WritePicHeader(sparams,op_head_ptr);
-		op_head_ptr->close();
-
-		return 0;
-	}
-
-}
-void WritePicHeader(SeqParams& sparams,std::ofstream* op_head_ptr){//write a human-readable picture header as separate file
-
-	int head_data[7];
-
-	//Write the chroma format
-	head_data[0]=sparams.cformat;
-
-	//Y component breadth and height
-	head_data[1]=sparams.xl;
-	head_data[2]=sparams.yl;
-
-	//Number of frames
-	head_data[3]=sparams.zl;
-
-	//interlaced or not
-	head_data[4]=sparams.interlace;
-
-	//top-field first or not (only relevant if interlaced)
-	head_data[5]=sparams.topfieldfirst;;
-
-	//frame-rate code (needed for display)
-	head_data[6]=sparams.framerate;;
-
-	if (*op_head_ptr){
-		op_head_ptr->write((char*) &head_data,sizeof head_data);
-	}
-	else
-		std::cerr<<std::endl<<"Can't open picture header file for writing";
-
+	return 0;
 }

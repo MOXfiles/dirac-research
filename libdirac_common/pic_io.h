@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.3  2004-05-12 08:35:34  tjdwave
+* Revision 1.4  2004-05-14 17:25:43  stuart_hc
+* Replaced binary header files with ASCII text format to achieve cross-platform interoperability.
+* Rearranged PicOutput constructor to permit code reuse from picheader/headmain.cpp
+*
+* Revision 1.3  2004/05/12 08:35:34  tjdwave
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
 * Added support for frame padding so that arbitrary block sizes and frame
@@ -89,10 +93,11 @@ public:
     //! Constructor
     /*!
         Constructor, takes
-		/param	output_name	the name of the output file
-		/params	sp			the sequence parameters
+		/param	output_name			the name of the output file
+		/param	sp					the sequence parameters
+		/param	write_header_only	optionally write only the header
      */	
-	PicOutput(const char* output_name, const SeqParams& sp);
+	PicOutput(const char* output_name, const SeqParams& sp, bool write_header_only = false);
 
 	//! Destructor
 	virtual ~PicOutput();
@@ -111,6 +116,12 @@ protected:
 
 	//! Write a component to file
 	virtual void WriteComponent(const PicArray& pic_data, const CompSort& cs);
+
+	//! Open picture's header file for output
+	virtual void PicOutput::OpenHeader(const char* output_name);
+
+	//! Open picture's YUV data file for output
+	virtual void PicOutput::OpenYUV(const char* output_name);
 };
 
 //! Picture input class
