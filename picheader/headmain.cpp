@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.6  2004-05-20 12:39:07  tjdwave
+* Revision 1.7  2004-05-24 15:57:28  tjdwave
+* Changed CLI names and functions to house style.
+*
+* Revision 1.6  2004/05/20 12:39:07  tjdwave
 * Fixed help message for CLI.
 *
 * Revision 1.5  2004/05/19 17:39:34  chaoticcoyote
@@ -110,7 +113,7 @@ int main( int argc, char *argv[] )
 	bool_opts.insert("interlace");
 	bool_opts.insert("topfieldfirst");
 
-	command_line args(argc,argv,bool_opts);
+	CommandLine args(argc,argv,bool_opts);
 
  	//the variables we'll read parameters into
 	char output_name[84];
@@ -127,8 +130,8 @@ int main( int argc, char *argv[] )
 	}
 
 	//start with the output file
-	if (args.get_inputs().size()==1){
-		output=args.get_inputs()[0];
+	if (args.GetInputs().size()==1){
+		output=args.GetInputs()[0];
 	}
 
 	//check we have real inputs
@@ -152,8 +155,8 @@ int main( int argc, char *argv[] )
 	sparams.topfieldfirst=true;
 	sparams.framerate=13;
 
-	for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
-		opt != args.get_options().end();
+	for (vector<CommandLine::option>::const_iterator opt = args.GetOptions().begin();
+		opt != args.GetOptions().end();
 		++opt)
 	{
 		if (opt->m_name == "cformat")

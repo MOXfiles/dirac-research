@@ -39,7 +39,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.7  2004-05-20 12:38:29  tjdwave
+* Revision 1.8  2004-05-24 15:59:31  tjdwave
+* Changed CLI names and functions to house style.
+*
+* Revision 1.7  2004/05/20 12:38:29  tjdwave
 * Fixed minor bug with -verbose option to make it true boolean.
 *
 * Revision 1.6  2004/05/19 17:39:34  chaoticcoyote
@@ -107,7 +110,7 @@ int main(int argc, char* argv[]) {
 	set<string> bool_opts;
 	bool_opts.insert("verbose");
 
-	command_line args(argc,argv,bool_opts);
+	CommandLine args(argc,argv,bool_opts);
 
 	char input_name[84];							// char arrays used for file names
 	char output_name[84];
@@ -123,9 +126,9 @@ int main(int argc, char* argv[]) {
 	{
 		//now set up the parameter set with these variables
 		//Do required inputs
-		if (args.get_inputs().size()==2){
-			input=args.get_inputs()[0];
-			output=args.get_inputs()[1];
+		if (args.GetInputs().size()==2){
+			input=args.GetInputs()[0];
+			output=args.GetInputs()[1];
 		}
 		//check we have real inputs
 		if ((input.length() == 0) || (output.length() ==0))
@@ -143,8 +146,8 @@ int main(int argc, char* argv[]) {
 		strcat(bit_name,".drc");
 
 		//next check for options
-		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
-			opt != args.get_options().end(); ++opt)
+		for (vector<CommandLine::option>::const_iterator opt = args.GetOptions().begin();
+			opt != args.GetOptions().end(); ++opt)
 		{
 			if (opt->m_name == "verbose")
 			{

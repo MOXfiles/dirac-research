@@ -38,7 +38,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.8  2004-05-20 12:37:33  tjdwave
+* Revision 1.9  2004-05-24 15:59:30  tjdwave
+* Changed CLI names and functions to house style.
+*
+* Revision 1.8  2004/05/20 12:37:33  tjdwave
 * Corrected help text for CLI.
 *
 * Revision 1.7  2004/05/19 17:39:34  chaoticcoyote
@@ -131,7 +134,7 @@ int main (int argc, char* argv[]){
 	bool_opts.insert("HD1080");
 	bool_opts.insert("SD576");
 
-	command_line args(argc,argv,bool_opts);
+	CommandLine args(argc,argv,bool_opts);
 
 	//the variables we'll read parameters into
 	EncoderParams encparams;
@@ -177,9 +180,9 @@ int main (int argc, char* argv[]){
 	{
 		// parse command-line arguments
 		//Do required inputs
-		if (args.get_inputs().size()==2){
-			input=args.get_inputs()[0];
-			output=args.get_inputs()[1];
+		if (args.GetInputs().size()==2){
+			input=args.GetInputs()[0];
+			output=args.GetInputs()[1];
 		}
 
 		//check we have real inputs
@@ -204,8 +207,8 @@ int main (int argc, char* argv[]){
 
 		//Now do the options
 		//Start with quantisation factors
-		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
-			opt != args.get_options().end(); ++opt){
+		for (vector<CommandLine::option>::const_iterator opt = args.GetOptions().begin();
+			opt != args.GetOptions().end(); ++opt){
 			if (opt->m_name == "qf")
 			{
 				qf = atof(opt->m_value.c_str());
@@ -218,8 +221,8 @@ int main (int argc, char* argv[]){
 
 		//go over and override quantisation factors if they've been specifically defined for
 	   	//each frame type
-		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
-			opt != args.get_options().end(); ++opt)	{
+		for (vector<CommandLine::option>::const_iterator opt = args.GetOptions().begin();
+			opt != args.GetOptions().end(); ++opt)	{
 			if (opt->m_name == "Iqf")
 			{
 				Iqf = atof(opt->m_value.c_str());
@@ -235,8 +238,8 @@ int main (int argc, char* argv[]){
 		}//opt
 
 			//Now do checking for presets
-		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
-			opt != args.get_options().end(); ++opt)
+		for (vector<CommandLine::option>::const_iterator opt = args.GetOptions().begin();
+			opt != args.GetOptions().end(); ++opt)
 		{
 			if (opt->m_name == "stream")
 			{
@@ -313,8 +316,8 @@ int main (int argc, char* argv[]){
 		}//opt
 
 		//now go over again and override presets with other values
-		for (vector<command_line::option>::const_iterator opt = args.get_options().begin();
-			opt != args.get_options().end(); ++opt)
+		for (vector<CommandLine::option>::const_iterator opt = args.GetOptions().begin();
+			opt != args.GetOptions().end(); ++opt)
 		{
 			if (opt->m_name == "L1_sep")
 			{
