@@ -39,7 +39,10 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-12 16:04:20  tjdwave
+* Revision 1.5  2004-05-14 17:27:13  stuart_hc
+* Added better error checking.
+*
+* Revision 1.4  2004/05/12 16:04:20  tjdwave
 *
 * Done general code tidy, implementing copy constructors, assignment= and const
 * correctness for most classes. Replaced Gop class by FrameBuffer class throughout.
@@ -142,6 +145,11 @@ int main(int argc, char* argv[]) {
 	 	//read the stream data in and get the sequence data out
 
 		std::ifstream infile(bit_name,std::ios::in | std::ios::binary);
+		if (! infile)
+		{
+			std::cerr << "Can't open " << bit_name << std::endl;
+			exit(1);
+		}
 		SequenceDecompressor mydecompress(&infile,verbose);
 		SeqParams& sparams=mydecompress.GetSeqParams();
 
@@ -171,4 +179,3 @@ int main(int argc, char* argv[]) {
 		return EXIT_SUCCESS;
 	}//?sufficient arguments
 }
-
