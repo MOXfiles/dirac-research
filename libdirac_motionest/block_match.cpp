@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -35,12 +35,13 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-#include "libdirac_motionest/block_match.h"
+#include <libdirac_motionest/block_match.h>
 #include <cmath>
 
 using std::vector;
 
-MvCostData FindBestMatch(BMParams& matchparams){
+MvCostData FindBestMatch(BMParams& matchparams)
+{
 
 	BlockDiffParams dparams(matchparams);
 	BlockDiff* mydiff;
@@ -75,35 +76,43 @@ MvCostData FindBestMatch(BMParams& matchparams){
 	for (unsigned int L=0;L<vect_list.size();++L){
 		temp_mv=vect_list[L][0];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
-		if (matchparams.up_conv){
+		if (matchparams.up_conv)
+        {
+
 			if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
-				|| (((dparams.xp+dparams.xl)<<1)+(temp_mv.x>>2))>=ref_data.length(0)
+				|| (((dparams.xp+dparams.xl)<<1)+(temp_mv.x>>2)) >= ref_data.LengthX()
 				|| ((dparams.yp<<1)+(temp_mv.y>>2))<0 
-				|| (((dparams.yp+dparams.yl)<<1)+(temp_mv.y>>2))>=ref_data.length(1) )
+				|| (((dparams.yp+dparams.yl)<<1)+(temp_mv.y>>2)) >= ref_data.LengthY() )
 				mydiff=checkdiff;
 			else
 				mydiff=simplediff;	
+
 		}
-		else{
-			if ((dparams.xp+temp_mv.x)<0 || (dparams.xp+dparams.xl+temp_mv.x)>ref_data.length(0) ||
-				(dparams.yp+temp_mv.y)<0 || (dparams.yp+dparams.yl+temp_mv.y)>ref_data.length(1) ){
-				mydiff=checkdiff;
-			}
-			else{
+		else
+        {
+
+			if ((dparams.xp+temp_mv.x)<0 || (dparams.xp+dparams.xl+temp_mv.x) >= ref_data.LengthX() ||
+				(dparams.yp+temp_mv.y)<0 || (dparams.yp+dparams.yl+temp_mv.y) >= ref_data.LengthY() )
+                mydiff=checkdiff;
+			else
 				mydiff=simplediff;
-			}			
+			
 		}
-		mydiff->Diff(dparams,temp_mv);
+		mydiff->Diff( dparams , temp_mv);
 		list_costs[L]=dparams.cost.total;
 	}//L
 
 	//select which lists we're going to use
 	min_cost=list_costs[0];
-	for (int L=1;L<list_costs.length();++L){
+
+	for ( int L=1 ; L<list_costs.Length() ; ++L)
+    {
 		if (list_costs[L]<min_cost)
 			min_cost=list_costs[L];
 	}//L
-	for (int L=0;L<list_costs.length();++L){
+
+	for ( int L=0 ; L<list_costs.Length() ; ++L)
+    {
 		if (list_costs[L]<1.5*min_cost){//value of 1.5 tbd. Only do lists whose 1st element isn't too far off best
 			list_nums.push_back(L);
 		}
@@ -112,29 +121,41 @@ MvCostData FindBestMatch(BMParams& matchparams){
    	//Ok, now we know which lists to pursue. Just go through all of them
 	int lnum;
 
-	for (unsigned int N=0;N<list_nums.size();++N){
+	for (size_t N=0;N<list_nums.size();++N)
+    {
 		lnum=list_nums[N];
-		for (unsigned int I=1;I<vect_list[lnum].size();++I){//start at 1 since did 0 above
-			temp_mv=vect_list[lnum][I];
+
+		for (size_t i=1 ; i<vect_list[lnum].size() ; ++i)
+        {//start at 1 since did 0 above
+
+			temp_mv=vect_list[lnum][i];
 			dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
-			if (matchparams.up_conv){
+			if (matchparams.up_conv)
+            {
+
 				if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
-					|| (((dparams.xp+dparams.xl)<<1)+(temp_mv.x>>2))>=ref_data.length(0)
+					|| (((dparams.xp+dparams.xl)<<1)+(temp_mv.x>>2)) >= ref_data.LengthX()
 					|| ((dparams.yp<<1)+(temp_mv.y>>2))<0 
-					|| (((dparams.yp+dparams.yl)<<1)+(temp_mv.y>>2))>=ref_data.length(1) )
+					|| (((dparams.yp+dparams.yl)<<1)+(temp_mv.y>>2)) >= ref_data.LengthY() )
 					mydiff=checkdiff;
 				else
 					mydiff=simplediff;
+
 			}
-			else{			
-				if ((dparams.xp+temp_mv.x)<0 || (dparams.xp+dparams.xl+temp_mv.x)>ref_data.length(0) ||
-					(dparams.yp+temp_mv.y)<0 || (dparams.yp+dparams.yl+temp_mv.y)>ref_data.length(1) )
+			else
+            {
+			
+				if ((dparams.xp+temp_mv.x)<0 || (dparams.xp+dparams.xl+temp_mv.x) > ref_data.LengthX() ||
+					(dparams.yp+temp_mv.y)<0 || (dparams.yp+dparams.yl+temp_mv.y) > ref_data.LengthY() )
 					mydiff=checkdiff;
 				else
 					mydiff=simplediff;
+
 			}
+
 			mydiff->Diff(dparams,temp_mv);
-		}//I
+
+		}//i
 	}//N
 
 	matchparams.best_mv=dparams.best_mv;
@@ -183,13 +204,15 @@ void FindBestMatchSubp(BMParams& matchparams,const MVector& pel_mv,MvCostData& b
 	for (unsigned int I=0;I<vect_list[list_idx].size();++I){
 		temp_mv=vect_list[list_idx][I];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
+
 		if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
-			|| (((dparams.xp+dparams.xl)<<1)+(temp_mv.x>>2))>=ref_data.length(0)
+			|| (((dparams.xp+dparams.xl)<<1)+(temp_mv.x>>2)) >= ref_data.LengthX()
 			|| ((dparams.yp<<1)+(temp_mv.y>>2))<0 
-			|| (((dparams.yp+dparams.yl)<<1)+(temp_mv.y>>2))>=ref_data.length(1) )
+			|| (((dparams.yp+dparams.yl)<<1)+(temp_mv.y>>2)) >= ref_data.LengthY() )
 			mydiff=checkdiff;
 		else
 			mydiff=simplediff;
+
 		mydiff->Diff(dparams,temp_mv);
 	}//I
 
@@ -199,13 +222,15 @@ void FindBestMatchSubp(BMParams& matchparams,const MVector& pel_mv,MvCostData& b
 	for (unsigned int I=0;I<vect_list[list_idx].size();++I){
 		temp_mv=vect_list[list_idx][I];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
+
 		if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
-			|| (((dparams.xp+dparams.xl)<<1)+(temp_mv.x>>2))>=ref_data.length(0)
+			|| (((dparams.xp+dparams.xl)<<1)+(temp_mv.x>>2)) >= ref_data.LengthX()
 			|| ((dparams.yp<<1)+(temp_mv.y>>2))<0 
-			|| (((dparams.yp+dparams.yl)<<1)+(temp_mv.y>>2))>=ref_data.length(1) )
+			|| (((dparams.yp+dparams.yl)<<1)+(temp_mv.y>>2)) >= ref_data.LengthY() )
 			mydiff=checkdiff;
 		else
 			mydiff=simplediff;
+
 		mydiff->Diff(dparams,temp_mv);
 	}//I
 
@@ -216,13 +241,15 @@ void FindBestMatchSubp(BMParams& matchparams,const MVector& pel_mv,MvCostData& b
 	for (unsigned int I=0;I<vect_list[list_idx].size();++I){
 		temp_mv=vect_list[list_idx][I];
 		dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
+
 		if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
-			|| (((dparams.xp+dparams.xl)<<1)+(temp_mv.x>>2))>=ref_data.length(0)
+			|| (((dparams.xp+dparams.xl)<<1)+(temp_mv.x>>2)) >= ref_data.LengthX()
 			|| ((dparams.yp<<1)+(temp_mv.y>>2))<0 
-			|| (((dparams.yp+dparams.yl)<<1)+(temp_mv.y>>2))>=ref_data.length(1) )
+			|| (((dparams.yp+dparams.yl)<<1)+(temp_mv.y>>2)) >= ref_data.LengthY() )
 			mydiff=checkdiff;
 		else
 			mydiff=simplediff;
+
 		mydiff->Diff(dparams,temp_mv);
 	}//I
 
@@ -233,13 +260,15 @@ void FindBestMatchSubp(BMParams& matchparams,const MVector& pel_mv,MvCostData& b
 		for (unsigned int I=0;I<vect_list[list_idx].size();++I){
 			temp_mv=vect_list[list_idx][I];
 			dparams.start_val=lambda*GetVar(matchparams.mv_pred,temp_mv);
+
 			if (   ((dparams.xp<<1)+(temp_mv.x>>2))<0 
-				|| (((dparams.xp+dparams.xl)<<1)+(temp_mv.x>>2))>=ref_data.length(0)
-				|| ((dparams.yp<<1)+(temp_mv.y>>2))<0 
-				|| (((dparams.yp+dparams.yl)<<1)+(temp_mv.y>>2))>=ref_data.length(1) )
+				|| (((dparams.xp+dparams.xl)<<1)+(temp_mv.x>>2)) >= ref_data.LengthX()
+				|| ((dparams.yp<<1)+(temp_mv.y>>2))<0  
+				|| (((dparams.yp+dparams.yl)<<1)+(temp_mv.y>>2)) >= ref_data.LengthY() )
 				mydiff=checkdiff;
 			else
 				mydiff=simplediff;
+
 			mydiff->Diff(dparams,temp_mv);
 		}//I
 	}

@@ -42,8 +42,8 @@
 
 //! A class for encapsulating all the data relating to a frame.
 /*!
-	A class for encapsulating all the data relating to a frame - all the component data, 
-	including upconverted data.
+    A class for encapsulating all the data relating to a frame - all the component data, 
+    including upconverted data.
  */
 class Frame{
 
@@ -52,93 +52,93 @@ public:
     //! Constructor
     /*!
         Constructor initialises the frame parameters and the data
-     */	
-	Frame(const FrameParams& fp);
+     */    
+    Frame(const FrameParams& fp);
 
-		//! Copy constructor. Private as not currently used [may want to implement reference counting later.]
-	Frame(const Frame& cpy);
+    //! Copy constructor. Private as not currently used [may want to implement reference counting later.]
+    Frame(const Frame& cpy);
 
-	//! Destructor
-	virtual ~Frame();
+    //! Destructor
+    virtual ~Frame();
 
-	//! Assignment =. Private as not currently used [may want to implement reference counting later.]
-	Frame& operator=(const Frame& rhs);
+    //! Assignment =. Private as not currently used [may want to implement reference counting later.]
+    Frame& operator=(const Frame& rhs);
 
-	//gets and sets
-	//! Gets the frame parameters
-	const FrameParams& GetFparams() const {return m_fparams;}
+    //gets and sets
+    //! Gets the frame parameters
+    const FrameParams& GetFparams() const {return m_fparams;}
 
-	//! Returns the luma data array
-	PicArray& Ydata() {return *m_Y_data;}
+    //! Returns the luma data array
+    PicArray& Ydata() {return *m_Y_data;}
 
-	//! Returns the U component
-	PicArray& Udata() {return *m_U_data;}
+    //! Returns the U component
+    PicArray& Udata() {return *m_U_data;}
 
-	//! Returns the V component 
-	PicArray& Vdata() {return *m_V_data;}
+    //! Returns the V component 
+    PicArray& Vdata() {return *m_V_data;}
 
-	//! Returns the luma data array
-	const PicArray& Ydata() const {return *m_Y_data;}
+    //! Returns the luma data array
+    const PicArray& Ydata() const {return *m_Y_data;}
 
-	//! Returns the U component
-	const PicArray& Udata() const {return *m_U_data;}
+    //! Returns the U component
+    const PicArray& Udata() const {return *m_U_data;}
 
-	//! Returns the V component 
-	const PicArray& Vdata() const {return *m_V_data;}
+    //! Returns the V component 
+    const PicArray& Vdata() const {return *m_V_data;}
 
-	//! Returns a given component 
-	PicArray& Data(CompSort cs);
+    //! Returns a given component 
+    PicArray& Data(CompSort cs);
 
-	//! Returns a given component
-	const PicArray& Data(CompSort cs) const;	
+    //! Returns a given component
+    const PicArray& Data(CompSort cs) const;    
 
-	//! Returns upconverted Y data
-	PicArray& UpYdata();
+    //! Returns upconverted Y data
+    PicArray& UpYdata();
 
-	//! Returns upconverted U data
-	PicArray& UpUdata();
+    //! Returns upconverted U data
+    PicArray& UpUdata();
 
-	//! Returns upconverted V data
-	PicArray& UpVdata();
+    //! Returns upconverted V data
+    PicArray& UpVdata();
 
-	//! Returns a given upconverted component
-	PicArray& UpData(CompSort cs);
+    //! Returns a given upconverted component
+    PicArray& UpData(CompSort cs);
 
-	//! Returns upconverted Y data
-	const PicArray& UpYdata() const;
+    //! Returns upconverted Y data
+    const PicArray& UpYdata() const;
 
-	//! Returns upconverted U data
-	const PicArray& UpUdata() const;
+    //! Returns upconverted U data
+    const PicArray& UpUdata() const;
 
-	//! Returns upconverted V data	
-	const PicArray& UpVdata() const;
+    //! Returns upconverted V data    
+    const PicArray& UpVdata() const;
 
-	//! Returns a given upconverted component
-	const PicArray& UpData(CompSort cs) const;
+    //! Returns a given upconverted component
+    const PicArray& UpData(CompSort cs) const;
 
     //! Clip the data to prevent overshoot
     /*!
         Clips the data to lie between 0 and 1020 (4*255) in 10-bit form to prevent overshoot/wraparound.
      */
-	void Clip();
+    void Clip();
 
 private:
-	FrameParams m_fparams;
-	PicArray* m_Y_data;//the 
-	PicArray* m_U_data;//component
-	PicArray* m_V_data;//data
-	mutable PicArray* m_upY_data;//upconverted data. Mutable because we
-	mutable PicArray* m_upU_data;//create them on the fly even in const
-	mutable PicArray* m_upV_data;//functions.
+    FrameParams m_fparams;
+    PicArray* m_Y_data;//the 
+    PicArray* m_U_data;//component
+    PicArray* m_V_data;//data
+    mutable PicArray* m_upY_data;//upconverted data. Mutable because we
+    mutable PicArray* m_upU_data;//create them on the fly even in const
+    mutable PicArray* m_upV_data;//functions.
 
-	//! Initialises the frame once the frame parameters have been set
-	void Init();
+    //! Initialises the frame once the frame parameters have been set
+    void Init();
 
-	//! Delete all the data
-	void ClearData();
+    //! Delete all the data
+    void ClearData();
 
-	//! Clip an individual component
-	void ClipComponent(PicArray& pic_data);	
+    //! Clip an individual component
+    void ClipComponent(PicArray& pic_data);    
 };
 
 

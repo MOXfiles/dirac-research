@@ -67,7 +67,7 @@ void CompDecompressor::Decompress(PicArray& pic_data)
 
 	WaveletTransform wtransform(depth);
 	SubbandList& bands=wtransform.BandList();
-	bands.Init(depth,pic_data.length(0),pic_data.length(1));
+	bands.Init(depth , pic_data.LengthX() , pic_data.LengthY());
 
 	GenQuantList();
 

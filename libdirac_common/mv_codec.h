@@ -51,104 +51,104 @@
 
 //! Codes and decodes all the Motion Vector data
 /*!
-	Derived from the ArithCodec class, this codes and decodes all the motion vector data.
+    Derived from the ArithCodec class, this codes and decodes all the motion vector data.
  */
 class MvDataCodec: public ArithCodec<MvData>
 {
 public:
     //! Constructor for encoding
-	    /*!
-		Creates a MvDataCodec object to encode MV data, based on parameters
-		/param	bits_out	the output for the encoded bits
-		/param	ctxs		the contexts used in the encoding process
-		/param	cp			the coding/decoding parameter set
-		/param 	cf			the chroma format
-     */	
-	MvDataCodec(BasicOutputManager* bits_out,
+        /*!
+        Creates a MvDataCodec object to encode MV data, based on parameters
+        /param    bits_out    the output for the encoded bits
+        /param    ctxs        the contexts used in the encoding process
+        /param    cp            the coding/decoding parameter set
+        /param     cf            the chroma format
+     */    
+    MvDataCodec(BasicOutputManager* bits_out,
                 size_t number_of_contexts,
                 const ChromaFormat & cf);
 
     //! Constructor for decoding
-	    /*!
-		Creates a MvDataCodec object to encode MV data, based on parameters
-		/param	bits_in		the input for the encoded bits
-		/param	ctxs		the contexts used in the encoding process
-		/param	cp			the coding/decoding parameter set
-		/param 	cf			the chroma format
-     */		
-	MvDataCodec(BitInputManager* bits_in,
+        /*!
+        Creates a MvDataCodec object to encode MV data, based on parameters
+        /param    bits_in        the input for the encoded bits
+        /param    ctxs        the contexts used in the encoding process
+        /param    cp            the coding/decoding parameter set
+        /param     cf            the chroma format
+     */        
+    MvDataCodec(BitInputManager* bits_in,
                 size_t number_of_contexts,
                 const ChromaFormat & cf); 
 
-    //! Initialises the contexts	
-	void InitContexts();
+    //! Initialises the contexts    
+    void InitContexts();
     
 private:
-	int MB_count;
-	const CodecParams  m_cparams;
-	const ChromaFormat & m_cformat;
+    int MB_count;
+    const CodecParams  m_cparams;
+    const ChromaFormat & m_cformat;
 
-	int b_xp, b_yp;		    //position of current block
-	int mb_xp, mb_yp;	    //position of current MB
-	int mb_tlb_x, mb_tlb_y;	//position of top-left block of current MB
+    int b_xp, b_yp;            //position of current block
+    int mb_xp, mb_yp;        //position of current MB
+    int mb_tlb_x, mb_tlb_y;    //position of top-left block of current MB
 
-	// functions	
-	MvDataCodec(const MvDataCodec& cpy);			//private, bodyless copy constructor: class should not be copied
-	MvDataCodec& operator=(const MvDataCodec& rhs); //private, bodyless copy operator=: class should not be assigned
+    // functions    
+    MvDataCodec(const MvDataCodec& cpy);            //private, bodyless copy constructor: class should not be copied
+    MvDataCodec& operator=(const MvDataCodec& rhs); //private, bodyless copy operator=: class should not be assigned
 
-	// coding functions	
-	void CodeMBSplit(MvData& in_data);	//code the MB splitting mode
-	void CodeMBCom(MvData& in_data);	//code the MB common ref mode
-	void CodePredmode(MvData& in_data);	//code the block prediction mode
-	void CodeMv1(MvData& in_data);		//code the first motion vector
-	void CodeMv2(MvData& in_data);		//code the second motion vector
-	void CodeDC(MvData& in_data);		//code the dc value of intra blocks
+    // coding functions    
+    void CodeMBSplit(MvData& in_data);    //code the MB splitting mode
+    void CodeMBCom(MvData& in_data);    //code the MB common ref mode
+    void CodePredmode(MvData& in_data);    //code the block prediction mode
+    void CodeMv1(MvData& in_data);        //code the first motion vector
+    void CodeMv2(MvData& in_data);        //code the second motion vector
+    void CodeDC(MvData& in_data);        //code the dc value of intra blocks
 
-	// decoding functions
-	void DecodeMBSplit(MvData& out_data);	//decode the MB splitting mode
-	void DecodeMBCom(MvData& out_data);//decode the MB common ref mode
-	void DecodePredmode(MvData& out_data);//decode the block prediction mode
-	void DecodeMv1(MvData& out_data);	//decode the first motion vector
-	void DecodeMv2(MvData& out_data);	//decode the second motion vector
-	void DecodeDC(MvData& out_data);	//decode the dc value of intra blocks	
+    // decoding functions
+    void DecodeMBSplit(MvData& out_data);    //decode the MB splitting mode
+    void DecodeMBCom(MvData& out_data);//decode the MB common ref mode
+    void DecodePredmode(MvData& out_data);//decode the block prediction mode
+    void DecodeMv1(MvData& out_data);    //decode the first motion vector
+    void DecodeMv2(MvData& out_data);    //decode the second motion vector
+    void DecodeDC(MvData& out_data);    //decode the dc value of intra blocks    
 
-	void DoWorkCode(MvData& in_data);
-	void DoWorkDecode(MvData& out_data, int num_bits);
+    void DoWorkCode(MvData& in_data);
+    void DoWorkDecode(MvData& out_data, int num_bits);
 
-	// Context stuff	
-	void Update(const int& context_num, const bool& Symbol);
-	void Resize(const int& context_num);
-	void ResetAll();
+    // Context stuff    
+    void Update(const int& context_num, const bool& Symbol);
+    void Resize(const int& context_num);
+    void ResetAll();
 
-	int ChooseContext(const MvData& data, const int BinNumber) const;
-	int ChooseContext(const MvData& data) const;
-	int ChooseSignContext(const MvData& data) const;
+    int ChooseContext(const MvData& data, const int BinNumber) const;
+    int ChooseContext(const MvData& data) const;
+    int ChooseSignContext(const MvData& data) const;
 
-	int ChooseMBSContext(const MvData& data, const int BinNumber) const;
-	int ChooseMBCContext(const MvData& data) const;
-	int ChoosePredContext(const MvData& data, const int BinNumber) const;
-	int ChooseREF1xContext(const MvData& data, const int BinNumber) const;
-	int ChooseREF1xSignContext(const MvData& data) const;
-	int ChooseREF1yContext(const MvData& data, const int BinNumber) const;
-	int ChooseREF1ySignContext(const MvData& data) const;
-	int ChooseREF2xContext(const MvData& data, const int BinNumber) const;
-	int ChooseREF2xSignContext(const MvData& data) const;
-	int ChooseREF2yContext(const MvData& data, const int BinNumber) const;
-	int ChooseREF2ySignContext(const MvData& data) const;
-	int ChooseYDCContext(const MvData& data, const int BinNumber) const;
-	int ChooseUDCContext(const MvData& data, const int BinNumber) const;
-	int ChooseVDCContext(const MvData& data, const int BinNumber) const;
-	int ChooseYDCSignContext(const MvData& data) const;
-	int ChooseUDCSignContext(const MvData& data) const;
-	int ChooseVDCSignContext(const MvData& data) const;
+    int ChooseMBSContext(const MvData& data, const int BinNumber) const;
+    int ChooseMBCContext(const MvData& data) const;
+    int ChoosePredContext(const MvData& data, const int BinNumber) const;
+    int ChooseREF1xContext(const MvData& data, const int BinNumber) const;
+    int ChooseREF1xSignContext(const MvData& data) const;
+    int ChooseREF1yContext(const MvData& data, const int BinNumber) const;
+    int ChooseREF1ySignContext(const MvData& data) const;
+    int ChooseREF2xContext(const MvData& data, const int BinNumber) const;
+    int ChooseREF2xSignContext(const MvData& data) const;
+    int ChooseREF2yContext(const MvData& data, const int BinNumber) const;
+    int ChooseREF2ySignContext(const MvData& data) const;
+    int ChooseYDCContext(const MvData& data, const int BinNumber) const;
+    int ChooseUDCContext(const MvData& data, const int BinNumber) const;
+    int ChooseVDCContext(const MvData& data, const int BinNumber) const;
+    int ChooseYDCSignContext(const MvData& data) const;
+    int ChooseUDCSignContext(const MvData& data) const;
+    int ChooseVDCSignContext(const MvData& data) const;
 
-	//prediction stuff
-	unsigned int MBSplitPrediction(const TwoDArray<MBData>& mbdata) const;
-	bool MBCBModePrediction(const TwoDArray<MBData>& mbdata) const;
-	unsigned int BlockModePrediction(const TwoDArray<PredMode>& preddata) const;
-	MVector Mv1Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
-	MVector Mv2Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
-	ValueType DCPrediction(const TwoDArray<ValueType>& dcdata,const TwoDArray<PredMode>& preddata) const;
+    //prediction stuff
+    unsigned int MBSplitPrediction(const TwoDArray<MBData>& mbdata) const;
+    bool MBCBModePrediction(const TwoDArray<MBData>& mbdata) const;
+    unsigned int BlockModePrediction(const TwoDArray<PredMode>& preddata) const;
+    MVector Mv1Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
+    MVector Mv2Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
+    ValueType DCPrediction(const TwoDArray<ValueType>& dcdata,const TwoDArray<PredMode>& preddata) const;
 };
 
 #endif

@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Richard Felton (Original Author), Thomas Davies
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -46,46 +46,46 @@
 
 //! Upconversion class
 /*!
-	Class to picture data by a factor of 2 in both dimensions
+    Class to picture data by a factor of 2 in both dimensions
  */
 class UpConverter{
 
 public:
 
-	//! Constructor
-	UpConverter(){}
-	//! Destructor
-	~UpConverter(){};
+    //! Constructor
+    UpConverter(){}
+    //! Destructor
+    ~UpConverter(){};
 
     //! Upconvert the picture data
     /*!
-		Upconvert the picture data, where the parameters are
-		/param	OldImage	is the original data
-		/param	NewImage	is the upconverted data
+        Upconvert the picture data, where the parameters are
+        /param    OldImage    is the original data
+        /param    NewImage    is the upconverted data
      */
-	void DoUpConverter(const PicArray &OldImage, PicArray &NewImage);
+    void DoUpConverter(const PicArray &OldImage, PicArray &NewImage);
 
 private:
-	UpConverter(const UpConverter& cpy);//private body-less copy constructor: class should not be copied
-	UpConverter& operator=(const UpConverter& rhs);//private body-less assignment: class should not be assigned
+    UpConverter(const UpConverter& cpy);//private body-less copy constructor: class should not be copied
+    UpConverter& operator=(const UpConverter& rhs);//private body-less assignment: class should not be assigned
 
-	//Applies the filter to a row number 
-	//LinePos and its neighbour.
-	void rowLoop(PicArray &NewImage, int &LinePos);
+    //Applies the filter to a row number 
+    //LinePos and its neighbour.
+    void rowLoop(PicArray &NewImage, int &LinePos);
 
-	//Variable to keep the loops in check
-	int xOld, yOld;
-	int xNew, yNew;
+    //Variable to keep the loops in check
+    int xOld, yOld;
+    int xNew, yNew;
 
-	//Define first set of filter parameters
-	static const int Stage_I_Size = 6;
-	static const int StageI_I = 167;
-	static const int StageI_II = -56; 
-	static const int StageI_III = 25;
-	static const int StageI_IV = -11; 
-	static const int StageI_V = 4;
-	static const int StageI_VI = -1;	
-	static const int Stage_I_Shift = 8;
+    //Define first set of filter parameters
+    static const int Stage_I_Size = 6;
+    static const int StageI_I = 167;
+    static const int StageI_II = -56; 
+    static const int StageI_III = 25;
+    static const int StageI_IV = -11; 
+    static const int StageI_V = 4;
+    static const int StageI_VI = -1;    
+    static const int Stage_I_Shift = 8;
 };
 
 #endif

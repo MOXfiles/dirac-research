@@ -257,310 +257,374 @@ int CompCompressor::SelectQuant(PicArray& pic_data,SubbandList& bands,const int 
 	int yl=node.Yl();
 	float vol;
 
-	if (bandmax<m_qflist[qf_start_idx-3]){
+	if (bandmax<m_qflist[qf_start_idx-3])
+    {
 		//coefficients are small so the subband can be skipped
 		node.SetQf(0,-1);//indicates that the subband is skipped
-		if (band_num==bands.Length()){
+
+		if ( band_num == bands.Length() )
 			AddSubAverage(pic_data,node.Xl(),node.Yl(),ADD);
-		}
+	
 		return 0;		
 	}
 	else{
-		for (int Q=0;Q<costs.length(0);Q++){
-			error_total[Q]=0.0;			
-			count0[Q]=0;
-			countPOS[Q]=0;
-			countNEG[Q]=0;			
+		for ( int q=0 ; q<costs.Length() ; q++)
+        {
+			error_total[q] = 0.0;			
+			count0[q] = 0;
+			countPOS[q] = 0;
+			countNEG[q] = 0;			
 		}
 
 		//first, find to nearest integral number of bits using 1/4 of the data
 		//////////////////////////////////////////////////////////////////////
 		vol=float((yl/2)*(xl/2));//vol is only 1/4 of the coeffs
 		count1=int(vol);
-		for (int J=yp+1;J<yp+yl;J+=2){
-			for (int I=xp+((J-yp)%4)/2;I<xp+xl;I+=2){
+		for ( int j=yp+1 ; j<yp+yl ; j+=2 )
+        {
+			for ( int i=xp+((j-yp)%4)/2 ; i<xp+xl ; i+=2)
+            {
 
-				val=pic_data[J][I];
-				quant_val=abs(val);
-				abs_val=quant_val;
+				val = pic_data[j][i];
+				quant_val = abs(val);
+				abs_val = quant_val;
 
-				for (int Q=qf_start_idx;Q<costs.length(0);Q+=4){
-					quant_val>>=(Q/4);								
-					if (quant_val){
-						count0[Q]+=quant_val;
-						quant_val<<=(Q/4);						
-						if (val>0){
-							countPOS[Q]++;
-						}
-						else{
-							countNEG[Q]++;
-						}
+				for ( int q=qf_start_idx ; q<costs.Length() ; q+=4)
+                {
+					quant_val >>= (q/4);								
+
+					if (quant_val)
+                    {
+						count0[q]+=quant_val;
+						quant_val <<= (q/4);						
+						if (val>0)
+							countPOS[q]++;
+						else
+							countNEG[q]++;
 					}
-					error=abs_val-quant_val;
-					if (quant_val!=0)					
-						error-=m_offset[Q];
-					error*=error;
-					error_total[Q]+=error;
-				}//Q
-			}//J
-		}//I
+
+					error = abs_val-quant_val;
+
+					if ( quant_val != 0)					
+						error -= m_offset[q];
+
+					error *= error;
+					error_total[q] += error;
+
+				}// q
+			}// i
+		}// j
 
  		//do entropy calculation etc		
-		for (int Q=qf_start_idx;Q<costs.length(0);Q+=4){
-			costs[Q].MSE=error_total[Q]/(vol*node.Wt()*node.Wt());
- 		 	//calculate probabilities and entropy
-			p0=float(count0[Q])/float(count0[Q]+count1);
-			p1=1.0-p0;
+		for ( int q=qf_start_idx ; q<costs.Length() ; q+=4 )
+        {
+			costs[q].MSE = error_total[q]/( vol*node.Wt()*node.Wt() );
+ 	
+    	 	//calculate probabilities and entropy
+			p0 = float( count0[q] )/float( count0[q]+count1 );
+			p1 = 1.0-p0;
 
-			if (p0!=0.0 && p1!=0.0)
-				costs[Q].ENTROPY=-(p0*log(p0)+p1*log(p1))/log(2.0);
+			if ( p0 != 0.0 && p1 != 0.0)
+				costs[q].ENTROPY =- (p0*log(p0)+p1*log(p1))/log(2.0);
 			else
-				costs[Q].ENTROPY=0.0;
+				costs[q].ENTROPY = 0.0;
+
 			//we want the entropy *per symbol*, not per bit ...			
-			costs[Q].ENTROPY*=float(count0[Q]+count1);
-			costs[Q].ENTROPY/=vol;
+			costs[q].ENTROPY *= float(count0[q]+count1);
+			costs[q].ENTROPY /= vol;
 
 			//now add in the sign entropy
-			if (countPOS[Q]+countNEG[Q]!=0){
-				p0=float(countNEG[Q])/float(countPOS[Q]+countNEG[Q]);
-				p1=1.0-p0;
-				if (p0!=0.0 && p1!=0.0)
-					sign_entropy=-((p0*log(p0)+p1*log(p1))/log(2.0));
+			if ( countPOS[q]+countNEG[q] != 0 )
+            {
+				p0 = float(countNEG[q])/float( countPOS[q]+countNEG[q] );
+				p1 = 1.0-p0;
+				if ( p0 != 0.0 && p1 != 0.0)
+					sign_entropy = -( (p0*log(p0)+p1*log(p1) ) / log(2.0));
 				else
-					sign_entropy=0.0;
+					sign_entropy = 0.0;
 			}
 			else
 				sign_entropy=0.0;	
 
  		 	//we want the entropy *per symbol*, not per bit ...
-			sign_entropy*=float(countNEG[Q]+countPOS[Q]);
-			sign_entropy/=vol;	
+			sign_entropy *= float( countNEG[q]+countPOS[q] );
+			sign_entropy /= vol;	
 
-			costs[Q].ENTROPY+=sign_entropy;
+			costs[q].ENTROPY += sign_entropy;
+
 			//sort out correction factors
-			costs[Q].ENTROPY*=m_encparams.EntropyFactors().Factor(band_num,m_fsort,m_csort);
-			costs[Q].TOTAL=costs[Q].MSE+m_lambda*costs[Q].ENTROPY;
-		}
+			costs[q].ENTROPY *= m_encparams.EntropyFactors().Factor(band_num,m_fsort,m_csort);
+			costs[q].TOTAL = costs[q].MSE+m_lambda*costs[q].ENTROPY;
+
+		}// q
+
 		//find the qf with the lowest cost
 		min_idx=qf_start_idx;
-		for (int Q=qf_start_idx;Q<costs.length(0);Q+=4) {
-			if (costs[Q].TOTAL<costs[min_idx].TOTAL)
-				min_idx=Q;
+		for ( int q=qf_start_idx ; q<costs.Length() ; q+=4 ) 
+        {
+			if ( costs[q].TOTAL < costs[min_idx].TOTAL )
+				min_idx=q;
 		}
 
 		//now repeat to get to 1/2 bit accuracy
 		///////////////////////////////////////
-		for (int Q=std::max(0,min_idx-2);Q<=std::min(costs.ubound(0),min_idx+2);Q+=2){
-			if (Q!=min_idx){
-				error_total[Q]=0.0;			
-				count0[Q]=0;
-				countPOS[Q]=0;
-				countNEG[Q]=0;			
+		for ( int q=std::max(0,min_idx-2) ; q<=std::min(costs.Last(),min_idx+2) ; q+=2 )
+        {
+			if ( q != min_idx )
+            {
+				error_total[q] = 0.0;			
+				count0[q] = 0;
+				countPOS[q] = 0;
+				countNEG[q] = 0;			
 			}
 		}
-		vol=float((yl/2)*(xl/2));
-		count1=int(vol);
-		int top_idx=std::min(costs.ubound(0),min_idx+2);
-		int bottom_idx=std::max(0,min_idx-2);
 
-		for (int J=yp+1;J<yp+yl;J+=2){
-			for (int I=xp+1;I<xp+xl;I+=2){
-				val=pic_data[J][I];
-				abs_val=abs(val);
+		vol = float( (yl/2) * (xl/2) );
+		count1 = int(vol);
+		int top_idx = std::min(costs.Last(),min_idx+2);
+		int bottom_idx = std::max(0,min_idx-2);
 
-				for (int Q=bottom_idx;Q<=top_idx;Q+=2){
-					if (Q!=min_idx){
-						quant_val=int(abs_val);					
-						quant_val*=m_qfinvlist[Q];
-						quant_val>>=17;
-						if (quant_val){
-							count0[Q]+=quant_val;
-							quant_val*=m_qflist[Q];						
-							if (val>0.0){
-								countPOS[Q]++;
-							}
-							else{
-								countNEG[Q]++;
-							}
+		for (int j=yp+1 ; j<yp+yl ; j+=2 )
+        {
+			for (int i=xp+1 ; i<xp+xl ; i+=2 )
+            {
+				val = pic_data[j][i];
+				abs_val = abs(val);
+
+				for ( int q=bottom_idx ; q<=top_idx ; q+=2 )
+                {
+					if ( q != min_idx )
+                    {
+						quant_val = int(abs_val);					
+						quant_val *= m_qfinvlist[q];
+						quant_val >>= 17;
+
+						if ( quant_val )
+                        {
+							count0[q] += quant_val;
+							quant_val *= m_qflist[q];						
+
+							if (val>0.0)
+								countPOS[q]++;
+							else
+								countNEG[q]++;
 						}
-						error=abs_val-quant_val;
-						if (quant_val!=0)					
-							error-=m_offset[Q];
-						error*=error;
-						error_total[Q]+=float(error);
+
+						error = abs_val-quant_val;
+
+						if ( quant_val != 0 )					
+							error -= m_offset[q];
+
+						error *= error;
+						error_total[q] += float(error);
+
 					}//end of if
-				}//Q
+				}//q
 			}//J
 		}//I
 
  		//do entropy calculation		
-		for (int Q=bottom_idx;Q<=top_idx;Q+=2){
-			if (Q!=min_idx){
-				costs[Q].MSE=error_total[Q]/(vol*node.Wt()*node.Wt());
+		for ( int q=bottom_idx ; q<=top_idx ; q+=2 )
+        {
+			if ( q != min_idx )
+            {
+				costs[q].MSE = error_total[q] / (vol*node.Wt()*node.Wt());
 	 		 	//calculate probabilities and entropy
-				p0=float(count0[Q])/float(count0[Q]+count1);
-				p1=1.0-p0;
+				p0 = float(count0[q]) / float(count0[q]+count1);
+				p1 = 1.0-p0;
 
-				if (p0!=0.0 && p1!=0.0)
-					costs[Q].ENTROPY=-(p0*log(p0)+p1*log(p1))/log(2.0);
+				if (p0 != 0.0 && p1 != 0.0)
+					costs[q].ENTROPY =- (p0*log(p0) + p1*log(p1)) / log(2.0);
 				else
-					costs[Q].ENTROPY=0.0;
+					costs[q].ENTROPY = 0.0;
 				//we want the entropy *per symbol*, not per bit ...			
-				costs[Q].ENTROPY*=count0[Q]+count1;
-				costs[Q].ENTROPY/=vol;
+				costs[q].ENTROPY *= count0[q]+count1;
+				costs[q].ENTROPY /= vol;
 
- 			//now add in the sign entropy
-				if (countPOS[Q]+countNEG[Q]!=0){
-					p0=float(countNEG[Q])/float(countPOS[Q]+countNEG[Q]);
-					p1=1.0-p0;
-					if (p0!=0.0 && p1!=0.0)
-						sign_entropy=-((p0*log(p0)+p1*log(p1))/log(2.0));
+ 		     	//now add in the sign entropy
+				if (countPOS[q]+countNEG[q] != 0)
+                {
+					p0 = float( countNEG[q] )/float( countPOS[q] + countNEG[q] );
+					p1 = 1.0-p0;
+					if (p0 != 0.0 && p1 != 0.0)
+						sign_entropy =- ( (p0*log(p0)+p1*log(p1)) / log(2.0) );
 					else
-						sign_entropy=0.0;
+						sign_entropy = 0.0;
 				}
 				else
-					sign_entropy=0.0;	
+					sign_entropy = 0.0;	
 
- 		 	//we want the entropy *per symbol*, not per bit ...
-				sign_entropy*=float(countNEG[Q]+countPOS[Q]);
-				sign_entropy/=vol;	
+ 		 	    //we want the entropy *per symbol*, not per bit ...
+				sign_entropy *= float(countNEG[q]+countPOS[q]);
+				sign_entropy /= vol;	
 
-				costs[Q].ENTROPY+=sign_entropy;
+				costs[q].ENTROPY += sign_entropy;
 				//sort out correction factors
-				costs[Q].ENTROPY*=m_encparams.EntropyFactors().Factor(band_num,m_fsort,m_csort);
-				costs[Q].TOTAL=costs[Q].MSE+m_lambda*costs[Q].ENTROPY;
+				costs[q].ENTROPY *= m_encparams.EntropyFactors().Factor(band_num,m_fsort,m_csort);
+				costs[q].TOTAL = costs[q].MSE+m_lambda*costs[q].ENTROPY;
 			}
-		}//Q
+		}//q
 
  		//find the qf with the lowest cost
-		for (int Q=bottom_idx;Q<=top_idx;Q+=2){
-			if (costs[Q].TOTAL<costs[min_idx].TOTAL)
-				min_idx=Q;
+		for ( int q=bottom_idx ; q<=top_idx ; q+=2 )
+        {
+			if ( costs[q].TOTAL < costs[min_idx].TOTAL )
+				min_idx = q;
 		}
 
  		//finally use 1/2 the values to get 1/4 bit accuracy
 		////////////////////////////////////////////////////		
 
 		bottom_idx=std::max(0,min_idx-1);
-		top_idx=std::min(costs.length(0)-1,min_idx+1);
-		for (int Q=bottom_idx;Q<=top_idx;Q++){
-			error_total[Q]=0.0;			
-			count0[Q]=0;
-			countPOS[Q]=0;
-			countNEG[Q]=0;			
+		top_idx=std::min(costs.Length()-1,min_idx+1);
+
+		for ( int q=bottom_idx ; q<=top_idx ; q++ )
+        {
+			error_total[q] = 0.0;			
+			count0[q] = 0;
+			countPOS[q] = 0;
+			countNEG[q] = 0;			
 		}
-		vol=float((yl/2)*xl);
-		count1=int(vol);		
-		for (int J=yp;J<yp+yl;++J){				
-			for (int I=xp+1;I<xp+xl;I+=2){				
-				val=pic_data[J][I];
-				abs_val=abs(val);
-				for (int Q=bottom_idx;Q<=top_idx;Q++){
-					quant_val=int(abs_val);					
-					quant_val*=m_qfinvlist[Q];
-					quant_val>>=17;
-					if (quant_val){
-						count0[Q]+=quant_val;
-						quant_val*=m_qflist[Q];						
-						if (val>0){
-							countPOS[Q]++;
-						}
-						else{
-							countNEG[Q]++;
-						}
+
+		vol = float( (yl/2) * xl );
+		count1 = int( vol );		
+
+		for (int j=yp ; j<yp+yl ; ++j )
+        {				
+			for (int i=xp+1 ; i<xp+xl ; i+=2)
+            {				
+				val = pic_data[j][i];
+				abs_val = abs(val);
+
+				for (int q=bottom_idx;q<=top_idx;q++)
+                {
+					quant_val = int(abs_val);					
+					quant_val *= m_qfinvlist[q];
+					quant_val >>= 17;
+
+					if (quant_val)
+                    {
+						count0[q] += quant_val;
+						quant_val *= m_qflist[q];						
+
+						if ( val > 0 )
+							countPOS[q]++;
+						else
+							countNEG[q]++;
 					}
-					error=abs_val-quant_val;
-					if (quant_val!=0)					
-						error-=m_offset[Q];
-					error*=error;
-					error_total[Q]+=float(error);
-				}//Q
-			}//J
-		}//I
+
+					error = abs_val - quant_val;
+
+					if ( quant_val != 0 )					
+						error -= m_offset[q];
+
+					error *= error;
+					error_total[q] += float(error);
+
+				}//q
+			}//i
+		}//j
 
  		//do entropy calculation		
-		for (int Q=bottom_idx;Q<=top_idx;Q++){
-			costs[Q].MSE=error_total[Q]/(vol*node.Wt()*node.Wt());
+		for ( int q=bottom_idx ; q<=top_idx ; q++ )
+        {
+			costs[q].MSE=error_total[q]/(vol*node.Wt()*node.Wt());
 
 		 	//calculate probabilities and entropy
-			p0=float(count0[Q])/float(count0[Q]+count1);
-			p1=1.0-p0;
-			if (p0!=0.0 && p1!=0.0)
-				costs[Q].ENTROPY=-(p0*log(p0)+p1*log(p1))/log(2.0);
+			p0 = float( count0[q] )/ float( count0[q]+count1 );
+			p1 = 1.0 - p0;
+
+			if ( p0 != 0.0 && p1 != 0.0)
+				costs[q].ENTROPY = -( p0*log(p0)+p1*log(p1) ) / log(2.0);
 			else
-				costs[Q].ENTROPY=0.0;
+				costs[q].ENTROPY = 0.0;
+
  		 	//we want the entropy *per symbol*, not per bit ...			
-			costs[Q].ENTROPY*=float(count0[Q]+count1);
-			costs[Q].ENTROPY/=vol;
+			costs[q].ENTROPY *= float(count0[q]+count1);
+			costs[q].ENTROPY /= vol;
 
  			//now add in the sign entropy
-			if (countPOS[Q]+countNEG[Q]!=0){
-				p0=float(countNEG[Q])/float(countPOS[Q]+countNEG[Q]);
-				p1=1.0-p0;
-				if (p0!=0.0 && p1!=0.0)
-					sign_entropy=-((p0*log(p0)+p1*log(p1))/log(2.0));
+			if ( countPOS[q] + countNEG[q] != 0 )
+            {
+				p0 = float( countNEG[q] )/float( countPOS[q]+countNEG[q] );
+				p1 = 1.0-p0;
+				if ( p0 != 0.0 && p1 != 0.0)
+					sign_entropy = -( (p0*log(p0)+p1*log(p1) ) / log(2.0));
 				else
-					sign_entropy=0.0;
+					sign_entropy = 0.0;
 			}
 			else
-				sign_entropy=0.0;	
+				sign_entropy = 0.0;	
 
  		 	//we want the entropy *per symbol*, not per bit ...
-			sign_entropy*=float(countNEG[Q]+countPOS[Q]);
-			sign_entropy/=vol;	
+			sign_entropy *= float(countNEG[q]+countPOS[q]);
+			sign_entropy /= vol;	
 
-			costs[Q].ENTROPY+=sign_entropy;
+			costs[q].ENTROPY += sign_entropy;
+
 			//sort out correction factors
-			costs[Q].ENTROPY*=m_encparams.EntropyFactors().Factor(band_num,m_fsort,m_csort);
-			costs[Q].TOTAL=costs[Q].MSE+m_lambda*costs[Q].ENTROPY;
-		}//Q
+			costs[q].ENTROPY *= m_encparams.EntropyFactors().Factor(band_num,m_fsort,m_csort);
+			costs[q].TOTAL = costs[q].MSE+m_lambda*costs[q].ENTROPY;
+
+		}//q
 
  		//find the qf with the lowest cost
-		for (int Q=bottom_idx;Q<=top_idx;Q++){
-			if (costs[Q].TOTAL<costs[min_idx].TOTAL)
-				min_idx=Q;
+		for ( int q=bottom_idx ; q<=top_idx ; q++ )
+        {
+			if ( costs[q].TOTAL < costs[min_idx].TOTAL )
+				min_idx=q;
 		}
 
-		if (costs[min_idx].ENTROPY==0.0)//then can skip after all
+		if ( costs[min_idx].ENTROPY == 0.0 )//then can skip after all
 			node.SetQf(0,-1);
 		else
 			node.SetQf(0,min_idx);
 
-		if (band_num==bands.Length()){
+		if ( band_num == bands.Length())
 			AddSubAverage(pic_data,node.Xl(),node.Yl(),ADD);
-		}
+
 		return int(costs[min_idx].ENTROPY*float(xl*yl));
 	}
 
 }
 
-ValueType CompCompressor::PicAbsMax(const PicArray& pic_data) const{
+ValueType CompCompressor::PicAbsMax(const PicArray& pic_data) const
+{
 	//finds the maximum absolute value of the picture array
-	return PicAbsMax(pic_data,pic_data.lbound(0),pic_data.lbound(1),pic_data.length(0),pic_data.length(1));
+	return PicAbsMax(pic_data,pic_data.FirstX() , pic_data.FirstY(),
+                     pic_data.LengthX(),pic_data.LengthY());
 }
 
-ValueType CompCompressor::PicAbsMax(const PicArray& pic_data,int xp, int yp ,int xl ,int yl) const{
+ValueType CompCompressor::PicAbsMax(const PicArray& pic_data,int xp, int yp ,int xl ,int yl) const
+{
 
-	int lbound0=std::max(pic_data.lbound(0),xp);	
-	int lbound1=std::max(pic_data.lbound(1),yp);	
-	int ubound0=std::min(pic_data.ubound(0),xp+xl-1);	
-	int ubound1=std::min(pic_data.ubound(1),yp+yl-1);		
+	int first_x=std::max(pic_data.FirstX(),xp);	
+	int first_y=std::max(pic_data.FirstY(),yp);	
+	int last_x=std::min(pic_data.LastX(),xp+xl-1);	
+	int last_y=std::min(pic_data.LastY(),yp+yl-1);		
 	ValueType val=0;
 
-	for (int J=lbound1;J<=ubound1;++J){
-		for (int I=lbound0;I<=ubound0;++I){	
-			val=std::max(val,pic_data[J][I]);	
-		}
-	}
+	for (int j=first_y ; j<=last_y; ++j)
+    {
+		for (int i=first_x ; i<=last_x; ++i)
+        {	
+			val = std::max( val , pic_data[j][i] );	
+		}// i
+	}// j
+
 	return val;
 }
 
 void CompCompressor::SetToVal(PicArray& pic_data,const Subband& node,ValueType val){
-	for (int J=node.Yp();J<node.Yp()+node.Yl();++J){	
-		for (int I=node.Xp();I<node.Xp()+node.Xl();++I){
-			pic_data[J][I]=val;
-		}
-	}
+
+	for (int j=node.Yp() ; j<node.Yp() + node.Yl() ; ++j)
+    {	
+		for (int i=node.Xp(); i<node.Xp() + node.Xl() ; ++i)
+        {
+			pic_data[j][i] = val;
+		}// i
+	}// j
+
 }
 
 void CompCompressor::AddSubAverage(PicArray& pic_data,int xl,int yl,AddOrSub dirn){
@@ -568,22 +632,29 @@ void CompCompressor::AddSubAverage(PicArray& pic_data,int xl,int yl,AddOrSub dir
 	ValueType last_val=2692;//corresponds to mid-grey in this DC band with these filters
 							//NB this is hard-wired for a level 4 transform
 	ValueType last_val2;
-	if (dirn==SUBTRACT){
-		for (int J=0;J<yl;J++){
-			for (int I=0;I<xl;I++){
-				last_val2=pic_data[J][I];		
-				pic_data[J][I]-=last_val;
-				last_val=last_val2;
-			}
-		}
+ 
+	if ( dirn == SUBTRACT )
+    {
+		for ( int j=0 ; j<yl ; j++)
+            {
+			for ( int i=0 ; i<xl ; i++)
+                {
+				last_val2 = pic_data[j][i];		
+				pic_data[j][i] -= last_val;
+				last_val = last_val2;
+			}// i
+		}// j
 	}
-	else{
-		for (int J=0;J<yl;J++){
-			for (int I=0;I<xl;I++){
-				pic_data[J][I]+=last_val;
-				last_val=pic_data[J][I];
-			}
-		}
+	else
+    {
+		for ( int j=0 ; j<yl ; j++)
+        {
+			for ( int i=0 ; i<xl; i++ )
+            {
+				pic_data[j][i] += last_val;
+				last_val = pic_data[j][i];
+			}// i
+		}// j
 
 	}
 }

@@ -62,21 +62,24 @@ void BMParams::Init(int M, int N)
 	yl=bp.Yblen()-yp+ypos;
 
  	//constrain block lengths to fall within the picture
-	xl=((xp+xl-1)>(pic_data->ubound(0)))?(pic_data->ubound(0)+1-xp):xl;
-	yl=((yp+yl-1)>(pic_data->ubound(1)))?(pic_data->ubound(1)+1-yp):yl;
+	xl=( (xp+xl-1) > (pic_data->LastX()) ) ? (pic_data->LastX()+1-xp) : xl;
+	yl=( (yp+yl-1) > (pic_data->LastY()) ) ? (pic_data->LastY()+1-yp) : yl;
 	me_lambda/=(bp.Xblen()*bp.Yblen());
 	me_lambda*=(xl*yl);//if I've shrunk the block I need to shrink the weight I apply to the entropy measure	
 }
 
 void SimpleBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv){
 
-	TwoDArray<ValueType> diff(dparams.xl,dparams.yl);	
+	TwoDArray<ValueType> diff(dparams.yl , dparams.xl);	
 	float sum=dparams.start_val;
-	for (int J=dparams.yp,L=0;J!=dparams.yp+dparams.yl;++J,++L){
-		for(int I=dparams.xp,K=0;I!=dparams.xp+dparams.xl;++I,++K){
-			diff[L][K]=(*pic_data)[J][I]-(*ref_data)[J+mv.y][I+mv.x];
-		}
-	}
+	for (int J=dparams.yp , L=0 ; J != dparams.yp+dparams.yl ; ++J , ++L )
+    {
+		for(int I=dparams.xp , K=0 ; I!= dparams.xp+dparams.xl ; ++I , ++K )
+        {
+			diff[L][K] = (*pic_data)[J][I]-(*ref_data)[J+mv.y][I+mv.x];
+		}// I, K
+	}// J, L
+
 	if (dparams.bailout){//I'm allowed to bail out early if I can
 		for (int J=0;J!=dparams.yl;++J){
 			for(int I=0;I!=dparams.xl;++I){
@@ -109,9 +112,9 @@ void SimpleBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv){
 
 void BChkBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv){
 
-	const int xmax=ref_data->length(0);
-	const int ymax=ref_data->length(1);
-	TwoDArray<ValueType> diff(dparams.xl,dparams.yl);
+	const int xmax=ref_data->LengthX();
+	const int ymax=ref_data->LengthY();
+	TwoDArray<ValueType> diff(dparams.yl , dparams.xl);
 	float sum=dparams.start_val;
 	for (int J=dparams.yp,L=0;J!=dparams.yp+dparams.yl;++J,++L){
 		for(int I=dparams.xp,K=0;I!=dparams.xp+dparams.xl;++I,++K){
@@ -171,7 +174,7 @@ void IntraBlockDiff::Diff(BlockDiffParams& dparams,ValueType dc_pred,float loc_l
 
 void BiSimpleBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2){
 
-	TwoDArray<ValueType> diff(dparams.xl,dparams.yl);
+	TwoDArray<ValueType> diff(dparams.yl , dparams.xl);
 
 	dparams.cost.mvcost=dparams.start_val;
 	dparams.cost.SAD=0.0;
@@ -192,9 +195,12 @@ void BiSimpleBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv1,const 
 
 void BiBChkBlockDiff::Diff(BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2){
 
-	TwoDArray<ValueType> diff(dparams.xl,dparams.yl);
-	const int xmax1=ref_data->length(0); int ymax1=ref_data->length(1);
-	const int xmax2=ref_data2->length(0);	int ymax2=ref_data2->length(1);
+	TwoDArray<ValueType> diff(dparams.yl , dparams.xl);
+	const int xmax1=ref_data->LengthX();
+    int ymax1=ref_data->LengthY();
+
+	const int xmax2=ref_data2->LengthX();
+	int ymax2=ref_data2->LengthY();
 
 	dparams.cost.mvcost=dparams.start_val;
 	dparams.cost.SAD=0.0;
@@ -266,8 +272,8 @@ void SimpleBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv){
 void BChkBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv){
 
 	//the picture sizes
-	const int DoubleXdim=ref_data->length(0);
-	const int DoubleYdim=ref_data->length(1);
+	const int DoubleXdim=ref_data->LengthX();
+	const int DoubleYdim=ref_data->LengthY();
 
 	//Coordinates in the image being written to
 	const ImageCoords StartPos(dparams.xp,dparams.yp);
@@ -370,12 +376,12 @@ void BiSimpleBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv1, con
 void BiBChkBlockDiffUp::Diff(BlockDiffParams& dparams, const MVector& mv1, const MVector& mv2){
 
 	//as above, but with bounds checking
-	const int xmax1=ref_data->length(0); 
-	const int ymax1=ref_data->length(1);
-	const int xmax2=ref_data2->length(0); 
-	const int ymax2=ref_data2->length(1);	
+	const int xmax1=ref_data->LengthX(); 
+	const int ymax1=ref_data->LengthY();
+	const int xmax2=ref_data2->LengthX(); 
+	const int ymax2=ref_data2->LengthY();	
 
-		//the start and end points in the current frame
+    //the start and end points in the current frame
 	const ImageCoords StartPos(dparams.xp,dparams.yp);//Coordinates in the current image
 	const ImageCoords EndPos(StartPos.x+dparams.xl,StartPos.y+dparams.yl);	
 

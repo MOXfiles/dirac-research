@@ -55,7 +55,8 @@
     writing a header once the subsequent data has been obtained. Implementation to be reviewed in
     future. TJD 13 April 2004.
 */
-class BasicOutputManager{
+class BasicOutputManager
+{
     public:
         //! Constructor
         /*!
@@ -135,7 +136,9 @@ class BasicOutputManager{
 /*!
 A class for handling data output, including headers and reordering.
 */
-class BitOutputManager{
+class BitOutputManager
+{
+
     public:
         //! Constructor.
         /*!
@@ -208,7 +211,8 @@ class BitOutputManager{
 ///////////////////////////////////////////////
 
 //! A class for managing bit-wise and byte-wise input. 
-class BitInputManager{
+class BitInputManager
+{
 
     public:
         //! Constructor. 

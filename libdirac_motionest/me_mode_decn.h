@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -38,8 +38,8 @@
 #ifndef _ME_MODE_DECN_H_
 #define _ME_MODE_DECN_H_
 
-#include "libdirac_common/motion.h"
-#include "libdirac_motionest/block_match.h"
+#include <libdirac_common/motion.h>
+#include <libdirac_motionest/block_match.h>
 
 class FrameBuffer;
 
@@ -53,7 +53,8 @@ class FrameBuffer;
 	only from reference 1). In deciding which modes to adopt, the ModeDecider object calculates costs for all
 	permutations, doing motion estimation for the level 1 and level 0 modes as these have not been calculated before.
  */
-class ModeDecider{
+class ModeDecider
+{
 
 public:
 	//! Constructor

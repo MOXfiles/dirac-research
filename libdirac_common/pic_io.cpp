@@ -370,7 +370,7 @@ bool PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
         }//I
 
         //pad the columns on the rhs using the edge value        
-        for (int i=xl ; i<pic_data.length(0) ; ++i ){
+        for (int i=xl ; i<pic_data.LengthX() ; ++i ){
             pic_data[j][i] = pic_data[j][xl-1];
         }//I
 
@@ -379,9 +379,9 @@ bool PicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
     delete [] temp;
 
     //now do the padded lines, using the last true line
-    for (int j=yl ; j<pic_data.length(1) ; ++j )
+    for (int j=yl ; j<pic_data.LengthY() ; ++j )
     {
-        for (int i=0 ; i<pic_data.length(0) ; ++i )
+        for (int i=0 ; i<pic_data.LengthX() ; ++i )
         {
             pic_data[j][i] = pic_data[yl-1][i];
         }//I

@@ -20,7 +20,8 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Richard Felton (Original Author),
+*                 Thomas Davies
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -38,7 +39,7 @@
 #ifndef _DOWNCONVERT_H_
 #define _DOWNCONVERT_H_
 
-#include "libdirac_common/common.h"
+#include <libdirac_common/common.h>
 
 //! A class for fast downconversion of picture data
 /*!

@@ -39,7 +39,7 @@
 #ifndef _GOLOMB_H_
 #define _GOLOMB_H_
 
-#include "libdirac_common/bit_manager.h"
+#include <libdirac_common/bit_manager.h>
 
 //exp-golomb coding and decoding
 

@@ -78,89 +78,89 @@ enum WltFilter { DAUB , HAAR };
 //! Contexts used for coefficient coding
 enum CtxAliases
 {//used for residual coding
-	SIGN0_CTX,          //0     -sign, previous symbol is 0
-	SIGN_POS_CTX,       //1     -sign, previous symbol is +ve
-	SIGN_NEG_CTX,       //2     -sign, previous symbol is -ve
+    SIGN0_CTX,          //0     -sign, previous symbol is 0
+    SIGN_POS_CTX,       //1     -sign, previous symbol is +ve
+    SIGN_NEG_CTX,       //2     -sign, previous symbol is -ve
 
 
-	Z_BIN1z_CTX,        //3     -bin 1, parent is zero, neighbours zero
-	Z_BIN1nz_CTX,       //4     -bin 1, parent is zero, neighbours non-zero
-	Z_BIN2_CTX,         //5     -bin 2, parent is zero
-	Z_BIN3_CTX,         //6     -bin 3, parent is zero
-	Z_BIN4_CTX,         //7     -bin 4, parent is zero
-	Z_BIN5plus_CTX,     //8     -bins 5 plus, parent is zero
+    Z_BIN1z_CTX,        //3     -bin 1, parent is zero, neighbours zero
+    Z_BIN1nz_CTX,       //4     -bin 1, parent is zero, neighbours non-zero
+    Z_BIN2_CTX,         //5     -bin 2, parent is zero
+    Z_BIN3_CTX,         //6     -bin 3, parent is zero
+    Z_BIN4_CTX,         //7     -bin 4, parent is zero
+    Z_BIN5plus_CTX,     //8     -bins 5 plus, parent is zero
 
-	NZ_BIN1z_CTX,       //9     -bin 1, parent is non-zero, neighbours zero
-	NZ_BIN1a_CTX,       //10    -bin 1, parent is non-zero, neighbours small
-	NZ_BIN1b_CTX,       //11    -bin 1, parent is non-zero, neighbours large
-	NZ_BIN2_CTX,        //12    -bin 2, parent is non-zero
-	NZ_BIN3_CTX,        //13    -bin 3, parent is non-zero
-	NZ_BIN4_CTX,        //14    -bin 4, parent is non-zero
-	NZ_BIN5plus_CTX,    //15    -bins 5 plus, parent is non-zero
+    NZ_BIN1z_CTX,       //9     -bin 1, parent is non-zero, neighbours zero
+    NZ_BIN1a_CTX,       //10    -bin 1, parent is non-zero, neighbours small
+    NZ_BIN1b_CTX,       //11    -bin 1, parent is non-zero, neighbours large
+    NZ_BIN2_CTX,        //12    -bin 2, parent is non-zero
+    NZ_BIN3_CTX,        //13    -bin 3, parent is non-zero
+    NZ_BIN4_CTX,        //14    -bin 4, parent is non-zero
+    NZ_BIN5plus_CTX,    //15    -bins 5 plus, parent is non-zero
 
-	ZTz_CTX,            //16    -zerotree, neighbouring symbols are zerotree elements
-	ZTnz_CTX,           //17    -zerotree, neighbouring symbols are not zerotree elements
-	ZTzb_CTX,           //16    -zerotree, neighbouring symbols are zerotree elements
-	ZTnzb_CTX           //17    -zerotree, neighbouring symbols are not zerotree elements
+    ZTz_CTX,            //16    -zerotree, neighbouring symbols are zerotree elements
+    ZTnz_CTX,           //17    -zerotree, neighbouring symbols are not zerotree elements
+    ZTzb_CTX,           //16    -zerotree, neighbouring symbols are zerotree elements
+    ZTnzb_CTX           //17    -zerotree, neighbouring symbols are not zerotree elements
 };
 
 //! Contexts used for MV data coding
 enum MvCtxAliases
 {
 
-	YDC_BIN1_CTX,       //0     -1st bin of DC value for Y
-	YDC_BIN2plus_CTX,   //1     -remaining DC bins
-	YDC_SIGN0_CTX,      //2     -sign of Y DC value, previous value 0
-	UDC_BIN1_CTX,       //3     --ditto
-	UDC_BIN2plus_CTX,   //4     --for
-	UDC_SIGN0_CTX,      //5     --U
-	VDC_BIN1_CTX,       //6     --and
-	VDC_BIN2plus_CTX,   //7     --V
-	VDC_SIGN0_CTX,      //8     --components
+    YDC_BIN1_CTX,       //0     -1st bin of DC value for Y
+    YDC_BIN2plus_CTX,   //1     -remaining DC bins
+    YDC_SIGN0_CTX,      //2     -sign of Y DC value, previous value 0
+    UDC_BIN1_CTX,       //3     --ditto
+    UDC_BIN2plus_CTX,   //4     --for
+    UDC_SIGN0_CTX,      //5     --U
+    VDC_BIN1_CTX,       //6     --and
+    VDC_BIN2plus_CTX,   //7     --V
+    VDC_SIGN0_CTX,      //8     --components
 
-	REF1x_BIN1_CTX,     //9     -bin 1, REF1 x vals
-	REF1x_BIN2_CTX,     //10    -bin 2, REF1 x vals
-	REF1x_BIN3_CTX,     //11    -bin 3, REF1 x vals
-	REF1x_BIN4_CTX,     //12    -bin 4, REF1 x vals
-	REF1x_BIN5plus_CTX, //13    -bin 5, REF1 x vals
-	REF1x_SIGN0_CTX,    //14    -sign, REF1 x vals, previous value 0
-	REF1x_SIGNP_CTX,    //15    -sign, REF1 x vals, previous value +ve
-	REF1x_SIGNN_CTX,    //16    -sign, REF1 x vals, previous value -ve
+    REF1x_BIN1_CTX,     //9     -bin 1, REF1 x vals
+    REF1x_BIN2_CTX,     //10    -bin 2, REF1 x vals
+    REF1x_BIN3_CTX,     //11    -bin 3, REF1 x vals
+    REF1x_BIN4_CTX,     //12    -bin 4, REF1 x vals
+    REF1x_BIN5plus_CTX, //13    -bin 5, REF1 x vals
+    REF1x_SIGN0_CTX,    //14    -sign, REF1 x vals, previous value 0
+    REF1x_SIGNP_CTX,    //15    -sign, REF1 x vals, previous value +ve
+    REF1x_SIGNN_CTX,    //16    -sign, REF1 x vals, previous value -ve
 
-	REF1y_BIN1_CTX,     //17    -bin 1, REF1 y vals
-	REF1y_BIN2_CTX,     //18    -bin 2, REF1 y vals
-	REF1y_BIN3_CTX,     //19    -bin 3, REF1 y vals
-	REF1y_BIN4_CTX,     //20    -bin 4, REF1 y vals
-	REF1y_BIN5plus_CTX, //21    -bin 5, REF1 y vals
-	REF1y_SIGN0_CTX,    //22    -sign, REF1 y vals, previous value 0
-	REF1y_SIGNP_CTX,    //23    -sign, REF1 y vals, previous value +ve
-	REF1y_SIGNN_CTX,    //24    -sign, REF1 y vals, previous value -ve
+    REF1y_BIN1_CTX,     //17    -bin 1, REF1 y vals
+    REF1y_BIN2_CTX,     //18    -bin 2, REF1 y vals
+    REF1y_BIN3_CTX,     //19    -bin 3, REF1 y vals
+    REF1y_BIN4_CTX,     //20    -bin 4, REF1 y vals
+    REF1y_BIN5plus_CTX, //21    -bin 5, REF1 y vals
+    REF1y_SIGN0_CTX,    //22    -sign, REF1 y vals, previous value 0
+    REF1y_SIGNP_CTX,    //23    -sign, REF1 y vals, previous value +ve
+    REF1y_SIGNN_CTX,    //24    -sign, REF1 y vals, previous value -ve
 
-	REF2x_BIN1_CTX,     //25    -bin 1, REF2 x vals
-	REF2x_BIN2_CTX,     //26    -bin 2, REF2 x vals
-	REF2x_BIN3_CTX,     //27    -bin 3, REF2 x vals
-	REF2x_BIN4_CTX,     //28    -bin 4, REF2 x vals
-	REF2x_BIN5plus_CTX, //29    -bin 5, REF2 x vals
-	REF2x_SIGN0_CTX,    //30    -sign, REF2 x vals, previous value 0
-	REF2x_SIGNP_CTX,    //31    -sign, REF1 y vals, previous value +ve
-	REF2x_SIGNN_CTX,    //32    -sign, REF1 y vals, previous value -ve
+    REF2x_BIN1_CTX,     //25    -bin 1, REF2 x vals
+    REF2x_BIN2_CTX,     //26    -bin 2, REF2 x vals
+    REF2x_BIN3_CTX,     //27    -bin 3, REF2 x vals
+    REF2x_BIN4_CTX,     //28    -bin 4, REF2 x vals
+    REF2x_BIN5plus_CTX, //29    -bin 5, REF2 x vals
+    REF2x_SIGN0_CTX,    //30    -sign, REF2 x vals, previous value 0
+    REF2x_SIGNP_CTX,    //31    -sign, REF1 y vals, previous value +ve
+    REF2x_SIGNN_CTX,    //32    -sign, REF1 y vals, previous value -ve
 
-	REF2y_BIN1_CTX,     //33    -bin 1, REF2 y vals
-	REF2y_BIN2_CTX,     //34    -bin 2, REF2 y vals
-	REF2y_BIN3_CTX,     //35    -bin 3, REF2 y vals
-	REF2y_BIN4_CTX,     //36    -bin 4, REF2 y vals
-	REF2y_BIN5plus_CTX, //37    -bin 5, REF2 y vals
-	REF2y_SIGN0_CTX,    //38    -sign, REF2 y vals, previous value 0
-	REF2y_SIGNP_CTX,    //39    -sign, REF2 y vals, previous value +ve
-	REF2y_SIGNN_CTX,    //40    -sign, REF2 y vals, previous value -ve
+    REF2y_BIN1_CTX,     //33    -bin 1, REF2 y vals
+    REF2y_BIN2_CTX,     //34    -bin 2, REF2 y vals
+    REF2y_BIN3_CTX,     //35    -bin 3, REF2 y vals
+    REF2y_BIN4_CTX,     //36    -bin 4, REF2 y vals
+    REF2y_BIN5plus_CTX, //37    -bin 5, REF2 y vals
+    REF2y_SIGN0_CTX,    //38    -sign, REF2 y vals, previous value 0
+    REF2y_SIGNP_CTX,    //39    -sign, REF2 y vals, previous value +ve
+    REF2y_SIGNN_CTX,    //40    -sign, REF2 y vals, previous value -ve
 
-	PMODE_BIN1_CTX,     //41    -bin 1, prediction mode value
-	PMODE_BIN2_CTX,     //42    -bin 2, prediction mode value
-	PMODE_BIN3_CTX,     //43    -bin 3, prediction mode value. Bin 4 not required
+    PMODE_BIN1_CTX,     //41    -bin 1, prediction mode value
+    PMODE_BIN2_CTX,     //42    -bin 2, prediction mode value
+    PMODE_BIN3_CTX,     //43    -bin 3, prediction mode value. Bin 4 not required
 
-	MB_CMODE_CTX,       //44    -context for MB common block mode
-	MB_SPLIT_BIN1_CTX,  //45    -bin1, MB split mode vals
-	MB_SPLIT_BIN2_CTX   //46    -bin2, MB split mode vals. Bin 3 not required
+    MB_CMODE_CTX,       //44    -context for MB common block mode
+    MB_SPLIT_BIN1_CTX,  //45    -bin1, MB split mode vals
+    MB_SPLIT_BIN2_CTX   //46    -bin2, MB split mode vals. Bin 3 not required
 
 };
 
@@ -177,31 +177,32 @@ enum MvCtxAliases
  */
 class PicArray: public TwoDArray<ValueType>{
 public:
-        //! Default constructor
-        /*!
+    //! Default constructor
+    /*!
         Default constructor creates an empty array.
-        */
-	PicArray(): TwoDArray<ValueType>(){}
-        //! Constructor.
-        /*!
+    */
+    PicArray(): TwoDArray<ValueType>(){}
+
+    //! Constructor.
+    /*!
         Contructor creates a two-D array, with specified size and colour format.
-        */
-	PicArray(int xl, int yl, CompSort cs=Y_COMP);
+    */
+    PicArray(int height, int width, CompSort cs=Y_COMP);
 
-        //copy constructor and assignment= derived by inheritance
+    //copy constructor and assignment= derived by inheritance
 
-        //! Destructor
-	~PicArray(){}
+    //! Destructor
+    ~PicArray(){}
 
-	//! Return which component is stored
+    //! Return which component is stored
     const CompSort& CSort() const;
 
     //! Set the type of component being stored
-	void SetCSort(const CompSort cs);
+    void SetCSort(const CompSort cs);
 
 private:
 
-	CompSort m_csort;
+    CompSort m_csort;
 };
 
 
@@ -232,7 +233,7 @@ public:
         Constructs arrays of correction factors of size.
         /param    depth    the depth of the wavelet transform.
         */
-	EntropyCorrector(int depth);
+    EntropyCorrector(int depth);
 
         ////////////////////////////////////////////////////////////////////
         //NB: Assume default copy constructor, assignment = and destructor//
@@ -242,20 +243,20 @@ public:
         /*!
         Returns the correction factor for the band given also the type of frame and component.
         */
-	float Factor(const int bandnum, const FrameSort fsort,const CompSort c) const;
+    float Factor(const int bandnum, const FrameSort fsort,const CompSort c) const;
         //! Update the correction factors.
         /*!
         Update the factors for a given subband, component and frame type.
         /param    est_bits    the number of bits it was estimated would be used
         /param    actual_bits    the number of bits that actually were used
          */    
-	void Update(int bandnum, FrameSort fsort, CompSort c,int est_bits,int actual_bits);
+    void Update(int bandnum, FrameSort fsort, CompSort c,int est_bits,int actual_bits);
 
 private:
-	void Init();//initialises the correction factors
-	TwoDArray<float> m_Yfctrs;
-	TwoDArray<float> m_Ufctrs;
-	TwoDArray<float> m_Vfctrs;
+    void Init();//initialises the correction factors
+    TwoDArray<float> m_Yfctrs;
+    TwoDArray<float> m_Ufctrs;
+    TwoDArray<float> m_Vfctrs;
 };
 
 //! Parameters for overlapped block motion compensation
@@ -328,7 +329,7 @@ class SeqParams
 {
 public:        
     //! Default Constructor 
-	SeqParams();
+    SeqParams();
 
     ////////////////////////////////////////////////////////////////////
     //NB: Assume default copy constructor, assignment = and destructor//
@@ -376,7 +377,7 @@ public:
     //! Sets the 'top field first' flag: true if the top field comes first in time
     void SetTopFieldFirst(bool tff) {m_topfieldfirst=tff;}
 
-	//! Sets the number of frames to be displayed per second
+    //! Sets the number of frames to be displayed per second
     void SetFrameRate(int fr){m_framerate=fr;}
 
 private:
@@ -407,31 +408,31 @@ class FrameParams {
 
 public:
        //! Default constructor
-	FrameParams();
+    FrameParams();
 
        //! Constructor 
        /*!
            Frame chroma format is set Frame sort defaults to I frame.
         */    
-	FrameParams(const ChromaFormat& cf, int xlen, int ylen);
+    FrameParams(const ChromaFormat& cf, int xlen, int ylen);
 
        //! Constructor
        /*!
            Frame chroma format and frame sort are set.
         */    
-	FrameParams(const ChromaFormat& cf, const FrameSort& fs);
+    FrameParams(const ChromaFormat& cf, const FrameSort& fs);
 
        //! Constructor
         /*
             All data is derived from the sequence parameters
         */
-	FrameParams(const SeqParams& sparams);
+    FrameParams(const SeqParams& sparams);
 
            //! Constructor
         /*
             All data is derived from the sequence parameters
         */
-	FrameParams(const SeqParams& sparams, const FrameSort& fs);
+    FrameParams(const SeqParams& sparams, const FrameSort& fs);
 
     ////////////////////////////////////////////////////////////////////
     //NB: Assume default copy constructor, assignment = and destructor//
@@ -527,7 +528,7 @@ public:
 
     //! Return the number of macroblocks horizontally
     const int XNumMB() const {return m_x_num_mb;}
-	
+    
     //! Return the number of macroblocks vertically
     const int YNumMB() const {return m_y_num_mb;}
 
@@ -613,7 +614,7 @@ class EncoderParams: public CodecParams{
 
 public:
     //! Default constructor    
-	EncoderParams();
+    EncoderParams();
 
         ////////////////////////////////////////////////////////////////////
         //NB: Assume default copy constructor, assignment = and destructor//
@@ -638,7 +639,7 @@ public:
     const EntropyCorrector& EntropyFactors() const {return *m_ent_correct;}
 
     //! Return a reference to the entropy factors - we need to be able to change the values of the entropy factors in situ
-	EntropyCorrector& EntropyFactors() {return *m_ent_correct;}
+    EntropyCorrector& EntropyFactors() {return *m_ent_correct;}
 
     //!Return a reference to the bit output class
     const BitOutputManager& BitsOut() const {return *m_bit_out;}
@@ -707,9 +708,9 @@ private:
 class DecoderParams: public CodecParams{
 public:
         //! Default constructor
-	DecoderParams():
-	CodecParams(),
-	m_bit_in(0){}
+    DecoderParams():
+    CodecParams(),
+    m_bit_in(0){}
 
         ////////////////////////////////////////////////////////////////////
         //NB: Assume default copy constructor, assignment = and destructor//
@@ -717,13 +718,13 @@ public:
         ////////////////////////////////////////////////////////////////////
 
     //! Return a reference to the bit output class
-	const BitInputManager& BitsIn() const {return *m_bit_in;}
+    const BitInputManager& BitsIn() const {return *m_bit_in;}
 
     //! Return a reference to the bit output class - we need to output, so non-const
-	BitInputManager& BitsIn() {return *m_bit_in;}
+    BitInputManager& BitsIn() {return *m_bit_in;}
 
     //! Sets the bit input - TBD: set this up in a constructor and pass decoder params around entirely by reference
-	void SetBitsIn(BitInputManager* bi){m_bit_in=bi;}
+    void SetBitsIn(BitInputManager* bi){m_bit_in=bi;}
 
 private:        
     //! Pointer to the bitstream input manager
@@ -732,9 +733,9 @@ private:
 
 //! A simple bounds checking function, very useful in a number of places
 inline ValueType BChk(const ValueType &num, const ValueType &max){
-	if(num < 0) return 0;
-	else if(num >= max) return max-1;
-	else return num;
+    if(num < 0) return 0;
+    else if(num >= max) return max-1;
+    else return num;
 }
 
 #endif

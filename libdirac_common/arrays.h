@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -50,21 +50,25 @@ typedef int CalcValueType;
 
 //! Range type. 
 /*!
-	Range type encapsulating a closed range of values [first,last]. Used to initialies OneDArrays.
+    Range type encapsulating a closed range of values [first,last]. Used to initialies OneDArrays.
  */
-class Range{
+class Range
+{
 public:
-	//! Constructor
+    //! Constructor
     /*!
-		Constructor taking a start and an end point for the range.
+        Constructor taking a start and an end point for the range.
      */
-	Range(int s, int e):fst(s),lst(e){}
-	//! Returns the start of the range.
-	const int first() const {return fst;}
-	//! Returns the end point of the range.
-	const int last() const {return lst;}
+    Range(int s, int e): m_fst(s), m_lst(e){}
+
+    //! Returns the start of the range.
+    const int First() const {return m_fst;}
+
+    //! Returns the end point of the range.
+    const int Last() const {return m_lst;}
+
 private:
-	int fst,lst;
+    int m_fst ,m_lst;
 };
 
 //////////////////////////////
@@ -73,184 +77,186 @@ private:
 
 //! A template class for one-dimensional arrays.
 /*!
-	A template class for one-D arrays. Can be used wherever built-in arrays are used, and 
-	eliminates the need for explicit memory (de-)allocation. Also supports arrays not 
-	based at zero.
+    A template class for one-D arrays. Can be used wherever built-in arrays are used, and 
+    eliminates the need for explicit memory (de-)allocation. Also supports arrays not 
+    based at zero.
  */
-template <class T> class OneDArray{
+template <class T> class OneDArray
+{
 public:
     //! Default constructor.
     /*!
-		Default constructor produces an empty array.
-     */	
-	OneDArray(){Init(0);}
+        Default constructor produces an empty array.
+     */    
+    OneDArray();
 
     //! 'Length' constructor.
     /*!
-		Length constructor produces a zero-based array.
-     */	
-	OneDArray(int len){Init(len);}
+        Length constructor produces a zero-based array.
+     */    
+    OneDArray(const int len);
 
    //! Range constructor
     /*!
-		Range constructor produces an array with values indexed within the range parameters.
-		/param	r	a range of indexing values.
-     */		
-	OneDArray(Range r){Init(r);}
+        Range constructor produces an array with values indexed within the range parameters.
+        /param    r    a range of indexing values.
+     */        
+    OneDArray(const Range& r);
 
-	//! Destructor.
+    //! Destructor.
     /*!
-		Destructor frees the data allocated in the constructors.
+        Destructor frees the data allocated in the constructors.
      */
-	~OneDArray(){
-		FreePtr();
-	}
+    ~OneDArray()
+    {
+        FreePtr();
+    }
 
-	//! Copy constructor.
+    //! Copy constructor.
     /*!
-		Copy constructor copies both data and metadata.
+        Copy constructor copies both data and metadata.
      */
-	OneDArray(const OneDArray<T>& Cpy);
+    OneDArray(const OneDArray<T>& cpy);
 
-	//! Assignment=
+    //! Assignment=
     /*!
-		Assignment= assigns both data and metadata.
+        Assignment= assigns both data and metadata.
      */
-	OneDArray<T>& operator=(const OneDArray<T>& rhs);	
+    OneDArray<T>& operator=(const OneDArray<T>& rhs);    
 
-	//! Resize the array, throwing away the current data.
-	void resize(int l);
+    //! Resize the array, throwing away the current data.
+    void Resize(int l);
 
-	//! Element access.
-	T& operator[](int pos){return ptr[pos-fst];}
+    //! Element access.
+    T& operator[](const int pos){return m_ptr[pos-m_first];}
 
-	//! Element access.
-	const T& operator[](int pos) const {return ptr[pos-fst];}
+    //! Element access.
+    const T& operator[](const int pos) const {return m_ptr[pos-m_first];}
 
-    //! Returns the length of the array if n=0, 0 otherwise.
-	int length(const int n)const {if (n==0) return l; else return 0;}
+    //! Returns the length of the array.    
+    int Length() const {return m_length;}
 
-    //! Returns the length of the array.	
-	int length() const {return l;}
+    //! Returns the index of the first element.    
+    int First() const {return m_first;}
 
-    //! Returns the index of the first element if n=0, 0 otherwise.	
-	int first(const int n) const {if (n==0) return fst; else return 0;}
+    //! Returns the index of the last element.    
+    int Last() const {return m_last;}
 
-    //! Returns the index of the first element.	
-	int first() const {return fst;}
-
-    //! Returns the index of the first element, Blitz-style.	
-	int lbound(const int n) const {return first(n);}
-
-    //! Returns the index of the last element if n=0, 0 otherwise.	
-	int last(const int n) const {if (n==0) return lst; else return -1;}
-
-    //! Returns the index of the last element.	
-	int last() const {return lst;}
-
-    //! Returns the index of the last element, Blitz-style.
-	int ubound(const int n) const {return last(n);}	
 private:
-	void Init(int len);
-	void Init(Range r);
-	void FreePtr();	
+    void Init(const int len);
 
-	std::allocator<T> alloc;
-	int fst, lst;
-	int l;
-	T* ptr;
+    void Init(const Range& r);
+
+    void FreePtr();    
+
+    int m_first, m_last;
+    int m_length;
+    T* m_ptr;
 };
 
 //public member functions//
 ///////////////////////////
 
 template <class T>
-OneDArray<T>::OneDArray(const OneDArray<T>& Cpy){
-	fst=Cpy.fst;
-	lst=Cpy.lst;
-	l=lst-fst+1;
-
-	if (fst==0)		
-		Init(l);
-	else
-		Init(Range(fst,lst));
-	for (int I=0;I<l;++I)
-		*(ptr+I)=*(Cpy.ptr+I);
+OneDArray<T>::OneDArray()
+{
+    Init(0);
 }
 
 template <class T>
-OneDArray<T>& OneDArray<T>::operator=(const OneDArray<T>& rhs){
-	if (&rhs!=this){
-		FreePtr();
-		fst=rhs.fst;
-		lst=rhs.lst;
-		l=rhs.l;			
-		if (fst==0)
-			Init(l);
-		else
-			Init(Range(fst,lst));
-		for (int I=0;I<l;++I)
-			*(ptr+I)=*(rhs.ptr+I);			
+OneDArray<T>::OneDArray(const int len)
+{
+    Init(len);
+}
 
-	}
-	return *this;
+template <class T>
+OneDArray<T>::OneDArray(const Range& r)
+{
+    Init(r);
+}
+
+template <class T>
+OneDArray<T>::OneDArray(const OneDArray<T>& cpy)
+{
+    m_first = cpy.m_first;
+    m_last = cpy.m_last;
+    m_length = m_last - m_first + 1;
+
+    if (m_first==0)        
+        Init(m_length);
+    else
+        Init(Range(m_first , m_last));
+
+    for (int i=0 ; i<m_length ; ++i)
+        *(m_ptr+i) = *(cpy.m_ptr+i);
+}
+
+template <class T>
+OneDArray<T>& OneDArray<T>::operator=(const OneDArray<T>& rhs)
+{
+    if (&rhs != this)
+    {
+        FreePtr();
+        m_first = rhs.m_first;
+        m_last = rhs.m_last;
+        m_length = rhs.m_length;            
+
+        if (m_first == 0)
+            Init(m_length);
+        else
+            Init(Range(m_first , m_last));
+
+        for (int i=0 ; i<m_length ; ++i)
+            *(m_ptr+i) = *(rhs.m_ptr+i);            
+
+    }
+    return *this;
 }
 
 template <class T> 
-void OneDArray<T>::resize(int l){	
-	FreePtr();
-	Init(l);
+void OneDArray<T>::Resize(int l)
+{    
+    FreePtr();
+    Init(l);
 }
 
 //private member functions//
 ////////////////////////////
 
 template <class T>
-void OneDArray<T>::Init(int len)
+void OneDArray<T>::Init(const int len)
 {
-	l=len;
-	fst=0;
-	lst=l-1;
-	if (l>0)
-	{
-		ptr=alloc.allocate(l);
-	}
-	else {
-		l=0;
-		fst=0;
-		lst=-1;
-	}
-}		
+    Range r(0 , len-1);
+
+    Init(r);
+
+}        
 
 template <class T>
-void OneDArray<T>::Init(Range r)
+void OneDArray<T>::Init(const Range& r)
 {
-	T tmp_val;
-	fst=r.first();
-	lst=r.last();
-	l=lst-fst+1; 
-	if (l>0){
-		ptr=alloc.allocate(l);
-		std::uninitialized_fill(ptr,ptr+l,tmp_val);
-	}
-	else {
-		l=0;
-		fst=0;
-		lst=-1;
-	}
+
+    m_first = r.First();
+    m_last = r.Last();
+    m_length = m_last - m_first + 1; 
+
+    if ( m_length>0 ) 
+    {
+        m_ptr = new T[ m_length ];
+    }
+    else 
+    {
+        m_length = 0;
+        m_first = 0;
+        m_last = -1;
+    }
 }
 
 template <class T>
 void OneDArray<T>::FreePtr()
 {
-	if (l>0)
-	{
-		int I=l;
-		while (I!=0)
-			alloc.destroy(&ptr[--I]);
-		alloc.deallocate(ptr,l);		
-
-	}
+    if ( m_length>0 )
+        delete[] m_ptr;
 }
 
 
@@ -260,201 +266,236 @@ void OneDArray<T>::FreePtr()
 
 //! A template class for two-dimensional arrays.
 /*!
-	A template class to do two-d arrays, so that explicit memory (de-)allocation is not required. Only
-	zero-based arrays are currently supported so that access is fast. The array is viewed as a 
-	(vertical) array of (horizontal) arrays. Accessing elements along a row is therefore much faster
-	than accessing them along a column.
+    A template class to do two-d arrays, so that explicit memory (de-)allocation is not required. Only
+    zero-based arrays are currently supported so that access is fast. The array is viewed as a 
+    (vertical) array of (horizontal) arrays. Accessing elements along a row is therefore much faster
+    than accessing them along a column.
  */
-template <class T> class TwoDArray{
-	typedef T* element_type;
+template <class T> class TwoDArray
+{
+    typedef T* element_type;
+
 public:
 
     //! Default constructor.
     /*!
-		Default constructor creates an empty array.
-     */	
-	TwoDArray(){Init(0,0);}
+        Default constructor creates an empty array.
+     */    
+    TwoDArray(){ Init(0,0); }
 
     //! Constructor.
     /*!
-		The constructor creates an array of width /param len0 and length /param len1.
-     */	
-	TwoDArray(int len0,int len1){Init(len0,len1);}
+        The constructor creates an array of width /param len0 and length /param len1.
+     */    
+    TwoDArray(const int height,const int width){Init(height , width);}
 
-    //! Destructor.
+    //! Destructor
     /*!
-		Destructor frees the data allocated in the constructor.
-     */	
-	virtual ~TwoDArray(){
-		FreeData();	
-	}
+        Destructor frees the data allocated in the constructor.
+     */    
+    virtual ~TwoDArray(){
+        FreeData();    
+    }
 
     //! Copy constructor.
     /*!
-		Copy constructor copies data and metadata.
-     */	
-	TwoDArray(const TwoDArray<T>& Cpy);
+        Copy constructor copies data and metadata.
+     */    
+    TwoDArray(const TwoDArray<T>& Cpy);
 
     //! Assignment =
     /*!
-		Assignement = assigns both data and metadata.
-     */	
-	TwoDArray<T>& operator=(const TwoDArray<T>& rhs);
+        Assignement = assigns both data and metadata.
+     */    
+    TwoDArray<T>& operator=(const TwoDArray<T>& rhs);
 
-    //! Resizes the array, deleting the current data.	
-	void resize(int len0, int len1);	
+    //! Resizes the array, deleting the current data.    
+    void Resize(const int height, const int width);    
 
     //! Element access.
     /*!
-		Accesses the rows of the arrays, which are returned in the form of pointers to the row data
-		NOT OneDArray objects.
-     */	
-	inline element_type& operator[](const int pos){return array_of_rows[pos];}
+        Accesses the rows of the arrays, which are returned in the form of pointers to the row data
+        NOT OneDArray objects.
+     */    
+    element_type& operator[](const int pos){return m_array_of_rows[pos];}
 
-   //! Element access.
+    //! Element access.
     /*!
-		Accesses the rows of the arrays, which are returned in the form of pointers to the row data
-		NOT OneDArray objects.
-     */	
-	inline const element_type& operator[](const int pos) const {return array_of_rows[pos];}
+        Accesses the rows of the arrays, which are returned in the form of pointers to the row data
+        NOT OneDArray objects.
+     */    
+    const element_type& operator[](const int pos) const {return m_array_of_rows[pos];}
 
-    //! Returns the raw data [deprecated]	
-	inline T**& data(){return array_of_rows;}
+    //! Returns the width
+    const int LengthX() const { return m_length_x; }
 
-    //! Returns the width if n=0, the height if n=1, 0 otherwise.	
-	int length(const int n) const {
-		if (n==0) return l0; 
-		else if (n==1) return l1;
-		else return 0;}
+    //! Returns the height
+    const int LengthY() const { return m_length_y; }
 
-    //! Returns the index of the first element of a row/column (n=0/1) or 0 (n>1)	
-	int first(const int n) const {
-		if (n==0) return first0;
-		else if (n==1) return first1; 
-		else return 0;}
+    //! Returns the index of the first element of a row
+    const int FirstX() const { return m_first_x; } 
 
-    //! Returns the index of the first element of a row/column (n=0/1) or 0 (n>1), Blitz style.	
-	int lbound(const int n) const {return first(n);}
+    //! Returns the index of the first element of a column
+    const int FirstY() const { return m_first_y; } 
 
-    //! Returns the index of the last element of a row/column (n=0/1) or 0 (n>1)	
-	int last(const int n) const {
-		if (n==0) return last0;
-		else if (n==1) return last1; 
-		else return -1;}
+    //! Returns the index of the last element of a row
+    const int LastX() const { return m_last_x; } 
 
-    //! Returns the index of the last element of a row/column (n=0/1) or 0 (n>1), Blitz style.	
-	int ubound(const int n) const {return last(n);}	
+    //! Returns the index of the first element of a column
+    const int LastY() const { return m_last_y; } 
 
 private:
-	void Init(int len0,int len1);
-	void FreeData();	
+    //! Initialise the array
+    void Init(const int height,const int width);
 
-	std::allocator<element_type> alloc;	
-	int first0,first1,last0,last1;
-	int l0,l1;
-	element_type* array_of_rows;
+    //! Free all the allocated data
+    void FreeData();    
+
+    int m_first_x;
+    int m_first_y;
+
+    int m_last_x;
+    int m_last_y;
+
+    int m_length_x;
+    int m_length_y;
+
+    element_type* m_array_of_rows;
 };
 
 //public member functions//
 ///////////////////////////
 
 template <class T>
-TwoDArray<T>::TwoDArray(const TwoDArray<T>& Cpy){
-	first0=Cpy.first0;
-	first1=Cpy.first1;		
-	last0=Cpy.last0;
-	last1=Cpy.last1;		
-	l0=last0-first0+1;
-	l1=last1-first1+1;		
-	if (first0==0 && first1==0)		
-		Init(l0,l1);
-	else{
-			//based 2D arrays not yet supported	
-	}
-	for (int J=0;J<l1;++J){
-		for (int I=0;I<l0;++I){
-			*(array_of_rows[J]+I)=*((Cpy.array_of_rows)[J]+I);	
-		}				
-	}
+TwoDArray<T>::TwoDArray(const TwoDArray<T>& Cpy)
+{
+    m_first_x = Cpy.m_first_x;
+    m_first_y = Cpy.m_first_y;        
+    m_last_x = Cpy.m_last_x;
+    m_last_y = Cpy.m_last_y;
+
+    m_length_x = m_last_x - m_first_x + 1;
+    m_length_y = m_last_y - m_first_y + 1;        
+
+    if (m_first_x == 0 && m_first_y == 0)        
+        Init(m_length_y , m_length_x);
+    else{
+            //based 2D arrays not yet supported    
+    }
+    for (int j=0 ; j<m_length_y ; ++j) 
+    {
+        for (int i=0 ; i<m_length_x ; ++i)
+        {
+            *(m_array_of_rows[j] + i) = *( (Cpy.m_array_of_rows)[j] + i );    
+        }// i
+    }// j
+
 }
 
 template <class T>
 TwoDArray<T>& TwoDArray<T>::operator=(const TwoDArray<T>& rhs){
-	if (&rhs!=this){
-		FreeData();
+    if (&rhs != this)
+    {
+        FreeData();
 
-		first0 = rhs.first0;
-		first1 = rhs.first1;			
+        m_first_x = rhs.m_first_x;
+        m_first_y = rhs.m_first_y;            
 
-		last0 = rhs.last0;
-		last1 = rhs.last1;
-		l0 = last0-first0+1;
-		l1 = last1-first1+1;		
-		if (first0 == 0 && first1 == 0)
-			Init(l0,l1);
-		else{
-				//based 2D arrays not yet supported
-		}
-		for (int J=0;J<l1;++J){
-			for (int I=0;I<l0;++I){
-				*(array_of_rows[J]+I)=*((rhs.array_of_rows)[J]+I);	
-			}				
-		}
-	}
-	return *this;
+        m_last_x = rhs.m_last_x;
+        m_last_y = rhs.m_last_y;
+
+        m_length_x = m_last_x - m_first_x + 1;
+        m_length_y = m_last_y - m_first_y + 1;        
+
+        if (m_first_x == 0 && m_first_y == 0)
+            Init(m_length_y , m_length_x);
+        else
+        {
+                //based 2D arrays not yet supported
+        }
+
+        for ( int j=0 ; j<m_length_y; ++j)
+        {
+            for ( int i=0; i<m_length_x ; ++i)
+            {
+                *(m_array_of_rows[j] + i ) = *( (rhs.m_array_of_rows)[j] + i );
+            }                
+        }
+    }
+
+    return *this;
+
 }
 
 template <class T>
-void TwoDArray<T>::resize(int len0, int len1){
-	FreeData();
-	Init(len0,len1);
+void TwoDArray<T>::Resize(const int height, const int width)
+{
+    FreeData();
+    Init(height , width);
 }
 
 //private member functions//
 ////////////////////////////
 
 template <class T>
-void TwoDArray<T>::Init(int len0,int len1){
-	l0=len0; l1=len1;
-	first0=0;first1=0;
-	last0=l0-1;last1=l1-1;
-	if (l1>0)
-	{
-		array_of_rows=alloc.allocate(l1);
-		if (l0>0){
-			for (int J=0;J<l1;++J){
-				array_of_rows[J]=new T[l0];
-			}
-		}
-		else{
-			l0=0;
-			first0=0;
-			last0=-1;
-		}
-	}
-	else {
-		l0=0;l1=0;
-		first0=0;first1=0;
-		last0=-1;last1=-1;
-	}
+void TwoDArray<T>::Init(const int height , const int width)
+{
+    m_length_x = width; 
+    m_length_y = height;
+    m_first_x = 0;
+    m_first_y = 0;
+
+    m_last_x = m_length_x-1;
+    m_last_y = m_length_y-1;
+
+    if (m_length_y>0)
+    {
+        // allocate the array containing ptrs to all the rows
+        m_array_of_rows = new element_type[ m_length_y ];
+
+        if ( m_length_x>0 )
+        {
+            // next, allocate all the rows
+            for (int j=0 ; j<m_length_y ; ++j)
+            {
+                m_array_of_rows[j] = new T[ m_length_x ];
+            }// j
+        }
+        else
+        {
+            m_length_x = 0;
+            m_first_x = 0;
+            m_last_x = -1;
+        }
+    }
+    else 
+    {
+        m_length_x = 0;
+        m_length_y = 0;
+        m_first_x = 0;
+        m_first_y = 0;
+        m_last_x = -1;
+        m_last_y = -1;
+    }
 }
 
 template <class T>
-void TwoDArray<T>::FreeData(){
-	if (l1>0)
-	{
-		if (l0>0) 
-		{
-			for (int J=0 ; J<l1 ; ++J)
-			{
-				delete[] array_of_rows[J];
-			}//J
-		}
-		int I=l1;
-		while (I!=0)
-			alloc.destroy(&array_of_rows[--I]);
-		alloc.deallocate(array_of_rows,l1);
-	}	
+void TwoDArray<T>::FreeData()
+{
+    if (m_length_y>0)
+    {
+        if (m_length_x>0) 
+        {
+            // deallocate each row
+            for (int j=0 ; j<m_length_y ; ++j)
+            {
+                delete[]  m_array_of_rows[j];                
+            }// j
+        }
+
+        // deallocate the array of rows
+        delete[] m_array_of_rows;
+    }    
 }
 
 #endif

@@ -46,58 +46,68 @@ using std::vector;
 ////////////////
 
 //Constructor
-BasicOutputManager::BasicOutputManager(std::ostream* out_data )
-: m_num_out_bytes(0),
-  m_op_ptr(out_data)
+BasicOutputManager::BasicOutputManager(std::ostream* out_data ):
+    m_num_out_bytes(0),
+    m_op_ptr(out_data)
 {
     InitOutputStream();
 }
 
-void BasicOutputManager::InitOutputStream() {
-    m_current_byte= 0;    // Set byte pointer to start of buffer
+void BasicOutputManager::InitOutputStream()
+{
+    m_current_byte = 0;    // Set byte pointer to start of buffer
     m_output_mask = 0x80; // Set output mask to MSB of byte
     m_buffer.clear();    //reset the output buffer
 }
 
-void BasicOutputManager::OutputBit(const bool& bit ){
+void BasicOutputManager::OutputBit(const bool& bit )
+{
     m_current_byte|=(bit? (m_output_mask):0);
     m_output_mask >>= 1; // Shift mask to next bit in the output byte
 
-    if ( m_output_mask == 0 ){ //if a whole byte has been written, write out
+    if ( m_output_mask == 0 )
+    { //if a whole byte has been written, write out
         m_output_mask = 0x80;
         m_buffer.push_back(m_current_byte);
-        m_current_byte= 0;
+        m_current_byte = 0;
     }    
 }
 
-void BasicOutputManager::OutputBit(const bool& bit, int& count){
+void BasicOutputManager::OutputBit(const bool& bit, int& count)
+{
     OutputBit(bit);
     count++;    
 }
 
-void BasicOutputManager::OutputByte(const char& byte){
+void BasicOutputManager::OutputByte(const char& byte)
+{
     FlushOutput();
     m_buffer.push_back(byte);    
 }
 
-void BasicOutputManager::OutputBytes(char* str_array){
+void BasicOutputManager::OutputBytes(char* str_array)
+{
     FlushOutput();
-    while (*str_array!=0){
+    while (*str_array!=0)
+    {
         m_buffer.push_back(*str_array);
         str_array++;
     }
 }
 
-void BasicOutputManager::OutputBytes(char* str_array,int num){
+void BasicOutputManager::OutputBytes(char* str_array,int num)
+{
     FlushOutput();
-    for (int I=0;I<num;++I)
-        m_buffer.push_back(str_array[I]);
+    for ( int i=0 ; i<num ; ++i )
+        m_buffer.push_back( str_array[i] );
 }
 
 
-void BasicOutputManager::WriteToFile(){
+void BasicOutputManager::WriteToFile()
+{
     FlushOutput();
-    for (vector<char>::iterator it=m_buffer.begin();it!=m_buffer.end();++it){
+    for ( vector<char>::iterator it=m_buffer.begin() ; it!=m_buffer.end() ; ++it )
+    {
         m_op_ptr->write(&(*it),1);        
     }
     m_num_out_bytes=m_buffer.size();
@@ -113,8 +123,7 @@ void BasicOutputManager::FlushOutput(){
     }
 }
 
-BitOutputManager::BitOutputManager(std::ostream* out_data )
-: 
+BitOutputManager::BitOutputManager(std::ostream* out_data ):
     m_header(out_data),
     m_data(out_data),
     m_total_bytes(0),
@@ -129,10 +138,13 @@ void BitOutputManager::WriteToFile()
 {
     m_header.WriteToFile();
     m_data.WriteToFile();
-    //after writing to file, get the number of unit bytes written
+    
+    // after writing to file, get the number of unit bytes written
     m_unit_data_bytes=m_data.GetNumBytes();
     m_unit_head_bytes=m_header.GetNumBytes();
     m_unit_bytes=m_unit_data_bytes+m_unit_head_bytes;
+
+    // increment the total numbers of bytes
     m_total_data_bytes+=m_unit_data_bytes;
     m_total_head_bytes+=m_unit_head_bytes;
     m_total_bytes+=m_unit_bytes;
@@ -144,34 +156,43 @@ void BitOutputManager::WriteToFile()
 ////////////////
 
 //Constructor
-BitInputManager::BitInputManager(std::istream* in_data )
-: m_ip_ptr(in_data)
+BitInputManager::BitInputManager(std::istream* in_data ):
+    m_ip_ptr(in_data)
 {
     InitInputStream();
 }
 
 
-void BitInputManager::InitInputStream(){
+void BitInputManager::InitInputStream()
+{
     m_input_bits_left = 0;
 }
 
-bool BitInputManager::InputBit(){
+bool BitInputManager::InputBit()
+{
     //assumes mode errors will be caught by iostream class    
-    if (m_input_bits_left == 0){
+
+    if (m_input_bits_left == 0)
+    {
         m_ip_ptr->read(&m_current_byte,1);
         m_input_bits_left = 8;
     }
+
     m_input_bits_left--;
+
     return bool( ( m_current_byte >> m_input_bits_left ) & 1 );
+
 }
 
-bool BitInputManager::InputBit(int& count){
+bool BitInputManager::InputBit(int& count)
+{
     count++;
     return InputBit();
 }
 
-bool BitInputManager::InputBit(int& count, const int max_count){
-    if (count<max_count)
+bool BitInputManager::InputBit(int& count, const int max_count)
+{
+    if ( count<max_count )
     {
         count++;
         return InputBit();
@@ -181,22 +202,28 @@ bool BitInputManager::InputBit(int& count, const int max_count){
     }
 }
 
-char BitInputManager::InputByte(){
+char BitInputManager::InputByte()
+{
     FlushInput(); //forget about what's in the current byte    
+
     char byte;
     m_ip_ptr->read(&byte,1);
+
     return byte;    
 }
 
-void BitInputManager::InputBytes(char* cptr, int num){
+void BitInputManager::InputBytes(char* cptr, int num)
+{
     FlushInput(); //forget about what's in the current byte    
     m_ip_ptr->read(cptr,num);    
 }
 
-void BitInputManager::FlushInput(){
-    m_input_bits_left=0;    
+void BitInputManager::FlushInput()
+{
+    m_input_bits_left = 0;    
 }
 
-bool BitInputManager::End() const {
+bool BitInputManager::End() const 
+{
     return m_ip_ptr->eof();    
 }

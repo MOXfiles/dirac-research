@@ -54,207 +54,207 @@ class Subband
 {
 public:
 
-	//! Default constructor
-	Subband();
+    //! Default constructor
+    Subband();
 
     //! Constructor
     /*!
         The constructor parameters are
-		/param	xpos	the xposition of the subband when packed into a big array with all the others
-		/param	ypos	the xposition of the subband
-		/param	xlen	the width of the subband
-		/param	ylen	the height of the subband
-     */	
-	Subband(int xpos, int ypos, int xlen, int ylen);
+        /param    xpos    the xposition of the subband when packed into a big array with all the others
+        /param    ypos    the xposition of the subband
+        /param    xlen    the width of the subband
+        /param    ylen    the height of the subband
+     */    
+    Subband(int xpos, int ypos, int xlen, int ylen);
 
     //! Constructor
     /*!
-		The constructor parameters are
-		/param	xpos	the xposition of the subband when packed into a big array with all the others
-		/param	ypos	the xposition of the subband
-		/param	xlen	the width of the subband
-		/param	ylen	the height of the subband
-		/param	d		the depth of the subband in the wavelet transform
-     */	
-	Subband(int xpos, int ypos, int xlen, int ylen, int d);
+        The constructor parameters are
+        /param    xpos    the xposition of the subband when packed into a big array with all the others
+        /param    ypos    the xposition of the subband
+        /param    xlen    the width of the subband
+        /param    ylen    the height of the subband
+        /param    d        the depth of the subband in the wavelet transform
+     */    
+    Subband(int xpos, int ypos, int xlen, int ylen, int d);
 
-	//! Destructor
-	~Subband();
+    //! Destructor
+    ~Subband();
 
-	//Default (shallow) copy constructor and operator= used
+    //Default (shallow) copy constructor and operator= used
 
-	//! Return the width of the subband
-	int Xl() const {return xln;}
+    //! Return the width of the subband
+    int Xl() const {return xln;}
     
-	//! Return the horizontal position of the subband
-	int Xp() const {return xps;}
+    //! Return the horizontal position of the subband
+    int Xp() const {return xps;}
     
-	//! Return the height of the subband
-	int Yl() const {return yln;}
+    //! Return the height of the subband
+    int Yl() const {return yln;}
     
-	//! Return the vertical position of the subband
-	int Yp() const {return yps;}
+    //! Return the vertical position of the subband
+    int Yp() const {return yps;}
     
-	//! Return the index of the maximum bit of the largest coefficient
-	int Max() const {return max_bit;}
+    //! Return the index of the maximum bit of the largest coefficient
+    int Max() const {return max_bit;}
     
-	//! Return the subband perceptual weight
-	double Wt() const {return wgt;}
+    //! Return the subband perceptual weight
+    double Wt() const {return wgt;}
     
-	//! Return the depth of the subband in the transform
-	int Depth() const {return dpth;}
+    //! Return the depth of the subband in the transform
+    int Depth() const {return dpth;}
     
-	//! Return the scale of the subband, viewed as a subsampled version of the picture
-	int Scale() const {return (1<<dpth);}
+    //! Return the scale of the subband, viewed as a subsampled version of the picture
+    int Scale() const {return (1<<dpth);}
     
-	//! Return a quantisation factor
-	int Qf(int n) const {return qfac[n];}
+    //! Return a quantisation factor
+    int Qf(int n) const {return qfac[n];}
     
-	//! Return the index of the parent subband
-	int Parent() const {return prt;}
+    //! Return the index of the parent subband
+    int Parent() const {return prt;}
     
-	//! Return the indices of any child subbands
-	std::vector<int> Children() const {return childvec;}
+    //! Return the indices of any child subbands
+    std::vector<int> Children() const {return childvec;}
     
-	int Child(int n) const {return childvec[n];}
+    int Child(int n) const {return childvec[n];}
 
-	// ... and sets
-	//! Set the perceptual weight
-	void SetQf(int n, int q)
+    // ... and sets
+    //! Set the perceptual weight
+    void SetQf(int n, int q)
     {
-        if (n >= qfac.lbound(0) && n<=qfac.ubound(0))
+        if (n >= qfac.First() && n<=qfac.Last() )
             qfac[n]=q;
     }
     
-	//! Set the perceptual weight
-	void SetWt(float w){wgt=w;}
+    //! Set the perceptual weight
+    void SetWt(float w){wgt=w;}
     
-	//! Set the parent index
-	void SetParent(int p){prt=p;}
+    //! Set the parent index
+    void SetParent(int p){prt=p;}
     
-	//! Set the subband depth
-	void SetDepth(int d){dpth=d;}
+    //! Set the subband depth
+    void SetDepth(int d){dpth=d;}
     
-	//! Set the index of the maximum bit of the largest coefficient
-	void SetMax(int m){max_bit=m;};
+    //! Set the index of the maximum bit of the largest coefficient
+    void SetMax(int m){max_bit=m;};
     
-	//! Set the indices of the children of the subband
-	void SetChildren(std::vector<int>& clist){childvec=clist;}
+    //! Set the indices of the children of the subband
+    void SetChildren(std::vector<int>& clist){childvec=clist;}
     
-	//! Add a child to the list of child subbands
-	void AddChild(int c){childvec.push_back(c);}
+    //! Add a child to the list of child subbands
+    void AddChild(int c){childvec.push_back(c);}
 
 private:
-	int xps,yps,xln,yln;		//subband bounds
-	double wgt;					//perceptual weight for quantisation
-	int dpth;					//depth in the transform
-	OneDArray<int> qfac;		//quantisers
-	int prt;					//position of parent in a subband list
-	std::vector<int> childvec;	//positions of children in the subband list
-	int max_bit;				//position of the MSB of the largest absolute value
+    int xps,yps,xln,yln;        //subband bounds
+    double wgt;                    //perceptual weight for quantisation
+    int dpth;                    //depth in the transform
+    OneDArray<int> qfac;        //quantisers
+    int prt;                    //position of parent in a subband list
+    std::vector<int> childvec;    //positions of children in the subband list
+    int max_bit;                //position of the MSB of the largest absolute value
 };
 
-//!	A class encapulating all the subbands produced by a transform
+//!    A class encapulating all the subbands produced by a transform
 class SubbandList
 {
 public:
-	//! Constructor
-	SubbandList(){}
+    //! Constructor
+    SubbandList(){}
 
-	//! Destructor
-	~SubbandList(){}
+    //! Destructor
+    ~SubbandList(){}
 
-	//Default (shallow) copy constructor and operator= used
-	//! Initialise the list
-	void Init(const int depth,const int xlen,const int ylen);
+    //Default (shallow) copy constructor and operator= used
+    //! Initialise the list
+    void Init(const int depth,const int xlen,const int ylen);
     
-	//! Return the length of the subband list	
-	int Length() const {return bands.size();}
+    //! Return the length of the subband list    
+    int Length() const {return bands.size();}
     
-	//! Return the subband at position n (1<=n<=length)
-	Subband& operator()(int n){return bands[n-1];}
+    //! Return the subband at position n (1<=n<=length)
+    Subband& operator()(int n){return bands[n-1];}
     
-	//! Return the subband at position n (1<=n<=length)	
-	const Subband& operator()(int n) const {return bands[n-1];}	
+    //! Return the subband at position n (1<=n<=length)    
+    const Subband& operator()(int n) const {return bands[n-1];}    
     
-	//! Add a band to the list
-	void AddBand(Subband& b){bands.push_back(b);}
+    //! Add a band to the list
+    void AddBand(Subband& b){bands.push_back(b);}
     
-	//! Remove all the bands from the list	
-	void Clear(){bands.clear();}
+    //! Remove all the bands from the list    
+    void Clear(){bands.clear();}
     
-private:	
-	std::vector<Subband> bands;
+private:    
+    std::vector<Subband> bands;
 };
 
 //! A class to do wavelet transforms
 /*!
-	A class to do forward and backward wavelet transforms by iteratively splitting or merging the
-	lowest frequency band.
+    A class to do forward and backward wavelet transforms by iteratively splitting or merging the
+    lowest frequency band.
 */
 class WaveletTransform
 {
 public:
-	//! Constructor
-	// WaveletTransform(WaveletTransformParams p);
+    //! Constructor
+    // WaveletTransform(WaveletTransformParams p);
     WaveletTransform(int d = 4, WltFilter f = DAUB);
         
-	//! Destructor
-	virtual ~WaveletTransform();
+    //! Destructor
+    virtual ~WaveletTransform();
 
-	//! Transforms the data to and from the wavelet domain
-	/*!
-		Transforms the data to and from the wavelet domain.
-		/param	d	the direction of the transform
-		/param	pic_data	the data to be transformed
-	*/
-	void Transform(const Direction d, PicArray& pic_data);
+    //! Transforms the data to and from the wavelet domain
+    /*!
+        Transforms the data to and from the wavelet domain.
+        /param    d    the direction of the transform
+        /param    pic_data    the data to be transformed
+    */
+    void Transform(const Direction d, PicArray& pic_data);
     
-	//! Returns the set of subbands
-	SubbandList& BandList(){return band_list;}
+    //! Returns the set of subbands
+    SubbandList& BandList(){return band_list;}
     
-	//! Returns the set of subbands
-	const SubbandList& BandList() const {return band_list;}
+    //! Returns the set of subbands
+    const SubbandList& BandList() const {return band_list;}
     
-	//! Sets the subband weights
-	/*!
-		Sets perceptual weights for the subbands. Takes into account both perceptual factors
-		(weight noise less at higher spatial frequencies) and the scaling needed for the 
-		wavelet transform. 
+    //! Sets the subband weights
+    /*!
+        Sets perceptual weights for the subbands. Takes into account both perceptual factors
+        (weight noise less at higher spatial frequencies) and the scaling needed for the 
+        wavelet transform. 
 
-		\param	cpd	perctual factor - the number of cycles per degree
-		\param	fsort	the frame sort (I, L1 or L2)
-		\param	cformat	the chroma format
-		\param	csort	the component type (Y, U or V)  
-	*/
+        \param    cpd    perctual factor - the number of cycles per degree
+        \param    fsort    the frame sort (I, L1 or L2)
+        \param    cformat    the chroma format
+        \param    csort    the component type (Y, U or V)  
+    */
     void SetBandWeights (const float cpd, 
                          const FrameSort& fsort,
                          const ChromaFormat& cformat,
                          const CompSort csort);
 
 private:
-	//other private variables	
-	// WaveletTransformParams params;
+    //other private variables    
+    // WaveletTransformParams params;
 
-	SubbandList band_list;
+    SubbandList band_list;
 
-	//! Depth of the transform
-	int depth;
+    //! Depth of the transform
+    int depth;
     
-	//! The filter set to be used (only Daubechies supported at present)
-	WltFilter filt_sort;	
+    //! The filter set to be used (only Daubechies supported at present)
+    WltFilter filt_sort;    
 
-	//functions
-	//!	Private, bodyless copy constructor: class should not be copied
-	WaveletTransform(const WaveletTransform& cpy);
+    //functions
+    //!    Private, bodyless copy constructor: class should not be copied
+    WaveletTransform(const WaveletTransform& cpy);
     
-	//! Private, bodyless copy operator=: class should not be assigned
-	WaveletTransform& operator=(const WaveletTransform& rhs);
+    //! Private, bodyless copy operator=: class should not be assigned
+    WaveletTransform& operator=(const WaveletTransform& rhs);
 
     //! Given x and y spatial frequencies in cycles per degree, returns a weighting value
-	float PerceptualWeight(float xf,float yf,CompSort cs);
-	void VHSplit(int xp, int yp, int xl, int yl, PicArray&pic_data);
-	void VHSynth(int xp, int yp, int xl, int yl, PicArray& pic_data);	
+    float PerceptualWeight(float xf,float yf,CompSort cs);
+    void VHSplit(int xp, int yp, int xl, int yl, PicArray&pic_data);
+    void VHSynth(int xp, int yp, int xl, int yl, PicArray& pic_data);    
 
 };
 

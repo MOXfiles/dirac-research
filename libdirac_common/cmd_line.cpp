@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Scott R Ladd (Original Author), Thomas Davies
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -43,33 +43,33 @@ CommandLine::CommandLine(int argc, char * argv[], const set<string> & bool_opts)
     m_inputs(),
     m_bool_opts(bool_opts)
 {
-	bool option_active = false;
-	vector<option>::iterator active_option;
+    bool option_active = false;
+    vector<option>::iterator active_option;
 
-	for (int i = 1; i < argc; ++i)
-	{
+    for (int i = 1; i < argc; ++i)
+    {
         // is it an option?
-		if ((strlen(argv[i]) > 1) && (argv[i][0] == '-'))
-		{
+        if ((strlen(argv[i]) > 1) && (argv[i][0] == '-'))
+        {
             // store new key
             string opt_key = string(&argv[i][1]);
-			m_options.push_back(option(opt_key));
+            m_options.push_back(option(opt_key));
             
             // active option is now last in list
-			active_option = m_options.end();
-			--active_option;
+            active_option = m_options.end();
+            --active_option;
             
             // check option list to see if we're looking for an argument
-			option_active = (m_bool_opts.find(opt_key) == m_bool_opts.end());
-		}
-		else
-		{
-			if (option_active)
-				active_option->m_value = string(argv[i]);
-			else
-				m_inputs.push_back(string(argv[i]));
+            option_active = (m_bool_opts.find(opt_key) == m_bool_opts.end());
+        }
+        else
+        {
+            if (option_active)
+                active_option->m_value = string(argv[i]);
+            else
+                m_inputs.push_back(string(argv[i]));
 
-			option_active = false;
-		}
-	}
+            option_active = false;
+        }
+    }
 }

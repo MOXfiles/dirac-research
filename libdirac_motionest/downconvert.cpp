@@ -20,7 +20,8 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Richard Felton (Original Author), 
+*                 Thomas Davies
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -35,7 +36,7 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-#include "libdirac_motionest/downconvert.h"
+#include <libdirac_motionest/downconvert.h>
 
 DownConverter::DownConverter(){
 }
@@ -44,7 +45,7 @@ DownConverter::DownConverter(){
 //General function - does some admin and calls the correct function
 void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data){
 	//Down-convert by a factor of two.
-	row_buffer= new ValueType[old_data.length(0)];	
+	row_buffer= new ValueType[old_data.LengthX()];	
 		//Variables that will be used by the filter calculations
 	int sum;
 	int colpos;
@@ -57,7 +58,7 @@ void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data){
 		//This means our main loop is in the x direction and
 		//there is a much greater chance the data we need will
 		//be in the cache.
-		for(int x = 0; x < old_data.length(0); x++){			
+		for(int x = 0; x < old_data.LengthX(); x++){			
 			//In down conversion we interpolate every pixel
 			//so there is no copying.
 			//Excuse the complicated ternary stuff but it sorts out the edge
@@ -77,9 +78,9 @@ void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data){
 	//This loop is like the last one but it deals with the center
 	//section of the image and so the ternary operations are dropped
 	//from the filter section.
-	for(int y = Stage_I_Size*2; y < old_data.length(1) - Stage_I_Size*2; y+=2,colpos++){
+	for(int y = Stage_I_Size*2; y < old_data.LengthY() - Stage_I_Size*2; y+=2,colpos++){
 
-		for(int x = 0; x < old_data.length(0); x++){
+		for(int x = 0; x < old_data.LengthX(); x++){
 
 			sum =  (old_data[y][x]   + old_data[y+1][x])*StageI_I;
 			sum += (old_data[y-1][x] + old_data[y+2][x])*StageI_II;
@@ -96,9 +97,9 @@ void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data){
 	//Another similar loop! - this time we are dealing with
 	//the trailing edge so the ternary stuff is back in the
 	//filter calcs but in the second parameter.
-	int yOld=old_data.length(1);	
-	for(int y = old_data.length(1) - (Stage_I_Size*2); y < old_data.length(1); y+=2,colpos++){
-		for(int x = 0; x < old_data.length(0); x++){
+	int yOld=old_data.LengthY();	
+	for(int y = old_data.LengthY() - (Stage_I_Size*2); y < old_data.LengthY(); y+=2,colpos++){
+		for(int x = 0; x < old_data.LengthX(); x++){
 
 			sum =  (old_data[y][x]   + old_data[((y+1)<yOld)?(y+1):(yOld-1)][x])*StageI_I;
 			sum += (old_data[y-1][x] + old_data[((y+2)<yOld)?(y+2):(yOld-1)][x])*StageI_II;
@@ -121,7 +122,7 @@ void DownConverter::RowLoop(int &colpos,const PicArray& old_data,PicArray& new_d
 
  	//Calculation variables
 	int sum;
-	int xOld=old_data.length(0);
+	int xOld=old_data.LengthX();
 	int linepos=0;	
 
  	//Leading Column Edge

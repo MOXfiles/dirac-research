@@ -56,8 +56,8 @@ public:
 
     ////////////////////////////////////////////////////////////
     //                                                        //
-    //    Assumes default copy constructor and assignment =   //
-    //                                                        //
+    //    Assumes default copy constructor,  assignment =     //
+    //                 and destructor                         //
     ////////////////////////////////////////////////////////////
 
     //! Update the quality factors given a locally decoded and an original frame

@@ -40,169 +40,172 @@
 
 #include <vector>
 #include <map>
-#include "libdirac_common/frame.h"
-#include "libdirac_common/common.h"
-#include "libdirac_common/pic_io.h"
+#include <libdirac_common/frame.h>
+#include <libdirac_common/common.h>
+#include <libdirac_common/pic_io.h>
 
 //! Holds frames both for reference and to overcome reordering delay
 /*!
-	The buffer holds frames in a stack to overcome both reordering due to bi-directional prediction and
- 	use as references for subsequence motion estimation. Frames, and components of frames, can be accessed
-	by their frame numbers. GOP parameters can be included in the constructors so that frames can be 
-	given types (I frame, L1 frame or L2 frame) on being pushed onto the stack; alternatively, these 
-	parameters can be overridden.
+    The buffer holds frames in a stack to overcome both reordering due to bi-directional prediction and
+     use as references for subsequence motion estimation. Frames, and components of frames, can be accessed
+    by their frame numbers. GOP parameters can be included in the constructors so that frames can be 
+    given types (I frame, L1 frame or L2 frame) on being pushed onto the stack; alternatively, these 
+    parameters can be overridden.
 */
 class FrameBuffer{
 public:
-	//! Constructor
-	/*!
-		Creates a FrameBuffer using the chroma format. Suitable for compressing when there
-		are no L2 frames, or when the temporal prediction structure is to be determined on the fly. 
+    //! Constructor
+    /*!
+        Creates a FrameBuffer using the chroma format. Suitable for compressing when there
+        are no L2 frames, or when the temporal prediction structure is to be determined on the fly. 
 
-		\param	cf	the Chroma format of frames in the buffer
-		\param	xlen	the width of frames in the buffer
-		\param	ylen	the hieght of frames in the buffer
+        \param    cf    the Chroma format of frames in the buffer
+        \param    xlen    the width of frames in the buffer
+        \param    ylen    the hieght of frames in the buffer
 
-	*/
-	FrameBuffer(ChromaFormat cf,int xlen,int ylen);
+    */
+    FrameBuffer(ChromaFormat cf,int xlen,int ylen);
 
-	//! Constructor
-	/*!
-		Creates a FrameBuffer using the chroma format and the separation in frames between
-		L1 frames. Suitable for compressing when there is no GOP structure, only an initial I-frame,
-		or when the temporal prediction structure is to be determined on the fly. 
+    //! Constructor
+    /*!
+        Creates a FrameBuffer using the chroma format and the separation in frames between
+        L1 frames. Suitable for compressing when there is no GOP structure, only an initial I-frame,
+        or when the temporal prediction structure is to be determined on the fly. 
 
-		\param	cf	the Chroma format of frames in the buffer
-		\param	L1sep	the number of Layer 2 frames between Layer 1 frames
-		\param	xlen	the width of frames in the buffer
-		\param	ylen	the hieght of frames in the buffer
+        \param    cf    the Chroma format of frames in the buffer
+        \param    L1sep    the number of Layer 2 frames between Layer 1 frames
+        \param    xlen    the width of frames in the buffer
+        \param    ylen    the hieght of frames in the buffer
 
-	*/
-	FrameBuffer(ChromaFormat cf,int L1sep,int xlen, int ylen);
+    */
+    FrameBuffer(ChromaFormat cf,int L1sep,int xlen, int ylen);
 
-	//! Constructor
-	/*!
-		Creates a FrameBuffer using the chroma format, the number of L1 frames between I frames
-		and the separation in frames between L1 frames. Suitable for compressing when there is a full GOP structure
-		or when the temporal prediction structure is to be determined on the fly. 
+    //! Constructor
+    /*!
+        Creates a FrameBuffer using the chroma format, the number of L1 frames between I frames
+        and the separation in frames between L1 frames. Suitable for compressing when there is a full GOP structure
+        or when the temporal prediction structure is to be determined on the fly. 
 
-		\param	cf	the Chroma format of frames in the buffer
-		\param	numL1	the number of Layer 1 frames before the next I frame. 0 means that there is only one I frame.
-		\param	L1sep	the number of Layer 2 frames between Layer 1 frames
-		\param	xlen	the width of frames in the buffer
-		\param	ylen	the hieght of frames in the buffer
-	*/	
-	FrameBuffer(ChromaFormat cf,int numL1,int L1sep,int xlen,int ylen);
+        \param    cf    the Chroma format of frames in the buffer
+        \param    numL1    the number of Layer 1 frames before the next I frame. 0 means that there is only one I frame.
+        \param    L1sep    the number of Layer 2 frames between Layer 1 frames
+        \param    xlen    the width of frames in the buffer
+        \param    ylen    the hieght of frames in the buffer
+    */    
+    FrameBuffer(ChromaFormat cf,int numL1,int L1sep,int xlen,int ylen);
 
-	//! Copy constructor
-	/*!
-		Copy constructor. Removes the current contents of the frame buffer and copies in the contents of the
-		initialising buffer.
-	*/
-	FrameBuffer(const FrameBuffer& cpy);
+    //! Copy constructor
+    /*!
+        Copy constructor. Removes the current contents of the frame buffer and copies in the contents of the
+        initialising buffer.
+    */
+    FrameBuffer(const FrameBuffer& cpy);
 
-	//! Operator=. 
-	/*!
-		Operator=. Assigns all elements of the rhs to the lhs.
-	*/
-	FrameBuffer& operator=(const FrameBuffer& rhs);
+    //! Operator=. 
+    /*!
+        Operator=. Assigns all elements of the rhs to the lhs.
+    */
+    FrameBuffer& operator=(const FrameBuffer& rhs);
 
-	//! Destructor
-	~FrameBuffer();
+    //! Destructor
+    ~FrameBuffer();
 
-	//! Get frame with a given frame number (NOT with a given position in the buffer)
-	Frame& GetFrame(unsigned int fnum);
-	//! Get frame with a given frame number (NOT with a given position in the buffer)
-	const Frame& GetFrame(unsigned int fnum) const;
+    //! Get frame with a given frame number (NOT with a given position in the buffer)
+    Frame& GetFrame(unsigned int fnum);
 
-	//! Get component with a given component sort and frame number (NOT with a given position in the buffer)
-	PicArray& GetComponent(unsigned int frame_num, CompSort c);
- 	//! Get component with a given component sort and frame number (NOT with a given position in the buffer)
-	const PicArray& GetComponent(unsigned int frame_num, CompSort c) const;	
+    //! Get frame with a given frame number (NOT with a given position in the buffer)
+    const Frame& GetFrame(unsigned int fnum) const;
 
-	//! Get upconverted component with a given component sort and frame number (NOT with a given position in the buffer)
-	PicArray& GetUpComponent(unsigned int frame_num, CompSort c);
-	//! Get upconverted component with a given component sort and frame number (NOT with a given position in the buffer)
-	const PicArray& GetUpComponent(unsigned int frame_num, CompSort c) const;
+    //! Get component with a given component sort and frame number (NOT with a given position in the buffer)
+    PicArray& GetComponent(unsigned int frame_num, CompSort c);
 
-	//! Return the number of frames in the buffer
-	size_t Size() const {return m_frame_data.size();}
+    //! Get component with a given component sort and frame number (NOT with a given position in the buffer)
+    const PicArray& GetComponent(unsigned int frame_num, CompSort c) const;    
 
-	//! Put a new frame into the top of the buffer
-	/*! 
-		Put a new frame into the top of the buffer. Frame parameters associated with the frame
-		will be the built-in parameters for the buffer.
+    //! Get upconverted component with a given component sort and frame number (NOT with a given position in the buffer)
+    PicArray& GetUpComponent(unsigned int frame_num, CompSort c);
 
-		\param	frame_num	the number of the frame being inserted
-	*/
-	void PushFrame(unsigned int frame_num);	
+    //! Get upconverted component with a given component sort and frame number (NOT with a given position in the buffer)
+    const PicArray& GetUpComponent(unsigned int frame_num, CompSort c) const;
 
-	//! Put a new frame into the top of the buffer
-	/*! 
-		Put a new frame into the top of the buffer. Frame parameters associated with the frame
-		will be as given by the frame parameter object.
-	*/
-	void PushFrame(const FrameParams& fp);
+    //! Return the number of frames in the buffer
+    size_t Size() const {return m_frame_data.size();}
 
-	//! Read a new frame into the buffer.
-	/*! 
-		Read a new frame into the buffer. Frame parameters associated with the frame
-		will be as given by the frame parameter object.
+    //! Put a new frame into the top of the buffer
+    /*! 
+        Put a new frame into the top of the buffer. Frame parameters associated with the frame
+        will be the built-in parameters for the buffer.
 
-		\param	picin	the picture input
-		\param	fp		the frame parameters to apply to the frame
-	*/	
-	void PushFrame(PicInput* picin,const FrameParams& fp);
+        \param    frame_num    the number of the frame being inserted
+    */
+    void PushFrame(unsigned int frame_num);    
 
-		//! Read a new frame into the buffer.
-	/*! 
-		Read a new frame into the buffer. Frame parameters associated with the frame
-		will be derived from the frame number and the internal GOP parameters in the frame buffer.
-		\param	picin	the picture input
-		\param	fnum	the frame number
-	*/	
-	void PushFrame(PicInput* picin,unsigned int fnum);
+    //! Put a new frame into the top of the buffer
+    /*! 
+        Put a new frame into the top of the buffer. Frame parameters associated with the frame
+        will be as given by the frame parameter object.
+    */
+    void PushFrame(const FrameParams& fp);
 
-	//! Delete expired frames
-	/*! 
-		Delete frames which have been output and which are no longer required for reference. Expiry 
-		times are set in each frame's frame parameters.
-	*/
-	void Clean(int fnum);
+    //! Read a new frame into the buffer.
+    /*! 
+        Read a new frame into the buffer. Frame parameters associated with the frame
+        will be as given by the frame parameter object.
 
-	//! Return the default frame parameters
-	const FrameParams& GetFParams() const{return m_fparams;}
+        \param    picin    the picture input
+        \param    fp        the frame parameters to apply to the frame
+    */    
+    void PushFrame(PicInput* picin,const FrameParams& fp);
+
+    //! Read a new frame into the buffer.
+    /*! 
+        Read a new frame into the buffer. Frame parameters associated with the frame
+        will be derived from the frame number and the internal GOP parameters in the frame buffer.
+        \param    picin    the picture input
+        \param    fnum    the frame number
+    */    
+    void PushFrame(PicInput* picin,unsigned int fnum);
+
+    //! Delete expired frames
+    /*! 
+        Delete frames which have been output and which are no longer required for reference. Expiry 
+        times are set in each frame's frame parameters.
+    */
+    void Clean(int fnum);
+
+    //! Return the default frame parameters
+    const FrameParams& GetFParams() const{return m_fparams;}
 
 private:
     //! the buffer storing all the values
-	std::vector<Frame*> m_frame_data;
+    std::vector<Frame*> m_frame_data;
 
     //!the map from frame numbers to position in the buffer
-	std::map<unsigned int,unsigned int> m_fnum_map;
+    std::map<unsigned int,unsigned int> m_fnum_map;
 
-	//! The frame parameters to use as a default if none are supplied with the frame
-	FrameParams m_fparams;
+    //! The frame parameters to use as a default if none are supplied with the frame
+    FrameParams m_fparams;
 
-	//! The number of L1 frames before next I frame
-	unsigned int m_num_L1;
+    //! The number of L1 frames before next I frame
+    unsigned int m_num_L1;
 
-	//! The distance, in frames, between L1 frames
-	unsigned int m_L1_sep;
+    //! The distance, in frames, between L1 frames
+    unsigned int m_L1_sep;
 
-	//! The length of the group of pictures (GOP)
-	unsigned int m_gop_len;
+    //! The length of the group of pictures (GOP)
+    unsigned int m_gop_len;
 
 
 
-	//! Set the frame parameters based on the frame number in display order and internal GOP parameters
-	void SetFrameParams(unsigned int fnum);
+    //! Set the frame parameters based on the frame number in display order and internal GOP parameters
+    void SetFrameParams(unsigned int fnum);
 
-	//! Remove a frame with a given frame number from the buffer
-	/*!
-		Remove a frame with a given frame number (in display order) from the buffer. Searches through 
-		the buffer and removes frame(s) with that number.
-	*/
-	void Remove(unsigned int fnum);
+    //! Remove a frame with a given frame number from the buffer
+    /*!
+        Remove a frame with a given frame number (in display order) from the buffer. Searches through 
+        the buffer and removes frame(s) with that number.
+    */
+    void Remove(unsigned int fnum);
 
 
 };

@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -43,9 +43,9 @@
 using std::vector;
 
 SubpelRefine::SubpelRefine(EncoderParams& cp): 
-encparams(cp),
-nshift(4),
-lambda(3)
+    encparams(cp),
+    nshift(4),
+    lambda(3)
 {
 	//define the relative coordinates of the four neighbours	
 	nshift[0].x = -1; nshift[0].y = 0;
@@ -130,24 +130,29 @@ MVector SubpelRefine::GetPred(int xblock,int yblock,const MvArray& mvarray){
 	ImageCoords n_coords;
 	vector<MVector> neighbours;
 
-	if (xblock>0 && yblock>0 && xblock<mvarray.last(0))
+	if (xblock>0 && yblock>0 && xblock<mvarray.LastX())
     {
-		for (int I=0;I<nshift.length();++I){
-			n_coords.x = xblock+nshift[I].x;
-			n_coords.y = yblock+nshift[I].y;
+
+		for (int i=0 ; i<nshift.Length() ; ++i)
+        {
+			n_coords.x = xblock+nshift[i].x;
+			n_coords.y = yblock+nshift[i].y;
 			neighbours.push_back(mvarray[n_coords.y][n_coords.x]);
-		}//I
+
+		}// i
 	}
 	else 
     {
-		for (int I=0;I<nshift.length();++I){
-			n_coords.x = xblock+nshift[I].x;
-			n_coords.y = yblock+nshift[I].y;
-			if (n_coords.x>=0 && n_coords.y>=0 && n_coords.x<mvarray.length(0) && n_coords.y<mvarray.length(1)){
+		for (int i=0 ; i<nshift.Length(); ++i )
+        {
+			n_coords.x = xblock+nshift[i].x;
+			n_coords.y = yblock+nshift[i].y;
+			if (n_coords.x>=0 && n_coords.y>=0 && n_coords.x<mvarray.LengthX() && n_coords.y<mvarray.LengthY())
 				neighbours.push_back(mvarray[n_coords.y][n_coords.x]);
-			}
-		}//I
+		}// i
 	}
+
 	mv_pred = MvMedian(neighbours);
+
 	return mv_pred;
 }

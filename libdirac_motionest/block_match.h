@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -38,7 +38,7 @@
 #ifndef _BLOCK_MATCH_H_
 #define _BLOCK_MATCH_H_
 
-#include "libdirac_motionest/me_utils.h"
+#include <libdirac_motionest/me_utils.h>
 
 //handles the business of finding the best block match
 

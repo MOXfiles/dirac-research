@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Richard Felton (Original Author), Thomas Davies
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -37,9 +37,9 @@
 
 //  Motion Compensation routines.
 //  Supports different sizes of blocks as long as the parameters
-// 	describing them are 'legal'. Blocks overlap the edge of the image
-// 	being written to but blocks in the reference image are forced to
-// 	lie completely within the image bounds.
+//     describing them are 'legal'. Blocks overlap the edge of the image
+//     being written to but blocks in the reference image are forced to
+//     lie completely within the image bounds.
 
 #ifndef _INCLUDED_MOT_COMP
 #define _INCLUDED_MOT_COMP
@@ -47,81 +47,81 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
-#include "libdirac_common/common.h"
-#include "libdirac_common/upconvert.h"
-#include "libdirac_common/motion.h"
+#include <libdirac_common/common.h>
+#include <libdirac_common/upconvert.h>
+#include <libdirac_common/motion.h>
 
 class FrameBuffer;
 class Frame;
 
 //! Motion compensator class. 
 /*!
-	Motion compensator class, for doing motion compensation with two references and overlapped blocks,
-	using raised-cosine roll-off.
+    Motion compensator class, for doing motion compensation with two references and overlapped blocks,
+    using raised-cosine roll-off.
  */
 class MotionCompensator
 {
 
 public:
-	//! Constructor.
+    //! Constructor.
     /*!
         Constructor initialises using codec parameters.
      */
-	MotionCompensator( const CodecParams &cp );
-	//! Destructor
-	~MotionCompensator();
+    MotionCompensator( const CodecParams &cp );
+    //! Destructor
+    ~MotionCompensator();
 
-	//! Toggles the MC mode
-	void SetCompensationMode( AddOrSub a_or_s ) { add_or_sub = a_or_s; }
+    //! Toggles the MC mode
+    void SetCompensationMode( AddOrSub a_or_s ) { add_or_sub = a_or_s; }
 
-	//! Compensate a frame
+    //! Compensate a frame
     /*!
-		Perform motion compensated addition/subtraction on a frame using parameters
-		/param	fnum	number of frame in the frame buffer to be compensated
-		/param	my_buffer	the FrameBuffer object containing the frame and the reference frames
-`		/param	mv_data	the motion vector data
+        Perform motion compensated addition/subtraction on a frame using parameters
+        /param    fnum    number of frame in the frame buffer to be compensated
+        /param    my_buffer    the FrameBuffer object containing the frame and the reference frames
+`        /param    mv_data    the motion vector data
      */
-	void CompensateFrame( FrameBuffer& my_buffer , int fnum , const MvData& mv_data );	//motion compensate a given frame
+    void CompensateFrame( FrameBuffer& my_buffer , int fnum , const MvData& mv_data );    //motion compensate a given frame
 
 private:
-	//private, body-less copy constructor: this class should not be copied
-	MotionCompensator( const MotionCompensator& cpy );
-	//private, body-less assignment=: this class should not be assigned
-	MotionCompensator& operator=( const MotionCompensator& rhs );
+    //private, body-less copy constructor: this class should not be copied
+    MotionCompensator( const MotionCompensator& cpy );
+    //private, body-less assignment=: this class should not be assigned
+    MotionCompensator& operator=( const MotionCompensator& rhs );
 
-	//functions
+    //functions
 
-	//! Motion-compensate a component
-	void CompensateComponent( Frame& picframe , const Frame& ref1frame , const Frame& ref2frame ,
-		const MvData& mv_data , const CompSort cs);
+    //! Motion-compensate a component
+    void CompensateComponent( Frame& picframe , const Frame& ref1frame , const Frame& ref2frame ,
+        const MvData& mv_data , const CompSort cs);
 
-	//! Motion-compensate an individual block
-	void CompensateBlock( PicArray& pic_data , const PicArray& refup_data , const MVector& Vec ,
-		const ImageCoords Pos , const TwoDArray<CalcValueType>& Weights , const ArithObj& arith );
+    //! Motion-compensate an individual block
+    void CompensateBlock( PicArray& pic_data , const PicArray& refup_data , const MVector& Vec ,
+        const ImageCoords Pos , const TwoDArray<CalcValueType>& Weights , const ArithObj& arith );
 
-	//! DC-compensate an individual block
-	void DCBlock( PicArray &pic_data , const ValueType dc , const ImageCoords Pos , 
-		const TwoDArray<CalcValueType>& Weights ,const ArithObj& arith);
+    //! DC-compensate an individual block
+    void DCBlock( PicArray &pic_data , const ValueType dc , const ImageCoords Pos , 
+        const TwoDArray<CalcValueType>& Weights ,const ArithObj& arith);
 
-	//! Recalculate the weight matrix and store other key block related parameters.
-	void ReConfig();
+    //! Recalculate the weight matrix and store other key block related parameters.
+    void ReConfig();
 
-	//variables	
-	CodecParams cparams;
-	bool luma_or_chroma;	//true if we're doing luma, false if we're coding chroma
+    //variables    
+    CodecParams cparams;
+    bool luma_or_chroma;    //true if we're doing luma, false if we're coding chroma
 
-	const ArithAddObj add;					//Particular arith obj
-	const ArithSubtractObj subtract;		//ditto
-	const ArithHalfSubtractObj subtracthalf;//ditto
-	const ArithHalfAddObj addhalf;			//ditto
-	AddOrSub add_or_sub;					//Motion compensated Addition/Subtraction flag
+    const ArithAddObj add;                    //Particular arith obj
+    const ArithSubtractObj subtract;        //ditto
+    const ArithHalfSubtractObj subtracthalf;//ditto
+    const ArithHalfAddObj addhalf;            //ditto
+    AddOrSub add_or_sub;                    //Motion compensated Addition/Subtraction flag
 
-	//Image and block information
-	OLBParams bparams;	//either luma or chroma block parameters
-	TwoDArray<CalcValueType>* BlockWeights;
-	int	xBlockSize,yBlockSize;
-	int ImageWidth;
-	int ImageHeight;
+    //Image and block information
+    OLBParams bparams;    //either luma or chroma block parameters
+    TwoDArray<CalcValueType>* BlockWeights;
+    int    xBlockSize,yBlockSize;
+    int ImageWidth;
+    int ImageHeight;
 };
 
 #endif

@@ -54,6 +54,11 @@ QualityMonitor::QualityMonitor(EncoderParams& encp,
 
     m_wtransform(4)
 {
+    ResetAll();
+}
+
+void QualityMonitor::ResetAll()
+{
     // set target WPSNRs
  	m_target_wpsnr[I_frame] = 2.8 * encparams.Qf() +20 ;
 	m_target_wpsnr[L1_frame] = m_target_wpsnr[I_frame] - 1.5;
@@ -85,18 +90,6 @@ QualityMonitor::QualityMonitor(EncoderParams& encp,
     {
         encparams.SetLambda( FrameSort(fsort), m_last_lambda[fsort] );
     }// fsort
-
-}
-
-void QualityMonitor::CalcNewLambdas(const FrameSort fsort, const double slope, const double actual_wpsnr)
-{	
-
-    encparams.SetLambda(fsort, encparams.Lambda(fsort) * std::pow( (double)10.0, (m_target_wpsnr[fsort] - actual_wpsnr)/slope ) );
-
-    if (fsort == L1_frame)
-		encparams.SetL1MELambda( encparams.L1Lambda() * m_me_ratio );
-    else if (fsort == L2_frame)
-		encparams.SetL2MELambda( encparams.L2Lambda() * m_me_ratio );
 
 }
 
@@ -150,7 +143,7 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame,
   		    //calculate the resulting offset
 		    offset = current_wpsnr - ( log10(current_lambda) * slope );
 
-            //update the default values
+            //update the default values using a simple recursive filter
             m_slope[fsort] = (9.0*m_slope[fsort] + slope)/10.0;
             m_offset[fsort] = (9.0*m_offset[fsort] + offset)/10.0;
             m_slope[fsort] = std::max( std::min(-9.0, m_slope[fsort]), -2.0);
@@ -168,6 +161,19 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame,
 
 }
 
+void QualityMonitor::CalcNewLambdas(const FrameSort fsort, const double slope, const double actual_wpsnr)
+{	
+
+    encparams.SetLambda(fsort, encparams.Lambda(fsort) *
+                        std::pow( (double)10.0, (m_target_wpsnr[fsort] - actual_wpsnr)/slope ) );
+
+    if (fsort == L1_frame)
+		encparams.SetL1MELambda( encparams.L1Lambda() * m_me_ratio );
+    else if (fsort == L2_frame)
+		encparams.SetL2MELambda( encparams.L2Lambda() * m_me_ratio );
+
+}
+
 double QualityMonitor::WeightedPSNRDiff(const PicArray& pic1_data, const PicArray& pic2_data, float cpd)
 {
 	long double mean_square_diff = 0.0;
@@ -175,9 +181,9 @@ double QualityMonitor::WeightedPSNRDiff(const PicArray& pic1_data, const PicArra
 
 	if ( cpd == 0.0 )
 	{
-		for (int j=0; j<pic1_data.length(1); ++j)
+		for (int j=0; j<pic1_data.LengthY(); ++j)
 		{
-			for (int i=0; i<pic1_data.length(0); ++i)
+			for (int i=0; i<pic1_data.LengthX(); ++i)
 			{
 				diff = (long double) ( pic1_data[j][i] - pic2_data[j][i]);
 				diff *= diff;
@@ -185,7 +191,7 @@ double QualityMonitor::WeightedPSNRDiff(const PicArray& pic1_data, const PicArra
 			}//i
 		}//j
 
-		mean_square_diff /= pic1_data.length(0)*pic1_data.length(0);
+		mean_square_diff /= pic1_data.LengthX()*pic1_data.LengthY();
 	}
 	else
 	{
@@ -194,9 +200,9 @@ double QualityMonitor::WeightedPSNRDiff(const PicArray& pic1_data, const PicArra
 
 		PicArray diff_data( pic1_data );
 
-		for (int j=0; j<pic1_data.length(1); ++j)
+		for (int j=0; j<pic1_data.LengthY(); ++j)
 		{
-			for (int i=0; i<pic1_data.length(0); ++i)
+			for (int i=0; i<pic1_data.LengthX(); ++i)
 			{
 				diff_data[j][i] -= pic2_data[j][i];
 			}//i
@@ -225,7 +231,7 @@ double QualityMonitor::WeightedPSNRDiff(const PicArray& pic1_data, const PicArra
 
 		}//B
 
-		mean_square_diff /= pic1_data.length(0)*pic1_data.length(0);
+		mean_square_diff /= pic1_data.LengthX()*pic1_data.LengthY();
 	}
 
     // now compensate for the fact that we've got two extra bits
