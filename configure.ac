@@ -56,6 +56,7 @@ dnl -----------------------------------------------
 AC_PROG_CXX
 AM_PROG_LIBTOOL
 AM_SANITY_CHECK
+AC_PROGRAM_CHECK(doxygen, latex)
 
 dnl -----------------------------------------------
 dnl Checks for required headers
