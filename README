@@ -56,15 +56,20 @@ the codec can be found at http://www.bbc.co.uk/rd/projects/dirac.
 
 4.1 Command-line parameters
 
-At the moment there is a very simple command-line parser class which is 
+At the moment there is a simple command-line parser class which is 
 used in all the executables. The general procedure for running a program
 is to type:
 
   prog_name -<flag_name> flag_val ... param1 param2 ...
 
-In other words, options are prefixed by a dash and all options take values.
-This includes boolean options. Parameters (like filenames) are not prefixed 
-by a dash. We hope to fix this and support boolean options properly soon.
+In other words, options are prefixed by a dash; some options take values, 
+while others are boolean options that enable specific features. For example:
+When running the encoder, the -qf options requires an numeric argument
+specifying the "quality factor" for encoding. The -verbose option enables
+detailed output, and does not require an argument.
+
+Running any program without argument will display a list of parameters and
+options.
 
 4.2 File formats
 
@@ -145,7 +150,7 @@ Simple coding example. Code an SD sequence to high quality.
 
 Solution.
 
-  dirac_encoder -SD576 true -qf 20 test test_out
+  dirac_encoder -SD576 -qf 20 test test_out
 
 will read test.yuv and test.hdr as input, and output a compressed bitstream test_out.drc
 as well as locally-decoded files test_out.yuv and test_out.hdr.
@@ -190,7 +195,7 @@ so 4xblen must divide the frame width and 4yblen the frame height.
 Decoding is much simpler. Just point the decoder input at the bitstream and the
 output to a file:
 
-  dirac_decoder -verbose true test_enc test_dec
+  dirac_decoder -verbose test_enc test_dec
 
 will decode into test_dec.{yuv,hdr} with running commentary.
 
