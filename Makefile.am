@@ -10,4 +10,4 @@ if HAVE_LATEX
 DOC_DIR = doc
 endif
 
-SUBDIRS = libdirac_common libdirac_motionest libdirac_encoder libdirac_decoder encoder decoder picheader $(DOC_DIR) tests
+SUBDIRS = libdirac_common libdirac_motionest libdirac_encoder libdirac_decoder encoder decoder picheader tests $(DOC_DIR) 
