@@ -1,3 +1,408 @@
+2004-11-22 14:15  asuraparaju
+
+	* AUTHORS: Updated list of contributors.
+
+2004-11-22 14:05  asuraparaju
+
+	* libdirac_common/band_codec.cpp, libdirac_common/band_codec.h,
+	  libdirac_common/cmd_line.cpp, libdirac_common/cmd_line.h,
+	  libdirac_common/common_types.h,
+	  libdirac_common/dirac_assertions.h, libdirac_common/frame.h,
+	  libdirac_common/golomb.cpp, libdirac_common/golomb.h,
+	  libdirac_common/mv_codec.cpp, libdirac_common/mv_codec.h,
+	  libdirac_common/wavelet_utils.cpp,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_decoder/comp_decompress.h,
+	  libdirac_decoder/dirac_cppparser.cpp,
+	  libdirac_decoder/dirac_cppparser.h,
+	  libdirac_decoder/frame_decompress.h,
+	  libdirac_decoder/seq_decompress.h,
+	  libdirac_encoder/comp_compress.h,
+	  libdirac_encoder/quality_monitor.cpp,
+	  libdirac_encoder/quality_monitor.h,
+	  libdirac_motionest/block_match.cpp,
+	  libdirac_motionest/block_match.h,
+	  libdirac_motionest/downconvert.cpp,
+	  libdirac_motionest/downconvert.h,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.cpp, libdirac_motionest/me_subpel.h,
+	  libdirac_motionest/me_utils.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/motion_estimate.h,
+	  libdirac_motionest/pixel_match.cpp,
+	  libdirac_motionest/pixel_match.h: Added namespace support. All
+	  core Dirac functionality is now in namespace dirac.
+
+2004-11-22 13:58  asuraparaju
+
+	* bootstrap: Added libtool support
+
+2004-11-22 13:57  asuraparaju
+
+	* dirac.pc.in: After the library restructuring, only two libraries
+	  are required - the encoder and decoder libraries.
+
+2004-11-22 13:57  asuraparaju
+
+	* configure.ac: Added libtool support to build libraries.
+
+2004-11-22 13:56  asuraparaju
+
+	* INSTALL: Minor changes related to the main configure file and the
+	  flags to use
+
+2004-11-22 13:56  asuraparaju
+
+	* README: Added descrition of additional flags available at
+	  configure time
+
+2004-11-22 13:54  asuraparaju
+
+	* decoder/Makefile.am, encoder/Makefile.am,
+	  libdirac_common/Makefile.am, libdirac_decoder/Makefile.am,
+	  libdirac_encoder/Makefile.am, libdirac_motionest/Makefile.am,
+	  util/conversion/common/Makefile.am,
+	  util/instrumentation/Makefile.am,
+	  util/instrumentation/libdirac_instrument/Makefile.am: Instead of
+	  4 libraries only two libraries are now built and installed -
+	  libdirac_encoder and libdirac_decoder. Only the public "C" API
+	  headers and libraries are copied to the installation directories
+	  when 'make install' is used.	Now using libtool to build
+	  libraries. On GNU/Linux and UNIX-like platforms, shared and
+	  static versions of the exported libraries are built.	    On MS
+	  Windows platforms, only shared libraries or static libraries can
+	  be built but not both.
+
+2004-11-22 13:51  asuraparaju
+
+	* tests/: Makefile.am, colourbars.at, unittests.at: Added valgrind
+	  support while running tests. The 'make valgrind-check' command
+	  now runs valgrind memory checks on all the tests. Note that the
+	  tests take a very long time to run in this mode
+
+2004-11-22 13:50  asuraparaju
+
+	* util/: Makefile.am, conversion/Makefile.am: Include Id tag to
+	  track revisions.
+
+2004-11-22 13:48  asuraparaju
+
+	* doc/: Makefile.am, algorithm/Makefile.am, api/Makefile.am,
+	  programmers/Makefile.am: Included the Id tag to track revisions.
+
+2004-11-22 13:46  asuraparaju
+
+	* Makefile.am: Added support for 'valgrind-check' argument to make.
+
+2004-11-22 13:42  asuraparaju
+
+	* util/instrumentation/libdirac_instrument/: draw_overlay.cpp,
+	  draw_overlay.h, gm_inliers.cpp, gm_inliers.h, motion_arrows.cpp,
+	  motion_arrows.h, motion_colour.cpp, motion_colour.h,
+	  motion_colour_arrows.cpp, motion_colour_arrows.h, overlay.cpp,
+	  overlay.h, overlay_symbols.cpp, overlay_symbols.h, pred_mode.cpp,
+	  pred_mode.h, sad.cpp, sad.h, split_mode.cpp, split_mode.h: Fixed
+	  "invalid read" and "memory leak" errors reported by valgrind.
+	  Added namespace support. All instrumentation library
+	  functionality is in the namespace dirac_instr.
+
+2004-11-22 13:39  asuraparaju
+
+	* util/instrumentation/: process_sequence.cpp, process_sequence.h:
+	  Replace all refrences to PicInput and PicOutput classes with
+	  FileStreamInput and FileStreamOutput classes. m_zl (number of
+	  frames in sequence) is no longer part of the Sequence header.
+	  Changed function ProcessSequence::DoSequence to work around this.
+
+2004-11-22 13:39  asuraparaju
+
+	* util/instrumentation/instrmain.cpp: Replaces all references to
+	  PicInput and PicOutput classes with FileStreamInput and
+	  FileStreamOutput classes.
+
+2004-11-22 13:37  asuraparaju
+
+	* picheader/: Makefile.am, headmain.cpp: Number of frames in a
+	  sequence is no longer required in encode/decode operations.
+
+2004-11-22 13:36  asuraparaju
+
+	* libdirac_encoder/: seq_compress.cpp, seq_compress.h: Restructured
+	  SequenceCompressor class to separate frame loading and frame
+	  compression functionality into two different functions. This was
+	  necessary to implement the "C" interface to the encoder. Added
+	  new access functions, GetFrameEncoded and GetMEData(), to return
+	  the latest frame encoded and the motion estimation data
+	  associated with it. Added function EndSequence that writes end of
+	  sequence information the the output bitstream.  Added namespace
+	  support. All core Dirac functionality is now in namespace dirac.
+
+2004-11-22 13:35  asuraparaju
+
+	* libdirac_encoder/: frame_compress.cpp, frame_compress.h: Motion
+	  Estimation data is no longer written to a file. Instead, added
+	  new functions, IsMEDataAvail and GetMEdata,  to enable class user
+	  to access the Motion Estimation data.  Added namespace support.
+	  All core Dirac functionality is now in namespace dirac.
+
+2004-11-22 13:34  asuraparaju
+
+	* libdirac_encoder/comp_compress.cpp: Allowed a full range of
+	  quantisers, so that lossless coding is possible.  Replaced tabs
+	  with spaces.	Fixed MSVC++ compiler warnings.  Added namespace
+	  support.
+
+2004-11-22 13:33  asuraparaju
+
+	* libdirac_decoder/seq_decompress.cpp: Removed all depedency on the
+	  m_zl (number of frames in sequence) parameter in the sequence
+	  parameters which no longer exists.
+
+2004-11-22 13:32  asuraparaju
+
+	* decoder/decmain.cpp, libdirac_decoder/dirac_parser.cpp,
+	  libdirac_decoder/dirac_parser.h: Moved structures common to the
+	  encoder and decoder "C" interfaces into
+	  librac_common/dirac_types.h
+
+2004-11-22 13:30  asuraparaju
+
+	* libdirac_common/bit_manager.h: Updated the bit stream version
+	  since the the bitstream in release 0.5.0 differs from the
+	  bitstream in version 0.4.x.  Added namespace support. All core
+	  Dirac functionality is now in namespace dirac.
+
+2004-11-22 13:29  asuraparaju
+
+	* libdirac_common/: frame_buffer.cpp, frame_buffer.h: FrameBuffer
+	  functions now support all io classes derived from the abstract
+	  pic io classes StreamPicInput and StreamPicOutput Added namespace
+	  support. All core Dirac functionality is now in namespace dirac.
+
+2004-11-22 13:29  asuraparaju
+
+	* libdirac_common/: pic_io.cpp, pic_io.h: Restructured the PicIO
+	  classes so that in addition to file io streams, memory based io
+	  streams are also supported. Replaced PicInput and PicOutput
+	  classes with FileStreamInput and FileStreamOutput classes.
+
+2004-11-22 13:28  asuraparaju
+
+	* libdirac_common/dirac_assertions.cpp: Modified dirac_assert
+	  function always dump core irrespetive of whether the code was
+	  built in debug mode or release mode.	Added namespace support.
+	  All core Dirac functionality is now in namespace dirac.
+
+2004-11-22 13:26  asuraparaju
+
+	* unit_tests/: core_suite.h, cppunit_testsuite.cpp, utmain.cpp:
+	  Added licence declaration.
+
+2004-11-22 13:25  asuraparaju
+
+	* unit_tests/Makefile.am: Added wavelet transform test.
+
+2004-11-22 13:24  asuraparaju
+
+	* unit_tests/: arrays_test.cpp, arrays_test.h: Added unit test for
+	  TwoDArray value constructor.
+
+2004-11-22 13:22  asuraparaju
+
+	* README.developers: Added text on bootstrapping to create the
+	  configure script from the CVS repository. Also added text on how
+	  to profile the code.
+
+2004-11-22 13:21  asuraparaju
+
+	* libdirac_common/frame.cpp: Modified clipping so that overshoots
+	  are allowed wrt Rec 601 ranges. This is because the original data
+	  may have overshoots too.  Added namespace support. All core Dirac
+	  functionality is now in namespace dirac.
+
+2004-11-22 13:20  asuraparaju
+
+	* libdirac_motionest/: me_mode_decn.cpp, me_utils.cpp: Minor code
+	  tidy. Assignment = changed to copy construction for a number of
+	  declarations.  Added namespace support. All core Dirac
+	  functionality is now in namespace dirac.
+
+2004-11-22 13:19  asuraparaju
+
+	* libdirac_decoder/frame_decompress.cpp: Changes related to
+	  MotionCompensator constructor changes.  Added namespace support.
+	  All core Dirac functionality is now in namespace dirac.
+
+2004-11-22 13:16  asuraparaju
+
+	* libdirac_common/: arith_codec.h, arrays.h, bit_manager.cpp,
+	  mot_comp.cpp, mot_comp.h, motion.cpp, motion.h, wavelet_utils.h:
+	  Added constant-value constructor to arrays.h.  Removed motion
+	  compensation-specific functions from motion.h.  Refactored
+	  mot_comp.h for speed and to remove rounding errors, incorporating
+	  patch supplied by Stephen Bearcroft. Also changed function for
+	  computing overlapped block weights to remove potential rounding
+	  errors here.	Changed constructor to configure motion
+	  compensation for addition or subtraction.  Added namespace
+	  support. All core Dirac functionality is now in namespace dirac.
+
+2004-11-22 13:13  asuraparaju
+
+	* encoder/encmain.cpp: Modified the encoder to use the new Encoder
+	  Public API.
+
+2004-11-22 13:11  asuraparaju
+
+	* libdirac_common/: common.cpp, common.h: Enforced a maximum of
+	  100% overlap in setting block sizes.	Removed m_zl (number of
+	  frames) parameter from SeqParams class. The user need no longer
+	  to specify the number of frames in the input sequence.  Added new
+	  functions ChromaWidth and ChromaHeight to SeqParams class which
+	  return the width and height of the chroma component.	Changed
+	  m_output_path in EncParams to var type std::string to prevent
+	  buffer overflow errors.  Added namespace support. All core Dirac
+	  functionality is now in namespace dirac.
+
+2004-11-22 13:09  asuraparaju
+
+	* libdirac_common/: upconvert.cpp, upconvert.h: Fixed bug in
+	  interpolating at the edge of the picture. Also clarified variable
+	  names. Added namespace support. All core Dirac functionality is
+	  now in namespace dirac.
+
+2004-11-22 13:07  asuraparaju
+
+	* unit_tests/: wavelet_utils_test.cpp, wavelet_utils_test.h: Unit
+	  test to test the Wavelet utilities
+
+2004-11-22 13:06  asuraparaju
+
+	* tests/at_wrap.in: Wrapper script around tests to use valgrind for
+	  memory checks
+
+2004-11-22 13:05  asuraparaju
+
+	* libdirac_encoder/: dirac_encoder.cpp, dirac_encoder.h: Encoder
+	  "C" Public API implementation files
+
+2004-11-22 13:04  asuraparaju
+
+	* libdirac_common/dirac_types.h: New header file to hold structures
+	  common to the Dirac Encoder and Decoder public "C" API
+
+2004-11-04 12:54  asuraparaju
+
+	* encoder/encmain.cpp: Setting original frame dimensions to
+	  codec_params for global motion
+
+2004-11-04 12:54  asuraparaju
+
+	* libdirac_common/arrays.h: Applied patch 1055707 and extended it
+	  to use memcpy for assigment = and copy constructor in both One-D
+	  and Two-D arrays.
+
+2004-11-04 12:53  asuraparaju
+
+	* libdirac_common/common.h: Including original frame dimensions in
+	  codec_params for use in global motion
+
+2004-11-04 12:53  asuraparaju
+
+	* libdirac_common/: motion.cpp, motion.h: Including arrays to hold
+	  global motion data in MvData and MEData
+
+2004-11-04 12:52  asuraparaju
+
+	* libdirac_common/: wavelet_utils.cpp, wavelet_utils.h: Refactored
+	  wavelet transform (again). Code now does re-ordering separately
+	  so that all the wavelet lifting stages can be done with in-place
+	  calculation.	All loops traverse contiguous data in memory to
+	  facilitate future vectorisation.
+
+2004-11-04 12:52  asuraparaju
+
+	* libdirac_encoder/comp_compress.cpp: Fixed bug 1055692 which was
+	  caused by integer overflow when calculating the quality based on
+	  4th powers of error. The integer overflow resulted in attempting
+	  to determine the square root of a negative number which caused
+	  the encoder to go into a permanent loop when using gcc 3.4.2.
+	  Modified the Mean Square Error calculation to use double instead
+	  of int type to fix this bug.
+
+2004-11-04 12:52  asuraparaju
+
+	* libdirac_motionest/me_utils.cpp: Applied patch 1055714. Now the
+	  Difference calculator uses a CalcValueType accumulator rather
+	  than float.
+
+2004-11-04 12:50  asuraparaju
+
+	* util/instrumentation/: instrmain.cpp,
+	  libdirac_instrument/Makefile.am,
+	  libdirac_instrument/gm_inliers.cpp,
+	  libdirac_instrument/gm_inliers.h,
+	  libdirac_instrument/overlay.cpp, libdirac_instrument/overlay.h:
+	  Update instrumentation with changes related to handling global
+	  motion
+
+2004-10-21 15:27  asuraparaju
+
+	* libdirac_common/motion.cpp: Fix "invalid write error" reported by
+	  valgrind in function MEData::FindTransitions.  This was causing
+	  the encoder to seg fault when using video of size 352x576.  (Bug#
+	  1050757)
+
+2004-10-21 15:26  asuraparaju
+
+	* libdirac_motionest/motion_estimate.cpp: Fix the error reported by
+	  valgrind in SetChromaDC where an unitialised variable was being
+	  used to initialise dcarray.
+
+2004-10-20 18:27  asuraparaju
+
+	* libdirac_motionest/block_match.cpp: Code tidy
+
+2004-10-20 18:26  asuraparaju
+
+	* libdirac_encoder/quality_monitor.h: Broke up	extremely long
+	  function prototype into multiple lines
+
+2004-10-20 18:24  asuraparaju
+
+	* libdirac_encoder/quality_monitor.cpp: Introduced clipping of the
+	  feedback control signal to reduce overshoots due to inaccuracies
+	  in the model.
+
+2004-10-20 18:23  asuraparaju
+
+	* libdirac_decoder/: frame_decompress.cpp, frame_decompress.h:
+	  Fixed memory leak (Bug# 1044503)
+
+2004-10-20 18:21  asuraparaju
+
+	* libdirac_decoder/dirac_parser.cpp: Fixed memory leak (Bug#
+	  1044501)
+
+2004-10-20 18:20  asuraparaju
+
+	* libdirac_common/mot_comp.cpp: Fixed memory leak (Bug #1044499)
+
+2004-10-20 18:18  asuraparaju
+
+	* libdirac_common/band_codec.cpp: Added max value for the number of
+	  symbols to be accumulated between resets. Prevents overflow in
+	  the arithmetic coder.
+
+2004-10-20 18:17  asuraparaju
+
+	* encoder/encmain.cpp: Changed GOP structure for 720p to be 24,3
+	  not 24,6
+
+2004-10-20 18:16  asuraparaju
+
+	* decoder/decmain.cpp: Fixed memory leak caused by not freeing up
+	  frame buffer that was dynamically allocated
+
 2004-09-21 13:58  asuraparaju
 
 	* NEWS: Included 0.4.3 release notes
