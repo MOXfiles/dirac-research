@@ -1,3 +1,97 @@
+2004-08-25 17:58  asuraparaju
+
+	* decoder/Makefile.am, encoder/Makefile.am,
+	  libdirac_common/Makefile.am, libdirac_decoder/Makefile.am,
+	  libdirac_encoder/Makefile.am, libdirac_motionest/Makefile.am,
+	  picheader/Makefile.am, unit_tests/Makefile.am,
+	  util/conversion/Makefile.am, util/conversion/common/Makefile.am,
+	  util/instrumentation/Makefile.am,
+	  util/instrumentation/libdirac_instrument/Makefile.am: Build under
+	  windows using gnu autotools, MSys as a shell and the no-cost MS
+	  VC++ 2003 compiler  now supported.
+
+2004-08-25 17:56  asuraparaju
+
+	* configure.ac: Fixed bug in configure where configure passed but
+	  make unit_tests failed when a version of cppunit older that
+	  1.10.2 is installed.	    Build under windows using gnu
+	  autotools, MSys as a shell and MS C++ compiler 7.1 (free version)
+	  now supported.
+
+2004-08-25 17:55  asuraparaju
+
+	* tests/Makefile.am: Set up CLEANFILES to the files created by
+	  encoder and decoder so that they are deleted during 'make clean'
+	  instead of manually deleting them.
+
+2004-08-25 17:54  asuraparaju
+
+	* README.release: Added compile and test under windows using MSYS
+	  and cl to checklist Included updating project page on
+	  www.freshmeat.net in check list.  Corrected line numbering and
+	  added note to send email to dirac-announce mailing list.
+
+2004-08-25 17:52  asuraparaju
+
+	* README: Added a section on compiling using MSYS shell and VC++
+	  2003 compiler under windows. Replaced all tabas with spaces.
+	  Reformatted text to not exceed 80 chars per line.
+
+2004-08-25 17:51  asuraparaju
+
+	* doc/dirac_bitstream.txt: Fixed error concerning prefix codes.
+
+2004-08-25 17:51  asuraparaju
+
+	* encoder/encmain.cpp: Removed duplicate text output. Fixed char
+	  buffer overflow bug which causes encoder to fail when file name
+	  paths exceed 80 chars.
+
+2004-08-25 17:50  asuraparaju
+
+	* libdirac_common/common.h: Fixed bug where SeqParams.Interlace()
+	  was returning the chroma format instead of interlace.
+
+2004-08-25 17:48  asuraparaju
+
+	* libdirac_common/pic_io.cpp: Removed text output if we've run out
+	  of input.
+
+2004-08-25 17:47  asuraparaju
+
+	* libdirac_common/frame_buffer.cpp, libdirac_common/frame_buffer.h,
+	  libdirac_common/motion.h, libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/frame_compress.h,
+	  libdirac_encoder/quality_monitor.cpp,
+	  libdirac_encoder/quality_monitor.h,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h,
+	  libdirac_motionest/block_match.cpp,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.cpp,
+	  libdirac_motionest/me_utils.cpp, libdirac_motionest/me_utils.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/pixel_match.cpp: Modified motion estimation so
+	  that it's done on the uncompressed data.  Changed the ME
+	  utilities so that they compute SAD only. Modified mode decisions
+	  to restore weights applied to different levels of decomposition.
+	  Changed QualityMonitor class so that the internal model of rate
+	  versus distortion is effectively reset if we have to recode a
+	  frame. Fixed bug with measurement of PSNR.
+
+2004-08-20 16:05  asuraparaju
+
+	* tests/colourbars.at: Fix paths for out-of-tree builds
+
+2004-08-19 15:27  asuraparaju
+
+	* doc/api/dirac_api.doxygen: Include utilities in documentation
+
+2004-08-19 14:55  asuraparaju
+
+	* configure.ac: Update release id to 0.4.0
+
 2004-08-19 13:23  asuraparaju
 
 	* decoder/Makefile.am, encoder/Makefile.am,
