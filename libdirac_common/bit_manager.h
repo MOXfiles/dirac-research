@@ -72,7 +72,7 @@ namespace dirac
     //! Not a start code but part of data
     const unsigned char NOT_START_CODE = 0xFF;
     //! Bitstream version
-    const unsigned char BITSTREAM_VERSION = 0x02;  //0.2
+    const unsigned char BITSTREAM_VERSION = 0x03;  //0.3
 
 
     ////////////////////////////////////////////////
