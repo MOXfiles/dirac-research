@@ -24,6 +24,8 @@ locally decoded encoder output; and b) the Windows VC++ decoder executable can
 decode the output of the Linux gcc encoder executable and the decoder output 
 is the same as the locally decoded encoder output.
 
+2.3    Check that diagnostics tool works
+
 3    Inspection
 
 3.1    View the test picture results of make check and check that file sizes 
