@@ -1,3 +1,66 @@
+2004-09-21 13:58  asuraparaju
+
+	* NEWS: Included 0.4.3 release notes
+
+2004-09-21 13:45  asuraparaju
+
+	* configure.ac: Updated release id to 0.4.3
+
+2004-09-21 11:56  asuraparaju
+
+	* encoder/encmain.cpp: Removed ambiguity between -HD720 and HD720p
+	  options.
+
+2004-09-21 11:16  asuraparaju
+
+	* util/instrumentation/libdirac_instrument/overlay.cpp: Fixed bug
+	  in setting x chroma factor for 4:1:1 input which caused the
+	  diagnostics tool to crash.
+
+2004-09-21 11:15  asuraparaju
+
+	* libdirac_motionest/: downconvert.cpp, downconvert.h: Fixed bug
+	  where downconverting a picture with odd valued dimensions.
+
+2004-09-21 11:14  asuraparaju
+
+	* libdirac_encoder/: quality_monitor.cpp, quality_monitor.h: Tidied
+	  and changed terminology to refer to quality rather than PSNR.
+
+2004-09-21 11:14  asuraparaju
+
+	* libdirac_common/: common.cpp, common.h: Fixed bug with block
+	  sizes for 411 coding.
+
+2004-09-21 11:14  asuraparaju
+
+	* doc/algorithm/: algorithm.htm, const_qual.htm, subband_rdo.htm:
+	  Added detail of the constant quality coding revisions. Updated
+	  version number.
+
+2004-09-17 16:46  asuraparaju
+
+	* libdirac_motionest/: block_match.cpp, me_mode_decn.cpp,
+	  me_subpel.cpp, me_subpel.h, motion_estimate.cpp: Changed
+	  structure to use a map for the different lambdas, which is
+	  encpasulated in the MEData structure. Limited size of motion
+	  vector costs to allow us to cope with motion transitions better.
+
+2004-09-17 16:44  asuraparaju
+
+	* libdirac_encoder/: comp_compress.cpp, frame_compress.cpp,
+	  quality_monitor.cpp, quality_monitor.h: Changed quality metric
+	  from PSNR to one based on 4th powers of errors, to give bigger
+	  weighting to large errors.
+
+2004-09-17 16:43  asuraparaju
+
+	* libdirac_common/: common.h, frame.cpp, frame_buffer.cpp,
+	  mot_comp.cpp, mot_comp.h, motion.cpp, motion.h,
+	  wavelet_utils.cpp: Fixed bug with scaling motion vectors for
+	  non-444 formats. Rationalised frame buffer functions. Added
+	  comments to common.h. General tidying up of code.
+
 2004-09-10 14:05  asuraparaju
 
 	* NEWS: Included 0.4.2 release notes
