@@ -48,16 +48,28 @@
 #include <libdirac_common/mv_codec.h>
 #include <libdirac_common/golomb.h>
 #include <libdirac_common/bit_manager.h>
+#include <libdirac_common/dirac_assertions.h>
+using namespace dirac;
+
 #include <iostream>
 #include <sstream>
 
 FrameCompressor::FrameCompressor( EncoderParams& encp ) :
     m_encparams(encp),
+    m_me_data(0),
     m_skipped(false),
     m_use_global(false),
     m_use_block_mv(true),
-    m_global_pred_mode(REF1_ONLY)
-{}
+    m_global_pred_mode(REF1_ONLY),
+    m_medata_avail(false)
+{
+}
+
+FrameCompressor::~FrameCompressor()
+{
+    if (m_me_data)
+        delete m_me_data;
+}
 
 void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_buffer , int fnum )
 {
@@ -70,13 +82,20 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_
 
     // number of bits written, without byte alignment
     unsigned int num_mv_bits;
+    m_medata_avail = false;
 
     CompCompressor my_compcoder(m_encparams , fparams );
 
+    if (m_me_data)
+    {
+        delete m_me_data;
+        m_me_data = 0;
+    }
+
     if ( fsort != I_frame )
     {
+
         m_me_data = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB());
-//  ,fparams.Refs().size() );
 
         // Motion estimate first
         MotionEstimator my_motEst( m_encparams );
@@ -92,9 +111,6 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_
 
     }
 
-    // Write the motion data out to file for instrumentation purposes
-    // (NB: recoding will mean that this is could be written more than once)
-    WriteMotionData( my_buffer , fnum );
 
     // Write the frame header. We wait until after motion estimation, since
     // this allows us to do cut-detection and (possibly) to decide whether
@@ -132,8 +148,7 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_
 
              // Then motion compensate
 
-            MotionCompensator mycomp( m_encparams );
-            mycomp.SetCompensationMode( SUBTRACT );
+            MotionCompensator mycomp( m_encparams , SUBTRACT);
             mycomp.CompensateFrame( my_buffer , fnum , *m_me_data );
 
         }//?fsort
@@ -149,18 +164,14 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_
         //motion compensate again if necessary
         if ( fsort != I_frame )
         {
-            MotionCompensator mycomp( m_encparams );
-            mycomp.SetCompensationMode( ADD );
+            MotionCompensator mycomp( m_encparams , ADD);
             mycomp.CompensateFrame( my_buffer , fnum , *m_me_data );
-
-            delete m_me_data;    
+            // Set me data available flag
+            m_medata_avail = true;
         }//?fsort
 
          //finally clip the data to keep it in range
         my_buffer.GetFrame(fnum).Clip();
-
-
-
 
     }//?m_skipped
 }
@@ -235,44 +246,10 @@ void FrameCompressor::WriteFrameHeader( const FrameParams& fparams )
     }// ?m_skipped
 }
 
-// Write motion data (MvData object) to file.
-// uses overloaded operator<< defined in libdirac_common/motion.cpp
-void FrameCompressor::WriteMotionData( const FrameBuffer& fbuffer , const int fnum)
+const MEData* FrameCompressor::GetMEData() const
 {
-    const FrameParams& fparams = fbuffer.GetFrame( fnum ).GetFparams();
-    const FrameSort fsort = fparams.FSort();
+    TESTM (m_me_data != NULL, "m_medata allocated");
+    TESTM (m_medata_avail == true, "ME Data available");
 
-    if (m_encparams.Verbose())
-        std::cerr<<std::endl<<"Writing motion data to file: ";
-
-    char file[150];
-    std::strcpy(file, m_encparams.OutputPath());
-
-    std::ofstream out(file, std::ios::out | std::ios::app);
-
-    out << std::endl << "[frame:" << fnum << "]";
-
-    if (fsort == I_frame)
-    {
-        out << ">intra" << std::endl;
-    }
-    else
-    {
-        out << ">mo_comp";
-        out << std::endl << std::endl << fparams.Refs().size() << " ";
-
-        for (int i=0; i<int(fparams.Refs().size()); ++i)
-            out << fparams.Refs()[i] << " ";
-
-        OLBParams block_params = m_encparams.LumaBParams(2);
-        out << block_params << " ";
-
-        // output macroblock and motion vector array dimensions
-        out << m_me_data->MBSplit().LengthY() << " " << m_me_data->MBSplit().LengthX() << " ";
-        out << m_me_data->Vectors(1).LengthY() << " " << m_me_data->Vectors(1).LengthX();
-
-        out << *m_me_data;
-    }
-    
-    out.close();
+    return m_me_data;
 }

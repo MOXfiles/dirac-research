@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author),
+*                 Scott R Ladd,
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -42,81 +44,90 @@
 #include <libdirac_common/frame_buffer.h>
 #include <libdirac_common/common.h>
 #include <libdirac_common/motion.h>
-
-class MvData;
-
-//! Compress a single image frame
-/*!
-    This class compresses a single frame at a time, using parameters supplied at
-    its construction. FrameCompressor is used by SequenceCompressor.
-*/
-class FrameCompressor
+namespace dirac
 {
-public:
-    //! Constructor
+
+    class MvData;
+
+    //! Compress a single image frame
     /*!
-        Creates a FrameEncoder with specific set of parameters the control
-        the compression process. It encodes motion data before encoding each
-        component of the frame. 
-        \param encp encoder parameters
+        This class compresses a single frame at a time, using parameters
+        supplied at its construction. FrameCompressor is used by
+        SequenceCompressor.
     */
-    FrameCompressor( EncoderParams& encp ); 
+    class FrameCompressor
+    {
+    public:
+        //! Constructor
+        /*!
+            Creates a FrameEncoder with specific set of parameters the control
+            the compression process. It encodes motion data before encoding
+            each component of the frame. 
+            \param encp encoder parameters
+        */
+        FrameCompressor( EncoderParams& encp ); 
 
-    //! Compress a specific frame within a group of pictures (GOP)
-    /*!
-        Compresses a specified frame within a group of pictures. 
-        \param fbuffer picture buffer in which the frame resides
-        \param orig_buffer the corresponding picture buffer of uncoded originals
-        \param fnum      frame number to compress
-    */
-    void Compress( FrameBuffer& fbuffer , const FrameBuffer& orig_buffer , int fnum );
+        //! Destructor
+        ~FrameCompressor( );
+        //! Compress a specific frame within a group of pictures (GOP)
+        /*!
+            Compresses a specified frame within a group of pictures. 
+            \param fbuffer picture buffer in which the frame resides
+            \param orig_buffer the corresponding picture buffer of uncoded originals
+            \param fnum      frame number to compress
+        */
+        void Compress( FrameBuffer& fbuffer , const FrameBuffer& orig_buffer , int fnum );
 
-    //! Returns true if the frame has been skipped rather than coded normally
-    bool IsSkipped(){ return m_skipped; }
+        //! Returns true if the frame has been skipped rather than coded normally
+        bool IsSkipped(){ return m_skipped; }
 
+        //! Returns true if Motion estimation data is available
+        bool IsMEDataAvail() const { return m_medata_avail; }
 
+        //! Returns the motion estimation data
+        const MEData* GetMEData() const;
 
-private:
-    //! Copy constructor is private and body-less
-    /*!
-        Copy constructor is private and body-less. This class should not be copied.
+    private:
+        //! Copy constructor is private and body-less
+        /*!
+            Copy constructor is private and body-less. This class should not
+            be copied.
+        */
+        FrameCompressor( const FrameCompressor& cpy );
 
-    */
-    FrameCompressor( const FrameCompressor& cpy );
+        //! Assignment = is private and body-less
+        /*!
+            Assignment = is private and body-less. This class should not be
+            assigned.
+        */
+        FrameCompressor& operator=(const FrameCompressor& rhs);
 
-    //! Assignment = is private and body-less
-    /*!
-        Assignment = is private and body-less. This class should not be assigned.
+        //! Write the frame compression header
+        void WriteFrameHeader(const FrameParams& fparams);
 
-    */
-    FrameCompressor& operator=(const FrameCompressor& rhs);
+        //member variables
+        // a local copy of the encoder params
+        EncoderParams& m_encparams;
+     
+        // Pointer to the motion vector data
+        MEData* m_me_data;
 
-    //! Write the frame compression header
-    void WriteFrameHeader(const FrameParams& fparams);
+        // True if the frame has been skipped, false otherwise
+        bool m_skipped;                
 
-    //! Write frame motion data
-    void WriteMotionData( const FrameBuffer& fbuffer , const int fnum );
+        // True if we use global motion vectors, false otherwise
+        bool m_use_global;
 
-    //member variables
-    // a local copy of the encoder params
-    EncoderParams& m_encparams;
- 
-    // Pointer to the motion vector data
-    MEData* m_me_data;
+        // True if we use block motion vectors, false otherwise
+        bool m_use_block_mv;
+        
+        // Prediction mode to use if we only have global motion vectors
+        PredMode m_global_pred_mode;
+        
+        // True if motion estimation data is available
+        bool m_medata_avail;
+    };
 
-    // True if the frame has been skipped, false otherwise
-    bool m_skipped;                
-
-    // True if we use global motion vectors, false otherwise
-    bool m_use_global;
-
-    // True if we use block motion vectors, false otherwise
-    bool m_use_block_mv;
-    
-    // Prediction mode to use if we only have global motion vectors
-    PredMode m_global_pred_mode;
-
-
-};
+} // namespace dirac
 
 #endif
