@@ -38,7 +38,11 @@
 * $Author$
 * $Revision$
 * $Log$
-* Revision 1.4  2004-05-24 16:03:48  tjdwave
+* Revision 1.5  2004-05-26 15:18:28  tjdwave
+* Corrected behaviour at end of stream, so that decoder freezes on the last
+* frame.
+*
+* Revision 1.4  2004/05/24 16:03:48  tjdwave
 * Support for IO error handling. Decoder freezes on last frame if out of data.
 *
 * Revision 1.3  2004/05/12 08:35:34  tjdwave
@@ -172,18 +176,19 @@ Frame& SequenceDecompressor::DecompressNextFrame(){
 
 	FrameDecompressor my_fdecoder(decparams);
 
-	if (current_code_fnum!=0)//if we're not at the beginning, clean the buffer of already displayed frames
-		my_buffer->Clean(show_fnum);	
+	if (current_code_fnum!=0){
+		//if we're not at the beginning, clean the buffer of frames that can be discarded
+		my_buffer->Clean(show_fnum);
+	}
 
 	int end_of_data=my_fdecoder.Decompress(*my_buffer);
 
 	//if we've exited with success, there's a new frame to display, so increment
-	//the counters. Otherwise, freeze on the last frame shown	
+	//the counters. Otherwise, freeze on the last frame shown
+	show_fnum=std::min(std::max(current_code_fnum-delay,0),sparams.zl-1);
 	if (!end_of_data){
-		show_fnum=std::min(std::max(current_code_fnum-delay,0),sparams.zl-1);
 		current_code_fnum++;
 	}
-
 	return my_buffer->GetFrame(show_fnum);
 }
 
