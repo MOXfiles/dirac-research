@@ -351,7 +351,7 @@ public:
     ChromaFormat CFormat() const {return m_cformat;}
     
     //! Returns true if the sequence is interlaced
-    bool Interlace() const {return m_cformat;}
+    bool Interlace() const {return m_interlace;}
     
     //! Returns true if the top field comes first in time
     bool TopFieldFirst() const {return m_topfieldfirst;}
