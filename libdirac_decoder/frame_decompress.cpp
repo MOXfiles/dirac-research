@@ -56,20 +56,19 @@ using std::vector;
 FrameDecompressor::FrameDecompressor(DecoderParams& decp, ChromaFormat cf)
 : 
 m_decparams(decp),
-m_cformat(cf),
-m_fparams(0)
+m_cformat(cf)
 {}
 
 FrameDecompressor::~FrameDecompressor()
 {
-    delete m_fparams;
 }
 
 bool FrameDecompressor::ReadFrameHeader(const FrameBuffer& my_buffer)
 {
-    m_fparams = new FrameParams (m_cformat , my_buffer.GetFParams().Xl(), my_buffer.GetFParams().Yl());
+    FrameParams my_fparams (m_cformat , my_buffer.GetFParams().Xl(), my_buffer.GetFParams().Yl());
      //Get the frame header (which includes the frame number)
-    m_read_header = ReadFrameHeader(*m_fparams);
+    m_fparams = my_fparams; 
+    m_read_header = ReadFrameHeader(m_fparams);
     return m_read_header;
 }
 
@@ -79,19 +78,19 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 
     if ( !(m_decparams.BitsIn().End())&& m_read_header )
     {//if we've not finished the data, can proceed
-        TEST (my_buffer.GetFParams().Xl() == m_fparams->Xl());
-        TEST (my_buffer.GetFParams().Yl() == m_fparams->Yl());
+        TEST (my_buffer.GetFParams().Xl() == m_fparams.Xl());
+        TEST (my_buffer.GetFParams().Yl() == m_fparams.Yl());
 
         if ( !m_skipped )
         {//if we're not m_skipped then we can decode the rest of the frame
 
             if ( m_decparams.Verbose() )
-                std::cerr<<std::endl<<"Decoding frame "<<m_fparams->FrameNum()<<" in display order";        
+                std::cerr<<std::endl<<"Decoding frame "<<m_fparams.FrameNum()<<" in display order";        
 
              //Add a frame into the buffer ready to receive the data        
-            my_buffer.PushFrame(*m_fparams);
-            Frame& my_frame = my_buffer.GetFrame(m_fparams->FrameNum());//Reference to the frame being decoded
-            FrameSort fsort = m_fparams->FSort();
+            my_buffer.PushFrame(m_fparams);
+            Frame& my_frame = my_buffer.GetFrame(m_fparams.FrameNum());//Reference to the frame being decoded
+            FrameSort fsort = m_fparams.FSort();
             MvData* mv_data;
             unsigned int num_mv_bits;
 
@@ -114,18 +113,18 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
             }
 
                //decode components
-            CompDecompress( my_buffer,m_fparams->FrameNum() , Y_COMP );
-            if ( m_fparams->CFormat() != Yonly )
+            CompDecompress( my_buffer,m_fparams.FrameNum() , Y_COMP );
+            if ( m_fparams.CFormat() != Yonly )
             {
-                CompDecompress( my_buffer , m_fparams->FrameNum() , U_COMP );        
-                CompDecompress( my_buffer , m_fparams->FrameNum() , V_COMP );
+                CompDecompress( my_buffer , m_fparams.FrameNum() , U_COMP );        
+                CompDecompress( my_buffer , m_fparams.FrameNum() , V_COMP );
             }
 
             if ( fsort != I_frame )
             {//motion compensate to add the data back in if we don't have an I frame
                 MotionCompensator mycomp(m_decparams);
                 mycomp.SetCompensationMode(ADD);
-                mycomp.CompensateFrame(my_buffer , m_fparams->FrameNum() , *mv_data);        
+                mycomp.CompensateFrame(my_buffer , m_fparams.FrameNum() , *mv_data);        
                 delete mv_data;    
             }
             my_frame.Clip();

@@ -86,7 +86,7 @@ public:
     bool ReadFrameHeader(const FrameBuffer& my_buffer);
 
     //! Returns the frame parameters of the current frame being decoded
-    const FrameParams& GetFrameParams() const{ return *m_fparams; }
+    const FrameParams& GetFrameParams() const{ return m_fparams; }
 
 private:
     //! Copy constructor is private and body-less
@@ -130,7 +130,7 @@ private:
     PredMode m_global_pred_mode;
 
     //! Current Frame Parameters
-    FrameParams *m_fparams;
+    FrameParams m_fparams;
 
     //! Read header successfully
     bool m_read_header;
