@@ -1,3 +1,51 @@
+2004-07-12 11:59  asuraparaju
+
+	* libdirac_common/arrays.h, libdirac_common/band_codec.cpp,
+	  libdirac_common/band_codec.h, libdirac_common/bit_manager.cpp,
+	  libdirac_common/bit_manager.h, libdirac_common/cmd_line.cpp,
+	  libdirac_common/cmd_line.h, libdirac_common/common.cpp,
+	  libdirac_common/common.h, libdirac_common/frame.cpp,
+	  libdirac_common/frame.h, libdirac_common/frame_buffer.cpp,
+	  libdirac_common/frame_buffer.h, libdirac_common/golomb.cpp,
+	  libdirac_common/golomb.h, libdirac_common/mot_comp.cpp,
+	  libdirac_common/mot_comp.h, libdirac_common/motion.cpp,
+	  libdirac_common/motion.h, libdirac_common/mv_codec.cpp,
+	  libdirac_common/mv_codec.h, libdirac_common/pic_io.cpp,
+	  libdirac_common/upconvert.cpp, libdirac_common/upconvert.h,
+	  libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/quality_monitor.cpp,
+	  libdirac_encoder/quality_monitor.h,
+	  libdirac_motionest/block_match.cpp,
+	  libdirac_motionest/block_match.h,
+	  libdirac_motionest/downconvert.cpp,
+	  libdirac_motionest/downconvert.h,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.cpp, libdirac_motionest/me_subpel.h,
+	  libdirac_motionest/me_utils.cpp, libdirac_motionest/me_utils.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/motion_estimate.h: Changed order of
+	  initialisation parameters for TwoDArray template class and
+	  subclass PicArray.  Tidied TwoDArray and OneDArray classes.
+	  Removed all use of allocators. Replaced tabs with spaces in
+	  libdirac_common. Fixed minor bug in quality_monitor PSNR
+	  measurement.	Made other typographical changes.
+
+2004-07-12 11:53  asuraparaju
+
+	* Makefile.am, configure.ac, tests/Makefile.am, tests/testsuite.at,
+	  tests/unittests.at, unit_tests/Makefile.am,
+	  unit_tests/arrays_test.cpp, unit_tests/arrays_test.h,
+	  unit_tests/core_suite.h, unit_tests/cppunit_testsuite.cpp,
+	  unit_tests/utmain.cpp: Added a unit test framework based on
+	  Cppunit. The unit tests will reside in the directory unit_tests.
+	  'make check' command will now run the unit tests as well.
+	  Currently unit test exists only for the TwoDArrays class. More
+	  tests will be added in future.
+
 2004-07-06 12:26  asuraparaju
 
 	* Makefile.am, README, encoder/encmain.cpp,
