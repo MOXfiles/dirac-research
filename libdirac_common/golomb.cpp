@@ -37,12 +37,15 @@
 
 #include <libdirac_common/golomb.h>
 #include <libdirac_common/bit_manager.h>
+using namespace dirac;
+
 #include <cmath>
 #include <cstdlib>
 #include <iostream>
 
 using std::vector;
-
+namespace dirac
+{
 void UnsignedGolombCode(BasicOutputManager& bitman, const unsigned int val)
 {
     unsigned int M = 0;
@@ -205,3 +208,4 @@ int GolombDecode(const vector<bool>& bitvec)
     }
     return val;        
 }
+} // namespace dirac

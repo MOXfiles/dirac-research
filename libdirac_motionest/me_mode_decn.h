@@ -41,118 +41,123 @@
 #include <libdirac_common/motion.h>
 #include <libdirac_motionest/block_match.h>
 
-class FrameBuffer;
-
-//! Decides between macroblock and block prediction modes.
-/*!
-    Loops over all the macroblocks and decides on the best modes. A macroblock
-    is a square of 16 blocks. There are three possible splitting levels: 
-        level 0 means the macroblock is considered as a single block; 
-        level 1 means the macroblock is considered as 4 larger blocks, termed
-    sub-macroblocks; 
-       level 0 means the macroblock is split right down to blocks. 
-
-    In addition there is a common_ref mode which if true means the prediction 
-    mode of all units within the MB are the same (e.g. all sub-MBs are predicted
-    only from reference 1). In deciding which modes to adopt, the ModeDecider 
-    object calculates costs for all permutations, doing motion estimation for
-    the level 1 and level 0 modes as these have not been calculated before.
-
-    The process of decision for each is as follows. For each MB, we loop over
-    the levels, and call DoLevelDecn. DoLevelDecn does motion estimation if
-    it's necessary. Then it assumes that we don't have a common block mode
-    and calls DoUnitDecn which finds the best mode for each unit in the
-    MB at that level, individually. Then we consider the case where we
-    say that all the modes will be the same, and call DoCommonMode to
-    see if we'll get a lower cost. Then when we've got a best cost for 
-    that level we go up to the next one.
- */
-class ModeDecider
+namespace dirac
 {
+    class FrameBuffer;
 
-public:
-    //! Constructor
+    //! Decides between macroblock and block prediction modes.
     /*!
-        The constructor creates arrays for handling the motion vector data 
-        at splitting levels 0 and 1, as motion
-        estimation must be performed for these levels.
+        Loops over all the macroblocks and decides on the best modes. A
+        macroblock is a square of 16 blocks. There are three possible
+        splitting levels: 
+            level 0 means the macroblock is considered as a single block; 
+            level 1 means the macroblock is considered as 4 larger blocks,
+            termed sub-macroblocks; 
+           level 0 means the macroblock is split right down to blocks. 
+
+        In addition there is a common_ref mode which if true means the
+        prediction mode of all units within the MB are the same (e.g. all
+        sub-MBs are predicted only from reference 1). In deciding which modes
+        to adopt, the ModeDecider object calculates costs for all
+        permutations, doing motion estimation for the level 1 and level 0
+        modes as these have not been calculated before.
+        The process of decision for each is as follows. For each MB, we loop
+        over the levels, and call DoLevelDecn. DoLevelDecn does motion
+        estimation if it's necessary. Then it assumes that we don't have a
+        common block mode and calls DoUnitDecn which finds the best mode for
+        each unit in the MB at that level, individually. Then we consider the
+        case where we say that all the modes will be the same, and call
+        DoCommonMode to see if we'll get a lower cost. Then when we've got a
+        best cost for that level we go up to the next one.
      */
-    ModeDecider(const EncoderParams& encp );    
+    class ModeDecider
+    {
 
-    //! Destructor
-    /*!
-        The destructor destroys the classes created in the constructor
-     */    
-    ~ModeDecider();
+    public:
+        //! Constructor
+        /*!
+            The constructor creates arrays for handling the motion vector data 
+            at splitting levels 0 and 1, as motion
+            estimation must be performed for these levels.
+         */
+        ModeDecider(const EncoderParams& encp );    
 
-    //! Does the actual mode decision
-    /*!
-        Does the mode decision
-        /param    my_buffer    the buffer of all the relevant frames
-        /param    frame_num    the frame number for which motion estimation is being done
-        /param    mvd    the motion vector data into which decisions will be written
-     */
-    void DoModeDecn( const FrameBuffer& my_buffer , int frame_num , MEData& me_data);
+        //! Destructor
+        /*!
+            The destructor destroys the classes created in the constructor
+         */    
+        ~ModeDecider();
 
-private:
-    ModeDecider( const ModeDecider& cpy );//private, body-less copy constructor: this class should not be copied
-    ModeDecider& operator=( const ModeDecider& rhs );//private, body-less assignment=: this class should not be assigned
+        //! Does the actual mode decision
+        /*!
+            Does the mode decision
+            /param    my_buffer    the buffer of all the relevant frames
+            /param    frame_num    the frame number for which motion estimation is being done
+            /param    mvd    the motion vector data into which decisions will be written
+         */
+        void DoModeDecn( const FrameBuffer& my_buffer , int frame_num , MEData& me_data);
 
-     //functions
-    void DoMBDecn();    //called by do_mode_decn for each MB
+    private:
+        ModeDecider( const ModeDecider& cpy );//private, body-less copy constructor: this class should not be copied
+        ModeDecider& operator=( const ModeDecider& rhs );//private, body-less assignment=: this class should not be assigned
 
-    //! Make a mode decision given a particular level of decomposition
-    void DoLevelDecn( int level );
+         //functions
+        void DoMBDecn();    //called by do_mode_decn for each MB
 
-    //! Decide on a mode for a given prediction unit (block, sub-MB or MB)
-    float DoUnitDecn( const int xpos , const int ypos , const int level );
+        //! Make a mode decision given a particular level of decomposition
+        void DoLevelDecn( int level );
 
-    //! Choose a common mode for all units in a MB assuming a particular level of decomposition
-    float DoCommonMode( PredMode& predmode , const int level);
+        //! Decide on a mode for a given prediction unit (block, sub-MB or MB)
+        float DoUnitDecn( const int xpos , const int ypos , const int level );
 
-    //! Do motion estimation for a prediction unit at a given level
-    void DoME( const int xpos , const int ypos , const int level );
+        //! Choose a common mode for all units in a MB assuming a particular level of decomposition
+        float DoCommonMode( PredMode& predmode , const int level);
 
- 
-    //! Return a measure of the cost of coding a given mode
-    float ModeCost( const int xindex , const int yindex , const PredMode predmode );
+        //! Do motion estimation for a prediction unit at a given level
+        void DoME( const int xpos , const int ypos , const int level );
 
-    //! Get a prediction for the dc value of a block
-    ValueType GetDCPred( int xblock , int yblock );
+     
+        //! Return a measure of the cost of coding a given mode
+        float ModeCost( const int xindex , const int yindex , const PredMode predmode );
 
-    //! Get a measure of DC value variance
-    float GetDCVar( const ValueType dc_val , const ValueType dc_pred);
+        //! Get a prediction for the dc value of a block
+        ValueType GetDCPred( int xblock , int yblock );
 
-     // Member data
-    FrameSort fsort;
+        //! Get a measure of DC value variance
+        float GetDCVar( const ValueType dc_val , const ValueType dc_pred);
 
-    //! A local reference to the encoder params
-    const EncoderParams& m_encparams;
+         // Member data
+        FrameSort fsort;
 
-    //! The Lagrangian parameter for motion estimation
-    float m_lambda;
+        //! A local reference to the encoder params
+        const EncoderParams& m_encparams;
 
-    //! Correction factor for comparing SAD costs for different MB splittings
-    OneDArray<float> m_level_factor;
+        //! The Lagrangian parameter for motion estimation
+        float m_lambda;
+
+        //! Correction factor for comparing SAD costs for different MB splittings
+        OneDArray<float> m_level_factor;
 
 
-    //! Correction factor for comparing mode costs for different MB splittings
-    OneDArray<float> m_mode_factor;
+        //! Correction factor for comparing mode costs for different MB splittings
+        OneDArray<float> m_mode_factor;
 
-    //! Motion vector data for each level of splitting
-    OneDArray< MEData* > m_me_data_set;
+        //! Motion vector data for each level of splitting
+        OneDArray< MEData* > m_me_data_set;
 
-    const PicArray* m_pic_data;
-    const PicArray* m_ref1_updata;
-    const PicArray* m_ref2_updata;
-    int num_refs;
+        const PicArray* m_pic_data;
+        const PicArray* m_ref1_updata;
+        const PicArray* m_ref2_updata;
+        int num_refs;
 
-    IntraBlockDiff* m_intradiff;
-    BiBChkBlockDiffUp* m_bicheckdiff;
+        IntraBlockDiff* m_intradiff;
+        BiBChkBlockDiffUp* m_bicheckdiff;
 
-    //position variables, used in all the mode decisions
-    int m_xmb_loc,m_ymb_loc;    //coords of the current MB
+        //position variables, used in all the mode decisions
+        int m_xmb_loc,m_ymb_loc;    //coords of the current MB
 
-};
+    };
+
+} // namespace dirac
 
 #endif

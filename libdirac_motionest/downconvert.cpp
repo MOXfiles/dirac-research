@@ -37,6 +37,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_motionest/downconvert.h>
+using namespace dirac;
 
 DownConverter::DownConverter()
 {}

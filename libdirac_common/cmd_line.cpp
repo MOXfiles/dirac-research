@@ -36,6 +36,8 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include "cmd_line.h"
+using namespace dirac;
+
 using namespace std;
 
 CommandLine::CommandLine(int argc, char * argv[], const set<string> & bool_opts)

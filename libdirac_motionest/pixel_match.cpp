@@ -42,6 +42,8 @@
 #include <libdirac_motionest/downconvert.h>
 #include <libdirac_motionest/me_mode_decn.h>
 #include <libdirac_motionest/me_subpel.h>
+using namespace dirac;
+
 #include <cmath>
 #include <vector>
 

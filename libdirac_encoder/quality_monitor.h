@@ -41,89 +41,93 @@
 #include <libdirac_common/common.h>
 #include <libdirac_common/frame.h>
 #include <libdirac_common/wavelet_utils.h>
-
-//! Class to monitor the quality of pictures and adjust coding parameters appropriately
-class QualityMonitor
+namespace dirac
 {
-public:
 
-    //! Constructor. Sets up initial Lagrangian values
-    /*
-       Constructor sets up initial Lagrangian values.
-    */
-    QualityMonitor(EncoderParams& ep,
-                   const SeqParams& sparams );
+    //! Class to monitor the quality of pictures and adjust coding parameters appropriately
+    class QualityMonitor
+    {
+    public:
 
-    ////////////////////////////////////////////////////////////
-    //                                                        //
-    //    Assumes default copy constructor,  assignment =     //
-    //                 and destructor                         //
-    ////////////////////////////////////////////////////////////
+        //! Constructor. Sets up initial Lagrangian values
+        /*
+           Constructor sets up initial Lagrangian values.
+        */
+        QualityMonitor(EncoderParams& ep,
+                       const SeqParams& sparams );
 
-    //! Update the quality factors, returning true if we need to recode
-    /*!
-        Update the quality factors, returning true if we need to recode
-        \param ld_frame the locally-decoded frame
-        \param orig_frame the original frame
-        \param count the number of times we've tried to code this frame before
-    */
-    bool UpdateModel(const Frame& ld_frame, const Frame& orig_frame ,const int count);
+        ////////////////////////////////////////////////////////////
+        //                                                        //
+        //    Assumes default copy constructor,  assignment =     //
+        //                 and destructor                         //
+        ////////////////////////////////////////////////////////////
 
-    //! Reset the quality factors (say if there's been a cut)
-    void ResetAll();
+        //! Update the quality factors, returning true if we need to recode
+        /*!
+            Update the quality factors, returning true if we need to recode
+            \param ld_frame the locally-decoded frame
+            \param orig_frame the original frame
+            \param count the number of times we've tried to code this frame before
+        */
+        bool UpdateModel(const Frame& ld_frame, const Frame& orig_frame ,const int count);
 
-private:
-    //functions
+        //! Reset the quality factors (say if there's been a cut)
+        void ResetAll();
 
-    //! Use the model parameters to calculate the resulting Lagrangian parameters
-    void CalcNewLambdas(const FrameSort fsort, const double slope, const double offset);
+    private:
+        //functions
 
-    //! Calculate the quality of coded wrt original picture
-    double QualityVal( const PicArray& coded_data , 
-                                       const PicArray& orig_data ,
-                                       double cpd , 
-                                       const FrameSort fsort );
+        //! Use the model parameters to calculate the resulting Lagrangian parameters
+        void CalcNewLambdas(const FrameSort fsort, const double slope, const double offset);
 
-    //member variables//
-    ////////////////////
+        //! Calculate the quality of coded wrt original picture
+        double QualityVal( const PicArray& coded_data , 
+                                           const PicArray& orig_data ,
+                                           double cpd , 
+                                           const FrameSort fsort );
 
-    //! A reference to the encoder parameters
-    EncoderParams& m_encparams;
+        //member variables//
+        ////////////////////
 
-    //! The chroma format
-    const ChromaFormat m_cformat;
+        //! A reference to the encoder parameters
+        EncoderParams& m_encparams;
 
-    //! The true picture width, minus padding
-    const int m_true_xl;
+        //! The chroma format
+        const ChromaFormat m_cformat;
 
-    //! The true picture height, minus padding
-    const int m_true_yl;
+        //! The true picture width, minus padding
+        const int m_true_xl;
 
-    // target quality values for each frame type
-    OneDArray<double> m_target_quality;
+        //! The true picture height, minus padding
+        const int m_true_yl;
 
-    // weighted PSNR values for last of each frame type
-    OneDArray<double> m_last_quality;
+        // target quality values for each frame type
+        OneDArray<double> m_target_quality;
 
-    /* Default Model parameters for quality wrt to log10(lambda)
-       Model is : 
-            quality = offset + slope * log10( lambda )
-        for each lambda parameter type.
-        Default parameters will be used if it's not possible to measure them, and updated 
-        using measured data
-    */
-    OneDArray<double> m_slope;
-    OneDArray<double> m_offset;
+        // weighted PSNR values for last of each frame type
+        OneDArray<double> m_last_quality;
 
-    //! Lagrangian parameters for the last I, L1 and L2 frames
-    OneDArray<double> m_last_lambda;
+        /* Default Model parameters for quality wrt to log10(lambda)
+           Model is : 
+                quality = offset + slope * log10( lambda )
+            for each lambda parameter type.
+            Default parameters will be used if it's not possible to measure
+            them, and updated using measured data
+        */
+        OneDArray<double> m_slope;
+        OneDArray<double> m_offset;
 
-    //! The Lagrangian ME parameters
-    double m_L1_me_lambda, m_L2_me_lambda;
+        //! Lagrangian parameters for the last I, L1 and L2 frames
+        OneDArray<double> m_last_lambda;
 
-    //! The ratio of Lagrangian ME parameters to frame motion estimation parameters
-    double m_me_ratio;
+        //! The Lagrangian ME parameters
+        double m_L1_me_lambda, m_L2_me_lambda;
 
-};
+        //! The ratio of Lagrangian ME parameters to frame motion estimation parameters
+        double m_me_ratio;
+
+    };
+
+} // namespace dirac
 
 #endif

@@ -41,71 +41,76 @@
 #include <libdirac_common/common.h>
 #include <libdirac_common/motion.h>
 #include <libdirac_motionest/block_match.h>
-
-class FrameBuffer;
-class MvData;
-class PicArray;
-
-//! The SubpelRefine class takes pixel-accurate motion vectors and refines them to 1/8-pixel accuracy
-/*!
-    The SubpelRefine class takes pixel-accurate motion vectors and refines them to 1/8-pixel accuracy. It uses references
-    upconverted by a factor of 2 in each dimension, with the remaining precision gained by doing linear interpolation
-    between values on-the-fly.
- */
-class SubpelRefine
+namespace dirac
 {
 
-public:
-    //! Constructor
+    class FrameBuffer;
+    class MvData;
+    class PicArray;
+    
+    //! The SubpelRefine class takes pixel-accurate motion vectors and refines them to 1/8-pixel accuracy
     /*!
-        The constructor initialises the encoder parameters.
-        /param    cp    the parameters used for controlling encoding
+        The SubpelRefine class takes pixel-accurate motion vectors and refines
+        them to 1/8-pixel accuracy. It uses references upconverted by a factor
+        of 2 in each dimension, with the remaining precision gained by doing
+        linear interpolation between values on-the-fly.
      */
-    SubpelRefine(const EncoderParams& cp);
+    class SubpelRefine
+    {
+    
+    public:
+        //! Constructor
+        /*!
+            The constructor initialises the encoder parameters.
+            /param    cp    the parameters used for controlling encoding
+         */
+        SubpelRefine(const EncoderParams& cp);
+    
+        //! Destructor
+        ~SubpelRefine(){}
+    
+        //! Does the actual sub-pixel refinement
+        /*!
+            Does the actual sub-pixel refinement.
+            /param    my_buffer    the buffer of pictures being used
+            /param    frame_num    the frame number on which motion estimation is being performed
+            /param    mvd    the motion vector data, into which the results will be written
+         */
+        void DoSubpel( const FrameBuffer& my_buffer , int frame_num , MEData& me_data );
+    
+    private:
+        //! Private, body-less copy constructor: this class should not be copied
+        SubpelRefine( const SubpelRefine& cpy );
+    
+        //! Private, body-less assignment=: this class should not be assigned
+        SubpelRefine& operator=( const SubpelRefine& rhs );
+    
+        //! Match a picture from its (upconverted) reference, and record the block mvs
+        void MatchPic(const PicArray& pic_data , const PicArray& refup_data , MEData& me_data ,
+                                 int ref_id);
+    
+        //! Match an individual block
+        void DoBlock( const int xblock , const int yblock , 
+                      BlockMatcher& my_bmatch, MEData& me_data , const int ref_id );
+    
+        //! Get a prediction for a block MV from the neighbouring blocks
+        MVector GetPred( int xblock , int yblock , const MvArray& mvarray );
+    
+        //member variables
+    
+        //! A local reference to the encoder params
+        const EncoderParams& m_encparams;
+    
+        //! The list of candidate vectors being tested
+        CandidateList m_cand_list;
+    
+        //! The relative coords of the set of neighbours used to generate MV predictions
+        OneDArray<ImageCoords> m_nshift;
+    
+    
+    
+    };
 
-    //! Destructor
-    ~SubpelRefine(){}
-
-    //! Does the actual sub-pixel refinement
-    /*!
-        Does the actual sub-pixel refinement.
-        /param    my_buffer    the buffer of pictures being used
-        /param    frame_num    the frame number on which motion estimation is being performed
-        /param    mvd    the motion vector data, into which the results will be written
-     */
-    void DoSubpel( const FrameBuffer& my_buffer , int frame_num , MEData& me_data );
-
-private:
-    //! Private, body-less copy constructor: this class should not be copied
-    SubpelRefine( const SubpelRefine& cpy );
-
-    //! Private, body-less assignment=: this class should not be assigned
-    SubpelRefine& operator=( const SubpelRefine& rhs );
-
-    //! Match a picture from its (upconverted) reference, and record the block mvs
-    void MatchPic(const PicArray& pic_data , const PicArray& refup_data , MEData& me_data ,
-                             int ref_id);
-
-    //! Match an individual block
-    void DoBlock( const int xblock , const int yblock , 
-                  BlockMatcher& my_bmatch, MEData& me_data , const int ref_id );
-
-    //! Get a prediction for a block MV from the neighbouring blocks
-    MVector GetPred( int xblock , int yblock , const MvArray& mvarray );
-
-    //member variables
-
-    //! A local reference to the encoder params
-    const EncoderParams& m_encparams;
-
-    //! The list of candidate vectors being tested
-    CandidateList m_cand_list;
-
-    //! The relative coords of the set of neighbours used to generate MV predictions
-    OneDArray<ImageCoords> m_nshift;
-
-
-
-};
+} // namespace dirac
 
 #endif

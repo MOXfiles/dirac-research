@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_common/mv_codec.h>
+using namespace dirac;
 
 //public functions//
 ////////////////////

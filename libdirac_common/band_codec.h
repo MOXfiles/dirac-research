@@ -41,205 +41,226 @@
 #include <libdirac_common/arith_codec.h>
 #include <libdirac_common/wavelet_utils.h>
 
-//Subclasses the arithmetic codec to produce a coding/decoding tool for subbands
-
-
-//! A general class for coding and decoding wavelet subband data.
-/*!
-    A general class for coding and decoding wavelet subband data, deriving from the abstract ArithCodec class.
- */
-class BandCodec: public ArithCodec<PicArray >
+namespace dirac
 {
-public:
+    //Subclasses the arithmetic codec to produce a coding/decoding tool for subbands
 
-    //! Constructor for encoding.
+
+    //! A general class for coding and decoding wavelet subband data.
     /*!
-        Creates a BandCodec object to encode subband data
-        /param    bits_out    the output for the encoded bits
-        /param    ctxs        the contexts used in the encoding process
-        /param    band_list    the set of all the subbands
-        /param     band_num    the number of the subband being coded 
+        A general class for coding and decoding wavelet subband data, deriving 
+        from the abstract ArithCodec class.
      */
-    BandCodec(BasicOutputManager* bits_out,
-              size_t number_of_contexts,
-              const SubbandList& band_list,
-              int band_num);
+    class BandCodec: public ArithCodec<PicArray >
+    {
+    public:
 
-    //! Constructor for decoding.
+        //! Constructor for encoding.
+        /*!
+            Creates a BandCodec object to encode subband data
+            /param    bits_out    the output for the encoded bits
+            /param    ctxs        the contexts used in the encoding process
+            /param    band_list    the set of all the subbands
+            /param     band_num    the number of the subband being coded 
+         */
+        BandCodec(BasicOutputManager* bits_out,
+                  size_t number_of_contexts,
+                  const SubbandList& band_list,
+                  int band_num);
+
+        //! Constructor for decoding.
+        /*!
+            Creates a BandCodec object to decode subband data.
+            /param    bits_in        the input for the encoded bits
+            /param    ctxs        the contexts used in the decoding process
+            /param    band_list    the set of all the subbands
+            /param     band_num    the number of the subband being decoded 
+         */
+        BandCodec(BitInputManager* bits_in,
+                  size_t number_of_contexts,
+                  const SubbandList& band_list,
+                  int band_num);
+
+        //! Initialise the contexts according to predefined counts.
+        void InitContexts();
+
+    protected:
+        // Code an individual value
+        void CodeVal(PicArray& in_data, const ValueType val);
+        // Decode an individual value
+        void DecodeVal(PicArray& out_data);
+
+    private:
+        // Functions
+        // Overridden from the base class
+        virtual void DoWorkCode(PicArray& in_data);
+        // Overridden from the base class
+        virtual void DoWorkDecode(PicArray& in_data, int num_bits);
+
+        void Update( const bool symbol , const int context_num );
+        void Resize(const int context_num);
+        void ResetAll();
+        
+        int ChooseContext(const PicArray& data, const int bin_number) const;
+        int ChooseContext(const PicArray& data) const;
+        int ChooseSignContext(const PicArray& data) const;
+
+        // Private, bodyless copy constructor: class should not be copied
+        BandCodec(const BandCodec& cpy);
+        // Private, bodyless copy operator=: class should not be assigned
+        BandCodec& operator=(const BandCodec& rhs);
+
+    protected:
+        //! variables    
+        int m_bnum;
+
+        //! the subband being coded
+        const Subband m_node;
+        
+        //! dimensions of the subband
+        int m_xp, m_yp, m_xl, m_yl;
+        
+        //! position within the subband
+        int m_xpos, m_ypos;
+        
+        //! size of the subband
+        int m_vol;
+        
+        //! the number of coefficients after which contexts are reset
+        int m_reset_coeff_num;
+        
+        //! count of the coefficients since the last context reset
+        int m_coeff_count;
+        
+        //! quantisation and inverse quantisation values
+        int m_qf, m_qfinv;
+        
+        //! reconstruction point
+        ValueType m_offset;
+        
+        //! sum of a neighbourhood of previously (de)coded values
+        ValueType m_nhood_sum;
+        
+        //! the parent subband
+        Subband m_pnode;
+        
+        //! coords of the parent subband
+        int m_pxp, m_pyp, m_pxl, m_pyl;
+        
+        //! position of the parent coefficient
+        int m_pxpos, m_pypos;
+        
+        //! True if the parent of a coeff is not zero
+        bool m_parent_notzero;
+        
+        //! used in selecting a context
+        ValueType m_cut_off_point;
+    };
+
+    //! A class specially for coding the LF subbands 
     /*!
-        Creates a BandCodec object to decode subband data.
-        /param    bits_in        the input for the encoded bits
-        /param    ctxs        the contexts used in the decoding process
-        /param    band_list    the set of all the subbands
-        /param     band_num    the number of the subband being decoded 
-     */
-    BandCodec(BitInputManager* bits_in,
-              size_t number_of_contexts,
-              const SubbandList& band_list,
-              int band_num);
+        A class specially for coding the LF subbands, where we don't want 
+        to/can't refer to the 
+        parent subband.
+    */
+    class LFBandCodec: public BandCodec
+    {
+    public:
+        //! Constructor for encoding
+        /*!
+            Creates a LFBandCodec object to encode subband data.
+            /param    bits_out    the output for the encoded bits
+            /param    ctxs        the contexts used in the encoding process
+            /param    band_list    the set of all the subbands
+            /param     band_num    the number of the subband being coded 
+         */        
+        LFBandCodec(BasicOutputManager* bits_out,
+                    size_t number_of_contexts,
+                    const SubbandList& band_list,
+                    int band_num)
+              : BandCodec(bits_out,number_of_contexts,band_list,band_num){}
 
-    //! Initialise the contexts according to predefined counts.
-    void InitContexts();
+        //! Constructor for decoding
+        /*!
+            Creates a LFBandCodec object to decode subband data.
+            /param    bits_in        the input for the encoded bits
+            /param    ctxs        the contexts used in the decoding process
+            /param    band_list    the set of all the subbands
+            /param     band_num    the number of the subband being decoded 
+         */
+        LFBandCodec(BitInputManager* bits_in,
+                    size_t number_of_contexts,
+                    const SubbandList& band_list,
+                    int band_num)
+          : BandCodec(bits_in,number_of_contexts,band_list,band_num){}
 
-protected:
-    void CodeVal(PicArray& in_data, const ValueType val);//code an individual value
-    void DecodeVal(PicArray& out_data);//decode an individual value
+    private:
+        // Overridden from the base class
+        virtual void DoWorkCode(PicArray& InData);
+        // Overridden from the base class
+        virtual void DoWorkDecode(PicArray& OutData, int num_bits);
+        // Private, bodyless copy constructor: class should not be copied
+        LFBandCodec(const LFBandCodec& cpy);
+        // Private, bodyless copy operator=: class should not be assigned
+        LFBandCodec& operator=(const LFBandCodec& rhs);
 
-private:
-    //functions
-    virtual void DoWorkCode(PicArray& in_data);                    //overridden from the base class
-    virtual void DoWorkDecode(PicArray& in_data, int num_bits); //ditto
+    };
 
-    void Update( const bool symbol , const int context_num );
-    void Resize(const int context_num);
-    void ResetAll();
-    
-    int ChooseContext(const PicArray& data, const int bin_number) const;
-    int ChooseContext(const PicArray& data) const;
-    int ChooseSignContext(const PicArray& data) const;
 
-    BandCodec(const BandCodec& cpy);            //private, bodyless copy constructor: class should not be copied
-    BandCodec& operator=(const BandCodec& rhs);    //private, bodyless copy operator=: class should not be assigned
+    //////////////////////////////////////////////////////////////////////////////////
+    //Finally,special class incorporating prediction for the DC band of intra frames//
+    //////////////////////////////////////////////////////////////////////////////////
 
-protected:
-    //! variables    
-    int m_bnum;
-
-    //! the subband being coded
-    const Subband m_node;
-    
-    //! dimensions of the subband
-    int m_xp, m_yp, m_xl, m_yl;
-    
-    //! position within the subband
-    int m_xpos, m_ypos;
-    
-    //! size of the subband
-    int m_vol;
-    
-    //! the number of coefficients after which contexts are reset
-    int m_reset_coeff_num;
-    
-    //! count of the coefficients since the last context reset
-    int m_coeff_count;
-    
-    //! quantisation and inverse quantisation values
-    int m_qf, m_qfinv;
-    
-    //! reconstruction point
-    ValueType m_offset;
-    
-    //! sum of a neighbourhood of previously (de)coded values
-    ValueType m_nhood_sum;
-    
-    //! the parent subband
-    Subband m_pnode;
-    
-    //! coords of the parent subband
-    int m_pxp, m_pyp, m_pxl, m_pyl;
-    
-    //! position of the parent coefficient
-    int m_pxpos, m_pypos;
-    
-    //! True if the parent of a coeff is not zero
-    bool m_parent_notzero;
-    
-    //! used in selecting a context
-    ValueType m_cut_off_point;
-};
-
-//! A class specially for coding the LF subbands 
-/*!
-    A class specially for coding the LF subbands, where we don't want to/can't refer to the 
-    parent subband.
-*/
-class LFBandCodec: public BandCodec
-{
-public:
-    //! Constructor for encoding
+    //! A class specially for coding the DC subband of Intra frames 
     /*!
-        Creates a LFBandCodec object to encode subband data.
-        /param    bits_out    the output for the encoded bits
-        /param    ctxs        the contexts used in the encoding process
-        /param    band_list    the set of all the subbands
-        /param     band_num    the number of the subband being coded 
-     */        
-    LFBandCodec(BasicOutputManager* bits_out,
-                size_t number_of_contexts,
-                const SubbandList& band_list,
-                int band_num)
-          : BandCodec(bits_out,number_of_contexts,band_list,band_num){}
+        A class specially for coding the DC subband of Intra frames, using 
+        intra-band prediction of coefficients.
+    */
+    class IntraDCBandCodec: public BandCodec
+    {
+    public:
+        //! Constructor for encoding
+        /*!
+            Creates a IntraDCBandCodec object to encode subband data, based on 
+            parameters
+            /param    bits_out    the output for the encoded bits
+            /param    ctxs        the contexts used in the encoding process
+            /param    band_list    the set of all the subbands
+            /param     band_num    the number of the subband being coded 
+         */
+        IntraDCBandCodec(BasicOutputManager* bits_out,
+                         size_t number_of_contexts,
+                         const SubbandList& band_list)
+          : BandCodec(bits_out,number_of_contexts,band_list,band_list.Length()){}
 
-    //! Constructor for decoding
-    /*!
-        Creates a LFBandCodec object to decode subband data.
-        /param    bits_in        the input for the encoded bits
-        /param    ctxs        the contexts used in the decoding process
-        /param    band_list    the set of all the subbands
-        /param     band_num    the number of the subband being decoded 
-     */
-    LFBandCodec(BitInputManager* bits_in,
-                size_t number_of_contexts,
-                const SubbandList& band_list,
-                int band_num)
-      : BandCodec(bits_in,number_of_contexts,band_list,band_num){}
+        //! Constructor for decoding
+        /*!
+            Creates a LFBandCodec object to decode subband data, based on 
+            parameters
+            /param    bits_in        the input for the encoded bits
+            /param    ctxs        the contexts used in the decoding process
+            /param    band_list    the set of all the subbands
+            /param     band_num    the number of the subband being decoded 
+         */    
+        IntraDCBandCodec(BitInputManager* bits_in,
+                         size_t number_of_contexts,
+                         const SubbandList& band_list)
+          : BandCodec(bits_in,number_of_contexts,band_list,band_list.Length()){}
 
-private:
-    virtual void DoWorkCode(PicArray& InData);                    //overridden from the base class
-    virtual void DoWorkDecode(PicArray& OutData, int num_bits); //ditto
+    private:
+        // Overridden from the base class
+        virtual void DoWorkCode(PicArray& InData);
+        // Overridden from the base class
+        virtual void DoWorkDecode(PicArray& OutData, int num_bits);
 
-    LFBandCodec(const LFBandCodec& cpy);            //private, bodyless copy constructor: class should not be copied
-    LFBandCodec& operator=(const LFBandCodec& rhs);    //private, bodyless copy operator=: class should not be assigned
+        // Private, bodyless copy constructor: class should not be copied
+        IntraDCBandCodec(const IntraDCBandCodec& cpy);
+        // Private, bodyless copy operator=: class should not be assigned
+        IntraDCBandCodec& operator=(const IntraDCBandCodec& rhs);
 
-};
+        // Prediction of a DC value from its previously coded neighbours
+        ValueType GetPrediction(const PicArray& Data) const;
+    };
 
-
-//////////////////////////////////////////////////////////////////////////////////
-//Finally,special class incorporating prediction for the DC band of intra frames//
-//////////////////////////////////////////////////////////////////////////////////
-
-//! A class specially for coding the DC subband of Intra frames 
-/*!
-    A class specially for coding the DC subband of Intra frames, using intra-band prediction 
-    of coefficients.
-*/
-class IntraDCBandCodec: public BandCodec
-{
-public:
-    //! Constructor for encoding
-    /*!
-        Creates a IntraDCBandCodec object to encode subband data, based on parameters
-        /param    bits_out    the output for the encoded bits
-        /param    ctxs        the contexts used in the encoding process
-        /param    band_list    the set of all the subbands
-        /param     band_num    the number of the subband being coded 
-     */
-    IntraDCBandCodec(BasicOutputManager* bits_out,
-                     size_t number_of_contexts,
-                     const SubbandList& band_list)
-      : BandCodec(bits_out,number_of_contexts,band_list,band_list.Length()){}
-
-    //! Constructor for decoding
-    /*!
-        Creates a LFBandCodec object to decode subband data, based on parameters
-        /param    bits_in        the input for the encoded bits
-        /param    ctxs        the contexts used in the decoding process
-        /param    band_list    the set of all the subbands
-        /param     band_num    the number of the subband being decoded 
-     */    
-    IntraDCBandCodec(BitInputManager* bits_in,
-                     size_t number_of_contexts,
-                     const SubbandList& band_list)
-      : BandCodec(bits_in,number_of_contexts,band_list,band_list.Length()){}
-
-private:
-    virtual void DoWorkCode(PicArray& InData);                    //overridden from the base class
-    virtual void DoWorkDecode(PicArray& OutData, int num_bits); //ditto
-
-    IntraDCBandCodec(const IntraDCBandCodec& cpy);                //private, bodyless copy constructor: class should not be copied
-    IntraDCBandCodec& operator=(const IntraDCBandCodec& rhs);    //private, bodyless copy operator=: class should not be assigned
-
-    ValueType GetPrediction(const PicArray& Data) const;//prediction of a DC value from its previously coded neighbours
-};
-
+} // namespace dirac
 #endif

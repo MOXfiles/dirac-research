@@ -41,6 +41,7 @@
 #include <libdirac_motionest/pixel_match.h>
 #include <libdirac_motionest/me_subpel.h>
 #include <libdirac_motionest/me_mode_decn.h>
+using namespace dirac;
 
 #include <cmath>
 #include <vector>

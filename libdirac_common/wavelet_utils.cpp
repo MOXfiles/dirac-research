@@ -38,6 +38,8 @@
 
 #include <libdirac_common/wavelet_utils.h>
 #include <libdirac_common/common.h>
+using namespace dirac;
+
 #include <cstdlib>
 
 // Default constructor

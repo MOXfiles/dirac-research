@@ -36,6 +36,8 @@
 * ***** END LICENSE BLOCK ***** */
 #ifndef DIRAC_ASSERTIONS_H
 #define DIRAC_ASSERTIONS_H
+namespace dirac
+{
 
 #undef cmpCOND
 #define cmpCOND( exp, trueRes, falseRes )    ( (exp) ? (trueRes) : (falseRes) )
@@ -72,5 +74,7 @@ void dirac_assert( const char *p_fname, int line_number, const char *p_mess);
 
 /*! Print a message to standard error */
 void dirac_report( const char *p_fname, int line_number, const char *p_mess);
+
+} // namespace dirac
 
 #endif

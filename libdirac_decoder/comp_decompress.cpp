@@ -40,6 +40,8 @@
 #include <libdirac_common/wavelet_utils.h>
 #include <libdirac_common/band_codec.h>
 #include <libdirac_common/golomb.h>
+using namespace dirac;
+
 #include <vector>
 
 #include <ctime>

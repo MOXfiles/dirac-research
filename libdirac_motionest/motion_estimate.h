@@ -40,66 +40,69 @@
 #define _MOTION_ESTIMATE_H_
 
 #include <libdirac_common/motion.h>
+namespace dirac
+{
+
+    class FrameBuffer;
 
 
-class FrameBuffer;
+    //! Class to handle the whole motion estimation process. 
+    /*!
+     
+     Class to handle the whole motion estimation process, which works in 
+     three stages. 
 
+     First a pixel-accurate estimate is formed by looking at the current 
+     frame data and the data from the reference frame(s). Motion vectors
+     are found for every block.
 
-//! Class to handle the whole motion estimation process. 
-/*!
- 
- Class to handle the whole motion estimation process, which works in 
- three stages. 
+     Second, these pixel-accurate motion vectors are refined to sub-pixel
+     accuracy. This means some sort of upconversion needs to be applied to
+     the reference. This can be done by actually upconverting the reference
+     to create a bigger picture or by doing some interpolation of values
+     on the fly.
 
- First a pixel-accurate estimate is formed by looking at the current 
- frame data and the data from the reference frame(s). Motion vectors
- are found for every block.
+     Third, mode decisions have to be made. This means choosing which (if
+     any) reference to use for each block, and whether to use the same 
+     motion vectors for groups of blocks together. A 2x2 group of blocks is
+     called a sub-MB and a 4x4 group of blocks is a MB (Macroblock). All 
+     the MV data is organised by MB.
+    */
+    class MotionEstimator{
+    public:
+        //! Constructor
+        MotionEstimator( const EncoderParams& encp );
+        //! Destructor
+        ~MotionEstimator(){}
 
- Second, these pixel-accurate motion vectors are refined to sub-pixel
- accuracy. This means some sort of upconversion needs to be applied to
- the reference. This can be done by actually upconverting the reference
- to create a bigger picture or by doing some interpolation of values
- on the fly.
+        //! Do the motion estimation
+        bool DoME(const FrameBuffer& my_buffer , int frame_num , MEData& me_data);
 
- Third, mode decisions have to be made. This means choosing which (if
- any) reference to use for each block, and whether to use the same 
- motion vectors for groups of blocks together. A 2x2 group of blocks is
- called a sub-MB and a 4x4 group of blocks is a MB (Macroblock). All 
- the MV data is organised by MB.
-*/
-class MotionEstimator{
-public:
-    //! Constructor
-    MotionEstimator( const EncoderParams& encp );
-    //! Destructor
-    ~MotionEstimator(){}
+    private:
+        //! Copy constructor: private, body-less - class should not be copied
+        MotionEstimator( const MotionEstimator& cpy );
 
-    //! Do the motion estimation
-    bool DoME(const FrameBuffer& my_buffer , int frame_num , MEData& me_data);
+        //! Assignment= : //private, body-less - class should not be assigned
+        MotionEstimator& operator=( const MotionEstimator& rhs );
 
-private:
-    //! Copy constructor: private, body-less - class should not be copied
-    MotionEstimator( const MotionEstimator& cpy );
+        //! Go through all the intra blocks and extract the chroma dc values to be coded
+        void SetChromaDC(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data);
 
-    //! Assignment= : //private, body-less - class should not be assigned
-    MotionEstimator& operator=( const MotionEstimator& rhs );
+        //! Called by previous fn for each component
+        void SetChromaDC(const PicArray& pic_data, MvData& mv_data,CompSort csort);        
 
-    //! Go through all the intra blocks and extract the chroma dc values to be coded
-    void SetChromaDC(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data);
+        //! Called by previous fn for each block
+        ValueType GetChromaBlockDC(const PicArray& pic_data, int xloc,int yloc,int split);
 
-    //! Called by previous fn for each component
-    void SetChromaDC(const PicArray& pic_data, MvData& mv_data,CompSort csort);        
+        //! Analyses the ME data and returns true if a cut is detected, false otherwise
+        bool IsACut( const MEData& ) const;
 
-    //! Called by previous fn for each block
-    ValueType GetChromaBlockDC(const PicArray& pic_data, int xloc,int yloc,int split);
+        // Member variables
 
-    //! Analyses the ME data and returns true if a cut is detected, false otherwise
-    bool IsACut( const MEData& ) const;
+        //! A local reference to the encoder parameters
+        const EncoderParams& m_encparams;
+    };
 
-    // Member variables
-
-    //! A local reference to the encoder parameters
-    const EncoderParams& m_encparams;
-};
+} // namespace dirac
 
 #endif

@@ -37,6 +37,7 @@
 
 #include <libdirac_motionest/me_subpel.h>
 #include <libdirac_common/frame_buffer.h>
+using namespace dirac;
 
 #include <iostream>
 

@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_common/band_codec.h>
+using namespace dirac;
 
 //! Constructor for encoding.
 BandCodec::BandCodec(BasicOutputManager* bits_out,

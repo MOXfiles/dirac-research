@@ -45,96 +45,102 @@
 #include "libdirac_common/frame_buffer.h"
 #include "libdirac_common/common.h"
 
-//! Compress a single image frame
-/*!
-    This class decompresses a single frame at a time, using parameters supplied at
-    its construction. FrameDecompressor is used by SequenceDecompressor.
-*/
-class FrameDecompressor{
-public:
-    //! Constructor
+namespace dirac
+{
+    //! Compress a single image frame
     /*!
-        Creates a FrameDecompressor with specific set of parameters the control
-        the decompression process. It decodes motion data before decoding each
-        component of the frame. 
-
-        \param  decp    decoder parameters
-        \param  cf      the chroma format of the frame being decompressed
+        This class decompresses a single frame at a time, using parameters
+        supplied at its construction. FrameDecompressor is used by
+        SequenceDecompressor.
     */
-    FrameDecompressor(DecoderParams& decp, ChromaFormat cf);
+    class FrameDecompressor{
+    public:
+        //! Constructor
+        /*!
+            Creates a FrameDecompressor with specific set of parameters the
+            control the decompression process. It decodes motion data before
+            decoding each component of the frame.
 
-    //! Destructor
-    /*!
-        Releases resources. 
-    */
-    ~FrameDecompressor();
+            \param  decp    decoder parameters
+            \param  cf      the chroma format of the frame being decompressed
+        */
+        FrameDecompressor(DecoderParams& decp, ChromaFormat cf);
 
-    //! Decompress the next frame into the buffer
-    /*!
-        Decompresses the next frame from the stream and place at the end of a frame buffer.
-        Returns true if able to decode successfully, false otherwise
+        //! Destructor
+        /*!
+            Releases resources. 
+        */
+        ~FrameDecompressor();
 
-        \param my_buffer   picture buffer into which the frame is placed
-    */
-    bool Decompress(FrameBuffer& my_buffer);
+        //! Decompress the next frame into the buffer
+        /*!
+            Decompresses the next frame from the stream and place at the end
+            of a frame buffer.
+            Returns true if able to decode successfully, false otherwise
 
-    //! Reads the header data
-    /*!
-        Reads the header data associated with decompressing the frame
-        \param my_buffer picture buffer from which frame dimensions are obtained
-    */
-    bool ReadFrameHeader(const FrameBuffer& my_buffer);
+            \param my_buffer   picture buffer into which the frame is placed
+        */
+        bool Decompress(FrameBuffer& my_buffer);
 
-    //! Returns the frame parameters of the current frame being decoded
-    const FrameParams& GetFrameParams() const{ return m_fparams; }
+        //! Reads the header data
+        /*!
+            Reads the header data associated with decompressing the frame
+            \param my_buffer picture buffer from which frame dimensions are obtained
+        */
+        bool ReadFrameHeader(const FrameBuffer& my_buffer);
 
-private:
-    //! Copy constructor is private and body-less
-    /*!
-        Copy constructor is private and body-less. This class should not be copied.
+        //! Returns the frame parameters of the current frame being decoded
+        const FrameParams& GetFrameParams() const{ return m_fparams; }
 
-    */
-    FrameDecompressor(const FrameDecompressor& cpy);
+    private:
+        //! Copy constructor is private and body-less
+        /*!
+            Copy constructor is private and body-less. This class should not be copied.
 
-    //! Assignment = is private and body-less
-    /*!
-        Assignment = is private and body-less. This class should not be assigned.
+        */
+        FrameDecompressor(const FrameDecompressor& cpy);
 
-    */
-    FrameDecompressor& operator=(const FrameDecompressor& rhs);
+        //! Assignment = is private and body-less
+        /*!
+            Assignment = is private and body-less. This class should not be
+            assigned.
+        */
+        FrameDecompressor& operator=(const FrameDecompressor& rhs);
 
-    //! Decodes component data    
-    void CompDecompress(FrameBuffer& my_buffer,int fnum, CompSort cs);
+        //! Decodes component data    
+        void CompDecompress(FrameBuffer& my_buffer,int fnum, CompSort cs);
 
-    //! Reads the header data associated with decompressing the frame
-    bool ReadFrameHeader(FrameParams& fparams);    //read the frame header data
+        //! Reads the header data associated with decompressing the frame
+        bool ReadFrameHeader(FrameParams& fparams);
 
-    //Member variables    
+        //Member variables    
 
-    //! Parameters for the decompression, as provided in constructor
-    DecoderParams& m_decparams;
+        //! Parameters for the decompression, as provided in constructor
+        DecoderParams& m_decparams;
 
-    //! Chroma format of the frame being decompressed
-    ChromaFormat m_cformat;
+        //! Chroma format of the frame being decompressed
+        ChromaFormat m_cformat;
 
-    //! An indicator which is true if the frame has been skipped, false otherwise
-    bool m_skipped;
+        //! An indicator which is true if the frame has been skipped, false otherwise
+        bool m_skipped;
 
-    //! An indicator that is true if we use global motion vectors, false otherwise
-    bool m_use_global;
+        //! An indicator that is true if we use global motion vectors, false otherwise
+        bool m_use_global;
 
-    //! An indicator that is true if we use block motion vectors, false otherwise
-    bool m_use_block_mv;
+        //! An indicator that is true if we use block motion vectors, false otherwise
+        bool m_use_block_mv;
 
-    //! Prediction mode to use if we only have global motion vectors
-    PredMode m_global_pred_mode;
+        //! Prediction mode to use if we only have global motion vectors
+        PredMode m_global_pred_mode;
 
-    //! Current Frame Parameters
-    FrameParams m_fparams;
+        //! Current Frame Parameters
+        FrameParams m_fparams;
 
-    //! Read header successfully
-    bool m_read_header;
+        //! Read header successfully
+        bool m_read_header;
 
-};
+    };
+
+} // namespace dirac
 
 #endif

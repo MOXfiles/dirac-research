@@ -37,6 +37,7 @@
 
 #include <libdirac_encoder/quality_monitor.h>
 #include <libdirac_common/wavelet_utils.h>
+using namespace dirac;
 
 using std::log10;
 
@@ -60,8 +61,8 @@ void QualityMonitor::ResetAll()
 {
     // set target qualities
  	m_target_quality[I_frame] = 0.28 * m_encparams.Qf()* m_encparams.Qf() + 20.0 ;
-	m_target_quality[L1_frame] = m_target_quality[I_frame] - 1.5;
-	m_target_quality[L2_frame] = m_target_quality[I_frame] - 2.5;
+	m_target_quality[L1_frame] = m_target_quality[I_frame] - 1.0;
+	m_target_quality[L2_frame] = m_target_quality[I_frame] - 2.0;
 
     // assume we hit those targets last time
     m_last_quality = m_target_quality;
@@ -194,6 +195,7 @@ void QualityMonitor::CalcNewLambdas(const FrameSort fsort, const double slope, c
 
 double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& orig_data , double cpd , const FrameSort fsort)
 {
+
     // The number of regions to look at in assessing quality
     int xregions( 4 );
     int yregions( 3 );
@@ -234,7 +236,8 @@ double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& or
             {
                 for (int i=xstart[p]; i<xend[p]; ++i)
                 {
-                    diff = static_cast<long double> ( coded_data[j][i] - orig_data[j][i]);
+                    diff = static_cast<long double> ( coded_data[j][i] - orig_data[j][i] );
+ 
                     diff *= diff;
                     diff *= diff;
 
@@ -247,6 +250,7 @@ double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& or
 
             // now compensate for the fact that we've got two extra bits
             diff_array[q][p] /= 16.0;
+
         }// p
     }// q
      

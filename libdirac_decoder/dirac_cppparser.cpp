@@ -42,6 +42,7 @@
 #include <libdirac_decoder/dirac_cppparser.h>
 #include <libdirac_decoder/seq_decompress.h>
 #include <libdirac_common/frame.h> 
+using namespace dirac;
 
 
 InputStreamBuffer::InputStreamBuffer()

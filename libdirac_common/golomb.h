@@ -41,30 +41,34 @@
 
 #include <libdirac_common/bit_manager.h>
 
-//exp-golomb coding and decoding
+namespace dirac
+{
+    //exp-golomb coding and decoding
 
-//! Code a value using unsigned exp-Golomb coding and output it
-void UnsignedGolombCode(BasicOutputManager& bitman, const unsigned int val);
+    //! Code a value using unsigned exp-Golomb coding and output it
+    void UnsignedGolombCode(BasicOutputManager& bitman, const unsigned int val);
 
-//! Code a value using unsigned exp-Golomb coding and output it to a vector
-void UnsignedGolombCode(std::vector<bool>& bitvec, const unsigned int val);
+    //! Code a value using unsigned exp-Golomb coding and output it to a vector
+    void UnsignedGolombCode(std::vector<bool>& bitvec, const unsigned int val);
 
-//! Code a value using signed exp-Golomb coding and output it
-void GolombCode(BasicOutputManager& bitman, const int val);
+    //! Code a value using signed exp-Golomb coding and output it
+    void GolombCode(BasicOutputManager& bitman, const int val);
 
-//! Code a value using signed exp-Golomb coding and output it to a vector
-void GolombCode(std::vector<bool>& bitvec, const int val);
+    //! Code a value using signed exp-Golomb coding and output it to a vector
+    void GolombCode(std::vector<bool>& bitvec, const int val);
 
-//! Decode a value using unsigned exp-Golomb decoding and output it
-unsigned int UnsignedGolombDecode(BitInputManager& bitman);//returning the value decoded
+    //! Decode a value using unsigned exp-Golomb decoding and output it
+    unsigned int UnsignedGolombDecode(BitInputManager& bitman);//returning the value decoded
 
-//! Decode a value using unsigned exp-Golomb decoding and output it
-unsigned int UnsignedGolombDecode(const std::vector<bool>& bitvec);//returning the value decoded
+    //! Decode a value using unsigned exp-Golomb decoding and output it
+    unsigned int UnsignedGolombDecode(const std::vector<bool>& bitvec);//returning the value decoded
 
-//! Decode a value using signed exp-Golomb decoding and output it
-int GolombDecode(BitInputManager& bitman);//returning the value decoded
+    //! Decode a value using signed exp-Golomb decoding and output it
+    int GolombDecode(BitInputManager& bitman);//returning the value decoded
 
-//! Decode a value using signed exp-Golomb decoding and output it
-int GolombDecode(const std::vector<bool>& bitvec);//returning the value decoded
+    //! Decode a value using signed exp-Golomb decoding and output it
+    int GolombDecode(const std::vector<bool>& bitvec);//returning the value decoded
+
+} // namespace dirac
 
 #endif

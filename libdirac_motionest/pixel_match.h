@@ -52,89 +52,93 @@
 *
 * *************************************************************************/
 
-class FrameBuffer;
-class MvData;
-class EncoderParams;
-class PicArray;
-
 #include <libdirac_common/common.h>
 #include <libdirac_common/motion.h>
 #include <libdirac_motionest/block_match.h>
-
-class PixelMatcher
+namespace dirac
 {
-public:
+    class FrameBuffer;
+    class MvData;
+    class EncoderParams;
+    class PicArray;
 
-    //! Constructor
-    PixelMatcher( const EncoderParams& encp);
 
-    //! Do the actual search
-    /* Do the searching.
+    class PixelMatcher
+    {
+    public:
 
-    \param  my_buffer  the buffer of pictures from which frames are taken
-    \param  frame_num  the number of the frame for which motion is to be estimated
-    \param  mv_data    class in which the measured motion vectors are stored, together with costs
-    
-    */
-    void DoSearch(const FrameBuffer& my_buffer, 
-                  int frame_num, 
-                  MEData& me_data);
+        //! Constructor
+        PixelMatcher( const EncoderParams& encp);
 
-private:
+        //! Do the actual search
+        /* Do the searching.
 
-    // Member variables
+        \param  my_buffer  the buffer of pictures from which frames are taken
+        \param  frame_num  the number of the frame for which motion is to be estimated
+        \param  mv_data    class in which the measured motion vectors are stored, together with costs
+        
+        */
+        void DoSearch(const FrameBuffer& my_buffer, 
+                      int frame_num, 
+                      MEData& me_data);
 
-    //! Local reference to the encoder 
-    const EncoderParams& m_encparams;
+    private:
 
-    // the depth of the hierarchical match 
-    int m_depth;
+        // Member variables
 
-    // the level we're at (from 0 to depth)
-    int m_level;
+        //! Local reference to the encoder 
+        const EncoderParams& m_encparams;
 
-    // the search-range sizes for the hierarchical match
-    int m_xr, m_yr;
+        // the depth of the hierarchical match 
+        int m_depth;
 
-    // the frame sort - I, L1 or L2
-    FrameSort m_fsort;
+        // the level we're at (from 0 to depth)
+        int m_level;
 
-    // list of candidate vectors for checking
-    CandidateList m_cand_list;
+        // the search-range sizes for the hierarchical match
+        int m_xr, m_yr;
 
-    // Lagrangian lambda used for matching
-    float m_lambda;
+        // the frame sort - I, L1 or L2
+        FrameSort m_fsort;
 
-    // Prediction used for each block. This is derived from neighbouring blocks
-    // and is used to control the variation in the motion vector field.
-    MVector m_mv_prediction;
+        // list of candidate vectors for checking
+        CandidateList m_cand_list;
 
-    // Functions
+        // Lagrangian lambda used for matching
+        float m_lambda;
 
-    //! Make down-converted pictures
-    void MakePicHierarchy(const PicArray& data, OneDArray< PicArray* >& down_data);
+        // Prediction used for each block. This is derived from neighbouring blocks
+        // and is used to control the variation in the motion vector field.
+        MVector m_mv_prediction;
 
-    //! Make a hierarchy of MvData structures
-    void MakeMEDataHierarchy(const OneDArray< PicArray*>& down_data,
-                                       OneDArray< MEData* >& me_data_set );
+        // Functions
 
-    //! Tidy up the allocations made in building the picture hirearchy
-    void TidyPics( OneDArray< PicArray*>& down_data );
+        //! Make down-converted pictures
+        void MakePicHierarchy(const PicArray& data, OneDArray< PicArray* >& down_data);
 
-    //! Tidy up the allocations made in building the MV data hirearchy
-    void TidyMEData( OneDArray< MEData*>& me_data_set );
+        //! Make a hierarchy of MvData structures
+        void MakeMEDataHierarchy(const OneDArray< PicArray*>& down_data,
+                                           OneDArray< MEData* >& me_data_set );
 
-    //! Match the picture data 
-    void MatchPic(const PicArray& ref_data , const PicArray& pic_data , MEData& me_data ,
-                  const MvData& guide_data, int ref_id);
+        //! Tidy up the allocations made in building the picture hirearchy
+        void TidyPics( OneDArray< PicArray*>& down_data );
 
-    //! Do a given block
-    void DoBlock(int xpos, int ypos , 
-                 TwoDArray<MvCostData>& pred_costs,
-                 MvArray& mv_array,
-                 const MvArray& guide_array,
-                 BlockMatcher& block_match);
+        //! Tidy up the allocations made in building the MV data hirearchy
+        void TidyMEData( OneDArray< MEData*>& me_data_set );
 
-};
+        //! Match the picture data 
+        void MatchPic(const PicArray& ref_data , const PicArray& pic_data , MEData& me_data ,
+                      const MvData& guide_data, int ref_id);
+
+        //! Do a given block
+        void DoBlock(int xpos, int ypos , 
+                     TwoDArray<MvCostData>& pred_costs,
+                     MvArray& mv_array,
+                     const MvArray& guide_array,
+                     BlockMatcher& block_match);
+
+    };
+
+} // namespace dirac
 
 #endif

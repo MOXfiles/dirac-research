@@ -43,63 +43,69 @@
 #include "libdirac_common/wavelet_utils.h"
 #include "libdirac_common/common.h"
 
-//! Compress a frame component
-/*!
-    This class compresses one of the three components (Y, U, or V) of a frame
-    according to a given set or parameters. CompCompressor is used by FrameCompressor.
-*/
-class CompCompressor
+namespace dirac
 {
-public:
-    //! Constructor
-    /*!
-        Create and initialize a component compressor with the given characteristics.
-        \param  encp    encoding parameters
-        \param  fp      frame parameters
-    */
-	CompCompressor( EncoderParams & encp, const FrameParams& fp);
-
     //! Compress a frame component
     /*!
-        Compress a PicArray containing a frame component (Y, U, or V).
-        \param  pic_data    the component data to be compressed
+        This class compresses one of the three components (Y, U, or V) of a
+        frame according to a given set or parameters. CompCompressor is used
+        by FrameCompressor.
     */
-	void Compress(PicArray & pic_data);
+    class CompCompressor
+    {
+    public:
+        //! Constructor
+        /*!
+            Create and initialize a component compressor with the given
+            characteristics.
+            \param  encp    encoding parameters
+            \param  fp      frame parameters
+        */
+        CompCompressor( EncoderParams & encp, const FrameParams& fp);
 
-private:
-	//! Copy constructor is private and body-less. This class should not be copied.
-	CompCompressor(const CompCompressor& cpy);
+        //! Compress a frame component
+        /*!
+            Compress a PicArray containing a frame component (Y, U, or V).
+            \param  pic_data    the component data to be compressed
+        */
+        void Compress(PicArray & pic_data);
 
-	//! Assignment = is private and body-less. This class should not be assigned.
-	CompCompressor& operator=(const CompCompressor& rhs);
+    private:
+        //! Copy constructor is private and body-less. This class should not be copied.
+        CompCompressor(const CompCompressor& cpy);
 
-	void GenQuantList();
+        //! Assignment = is private and body-less. This class should not be assigned.
+        CompCompressor& operator=(const CompCompressor& rhs);
 
-    void SelectQuantisers( PicArray& pic_data , SubbandList& bands ,
-                           OneDArray<unsigned int>& est_counts );
+        void GenQuantList();
 
-	int SelectQuant(PicArray& pic_data,SubbandList& bands,int band_num);
+        void SelectQuantisers( PicArray& pic_data , SubbandList& bands ,
+                               OneDArray<unsigned int>& est_counts );
 
-	ValueType PicAbsMax(const PicArray& pic_data,int xp, int yp ,int xl ,int yl) const;
+        int SelectQuant(PicArray& pic_data,SubbandList& bands,int band_num);
 
-	ValueType PicAbsMax(const PicArray& pic_data) const;
+        ValueType PicAbsMax(const PicArray& pic_data,int xp, int yp ,int xl ,int yl) const;
 
-	void SetToVal(PicArray& pic_data,const Subband& node,ValueType val);
+        ValueType PicAbsMax(const PicArray& pic_data) const;
 
-	void AddSubAverage(PicArray& pic_data,int xl,int yl,AddOrSub dirn);
+        void SetToVal(PicArray& pic_data,const Subband& node,ValueType val);
 
-	//member variables
-	EncoderParams& m_encparams;
-	const FrameParams& m_fparams;
-    const FrameSort& m_fsort;	
-	const ChromaFormat& m_cformat;
-	CompSort m_csort;
-	OneDArray<int> m_qflist;
-	OneDArray<int> m_qfinvlist;
-	OneDArray<int> m_offset;
-	float m_lambda;
+        void AddSubAverage(PicArray& pic_data,int xl,int yl,AddOrSub dirn);
 
-};
+        //member variables
+        EncoderParams& m_encparams;
+        const FrameParams& m_fparams;
+        const FrameSort& m_fsort;    
+        const ChromaFormat& m_cformat;
+        CompSort m_csort;
+        OneDArray<int> m_qflist;
+        OneDArray<int> m_qfinvlist;
+        OneDArray<int> m_offset;
+        float m_lambda;
+
+    };
+
+} // namespace dirac
 
 
 
