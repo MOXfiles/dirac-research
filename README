@@ -1,7 +1,5 @@
-Release notes for Dirac Version 0.3.0
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-
-For instructions on how to build/install, see the end of this file.
+README for the Dirac video codec
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 1. Executive Summary
 ~~~~~~~~~~~~~~~~~~~~
@@ -24,16 +22,34 @@ coding tools that work over a wide variety of content and formats, using well-un
 compression techniques, in a clear and accessible software structure. It is not intended 
 as a demonstration or reference coder.
 
+
 2. Documentation
 ~~~~~~~~~~~~~~~~
 
 A user guide and a guide to the software is in progress. More details on running
 the codec can be found at http://www.bbc.co.uk/rd/projects/dirac.
 
+
 3. Building and installing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
-Instructions are provided in dirac_build_howto.txt. Generic instructions
-for building Unix tarball distributions are given in the INSTALL file.
+
+  GNU/Linux, Unix, MacOS X, Cygwin, Mingw
+  ---------------------------------------
+     ./configure
+     make
+     make install
+
+  The INSTALL file documents arguments to ./configure such as
+  --prefix=/usr/local (specify the installation location prefix).
+
+  Microsoft Visual C++
+  --------------------
+  The MSVC build uses nmake (make sure nmake.exe and lib.exe are in the PATH).
+     cd win
+     nmake /f Makefile
+
+  Libraries and executables are created in the win directory.
+
 
 4. Running the example programs
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
