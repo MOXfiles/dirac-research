@@ -1,3 +1,15 @@
+dirac-0.4.2
+===========
+  - Fixed bugs in writing instrumentation data while encoding which
+    caused the diagnostics tool to go into an infinite loop
+  - Fixed bug in diagnostic tool when handling reference 2 and only
+    one reference frame is available
+  - Number of frames in encoded output header is now set correctly to
+    the number of frames encoded.
+  - Fixed bug with bit-rate being miscalculated when only a section of the 
+    sequence is encoded.
+  - Fixed bug with setting DC band perceptual weight.
+
 dirac-0.4.1
 ===========
   - Added support for build under Microsoft Windows using gnu autotools,
