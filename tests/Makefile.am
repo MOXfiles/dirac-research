@@ -31,6 +31,7 @@ clean-local:
 		rm -f $(srcdir)/testpics/*enc*.drc; \
 		rm -f $(srcdir)/testpics/*enc*.yuv; \
 		rm -f $(srcdir)/testpics/*enc*.hdr; \
+		rm -f $(srcdir)/testpics/*enc*.imt; \
 		rm -f $(srcdir)/testpics/*dec*.yuv; \
 		rm -f $(srcdir)/testpics/*dec*.hdr; \
 	fi

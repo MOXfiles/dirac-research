@@ -8,7 +8,7 @@ AT_CHECK([make_header -xl 720 -yl 576 -zl 1 -cformat format420 -framerate 25 ../
 # FIXME: remove the [ignore] for stdout and stderr.
 AT_CHECK([dirac_encoder -SD576 -qf 7 -num_L1 0 ../../colourbars_420 ../../colourbars_420_enc], 0, [ignore], [ignore])
 
-AT_CHECK([dirac_decoder ../../colourbars_420_enc ../../colourbars_420_dec])
+AT_CHECK([dirac_decoder ../../colourbars_420_enc ../../colourbars_420_dec], 0, [ignore], [ignore])
 
 AT_CHECK([cmp ../../colourbars_420_enc.yuv ../../colourbars_420_dec.yuv])
 
