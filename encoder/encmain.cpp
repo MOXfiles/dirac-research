@@ -101,12 +101,8 @@ int main (int argc, char* argv[]){
     EncoderParams encparams;
 
     OLBParams bparams(12, 12, 8, 8);
-    //input name for pictures
-    char input_name[84];
-    //output name for pictures
-    char output_name[84];
     //output name for the bitstream
-    char bit_name[84];
+    string bit_name;
 
     string input,output;
 
@@ -146,26 +142,14 @@ int main (int argc, char* argv[]){
             exit(1);
         }
 
-        for (size_t i=0;i<input.length();i++)
-            input_name[i]=input[i];
-
-        input_name[input.length()] = '\0';
-
-        for (size_t i=0;i<output.length();i++)
-            output_name[i]=output[i];
-
-        output_name[output.length()] = '\0';
-
-        strncpy(bit_name,output_name,84);
-        strcat(bit_name,".drc");
+        bit_name = output + ".drc";
 
         // attempt to create a directory for MvData
-        char dir_path[120];
-        strcpy(dir_path, output.c_str());
-        strcat(dir_path, ".imt");
-        encparams.SetOutputPath(dir_path);
+        string dir_path;
+        dir_path = output + ".imt";
+        encparams.SetOutputPath(dir_path.c_str());
 
-        std::ofstream out(dir_path, std::ios::out);
+        std::ofstream out(dir_path.c_str(), std::ios::out);
         out.close();
 
         //Now do the options
@@ -295,12 +279,12 @@ int main (int argc, char* argv[]){
 
            /* ------ open input files & get params -------- */
 
-        PicInput myinputpic(input_name);
+        PicInput myinputpic(input.c_str());
         myinputpic.ReadPicHeader();
 
           /* ------- open output files and write the header -------- */
 
-        PicOutput myoutputpic(output_name,myinputpic.GetSeqParams());
+        PicOutput myoutputpic(output.c_str(),myinputpic.GetSeqParams());
         myoutputpic.WritePicHeader();
 
     /********************************************************************/
@@ -312,7 +296,7 @@ int main (int argc, char* argv[]){
 
    /********************************************************************/
       //open the bitstream file
-        std::ofstream outfile(bit_name,std::ios::out | std::ios::binary);    //bitstream output
+        std::ofstream outfile(bit_name.c_str(),std::ios::out | std::ios::binary);    //bitstream output
 
    /********************************************************************/
         //do the work!!
@@ -335,8 +319,6 @@ int main (int argc, char* argv[]){
      //close the bitstream file
         outfile.close();
 
-        if ( encparams.Verbose() )
-            std::cerr<<std::endl<<"Finished encoding\n";
         return EXIT_SUCCESS;
 
 
