@@ -1,5 +1,5 @@
-Dirac developer practices
-=========================
+Dirac software development practices
+====================================
 
 Sourceforge Developers forum
 ----------------------------
@@ -23,14 +23,15 @@ many files can fall into this category - for example
 
 Developers should 'monitor' the forums by going to the forum page and
 clicking 'Monitor this forum'.  Any new message will then be emailed
-to their username@users.sourceforge.net email address.  E.g.
+to their username@users.sourceforge.net email address.
   http://sourceforge.net/forum/forum.php?forum_id=353620
 
 
 Mailing lists
 --------------
 Developers should subscribe to the dirac-announce and dirac-commits
-mailing lists.
+mailing lists.  dirac-announce is used to announce new releases and
+dirac-commits is sent mail automatically for every commit.
 
 
 CVS log messages
@@ -39,7 +40,8 @@ Always indicate why the change is necessary in addition to a succinct summary
 of what as changed.  As the number of developers increases it becomes
 increasingly difficult for developers to understand the changes going on in
 areas they are not familiar with.  If the changes relate to an API change
-developers may not realise this if it is not mentioned in the log message.
+developers may not realise this if it is not mentioned in the log message
+as the reason for the change.
 
 E.g.
   Bad
@@ -53,21 +55,23 @@ E.g.
   - Enhanced portability: stricmp replaced by strcasecmp (the POSIX standard) 
 
 
-Source code style
------------------
+Software practices
+------------------
 Portability
-  Dirac aims to be as portable as possible and to that end follows the following
-  standards:
-    POSIX 1003.1 standard for system interfaces
-    ISO C99
+  This project aims to be as portable as possible and to that end follows the
+  following standards:
+    POSIX 1003.1 - System Interfaces volume (XSH) & Threads
+    ISO C99 (1999)
     ISO C++ (1998)
   The only exception to this practice is for the Microsoft Visual C++ compiler
   which continues to fall short of all the above standards.  Where MS VC++
-  is incompatible with the standard, experiment if often necessary to find
-  an alternative usage which works under MS VC++.
+  is incompatible with the standards, experiment is often necessary to find
+  an alternative usage which works under MS VC++.  Use of the _MSC_VER macro
+  in conditional compilation is the accepted way to accommodate such
+  differences.
 
 Source code formatting
-  Dirac source code uses TABs with a spacing of 4.
+  Source code uses TABs with a spacing of 4.
 
 Naming practice
   Class and function names start with a capital then use lowercase with multi-
@@ -79,6 +83,16 @@ Naming practice
 
 (inspired by http://docs.kde.org/en/3.2/kdemultimedia/artsbuilder/coding-standards.html)
 
+Testing with "make check"
+  Developers should aim to have all the regression tests succeed.  If a
+  developer anticipates breaking the tests (while a significant body of work
+  is being undertaken) this must be announced on the Developer Forum, and
+  the fixing of the tests would be coordinated there.
+
+  Developers should also aim to have good test coverage especially when
+  adding functionality.  When adding a new feature, expect to be asked
+  "Where's the test?"
+
 
 Line-endings
 ------------
@@ -86,3 +100,18 @@ All source code and documentation will have LF line-endings, include makefiles
 and scripts.  The only exception will be for .dsp and .dsw (and any other
 WIN32 specific) files which will not function under MS VC++ unless they use
 CR-LF line-endings.
+
+
+Binary files in CVS
+-------------------
+CVS will modify files during checkin and checkout unless they are tagged as
+binary.  The modifications include translation of CR-LF <-> LF (depending on
+the OS of the CVS client) and expansion of CVS keywords such as $Id$ and $Log$.
+
+Files which must not be modified in this way must be tagged as binary either
+using the add command or admin command:
+  cvs add -kb fig1.jpg
+  cvs admin -kb fig1.jpg  (for files already in CVS)
+
+MS VC++ project files, such as .dsp and .dsw, fall into this category since
+they do not function if their line-endings are not CR-LF.
