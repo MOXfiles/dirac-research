@@ -146,7 +146,7 @@ int main(int argc, char * argv[] ) {
         }
 
         //Vertically interpolate the UV samples
-        for (int line=0; line<height; ++line) {
+        for (int line=1; line<height; line+=2) {
             for (int pixel=0; pixel<width; pixel+=2) {
                 UImage[line*UVWidth+pixel] = ((UImage[(line-1)*UVWidth+pixel]+
                         2*UImage[line*UVWidth+pixel]+UImage[(line+1)*UVWidth+pixel]+1)>>1);
