@@ -199,10 +199,12 @@ void FlipY(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, T
 MvData::MvData( const int xnumMB, const int ynumMB , 
                 const int xnumblocks, const int ynumblocks , const int num_refs ):
     m_vectors( Range(1 , num_refs) ),
+    m_gm_vectors( Range(1 , num_refs) ),
     m_modes( ynumblocks , xnumblocks ),
     m_dc( 3 ),
     m_mb_split( ynumMB , xnumMB ),
-    m_mb_common( ynumMB , xnumMB )
+    m_mb_common( ynumMB , xnumMB ),
+    m_gm_params( Range(1 , num_refs) )
 {
 
     InitMvData();
@@ -210,10 +212,12 @@ MvData::MvData( const int xnumMB, const int ynumMB ,
 
 MvData::MvData( const int xnumMB , const int ynumMB , const int num_refs ):
     m_vectors( Range(1 , num_refs) ),
+    m_gm_vectors( Range(1 , num_refs) ),
     m_modes( 4*ynumMB , 4*xnumMB ),
     m_dc( 3 ),
     m_mb_split( ynumMB , xnumMB ),
-    m_mb_common( ynumMB , xnumMB )
+    m_mb_common( ynumMB , xnumMB ),
+    m_gm_params( Range(1 , num_refs) )
 {
     InitMvData();
 }
@@ -223,7 +227,13 @@ void MvData::InitMvData()
     // Create the arrays of vectors
      for ( int i=m_vectors.First() ; i<=m_vectors.Last() ; ++i ){
          m_vectors[i] = new MvArray( Mode().LengthY() , Mode().LengthX() );
+         m_gm_vectors[i] = new MvArray( Mode().LengthY() , Mode().LengthX() );
      }
+
+    // create global motion parameter arrays
+    for ( int i=m_gm_params.First() ; i<=m_gm_params.Last() ; ++i ){
+         m_gm_params[i] = new OneDArray<float> ( 8 );
+    }
 
      // Create the arrays of dc values
      for ( int i=0 ; i<3 ; ++i )
@@ -235,8 +245,14 @@ MvData::~MvData()
    // Delete the arrays of vectors
     for ( int i=m_vectors.First() ; i<=m_vectors.Last() ; ++i ){
         delete m_vectors[i];
+        delete m_gm_vectors[i];
     }
 
+     // delete array of global motion parameters
+     for ( int i=m_gm_params.First() ; i<=m_gm_params.Last() ; ++i ){
+         delete m_gm_params[i];
+     }
+     
      // Delete the arrays of dc values
      for ( int i=0 ; i<3 ; ++i )
          delete m_dc[i];
@@ -251,6 +267,7 @@ MEData::MEData(const int xnumMB , const int ynumMB ,
      m_intra_costs( ynumblocks , xnumblocks ),
      m_bipred_costs( ynumblocks , xnumblocks ),
      m_MB_costs( ynumMB , xnumMB ),
+     m_inliers( Range( 1 , num_refs ) ),
      m_lambda_map( ynumblocks , xnumblocks )
 {
     InitMEData();
@@ -262,6 +279,7 @@ MEData::MEData( const int xnumMB , const int ynumMB ,  const int num_refs ):
      m_intra_costs( 4*ynumMB , 4*xnumMB ),
      m_bipred_costs( 4*ynumMB , 4*xnumMB ),
      m_MB_costs( ynumMB , xnumMB ),
+     m_inliers( Range( 1 , num_refs ) ),
      m_lambda_map( 4*ynumMB , 4*xnumMB )
 {
     InitMEData();
@@ -273,6 +291,10 @@ void MEData::InitMEData()
    // Create the arrays of prediction costs
     for ( int i=m_pred_costs.First() ; i<=m_pred_costs.Last() ; ++i )
         m_pred_costs[i] = new TwoDArray<MvCostData>( Mode().LengthY() , Mode().LengthX() );
+
+    // Create the arrays of vectors
+     for ( int i=m_inliers.First() ; i<=m_inliers.Last() ; ++i )
+         m_inliers[i] = new TwoDArray<int>( Mode().LengthY() , Mode().LengthX() );
 }
 
 void MEData::SetLambdaMap( const int num_refs , const float lambda )
@@ -481,6 +503,9 @@ MEData::~MEData()
     // Delete the arrays of prediction costs
      for ( int i=m_pred_costs.First() ; i<=m_pred_costs.Last() ; ++i )
          delete m_pred_costs[i];
+
+     for ( int i=m_inliers.First() ; i<=m_inliers.Last() ; ++i )
+        delete m_inliers[i];
 }
 
 //! Overloaded operator<< for MvCostData
@@ -550,7 +575,12 @@ istream &operator>> (istream & stream, MEData & me_data)
     {
         stream >> me_data.Vectors(i);
         stream >> me_data.PredCosts(i);
+        //stream >> me_data.GlobalMotionParameters(i);
+        //stream >> me_data.GlobalMotionVectors(i);
+        //stream >> me_data.GlobalMotionInliers(i);
     }
+
+    
 
     return stream;
 }
@@ -585,6 +615,9 @@ ostream &operator<< (ostream & stream, MEData & me_data)
     {
         stream << endl << me_data.Vectors(i);
         stream << endl << me_data.PredCosts(i) << endl;
+        //stream << endl << me_data.GlobalMotionParameters(i) << endl;
+        //stream << endl << me_data.GlobalMotionVectors(i) << endl;
+        //stream << endl << me_data.GlobalMotionInliers(i) << endl;
     }
     
     return stream;

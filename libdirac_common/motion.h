@@ -172,6 +172,8 @@ typedef MotionVector<int> ImageCoords;
 //! MvArray is a two-D array of MVectors
 typedef TwoDArray<MVector> MvArray;
 
+typedef TwoDArray< MotionVector<float> > MvFloatArray;
+
 //! Class for recording costs derived in motion estimation
 class MvCostData
 {
@@ -233,6 +235,12 @@ public:
     //! Get the MVs for a reference
     const MvArray& Vectors(const int ref_id) const {return *( m_vectors[ref_id] );}
 
+    //! Get the global MVs for a reference
+    MvArray& GlobalMotionVectors(const int ref_id){return *( m_gm_vectors[ref_id] );}
+
+    //! Get the global MVs for a reference
+    const MvArray& GlobalMotionVectors(const int ref_id) const {return *( m_gm_vectors[ref_id] );}    
+
     //! Get the DC values for each component
     TwoDArray<ValueType>& DC(CompSort cs){return *( m_dc[cs] );}
 
@@ -260,6 +268,12 @@ public:
     //! Get the MB common mode parameters
     const TwoDArray<bool>& MBCommonMode() const{return m_mb_common;}
 
+    //! Get the global motion model parameters
+    OneDArray<float>& GlobalMotionParameters(const int ref_id) { return *( m_gm_params[ref_id] ); }
+
+    //! Get the global motion model parameters
+    const OneDArray<float>& GlobalMotionParameters(const int ref_id) const { return *( m_gm_params[ref_id] ); }
+
 private:
     // Initialises the arrays of data
     void InitMvData();
@@ -267,6 +281,9 @@ private:
     // The motion vectors
     OneDArray<MvArray*> m_vectors;
 
+    // The global motion vectors
+    OneDArray<MvArray*> m_gm_vectors;
+    
     // The block modes
     TwoDArray<PredMode> m_modes;
 
@@ -279,7 +296,8 @@ private:
     // The MB common mode indicators 
     TwoDArray<bool> m_mb_common;
 
-
+    // Global motion model parameters
+    OneDArray< OneDArray<float>* > m_gm_params;
 };
 
 //! Class for all the motion estimation data
@@ -355,6 +373,12 @@ public:
     //! Overloaded operator>> for input of data from (file) stream
     friend std::istream &operator>> (std::istream & stream, MEData & me_data);
 
+    //! Get the block cost structures for each reference
+    TwoDArray<int>& GlobalMotionInliers(const int ref_id){ return *( m_inliers[ref_id] ); }
+
+    //! Get the block cost structures for each reference
+    const TwoDArray<int>& GlobalMotionInliers(const int ref_id) const { return *( m_inliers[ref_id] ); }
+        
 private:
     // Initialises the arrays of data
     void InitMEData();
@@ -373,6 +397,9 @@ private:
 
     // The costs for each macroblock as a whole
     TwoDArray<float> m_MB_costs;
+
+    // Global motion inliers
+    OneDArray< TwoDArray<int>* > m_inliers;
 
     // A map of the lambda values to use
     TwoDArray<float> m_lambda_map;
