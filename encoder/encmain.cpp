@@ -640,7 +640,7 @@ int main (int argc, char* argv[])
         {
             if (dirac_encoder_load( encoder, frame_buf, frame_size ) < 0)
             {
-                std::cerr << "Unrecoverable Encoder Error. Quitting..." 
+                std::cerr << "dirac_encoder_load failed: Unrecoverable Encoder Error. Quitting..." 
                           << std::endl;
                 return EXIT_FAILURE;
             }
@@ -667,7 +667,7 @@ int main (int argc, char* argv[])
                 break;
 
             case ENC_STATE_INVALID:
-                std::cerr << "Unrecoverable Encoder Error. Quitting..." 
+                std::cerr << "Invalid state. Unrecoverable Encoder Error. Quitting..." 
                           << std::endl;
                 return EXIT_FAILURE;
             default:
