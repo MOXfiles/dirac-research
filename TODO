@@ -1,13 +1,14 @@
 TO DO
 ~~~~~
 
-Last updated 28 May 2004
+Last updated 18 August 2004
 
 The list covers both software and algorithmic issues, and is in no particular
 order. See also the website at www.bbc.co.uk/rd/projects/dirac/. If you'd like
 to help us fix these, contact us through dirac@rd.bbc.co.uk.
 
--- [Ongoing]. Documentation for bitstream structure and format.
+-- [Ongoing]. Documentation for bitstream structure and format. A draft bitstream
+   spec is in preparation and will be released soon.
 
 -- [Ongoing]. Documentation of encoder and decoder algorithms and software.
 [The algorithm documentation is now available on www.bbc.co.uk/rd/projects/dirac/.]
@@ -15,18 +16,20 @@ to help us fix these, contact us through dirac@rd.bbc.co.uk.
 -- Interlace coding tools, for motion estimation and compensation in particular.
 
 -- Support for constant-quality encoding - adaptation of frame Lagrangian
- parameters to hit a quality target. Collation of perceptually-weighted noise.
+ parameters to hit a quality target. We have a rudimentary form in release 0.4.0
+ which is based on PSNR, but we need to have a better model of perceptual 
+ quality.
 
--- Separable perceptual modelling module, for separate optimisation.
-
--- Introduce support for encoder-side intra frame insertion/cut detection.
+-- Separable perceptual modelling module, for separate optimisation. 
 
 -- Introduce support for frame skipping - bit stream flag + algorithms, decoder
  frame repetition, frame numbers and frame expiry times.
 [Flags are now in place, but functionality and encoder-side algorithms need
 definition.]
 
--- Speed-up improvements to motion estimation.
+-- Speed-up improvements to motion compensation, motion estimation and other tools.
+   Generally, we could do with the code being regularly profiled so that we can
+   keep track of performance hotspots.
 
 -- Global motion estimation and compensation.
 
@@ -47,9 +50,5 @@ definition.]
  efficiency
 
 -- DirectShow filter for compressed file format. Require pull pin, buffering and
- multitheading.Integrate with MPlayer also.DirectShow filter for uncompressed
- file format.
-[Pending definition of wrapper format and defining of mux/demux classes and functions.]
+ multitheading. DirectShow filter for uncompressed file format.
 
--- Subclass picture IO classes to support uncompressed video as multiple
- numbered files, supporting common image formats (dpx, tiff etc)
