@@ -51,6 +51,11 @@
 namespace dirac
 {
     typedef short ValueType;
+    // For clipping purposes, set the maximum value at 1020 = 4*255
+    // (we have two accuracy bits throughout)
+    const int PIXEL_VALUE_MAX = 1020;
+    const int PIXEL_VALUE_MIN = 0;
+
     typedef int CalcValueType;
 
     //! Range type. 
