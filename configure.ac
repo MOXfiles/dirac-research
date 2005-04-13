@@ -14,7 +14,7 @@ GENERIC_LIBRARY_NAME=dirac
 #release versioning
 GENERIC_MAJOR_VERSION=0
 GENERIC_MINOR_VERSION=5
-GENERIC_MICRO_VERSION=1
+GENERIC_MICRO_VERSION=2
 
 #shared library versioning
 GENERIC_LIBRARY_VERSION=0:0:0
@@ -209,7 +209,7 @@ if test x"${enableval}" = x"yes" ; then
 			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
 			CXXFLAGS="-DDIRAC_DEBUG -g -O0 $CXXFLAGS"
 		    # report only errors and warnings as errors
-		    CXXFLAGS="$CXXFLAGS -w1 -Werror" 
+		    CXXFLAGS="$CXXFLAGS -w1 -Werror -wr964" 
 		    ;;
 	    cl*|CL*)
 		    # -Od turn off optimisation, -Z7 turn on debugging info
