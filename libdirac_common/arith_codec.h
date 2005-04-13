@@ -628,7 +628,6 @@ namespace dirac
     {
         ProbInterval limits;
 
-        const Context& c( m_context_list[context_num] );
         const calc_t count( ( ( static_cast<calc_t>( m_code - m_low_code ) + 1 )<<10 ) - 1 );
 
         const calc_t range( static_cast<calc_t>( m_high_code - m_low_code ) + 1 );
