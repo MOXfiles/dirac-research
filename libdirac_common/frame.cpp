@@ -42,6 +42,9 @@
 using namespace dirac;
 
 #include <iostream>
+#if defined(HAVE_MMX)
+#include <mmintrin.h>
+#endif
 
 ///////////////
 //---Frame---//
@@ -330,14 +333,57 @@ const PicArray& Frame::UpData(CompSort cs) const
 
 void Frame::ClipComponent(PicArray& pic_data)
 {
-    for (int j=pic_data.FirstY() ; j<=pic_data.LastY() ; ++j)
+    ValueType *pic = &(pic_data[pic_data.FirstY()][pic_data.FirstX()]);
+    int count = pic_data.LengthY() * pic_data.LengthX();
+
+#if defined (HAVE_MMX)
     {
-        for (int i=pic_data.FirstX() ; i<=pic_data.LastX() ; ++i)
+        int qcount = count >> 2;
+        count = count & 3;
+    
+        __m64 pack_usmax = _mm_set_pi16 (0xffff, 0xffff, 0xffff, 0xffff);
+           //__m64 pack_smax = _mm_set_pi16 (0x7fff, 0x7fff, 0x7fff, 0x7fff);
+           __m64 pack_smin = _mm_set_pi16 (0x8000, 0x8000, 0x8000, 0x8000);
+           __m64 high_val = _mm_set_pi16 (PIXEL_VALUE_MAX, PIXEL_VALUE_MAX, PIXEL_VALUE_MAX, PIXEL_VALUE_MAX);
+           __m64 lo_val = _mm_set_pi16 (PIXEL_VALUE_MIN, PIXEL_VALUE_MIN, PIXEL_VALUE_MIN, PIXEL_VALUE_MIN);
+    
+        __m64 clip_max = _mm_add_pi16 (pack_smin, high_val);
+        __m64 clip_min = _mm_add_pi16 (pack_smin, lo_val);
+    
+        __m64 tmp1 =  _mm_subs_pu16 ( pack_usmax, clip_max);
+        __m64 tmp2 =  _mm_adds_pu16 ( clip_min, tmp1 );
+    
+        while (qcount--)
         {
-            pic_data[j][i] = std::min( pic_data[j][i] , ValueType( 1020 ) );
-            pic_data[j][i] = std::max( pic_data[j][i] , ValueType( 0 ) );
-        }// i        
-    }// j
+            ValueType *p1 = pic;
+            *(__m64 *)p1 = _mm_add_pi16 (pack_smin, *(__m64 *)p1);
+            *(__m64 *)p1 = _mm_adds_pu16 (*(__m64 *)p1,  tmp1);
+            *(__m64 *)p1 = _mm_subs_pu16 (*(__m64 *)p1,  tmp2);
+            *(__m64 *)p1 = _mm_add_pi16 (lo_val, *(__m64 *)p1);
+            pic += 4;
+        }
+        //Mop up remaining pixels
+            while( count-- )
+        {
+            *pic = std::max( 
+                    ValueType( PIXEL_VALUE_MIN ), 
+                    std::min( ValueType( PIXEL_VALUE_MAX ), *pic ) 
+                    );
+            pic++;
+        }
+
+        _mm_empty();
+        return;
+    }
+#endif
+
+    // NOTE: depending on a contigous chunk of memory being allocated
+    while (count--)
+    {
+        *pic = std::max( (ValueType) PIXEL_VALUE_MIN,  
+        std::min( ValueType( PIXEL_VALUE_MAX ), *pic ));
+        pic++;
+    }
 }
 
 void Frame::Clip()
