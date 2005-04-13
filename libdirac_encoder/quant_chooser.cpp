@@ -75,7 +75,7 @@ int QuantChooser::GetBestQuant( Subband& node )
     max_val = BlockAbsMax( big_block );
 
     if ( max_val>=1 )
-        max_bit = int( floor( log( float( max_val ) )/log( 2.0 ) ) );
+        max_bit = int( std::floor( std::log( float( max_val ) )/std::log( 2.0 ) ) );
     else
     {
        // Exit saying 'Skip this subband'
@@ -385,7 +385,7 @@ void QuantChooser::LagrangianCalc(const CodeBlock& code_block , const int block_
         p1 = 1.0 - p0;
 
         if ( p0 != 0.0 && p1 != 0.0)
-            m_costs[block_idx][q].ENTROPY = -( p0*log(p0)+p1*log(p1) ) / log(2.0);
+            m_costs[block_idx][q].ENTROPY = -( p0*std::log(p0)+p1*std::log(p1) ) / std::log(2.0);
         else
             m_costs[block_idx][q].ENTROPY = 0.0;
 
@@ -399,7 +399,7 @@ void QuantChooser::LagrangianCalc(const CodeBlock& code_block , const int block_
             p0 = double( m_countNEG[block_idx][q] )/double( m_countPOS[block_idx][q]+m_countNEG[block_idx][q] );
             p1 = 1.0-p0;
             if ( p0 != 0.0 && p1 != 0.0)
-                sign_entropy = -( (p0*log(p0)+p1*log(p1) ) / log(2.0));
+                sign_entropy = -( (p0*std::log(p0)+p1*std::log(p1) ) / std::log(2.0));
             else
                 sign_entropy = 0.0;
         }
