@@ -23,6 +23,7 @@
 * Contributor(s): Richard Felton (Original Author), 
 *                 Thomas Davies,
 *                 Steve Bearcroft
+*                 Mike Ferenduros
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -178,7 +179,7 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 
     // Set up another picture which will contain the MC data, which
     // we'll add or subtract to pic_data_out
-    TwoDArray<CalcValueType> pic_data(pic_data_out.LengthY(), pic_data_out.LengthX() , 0);
+    TwoDArray<CalcValueType> pic_data(pic_data_out.LengthY(), pic_data_out.LengthX() );
 
     // Factors to compensate for subsampling of chroma
     int xscale_factor = 1;
@@ -232,11 +233,20 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
     //and add the compensated pixels to the image pointed to by pic_data.
     size_t wgt_idx;
 
-    //Loop over all the block rows
+    int first_uncleared_row = 0;
 
+    //Loop over all the block rows
     pos.y = -m_bparams.Yoffset();
     for(int yblock = 0; yblock < m_cparams.YNumBlocks(); ++yblock)
     {
+
+        int clear_to_row = std::min( pos.y+m_bparams.Yblen(), pic_data.LengthY() );
+        if( clear_to_row > first_uncleared_row )
+        {
+            memset( pic_data[first_uncleared_row], 0, (clear_to_row-first_uncleared_row)*pic_data.LengthX()*sizeof(CalcValueType) );
+            first_uncleared_row = clear_to_row;
+        }
+
         pos.x = -m_bparams.Xoffset();
         //loop over all the blocks in a row
         for(int xblock = 0 ; xblock < m_cparams.XNumBlocks(); ++xblock)
@@ -272,33 +282,41 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
             }
 
             block_mode = mv_data.Mode()[yblock][xblock];
-            mv1 = (*mv_array1)[yblock][xblock];
-            mv1.x /= xscale_factor;
-            mv1.y /= yscale_factor;
-
-            mv2 = (*mv_array2)[yblock][xblock];
-            mv2.x /= xscale_factor;
-            mv2.y /= yscale_factor;
-
-
-            dc = dcarray[yblock][xblock]<<2;// DC is only given 8 bits, 
-                                            // so need to shift to get 10-bit data
 
             if(block_mode == REF1_ONLY)
             {
+                mv1 = (*mv_array1)[yblock][xblock];
+                mv1.x /= xscale_factor;
+                mv1.y /= yscale_factor;
+
                 CompensateBlock(pic_data, ref1up, mv1, pos, m_block_weights[wgt_idx]);
             }
             else if (block_mode == REF2_ONLY)
             {                
+                mv2 = (*mv_array2)[yblock][xblock];
+                mv2.x /= xscale_factor;
+                mv2.y /= yscale_factor;
+
                 CompensateBlock(pic_data, ref2up, mv2, pos, m_block_weights[wgt_idx]);
             }
             else if(block_mode == REF1AND2)
             {
+                mv1 = (*mv_array1)[yblock][xblock];
+                mv1.x /= xscale_factor;
+                mv1.y /= yscale_factor;
+
                 CompensateBlock(pic_data, ref1up, mv1, pos, m_half_block_weights[wgt_idx]);
+                mv2 = (*mv_array2)[yblock][xblock];
+                mv2.x /= xscale_factor;
+                mv2.y /= yscale_factor;
+
                 CompensateBlock(pic_data, ref2up, mv2, pos, m_half_block_weights[wgt_idx]);                    
             }
             else
             {//we have a DC block.
+                dc = dcarray[yblock][xblock]<<2;// DC is only given 8 bits, 
+                                            // so need to shift to get 10-bit data
+
                 DCBlock(pic_data, dc,pos, m_block_weights[wgt_idx]);
             }
 
@@ -319,9 +337,12 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 
         for ( int i =pic_data.FirstY(); i <= y_end_data; i++)
         {
+            CalcValueType *pic_row = pic_data[i];
+            ValueType *out_row = pic_data_out[i];
+
             for ( int j =pic_data.FirstX(); j <= x_end_data; ++j)
             {
-                pic_data_out[i][j] -= static_cast<ValueType>( (pic_data[i][j] + 1024) >> 11 );
+                out_row[j] -= static_cast<ValueType>( (pic_row[j] + 1024) >> 11 );
             }
  
             // Okay, we've done all the actual blocks. Now if the picture is further padded
@@ -331,16 +352,17 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
 
             for (int j=( m_cparams.XNumBlocks()*m_bparams.Xbsep() ); j<pic_data.LengthX() ; ++j )
             {
-                pic_data_out[i][j] = 0;
+                out_row[j] = 0;
             }
         }
         // Finally, now we've done all the blocks, we must set all padded lines below 
         // the last row equal to 0, if we're subtracting
         for ( int y=m_cparams.YNumBlocks()*m_bparams.Ybsep() ; y<pic_data.LengthY() ; ++y )
         {
+            ValueType *out_row = pic_data_out[y];
             for ( int x=0 ; x<pic_data.LengthX() ; ++x )
             {
-                pic_data_out[y][x] = 0;
+                out_row[x] = 0;
             }
 
         }
@@ -349,9 +371,12 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
     {
         for ( int i =pic_data.FirstY(); i <= pic_data.LastY(); i++)
         {
+            CalcValueType *pic_row = pic_data[i];
+            ValueType *out_row = pic_data_out[i];
+
             for ( int j =pic_data.FirstX(); j <= pic_data.LastX(); j++)
             {
-                pic_data_out[i][j] += static_cast<ValueType>( (pic_data[i][j] + 1024) >> 11 );
+                  out_row[j] += static_cast<ValueType>( (pic_row[j] + 1024) >> 11 ); 
             }
         }
     }
@@ -375,16 +400,16 @@ const ImageCoords& pos , const TwoDArray<CalcValueType>& wt_array )
     const MVector roundvec( mv.x>>2 , mv.y>>2 );
 
     //Get the remainder after rounding. NB rmdr values always 0,1,2 or 3
-    const MVector rmdr( mv.x - ( roundvec.x<<2 ) , mv.y - ( roundvec.y<<2 ) );
+    const MVector rmdr( mv.x & 3 , mv.y & 3 );
 
     //Where to start in the upconverted image
     const ImageCoords ref_start( ( start_pos.x<<1 ) + roundvec.x ,( start_pos.y<<1 ) + roundvec.y );
 
     //weights for doing linear interpolation, calculated from the remainder values
-    const ValueType TLweight( (4 - rmdr.x) * (4 - rmdr.y) );
-    const ValueType TRweight( rmdr.x * ( 4 - rmdr.y ) );
-    const ValueType BLweight( ( 4 - rmdr.x ) * rmdr.y );
-    const ValueType BRweight( rmdr.x * rmdr.y );
+    const ValueType linear_wts[4] = {  (4 - rmdr.x) * (4 - rmdr.y),    //tl
+                                    rmdr.x * (4 - rmdr.y),          //tr
+                                    (4 - rmdr.x) * rmdr.y,          //bl
+                                    rmdr.x * rmdr.y };              //br
 
     //An additional stage to make sure the block to be copied does not fall outside
     //the reference image.
@@ -403,25 +428,76 @@ const ImageCoords& pos , const TwoDArray<CalcValueType>& wt_array )
     else if( ref_start.y + ((end_pos.y - start_pos.y)<<1 ) >= refYlen)
         do_bounds_checking = true;
 
+
      if( !do_bounds_checking )
      {
-         for(int c = start_pos.y, wY = diff.y, uY = ref_start.y; c < end_pos.y; ++c, ++wY, uY += 2)
-         {
-             for(int l = start_pos.x, wX = diff.x, uX = ref_start.x; l < end_pos.x; ++l, ++wX, uX += 2)
-             {
+         // FIXME: This would be slightly better if upsampled data was interleaved into rows of (tl,tr,bl,br).
+         // On the other hand, MMX/SSE2 don't do inner-products so they'd probably prefer interleaving vertically
+        CalcValueType *pic_curr = &pic_data[start_pos.y][start_pos.x];
+        ValueType *refup_curr = &refup_data[ref_start.y][ref_start.x];
+        CalcValueType *wt_curr = &wt_array[diff.y][diff.x];
+ 
+        const int block_width = end_pos.x - start_pos.x;
 
-                 pic_data[c][l] += (( TLweight * refup_data[uY][uX] +
-                          TRweight * refup_data[uY][uX+1] +
-                          BLweight * refup_data[uY+1][uX] +
-                          BRweight * refup_data[uY+1][uX+1] +
-                          8
-                          ) >> 4) * wt_array[wY][wX];
-             }//l
-         }//c
+           const int pic_next = pic_data.LengthX() - block_width;                //go down a row and back up
+           const int refup_next = refup_data.LengthX()*2 - block_width*2;        //go down 2 rows and back up
+           const int wt_next = wt_array.LengthX() - block_width;                //go down a row and back up
+
+           if( rmdr.x == 0 && rmdr.y == 0 )
+           {
+             for( int y=end_pos.y-start_pos.y; y > 0; --y, pic_curr+=pic_next, wt_curr+=wt_next, refup_curr+=refup_next )
+             {
+                 for( int x=block_width; x > 0; --x, ++pic_curr, ++wt_curr, refup_curr+=2 )
+                 {
+                     *pic_curr += CalcValueType( refup_curr[0] )* *wt_curr;
+                 }
+             }
+         }
+          else if( rmdr.y == 0 )
+           {
+             for( int y=end_pos.y-start_pos.y; y > 0; --y, pic_curr+=pic_next, wt_curr+=wt_next, refup_curr+=refup_next )
+             {
+                 for( int x=block_width; x > 0; --x, ++pic_curr, ++wt_curr, refup_curr+=2 )
+                 {
+                     *pic_curr += ((    linear_wts[0] * CalcValueType( refup_curr[0] ) +
+                                        linear_wts[1] * CalcValueType( refup_curr[1] ) +
+                                        8
+                                 ) >> 4) * *wt_curr;
+                 }
+             }
+         }
+         else if( rmdr.x == 0 )
+         {
+             for( int y=end_pos.y-start_pos.y; y > 0; --y, pic_curr+=pic_next, wt_curr+=wt_next, refup_curr+=refup_next )
+             {
+                 for( int x=block_width; x > 0; --x, ++pic_curr, ++wt_curr, refup_curr+=2 )
+                 {
+                     *pic_curr += ((    linear_wts[0] * CalcValueType( refup_curr[0] ) +
+                                        linear_wts[2] * CalcValueType( refup_curr[refXlen+0] ) +
+                                        8
+                                    ) >> 4) * *wt_curr;
+                 }
+             }
+         }
+         else
+         {
+             for( int y=end_pos.y-start_pos.y; y > 0; --y, pic_curr+=pic_next, wt_curr+=wt_next, refup_curr+=refup_next )
+             {
+                 for( int x=block_width; x > 0; --x, ++pic_curr, ++wt_curr, refup_curr+=2 )
+                 {
+                     *pic_curr += ((    linear_wts[0] * CalcValueType( refup_curr[0] ) +
+                                        linear_wts[1] * CalcValueType( refup_curr[1] ) +
+                                        linear_wts[2] * CalcValueType( refup_curr[refXlen+0] ) +
+                                        linear_wts[3] * CalcValueType( refup_curr[refXlen+1] ) +
+                                        8
+                                    ) >> 4) * *wt_curr;
+                 }
+             }
+         }
      }
      else
      {
-         //We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+         // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
 
         for(int c = start_pos.y, wY = diff.y, uY = ref_start.y,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen);
             c < end_pos.y; ++c, ++wY, uY += 2,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen))
@@ -430,12 +506,12 @@ const ImageCoords& pos , const TwoDArray<CalcValueType>& wt_array )
                 l < end_pos.x; ++l, ++wX, uX += 2,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen))
             {
 
-                pic_data[c][l] += (( TLweight * refup_data[BuY][BuX] +
-                         TRweight * refup_data[BuY][BuX1]  +
-                         BLweight * refup_data[BuY1][BuX]+
-                         BRweight * refup_data[BuY1][BuX1] +
-                         8
-                         ) >> 4) * wt_array[wY][wX];
+                pic_data[c][l] += (( linear_wts[0] * CalcValueType( refup_data[BuY][BuX] ) +
+                                     linear_wts[1] * CalcValueType( refup_data[BuY][BuX1] ) +
+                                     linear_wts[2] * CalcValueType( refup_data[BuY1][BuX] )+
+                                     linear_wts[3] * CalcValueType( refup_data[BuY1][BuX1] ) +
+                                     8
+                                   ) >> 4) * wt_array[wY][wX];
             }//l
         }//c
 
