@@ -42,21 +42,27 @@ using namespace dirac;
 
 namespace dirac
 {
-    CalcValueType simple_block_diff_mmx_4(
+    CalcValueType simple_block_diff_mmx_4 ( 
             const BlockDiffParams& dparams, const MVector& mv, 
             const PicArray& pic_data, const PicArray& ref_data)
     {
         __m64 sum = _mm_set_pi32(0, 0);
 
-        int last_idx = (dparams.Xl()%4) ? (dparams.Xl()+4 - (dparams.Xl()%4)) :
-                            dparams.Xl();
 
-        for (int j=dparams.Yp() ; j != dparams.Yp()+dparams.Yl() ; ++j )
+        ValueType *src = &(pic_data[dparams.Yp()][dparams.Xp()]);
+        ValueType *refd = &(ref_data[dparams.Yp()+mv.y][dparams.Xp()+mv.x]);
+
+        int height = dparams.Yl();
+        int width = dparams.Xl();
+        int ext_width = width + (width&2);
+        int pic_next = (pic_data.LengthX() - ext_width);
+        int ref_next = (ref_data.LengthX() - ext_width);
+        while (height--)
         {
-            for(int i=dparams.Xp() ; i!= dparams.Xp()+last_idx ; i += 4 )
+            for (int i = 0; i < ext_width; i+=4) 
             {
-                __m64 pic = *(__m64 *)&pic_data[j][i];
-                __m64 ref = *(__m64 *)&ref_data[j+mv.y][i+mv.x];
+                __m64 pic = *(__m64 *)src;
+                __m64 ref = *(__m64 *)refd;
                 // pic - ref
                 pic = _mm_sub_pi16 (pic, ref);
                 // abs (pic - ref)
@@ -68,13 +74,16 @@ namespace dirac
                 ref = _mm_unpackhi_pi16(pic, ref);
                 pic = _mm_unpacklo_pi16(pic, pic);
                 pic = _mm_srai_pi32 (pic, 16);
-                //ref = _mm_srai_pi32 (ref, 16);
-                if (i + 4 <= (dparams.Xp()+dparams.Xl()))
+                if ( (i + 4) <= width)
                 {
                     pic = _mm_add_pi32 (pic, ref);
                 }
                 sum = _mm_add_pi32 (sum, pic);
+                src += 4;
+                refd += 4;
             }
+            src += pic_next;
+            refd += ref_next;
         }
         int *result = (int *) &sum;
         _mm_empty();
@@ -82,26 +91,38 @@ namespace dirac
         return result[0] + result[1];
     }
 
+
     CalcValueType simple_block_diff_up_mmx_4(
             const PicArray& pic_data, const PicArray& ref_data, 
             const ImageCoords& start_pos, const ImageCoords& end_pos, 
             const ImageCoords &ref_start, const ValueType weights[4])
     {
+        ValueType *pic = &pic_data[start_pos.y][start_pos.x];
+        ValueType *ref_up = &ref_data[ref_start.y][ref_start.x];
+
+        const int width = end_pos.x - start_pos.x;
+        int height = end_pos.y - start_pos.y;
+        const int refup_stride = ref_data.LengthX();
+
+        // go down a row and back up
+        const int pic_next = pic_data.LengthX() - width;
+        // go down 2 rows and back up
+        const int refup_next = ref_data.LengthX()*2 - width*2;
+
         __m64 sum = _mm_set_pi32(0, 0);
         __m64 eight = _mm_set_pi32(8, 8);
 
         __m64 weights1 = _mm_set_pi16(weights[0], weights[1], weights[0], weights[1]);
         __m64 weights2 = _mm_set_pi16(weights[2], weights[3], weights[2], weights[3]);
 
-        for(int c = start_pos.y, uY = ref_start.y; c < end_pos.y; ++c, uY += 2)
-        {
-            ValueType *p1 = &ref_data[uY][ref_start.x];
-            ValueType *p2 = &ref_data[uY+1][ref_start.x];
 
-            for(int l = start_pos.x; l < end_pos.x; l+=2, p1 += 4, p2 += 4)
+        while ( height--)
+        {
+            int count = width >>1; // handle 2 pic_data values at a time
+            while (count--)
             {
-                __m64 ref1 = *(__m64 *)p1;
-                __m64 ref2 = *(__m64 *)p2;
+                __m64 ref1 = *(__m64 *)(ref_up);
+                __m64 ref2 = *(__m64 *)(ref_up+refup_stride);
                 // multiply by weights
                 ref1 = _mm_madd_pi16 (ref1, weights1);
                 // multiply by weights
@@ -112,10 +133,10 @@ namespace dirac
                 ref1 = _mm_add_pi32 (ref1, eight);
                 // shift temp >>4
                 ref1 = _mm_srai_pi32 (ref1, 4);
-
-                // load pic_data
+                
+                // load pic_data into ref2
                 ref2 = _mm_xor_si64(ref2, ref2);
-                ref2 = _mm_unpacklo_pi16 (*(__m64 *)&pic_data[c][l], ref2);
+                ref2 = _mm_unpacklo_pi16 (*(__m64 *)pic, ref2);
                 // pic_data - temp
                 ref1 =_mm_sub_pi32 (ref1, ref2);
                 // abs (pic_data - temp)
@@ -124,8 +145,13 @@ namespace dirac
                 ref1 = _mm_sub_pi32 (ref1, ref2);
                 // sum += abs(pic_data - temp)
                 sum = _mm_add_pi32 (sum, ref1);
-            }//l
-        }//c
+
+                ref_up +=4;
+                pic += 2;
+            }
+            ref_up += refup_next;
+            pic += pic_next;
+        }
 
         _mm_empty();
 
