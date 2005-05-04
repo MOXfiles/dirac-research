@@ -36,6 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_common/mv_codec.h>
+
 using namespace dirac;
 
 //public functions//
@@ -132,6 +133,12 @@ inline int MvDataCodec::ChoosePredContext(const MvData& data, const int BinNumbe
 	else
 		return PMODE_BIN3_CTX; 
 }
+
+inline int MvDataCodec::ChooseBlockMotionTypePredContext() const
+{
+	return BLOCK_USE_GM_CTX; 
+}
+
 
 inline int MvDataCodec::ChooseREF1xContext(const MvData& data, const int BinNumber) const
 {
@@ -329,6 +336,30 @@ inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode 
 	return result; 
 }
 
+
+inline bool MvDataCodec::BlockMotionTypePrediction(const TwoDArray < bool > & preddata) const
+{
+	bool result = true;
+	std::vector <unsigned int> nbrs; 
+
+	if (b_xp > 0 && b_yp > 0)
+	{
+		nbrs.push_back( (unsigned int)( preddata[b_yp-1][b_xp] ) ); 
+		nbrs.push_back( (unsigned int)( preddata[b_yp-1][b_xp-1] ) ); 
+		nbrs.push_back( (unsigned int)( preddata[b_yp][b_xp-1] ) ); 
+
+		result = (bool)GetMean(nbrs);
+	}
+	else if (b_xp > 0 && b_yp == 0)
+		result = preddata[b_yp][b_xp-1]; 
+	else if (b_xp == 0 && b_yp > 0)
+		result = preddata[b_yp-1][b_xp]; 
+
+	return result; 
+}
+
+
+
 inline MVector MvDataCodec::Mv1Prediction(const MvArray& mvarray,
 										  const TwoDArray < PredMode > & preddata) const
 {
@@ -493,7 +524,6 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 			}
 			common_ref = in_data.MBCommonMode()[mb_yp][mb_xp]; 
 
-
 			//do prediction modes            
 			for (b_yp = mb_tlb_y; b_yp < mb_tlb_y+4; b_yp += pstep)
 				for (b_xp = mb_tlb_x; b_xp < mb_tlb_x+4; b_xp += pstep)
@@ -506,16 +536,50 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 			{
 				for (b_xp = mb_tlb_x; b_xp < mb_tlb_x+4; b_xp += step)
 				{
+					// If Intra Block, then code the DC
+					if(in_data.Mode()[b_yp][b_xp] == INTRA)
+						CodeDC(in_data);  
+
+					else // If an Inter Block:
+					{
+						if(in_data.m_use_global_only) // if ONLY using Global Motion: 
+						{
+							//UseGlobalMotionForBlock( in_data ); // Use Global Motion Vectors
+						}
+						else // if using block (and possibly) Global Motion:
+						{
+							if(in_data.m_use_global) // if using Global Motion
+								CodeBlockMotionType(in_data); // encode whether or not it gets used for current Pred. Unit
+
+							if(in_data.BlockUseGlobal()[b_yp][b_xp])
+							{	
+								//UseGlobalMotionForBlock( in_data ); // Use Global Motion Vectors
+							}
+							else // if not using Global Motion for the current Pred. Unit
+							{
+								if (in_data.Mode()[b_yp][b_xp] == REF1_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
+									CodeMv1(in_data); 
+
+								if (in_data.Mode()[b_yp][b_xp] == REF2_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
+									CodeMv2(in_data);
+							}
+						}
+					}
+
+					/*
 					if (!in_data.m_use_global_only) 
 					{
-						if (in_data.Mode()[b_yp][b_xp] == REF1_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
-							CodeMv1(in_data); 
+					//CodeBlockMotionType(in_data); 
 
-						if (in_data.Mode()[b_yp][b_xp] == REF2_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
-							CodeMv2(in_data); 
+					if (in_data.Mode()[b_yp][b_xp] == REF1_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
+					CodeMv1(in_data); 
+
+					if (in_data.Mode()[b_yp][b_xp] == REF2_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
+					CodeMv2(in_data); 
 					}
 					if(in_data.Mode()[b_yp][b_xp] == INTRA)
-						CodeDC(in_data);                     
+					CodeDC(in_data);                    
+					*/
 				}//b_xp
 			}//b_yp    
 
@@ -599,6 +663,18 @@ void MvDataCodec::CodePredmode(const MvData& in_data)
 	if (val  !=  3) //if we've had three zeroes, know we must have value 3
 		EncodeSymbol( 1 , ChoosePredContext( in_data , val + 1 ) ); 
 }
+
+void MvDataCodec::CodeBlockMotionType(const MvData& in_data)
+{
+	bool val = in_data.BlockUseGlobal()[b_yp][b_xp] == BlockMotionTypePrediction( in_data.BlockUseGlobal() ); 
+
+	if (val == true)
+		EncodeSymbol( 1 , ChooseBlockMotionTypePredContext() );
+	else 
+		EncodeSymbol( 0 , ChooseBlockMotionTypePredContext() );
+}
+
+
 
 void MvDataCodec::CodeMv1(const MvData& in_data )
 {
@@ -753,6 +829,8 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 			{                
 				for (b_xp = mb_tlb_x; b_xp < mb_tlb_x + 4;  b_xp += pstep)
 				{
+
+
 					DecodePredmode(out_data); 
 					//std::cerr <<  out_data.Mode()[b_yp][b_xp];
 
@@ -763,25 +841,57 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 				}
 			}
 
-
 			//now do all the block mvs in the mb
 			for (int j = 0; j < max; ++j)
 			{                
 				for (int i = 0; i < max; ++i)
 				{
 					xstart = b_xp = mb_tlb_x + i * step; 
-					ystart = b_yp = mb_tlb_y + j * step;                                             
-					if (!out_data.m_use_global_only) 
-					{
-						if (out_data.Mode()[b_yp][b_xp] == REF1_ONLY || out_data.Mode()[b_yp][b_xp] == REF1AND2 )
-							DecodeMv1( out_data ); 
+					ystart = b_yp = mb_tlb_y + j * step;
 
-						if (out_data.Mode()[b_yp][b_xp] == REF2_ONLY || out_data.Mode()[b_yp][b_xp] == REF1AND2 )
-							DecodeMv2( out_data ); 
-					}
+					// If Intra Block, then decode the DC
 					if(out_data.Mode()[b_yp][b_xp] == INTRA)
 						DecodeDC( out_data ); 
 
+					else // If an Inter Block: 
+					{
+						if(out_data.m_use_global_only) // if ONLY using Global Motion: 
+							UseGlobalMotionForBlock( out_data ); // Use Global Motion Vectors
+
+						else // if using block (and possibly) Global Motion:	
+						{
+							if(out_data.m_use_global) // if using Global Motion
+								DecodeBlockMotionType(out_data); // decode whether or not it gets used for current Pred. Unit
+
+							if(out_data.BlockUseGlobal()[b_yp][b_xp]) 
+								UseGlobalMotionForBlock( out_data ); // Use Global Motion Vectors for current Pred. Unit
+
+							else // if not using Global Motion for the current Pred. Unit
+							{
+								if (out_data.Mode()[b_yp][b_xp] == REF1_ONLY || out_data.Mode()[b_yp][b_xp] == REF1AND2 )
+									DecodeMv1(out_data); 
+
+								if (out_data.Mode()[b_yp][b_xp] == REF2_ONLY || out_data.Mode()[b_yp][b_xp] == REF1AND2 )
+									DecodeMv2(out_data);
+							}
+						}
+					}
+
+					/*
+					if(in_data.Mode()[b_yp][b_xp] == INTRA)
+					CodeDC(in_data);  
+
+					else if(!in_data.m_use_global_only) 
+					{
+					CodeBlockMotionType(in_data); 
+
+					if (in_data.Mode()[b_yp][b_xp] == REF1_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
+					CodeMv1(in_data); 
+
+					if (in_data.Mode()[b_yp][b_xp] == REF2_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
+					CodeMv2(in_data); 
+					}
+					*/
 					//propagate throughout MB    
 					for (b_yp = ystart; b_yp < ystart+step; b_yp++)
 					{
@@ -793,7 +903,8 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 							out_data.Vectors(2)[b_yp][b_xp].y = out_data.Vectors(2)[ystart][xstart].y; 
 							out_data.DC( Y_COMP )[b_yp][b_xp] = out_data.DC( Y_COMP )[ystart][xstart]; 
 							out_data.DC( U_COMP )[b_yp][b_xp] = out_data.DC( U_COMP )[ystart][xstart]; 
-							out_data.DC( V_COMP )[b_yp][b_xp] = out_data.DC( V_COMP )[ystart][xstart]; 
+							out_data.DC( V_COMP )[b_yp][b_xp] = out_data.DC( V_COMP )[ystart][xstart];
+							out_data.BlockUseGlobal()[b_yp][b_xp] = out_data.BlockUseGlobal()[ystart][xstart];
 						}//b_xp
 					}//b_yp
 				}//i                    
@@ -891,6 +1002,19 @@ void MvDataCodec::DecodePredmode( MvData& out_data )
 	while (!bit && val != 3);  
 
 	out_data.Mode()[b_yp][b_xp] = PredMode( ( val + BlockModePrediction (out_data.Mode() ) ) %4); 
+}
+
+
+void MvDataCodec::DecodeBlockMotionType( MvData& out_data )
+{
+	bool bit;
+
+	DecodeSymbol( bit , ChooseBlockMotionTypePredContext() ); 
+
+	if (bit)
+		out_data.BlockUseGlobal()[b_yp][b_xp] = BlockMotionTypePrediction( out_data.BlockUseGlobal() ); 
+	else
+		out_data.BlockUseGlobal()[b_yp][b_xp] = !BlockMotionTypePrediction( out_data.BlockUseGlobal() ); 
 }
 
 void MvDataCodec::DecodeMv1( MvData& out_data )
@@ -997,6 +1121,21 @@ void MvDataCodec::DecodeMv2( MvData& out_data )
 	}
 
 	out_data.Vectors(2)[b_yp][b_xp].y = val + pred.y; 
+}
+
+
+void MvDataCodec::UseGlobalMotionForBlock( MvData& out_data )
+{
+	if (out_data.Mode()[b_yp][b_xp] == REF1_ONLY || out_data.Mode()[b_yp][b_xp] == REF1AND2 )
+	{
+		out_data.Vectors(1)[b_yp][b_xp].x = out_data.GlobalMotionVectors(1)[b_yp][b_xp].x;
+		out_data.Vectors(1)[b_yp][b_xp].y = out_data.GlobalMotionVectors(1)[b_yp][b_xp].y;
+	}
+	if (out_data.Mode()[b_yp][b_xp] == REF2_ONLY || out_data.Mode()[b_yp][b_xp] == REF1AND2 )
+	{
+		out_data.Vectors(2)[b_yp][b_xp].x = out_data.GlobalMotionVectors(2)[b_yp][b_xp].x;
+		out_data.Vectors(2)[b_yp][b_xp].y = out_data.GlobalMotionVectors(2)[b_yp][b_xp].y;
+	}
 }
 
 void MvDataCodec::DecodeDC( MvData& out_data )

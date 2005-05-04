@@ -164,7 +164,11 @@ namespace dirac
 
 		GLOBAL_MAG_Ac_CTX,	//47	-global motion: magnitude bins for "A-matrix" and "c-vector" parameters 	
         GLOBAL_MAG_b_CTX,	//48	-global motion: magnitude bins for "b-vector" (translation) parameters 	
-		GLOBAL_SIGN_CTX		//49	-global motion: sign bin for all global motion parameters
+		GLOBAL_SIGN_CTX	,	//49	-global motion: sign bin for all global motion parameters
+
+		BLOCK_USE_GM_CTX,	//50	-glbal motion: context for block motion type (i.e. global or block)
+
+		NUMBER_OF_CONTEXTS  //51	-total number of contexts
 };
 
 

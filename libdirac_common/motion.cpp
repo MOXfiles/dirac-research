@@ -58,7 +58,9 @@ m_modes( ynumblocks , xnumblocks ),
 m_dc( 3 ),
 m_mb_split( ynumMB , xnumMB ),
 m_mb_common( ynumMB , xnumMB ),
-m_gm_params( Range(1 , num_refs) )
+m_gm_params( Range(1 , num_refs) ),
+m_block_use_global( ynumblocks , xnumblocks )
+
 {
 
 	InitMvData();
@@ -71,7 +73,8 @@ m_modes( 4*ynumMB , 4*xnumMB ),
 m_dc( 3 ),
 m_mb_split( ynumMB , xnumMB ),
 m_mb_common( ynumMB , xnumMB ),
-m_gm_params( Range(1 , num_refs) )
+m_gm_params( Range(1 , num_refs) ),
+m_block_use_global( 4*ynumMB , 4*xnumMB )
 {
 	InitMvData();
 }
@@ -99,6 +102,10 @@ void MvData::InitMvData()
 		for ( int j=0; j<8; j++ ) 
 			(*(m_gm_params[i]))[j] = 0.0; // Default Global Motion Parameters: All Zeros
 	}
+
+	for (int x=0; x<m_block_use_global.LengthX(); x++) 
+		for (int y=0; y<m_block_use_global.LengthY(); y++)
+			m_block_use_global[y][x] = true;
 
 	// Create the arrays of dc values
 	for ( int i=0 ; i<3 ; ++i )

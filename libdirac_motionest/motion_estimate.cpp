@@ -42,7 +42,7 @@
 #include <libdirac_motionest/me_subpel.h>
 #include <libdirac_motionest/me_mode_decn.h>
 #include <libdirac_motionest/global_motion.h>
-//#include <libdirac_motionest/me_motion_type_decn.h>
+#include <libdirac_motionest/me_motion_type_decn.h>
 using namespace dirac;
 
 #include <cmath>
@@ -88,9 +88,10 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 	// Choose between global and block motion for each prediction unit.
 	// Alternatively, we may want to use Global Motion only. 
 
-	//MotionTypeDecider my_motion_type_dec;
+	MotionTypeDecider my_motion_type_dec;
     //int motion_choice = my_motion_type_dec.DoMotionTypeDecn( my_buffer , frame_num , me_data );
-	int motion_choice = 0; // Force choice here - USED FOR TESTING ONLY!
+    int motion_choice = my_motion_type_dec.DoMotionTypeDecn( me_data );
+	motion_choice = 1; // Force choice here - USED FOR TESTING ONLY!
 	
 	if (motion_choice==0)
 		me_data.SetGlobalMotionFlags(0,0); // No Global Motion

@@ -286,7 +286,11 @@ namespace dirac
 		bool m_use_global_only; // should probably be private
 
         //! Get the blocks' global motion flags
-        //TwoDArray<PredMode>& BlockUseGlobal(){return m_block_use_global;}
+        TwoDArray<bool>& BlockUseGlobal(){return m_block_use_global;}
+
+        //! Get the blocks' global motion flags
+        const TwoDArray<bool>& BlockUseGlobal() const{return m_block_use_global;}
+
 
 		// Quantisation (and Inverse Quantisation) of Global Motion Parameters:
 		void QuantiseGlobalMotionParameters();
@@ -316,6 +320,9 @@ namespace dirac
 
         // Global motion model parameters
         OneDArray< OneDArray<float>* > m_gm_params;
+
+		// Block Global Motion Options (i.e. use global motio or use block motion)
+		TwoDArray<bool> m_block_use_global;
 
     };
 

@@ -101,6 +101,7 @@ namespace dirac
         void CodeMBSplit(const MvData& in_data);    //code the MB splitting mode
         void CodeMBCom(const MvData& in_data);    //code the MB common ref mode
         void CodePredmode(const MvData& in_data);    //code the block prediction mode
+        void CodeBlockMotionType(const MvData& in_data);    //code the block motion type (i.e. global or not)
         void CodeMv1(const MvData& in_data);        //code the first motion vector
         void CodeMv2(const MvData& in_data);        //code the second motion vector
         void CodeDC(const MvData& in_data);        //code the dc value of intra blocks
@@ -110,8 +111,10 @@ namespace dirac
 		void DecodeMBSplit( MvData& out_data);    //decode the MB splitting mode
         void DecodeMBCom( MvData& out_data);//decode the MB common ref mode
         void DecodePredmode(MvData& out_data);//decode the block prediction mode
+		void DecodeBlockMotionType(MvData& out_data);//decode the block motion type (i.e. global or not)
         void DecodeMv1( MvData& out_data);    //decode the first motion vector
         void DecodeMv2( MvData& out_data);    //decode the second motion vector
+		void UseGlobalMotionForBlock( MvData& out_data);  // Use global motion for the current block
         void DecodeDC( MvData& out_data);    //decode the dc value of intra blocks    
 
         void DoWorkCode( MvData& in_data );
@@ -129,6 +132,7 @@ namespace dirac
         int ChooseMBSContext(const MvData& data, const int BinNumber) const;
         int ChooseMBCContext(const MvData& data) const;
         int ChoosePredContext(const MvData& data, const int BinNumber) const;
+		int ChooseBlockMotionTypePredContext() const;
         int ChooseREF1xContext(const MvData& data, const int BinNumber) const;
         int ChooseREF1xSignContext(const MvData& data) const;
         int ChooseREF1yContext(const MvData& data, const int BinNumber) const;
@@ -152,6 +156,7 @@ namespace dirac
         unsigned int MBSplitPrediction(const TwoDArray<int>& mbdata) const;
         bool MBCBModePrediction(const TwoDArray<bool>& mbdata) const;
         unsigned int BlockModePrediction(const TwoDArray<PredMode>& preddata) const;
+        bool BlockMotionTypePrediction(const TwoDArray<bool>& preddata) const;
         MVector Mv1Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
         MVector Mv2Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
         ValueType DCPrediction(const TwoDArray<ValueType>& dcdata,const TwoDArray<PredMode>& preddata) const;

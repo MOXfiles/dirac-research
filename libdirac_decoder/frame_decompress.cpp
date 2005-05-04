@@ -104,7 +104,7 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 				//decode mv data
 				if (m_decparams.Verbose())
 					std::cerr<<std::endl<<"Decoding motion data ...";        
-				MvDataCodec my_mv_decoder( &m_decparams.BitsIn(), 50 , m_cformat);
+				MvDataCodec my_mv_decoder( &m_decparams.BitsIn(), NUMBER_OF_CONTEXTS, m_cformat);
 				my_mv_decoder.InitContexts();//may not be necessary
 				num_mv_bits = UnsignedGolombDecode( m_decparams.BitsIn() );
 
