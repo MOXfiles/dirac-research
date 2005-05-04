@@ -315,22 +315,6 @@ namespace dirac
         
         //! Remove all the bands from the list    
         void Clear(){bands.clear();}
-
-        //! Sets the subband weights
-        /*!
-            Sets perceptual weights for the subbands. Takes into account both perceptual factors
-            (weight noise less at higher spatial frequencies) and the scaling needed for the 
-            wavelet transform. 
-
-            \param    cpd    perctual factor - the number of cycles per degree
-            \param    fsort    the frame sort (I, L1 or L2)
-            \param    cformat    the chroma format
-            \param    csort    the component type (Y, U or V)  
-        */
-        void SetBandWeights (const float cpd, 
-                             const FrameSort& fsort,
-                             const ChromaFormat& cformat,
-                             const CompSort csort);
     
     private:
 
@@ -341,68 +325,6 @@ namespace dirac
         std::vector<Subband> bands;
     };
 
-
-    //! Class to do two-tap prediction lifting step
-    template <int gain> class PredictStep
-    {
-
-    public:
-
-        //! Constructor
-        PredictStep(){}
-
-        // Assume default copy constructor, assignment= and destructor //
-
-        //! Do the filtering
-        /*
-            Do the filtering.
-            \param   in_val   the value being predicted
-            \param   val1   the first value being used for prediction
-            \param   val2   the second value being used for prediction
-        */
-        void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const;
-
-    private:
-
-    }; 
-
-    template <int gain>
-    inline void  PredictStep<gain>::Filter( ValueType& in_val, 
-                                            const ValueType& val1, 
-                                            const ValueType& val2) const
-    {
-        in_val -= static_cast< ValueType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
-    }
-
-    //! Class to do two-tap updating lifting step
-    template <int gain> class UpdateStep
-    {
-
-    public:
-        //! Constructor
-        UpdateStep(){}
-
-        //! Do the filtering
-        /*
-            Do the filtering.
-            \param   in_val   the value being updated
-            \param   val1   the first value being used for updating
-            \param   val2   the second value being used for updating
-        */
-        void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const;
-
-    private:
-
-    };  
-
-    template <int gain>
-    inline void UpdateStep<gain>::Filter(ValueType& in_val,
-                                              const ValueType& val1, 
-                                              const ValueType& val2) const
-    {
-        in_val += static_cast< ValueType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
-    }
-
     //! A class to do wavelet transforms
     /*!
         A class to do forward and backward wavelet transforms by iteratively splitting or merging the
@@ -412,7 +334,7 @@ namespace dirac
     {
     public:
         //! Constructor
-        WaveletTransform(int d = 4, WltFilter f = DAUB);
+        WaveletTransform(int d = 4, WltFilter f = DAUB97);
         
         //! Destructor
         virtual ~WaveletTransform();
@@ -426,10 +348,10 @@ namespace dirac
         void Transform(const Direction d, PicArray& pic_data);
     
         //! Returns the set of subbands
-        SubbandList& BandList(){return band_list;}
+        SubbandList& BandList(){return m_band_list;}
     
         //! Returns the set of subbands
-        const SubbandList& BandList() const {return band_list;}
+        const SubbandList& BandList() const {return m_band_list;}
     
         //! Sets the subband weights
         /*!
@@ -447,19 +369,273 @@ namespace dirac
                              const ChromaFormat& cformat,
                              const CompSort csort);
 
+        //! Return the expected DC band value assuming a mid-grey picture (mean val=512)
+        ValueType GetMeanDCVal() const;
+ 
     private:
-        //other private variables    
+        // Classes used within wavelet transform
 
-        SubbandList band_list;
+        //! A virtual parent class to do vertical and horizontal splitting with wavelet filters
+        class VHFilter
+        {
+
+        public:
+
+            VHFilter(){}
+
+            virtual ~VHFilter(){}
+
+            //! Split a subband into 4
+            virtual void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data)=0; 
+
+            //! Create a single band from 4 quadrant bands
+            virtual void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data)=0;
+
+            //! Return a correction factor to compensate for non-unity gain of low-pass filter
+            virtual double GetLowFactor() const=0;
+
+            //! Return a correction factor to compensate for non-unity gain of high-pass filter
+            virtual double GetHighFactor() const =0;
+
+        protected:
+            
+            //! Interleave data from separate subbands into even and odd positions for in-place calculation - called by Synth
+            inline void Interleave( const int xp, const int yp, const int xl, const int yl, PicArray&pic_data );
+    
+
+            //! De-interleave data even and odd positions into separate subbands - called by Split
+            inline void DeInterleave( const int xp, const int yp, const int xl, const int yl, PicArray&pic_data );
+        };
+
+        //! Class to do Daubechies (9,7) filtering operations
+        class VHFilterDaub9_7 : public VHFilter
+        {
+
+        public:
+
+            //! Split a subband into 4
+            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+
+            //! Create a single band from 4 quadrant bands
+            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+
+            //! Return a correction factor to compensate for non-unity gain of low-pass filter
+            double GetLowFactor() const { return 1.149604398;}
+
+            //! Return a correction factor to compensate for non-unity gain of high-pass filter
+            double GetHighFactor() const { return 0.869864452;}
+
+        };
+
+        //! Class to do (5,3) wavelet filtering operations
+        class VHFilter5_3 : public VHFilter
+        {
+
+        public:
+
+            //! Split a subband into 4
+            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+
+            //! Create a single band from 4 quadrant bands
+            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+
+            //! Return a correction factor to compensate for non-unity power gain of low-pass filter
+            double GetLowFactor() const { return 1.179535649;}    
+
+            //! Return a correction factor to compensate for non-unity power gain of high-pass filter
+            double GetHighFactor() const { return 0.81649658;}
+
+        };
+
+        //! Class to do an approximation to Daubechies (9,7) but with just two lifting steps
+        class VHFilterApprox9_7 : public VHFilter
+        {
+
+        public:
+
+            //! Split a subband into 4
+            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+
+            //! Create a single band from 4 quadrant bands
+            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+
+            //! Return a correction factor to compensate for non-unity power gain of low-pass filter
+            double GetLowFactor() const { return 1.218660804;}
+
+            //! Return a correction factor to compensate for non-unity power gain of high-pass filter
+            double GetHighFactor() const { return 0.780720058;}
+
+        };
+
+
+        //! An extension of Approx9_7, with a better low-pass filter but more computation
+        class VHFilter13_5 : public VHFilter
+        {
+
+        public:
+
+            //! Split a subband into 4
+            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+
+            //! Create a single band from 4 quadrant bands
+            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+
+            //! Return a correction factor to compensate for non-unity power gain of low-pass filter
+            double GetLowFactor() const { return 1.28087;}
+
+            //! Return a correction factor to compensate for non-unity power gain of high-pass filter
+            double GetHighFactor() const { return 0.809254;}
+        };
+
+
+        // Lifting steps used in the filters
+
+        //! Class to do two-tap prediction lifting step
+        template<int shift>
+        class PredictStepShift
+        {
+
+        public:
+
+            //! Constructor
+            PredictStepShift(){}
+
+            // Assume default copy constructor, assignment= and destructor //
+
+            //! Do the filtering
+            /*
+                Do the filtering.
+                \param   in_val   the value being predicted
+                \param   val1   the first value being used for prediction
+                \param   val2   the second value being used for prediction
+            */
+            inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
+            {
+                in_val -= (( val1 + val2 ) >>shift );
+            }
+
+        };
+
+        //! Class to do two-tap updating lifting step
+        template<int shift>
+        class UpdateStepShift
+        {
+
+        public:
+            //! Constructor
+            UpdateStepShift(){}
+
+            //! Do the filtering
+            /*
+                Do the filtering.
+                \param   in_val   the value being updated
+                \param   val1   the first value being used for updating
+                \param   val2   the second value being used for updating
+            */
+            inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
+            {
+                in_val += ( ( val1 + val2 ) >>shift );
+            }
+
+        };  
+
+        //! Class to do symmetric four-tap prediction lifting step
+        template <int shift , int tap1, int tap2>
+        class PredictStepFourTap
+        {
+        public:
+
+            //! Constructor
+            PredictStepFourTap(){}
+
+            // Assume default copy constructor, assignment= and destructor //
+
+            //! Do the filtering
+            inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2 ,
+                                                  const ValueType& val3, const ValueType& val4 ) const
+            {
+                in_val -= ( tap1*( val1 + val2 ) + tap2*( val3 + val4 ) )>>shift;
+            }
+        }; 
+
+        //! Class to do symmetric four-tap update lifting step
+        template <int shift , int tap1 , int tap2>
+        class UpdateStepFourTap
+        {
+ 
+        public:
+            //! Constructor
+            UpdateStepFourTap(){}
+
+            //! Do the filtering
+            inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2 ,
+                                                  const ValueType& val3, const ValueType& val4 ) const
+            {
+                in_val += ( tap1*( val1 + val2 ) + tap2*( val3 + val4 ) )>>shift;
+            }
+        };  
+
+        //! Class to do two-tap prediction lifting step for Daubechies (9,7)
+        template <int gain> class PredictStep97
+        {
+        public:
+
+            //! Constructor
+            PredictStep97(){}
+
+            // Assume default copy constructor, assignment= and destructor //
+
+            //! Do the filtering
+            /*
+                Do the filtering.
+                \param   in_val   the value being predicted
+                \param   val1   the first value being used for prediction
+                \param   val2   the second value being used for prediction
+            */
+            inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
+            {
+                in_val -= static_cast< ValueType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
+            }
+        }; 
+
+        //! Class to do two-tap update lifting step for Daubechies (9,7)
+        template <int gain> class UpdateStep97
+        {
+ 
+        public:
+            //! Constructor
+            UpdateStep97(){}
+
+            //! Do the filtering
+            /*
+                Do the filtering.
+                \param   in_val   the value being updated
+                \param   val1   the first value being used for updating
+                \param   val2   the second value being used for updating
+            */
+            inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
+            {
+                in_val += static_cast< ValueType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
+            }
+        };  
+
+    private:
+
+        // Private variables    
+
+        SubbandList m_band_list;
 
         //! Depth of the transform
-        int depth;
+        int m_depth;
     
-        //! The filter set to be used (only Daubechies supported at present)
-        WltFilter filt_sort;    
+        //! The filter set to be used
+        WltFilter m_filt_sort; 
+
+        //! A class to do the filtering required
+        VHFilter* m_vhfilter;
 
     private:
-        //functions
+        // Private functions
         //!    Private, bodyless copy constructor: class should not be copied
         WaveletTransform(const WaveletTransform& cpy);
     
@@ -468,14 +644,7 @@ namespace dirac
     
         //! Given x and y spatial frequencies in cycles per degree, returns a weighting value
         float PerceptualWeight(float xf,float yf,CompSort cs);
-
-        //! Split a subband into 4
-        void VHSplit(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
-
-        //! Synthesise a picture from 4 subbands
-        void VHSynth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
-  
-    };
+   };  
 
 }// end namespace dirac
 

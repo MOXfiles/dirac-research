@@ -72,8 +72,10 @@ namespace dirac
     //! Forward or backward
     enum Direction { FORWARD , BACKWARD };
 
-    //! Currently only Daubechies (DAUB) implemented
-    enum WltFilter { DAUB , HAAR };
+    //! Different supported filter types. When a new filter type is added
+    enum WltFilter { DAUB97 , APPROX97 , FIVETHREE , THIRTEENFIVE};
+    //! No. of different wlt filters. For testing, increment on adding a filter
+    static const int NUM_WLT_FILTERS = 4;
 
     //! Contexts used for coefficient coding
     enum CtxAliases

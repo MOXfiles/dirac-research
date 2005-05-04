@@ -212,495 +212,73 @@ void SubbandList::Init(const int depth,const int xlen,const int ylen)
 //public methods
 
 WaveletTransform::WaveletTransform(int d, WltFilter f)
-  : depth(d),
-    filt_sort(f)
+  : m_depth(d),
+    m_filt_sort(f)
 {
-    // this space intentionally left blank
+    switch( m_filt_sort )
+    {
+
+    case APPROX97 :
+        m_vhfilter = new VHFilterApprox9_7;
+        break;
+
+    case FIVETHREE : 
+        m_vhfilter = new VHFilter5_3;
+        break;
+
+    case THIRTEENFIVE :
+        m_vhfilter = new VHFilter13_5;
+        break;
+
+    default :
+        m_vhfilter = new VHFilterDaub9_7;
+    }
 }
 
 //! Destructor
 WaveletTransform::~WaveletTransform()
 {
-    // this space intentionally left blank
+    delete m_vhfilter;
 }
 
 void WaveletTransform::Transform(const Direction d, PicArray& pic_data)
 {
     int xl,yl; 
-
+ 
     if (d == FORWARD)
     {
-        //do work
         xl=pic_data.LengthX(); 
         yl=pic_data.LengthY(); 
         
-        for (int l = 1; l <= depth; ++l)
+        for (int l = 1; l <= m_depth; ++l , xl>>=1 , yl>>=1)
         {
-            VHSplit(0,0,xl,yl,pic_data); 
-            xl /= 2; 
-            yl /= 2; 
+            m_vhfilter->Split(0,0,xl,yl,pic_data); 
         }
 
-        band_list.Init( depth , pic_data.LengthX() , pic_data.LengthY() ); 
+        m_band_list.Init( m_depth , pic_data.LengthX() , pic_data.LengthY() );
     }
     else
     {
-        //do work
-        xl = pic_data.LengthX()/(1<<(depth-1)); 
-        yl = pic_data.LengthY()/(1<<(depth-1)); 
+        xl = pic_data.LengthX()/(1<<(m_depth-1)); 
+        yl = pic_data.LengthY()/(1<<(m_depth-1)); 
         
-        for (int l = 1; l <= depth; ++l)
+        for (int l = 1; l <= m_depth; ++l, xl<<=1 , yl<<=1 )
         {
-            VHSynth(0,0,xl,yl,pic_data); 
-            xl *= 2; 
-            yl *= 2; 
+            m_vhfilter->Synth(0,0,xl,yl,pic_data); 
         }
-        
         //band list now inaccurate, so clear        
-        band_list.Clear();     
+        m_band_list.Clear();     
     }
 }
 
-//private functions
-///////////////////
-
-void WaveletTransform::VHSplit(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data)
-{
-
-    //version based on integer-like types
-    //using edge-extension rather than reflection
-
-    OneDArray<ValueType *> tmp_data(yl); 
-    const int xl2 = xl/2; 
-    const int yl2 = yl/2; 
-    const int xend=xp+xl;
-    const int yend=yp+yl;
-
-    ValueType* line_data; 
-
-    // Positional variables
-    int i,j,k,r,s; 
-  
-    // Objects to do lifting stages 
-    // (in revese order and type from synthesis)
-    const PredictStep< 6497 > predictA;
-    const PredictStep< 217 > predictB;
-    const UpdateStep< 3616 > updateA;
-    const UpdateStep< 1817 > updateB;
-
-     //first do horizontal 
-
-    for (j = yp;  j < yend; ++j)
-    {
-        // First lifting stage
-        line_data = pic_data[j];                 
-
-        predictA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
-        predictB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
-
-        for (i = xp+2, k = xp+3; i < xend-2; i+=2, k+=2)
-        {
-            predictA.Filter( line_data[k] , line_data[i+2] , line_data[i] );
-            predictB.Filter( line_data[i] , line_data[k-2] , line_data[k] );
-        }// i
-        
-        predictA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
-        predictB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] );
-
-
-         //second lifting stage 
-        
-        updateA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
-        updateB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
-
-        for (i = xp+2, k = xp+3;  i < xend-2; i+=2 , k+=2)
-        { 
-            updateA.Filter( line_data[k] , line_data[i+2] , line_data[i] );
-            updateB.Filter( line_data[i] , line_data[k-2] , line_data[k] );
-        }// i
-
-        updateA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
-        updateB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] );
-
-    }// j
-
-    // next do vertical
-
-    // First lifting stage
-
-    // top edge - j=xp
-    for ( i = xp ; i<xend ; ++ i)
-    {
-        predictA.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
-        predictB.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
-    }// i
-
-    // middle bit
-    for ( j = yp+2, k = yp+3 ; j<yend-2 ; j+=2 , k+=2)
-    {
-        for ( i = xp ; i<xend ; ++ i)
-        {
-            predictA.Filter( pic_data[k][i] , pic_data[j+2][i] , pic_data[j][i] );
-            predictB.Filter( pic_data[j][i] , pic_data[k-2][i] , pic_data[k][i] );
-        }// i
-    }// j
-    // bottom edge
-    for ( i = xp ; i<xend ; ++ i)
-    {
-        predictA.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
-        predictB.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
-    }// i
-
-    // Second lifting stage
-
-    // top edge - j=xp
-    for ( i = xp ; i<xend ; ++ i)
-    {
-        updateA.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
-        updateB.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
-    }// i
-
-    // middle bit
-    for ( j = yp+2, k = yp+3 ; j<yend-2 ; j+=2 , k+=2)
-    {
-        for ( i = xp ; i<xend ; ++ i)
-        {
-            updateA.Filter( pic_data[k][i] , pic_data[j+2][i] , pic_data[j][i] );
-            updateB.Filter( pic_data[j][i] , pic_data[k-2][i] , pic_data[k][i] );
-        }// i
-    }// j
-    // bottom edge
-    for ( i = xp ; i<xend ; ++ i)
-    {
-        updateA.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
-        updateB.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
-    }// i
-
-    // Lastly, have to reorder so that subbands are no longer interleaved
-
-    ValueType** temp_data = new ValueType*[yl];
-    for ( j = 0 ; j< yl ; ++ j)
-        temp_data[j] = new ValueType[xl];
-
-    // Make a temporary copy of the subband
-    for ( j = yp; j<yend ; j++ )
-        memcpy( temp_data[j-yp] , pic_data[j]+xp , xl * sizeof( ValueType ) );
-
-    // Re-order to de-interleave
-    for ( j = yp, s=0; j<yp+yl2 ; j++, s+=2)
-    {
-        for ( i = xp , r=0 ; i<xp+xl2 ; i++ , r += 2)
-            pic_data[j][i] = temp_data[s][r];
-        for ( i = xp+xl2, r=1; i<xend ; i++ , r += 2)
-            pic_data[j][i] = temp_data[s][r];
-    }// j 
-
-    for ( j = yp+yl2, s=1 ; j<yend ; j++ , s += 2)
-    {
-        for ( i = xp , r=0 ; i<xp+xl2 ; i++ , r += 2)
-            pic_data[j][i] = temp_data[s][r];
-        for ( i = xp+xl2, r=1; i<xend ; i++ , r += 2)
-            pic_data[j][i] = temp_data[s][r];
-    }// j 
-
-
-    for ( j = 0 ; j< yl ; ++ j)
-        delete[] temp_data[j];
-    delete[] temp_data;
-
-}
-///*
-void WaveletTransform::VHSynth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data)
-{
-    int i,j,k,r,s;
-
-    const int xend( xp+xl );
-    const int yend( yp+yl );
-    const int xl2( xl/2 );
-    const int yl2( yl/2 );
-
-    const PredictStep< 1817 > predictB;
-    const PredictStep< 3616 > predictA;
-    const UpdateStep< 217 > updateB;
-    const UpdateStep< 6497 > updateA;
-
-    ValueType* line_data;
-
-    // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
-
-    ValueType** temp_data = new ValueType*[yl];
-    for ( j = 0 ; j< yl ; ++ j)
-        temp_data[j] = new ValueType[xl];
-
-    // Make a temporary copy of the subband
-    for ( j = yp; j<yend ; j++ )
-        memcpy( temp_data[j-yp] , pic_data[j]+xp , xl * sizeof( ValueType ) );
-
-    // Re-order to interleave
-    for ( j = 0, s=yp; j<yl2 ; j++, s+=2)
-    {
-        for ( i = 0 , r=xp ; i<xl2 ; i++ , r += 2)
-            pic_data[s][r] = temp_data[j][i];
-        for ( i = xl2, r=xp+1; i<xl ; i++ , r += 2)
-            pic_data[s][r] = temp_data[j][i];
-    }// j 
-
-    for ( j = yl2, s=yp+1 ; j<yl ; j++ , s += 2)
-    {
-        for ( i = 0 , r=xp ; i<xl2 ; i++ , r += 2)
-            pic_data[s][r] = temp_data[j][i];
-        for ( i = xl2, r=xp+1; i<xl ; i++ , r += 2)
-            pic_data[s][r] = temp_data[j][i];
-    }// j 
-
-    for ( j = 0 ; j< yl ; ++ j)
-        delete[] temp_data[j];
-    delete[] temp_data;
-
-    // Next, do the vertical synthesis
-    // First lifting stage
-
-    // Begin with the bottom edge
-    for ( i = xend-1 ; i>=xp ; --i)
-    {
-        predictB.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
-        predictA.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
-    }// i
-    // Next, do the middle bit
-    for ( j = yend-4, k = yend-3 ; j>yp ; j-=2 , k-=2)
-    {
-        for ( i = xend-1 ; i>=xp ; --i)
-        {
-            predictB.Filter( pic_data[j][i] , pic_data[k-2][i] , pic_data[k][i] );
-            predictA.Filter( pic_data[k][i] , pic_data[j+2][i] , pic_data[j][i] );
-        }// i
-    }// j
-    // Then do the top edge
-    for ( i = xend-1 ; i>=xp ; --i)
-    {
-        predictB.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
-        predictA.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
-    }// i
-
-    // Second lifting stage
-
-    // Begin with the bottom edge
-    for ( i = xend-1 ; i>=xp ; --i)
-    {
-        updateB.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
-        updateA.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
-    }// i
-    // Next, do the middle bit
-    for ( j = yend-4, k = yend-3 ; j>yp ; j-=2 , k-=2)
-    {
-        for ( i = xend-1 ; i>=xp ; --i)
-        {
-            updateB.Filter( pic_data[j][i] , pic_data[k-2][i] , pic_data[k][i] );
-            updateA.Filter( pic_data[k][i] , pic_data[j+2][i] , pic_data[j][i] );
-        }// i
-    }// j
-    // Then do the top edge
-    for ( i = xend-1 ; i>=xp ; --i)
-    {
-        updateB.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
-        updateA.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
-    }// i
-
-
-    // Next do the horizontal synthesis
-    for (j = yend-1;  j >= yp ; --j)
-    {
-        // First lifting stage 
-        line_data = pic_data[j];
-
-        predictB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] ); 
-        predictA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
-
-        for (i = xend-4, k = xend-3;  i > xp; i-=2 , k-=2)
-        { 
-            predictB.Filter( line_data[i] , line_data[k-2] , line_data[k] );
-            predictA.Filter( line_data[k] , line_data[i+2] , line_data[i] );
-        }// i
-
-        predictB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
-        predictA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
-
-        // Second lifting stage
-
-        updateB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] );
-        updateA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
-
-        for (i = xend-4, k = xend-3;  i > xp; i-=2 , k-=2)
-        {
-            updateB.Filter( line_data[i] , line_data[k-2] , line_data[k] );
-            updateA.Filter( line_data[k] , line_data[i+2] , line_data[i] );
-        }// i
-
-        updateB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
-        updateA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
-
-    }
-
-} 
-//*/
-/*
-void WaveletTransform::VHSynth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data)
-{
-    int i,j,k,r,s;
-
-    const int xl2( xl/2 );
-    const int yl2( yl/2 );
-
-    const PredictStep< 1817 > predictB;
-    const PredictStep< 3616 > predictA;
-    const UpdateStep< 217 > updateB;
-    const UpdateStep< 6497 > updateA;
-
-    ValueType* line_data;
-
-    // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
-
-    ValueType** temp_data = new ValueType*[yl];
-    for ( j = 0 ; j< yl ; ++ j)
-        temp_data[j] = new ValueType[xl];
-
-    for ( j = 0, s=yp ; j<yl ; j+=2, s++ )
-    {
-        for ( i = 0 , r=xp ; i<xl ; i+=2, r++ )
-        {
-            temp_data[j][i] = pic_data[s][r];
-            temp_data[j][i+1] = pic_data[s][r+xl2];
-        }// i
-        for ( i = 0 , r=xp ; i<xl ; i+=2, r++ )
-        {
-            temp_data[j+1][i] = pic_data[s+yl2][r];
-            temp_data[j+1][i+1] = pic_data[s+yl2][r+xl2];
-        }// i
-
-    }// j 
-
-    // Next, do the vertical synthesis
-    // First lifting stage
-
-    // Begin with the bottom edge
-    for ( i = xl-1 ; i>=0 ; --i)
-    {
-        predictB.Filter( temp_data[yl-2][i] , temp_data[yl-3][i] , temp_data[yl-1][i] );
-        predictA.Filter( temp_data[yl-1][i] , temp_data[yl-2][i] , temp_data[yl-2][i] );
-    }// i
-    // Next, do the middle bit
-    for ( j = yl-4, k = yl-3 ; j>0 ; j-=2 , k-=2)
-    {
-        for ( i = xl-1 ; i>=0 ; --i)
-        {
-            predictB.Filter( temp_data[j][i] , temp_data[k-2][i] , temp_data[k][i] );
-            predictA.Filter( temp_data[k][i] , temp_data[j+2][i] , temp_data[j][i] );
-        }// i
-    }// j
-    // Then do the top edge
-    for ( i = xl-1 ; i>=0 ; --i)
-    {
-        predictB.Filter( temp_data[0][i] , temp_data[1][i] , temp_data[yp+1][i] );
-        predictA.Filter( temp_data[1][i] , temp_data[2][i] , temp_data[yp][i] );
-    }// i
-
-    // Second lifting stage
-
-    // Begin with the bottom edge
-    for ( i = xl-1 ; i>=0 ; --i)
-    {
-        updateB.Filter( temp_data[yl-2][i] , temp_data[yl-3][i] , temp_data[yl-1][i] );
-        updateA.Filter( temp_data[yl-1][i] , temp_data[yl-2][i] , temp_data[yl-2][i] );
-    }// i
-    // Next, do the middle bit
-    for ( j = yl-4, k = yl-3 ; j>0 ; j-=2 , k-=2)
-    {
-        for ( i = xl-1 ; i>=0 ; --i)
-        {
-            updateB.Filter( temp_data[j][i] , temp_data[k-2][i] , temp_data[k][i] );
-            updateA.Filter( temp_data[k][i] , temp_data[j+2][i] , temp_data[j][i] );
-        }// i
-    }// j
-    // Then do the top edge
-    for ( i = xl-1 ; i>=0 ; --i)
-    {
-        updateB.Filter( temp_data[0][i] , temp_data[1][i] , temp_data[1][i] );
-        updateA.Filter( temp_data[1][i] , temp_data[2][i] , temp_data[0][i] );
-    }// i
-
-
-    // Next do the horizontal synthesis
-    for (j = yl-1;  j >= 0 ; --j)
-    {
-        // First lifting stage 
-        line_data = temp_data[j];
-
-        predictB.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] ); 
-        predictA.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] );
-
-        for (i = xl-4, k = xl-3;  i > 0; i-=2 , k-=2)
-        { 
-            predictB.Filter( line_data[i] , line_data[k-2] , line_data[k] );
-            predictA.Filter( line_data[k] , line_data[i+2] , line_data[i] );
-        }// i
-
-        predictB.Filter( line_data[0] , line_data[1] , line_data[1] );
-        predictA.Filter( line_data[1] , line_data[2] , line_data[0] );
-
-        // Second lifting stage
-
-        updateB.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] );
-        updateA.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] );
-
-        for (i = xl-4, k = xl-3;  i > 0; i-=2 , k-=2)
-        {
-            updateB.Filter( line_data[i] , line_data[k-2] , line_data[k] );
-            updateA.Filter( line_data[k] , line_data[i+2] , line_data[i] );
-        }// i
-
-        updateB.Filter( line_data[0] , line_data[1] , line_data[1] );
-        updateA.Filter( line_data[1] , line_data[2] , line_data[0] );
-
-    }
-
-    // Copy back in
-    for ( j = 0; j<yl ; j++ )
-        memcpy(  pic_data[j+yp]+xp , temp_data[j] , xl * sizeof( ValueType ) );
-
-    for ( j = 0 ; j< yl ; ++ j)
-        delete[] temp_data[j];
-    delete[] temp_data;
-
-
-} 
-*/
-
-//perceptual weighting stuff
-////////////////////////////
-
-// Returns a perceptual noise weighting based on extending CCIR 959 values
-// assuming a two-d isotropic response. Also has a fudge factor of 20% for chroma
-float SubbandList::PerceptualWeight( const float xf , 
-                                     const float yf ,  
-                                     const CompSort cs )
-{
-    double freq_sqd( xf*xf + yf*yf );
-
-    if ( cs != Y_COMP )
-        freq_sqd *= 1.2;
-
-    return 0.255 * std::pow( 1.0 + 0.2561*freq_sqd , 0.75) ;
-
-}
-
-void SubbandList::SetBandWeights (const float cpd, 
+void WaveletTransform::SetBandWeights (const float cpd, 
                                        const FrameSort& fsort,
                                        const ChromaFormat& cformat,
                                        const CompSort csort)
 {
     //NB - only designed for progressive to date    
 
-    int xlen, ylen, xl, yl, xp, yp, depth;
+    int xlen, ylen, xl, yl, xp, yp;
     float xfreq, yfreq;
     float temp;
 
@@ -729,17 +307,17 @@ void SubbandList::SetBandWeights (const float cpd,
 
     }
 
-    xlen = 2 * (*this)(1).Xl();
-    ylen = 2 * (*this)(1).Yl();
+    xlen = 2 * m_band_list(1).Xl();
+    ylen = 2 * m_band_list(1).Yl();
 
     if (cpd != 0.0)
     {
-        for( int i = 1; i<=(*this).Length() ; i++ )
+        for( int i = 1; i<=m_band_list.Length() ; i++ )
         {
-            xp = (*this)(i).Xp();
-            yp = (*this)(i).Yp();
-            xl = (*this)(i).Xl();
-            yl = (*this)(i).Yl();
+            xp = m_band_list(i).Xp();
+            yp = m_band_list(i).Yp();
+            xl = m_band_list(i).Xl();
+            yl = m_band_list(i).Yl();
 
 
             xfreq = cpd * ( float(xp) + (float(xl)/2.0) ) / float(xlen);
@@ -754,20 +332,20 @@ void SubbandList::SetBandWeights (const float cpd,
 
             temp = PerceptualWeight( xfreq/chroma_xfac , yfreq/chroma_yfac , csort );
 
-            (*this)(i).SetWt(temp);
+            m_band_list(i).SetWt(temp);
         }// i
 
         // Give more welly to DC in a completely unscientific manner ...
         // (should really relate this to the frame rate)
-        (*this)( (*this).Length() ).SetWt((*this)(13).Wt()/6.0);
+        m_band_list( m_band_list.Length() ).SetWt(m_band_list(13).Wt()/6.0);
 
         // Make sure dc is always the lowest weight
-        float min_weight=(*this)((*this).Length()).Wt();
+        float min_weight=m_band_list(m_band_list.Length()).Wt();
 
-        for( int b=1 ; b<=(*this).Length()-1 ; b++ )
-            min_weight = ((min_weight>(*this)(b).Wt()) ? (*this)(b).Wt() : min_weight);
+        for( int b=1 ; b<=m_band_list.Length()-1 ; b++ )
+            min_weight = ((min_weight>m_band_list(b).Wt()) ? m_band_list(b).Wt() : min_weight);
 
-        (*this)( (*this).Length() ).SetWt( min_weight );
+        m_band_list( m_band_list.Length() ).SetWt( min_weight );
 
         // Now normalize weights so that white noise is always weighted the same
 
@@ -776,42 +354,939 @@ void SubbandList::SetBandWeights (const float cpd,
         //fraction of the total number of samples belonging to each subband
         double subband_fraction;    
 
-        for( int i=1 ; i<=(*this).Length() ; i++ )
+        for( int i=1 ; i<=m_band_list.Length() ; i++ )
         {
-            subband_fraction = 1.0/((double) (*this)(i).Scale() * (*this)(i).Scale());
-            overall_factor += subband_fraction/( (*this)(i).Wt() * (*this)(i).Wt() );
+            subband_fraction = 1.0/((double) m_band_list(i).Scale() * m_band_list(i).Scale());
+            overall_factor += subband_fraction/( m_band_list(i).Wt() * m_band_list(i).Wt() );
         }
         overall_factor = std::sqrt( overall_factor );
 
         //go through and normalise
 
-        for( int i=(*this).Length() ; i>0 ; i-- )
-            (*this)(i).SetWt( (*this)(i).Wt() * overall_factor );
+        for( int i=m_band_list.Length() ; i>0 ; i-- )
+            m_band_list(i).SetWt( m_band_list(i).Wt() * overall_factor );
     }
     else
     {//cpd=0 so set all weights to 1
 
-        for( int i=1 ; i<=(*this).Length() ; i++ )
-           (*this)(i).SetWt( 1.0 );        
+        for( int i=1 ; i<=m_band_list.Length() ; i++ )
+           m_band_list(i).SetWt( 1.0 );        
 
     }
 
     //Finally, adjust to compensate for the absence of scaling in the transform
     //Factor used to compensate:
-    const double alpha(1.149658203);    
-    for ( int i=1 ; i<=(*this).Length() ; ++i )
+    double lfac = m_vhfilter->GetLowFactor();  
+    double hfac = m_vhfilter->GetHighFactor(); 
+
+    for ( int i=1 ; i<=m_band_list.Length() ; ++i )
     {
-        depth=(*this)(i).Depth();
 
-        if ( (*this)(i).Xp() == 0 && (*this)(i).Yp() == 0)
-            temp=std::pow(alpha,2*depth);
-        else if ( (*this)(i).Xp() != 0 && (*this)(i).Yp() != 0)
-            temp=std::pow(alpha,2*(depth-2));
+        m_band_list(i).SetWt( m_band_list(i).Wt() / std::pow(lfac,m_depth-1) );
+
+        if ( m_band_list(i).Xp() == 0 && m_band_list(i).Yp() == 0)
+            temp = lfac * lfac;
+        else if ( m_band_list(i).Xp() != 0 && m_band_list(i).Yp() != 0)
+            temp = hfac * hfac;
         else
-            temp=std::pow(alpha,2*(depth-1));
+            temp = lfac * hfac;
 
-        (*this)(i).SetWt((*this)(i).Wt()/temp);
+        m_band_list(i).SetWt( m_band_list(i).Wt() / temp );
 
     }// i        
 
-}    
+} 
+
+ValueType WaveletTransform::GetMeanDCVal() const
+{
+    /* The DC band is created by applying the low-pass filter vertically
+       and horizontally to create a low-pass subband, and repeating this
+       m_depth times. So if m_depth=4, we have 8 applications of the filter.
+       The gain applied to values in the DC band is approximated by the gain
+       of the low-pass filter, to the power 8. It's only approximate because
+       integer lifting implementations involve rounding.
+    */
+
+    switch (m_filt_sort)
+    {
+    case APPROX97 :
+        return 512;    
+    case FIVETHREE :
+        return 512;
+    case THIRTEENFIVE :
+        return 512;
+    default :
+        // Assume Daubechies (9,7)
+        // Gain of low-pass filter is approx 1.2302 so values are
+        // 1.23^(depth*2) * 512
+
+        switch( m_depth )
+        {
+        case 1 :
+            return (ValueType) 775;
+        case 2 :
+            return (ValueType) 1174;
+        case 3 :
+            return (ValueType) 1778;
+        case 4 :
+            return (ValueType) 2692;
+        case 5 :
+            return (ValueType) 4074;
+        case 6 :
+            return (ValueType) 6165;
+        default :
+            return (ValueType) 512;
+        }
+    }
+
+}
+
+
+// Private functions //
+///////////////////////
+
+void WaveletTransform::VHFilter::Interleave( const int xp , 
+                                             const int yp , 
+                                             const int xl , 
+                                             const int yl , 
+                                             PicArray& pic_data)
+{
+    ValueType temp_data[yl][xl];
+    const int xl2( xl>>1);
+    const int yl2( yl>>1);
+    const int xend( xp + xl );
+    const int yend( yp + yl );
+
+    // Make a temporary copy of the subband
+    for (int j = yp; j<yend ; j++ )
+        memcpy( temp_data[j-yp] , pic_data[j]+xp , xl * sizeof( ValueType ) );
+
+    // Re-order to interleave
+    for (int j = 0, s=yp; j<yl2 ; j++, s+=2)
+    {
+        for (int i = 0 , r=xp ; i<xl2 ; i++ , r += 2)
+            pic_data[s][r] = temp_data[j][i];
+        for (int i = xl2, r=xp+1; i<xl ; i++ , r += 2)
+            pic_data[s][r] = temp_data[j][i];
+    }// j 
+
+    for (int j = yl2, s=yp+1 ; j<yl ; j++ , s += 2)
+    {
+        for (int i = 0 , r=xp ; i<xl2 ; i++ , r += 2)
+            pic_data[s][r] = temp_data[j][i];
+        for (int i = xl2, r=xp+1; i<xl ; i++ , r += 2)
+            pic_data[s][r] = temp_data[j][i];
+    }// j 
+
+}
+
+void WaveletTransform::VHFilter::DeInterleave( const int xp , 
+                                               const int yp , 
+                                               const int xl , 
+                                               const int yl , 
+                                               PicArray& pic_data)
+{
+    ValueType temp_data[yl][xl];
+    const int xl2( xl>>1);
+    const int yl2( yl>>1);
+    const int xend( xp + xl );
+    const int yend( yp + yl );
+
+    // Make a temporary copy of the subband
+    for (int  j = yp; j<yend ; j++ )
+        memcpy( temp_data[j-yp] , pic_data[j]+xp , xl * sizeof( ValueType ) );
+
+    // Re-order to de-interleave
+    for (int  j = yp, s=0; j<yp+yl2 ; j++, s+=2)
+    {
+        for (int i = xp , r=0 ; i<xp+xl2 ; i++ , r += 2)
+            pic_data[j][i] = temp_data[s][r];
+        for (int i = xp+xl2, r=1; i<xend ; i++ , r += 2)
+            pic_data[j][i] = temp_data[s][r];
+    }// j 
+
+    for (int j = yp+yl2, s=1 ; j<yend ; j++ , s += 2)
+    {
+        for (int i = xp , r=0 ; i<xp+xl2 ; i++ , r += 2)
+            pic_data[j][i] = temp_data[s][r];
+        for (int i = xp+xl2, r=1; i<xend ; i++ , r += 2)
+            pic_data[j][i] = temp_data[s][r];
+    }// j 
+
+}
+
+void WaveletTransform::VHFilterDaub9_7::Split (const int xp , 
+                                               const int yp , 
+                                               const int xl , 
+                                               const int yl , 
+                                               PicArray& pic_data)
+{
+
+    //version based on integer-like types
+    //using edge-extension rather than reflection
+
+    const int xl2 = xl/2; 
+    const int yl2 = yl/2; 
+    const int xend=xp+xl;
+    const int yend=yp+yl;
+
+    ValueType* line_data; 
+
+    // Positional variables
+    int i,j,k,r,s; 
+  
+    // Objects to do lifting stages 
+    // (in revese order and type from synthesis)
+    const PredictStep97< 6497 > predictA;
+    const PredictStep97< 217 > predictB;
+    const UpdateStep97< 3616 > updateA;
+    const UpdateStep97< 1817 > updateB;
+
+     //first do horizontal 
+
+    for (j = yp;  j < yend; ++j)
+    {
+        // First lifting stage
+        line_data = pic_data[j];                 
+
+        predictA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
+        predictB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
+
+        for ( k = xp+3; k < xend-1; k+=2)
+        {
+            predictA.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
+            predictB.Filter( line_data[k-1] , line_data[k-2] , line_data[k] );
+        }// i
+        
+        predictA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
+        predictB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] );
+
+
+         //second lifting stage 
+        
+        updateA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
+        updateB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
+
+        for ( k = xp+3;  k < xend-1; k+=2)
+        { 
+            updateA.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
+            updateB.Filter( line_data[k-1] , line_data[k-2] , line_data[k] );
+        }// i
+
+        updateA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
+        updateB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] );
+
+    }// j
+
+    // next do vertical
+
+    // First lifting stage
+
+    // top edge - j=xp
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        predictA.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
+        predictB.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
+    }// i
+
+    // middle bit
+    for ( k = yp+3 ; k<yend-1 ; k+=2)
+    {
+        for ( i = xp ; i<xend ; ++ i)
+        {
+            predictA.Filter( pic_data[k][i] , pic_data[k+1][i] , pic_data[k-1][i] );
+            predictB.Filter( pic_data[k-1][i] , pic_data[k-2][i] , pic_data[k][i] );
+        }// i
+    }// j
+    // bottom edge
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        predictA.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
+        predictB.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
+    }// i
+
+    // Second lifting stage
+
+    // top edge - j=xp
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        updateA.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
+        updateB.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
+    }// i
+
+    // middle bit
+    for ( k = yp+3 ; k<yend-1 ; k+=2)
+    {
+        for ( i = xp ; i<xend ; ++ i)
+        {
+            updateA.Filter( pic_data[k][i] , pic_data[k+1][i] , pic_data[k-1][i] );
+            updateB.Filter( pic_data[k-1][i] , pic_data[k-2][i] , pic_data[k][i] );
+        }// i
+    }// j
+    // bottom edge
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        updateA.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
+        updateB.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
+    }// i
+
+    // Lastly, have to reorder so that subbands are no longer interleaved
+    DeInterleave( xp ,yp ,xl ,yl , pic_data );
+
+}
+
+void WaveletTransform::VHFilterDaub9_7::Synth (const int xp ,
+                                               const int yp , 
+                                               const int xl , 
+                                               const int yl , 
+                                               PicArray& pic_data)
+{
+
+    int i,j,k,r,s;
+
+    const int xend( xp+xl );
+    const int yend( yp+yl );
+    const int xl2( xl/2 );
+    const int yl2( yl/2 );
+
+    const PredictStep97< 1817 > predictB;
+    const PredictStep97< 3616 > predictA;
+    const UpdateStep97< 217 > updateB;
+    const UpdateStep97< 6497 > updateA;
+
+    ValueType* line_data;
+
+    // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
+    Interleave( xp , yp , xl , yl , pic_data );
+
+    // Next, do the vertical synthesis
+    // First lifting stage
+
+    // Begin with the bottom edge
+    for ( i = xend-1 ; i>=xp ; --i)
+    {
+        predictB.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
+        predictA.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
+    }// i
+    // Next, do the middle bit
+    for ( k = yend-3 ; k>yp+1 ; k-=2)
+    {
+        for ( i = xend-1 ; i>=xp ; --i)
+        {
+            predictB.Filter( pic_data[k-1][i] , pic_data[k-2][i] , pic_data[k][i] );
+            predictA.Filter( pic_data[k][i] , pic_data[k+1][i] , pic_data[k-1][i] );
+        }// i
+    }// j
+    // Then do the top edge
+    for ( i = xend-1 ; i>=xp ; --i)
+    {
+        predictB.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
+        predictA.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
+    }// i
+
+    // Second lifting stage
+
+    // Begin with the bottom edge
+    for ( i = xend-1 ; i>=xp ; --i)
+    {
+        updateB.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
+        updateA.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
+    }// i
+    // Next, do the middle bit
+    for ( k = yend-3 ; k>yp+1 ; k-=2)
+    {
+        for ( i = xend-1 ; i>=xp ; --i)
+        {
+            updateB.Filter( pic_data[k-1][i] , pic_data[k-2][i] , pic_data[k][i] );
+            updateA.Filter( pic_data[k][i] , pic_data[k+1][i] , pic_data[k-1][i] );
+        }// i
+    }// j
+    // Then do the top edge
+    for ( i = xend-1 ; i>=xp ; --i)
+    {
+        updateB.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
+        updateA.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
+    }// i
+
+
+    // Next do the horizontal synthesis
+    for (j = yend-1;  j >= yp ; --j)
+    {
+        // First lifting stage 
+        line_data = pic_data[j];
+
+        predictB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] ); 
+        predictA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
+
+        for ( k = xend-3;  k > xp+1; k-=2)
+        { 
+            predictB.Filter( line_data[k-1] , line_data[k-2] , line_data[k] );
+            predictA.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
+        }// i
+
+        predictB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
+        predictA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
+
+        // Second lifting stage
+
+        updateB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] );
+        updateA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
+
+        for ( k = xend-3;  k > xp+1; k-=2)
+        {
+            updateB.Filter( line_data[k-1] , line_data[k-2] , line_data[k] );
+            updateA.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
+        }// i
+
+        updateB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
+        updateA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
+
+    }
+
+} 
+
+void WaveletTransform::VHFilter5_3::Split(const int xp , 
+                                          const int yp , 
+                                          const int xl , 
+                                          const int yl , 
+                                          PicArray& pic_data)
+{
+
+    //version based on integer-like types
+    //using edge-extension rather than reflection
+
+    const int xl2 = xl/2; 
+    const int yl2 = yl/2; 
+    const int xend=xp+xl;
+    const int yend=yp+yl;
+
+    ValueType* line_data; 
+
+    // Positional variables
+    int i,j,k,r,s; 
+  
+    // Objects to do lifting stages 
+    // (in revese order and type from synthesis)
+    const PredictStepShift< 1 > predict;
+    const UpdateStepShift< 2 > update;
+
+     //first do horizontal 
+
+    for (j = yp;  j < yend; ++j)
+    {
+        // First lifting stage
+        line_data = &pic_data[j][xp];                 
+
+        predict.Filter( line_data[1] , line_data[2] , line_data[0] );
+        update.Filter( line_data[0] , line_data[1] , line_data[1] );
+
+        for (k = 3; k < xl-1; k+=2)
+        {
+            predict.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
+            update.Filter(  line_data[k-1] , line_data[k-2] , line_data[k] );
+        }// i
+        
+        predict.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] );
+        update.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] );
+
+    }// j
+
+    // next do vertical
+
+    // First lifting stage
+
+    // top edge - j=xp
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        predict.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
+        update.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
+    }// i
+
+    // middle bit
+    for (k = yp+3 ; k<yend-1 ; k+=2)
+    {
+        for ( i = xp ; i<xend ; ++ i)
+        {
+            predict.Filter( pic_data[k][i] , pic_data[k+1][i] , pic_data[k-1][i] );
+            update.Filter( pic_data[k-1][i] , pic_data[k-2][i] , pic_data[k][i] );
+        }// i
+    }// j
+    // bottom edge
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        predict.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
+        update.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
+    }// i
+
+    // Lastly, have to reorder so that subbands are no longer interleaved
+    DeInterleave( xp , yp , xl , yl , pic_data );
+}
+
+void WaveletTransform::VHFilter5_3::Synth(const int xp ,
+                                          const int yp , 
+                                          const int xl , 
+                                          const int yl , 
+                                          PicArray& pic_data)
+{
+    int i,j,k,r,s;
+
+    const int xend( xp+xl );
+    const int yend( yp+yl );
+    const int xl2( xl/2 );
+    const int yl2( yl/2 );
+
+    const PredictStepShift< 2 > predict;
+    const UpdateStepShift< 1 > update;
+
+    ValueType* line_data;
+
+    // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
+    Interleave( xp , yp , xl , yl , pic_data );
+
+    // Next, do the vertical synthesis
+    // First lifting stage
+
+    // Begin with the bottom edge
+    for ( i = xend-1 ; i>=xp ; --i)
+    {
+        predict.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
+        update.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
+    }// i
+    // Next, do the middle bit
+    for ( k = yend-3 ; k>yp+1 ; k-=2)
+    {
+        for ( i = xend-1 ; i>=xp ; --i)
+        {
+            predict.Filter( pic_data[k-1][i] , pic_data[k-2][i] , pic_data[k][i] );
+            update.Filter( pic_data[k][i] , pic_data[k+1][i] , pic_data[k-1][i] );
+        }// i
+    }// j
+    // Then do the top edge
+    for ( i = xend-1 ; i>=xp ; --i)
+    {
+        predict.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
+        update.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
+    }// i
+
+    // Next do the horizontal synthesis
+    for (j = yend-1;  j >= yp ; --j)
+    {
+        // First lifting stage 
+        line_data = &pic_data[j][xp];
+
+        predict.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] ); 
+        update.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] );
+
+        for ( k = xl-3;  k > 1; k-=2)
+        { 
+            predict.Filter( line_data[k-1] , line_data[k-2] , line_data[k] );
+            update.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
+        }// i
+
+        predict.Filter( line_data[0] , line_data[1] , line_data[1] );
+        update.Filter( line_data[1] , line_data[2] , line_data[0] );
+
+    }
+
+} 
+
+void WaveletTransform::VHFilterApprox9_7::Split(const int xp , 
+                                                const int yp , 
+                                                const int xl , 
+                                                const int yl ,
+                                                PicArray& pic_data)
+{
+
+    //version based on integer-like types
+    //using edge-extension rather than reflection
+
+    const int xl2 = xl/2; 
+    const int yl2 = yl/2; 
+    const int xend=xp+xl;
+    const int yend=yp+yl;
+
+    ValueType* line_data; 
+
+    // Positional variables
+    int i,j,k,r,s; 
+
+    PredictStepFourTap< 4 , 9 , -1 > predict;
+    UpdateStepShift< 2 > update;
+
+    //first do horizontal 
+
+    for (j = yp;  j < yend; ++j)
+    {
+        line_data = &pic_data[j][xp];                 
+
+        // First lifting stage
+        predict.Filter( line_data[1] , line_data[0]  , line_data[2] , line_data[0] , line_data[4] );
+        for (k=3 ; k<xl-3 ; k+=2)
+        {
+            predict.Filter( line_data[k] , line_data[k-1] , line_data[k+1] , line_data[k-3] , line_data[k+3] );
+        }// i 
+        predict.Filter( line_data[xl-3] , line_data[xl-4] , line_data[xl-2] , line_data[xl-6] , line_data[xl-2] );
+        predict.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] , line_data[xl-4] , line_data[xl-2] );
+
+        //Second lifting stage 
+
+        update.Filter( line_data[0] , line_data[1] , line_data[1] );
+        for (i=2 ; i<xl-1 ; i+=2 )
+        {
+            update.Filter( line_data[i] , line_data[i-1] , line_data[i+1] );
+        }// i 
+
+   }// j
+
+    // next do vertical
+
+    // First lifting stage
+    // top line
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        predict.Filter( pic_data[yp+1][i] , pic_data[yp][i] , pic_data[yp+2][i] , pic_data[yp][i] , pic_data[yp+4][i] );
+    }// i
+
+    // middle bit
+    for ( k = yp+3 ; k<yend-3 ; k+=2)
+    {
+        for ( i = xp ; i<xend ; ++i)
+        {
+            predict.Filter( pic_data[k][i] , pic_data[k-1][i] , pic_data[k+1][i] , pic_data[k-3][i] , pic_data[k+3][i] );
+        }// i
+    }// j
+
+    // bottom lines
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        predict.Filter( pic_data[yend-3][i] , pic_data[yend-4][i] , pic_data[yend-2][i] , pic_data[yend-6][i] , pic_data[yend-2][i] );
+        predict.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] , pic_data[yend-4][i] , pic_data[yend-2][i] );
+    }// i
+
+    //Second lifting stage
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        update.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
+
+    }// i
+    // middle bit
+    for ( j = yp+2 ; j<yend-1 ; j+=2 , k+=2)
+    {
+        for ( i = xp ; i<xend ; ++i)
+        {
+            update.Filter( pic_data[j][i] , pic_data[j-1][i] , pic_data[j+1][i] );
+        }// i
+    }// j
+
+    // Lastly, have to reorder so that subbands are no longer interleaved
+    DeInterleave( xp , yp , xl , yl , pic_data );
+}
+
+void WaveletTransform::VHFilterApprox9_7::Synth(const int xp , 
+                                                const int yp , 
+                                                const int xl , 
+                                                const int yl , 
+                                                PicArray& pic_data)
+{
+    int i,j,k,r,s;
+
+    const int xend( xp+xl );
+    const int yend( yp+yl );
+    const int xl2( xl/2 );
+    const int yl2( yl/2 );
+
+    PredictStepShift<2> predict;
+    UpdateStepFourTap< 4 , 9 , -1> update;
+
+    ValueType* line_data;
+
+    // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
+    Interleave( xp , yp , xl ,yl , pic_data );
+
+    // First, do the vertical synthesis
+
+    // First lifting stage
+    // Middle bit
+    for ( j=yend-2 ; j>=yp+2 ; j-=2 )
+    {
+        for ( i = xend-1 ; i>=xp ; --i)
+        {
+            predict.Filter( pic_data[j][i] , pic_data[j-1][i] , pic_data[j+1][i] );
+        }// i
+    }// j
+
+    // top line
+    for ( i = xend-1 ; i>=xp ; --i)
+    {
+        predict.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
+    }// i
+
+
+    // Second lifting stage
+    for ( i = xend-1 ; i>=xp ; --i)
+    {
+
+        update.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] , pic_data[yend-4][i] , pic_data[yend-2][i] );
+        update.Filter( pic_data[yend-3][i] , pic_data[yend-4][i] , pic_data[yend-2][i] , pic_data[yend-6][i] , pic_data[yend-2][i] );
+    }// i
+
+    // middle bit
+    for ( j=yend-5 ; j>=yp+3 ; j-=2)
+    {
+        for ( i = xend-1 ; i>=xp ; --i)
+        {
+            update.Filter( pic_data[j][i] , pic_data[j-1][i] , pic_data[j+1][i] , pic_data[j-3][i] , pic_data[j+3][i] );
+        }// i
+    }// k
+
+    for ( i = xend-1 ; i>=xp ; --i)
+    {
+        update.Filter( pic_data[yp+1][i] , pic_data[yp][i] , pic_data[yp+2][i] , pic_data[yp][i] , pic_data[yp+4][i] );
+    }// i
+
+    // Next do the horizontal synthesis
+    for (j = yend-1;  j >= yp; --j)
+    {
+        line_data = &pic_data[j][xp];                 
+
+        // First lifting stage
+        for (i=xl-2 ; i>=2 ; i-=2)
+        {
+            predict.Filter( line_data[i] , line_data[i-1] , line_data[i+1] );
+        }// i 
+        predict.Filter( line_data[0] , line_data[1] , line_data[1] );
+
+        // Second lifting stage
+        update.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] , line_data[xl-4] , line_data[xl-2] );
+        update.Filter( line_data[xl-3] , line_data[xl-4] , line_data[xl-2] , line_data[xl-6] , line_data[xl-2] );
+        for (i=xl-5 ; i>=3 ; i-=2)
+        {
+            update.Filter( line_data[i] , line_data[i-1] , line_data[i+1] , line_data[i-3] , line_data[i+3] );
+        }// i 
+        update.Filter( line_data[1] , line_data[0] , line_data[2] , line_data[0] , line_data[4] );
+
+
+    }// j
+
+
+}
+
+void WaveletTransform::VHFilter13_5::Split(const int xp , 
+                                           const int yp , 
+                                           const int xl , 
+                                           const int yl , 
+                                           PicArray& pic_data)
+{
+
+    //version based on integer-like types
+    //using edge-extension rather than reflection
+
+    const int xl2 = xl/2; 
+    const int yl2 = yl/2; 
+    const int xend=xp+xl;
+    const int yend=yp+yl;
+
+    PredictStepFourTap< 4 , 9 , -1 > predict;
+    UpdateStepFourTap< 5 , 9 , -1> update;
+
+    ValueType* line_data; 
+
+    // Positional variables
+    int i,j,k,r,s; 
+  
+     //first do horizontal 
+
+    for (j = yp;  j < yend; ++j)
+    {
+        line_data = &pic_data[j][xp];                 
+
+        // First lifting stage
+        predict.Filter( line_data[1] , line_data[0] ,line_data[2] , line_data[0] , line_data[4] ); 
+        for (k=3 ; k<xl-3 ; k+=2)
+        {
+            predict.Filter( line_data[k] , line_data[k-1] , line_data[k+1] , line_data[k-3] , line_data[k+3] );
+        }// i 
+
+        predict.Filter( line_data[xl-3] , line_data[xl-4] , line_data[xl-2] , line_data[xl-6] , line_data[xl-2] );
+        predict.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] , line_data[xl-4] , line_data[xl-2] );
+
+         //second lifting stage 
+        update.Filter( line_data[0] , line_data[1] , line_data[1] , line_data[3] , line_data[1] );
+        update.Filter( line_data[2] , line_data[1] , line_data[3] , line_data[5] , line_data[1] );
+        for (k=4 ; k<xl-3 ; k+=2)
+        {
+            update.Filter( line_data[k] , line_data[k-1] , line_data[k+1] , line_data[k-3] , line_data[k+3] );
+        }// i 
+
+        update.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] , line_data[xl-5] , line_data[xl-1] );
+    }// j
+
+    // next do vertical
+
+    // First lifting stage
+
+    // top edge - j=xp
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        predict.Filter( pic_data[yp+1][i] , pic_data[yp][i] , pic_data[yp+2][i] , pic_data[yp][i] , pic_data[yp+4][i] ); 
+    }// i
+
+    // middle bit
+    for ( k = yp+3 ; k<yend-3 ; k+=2)
+    {
+        for ( i = xp ; i<xend ; ++ i)
+        {
+            predict.Filter( pic_data[k][i] , pic_data[k-1][i] , pic_data[k+1][i] , pic_data[k-3][i] , pic_data[k+3][i] );
+        }// i
+    }// j
+    // bottom edge
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        predict.Filter( pic_data[yend-3][i] , pic_data[yend-4][i] , pic_data[yend-2][i] , pic_data[yend-6][i] , pic_data[yend-2][i] );
+        predict.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] , pic_data[yend-4][i] , pic_data[yend-2][i] );
+    }// i
+
+    // Second lifting stage
+
+    // top edge - j=xp
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        update.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] , pic_data[yp+3][i] , pic_data[yp+1][i] );
+        update.Filter( pic_data[yp+2][i] , pic_data[yp+1][i] , pic_data[yp+3][i] , pic_data[yp+5][i] , pic_data[yp+1][i] );
+    }// i
+
+    // middle bit
+    for ( k = yp+4 ; k<yend-3 ; k+=2)
+    {
+        for ( i = xp ; i<xend ; ++ i)
+        {
+           update.Filter( pic_data[k][i] , pic_data[k-1][i] , pic_data[k+1][i] , pic_data[k-3][i] , pic_data[k+3][i] );
+        }// i
+    }// j
+    // bottom edge
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        update.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] , pic_data[yend-5][i] , pic_data[yend-1][i] );
+    }// i
+
+    // Lastly, have to reorder so that subbands are no longer interleaved
+    DeInterleave( xp , yp , xl , yl , pic_data );
+}
+
+void WaveletTransform::VHFilter13_5::Synth(const int xp ,
+                                           const int yp , 
+                                           const int xl ,
+                                           const int yl , 
+                                           PicArray& pic_data)
+{
+    int i,j,k,r,s;
+
+    const int xend( xp+xl );
+    const int yend( yp+yl );
+    const int xl2( xl/2 );
+    const int yl2( yl/2 );
+
+    PredictStepFourTap< 5 , 9 , -1 > predict;
+    UpdateStepFourTap< 4 , 9 , -1> update;
+
+    // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
+    Interleave( xp , yp , xl , yl , pic_data );  
+
+    // Next, do the vertical synthesis
+
+    // First lifting stage
+    // bottom edge
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        predict.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] , pic_data[yend-5][i] , pic_data[yend-1][i] );
+    }// i
+
+    // middle bit
+    for ( k = yend-4 ; k>=yp+4 ; k-=2)
+    {
+        for ( i = xp ; i<xend ; ++ i)
+        {
+           predict.Filter( pic_data[k][i] , pic_data[k-1][i] , pic_data[k+1][i] , pic_data[k-3][i] , pic_data[k+3][i] );
+        }// i
+    }// j
+
+    // top edge - j=xp
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        predict.Filter( pic_data[yp+2][i] , pic_data[yp+1][i] , pic_data[yp+3][i] , pic_data[yp+5][i] , pic_data[yp+1][i] );
+        predict.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] , pic_data[yp+3][i] , pic_data[yp+1][i] );
+
+    }// i
+
+    // Second lifting stage
+    // bottom edge
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        update.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] , pic_data[yend-4][i] , pic_data[yend-2][i] );
+        update.Filter( pic_data[yend-3][i] , pic_data[yend-4][i] , pic_data[yend-2][i] , pic_data[yend-6][i] , pic_data[yend-2][i] );
+
+    }// i
+
+    // middle bit
+    for ( k = yend-5 ; k>=yp+3 ; k-=2)
+    {
+        for ( i = xp ; i<xend ; ++ i)
+        {
+            update.Filter( pic_data[k][i] , pic_data[k-1][i] , pic_data[k+1][i] , pic_data[k-3][i] , pic_data[k+3][i] );
+        }// i
+    }// j
+
+    // top edge - j=xp
+    for ( i = xp ; i<xend ; ++ i)
+    {
+        update.Filter( pic_data[yp+1][i] , pic_data[yp][i] , pic_data[yp+2][i] , pic_data[yp][i] , pic_data[yp+4][i] ); 
+    }// i
+
+    // Next do the horizontal synthesis
+
+    ValueType* line_data;
+
+    for (j = yend-1;  j >= yp ; --j)
+    {
+        line_data = &pic_data[j][xp];                 
+
+        // First lifting stage
+
+        predict.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] , line_data[xl-5] , line_data[xl-1] );
+
+        for (k=xl-4 ; k>=4 ; k-=2)
+        {
+            predict.Filter( line_data[k] , line_data[k-1] , line_data[k+1] , line_data[k-3] , line_data[k+3] );
+
+        }// i 
+        predict.Filter( line_data[2] , line_data[1] , line_data[3] , line_data[5] , line_data[1] );
+        predict.Filter( line_data[0] , line_data[1] , line_data[1] , line_data[3] , line_data[1] );
+
+         //second lifting stage 
+        update.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] , line_data[xl-4] , line_data[xl-2] );
+        update.Filter( line_data[xl-3] , line_data[xl-4] , line_data[xl-2] , line_data[xl-6] , line_data[xl-2] );
+
+        for (k=xl-5 ; k>=3 ; k-=2)
+        {
+            update.Filter( line_data[k] , line_data[k-1] , line_data[k+1] , line_data[k-3] , line_data[k+3] );
+        }// i 
+
+        update.Filter( line_data[1] , line_data[0] , line_data[2] , line_data[0] , line_data[4] ); 
+
+    }// j
+} 
+
+// Returns a perceptual noise weighting based on extending CCIR 959 values
+// assuming a two-d isotropic response. Also has a fudge factor of 20% for chroma
+float WaveletTransform::PerceptualWeight( const float xf , 
+                                     const float yf ,  
+                                     const CompSort cs )
+{
+    double freq_sqd( xf*xf + yf*yf );
+
+    if ( cs != Y_COMP )
+        freq_sqd *= 1.2;
+
+    return 0.255 * std::pow( 1.0 + 0.2561*freq_sqd , 0.75) ;
+
+}

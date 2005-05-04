@@ -717,6 +717,6 @@ ValueType IntraDCBandCodec::GetPrediction( const PicArray& data , const int xpos
         if(xpos!=0)
             return data[0][xpos - 1];
         else
-            return 2692; // TODO: What does this mean? Literal constants like this are dangerous!
+            return 0;
     }
 }

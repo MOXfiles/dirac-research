@@ -90,8 +90,13 @@ void CompCompressor::Compress(PicArray& pic_data)
      if (m_csort == V_COMP) 
          m_lambda*= m_encparams.VFactor();
 
+    WltFilter filt_sort;
+    if ( m_fsort != L2_frame )
+        filt_sort = THIRTEENFIVE;
+    else
+        filt_sort = APPROX97;
 
-    WaveletTransform wtransform(depth);
+    WaveletTransform wtransform( depth , filt_sort );
     wtransform.Transform( FORWARD , pic_data );
 
     // Choose all the quantisers //
@@ -100,8 +105,8 @@ void CompCompressor::Compress(PicArray& pic_data)
 
     // Set up the code blocks
     SetupCodeBlocks( bands );
-    // Set the weights
-    bands.SetBandWeights( m_encparams.CPD() , m_fparams.FSort() , m_fparams.CFormat(), m_csort);
+
+    wtransform.SetBandWeights( m_encparams.CPD() , m_fparams.FSort() , m_fparams.CFormat(), m_csort);
 
     OneDArray<unsigned int> estimated_bits( Range( 1 , bands.Length() ) );
 
@@ -139,7 +144,7 @@ void CompCompressor::Compress(PicArray& pic_data)
         else
         {   // ... skipped
             if (b == bands.Length() && m_fsort == I_frame)
-                SetToVal( pic_data , bands(b) , 2692 );
+                SetToVal( pic_data , bands(b) , wtransform.GetMeanDCVal() );
             else
                 SetToVal( pic_data , bands(b) , 0 );
         }
@@ -289,11 +294,13 @@ void CompCompressor::SetToVal(PicArray& pic_data,const Subband& node,ValueType v
 }
 
 
-void CompCompressor::AddSubAverage(PicArray& pic_data,int xl,int yl,AddOrSub dirn)
+void CompCompressor::AddSubAverage( PicArray& pic_data ,
+                                    int xl ,
+                                    int yl , 
+                                    AddOrSub dirn)
 {
 
-    ValueType last_val = 2692;//corresponds to mid-grey in this DC band with these filters
-                            //NB this is hard-wired for a level 4 transform
+    ValueType last_val=0;
     ValueType last_val2;
  
     if ( dirn == SUBTRACT )
