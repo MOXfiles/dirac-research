@@ -53,7 +53,7 @@ void WaveletTransformTest::initPicData( PicArray& pic_data )
     {
        for (int i=pic_data.FirstX() ; i<=pic_data.LastX() ; ++i)
        {
-           pic_data[j][i] = (i+j) % 13;       
+           pic_data[j][i] = (((i-j) % 13)*1024)/13;       
        }// i
     }// j
 }
@@ -87,18 +87,21 @@ void WaveletTransformTest::testTransformInvertibility()
     const int depth( 1 );
 
     // Initialise a picture and a copy
-    PicArray pic_data( 64 , 64 );
+    PicArray pic_data( 512 , 512 );
     initPicData( pic_data );
 
     PicArray copy_data( pic_data );
 
-	WaveletTransform wtransform( depth , DAUB );
+    for (int i=0 ; i< NUM_WLT_FILTERS; ++i)
+    {
+        WaveletTransform wtransform( depth , (WltFilter) i );
 
-    // Go forward and back - we should be back where we started
-    wtransform.Transform( FORWARD , pic_data );
-    wtransform.Transform( BACKWARD , pic_data );
+        // Go forward and back - we should be back where we started
+        wtransform.Transform( FORWARD , pic_data );
+        wtransform.Transform( BACKWARD , pic_data );
 
-    bool test_val = equalArrays<ValueType>( pic_data , copy_data );
+        bool test_val = equalArrays<ValueType>( pic_data , copy_data );
 
-	CPPUNIT_ASSERT ( test_val == true );
+        CPPUNIT_ASSERT ( test_val == true );
+    }// i
 }
