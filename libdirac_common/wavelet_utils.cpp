@@ -451,10 +451,9 @@ void WaveletTransform::VHFilter::Interleave( const int xp ,
                                              const int yl , 
                                              PicArray& pic_data)
 {
-    ValueType temp_data[yl][xl];
+    TwoDArray<ValueType> temp_data( yl , xl );
     const int xl2( xl>>1);
     const int yl2( yl>>1);
-    const int xend( xp + xl );
     const int yend( yp + yl );
 
     // Make a temporary copy of the subband
@@ -486,7 +485,7 @@ void WaveletTransform::VHFilter::DeInterleave( const int xp ,
                                                const int yl , 
                                                PicArray& pic_data)
 {
-    ValueType temp_data[yl][xl];
+    TwoDArray<ValueType> temp_data( yl , xl );
     const int xl2( xl>>1);
     const int yl2( yl>>1);
     const int xend( xp + xl );
@@ -525,15 +524,13 @@ void WaveletTransform::VHFilterDaub9_7::Split (const int xp ,
     //version based on integer-like types
     //using edge-extension rather than reflection
 
-    const int xl2 = xl/2; 
-    const int yl2 = yl/2; 
     const int xend=xp+xl;
     const int yend=yp+yl;
 
     ValueType* line_data; 
 
     // Positional variables
-    int i,j,k,r,s; 
+    int i,j,k; 
   
     // Objects to do lifting stages 
     // (in revese order and type from synthesis)
@@ -642,12 +639,10 @@ void WaveletTransform::VHFilterDaub9_7::Synth (const int xp ,
                                                PicArray& pic_data)
 {
 
-    int i,j,k,r,s;
+    int i,j,k;
 
     const int xend( xp+xl );
     const int yend( yp+yl );
-    const int xl2( xl/2 );
-    const int yl2( yl/2 );
 
     const PredictStep97< 1817 > predictB;
     const PredictStep97< 3616 > predictA;
@@ -755,15 +750,13 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
     //version based on integer-like types
     //using edge-extension rather than reflection
 
-    const int xl2 = xl/2; 
-    const int yl2 = yl/2; 
     const int xend=xp+xl;
     const int yend=yp+yl;
 
     ValueType* line_data; 
 
     // Positional variables
-    int i,j,k,r,s; 
+    int i,j,k; 
   
     // Objects to do lifting stages 
     // (in revese order and type from synthesis)
@@ -828,12 +821,10 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
                                           const int yl , 
                                           PicArray& pic_data)
 {
-    int i,j,k,r,s;
+    int i,j,k;
 
     const int xend( xp+xl );
     const int yend( yp+yl );
-    const int xl2( xl/2 );
-    const int yl2( yl/2 );
 
     const PredictStepShift< 2 > predict;
     const UpdateStepShift< 1 > update;
@@ -900,15 +891,13 @@ void WaveletTransform::VHFilterApprox9_7::Split(const int xp ,
     //version based on integer-like types
     //using edge-extension rather than reflection
 
-    const int xl2 = xl/2; 
-    const int yl2 = yl/2; 
     const int xend=xp+xl;
     const int yend=yp+yl;
 
     ValueType* line_data; 
 
     // Positional variables
-    int i,j,k,r,s; 
+    int i,j,k; 
 
     PredictStepFourTap< 4 , 9 , -1 > predict;
     UpdateStepShift< 2 > update;
@@ -988,12 +977,10 @@ void WaveletTransform::VHFilterApprox9_7::Synth(const int xp ,
                                                 const int yl , 
                                                 PicArray& pic_data)
 {
-    int i,j,k,r,s;
+    int i,j;
 
     const int xend( xp+xl );
     const int yend( yp+yl );
-    const int xl2( xl/2 );
-    const int yl2( yl/2 );
 
     PredictStepShift<2> predict;
     UpdateStepFourTap< 4 , 9 , -1> update;
@@ -1081,8 +1068,6 @@ void WaveletTransform::VHFilter13_5::Split(const int xp ,
     //version based on integer-like types
     //using edge-extension rather than reflection
 
-    const int xl2 = xl/2; 
-    const int yl2 = yl/2; 
     const int xend=xp+xl;
     const int yend=yp+yl;
 
@@ -1092,7 +1077,7 @@ void WaveletTransform::VHFilter13_5::Split(const int xp ,
     ValueType* line_data; 
 
     // Positional variables
-    int i,j,k,r,s; 
+    int i,j,k; 
   
      //first do horizontal 
 
@@ -1179,12 +1164,10 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
                                            const int yl , 
                                            PicArray& pic_data)
 {
-    int i,j,k,r,s;
+    int i,j,k;
 
     const int xend( xp+xl );
     const int yend( yp+yl );
-    const int xl2( xl/2 );
-    const int yl2( yl/2 );
 
     PredictStepFourTap< 5 , 9 , -1 > predict;
     UpdateStepFourTap< 4 , 9 , -1> update;
