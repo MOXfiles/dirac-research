@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author), 
+*				  Scott R Ladd
+*				  Marc Servais
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -495,6 +497,8 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 	{
 		in_data.QuantiseGlobalMotionParameters();
 		CodeGlobalMotionParameters(in_data);
+		in_data.DequantiseGlobalMotionParameters();
+		in_data.GenerateGlobalMotionVectors();
 	}
 
 	MB_count = 0; 
@@ -536,6 +540,7 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 			{
 				for (b_xp = mb_tlb_x; b_xp < mb_tlb_x+4; b_xp += step)
 				{
+
 					// If Intra Block, then code the DC
 					if(in_data.Mode()[b_yp][b_xp] == INTRA)
 						CodeDC(in_data);  
@@ -543,18 +548,16 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 					else // If an Inter Block:
 					{
 						if(in_data.m_use_global_only) // if ONLY using Global Motion: 
-						{
-							//UseGlobalMotionForBlock( in_data ); // Use Global Motion Vectors
-						}
+							UseGlobalMotionForBlock( in_data ); // Use Global Motion Vectors
+
 						else // if using block (and possibly) Global Motion:
 						{
 							if(in_data.m_use_global) // if using Global Motion
 								CodeBlockMotionType(in_data); // encode whether or not it gets used for current Pred. Unit
 
-							if(in_data.BlockUseGlobal()[b_yp][b_xp])
-							{	
-								//UseGlobalMotionForBlock( in_data ); // Use Global Motion Vectors
-							}
+							if(in_data.BlockUseGlobal()[b_yp][b_xp]) // if using Global Motion for the current Pred. Unit
+								UseGlobalMotionForBlock( in_data ); // Use Global Motion Vectors
+
 							else // if not using Global Motion for the current Pred. Unit
 							{
 								if (in_data.Mode()[b_yp][b_xp] == REF1_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
@@ -565,21 +568,7 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 							}
 						}
 					}
-
-					/*
-					if (!in_data.m_use_global_only) 
-					{
-					//CodeBlockMotionType(in_data); 
-
-					if (in_data.Mode()[b_yp][b_xp] == REF1_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
-					CodeMv1(in_data); 
-
-					if (in_data.Mode()[b_yp][b_xp] == REF2_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
-					CodeMv2(in_data); 
-					}
-					if(in_data.Mode()[b_yp][b_xp] == INTRA)
-					CodeDC(in_data);                    
-					*/
+	
 				}//b_xp
 			}//b_yp    
 
@@ -794,9 +783,9 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 	{
 		DecodeGlobalMotionParameters(out_data);
 		out_data.DequantiseGlobalMotionParameters();
+		out_data.GenerateGlobalMotionVectors();
 	}
 
-	//std::cerr << std::endl<< "Decoding Prediction Modes (0,1,2,3): ";
 
 	for (mb_yp = 0,mb_tlb_y = 0; mb_yp < out_data.MBSplit().LengthY(); ++mb_yp,mb_tlb_y += 4)
 	{
@@ -829,8 +818,6 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 			{                
 				for (b_xp = mb_tlb_x; b_xp < mb_tlb_x + 4;  b_xp += pstep)
 				{
-
-
 					DecodePredmode(out_data); 
 					//std::cerr <<  out_data.Mode()[b_yp][b_xp];
 
@@ -863,7 +850,7 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 							if(out_data.m_use_global) // if using Global Motion
 								DecodeBlockMotionType(out_data); // decode whether or not it gets used for current Pred. Unit
 
-							if(out_data.BlockUseGlobal()[b_yp][b_xp]) 
+							if(out_data.BlockUseGlobal()[b_yp][b_xp]) // if using Global Motion for the current Pred. Unit
 								UseGlobalMotionForBlock( out_data ); // Use Global Motion Vectors for current Pred. Unit
 
 							else // if not using Global Motion for the current Pred. Unit
@@ -877,21 +864,6 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 						}
 					}
 
-					/*
-					if(in_data.Mode()[b_yp][b_xp] == INTRA)
-					CodeDC(in_data);  
-
-					else if(!in_data.m_use_global_only) 
-					{
-					CodeBlockMotionType(in_data); 
-
-					if (in_data.Mode()[b_yp][b_xp] == REF1_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
-					CodeMv1(in_data); 
-
-					if (in_data.Mode()[b_yp][b_xp] == REF2_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
-					CodeMv2(in_data); 
-					}
-					*/
 					//propagate throughout MB    
 					for (b_yp = ystart; b_yp < ystart+step; b_yp++)
 					{
@@ -904,7 +876,6 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 							out_data.DC( Y_COMP )[b_yp][b_xp] = out_data.DC( Y_COMP )[ystart][xstart]; 
 							out_data.DC( U_COMP )[b_yp][b_xp] = out_data.DC( U_COMP )[ystart][xstart]; 
 							out_data.DC( V_COMP )[b_yp][b_xp] = out_data.DC( V_COMP )[ystart][xstart];
-							out_data.BlockUseGlobal()[b_yp][b_xp] = out_data.BlockUseGlobal()[ystart][xstart];
 						}//b_xp
 					}//b_yp
 				}//i                    
@@ -1124,17 +1095,17 @@ void MvDataCodec::DecodeMv2( MvData& out_data )
 }
 
 
-void MvDataCodec::UseGlobalMotionForBlock( MvData& out_data )
+void MvDataCodec::UseGlobalMotionForBlock( MvData& mv_data )
 {
-	if (out_data.Mode()[b_yp][b_xp] == REF1_ONLY || out_data.Mode()[b_yp][b_xp] == REF1AND2 )
+	if ((mv_data.Mode()[b_yp][b_xp] == REF1_ONLY) || (mv_data.Mode()[b_yp][b_xp] == REF1AND2))
 	{
-		out_data.Vectors(1)[b_yp][b_xp].x = out_data.GlobalMotionVectors(1)[b_yp][b_xp].x;
-		out_data.Vectors(1)[b_yp][b_xp].y = out_data.GlobalMotionVectors(1)[b_yp][b_xp].y;
+		mv_data.Vectors(1)[b_yp][b_xp].x = mv_data.GlobalMotionVectors(1)[b_yp][b_xp].x;
+		mv_data.Vectors(1)[b_yp][b_xp].y = mv_data.GlobalMotionVectors(1)[b_yp][b_xp].y;
 	}
-	if (out_data.Mode()[b_yp][b_xp] == REF2_ONLY || out_data.Mode()[b_yp][b_xp] == REF1AND2 )
+	if ((mv_data.Mode()[b_yp][b_xp] == REF2_ONLY) || (mv_data.Mode()[b_yp][b_xp] == REF1AND2))
 	{
-		out_data.Vectors(2)[b_yp][b_xp].x = out_data.GlobalMotionVectors(2)[b_yp][b_xp].x;
-		out_data.Vectors(2)[b_yp][b_xp].y = out_data.GlobalMotionVectors(2)[b_yp][b_xp].y;
+		mv_data.Vectors(2)[b_yp][b_xp].x = mv_data.GlobalMotionVectors(2)[b_yp][b_xp].x;
+		mv_data.Vectors(2)[b_yp][b_xp].y = mv_data.GlobalMotionVectors(2)[b_yp][b_xp].y;
 	}
 }
 

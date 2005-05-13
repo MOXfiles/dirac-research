@@ -22,7 +22,7 @@
 *
 * Contributor(s): Richard Felton (Original Author), 
 *                 Thomas Davies,
-*                 Steve Bearcroft
+*                 Steve Bearcroft,
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -211,25 +211,14 @@ void MotionCompensator::CompensateComponent(Frame& picframe, const Frame &ref1fr
     const int num_refs = picframe.GetFparams().Refs().size();
     const MvArray* mv_array1; 
     const MvArray* mv_array2;
-	if (mv_data.m_use_global_only)
-	    mv_array1 = &mv_data.GlobalMotionVectors(1); // Use Global Motion
-	else
-		mv_array1 = &mv_data.Vectors(1); // Use Block Motion Vector
+	
+	mv_array1 = &mv_data.Vectors(1); // Use Block Motion Vector
     if (num_refs ==2 )
-	{
-        if (mv_data.m_use_global_only)
-			mv_array2 = &mv_data.GlobalMotionVectors(2); // Use Global Motion
-		else
-			mv_array2 = &mv_data.Vectors(2); // Use Block Motion Vector
-	}
+		mv_array2 = &mv_data.Vectors(2); // Use Block Motion Vector
 	else
-	{
-        if (mv_data.m_use_global_only)
-			mv_array2 = &mv_data.GlobalMotionVectors(1); // Use Global Motion
-		else
-			mv_array2 = &mv_data.Vectors(1); // Use Block Motion Vector
-	}
-    ReConfig();//set all the weighting blocks up    
+		mv_array2 = &mv_data.Vectors(1); // Use Block Motion Vector
+
+	ReConfig();//set all the weighting blocks up    
 
     //Blocks are listed left to right, line by line.
     MVector mv1,mv2;

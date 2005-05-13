@@ -105,7 +105,7 @@ void MvData::InitMvData()
 
 	for (int x=0; x<m_block_use_global.LengthX(); x++) 
 		for (int y=0; y<m_block_use_global.LengthY(); y++)
-			m_block_use_global[y][x] = true;
+			m_block_use_global[y][x] = false;
 
 	// Create the arrays of dc values
 	for ( int i=0 ; i<3 ; ++i )
@@ -187,16 +187,6 @@ void MvData::DequantiseGlobalMotionParameters()
 		(*(m_gm_params[i]))[5] /= 1; 
 		(*(m_gm_params[i]))[6] /= 128; 
 		(*(m_gm_params[i]))[7] /= 128; 
-		/*	 
-		(*(m_gm_params[i]))[0] = 0; 
-		(*(m_gm_params[i]))[1] = 0; 
-		(*(m_gm_params[i]))[2] = 0; 
-		(*(m_gm_params[i]))[3] = 0; 
-		//(*(m_gm_params[i]))[4] = 0; 
-		//(*(m_gm_params[i]))[5] = 0; 
-		(*(m_gm_params[i]))[6] = 0; 
-		(*(m_gm_params[i]))[7] = 0; 
-		*/	
 	}
 }
 
