@@ -106,12 +106,12 @@ void MotionCompTest::testZeroMotionComp()
     cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
+    cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
 
-
-    MotionCompensator mc( cp, ADD );
+    // MotionCompensator mc( cp );
     
     MvData* mv_data = setupMV1Data(cp, 0, 0, REF1_ONLY);
 
@@ -132,13 +132,15 @@ void MotionCompTest::testZeroMotionComp()
     fbuffer.PushFrame(fp);
     FramesTest::zeroFrame(fbuffer.GetFrame(2));
 
-    mc.CompensateFrame(fbuffer, 1, *mv_data);
+    // mc.CompensateFrame(ADD, fbuffer, 1, *mv_data);
+    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 1, *mv_data);
 
-    MotionCompensator mc2( cp, SUBTRACT );
+    // MotionCompensator mc2( cp );
 
     //too many rounding errors for this to be exactly true;
-    CPPUNIT_ASSERT (FramesTest::almostEqualFrames (fbuffer.GetFrame(0), fbuffer.GetFrame(1), 2));
-    mc2.CompensateFrame(fbuffer, 1, *mv_data);
+    CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(0), fbuffer.GetFrame(1)));
+    // mc2.CompensateFrame(SUBTRACT, fbuffer, 1, *mv_data);
+    MotionCompensator::CompensateFrame(cp, SUBTRACT, fbuffer, 1, *mv_data);
 
     CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(2), fbuffer.GetFrame(1)));
     delete mv_data;
@@ -175,11 +177,13 @@ void MotionCompTest::testAddandSubMotionComp()
     fbuffer.PushFrame(fp);
     FramesTest::zeroFrame(fbuffer.GetFrame(2));
 
-    MotionCompensator mc( cp, ADD );
-    mc.CompensateFrame(fbuffer, 1, *mv_data);
+    // MotionCompensator mc( cp );
+    // mc.CompensateFrame(ADD, fbuffer, 1, *mv_data);
+    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 1, *mv_data);
 
-    MotionCompensator mc2( cp, SUBTRACT );
-    mc2.CompensateFrame(fbuffer, 1, *mv_data);
+    // MotionCompensator mc2( cp );
+    // mc2.CompensateFrame(SUBTRACT, fbuffer, 1, *mv_data);
+    MotionCompensator::CompensateFrame(cp, SUBTRACT, fbuffer, 1, *mv_data);
 
     CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(2), fbuffer.GetFrame(1)));
     delete mv_data;
@@ -217,11 +221,13 @@ void MotionCompTest::testL2_frame()
     fbuffer.PushFrame(fp);
     FramesTest::zeroFrame(fbuffer.GetFrame(2));
 
-    MotionCompensator mc( cp, ADD );
-    mc.CompensateFrame(fbuffer, 1, *mv_data);
+    // MotionCompensator mc( cp );
+    // mc.CompensateFrame(ADD, fbuffer, 1, *mv_data);
+    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 1, *mv_data);
 
-    MotionCompensator mc2( cp, SUBTRACT );
-    mc2.CompensateFrame(fbuffer, 1, *mv_data);
+    // MotionCompensator mc2( cp );
+    // mc2.CompensateFrame(SUBTRACT, fbuffer, 1, *mv_data);
+    MotionCompensator::CompensateFrame(cp, SUBTRACT, fbuffer, 1, *mv_data);
 
     CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(2), fbuffer.GetFrame(1)));
     delete mv_data;
@@ -258,8 +264,9 @@ void MotionCompTest::testI_frame()
     FramesTest::setupFrame(fbuffer.GetFrame(1),0);
 
 
-    MotionCompensator mc( cp, ADD );
-    mc.CompensateFrame(fbuffer, 1, *mv_data);
+    // MotionCompensator mc( cp );
+    // mc.CompensateFrame(ADD, fbuffer, 1, *mv_data);
+    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 1, *mv_data);
 
     CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(0), fbuffer.GetFrame(1)));
     delete mv_data;
@@ -301,13 +308,15 @@ void MotionCompTest::testRef2()
     fbuffer.PushFrame(fp);
     FramesTest::zeroFrame(fbuffer.GetFrame(2));
 
-    MotionCompensator mc( cp, ADD );
-    mc.CompensateFrame(fbuffer, 1, *mv_data);
+    // MotionCompensator mc( cp );
+    // mc.CompensateFrame(ADD, fbuffer, 1, *mv_data);
+    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 1, *mv_data);
 
-    CPPUNIT_ASSERT (FramesTest::almostEqualFrames (fbuffer.GetFrame(0), fbuffer.GetFrame(1), 2));
+    CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(0), fbuffer.GetFrame(1)));
 
-    MotionCompensator mc2( cp, SUBTRACT );
-    mc2.CompensateFrame(fbuffer, 1, *mv_data);
+    // MotionCompensator mc2( cp );
+    // mc2.CompensateFrame(SUBTRACT, fbuffer, 1, *mv_data);
+    MotionCompensator::CompensateFrame(cp, SUBTRACT, fbuffer, 1, *mv_data);
 
     CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(2), fbuffer.GetFrame(1)));
     delete mv_data;
@@ -357,21 +366,25 @@ void MotionCompTest::testRef1and2()
     fbuffer.PushFrame(fp);
     FramesTest::zeroFrame(fbuffer.GetFrame(3));
 
-    MotionCompensator mc( cp, ADD );
+    //MotionCompensator mc( cp );
 
-    mc.CompensateFrame(fbuffer, 2, *mv_data);
+    //mc.CompensateFrame(ADD, fbuffer, 2, *mv_data);
+    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 2, *mv_data);
 
-    MotionCompensator mc2( cp, ADD );
+    //MotionCompensator mc2( cp );
 
-    mc2.CompensateFrame(fbuffer, 2, *mv_data1);
+    //mc2.CompensateFrame(ADD, fbuffer, 2, *mv_data1);
+    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 2, *mv_data1);
 
-    MotionCompensator mc3( cp, ADD );
+    // MotionCompensator mc3( cp );
 
-    mc3.CompensateFrame(fbuffer, 3, *mv_data2);
+    // mc3.CompensateFrame(ADD, fbuffer, 3, *mv_data2);
+    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 3, *mv_data2);
 
-    MotionCompensator mc4( cp, ADD );
+    //MotionCompensator mc4( cp );
 
-    mc4.CompensateFrame(fbuffer, 3, *mv_data2);
+    //mc4.CompensateFrame(ADD, fbuffer, 3, *mv_data2);
+    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 3, *mv_data2);
 
     CPPUNIT_ASSERT (FramesTest::almostEqualFrames (fbuffer.GetFrame(2), fbuffer.GetFrame(3), 5    ));
     delete mv_data;
