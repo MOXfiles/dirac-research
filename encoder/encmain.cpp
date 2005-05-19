@@ -23,6 +23,7 @@
  * Contributor(s): Thomas Davies (Original Author), 
  *                 Scott R Ladd,
  *                 Anuradha Suraparaju 
+ *                 Andrew Kennedy
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -71,6 +72,10 @@ static void display_help()
     cout << "\nHD720   bool    I  false         Use HD-720 compression presets";
     cout << "\nHD1080  bool    I  false         Use HD-1080 compression presets";
     cout << "\nSD576   bool    I  false         Use SD-576 compression presets";
+    cout << "\nx       ulong   I  Preset        Width of frame";
+    cout << "\ny       ulong   I  Preset        Length of frame";
+    cout << "\ncformat ulong   I  Yonly         Chroma format";
+    cout << "\ncfr     ulong   I  Preset        Frame rate(s) (e.n or e/n format)";
     cout << "\nstart   ulong   I  0UL           Frame number to start encoding from";
     cout << "\nstop    ulong   I  EOF           Frame number after which encoding finishes";
     cout << "\nL1_sep  ulong   I  0UL           Separation of L1 frames";
@@ -86,70 +91,6 @@ static void display_help()
     cout << endl;
 }
 
-bool ReadPicHeader (std::ifstream &fhdr, dirac_encoder_context_t &enc_ctx)
-{
-    if (!fhdr)
-        return false;
-
-    int temp_int;
-    bool ret_stat = true;
-    dirac_seqparams_t &sparams = enc_ctx.seq_params;
-
-    ios::iostate oldExceptions = fhdr.exceptions();
-    fhdr.exceptions (ios::failbit | ios::badbit);
-
-    try
-    {
-        fhdr >> temp_int;
-        sparams.chroma =   (ChromaFormat)temp_int;
-    
-        fhdr >> sparams.width;
-
-        fhdr >> sparams.height;
-
-        fhdr >> sparams.interlace;
-
-        fhdr >> sparams.topfieldfirst;
-
-        fhdr >> temp_int;
-        sparams.frame_rate.numerator = temp_int;
-        sparams.frame_rate.denominator = 1;
-    }
-    catch (...)
-    {
-        std::cerr << "Error reading header file." << std::endl;
-        ret_stat =  false;
-    }
-    fhdr.exceptions (oldExceptions);
-    return ret_stat;
-}
-
-bool WritePicHeader (std::ofstream &fhdr, dirac_encoder_t *encoder)
-{
-    bool ret_stat = true;
-    dirac_seqparams_t &sparams = encoder->enc_ctx.seq_params;
-
-    ios::iostate oldExceptions = fhdr.exceptions();
-    fhdr.exceptions (ios::failbit | ios::badbit);
-
-    try
-    {
-        fhdr << sparams.chroma << std::endl;
-        fhdr << sparams.width << std::endl;
-        fhdr << sparams.height << std::endl;
-        fhdr << sparams.interlace << std::endl;
-        fhdr << sparams.topfieldfirst << std::endl;
-        fhdr << sparams.frame_rate.numerator << std::endl;
-    }
-
-    catch (...)
-    {
-        std::cerr << "Error reading header file." << std::endl;
-        ret_stat =  false;
-    }
-    fhdr.exceptions (oldExceptions);
-    return ret_stat;
-}
 
 bool WritePicData (std::ofstream &fdata, dirac_encoder_t *encoder)
 {
@@ -458,6 +399,82 @@ int main (int argc, char* argv[])
     //now go over again and override presets with other values
     for (int i = 1; i < argc; )
     {
+        if ( strcmp(argv[i], "-width") == 0 )
+        {
+            i++;
+            enc_ctx.seq_params.width =  
+                strtoul(argv[i],NULL,10);
+        }
+
+        if ( strcmp(argv[i], "-height") == 0 )
+        {
+            i++;
+            enc_ctx.seq_params.height =  
+                strtoul(argv[i],NULL,10);
+        }
+        
+        if ( strcmp(argv[i], "-cformat") == 0 )
+        {
+            i++;
+            enc_ctx.seq_params.chroma =  
+                (ChromaFormat)strtoul(argv[i],NULL,10);
+        }
+
+        if ( strcmp(argv[i], "-fr") == 0 )
+        {
+            i++;
+            if(strncmp(argv[i], "59.94", 5)==0)
+            {
+                 enc_ctx.seq_params.frame_rate.numerator=60000;
+                 enc_ctx.seq_params.frame_rate.denominator=1001;
+            }
+            else if(strncmp(argv[i], "23.98", 5)==0)
+            {
+                enc_ctx.seq_params.frame_rate.numerator=24000; 
+                enc_ctx.seq_params.frame_rate.denominator=1001;
+            }
+            else if(strncmp(argv[i], "29.97", 5)==0)
+            {
+                enc_ctx.seq_params.frame_rate.numerator=30000;
+                enc_ctx.seq_params.frame_rate.denominator=1001;
+            }
+            //test for decimal format
+            else if(strcspn(argv[i], ".")!=strlen(argv[i]))
+            {
+                // look for whole number
+                char* num_token = strtok(argv[i], ".");
+                int whole = strtoul(num_token,NULL,10);
+                int decimal=0;
+                int decimal_length=0;
+
+                // look for decimal part
+                num_token = strtok(NULL, "");
+                if(num_token)
+                {
+                    decimal_length=strlen(num_token);
+                    decimal=strtoul(num_token, NULL, 10);
+                }
+                // calculate amount to raise to whole number
+                int multiply = (int)pow(10, decimal_length);
+                enc_ctx.seq_params.frame_rate.numerator =  
+                    decimal == 0 ? whole : (multiply*whole)+decimal;
+                enc_ctx.seq_params.frame_rate.denominator = 
+                    decimal == 0 ? 1 : multiply;
+                 
+            }
+            else 
+            {
+                // assume e/d format
+                char* token = strtok(argv[i], "/");
+                enc_ctx.seq_params.frame_rate.numerator =  
+                strtoul(token,NULL,10);
+                token = strtok(NULL, "");
+                if(token)
+                    enc_ctx.seq_params.frame_rate.denominator = 
+                    strtoul(token, NULL, 10);
+             }
+        }
+
         if ( strcmp(argv[i], "-qf") == 0 )
         {
             i++;
@@ -550,18 +567,6 @@ int main (int argc, char* argv[])
   /********************************************************************/
     //next do picture file stuff
 
-    /* ------ open input files & get params -------- */
-    // Open header
-    std::string input_name_hdr = input + ".hdr";
-    std::ifstream 
-    ip_head_ptr (input_name_hdr.c_str(), std::ios::in | std::ios::binary);
-    if (!ip_head_ptr)
-    {
-        std::cerr << std::endl <<
-            "Can't open input header file: " << input_name_hdr << std::endl;
-        return EXIT_FAILURE;
-    }
-
     // Open uncompressed data file
     std::string input_name_yuv = input + ".yuv";
     std::ifstream 
@@ -573,11 +578,7 @@ int main (int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    // Read the picture header details from file
-    if (!ReadPicHeader(ip_head_ptr,enc_ctx))
-    {
-        return EXIT_FAILURE;
-    }
+
    
    /********************************************************************/
     //open the bitstream file
@@ -586,10 +587,6 @@ int main (int argc, char* argv[])
     // open the decoded ouput file
     std::string output_name_yuv = output + ".yuv";
     std::ofstream outyuv(output_name_yuv.c_str(),std::ios::out | std::ios::binary);
-
-      // open the decoded ouput file header
-    std::string output_name_hdr = output + ".hdr";
-    std::ofstream outhdr(output_name_hdr.c_str(),std::ios::out | std::ios::binary); 
 
       // open the diagnostics ouput file
     std::string output_name_imt = output + ".imt";
@@ -695,8 +692,7 @@ int main (int argc, char* argv[])
                   << " bits/sec." << std::endl;
     }
 
-    
-   WritePicHeader(outhdr, encoder);
+   
    /********************************************************************/
 
      // close the encoder
@@ -705,16 +701,13 @@ int main (int argc, char* argv[])
     outfile.close();
      // close the decoded output file
     outyuv.close();
-     // close the decoded output header file
-    outhdr.close();
+   
      // close the decoded output header file
     outimt.close();
 
     // close the pic data file
     ip_pic_ptr.close();
 
-    // close the pic header file
-    ip_head_ptr.close();
 
     // delete frame buffer
     delete [] frame_buf;
