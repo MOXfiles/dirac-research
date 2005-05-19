@@ -43,9 +43,9 @@
 #include <libdirac_common/bit_manager.h>
 #include <libdirac_common/arrays.h>
 #include <libdirac_common/common_types.h>
+#include <libdirac_common/dirac_assertions.h>
 #include <vector>
 #include <cmath>
-
 namespace dirac
 {
     /*! \file
@@ -588,7 +588,10 @@ namespace dirac
 
         //! Return the original frame height
         int OrigYl() const {return m_orig_yl;}
-        
+
+        //! Return the number of accuracy bits used for motion vectors
+        int MVPrecision() const { return m_mv_precision; }
+             
         // ... and Sets
         //! Set how many MBs there are horizontally
         void SetXNumMB(const int xn){m_x_num_mb=xn;}    
@@ -619,6 +622,14 @@ namespace dirac
 
         //! Set the original frame height
         void SetOrigYl(const int y){m_orig_yl=y;}
+
+        //! Set the number of accuracy bits for motion vectors
+        void SetMVPrecision(const int p)
+        {
+            // Assert in debug mode. Maybe we should throw an exception???
+            TESTM((p >=0 && p <=3), "Motion precision value in range 0..3");
+            m_mv_precision = p;
+        }
 
     private:
         
@@ -651,6 +662,9 @@ namespace dirac
 
         //! The original frame height
         int m_orig_yl;
+
+        //! The precision of motion vectors (number of accuracy bits eg 1=half-pel accuracy) 
+        int m_mv_precision;
     };
 
     //! Parameters for the encoding process

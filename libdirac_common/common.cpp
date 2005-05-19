@@ -199,7 +199,8 @@ CodecParams::CodecParams():
     m_interlace(false),
     m_topfieldfirst(false),
     m_lbparams(3),
-    m_cbparams(3)
+    m_cbparams(3),
+    m_mv_precision(2)
 {}
 
 void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat cformat)
