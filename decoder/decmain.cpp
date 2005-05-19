@@ -110,18 +110,7 @@ static void WritePicData (dirac_decoder_t *decoder, FILE *fp)
     }
 }
 
-static void WritePicHeader (dirac_decoder_t *decoder, FILE *fp)
-{
-    assert (decoder != NULL);
-    assert (fp);
 
-    fprintf (fp, "%d\n", decoder->seq_params.chroma);
-    fprintf (fp, "%d\n", decoder->seq_params.width);
-    fprintf (fp, "%d\n", decoder->seq_params.height);
-    fprintf (fp, "%d\n", decoder->seq_params.interlace);
-    fprintf (fp, "%d\n", decoder->seq_params.topfieldfirst);
-    fprintf (fp, "%d\n", decoder->seq_params.frame_rate.numerator);
-}
 
 static void FreeFrameBuffer (dirac_decoder_t *decoder)
 {
@@ -142,7 +131,7 @@ static void DecodeDirac (const char *iname, const char *oname)
     clock_t start_t, stop_t;
     dirac_decoder_t *decoder = NULL;
     FILE *ifp;
-    FILE *fpdata, *fphdr;
+    FILE *fpdata;
     unsigned char buffer[4096];
     int bytes;
     int num_frames = 0;
@@ -154,9 +143,6 @@ static void DecodeDirac (const char *iname, const char *oname)
     strncpy(infile_name, iname, sizeof(infile_name));
     strcat(infile_name, ".drc");
 
-    strncpy(outfile_hdr, oname, sizeof(outfile_hdr));
-    strcat(outfile_hdr, ".hdr");
-
     strncpy(outfile_data, oname, sizeof(outfile_data));
     strcat(outfile_data, ".yuv");
 
@@ -166,18 +152,10 @@ static void DecodeDirac (const char *iname, const char *oname)
         return;
     }
 
-    if ((fphdr = fopen (outfile_hdr, "w")) ==NULL)
-    {
-        perror(outfile_hdr);
-        fclose(ifp);
-        return;
-    }
-
     if ((fpdata = fopen (outfile_data, "wb")) ==NULL)
     {
         perror(outfile_hdr);
         fclose(ifp);
-        fclose(fphdr);
         return;
     }
 
@@ -239,8 +217,7 @@ static void DecodeDirac (const char *iname, const char *oname)
             }
             dirac_set_buf (decoder, buf, NULL);
 
-            /* write the header file */
-            WritePicHeader(decoder, fphdr);
+         
             }
             break;
 
@@ -304,7 +281,6 @@ static void DecodeDirac (const char *iname, const char *oname)
             (double)(stop_t-start_t)/(double)(CLOCKS_PER_SEC*num_frames));
 
     fclose(fpdata);
-    fclose(fphdr);
     fclose(ifp);
 
     /* free all resources */
