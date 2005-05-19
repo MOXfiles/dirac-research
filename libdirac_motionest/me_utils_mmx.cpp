@@ -42,6 +42,12 @@ using namespace dirac;
 
 namespace dirac
 {
+    union u_sum
+    {
+        int  i[2];
+        __m64 m;
+    } u_sum;
+
     CalcValueType simple_block_diff_mmx_4 ( 
             const BlockDiffParams& dparams, const MVector& mv, 
             const PicArray& pic_data, const PicArray& ref_data)
@@ -85,10 +91,10 @@ namespace dirac
             src += pic_next;
             refd += ref_next;
         }
-        int *result = (int *) &sum;
+        u_sum.m = sum;
         _mm_empty();
 
-        return result[0] + result[1];
+        return u_sum.i[0] + u_sum.i[1];
     }
 
 
@@ -153,10 +159,10 @@ namespace dirac
             pic += pic_next;
         }
 
+        u_sum.m = sum;
         _mm_empty();
 
-        int *result = (int *) &sum;
-        return result[0] + result[1];
+        return u_sum.i[0] + u_sum.i[1];
     }
 
     inline void check_active_columns(
@@ -233,10 +239,10 @@ namespace dirac
             }//l
         }//c
 
+        u_sum.m = sum;
         _mm_empty();
 
-        int *result = (int *) &sum;
-        return result[0] + result[1];
+        return u_sum.i[0] + u_sum.i[1];
     }
 
 
@@ -317,10 +323,10 @@ namespace dirac
             }//l
         }//c
 
+        u_sum.m = sum;
         _mm_empty();
 
-        int *result = (int *) &sum;
-        return result[0] + result[1];
+        return u_sum.i[0] + u_sum.i[1];
     }
 }
 #endif
