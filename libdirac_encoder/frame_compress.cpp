@@ -62,8 +62,7 @@ FrameCompressor::FrameCompressor( EncoderParams& encp ) :
     m_use_block_mv(true),
     m_global_pred_mode(REF1_ONLY),
     m_medata_avail(false)
-{
-}
+{}
 
 FrameCompressor::~FrameCompressor()
 {
@@ -71,7 +70,9 @@ FrameCompressor::~FrameCompressor()
         delete m_me_data;
 }
 
-void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_buffer , int fnum )
+void FrameCompressor::Compress( FrameBuffer& my_buffer ,
+                                const FrameBuffer& orig_buffer ,
+                                int fnum )
 {
     FrameOutputManager& foutput = m_encparams.BitsOut().FrameOutput();
 
@@ -80,7 +81,7 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_
     const FrameSort& fsort = fparams.FSort();
     const ChromaFormat cformat = fparams.CFormat();
 
-    // number of bits written, without byte alignment
+    // number of bits written
     unsigned int num_mv_bits;
     m_medata_avail = false;
 
@@ -94,6 +95,8 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_
 
     if ( fsort != I_frame )
     {
+        // Set the precision to quarter pixel as standard
+        m_encparams.SetMVPrecision( 2 );
 
         m_me_data = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB());
 
@@ -147,10 +150,10 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_
             }
 
              // Then motion compensate
-
-            MotionCompensator mycomp( m_encparams , SUBTRACT);
-            mycomp.CompensateFrame( my_buffer , fnum , *m_me_data );
-
+            MotionCompensator::CompensateFrame( m_encparams , SUBTRACT , 
+                                                my_buffer , fnum , 
+                                                *m_me_data );
+ 
         }//?fsort
 
         //code component data
@@ -164,8 +167,10 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_
         //motion compensate again if necessary
         if ( fsort != I_frame )
         {
-            MotionCompensator mycomp( m_encparams , ADD);
-            mycomp.CompensateFrame( my_buffer , fnum , *m_me_data );
+            MotionCompensator::CompensateFrame( m_encparams , ADD , 
+                                                my_buffer , fnum , 
+                                                *m_me_data );
+
             // Set me data available flag
             m_medata_avail = true;
         }//?fsort
@@ -241,6 +246,8 @@ void FrameCompressor::WriteFrameHeader( const FrameParams& fparams )
             {
                 UnsignedGolombCode( frame_header_op , (unsigned int) m_global_pred_mode );
             }
+            // Write the motion vector precision being used for the frame
+            UnsignedGolombCode( frame_header_op , (unsigned int) m_encparams.MVPrecision() );
         }
 
     }// ?m_skipped
