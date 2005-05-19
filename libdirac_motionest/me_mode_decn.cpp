@@ -325,7 +325,8 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
 
     for ( int j=0 ; j<2 ; ++j )
         for (int i=0 ; i<2 ; ++i )
-            AddNewVlist( cand_list , guide_data.Vectors(1)[guide_ypos+j][guide_xpos+i] , 1 , 1 );
+            AddNewVlist( cand_list , guide_data.Vectors(1)[guide_ypos+j][guide_xpos+i] , 1 , 1 , 
+                         1<<( 3-m_encparams.MVPrecision() ) );
 
     if (xblock>0 && yblock>0)
         mv_pred = MvMedian( m_me_data_set[2]->Vectors(1)[yblock][xblock-1] ,
@@ -353,12 +354,9 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
         cand_list.clear();                
 
         for ( int j=0 ; j<2 ; ++j )
-        {
             for (int i=0 ; i<2 ; ++i )
-            {
-                AddNewVlist( cand_list , guide_data.Vectors(2)[guide_ypos+j][guide_xpos+i] , 1 , 1 );
-            }// i
-        }// j
+                AddNewVlist( cand_list , guide_data.Vectors(2)[guide_ypos+j][guide_xpos+i] , 1 , 1 ,
+                             1<<( 3-m_encparams.MVPrecision() ) );
 
         if (xblock>0 && yblock>0)
             mv_pred = MvMedian( m_me_data_set[2]->Vectors(2)[yblock][xblock-1] ,

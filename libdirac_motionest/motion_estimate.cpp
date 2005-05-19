@@ -62,11 +62,10 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
     pix_match.DoSearch( my_buffer , frame_num , me_data);
 
     // Step 2. 
-    // Pixel accurate vectors are then refined to 1/8 of a pixel
+    // Pixel accurate vectors are then refined to sub-pixel accuracy
 
     SubpelRefine pelrefine( m_encparams );
     pelrefine.DoSubpel( my_buffer , frame_num , me_data );
-
 
     // Step3.
     // We now have to decide how each macroblock should be split 
@@ -81,6 +80,27 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 
     if (fparams.CFormat() != Yonly)
         SetChromaDC( my_buffer , frame_num , me_data );
+
+    // Shift the vectors to remove redundant accuracy bits     
+    MvArray& mvector1 = me_data.Vectors( 1 );
+    for (int j=0 ; j<mvector1.LengthY() ; j++)
+    {
+        for (int i=0 ; i<mvector1.LengthX() ; i++)
+        {
+            mvector1[j][i].x >>= ( 3-m_encparams.MVPrecision() );
+            mvector1[j][i].y >>= ( 3-m_encparams.MVPrecision() );
+        }// i
+    }// j
+
+    MvArray& mvector2 = me_data.Vectors( 2 );
+    for (int j=0 ; j<mvector2.LengthY() ; j++)
+    {
+        for (int i=0 ; i<mvector2.LengthX() ; i++)
+        {
+            mvector2[j][i].x >>= ( 3-m_encparams.MVPrecision() );
+            mvector2[j][i].y >>= ( 3-m_encparams.MVPrecision() );
+        }// i
+    }// j
 
     return IsACut( me_data );
 

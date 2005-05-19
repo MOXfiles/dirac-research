@@ -154,7 +154,7 @@ void SubpelRefine::DoBlock(const int xblock , const int yblock ,
     const MVector mv_pred = GetPred( xblock , yblock , mv_array );
 
     // Will use the integer vector as a guide - must multiply by 8 since we're
-    // doing 1/8th pixel accuracy
+    // doing maximum of 1/8th pixel accuracy
     mv_array[yblock][xblock] = mv_array[yblock][xblock]<<3;
 
     // Re-calculate at pixel accuracy, with correct predictor and lambda
@@ -163,20 +163,12 @@ void SubpelRefine::DoBlock(const int xblock , const int yblock ,
 
     AddNewVlist( cand_list , mv_array[yblock][xblock] , 0 , 0 , 1 );// (creates a singleton list)
 
-    // Do half-pel accuracy
-    AddNewVlist(cand_list , mv_array[yblock][xblock] , 1 , 1 , 4);
-    cand_list.erase( cand_list.begin() );
-    my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, loc_lambda );
-
-    // Next , go down to 1/4-pixel accuracy
-    AddNewVlist(cand_list , mv_array[yblock][xblock] , 1 , 1 , 2);
-    cand_list.erase( cand_list.begin() );
-    my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, loc_lambda );
-
-    // Finally, do 1/8-pixel accuracy
-    AddNewVlist(cand_list , mv_array[yblock][xblock] , 1 , 1 , 1);
-    cand_list.erase( cand_list.begin() );
-    my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, loc_lambda );
+    for ( int i=1; i<=m_encparams.MVPrecision() ; ++i )
+    {
+        AddNewVlist(cand_list , mv_array[yblock][xblock] , 1 , 1 , (1<<(3-i)) );
+        cand_list.erase( cand_list.begin() );
+        my_bmatch.FindBestMatchSubp( xblock , yblock , cand_list, mv_pred, loc_lambda );
+    }// i
 
 }
 
