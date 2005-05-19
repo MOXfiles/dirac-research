@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Richard Felton (Original Author), Thomas Davies
+* Contributor(s): Richard Felton (Original Author),
+*                 Thomas Davies
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -47,20 +49,25 @@
 #include <cstdlib>
 #include <ctime>
 #include <iostream>
+#include <vector>
 #include <libdirac_common/common.h>
 #include <libdirac_common/upconvert.h>
 #include <libdirac_common/motion.h>
+#include <libdirac_common/frame_buffer.h>
 
 namespace dirac
 {
     class FrameBuffer;
     class Frame;
 
-    //! Motion compensator class. 
+ 
+    //! Abstract Motion compensator class. 
     /*!
         Motion compensator class, for doing motion compensation with two 
         references and overlapped blocks, using raised-cosine roll-off.
-     */
+        This is an abstract class. It must be sub-classed and the 
+        CompensateBlock must be defined in the sub-classes.
+    */
     class MotionCompensator
     {
 
@@ -69,19 +76,40 @@ namespace dirac
         /*!
             Constructor initialises using codec parameters.
          */
-        MotionCompensator( const CodecParams &cp , const AddOrSub direction  );
+        MotionCompensator( const CodecParams &cp );
         //! Destructor
-        ~MotionCompensator();
+        virtual ~MotionCompensator();
+
+        //! Convenience function to perform motion compensation on a frame
+        /*!
+            Static function that motion compensates a frame. It uses the
+            MV precision value in the CodecParams to instantiate the 
+            appropriate MotionCompensation sub-class.
+            \param    cp        Encoder/decoder parameters
+            \param    direction whether we're subtracting or adding
+            \param    buffer    the FrameBuffer object containing the frame and the reference frames
+            \param    fnum    number of frame in the frame buffer to be compensated
+    `       \param    mv_data    the motion vector data
+         */
+        static void CompensateFrame ( const CodecParams &cp, 
+                                      const AddOrSub direction , 
+                                      FrameBuffer& buffer , 
+                                      const int fnum, 
+                                      const MvData& mv_data );
 
         //! Compensate a frame
         /*!
             Perform motion compensated addition/subtraction on a frame using 
             parameters
+            \param    direction whether we're subtracting or adding
             \param    fnum    number of frame in the frame buffer to be compensated
             \param    my_buffer    the FrameBuffer object containing the frame and the reference frames
     `       \param    mv_data    the motion vector data
          */
-        void CompensateFrame( FrameBuffer& my_buffer , int fnum , const MvData& mv_data );
+        void CompensateFrame( const AddOrSub direction , 
+                              FrameBuffer& my_buffer , 
+                              int fnum , 
+                              const MvData& mv_data );
 
     private:
         //private, body-less copy constructor: this class should not be copied
@@ -92,20 +120,17 @@ namespace dirac
         //functions
 
         //! Motion-compensate a component
-        void CompensateComponent( Frame& picframe , const Frame& ref1frame , 
-            const Frame& ref2frame ,
-            const MvData& mv_data , const CompSort cs);
-
-        //! Motion-compensate an individual block
-        void CompensateBlock( TwoDArray<CalcValueType>& pic_data , 
-            const PicArray& refup_data , const MVector& Vec ,
-            const ImageCoords& Pos , const TwoDArray<CalcValueType>& Weights );
-
-        //! DC-compensate an individual block
-        void DCBlock( TwoDArray<CalcValueType> &pic_data , const ValueType dc ,
-            const ImageCoords& Pos , const TwoDArray<CalcValueType>& Weights);
+        void CompensateComponent( Frame& picframe , 
+                                  const Frame& ref1frame , 
+                                  const Frame& ref2frame ,
+                                  const MvData& mv_data , const CompSort cs);
 
         //! Recalculate the weight matrix and store other key block related parameters.
+        //! DC-compensate an individual block
+        void DCBlock( TwoDArray<CalcValueType> &pic_data ,
+                      const ValueType dc ,
+                      const ImageCoords& Pos , 
+                      const TwoDArray<CalcValueType>& Weights );
         void ReConfig();
 
         // Overlapping blocks are acheived by applying a 2D raised cosine shape
@@ -132,7 +157,14 @@ namespace dirac
         //! Flips the values in an array in the y direction.
         void FlipY(const TwoDArray<CalcValueType>& Original, const OLBParams &bparams, TwoDArray<CalcValueType>& Flipped);
 
-    private:
+        //! Motion-compensate a block. Pure virtual. SubClasses need to define it
+        virtual void CompensateBlock( TwoDArray<CalcValueType>& pic_data , 
+                              const PicArray& refup_data , 
+                              const MVector& Vec ,
+                              const ImageCoords& Pos , 
+                              const TwoDArray<CalcValueType>& Weights ) = 0;
+        
+    protected:
         //variables    
 
         //! The codec parameters
@@ -151,6 +183,81 @@ namespace dirac
         TwoDArray<CalcValueType>* m_half_block_weights;
 
     };
+
+    //! Pixel precision Motion compensator class. 
+    class MotionCompensator_Pixel : public MotionCompensator
+    {
+
+    public:
+        //! Constructor.
+        /*!
+            Constructor initialises using codec parameters.
+         */
+        MotionCompensator_Pixel (const CodecParams &cp);
+
+    private:
+        //! Motion-compensate a block. 
+        virtual void CompensateBlock( TwoDArray<CalcValueType>& pic_data , 
+                              const PicArray& refup_data , 
+                              const MVector& Vec ,
+                              const ImageCoords& Pos , 
+                              const TwoDArray<CalcValueType>& Weights );
+    };
+
+    //! Half Pixel precision Motion compensator class. 
+    class MotionCompensator_HalfPixel : public MotionCompensator
+    {
+    public:
+        //! Constructor.
+        /*!
+            Constructor initialises using codec parameters.
+         */
+        MotionCompensator_HalfPixel (const CodecParams &cp);
+    private:
+        //! Motion-compensate a block. 
+        virtual void CompensateBlock( TwoDArray<CalcValueType>& pic_data , 
+                              const PicArray& refup_data , 
+                              const MVector& Vec ,
+                              const ImageCoords& Pos , 
+                              const TwoDArray<CalcValueType>& Weights );
+    };
+
+    //! Quarter Pixel precision Motion compensator class. 
+    class MotionCompensator_QuarterPixel : public MotionCompensator
+    {
+    public:
+        //! Constructor.
+        /*!
+            Constructor initialises using codec parameters.
+         */
+        MotionCompensator_QuarterPixel (const CodecParams &cp);
+    private:
+        //! Motion-compensate a block. 
+        virtual void CompensateBlock( TwoDArray<CalcValueType>& pic_data , 
+                              const PicArray& refup_data , 
+                              const MVector& Vec ,
+                              const ImageCoords& Pos , 
+                              const TwoDArray<CalcValueType>& Weights );
+    };
+
+    //! Eighth Pixel precision Motion compensator class. 
+    class MotionCompensator_EighthPixel : public MotionCompensator
+    {
+    public:
+        //! Constructor.
+        /*!
+            Constructor initialises using codec parameters.
+         */
+        MotionCompensator_EighthPixel (const CodecParams &cp);
+    private:
+        //! Motion-compensate a block. 
+        virtual void CompensateBlock( TwoDArray<CalcValueType>& pic_data , 
+                              const PicArray& refup_data , 
+                              const MVector& Vec ,
+                              const ImageCoords& Pos , 
+                              const TwoDArray<CalcValueType>& Weights );
+    };
+
 
 } // namespace dirac
 
