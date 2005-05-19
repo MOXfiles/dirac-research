@@ -88,7 +88,7 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
             if ( m_decparams.Verbose() )
                 std::cerr<<std::endl<<"Decoding frame "<<m_fparams.FrameNum()<<" in display order";        
 
-             //Add a frame into the buffer ready to receive the data        
+            // Add a frame into the buffer ready to receive the data        
             my_buffer.PushFrame(m_fparams);
             Frame& my_frame = my_buffer.GetFrame(m_fparams.FrameNum());//Reference to the frame being decoded
             FrameSort fsort = m_fparams.FSort();
@@ -123,8 +123,9 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 
             if ( fsort != I_frame )
             {//motion compensate to add the data back in if we don't have an I frame
-                MotionCompensator mycomp(m_decparams , ADD );
-                mycomp.CompensateFrame(my_buffer , m_fparams.FrameNum() , *mv_data);        
+            MotionCompensator::CompensateFrame( m_decparams , ADD , 
+                                                my_buffer , m_fparams.FrameNum() ,
+                                                *mv_data );
                 delete mv_data;    
             }
             my_frame.Clip();
@@ -205,6 +206,9 @@ bool FrameDecompressor::ReadFrameHeader( FrameParams& fparams )
                  //for the whole frame
                 if ( m_use_global && !m_use_block_mv )
                     m_global_pred_mode= PredMode(UnsignedGolombDecode( m_decparams.BitsIn() ));
+
+                // Read the motion vector precision being used for the frame
+                m_decparams.SetMVPrecision( UnsignedGolombDecode( m_decparams.BitsIn() ) );
 
             }//?is not an I frame
         }//?m_skipped

@@ -42,8 +42,8 @@
 #ifndef _FRAME_DECOMPRESS_H_
 #define _FRAME_DECOMPRESS_H_
 
-#include "libdirac_common/frame_buffer.h"
-#include "libdirac_common/common.h"
+#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/common.h>
 
 namespace dirac
 {
