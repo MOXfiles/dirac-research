@@ -240,6 +240,9 @@ namespace dirac
         */
         BiBlockDiff( const PicArray& ref1 , const PicArray& ref2 , const PicArray& pic);
 
+        //! Virtual destructor
+        virtual ~BiBlockDiff( ) {}
+
         //! Do the actual difference
         /*!
             Do the actual difference
