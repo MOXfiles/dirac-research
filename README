@@ -159,30 +159,16 @@ options.
 
 4.2 File formats
 
-The example coder and decoder use a temporary file format which consists of
-raw 8-bit planar YUV data together with a header file. This means that data
-is stored bytewise, with a frame of Y followed by a frame of U followed by
-a frame of V, all scanned in the usual raster order. 
+The example coder and decoder use raw 8-bit planar YUV data.  This means that
+data is stored bytewise, with a frame of Y followed by a frame of U followed
+by a frame of V, all scanned in the usual raster order. The video dimensions
+, frame rate and chroma are passed to the encoder via command line arguments.
 
 Other file formats are supported by means of conversion utilities that
 may be found in the subdirectory util/conversion. These will convert to
 and from raw RGB format, and support all the standard raw YUV formats as
 well as bitmaps. Raw RGB can be obtained as an output from standard conversion
 utilities such as ImageMagick.
-
-Once a raw YUV file has been made, in order to run the codec, a header must be
-constructed. The header records such picture information as: the picture
-dimensions, which are taken to be those of the luminance or Y component, and
-other metadata. The other metadata consists of the chroma format, the frame
-rate in Hertz, a flag indicating interlace and, if interlace, a flag
-indicating whether the interlace is top-field first. The chroma format setting
-records whether the video is sampled 4:4:4, 4:2:2, 4:1:1 or 4:2:0, and is
-essential. The frame rate setting is used to calculate bit-rate for the
-encoder, and display rate for the decoder, and if omitted a rate of 12Hz is
-assumed.
-
-The header file is made using the make_header tool in subdirectory 
-picheader/make_header. It's in text format so can also be edited manually.
 
 Example.
   Compress an image sequence of 100 frames of 352x288 video in tiff format.
@@ -202,33 +188,22 @@ Example.
 
   Note that this uses stdin and stdout to read and write the data.
 
-
-  Step 3.
-
-  Make the appropriate header to accompany the raw data file:
-
-  make_header -xl 720 -yl 576 -cformat format420 -framerate 25 -interlace file
-
-  This writes file.hdr with the corresponding parameters.
-  
-  We have provided a script, create_test_data.pl to help convert rgb format 
-  files into all the input formats supported by Dirac and to create header
-  files. The command line arguments it supports can be listed using
+  We have provided a script create_test_data.pl to help convert rgb format 
+  files into all the input formats supported by Dirac. The command line
+  arguments it supports can be listed using
   
   create_test_data.pl -use
 
   Sample usage is
   
-  create_test_data.pl -width=352 -height=288 -num_frames=100 -frame_rate=13 file.rgb
+  create_test_data.pl -width=352 -height=288 -num_frames=100 file.rgb
  
-  (This assumes that the RGBtoYUV utilies and the make_header script are in
-  a directory specified in PATH variable. If not in the path, then use
-  options -convutildir and -hdrutildir to set the directories where the script
-  can find the conversion and header utilities)
+  (This assumes that the RGBtoYUV utilities  are in a directory specified in
+  PATH variable. If not in the path, then use options -convutildir and to set
+  the directories where the script can find the conversion utilities.)
 
   The scripts then outputs files in all chroma formats (Yonly, 411, 420, 422,
-  444) supported by Dirac and the corresponding header files to the current 
-  directory.
+  444) supported by Dirac to the current directory.
 
 
   Step 4.
@@ -257,8 +232,6 @@ native formats (see http://zebra.fh-weingarten.de/~transcode/):
     transcode -i source.dv -x auto,null --dv_yuy2_mode -k -V -y raw,null -o file.avi
     tcextract -i test.avi -x rgb > file.yuv
 
-    make_header -xl 720 -yl 576 -cformat format420 -framerate 25 -interlace file
-
 Viewing and playback utilities for uncompressed video include MPlayer and
 ImageMagick's display command.
 
@@ -279,12 +252,12 @@ ImageMagick's display command.
 4.3 Encoding
 
 There are a large number of parameters that can be used to run the encoder,
-all of which are listed below, and which are set using the same conventions as
-for make_header. However, things are simplified by using presets for different
-applications. These set such things as block sizes and overlaps for motion
-estimation and compensation (the codec used overlapped blocks), and
-psychovisual weighting. They also define the context in which other parameters
-like quality factors, operate. The presets are:
+all of which are listed below. However, things are simplified by using presets
+for different applications. These set such things as frame sizes, chroma
+format, frame rate, block sizes and overlaps for motion estimation and
+compensation (the codec used overlapped blocks), and psychovisual weighting.
+They also define the context in which other parameters like quality factors,
+operate. The presets are:
 
 CIF      : for CIF video
 SD576    : for standard definition video
@@ -302,12 +275,20 @@ Solution.
 
   dirac_encoder -SD576 -qf 9 test test_out
 
-will read test.yuv and test.hdr as input, and output a compressed bitstream
-test_out.drc as well as locally-decoded files test_out.yuv and test_out.hdr.
+will read 4:2:0 test.yuv as input, and output a compressed bitstream
+test_out.drc as well as locally-decoded files test_out.yuv and diagnostics
+file test_out.imt. Refer to the online programmer's guide to see how the
+sequence and encoder parameters are set based on the preset value.
 
 Other parameters.
 
 verbose   : turn on verbosity (if you don't, you won't see the final bitrate!)
+x         : Width of video frame
+y         : Height of video frame
+cformat   : Chroma format. It accepts a number between 0 and 4.
+            0 - Yonly, 1 - 4:2:2, 2 - 4:4:4, 3 - 4:2:0 and 4 - 4:4:4
+fr        : Frame rate. Can be a decimal number or a fraction. Examples
+            of acceptable values are 25, 29.97, 12.5, 30000/1.
 start     : code from this frame number
 stop      : code up until this frame number
 L1_sep    : the separation between L1 frames (frames that are predicted but 
@@ -347,4 +328,4 @@ output to a file:
 
   dirac_decoder -verbose test_enc test_dec
 
-will decode into test_dec.{yuv,hdr} with running commentary.
+will decode into test_dec.yuv with running commentary.
