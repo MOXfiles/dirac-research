@@ -219,25 +219,14 @@ namespace dirac
                 Constructor, takes
                 \param output_name the name of the output file
                 \param sp the sequence parameters
-                \param write_header_only optionally write only the header
              */  
             FileStreamOutput (const char* output_name,
-              const SeqParams& sp,
-              bool write_header_only = false);
+              const SeqParams& sp);
 
             //! Destructor
             virtual ~FileStreamOutput ();
 
-            //! Write the picture sequence header
-            virtual bool WritePicHeader();
-
         protected:
-
-            //! Header output stream
-            std::ofstream* m_op_head_ptr;
-
-            //! Open picture's header file for output
-            virtual bool OpenHeader(const char* output_name);
 
             //! Open picture's YUV data file for output
             virtual bool OpenYUV(const char* output_name);
@@ -274,7 +263,7 @@ namespace dirac
             //! Read the next frame from the file
             virtual bool ReadNextFrame(Frame& myframe);
 
-            //! Get the sequence parameters (got from the picture header)
+            //! Get the sequence parameters 
             const SeqParams& GetSeqParams() const {return m_sparams;}
 
             //! Returns true if we're at the end of the input, false otherwise
@@ -386,22 +375,16 @@ namespace dirac
             /*!
                 Constructor, takes
                 \param input_name the name of the input picture file
+                \param sparams    the sequence parameters
              */
-            FileStreamInput (const char* input_name);
+            FileStreamInput (const char* input_name, const SeqParams &sparams);
 
             //! Destructor
             virtual ~FileStreamInput ();
 
-            //! Read the picture header
-            virtual bool ReadPicHeader();
-
             //! Skip n frames of input
             virtual void Skip( const int n);
 
-
-        protected:
-            //! input header stream
-            std::ifstream* m_ip_head_ptr;
     };
 
 } // namespace dirac

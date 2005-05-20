@@ -144,38 +144,10 @@ void MemoryStreamOutput::SetMembufReference (unsigned char *buf, int buf_size)
 
 
 FileStreamOutput::FileStreamOutput(const char* output_name,
-                     const SeqParams& sp,
-                     bool write_header_only) : StreamPicOutput(sp)
+                     const SeqParams& sp) : 
+    StreamPicOutput(sp)
 {
-    m_op_head_ptr = NULL;
-
-    OpenHeader(output_name);
-    if (! write_header_only)
-        OpenYUV(output_name);
-}
-
-bool FileStreamOutput::OpenHeader(const char* output_name)
-{
-    char output_name_hdr[FILENAME_MAX];
-
-    strncpy(output_name_hdr, output_name, sizeof(output_name_hdr));
-    strcat(output_name_hdr, ".hdr");
-
-    //header output
-    m_op_head_ptr =
-        new std::ofstream(output_name_hdr,std::ios::out | std::ios::binary);
-
-    if (!(*m_op_head_ptr))
-    {
-        std::cerr <<std::endl <<
-            "Can't open output header file for output: " << 
-             output_name_hdr << std::endl;
-
-        return false;    
-
-    }
-
-    return true;
+    OpenYUV(output_name);
 }
 
 bool FileStreamOutput::OpenYUV(const char* output_name)
@@ -204,34 +176,11 @@ bool FileStreamOutput::OpenYUV(const char* output_name)
 
 FileStreamOutput::~FileStreamOutput()
 {
-    if (m_op_head_ptr && *m_op_head_ptr)
-    {
-        m_op_head_ptr->close();
-        delete m_op_head_ptr;
-    }
-
     if (m_op_pic_ptr && *m_op_pic_ptr)
     {
         static_cast<std::ofstream *>(m_op_pic_ptr)->close();
         delete m_op_pic_ptr;
     }
-}
-
-//write a human-readable picture header as separate file
-bool FileStreamOutput::WritePicHeader()
-{
-    if (!m_op_head_ptr || !*m_op_head_ptr)
-        return false;
-
-    *m_op_head_ptr << m_sparams.CFormat() << std::endl;
-    *m_op_head_ptr << m_sparams.Xl() << std::endl;
-    *m_op_head_ptr << m_sparams.Yl() << std::endl;
-    *m_op_head_ptr << m_sparams.Interlace() << std::endl;
-    *m_op_head_ptr << m_sparams.TopFieldFirst() << std::endl;
-    *m_op_head_ptr << m_sparams.FrameRate() << std::endl;
-
-    return true;
-
 }
 
 /**************************************Input***********************************/
@@ -365,69 +314,31 @@ void MemoryStreamInput::Skip(const int num)
     REPORTM (false, "MemoryStreamInput::Skip - Reached unimplemented function");
 }
 
-FileStreamInput::FileStreamInput(const char* input_name)
+FileStreamInput::FileStreamInput(const char* input_name, 
+                                 const SeqParams &sparams)
 {
 
     char input_name_yuv[FILENAME_MAX];
-    char input_name_hdr[FILENAME_MAX];
 
     strncpy(input_name_yuv, input_name, sizeof(input_name_yuv));
-    strncpy(input_name_hdr, input_name, sizeof(input_name_hdr));
     strcat(input_name_yuv, ".yuv");
-    strcat(input_name_hdr, ".hdr");
 
-    //header output
-    m_ip_head_ptr =
-        new std::ifstream(input_name_hdr,std::ios::in | std::ios::binary);
-    //picture output
+    //picture input
     m_ip_pic_ptr =
         new std::ifstream(input_name_yuv,std::ios::in | std::ios::binary);
 
-    if (!(*m_ip_head_ptr))
-        std::cerr << std::endl <<
-            "Can't open input header file: " << input_name_hdr << std::endl;
     if (!(*m_ip_pic_ptr))
         std::cerr << std::endl<<
             "Can't open input picture data file: " <<
             input_name_yuv << std::endl;
+    
+    m_sparams = sparams;
 }
 
 FileStreamInput::~FileStreamInput()
 {
     static_cast<std::ifstream *>(m_ip_pic_ptr)->close();
-    m_ip_head_ptr->close();
     delete m_ip_pic_ptr;
-    delete m_ip_head_ptr;
-}
-
-//read a picture header from a separate file
-bool FileStreamInput::ReadPicHeader()
-{
-    if (! *m_ip_head_ptr)
-        return false;
-
-    int temp_int;
-    bool temp_bool;
-
-    *m_ip_head_ptr >> temp_int;
-    m_sparams.SetCFormat( (ChromaFormat)temp_int );
-
-    *m_ip_head_ptr >> temp_int;
-    m_sparams.SetXl( temp_int );
- 
-   *m_ip_head_ptr >> temp_int;
-    m_sparams.SetYl( temp_int );
-
-    *m_ip_head_ptr >> temp_bool;
-    m_sparams.SetInterlace( temp_bool );
-
-    *m_ip_head_ptr >> temp_bool;
-    m_sparams.SetTopFieldFirst( temp_bool );
-
-    *m_ip_head_ptr >> temp_int;    
-    m_sparams.SetFrameRate( temp_int );
-
-    return true;
 }
 
 void FileStreamInput::Skip(const int num)
