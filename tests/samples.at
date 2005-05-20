@@ -4,32 +4,97 @@ AT_SETUP([samples])
 
 AT_CHECK([(test $DIRAC_INPUT_DATA_DIR -a -d $DIRAC_INPUT_DATA_DIR) || exit 77], ignore)
 
-for samp in `ls $DIRAC_INPUT_DATA_DIR/*.hdr`;
+echo "HERE"
+for samp in `ls $DIRAC_INPUT_DATA_DIR/*.yuv`;
 do
-
-samp=`echo $samp | sed 's/\.hdr//g'`;
+samp=`echo $samp | sed 's/\.yuv//g'`;
 encout="$samp"_"enc";
 encout=`basename $encout`
 decout="$samp"_"dec";
 decout=`basename $decout`
 instrout="$samp"_"instr";
 instrout=`basename $instrout`
-is_SD=`echo $samp | egrep "576|576p"`
-echo "is_SD=$is_SD"
-is_HD720=`echo $samp | egrep "1280|720p"`
-echo "is_HD720=$is_HD720"
-is_HD1080=`echo $samp | egrep "1920|1080i"`
-echo "is_HD1080=$is_HD1080"
-if [ test $is_SD ]; then
+
+width=0
+height=0
+chroma="unknown"
+preset=""
+
+# first tackle files name in the style nameFORMAT_CHROMA.yuv
+# e.g. waterfallCIF_411 or waterfall576p_444 etc
+case $samp in
+*576p*)
+	width=720
+	height=576
+	chroma=`echo $samp | sed -e 's/.*576p_\(.*\)/\1/'`
+	;;
+*720p*)
+	width=1280;
+	height=720;
+	chroma=`echo $samp | sed -e 's/.*720p_\(.*\)/\1/'`
+	;;
+*1080i*)
+	width=1920
+	height=1080
+	chroma=`echo $samp | sed -e 's/.*1080i_\(.*\)/\1/'`
+	;;
+*CIF*) 
+	width=352;
+	height=288;
+	chroma=`echo $samp | sed -e 's/.*CIF_\(.*\)/\1/'`
+	;;
+*)
+	#handle files with names like name-WIDTHxHEIGHTxNUMFRAMES_CHROMA.yuv
+	#e.g. snowboard-jum-720x576x50_430.yuv
+	width=`echo $samp |  sed -e 's/.*[[^0-9]]\([[0-9]][[0-9]]*\)x\([[0-9]][[0-9]]*\)x[[0-9]][[0-9]]*_\(.*\)/\1/'`
+	height=`echo $samp |  sed -e 's/.*[[^0-9]]\([[0-9]][[0-9]]*\)x\([[0-9]][[0-9]]*\)x[[0-9]][[0-9]]*_\(.*\)/\2/'`
+	chroma=`echo $samp |  sed -e 's/.*[[^0-9]]\([[0-9]][[0-9]]*\)x\([[0-9]][[0-9]]*\)x[[0-9]][[0-9]]*_\(.*\)/\3/'`
+	;;
+esac
+
+if test $width = $samp || test $height = $samp  || test $chroma = $samp;
+then
+	echo "Filename not in expected format :  $samp.yuv : Skipping this file..."
+	continue;
+fi
+
+case $chroma in
+"Yonly")
+	chroma=0;;
+"422")
+	chroma=1;;
+"444")
+	chroma=2;;
+"411")
+	chroma=4;;
+"420")
+	chroma=3;;
+*)
+	chroma="unknown";;
+esac
+
+#cannot proceed if with or height or chroma not set
+if test $width -eq 0 || test $height -eq 0 || test $chroma = "unknown";
+then
+	continue;
+fi
+
+if test $width -eq 720 || test $height -eq 576;
+then
 	preset="-SD576";
-elif [ test $is_HD720 ]; then
+elif test $width -eq 1280 || test $height -eq 720;
+then
 	preset="-HD720";
-elif [ test $is_HD1080  ]; then
+elif test $width -eq 1920 || test $height -eq 1080;
+then
 	preset="-HD1080";
 else
 	preset="-CIF";
 fi
-AT_CHECK([at_wrap dirac_encoder $preset -qf 7 $samp ../../$encout], 0, [ignore])
+
+echo "$samp $preset $chroma $width $height"
+
+AT_CHECK([at_wrap dirac_encoder $preset -qf 7 -w $width -h $height -cformat $chroma  $samp ../../$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$encout ../../$decout], 0, [ignore])
 AT_CHECK([cmp ../../$encout.yuv ../../$decout.yuv]
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mc_instr -motion_colour -clip 50], 0)
