@@ -606,8 +606,9 @@ void DiracEncoder::GetSequenceStats(dirac_encoder_t *encoder)
     sstats->ucomp_bits = m_encparams.BitsOut().ComponentBytes( U_COMP ) * 8;
     sstats->vcomp_bits = m_encparams.BitsOut().ComponentBytes( V_COMP ) * 8;
 
-    sstats->bit_rate = (sstats->seq_bits * sparams->frame_rate.numerator)/
-                        (sparams->frame_rate.denominator * m_num_coded_frames);
+    sstats->bit_rate = int((sstats->seq_bits * 
+                        (double)sparams->frame_rate.numerator)/
+                        (sparams->frame_rate.denominator * m_num_coded_frames));
 }
 
 int DiracEncoder::GetSequenceEnd (dirac_encoder_t *encoder)

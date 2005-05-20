@@ -75,7 +75,7 @@ static void display_help()
     cout << "\nx       ulong   I  Preset        Width of frame";
     cout << "\ny       ulong   I  Preset        Length of frame";
     cout << "\ncformat ulong   I  Yonly         Chroma format";
-    cout << "\ncfr     ulong   I  Preset        Frame rate(s) (e.n or e/n format)";
+    cout << "\nfr     ulong   I  Preset        Frame rate(s) (e.n or e/n format)";
     cout << "\nstart   ulong   I  0UL           Frame number to start encoding from";
     cout << "\nstop    ulong   I  EOF           Frame number after which encoding finishes";
     cout << "\nL1_sep  ulong   I  0UL           Separation of L1 frames";
