@@ -81,6 +81,36 @@ static void DisplayHelp()
     cout << "\nverbose              bool    I  false         Display information during process";
 }
 
+bool ReadSequenceParams (std::istream &in, SeqParams &seqparams)
+{
+    if (! in )
+        return false;
+
+    int temp_int;
+    bool temp_bool;
+
+    in >> temp_int;
+    seqparams.SetCFormat( (ChromaFormat)temp_int );
+
+    in >> temp_int;
+    seqparams.SetXl( temp_int );
+ 
+    in >> temp_int;
+    seqparams.SetYl( temp_int );
+
+    in >> temp_bool;
+    seqparams.SetInterlace( temp_bool );
+
+    in >> temp_bool;
+    seqparams.SetTopFieldFirst( temp_bool );
+
+    in >> temp_int;    
+    seqparams.SetFrameRate( temp_int );
+
+    return true;
+}
+
+
 int main (int argc, char* argv[])
 {
     // read command line options
@@ -250,24 +280,10 @@ int main (int argc, char* argv[])
             } // m_name            
         } // opt
     } // args > 3
-
-    // Create objects for input and output picture sequences
-    FileStreamInput inputpic(input.c_str());
-    inputpic.ReadPicHeader();
-
-    // if the input sequence is Y only, make the ouput sequence 4:2:0
-    SeqParams seqparams = inputpic.GetSeqParams();
-    if (seqparams.CFormat() == Yonly)
-    {
-        seqparams.SetCFormat( format420 );
-    }
-    
-    FileStreamOutput outputpic(output.c_str(), seqparams);
-    outputpic.WritePicHeader();
     
     // read motion data from file
     if (verbose) cerr << endl << "Opening motion data file ";
-    char mv_file[100];
+    char mv_file[FILENAME_MAX];
     strcpy(mv_file, input.c_str());
     strcat(mv_file, ".imt");
     if (verbose) cerr << mv_file;
@@ -279,8 +295,22 @@ int main (int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    if (verbose) cerr << " ... ok" << endl << "Processing sequence...";
+    SeqParams seqparams;
+    ReadSequenceParams (in, seqparams);
+    // if the input sequence is Y only, make the ouput sequence 4:2:0
+    if (seqparams.CFormat() == Yonly)
+    {
+        seqparams.SetCFormat( format420 );
+    }
+
+
+    // Create objects for input and output picture sequences
+    FileStreamInput inputpic(input.c_str(), seqparams);
+
     
+    FileStreamOutput outputpic(output.c_str(), seqparams);
+    
+    if (verbose) cerr << " ... ok" << endl << "Processing sequence...";
     // *** process the sequence ***
     ProcessSequence process(oparams, inputpic, outputpic, in, verbose, buffer, seqparams);
     process.DoSequence(start, stop);
