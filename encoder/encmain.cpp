@@ -126,6 +126,32 @@ bool WritePicData (std::ofstream &fdata, dirac_encoder_t *encoder)
     return ret_stat;
 }
 
+bool WriteSequenceHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
+{
+    bool ret_stat = true;
+    dirac_seqparams_t &sparams = encoder->enc_ctx.seq_params;
+    ios::iostate oldExceptions = fdata.exceptions();
+    fdata.exceptions (ios::failbit | ios::badbit);
+
+    try
+    {
+        fdata << sparams.chroma << std::endl;
+        fdata << sparams.width << std::endl;
+        fdata << sparams.height << std::endl;
+        fdata << sparams.interlace << std::endl;
+        fdata << sparams.topfieldfirst << std::endl;
+        fdata << sparams.frame_rate.numerator << std::endl;
+    }
+
+    catch (...)
+    {
+        std::cerr << "Error writing sequence info in diagnostics file." << std::endl;
+        ret_stat =  false;
+    }
+    fdata.exceptions (oldExceptions);
+    return ret_stat;
+}
+
 bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
 {
     //dirac_seqparams_t &sparams = encoder->enc_ctx.seq_params;
@@ -455,7 +481,7 @@ int main (int argc, char* argv[])
                     decimal=strtoul(num_token, NULL, 10);
                 }
                 // calculate amount to raise to whole number
-                int multiply = (int)pow(10, decimal_length);
+                int multiply = (int)std::pow(10.0, decimal_length);
                 enc_ctx.seq_params.frame_rate.numerator =  
                     decimal == 0 ? whole : (multiply*whole)+decimal;
                 enc_ctx.seq_params.frame_rate.denominator = 
@@ -621,6 +647,8 @@ int main (int argc, char* argv[])
     }
         
     encoder = dirac_encoder_init( &enc_ctx, verbose );
+
+    WriteSequenceHeader ( outimt, encoder );
 
     if (!encoder)
     {
