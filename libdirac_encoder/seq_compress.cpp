@@ -234,7 +234,6 @@ Frame& SequenceCompressor::CompressNextFrame()
         int count = 0;
         int max_count = 3;
 
-
         do
         {
       
@@ -243,11 +242,11 @@ Frame& SequenceCompressor::CompressNextFrame()
 
             m_fcoder.Compress( *m_fbuffer , *m_origbuffer , m_current_display_fnum );
 
+            ++count;
+
             // Adjust the Lagrangian parameters and check if we need to re-do the frame
             recode = m_qmonitor.UpdateModel( m_fbuffer->GetFrame( m_current_display_fnum ) , 
                                              m_origbuffer->GetFrame( m_current_display_fnum ) , count );
-
-            ++count;
 
             if ( recode && count<max_count )
             {
