@@ -1,3 +1,351 @@
+2005-05-25 13:51  asuraparaju
+
+	* README.release: Add ffmpeg patch to checklist
+
+2005-05-25 13:43  asuraparaju
+
+	* NEWS: Included dirac-0.5.2 release notes
+
+2005-05-25 13:40  asuraparaju
+
+	* AUTHORS: Updated contibutor list
+
+2005-05-25 13:06  asuraparaju
+
+	* extras/patches/: MPlayer-1.0pre7_dirac-0.5.x.patch,
+	  README_MPlayer-1.0pre7_dirac-0.5.x_patch,
+	  README_ffmpeg-0.4.9-pre1-dirac-0.5.x_patch,
+	  README_transcode-0.6.14_dirac-0.5.x_patch,
+	  ffmpeg-0.4.9-pre1-dirac-0.5.x.patch,
+	  transcode-0.6.14-dirac-0.5.x.patch: Patches to MPlayer, ffmped
+	  and transcode to add Dirac support to these tools.
+
+2005-05-24 08:28  tjdwave
+
+	* libdirac_encoder/seq_compress.cpp: Fixed bug with count increment
+	  so that fast adaption takes place on first recoding rather than
+	  second.
+
+2005-05-20 15:30  asuraparaju
+
+	* README: Modified this file to remove all references to image
+	  header files which are no longer required.
+
+2005-05-20 15:25  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: Fix minor glitches in verbose
+	  output
+
+2005-05-20 15:02  asuraparaju
+
+	* win32/VS2003/dirac.sln: Remove MakeHeader from list of targets as
+	  contents of header files have been replaced with command line
+	  arguments.
+
+2005-05-20 15:01  asuraparaju
+
+	* encoder/encmain.cpp, libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/seq_compress.cpp: Fix bugs in bit rate reporting
+
+2005-05-20 14:05  asuraparaju
+
+	* Makefile.am, configure.ac: make_header utility is no longer
+	  required. So removing picheader directory from list of targets.
+
+2005-05-20 13:44  asuraparaju
+
+	* tests/: colourbars.at, create_dirac_testfile.pl, samples.at:
+	  Remove all references to make_header. Sequence header information
+	  is now passed to encoder on the command line.
+
+2005-05-20 13:43  asuraparaju
+
+	* util/instrumentation/instrmain.cpp: The encoder now writes
+	  sequence header information to the instrumentation output file.
+	  So read sequence info from instrumentation file.
+
+2005-05-20 13:42  asuraparaju
+
+	* encoder/encmain.cpp: Fix g++ errors. Write the sequence header
+	  information to the instrumentation file.
+
+2005-05-20 13:41  asuraparaju
+
+	* libdirac_common/: pic_io.cpp, pic_io.h: Delete all code relating
+	  to header file creation/reading. All sequence parameters are now
+	  supplied to encoder via the command line.
+
+2005-05-19 12:23  dirac_dev
+
+	* decoder/decmain.cpp: Removed any references to header files.
+
+2005-05-19 12:15  dirac_dev
+
+	* encoder/encmain.cpp: Removed requirement of a header file. All
+	  parameters are handled through command-line options. Most options
+	  will still be set by the pre-set option, although they can be
+	  overriden.
+
+2005-05-19 12:03  asuraparaju
+
+	* unit_tests/motion_comp_test.cpp: Update motion compensation tests
+	  to use the helper function in MotionCompensator to instantiate
+	  the MotionCompensator sub-class for the mv precision value
+	  selected.
+
+2005-05-19 11:56  asuraparaju
+
+	* libdirac_decoder/: frame_decompress.cpp, frame_decompress.h: Now
+	  reads the MV precision in the frame header.
+
+2005-05-19 11:35  asuraparaju
+
+	* libdirac_encoder/frame_compress.cpp: Writing the motion vector
+	  precision value as part of frame header. Default mv precision is
+	  set to 2 i.e. quarter pixel.
+
+2005-05-19 11:25  asuraparaju
+
+	* libdirac_motionest/me_utils_mmx.cpp: Fixed C/C++ aliasing
+	  violations that caused a performance slow down when compiled with
+	  gcc 4.0.0
+
+2005-05-19 11:24  asuraparaju
+
+	* libdirac_motionest/me_utils.h: Fixed gcc 4.0.0 warnings
+
+2005-05-19 11:23  asuraparaju
+
+	* libdirac_common/bit_manager.h: Updated bitstream version to 0.4
+
+2005-05-19 11:21  asuraparaju
+
+	* libdirac_common/: common.cpp, common.h: Added a field to
+	  CodecParams class for motion vector precision. A value of 'n'
+	  implies a precision of (2**-n)i pixel. i.e. a value of 2 implies
+	  an mv precision of 1/4 i.e. quarter pixel.
+
+2005-05-19 11:16  asuraparaju
+
+	* libdirac_common/: mot_comp.cpp, mot_comp.h: Added support for
+	  multiple levels of motion vector precision - pixel, half pixel,
+	  quarter pixel and multiple pixel. The main MotionCompensator
+	  class is an abstract class. Each of its sub-classes define the
+	  CompensateBlock function to a particular level of motion
+	  precision.
+
+2005-05-19 11:12  asuraparaju
+
+	* libdirac_motionest/: me_mode_decn.cpp, me_subpel.cpp,
+	  motion_estimate.cpp: Motion estimation modified to support
+	  variable motion vector precision. The implementation is
+	  preliminary, and should be modified later: vectors are scaled by
+	  a factor 8 to give a maximum of eighth-pel accuracy. Generic
+	  block matching functions are used at this accuracy even though
+	  true accuracy will be less - the subpixel search is merely
+	  truncated.
+
+	  In the future, half-pixel and quarter-pixel block matching
+	  functions should be written, just as for motion compensation as
+	  these will be faster.
+
+2005-05-13 09:40  mservais
+
+	* libdirac_common/mot_comp.cpp, libdirac_common/motion.cpp,
+	  libdirac_common/mv_codec.cpp,
+	  libdirac_motionest/me_motion_type_decn.cpp,
+	  libdirac_motionest/me_motion_type_decn.h,
+	  libdirac_motionest/motion_estimate.cpp: Prediction units can now
+	  use either global or block motion. (Decision based on similarity
+	  of global and block motion vectors.)
+
+2005-05-11 10:13  tjdwave
+
+	* libdirac_common/wavelet_utils.cpp: Fixed -pedantic errors on
+	  unused variables. Replaced dynamic built-in array (which violates
+	  ISO C++) with array class.
+
+2005-05-05 15:10  tjdwave
+
+	* unit_tests/wavelet_utils_test.cpp: Added support for testing all
+	  different wavelet transforms for invertibility.
+
+2005-05-04 14:35  tjdwave
+
+	* libdirac_common/common.h, libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h, libdirac_common/band_codec.cpp,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp: Modifications to support
+	  different wavelet filter types.
+
+	  wavelet_utils.{cpp,h} Added three new filter types with lifting
+	  implementations, all much faster than Daubechies (9,7).
+	  Refactored the code to support filter selection in constructor of
+	  WaveletTransform class. Added method to correctly output DC band
+	  expected values. Separated off coefficient interleaving and
+	  deinterleaving. Setting of subband weights is now a
+	  WaveletTransform function, as noise weighting factors depend on
+	  the filter choice.
+
+	  band_codec.cpp Removed literal constant and used 0 instead for
+	  top-left DC value prediction.
+
+	  comp_compress.cpp, comp_decompress.cpp Changed default filters
+	  from Daubechies (9,7) to faster filters which perform almost as
+	  well. This is a temporary mod. It is intended to be able to
+	  select fast filters via the CLI and for wavelet filter choices to
+	  be signalled in frame headers. This will be done in later
+	  refactoring to converge with the bitstream syntax in terms of
+	  frame types and header information.
+
+2005-05-04 12:13  mservais
+
+	* libdirac_motionest/: me_motion_type_decn.cpp,
+	  me_motion_type_decn.h: Introduces decision as to whether
+	  individual prediction units should use Global Motion or not. (Not
+	  complete yet!)
+
+2005-05-04 12:06  mservais
+
+	* libdirac_common/common.h, libdirac_common/motion.cpp,
+	  libdirac_common/motion.h, libdirac_common/mv_codec.cpp,
+	  libdirac_common/mv_codec.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_motionest/motion_estimate.cpp,
+	  win32/VS2003/libdirac_common/libdirac_common.vcproj,
+	  win32/VS2003/libdirac_motionest/libdirac_motionest.vcproj:
+	  Introduces decision as to whether individual prediction units
+	  should use Global Motion or not. (Not complete yet!)
+
+2005-04-13 16:36  asuraparaju
+
+	* libdirac_common/arrays.h: New constants PIXEL_VALUE_MIN and
+	  PIXEL_VALUE_MAX to define the upper and lower limits on pixel
+	  values.
+
+2005-04-13 16:28  asuraparaju
+
+	* libdirac_common/frame.cpp: Included an MMX implementation of
+	  Frame::ClipComponent to achieve a decoding speedup in conjuction
+	  with mot_comp.cpp changes. Also using pointer arithmetic insted
+	  of index operator when accessing TwoDArray objects.
+
+2005-04-13 16:25  asuraparaju
+
+	* libdirac_motionest/me_utils_mmx.cpp: Using pointer arithmetic
+	  instead of the index operator when using TwoDArray objects to get
+	  an overall slight improvement in encoding speed.
+
+2005-04-13 16:16  asuraparaju
+
+	* libdirac_common/mot_comp.cpp: Partially applied patch 1151976.
+	  Using pointer arithmetic instead of index operator to access
+	  TwoDArray objects. A few other tweaks to improve cache locality.
+
+2005-04-13 16:09  asuraparaju
+
+	* libdirac_encoder/quant_chooser.cpp: Fix errors reported by
+	  MIPSPro C++ compiler regarding not specifiying the namespace for
+	  math functions like floor and log.
+
+2005-04-13 16:06  asuraparaju
+
+	* libdirac_common/arith_codec.h: Fix g++ warning re unused
+	  variables.
+
+2005-04-13 16:06  asuraparaju
+
+	* configure.ac: Included icc compile time flag -wr964 to treat
+	  warning 964 as a remark when mmx is enabled.
+
+2005-04-12 11:56  timborer
+
+	* doc/DiracSpecV0.1.doc: Modifed default Motion Vector precision
+	  (now 1/4 pel), added note that max MV precision should be
+	  included in Level. Corrected typos.
+
+2005-04-06 15:31  tjdwave
+
+	* libdirac_common/: band_codec.cpp, band_codec.h, mv_codec.cpp,
+	  mv_codec.h: Oops. Correct files now uploaded.
+
+2005-04-06 15:28  tjdwave
+
+	* libdirac_common/: band_codec.cpp, band_codec.h, mv_codec.cpp,
+	  mv_codec.h: Changes to reflect mods to arith_codec.h: in
+	  particular, Update is removed as this is no longer a virtual
+	  function. Instead the base class function is called directly in
+	  the encoding/decoding engines.
+
+2005-04-06 15:07  tjdwave
+
+	* libdirac_common/arith_codec.h: Speed-up to arithmetic coding and
+	  decoding, using probability range renormalisation to avoid
+	  unnecessary divides.
+
+2005-04-05 14:56  timborer
+
+	* doc/DiracSpecV0.1.doc: Initial draft of Dirac spec. This is not a
+	  specification of what we have but a proposed spec for what we
+	  want. At the moment it focuses on syntax rather than semantics.
+	  It is inkorect and incomplet.
+
+2005-03-17 11:21  mservais
+
+	* libdirac_motionest/motion_estimate.cpp: Example with "Global
+	  Motion Only" set to 1.
+
+2005-03-17 11:01  mservais
+
+	* libdirac_motionest/: filter_weighted_local.cpp,
+	  global_motion.cpp, me_mode_decn.cpp, model_affine.cpp,
+	  model_affine.h, model_global_motion.h, model_projective.h,
+	  motion_estimate.cpp, reject_intensity.cpp, reject_sad.cpp:
+	  Initial implementation of Global Motion. Allows for Global Motion
+	  Only switch for each frame. If this is set, only the Global
+	  Motion Parameters are coded - i.e. no block motion vectors are
+	  coded.
+
+2005-03-17 10:57  mservais
+
+	* libdirac_common/common.h, libdirac_common/mot_comp.cpp,
+	  libdirac_common/motion.cpp, libdirac_common/motion.h,
+	  libdirac_common/mv_codec.cpp, libdirac_common/mv_codec.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/frame_decompress.h,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/frame_compress.h: Initial implementation of
+	  Global Motion. Allows for Global Motion Only switch for each
+	  frame. If this is set, only the Global Motion Parameters are
+	  coded - i.e. no block motion vectors are coded.
+
+2005-03-17 10:43  mservais
+
+	* libdirac_motionest/reject_local.cpp: Initial implementation of
+	  Global Motion. Allows for Global Motion Only switch for each
+	  frame. If this is set, only the Global Motion Parameters are
+	  coded - i.e. no block motion vectors are coded.
+
+2005-03-17 10:34  mservais
+
+	* libdirac_motionest/global_motion.h: Initial Implementation for
+	  Global Motion. Allows a Global Motion Only switch for each frame.
+	  If this is set, only the Global Motion Parameters are coded -
+	  i.e. no block motion vectors are coded.
+
+2005-03-11 13:43  asuraparaju
+
+	* libdirac_common/: common.cpp, common.h: Fixed bug 1159031.
+	  dirac_quantiser_lists is not an extern anymore and is limited to
+	  file scope.
+
+2005-03-04 14:55  tjdwave
+
+	* libdirac_common/arrays.h, AUTHORS: Added Mike Ferenduros' mods to
+	  arrays, so that memory allocation is always contiguous. Also
+	  added him to list of contributors.
+
 2005-02-17 13:05  asuraparaju
 
 	* NEWS: Included Dirac 0.5.1 release notes
