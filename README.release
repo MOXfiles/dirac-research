@@ -95,12 +95,15 @@ that the release distribution has all the necessary files.
 6.11 Recreate the MPlayer patch if required and upload it to Dirac project
      page on Sourceforge
 
-6.12 Recreate the Dirac Directshow filter if required and upload it to Dirac 
+6.12 Recreate the ffmpeg patch if required and upload it to Dirac project
+     page on Sourceforge
+
+6.13 Recreate the Dirac Directshow filter if required and upload it to Dirac 
      project page on Sourceforge
 
-6.13 Announce the new release by sending an email to the Dirac announce mailing 
+6.14 Announce the new release by sending an email to the Dirac announce mailing 
     list dirac-announce@lists.sourceforge.net
 
-6.14 Update News on the Dirac project page on Sourceforge.
+6.15 Update News on the Dirac project page on Sourceforge.
 
-6.15 Update project page on www.freshmeat.net
+6.16 Update project page on www.freshmeat.net
