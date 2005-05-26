@@ -283,10 +283,10 @@ sequence and encoder parameters are set based on the preset value.
 Other parameters.
 
 verbose   : turn on verbosity (if you don't, you won't see the final bitrate!)
-x         : Width of video frame
-y         : Height of video frame
+width     : Width of video frame
+height    : Height of video frame
 cformat   : Chroma format. It accepts a number between 0 and 4.
-            0 - Yonly, 1 - 4:2:2, 2 - 4:4:4, 3 - 4:2:0 and 4 - 4:4:4
+            0 - Yonly, 1 - 4:2:2, 2 - 4:4:4, 3 - 4:2:0 and 4 - 4:1:1
 fr        : Frame rate. Can be a decimal number or a fraction. Examples
             of acceptable values are 25, 29.97, 12.5, 30000/1.
 start     : code from this frame number
