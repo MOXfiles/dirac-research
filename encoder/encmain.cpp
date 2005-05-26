@@ -72,10 +72,10 @@ static void display_help()
     cout << "\nHD720   bool    I  false         Use HD-720 compression presets";
     cout << "\nHD1080  bool    I  false         Use HD-1080 compression presets";
     cout << "\nSD576   bool    I  false         Use SD-576 compression presets";
-    cout << "\nx       ulong   I  Preset        Width of frame";
-    cout << "\ny       ulong   I  Preset        Length of frame";
-    cout << "\ncformat ulong   I  Yonly         Chroma format";
-    cout << "\nfr     ulong   I  Preset        Frame rate(s) (e.n or e/n format)";
+    cout << "\nwidth   ulong   I  Preset        Width of frame";
+    cout << "\nheight  ulong   I  Preset        Length of frame";
+    cout << "\ncformat ulong   I  Yonly         Chroma format 0=Yonly 1=422 2=444 3=420 4=411";
+    cout << "\nfr      ulong   I  Preset        Frame rate(s) (e.n or e/n format)";
     cout << "\nstart   ulong   I  0UL           Frame number to start encoding from";
     cout << "\nstop    ulong   I  EOF           Frame number after which encoding finishes";
     cout << "\nL1_sep  ulong   I  0UL           Separation of L1 frames";
@@ -84,10 +84,10 @@ static void display_help()
     cout << "\nyblen   ulong   I  0UL           Overlapping block vertical length";
     cout << "\nxbsep   ulong   I  0UL           Overlapping block horizontal separation";
     cout << "\nybsep   ulong   I  0UL           Overlapping block vertical separation";
-    cout << "\ncpd     ulong   I  0UL           Perceptual weighting - vertical cycles per degree";
+    cout << "\ncpd     ulong   I  0UL           Perceptual weighting - vertical cycles per deg.";
     cout << "\nqf      float   I  0.0F          Overall quality factor (0.0 - 10.0)";
     cout << "\nverbose bool    I  false         Verbose mode";
-    cout << "\nnolocal bool    I  false         Do no write diagnostics and locally decoded output";
+    cout << "\nnolocal bool    I  false         Don't write diagnostics & locally decoded video";
     cout << endl;
 }
 
@@ -648,14 +648,14 @@ int main (int argc, char* argv[])
         
     encoder = dirac_encoder_init( &enc_ctx, verbose );
 
-    WriteSequenceHeader ( outimt, encoder );
-
     if (!encoder)
     {
         std::cerr << "Unrecoverable Error: dirac_encoder_init failed. "
                   << std::endl;
         return EXIT_FAILURE;
     }
+
+    WriteSequenceHeader ( outimt, encoder );
 
     int frames_written = 0;
     dirac_encoder_state_t state;
