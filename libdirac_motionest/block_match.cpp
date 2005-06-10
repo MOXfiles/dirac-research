@@ -213,7 +213,7 @@ ValueType BlockMatcher::GetVar( const MVector& predmv , const MVector& mv ) cons
     diff.x = mv.x-predmv.x;
     diff.y = mv.y-predmv.y;    
 
-    return std::max( Norm1( diff ) , m_var_max );
+    return Norm1( diff );
 }
  
 ValueType BlockMatcher::GetVarUp( const MVector& predmv , const MVector& mv ) const
@@ -222,7 +222,7 @@ ValueType BlockMatcher::GetVarUp( const MVector& predmv , const MVector& mv ) co
     diff.x = mv.x-predmv.x;
     diff.y = mv.y-predmv.y;    
 
-    return std::max( Norm1( diff ) , m_var_max_up );
+    return Norm1( diff );
 }   
 
 void BlockMatcher::FindBestMatch(int xpos , int ypos ,

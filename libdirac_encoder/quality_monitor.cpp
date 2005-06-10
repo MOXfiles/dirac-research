@@ -84,7 +84,7 @@ void QualityMonitor::ResetAll()
     // Exact value TBD - will incorporate stuff about blocks and so on
     // Also need to think about how this can be adapted for sequences with more or less motion 
 
-    m_me_ratio = 0.1;
+    m_me_ratio = 0.75;
 
  	// set up the Lagrangian parameters
     for (size_t fsort=0; fsort<3; ++fsort)
@@ -197,16 +197,11 @@ double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& or
 {
 
     // The number of regions to look at in assessing quality
-    int xregions( 4 );
-    int yregions( 3 );
-
-    if ( fsort == I_frame )
-    {
-        xregions = 1;
-        yregions = 1;
-    }
+    const int xregions( 4 );
+    const int yregions( 3 );
 
     TwoDArray<long double> diff_array( yregions , xregions);
+    TwoDArray<long double> diff_sq_array( yregions , xregions);
 	long double diff;
     ValueType filt_orig, filt_coded;
 
@@ -231,7 +226,7 @@ double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& or
     { 
         for ( int p=0 ; p<diff_array.LengthX() ; p++ )
         { 
-            diff_array[q][p] = 0.0;
+            diff_sq_array[q][p] = 0.0;
 
             for (int j=ystart[q]; j<yend[q]; j++)
             {
@@ -245,31 +240,34 @@ double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& or
                     diff *= diff;
                     diff *= diff;
 
-                    diff_array[q][p] += diff;
+                    diff_sq_array[q][p] += diff;
                 }//i
             }//j
 
-            diff_array[q][p] /= ( xend[p]-xstart[p] ) * ( yend[q]-ystart[q] );
-            diff_array[q][p] = std::sqrt( diff_array[q][p] );
+            diff_sq_array[q][p] /= ( xend[p]-xstart[p] ) * ( yend[q]-ystart[q] );
 
             // now compensate for the fact that we've got two extra bits
-            diff_array[q][p] /= 16.0;
+            diff_sq_array[q][p] /= 256.0;
+
+            diff_array[q][p] = std::sqrt( diff_sq_array[q][p] );
 
         }// p
     }// q
      
-    // return the worst area
-    long double worst_diff = diff_array[0][0];
+    // return the self-weighted average
+
+    long double sum_diff( 0 );
+    long double sum_sq_diff( 0 );
     for ( int q=0 ; q<diff_array.LengthY() ; ++q )
     { 
         for ( int p=0 ; p<diff_array.LengthX() ; ++p )
         { 
-            if ( diff_array[q][p] > worst_diff )          
-                worst_diff = diff_array[q][p];
+            sum_diff += diff_array[q][p];
+            sum_sq_diff += diff_sq_array[q][p];
         }// p
     }// q
 
-	return static_cast<double> ( 10.0 * std::log10( 255.0*255.0 / worst_diff ) );	
+	return static_cast<double> ( 10.0 * std::log10( 255.0*255.0*sum_diff / sum_sq_diff ) );	
 }
 
 ValueType QualityMonitor::Filter( const PicArray& data , const int xpos , const int ypos ) const
