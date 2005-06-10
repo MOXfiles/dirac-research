@@ -781,8 +781,8 @@ static void SetEncoderParameters (dirac_encoder_context_t *enc_ctx, dirac_encode
         encparams.L1_sep = 3;
         encparams.num_L1 = 3;
         encparams.cpd = 32.0f;
-        encparams.xblen = 20;
-        encparams.yblen = 20;
+        encparams.xblen = 24;
+        encparams.yblen = 24;
         encparams.xbsep = 16;
         encparams.ybsep = 16;
         break;
