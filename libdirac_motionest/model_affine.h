@@ -65,6 +65,12 @@ namespace dirac
         */
         void CalculateModelParameters(MvFloatArray &, TwoDArray<int> &, OneDArray<float> &);
     
+		/*! 
+			Calcates additional two parameters for perspective case.
+			Done for testing purposes.
+		*/
+		//void EstimateProjectiveDenominator(MvFloatArray & mv, TwoDArray<int> & inliers, OneDArray<float> & parameters);
+
         //! Generates float global motion vector field
         void GenerateGlobalMotionVectors(MvFloatArray &, OneDArray<float> &);
     

@@ -155,6 +155,95 @@ void ModelProjective::CalculateModelParameters(MvFloatArray & mv,
     parameters[7] = coeffs[7];
 }
 
+
+void ModelProjective::CalculateModelParametersOld(MvFloatArray & mv,
+                                               TwoDArray<int> & inliers,
+                                               OneDArray<float> & parameters)
+{
+    /*
+    // ****** DEBUG ******
+    // give fixed, small array of motion vectors
+    float a11 = 0.0;
+    float a12 = 0.0;
+    float a21 = 0.0;
+    float a22 = 0.0;
+
+    float b1 = 0.0;
+    float b2 = 0.0;
+
+    float c1 = 0.0;
+    float c2 = 0.0;
+
+    std::cerr<<std::endl<<"Scrub that, using fixed value MVs,";
+    std::cerr<<std::endl<<"A: "<<a11<<" "<<a12<<" "<<a21<<" "<<a22;
+    std::cerr<<std::endl<<"B: "<<b1<<" "<<b2;
+    std::cerr<<std::endl<<"C: "<<c1<<" "<<c2;
+
+    */
+    int count = 0;
+
+    for (int j=0;j<m_y_mvs;j++)
+    {
+        for (int i=0;i<m_x_mvs;i++)
+        {
+            if (inliers[j][i])
+            {
+                ++count;
+            }
+        }
+    }
+
+    OneDArray<float> xi( count );
+    OneDArray<float> yi( count );
+    OneDArray<float> xo( count );
+    OneDArray<float> yo( count );
+    OneDArray<float> t( ( xi.Length() + yi.Length() ) * ( ( xi.Length() + yi.Length() ) +1 ) );
+    
+    double coeffs[8];
+
+    count = 0;
+                            
+    for (int j=0;j<m_y_mvs;j++)
+    {
+        for (int i=0;i<m_y_mvs;i++)
+        {
+            if (inliers[j][i])
+            {
+                float x = i + 0.5 - ( m_x_mvs / 2 );
+                float y = j + 0.5 - ( m_y_mvs / 2 );
+
+
+                //mv[j][i].x = ( ( a11 * x ) + ( a12 * y ) + b1 ) / ( ( c1 * x ) + ( c2 * y ) + 1 );
+                //mv[j][i].y = ( ( a21 * x ) + ( a22 * y ) + b2 ) / ( ( c1 * x ) + ( c2 * y ) + 1 );
+
+                //std::cerr<<std::endl<<"Motion vectors: "<<i<<","<<j<<": "<<mv[j][i].x<<","<<mv[j][i].y;
+
+                xi[count] = x;
+                yi[count] = y;
+
+                xo[count] = mv[j][i].x;
+                yo[count] = mv[j][i].y;
+
+                ++count;
+            }
+        }
+    }
+
+    // ******* END DEBUG *******
+
+    Calc_mapping_coeffs( xi, yi, xo, yo, t, coeffs);
+
+    // set parameters for calling function    
+    parameters[0] = coeffs[0];
+    parameters[1] = coeffs[1];
+    parameters[2] = coeffs[3];
+    parameters[3] = coeffs[4];
+    parameters[4] = coeffs[2];
+    parameters[5] = coeffs[5];
+    parameters[6] = coeffs[6];
+    parameters[7] = coeffs[7];
+}
+
 int ModelProjective::Calc_mapping_coeffs( OneDArray<float>& xi,
                                           OneDArray<float>& yi, 
                                           OneDArray<float>& xo,

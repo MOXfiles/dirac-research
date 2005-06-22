@@ -73,6 +73,8 @@ void PixelMatcher::DoSearch(const FrameBuffer& my_buffer, int frame_num, MEData&
     else    
         ref2 = ref1;
 
+	std::cerr << std::endl << "ref1 = " << ref1 << ", ref2 = " << ref2;
+
     // Obtain C++ references to the reference picture luma components
     const PicArray& ref1_data = my_buffer.GetComponent(ref1 , Y_COMP);
     const PicArray& ref2_data = my_buffer.GetComponent(ref2 , Y_COMP);

@@ -49,6 +49,7 @@
 #include <libdirac_motionest/filter_weighted_local.h>
 #include <libdirac_motionest/reject_outlier.h>
 #include <libdirac_motionest/reject_edge.h>
+#include <libdirac_motionest/model_global_motion.h>
 
 namespace dirac
 {
@@ -68,7 +69,8 @@ namespace dirac
         ~GlobalMotion();
     
         //! Single public function. Interface to carry out approximation process
-        void ModelGlobalMotion(int);
+        void ModelGlobalMotion();
+		void ModelGlobalMotion(int);
     
     private :
         //! Frame buffer reference

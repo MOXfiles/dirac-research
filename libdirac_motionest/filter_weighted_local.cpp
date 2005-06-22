@@ -417,7 +417,8 @@ void FilterWeightedLocal::Refine(MvFloatArray & gmv, int & score)
     // test refined motion vector field
     OneDArray<float> model_parameters(10);                                           // create vector to hold model parameters
     m_model.CalculateModelParameters(mv_filt, m_global_inliers, model_parameters);  // calculate model parameters
-    m_model.GenerateGlobalMotionVectors(gmv, model_parameters);                     // generate global motion vectors
+	
+	m_model.GenerateGlobalMotionVectors(gmv, model_parameters);                     // generate global motion vectors
     int new_score = m_test.Test(gmv, m_global_inliers);                             // test new global motion vectors
 
     //if (m_debug) std::cerr<<std::endl<<"Filter model parameters: "<<model_parameters[0]<<" "<<model_parameters[1]<<" "<<model_parameters[2]<<" "<<model_parameters[3]

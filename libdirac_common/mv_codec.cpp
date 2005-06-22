@@ -338,7 +338,6 @@ inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode 
 	return result; 
 }
 
-
 inline bool MvDataCodec::BlockMotionTypePrediction(const TwoDArray < bool > & preddata) const
 {
 	bool result = true;
@@ -356,6 +355,28 @@ inline bool MvDataCodec::BlockMotionTypePrediction(const TwoDArray < bool > & pr
 		result = preddata[b_yp][b_xp-1]; 
 	else if (b_xp == 0 && b_yp > 0)
 		result = preddata[b_yp-1][b_xp]; 
+
+	return result; 
+}
+
+
+inline bool MvDataCodec::MacroBlockMotionTypePrediction(const TwoDArray < bool > & preddata) const
+{
+	bool result = true;
+	std::vector <unsigned int> nbrs; 
+
+	if (mb_xp > 0 && mb_yp > 0)
+	{
+		nbrs.push_back( (unsigned int)( preddata[mb_yp-1][mb_xp] ) ); 
+		nbrs.push_back( (unsigned int)( preddata[mb_yp-1][mb_xp-1] ) ); 
+		nbrs.push_back( (unsigned int)( preddata[mb_yp][mb_xp-1] ) ); 
+
+		result = (bool)GetMean(nbrs);
+	}
+	else if (mb_xp > 0 && mb_yp == 0)
+		result = preddata[mb_yp][mb_xp-1]; 
+	else if (mb_xp == 0 && mb_yp > 0)
+		result = preddata[mb_yp-1][mb_xp]; 
 
 	return result; 
 }
@@ -483,13 +504,28 @@ inline ValueType MvDataCodec::DCPrediction(const TwoDArray < ValueType > & dcdat
 }
 
 
+bool MvDataCodec::IsPartlyInterMacroBlock( MvData& in_data )
+{
+	// returns true if there is at least one non-intra Prediction Unit in the Macro-Block
+	int split_depth = in_data.MBSplit()[mb_yp][mb_xp]; 
+	int step = 4  >>  (split_depth); 
+	bool IsPartlyInter = false;
+
+	for (int y = mb_tlb_y; y < mb_tlb_y+4; y += step)
+		for (int x = mb_tlb_x; x < mb_tlb_x+4; x += step)
+			IsPartlyInter = IsPartlyInter || (in_data.Mode()[y][x] != INTRA);
+
+	return IsPartlyInter;
+}		
+
 void MvDataCodec::DoWorkCode( MvData& in_data )
 {
 	int step,max; 
 	int pstep,pmax; 
 	int split_depth; 
-	bool common_ref; 
-
+	bool common_ref = false; 
+	bool MB_has_inter_PU;
+	PredMode common_mode;
 
 	std::cerr<<std::endl<<"==> Encoder: Global Motion Flag = " << in_data.m_use_global;
 	std::cerr<<";  Global Motion Only Flag = " << in_data.m_use_global_only;
@@ -503,37 +539,94 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 
 	MB_count = 0; 
 
-	for (mb_yp = 0, mb_tlb_y = 0;  mb_yp < in_data.MBSplit().LengthY();  ++mb_yp, mb_tlb_y += 4)
+	for (mb_yp = 0, mb_tlb_y = 0; mb_yp <  in_data.MBSplit().LengthY(); ++mb_yp, mb_tlb_y += 4)
 	{
-		for (mb_xp = 0,mb_tlb_x = 0; mb_xp < in_data.MBSplit().LengthX(); ++mb_xp,mb_tlb_x += 4)
+		for (mb_xp = 0,mb_tlb_x = 0; mb_xp <  in_data.MBSplit().LengthX(); ++mb_xp,mb_tlb_x += 4)
 		{
+
+			if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK)
+				MB_has_inter_PU = false;
+
 			//start with split mode
 			CodeMBSplit(in_data); 
 			split_depth = in_data.MBSplit()[mb_yp][mb_xp]; 
-
 			step = 4  >>  (split_depth); 
 			max = (1 << split_depth); 
 
 			//next do common_ref
 			if(split_depth != 0)
 			{
-				CodeMBCom(in_data); 
+				if (USE_COMMON_MODE_FLAG)
+					CodeMBCom(in_data); 
 				pstep = step; 
 				pmax = max; 
 			}
-			else
+			else // Pred. Unit (PU) is the whole MB
 			{
+				if (USE_COMMON_MODE_FLAG)
+					in_data.MBCommonMode()[mb_yp][mb_xp] = true; 
 				pstep = 4; 
 				pmax = 1; 
 			}
-			common_ref = in_data.MBCommonMode()[mb_yp][mb_xp]; 
+
+			//std::cerr<<std::endl<<"***** Prediction Modes: ";
+
+			if (USE_COMMON_MODE_FLAG)
+			{
+				common_ref = in_data.MBCommonMode()[mb_yp][mb_xp]; 
+				if (common_ref)
+				{
+					b_yp = mb_tlb_y;
+					b_xp = mb_tlb_x;
+					common_mode = in_data.Mode()[b_yp][b_xp];
+					CodePredmode(in_data);
+					//std::cerr<<"(Common Mode = "<<common_mode<<") ";
+				}
+			}
+
 
 			//do prediction modes            
 			for (b_yp = mb_tlb_y; b_yp < mb_tlb_y+4; b_yp += pstep)
+			{
 				for (b_xp = mb_tlb_x; b_xp < mb_tlb_x+4; b_xp += pstep)
-					CodePredmode(in_data); 
+				{
+					if (USE_COMMON_MODE_FLAG && common_ref)
+						in_data.Mode()[b_yp][b_xp] = common_mode; 
+					else
+						CodePredmode(in_data);
+					
+					//std::cerr<<in_data.Mode()[b_yp][b_xp];
+					
+					if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK)
+						MB_has_inter_PU = MB_has_inter_PU || (in_data.Mode()[b_yp][b_xp] != INTRA);
+				}
+			}
 
-			step = 4 >> (split_depth);             
+			step = 4 >> (split_depth);   // 1, 2 or 4          
+
+			if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK && !MB_has_inter_PU)
+				std::cerr<<std::endl<<"Macroblock at ("<<mb_yp<<", "<<mb_xp<<") has ONLY intra prediction unit(s)";
+
+			if (pstep!=step)
+				std::cerr<<std::endl<<"********** step = "<<step<<",  pstep = "<<pstep<< "********** ";
+
+			if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK) 
+			{
+				if(in_data.m_use_global) // if using Global Motion
+				{
+					if(MB_has_inter_PU/*IsPartlyInterMacroBlock(in_data)*/) // if MB is not totally Intra
+					{
+						if(!in_data.m_use_global_only) // if not using Global Motion exclusively: 
+							CodeMacroBlockMotionType(in_data); // encode whether or not it gets used for current Macro-Block		
+						
+						// Flag constituent PUs as using Global/Block Motion:
+						for (b_yp = mb_tlb_y; b_yp < mb_tlb_y+4; b_yp += step)
+							for (b_xp = mb_tlb_x; b_xp < mb_tlb_x+4; b_xp += step)
+								in_data.BlockUseGlobal()[b_yp][b_xp] = in_data.MacroBlockUseGlobal()[mb_yp][mb_xp]; 
+					}
+				}
+			}
+
 
 			//now do all the block mvs in the mb            
 			for (b_yp = mb_tlb_y; b_yp < mb_tlb_y+4; b_yp += step)
@@ -547,18 +640,17 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 
 					else // If an Inter Block:
 					{
+
 						if(in_data.m_use_global_only) // if ONLY using Global Motion: 
-							UseGlobalMotionForBlock( in_data ); // Use Global Motion Vectors
+							in_data.BlockUseGlobal()[b_yp][b_xp] = true;
 
-						else // if using block (and possibly) Global Motion:
+						else // if using block (and possibly global) Motion:
 						{
-							if(in_data.m_use_global) // if using Global Motion
-								CodeBlockMotionType(in_data); // encode whether or not it gets used for current Pred. Unit
+							if (!FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK)
+								if(in_data.m_use_global) // if using Global Motion
+									CodeBlockMotionType(in_data); // encode whether or not it gets used for current Pred. Unit				
 
-							if(in_data.BlockUseGlobal()[b_yp][b_xp]) // if using Global Motion for the current Pred. Unit
-								UseGlobalMotionForBlock( in_data ); // Use Global Motion Vectors
-
-							else // if not using Global Motion for the current Pred. Unit
+							if(!in_data.BlockUseGlobal()[b_yp][b_xp]) // if not using Global Motion for the current Pred. Unit
 							{
 								if (in_data.Mode()[b_yp][b_xp] == REF1_ONLY || in_data.Mode()[b_yp][b_xp] == REF1AND2 )
 									CodeMv1(in_data); 
@@ -567,16 +659,42 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 									CodeMv2(in_data);
 							}
 						}
-					}
-	
-				}//b_xp
-			}//b_yp    
 
-			//TODO: Update all contexts here?
+
+						// propagate throughout Prediction Unit:
+
+						if (in_data.BlockUseGlobal()[b_yp][b_xp]) // if using Global Motion for the current Pred. Unit
+						{
+							for (int y = b_yp;  y < b_yp + pstep;  y++)
+							{
+								for (int x = b_xp;  x < b_xp + pstep;  x++) 
+								{
+									in_data.Vectors(1)[y][x].x = in_data.GlobalMotionVectors(1)[y][x].x; 
+									in_data.Vectors(1)[y][x].y = in_data.GlobalMotionVectors(1)[y][x].y; 
+									in_data.Vectors(2)[y][x].x = in_data.GlobalMotionVectors(2)[y][x].x; 
+									in_data.Vectors(2)[y][x].y = in_data.GlobalMotionVectors(2)[y][x].y;
+								}
+							}
+						}
+						else // if not using Global Motion for the current Pred. Unit
+						{
+							for (int y = b_yp;  y < b_yp + pstep;  y++) 
+							{
+								for (int x = b_xp;  x < b_xp + pstep;  x++)
+								{
+									in_data.Vectors(1)[y][x].x = in_data.Vectors(1)[b_yp][b_xp].x; 
+									in_data.Vectors(1)[y][x].y = in_data.Vectors(1)[b_yp][b_xp].y; 
+									in_data.Vectors(2)[y][x].x = in_data.Vectors(2)[b_yp][b_xp].x; 
+									in_data.Vectors(2)[y][x].y = in_data.Vectors(2)[b_yp][b_xp].y;
+								}
+							}
+						}
+					}
+				}//b_xp
+			}//b_yp   
 
 		}//mb_xp
 	}//mb_yp
-
 }
 
 
@@ -663,6 +781,16 @@ void MvDataCodec::CodeBlockMotionType(const MvData& in_data)
 		EncodeSymbol( 0 , ChooseBlockMotionTypePredContext() );
 }
 
+
+void MvDataCodec::CodeMacroBlockMotionType(const MvData& in_data)
+{
+	bool val = in_data.MacroBlockUseGlobal()[mb_yp][mb_xp] == MacroBlockMotionTypePrediction( in_data.MacroBlockUseGlobal() ); 
+
+	if (val == true)
+		EncodeSymbol( 1 , ChooseBlockMotionTypePredContext() );
+	else 
+		EncodeSymbol( 0 , ChooseBlockMotionTypePredContext() );
+}
 
 
 void MvDataCodec::CodeMv1(const MvData& in_data )
@@ -774,8 +902,10 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 	int step,max; 
 	int pstep,pmax;     
 	int split_depth; 
-	bool common_ref; 
-	int xstart,ystart;     
+	bool common_ref = false; 
+	int xstart,ystart;  
+	bool MB_has_inter_PU;
+	PredMode common_mode;
 
 	std::cerr<<std::endl<<"==> Decoder: Global Motion Flag = " << out_data.m_use_global;
 	std::cerr<<";  Global Motion Only Flag = " << out_data.m_use_global_only;
@@ -787,10 +917,14 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 	}
 
 
-	for (mb_yp = 0,mb_tlb_y = 0; mb_yp < out_data.MBSplit().LengthY(); ++mb_yp,mb_tlb_y += 4)
+	for (mb_yp = 0, mb_tlb_y = 0; mb_yp < out_data.MBSplit().LengthY(); ++mb_yp, mb_tlb_y += 4)
 	{
 		for (mb_xp = 0,mb_tlb_x = 0; mb_xp < out_data.MBSplit().LengthX(); ++mb_xp,mb_tlb_x += 4)
 		{
+
+			if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK)
+				MB_has_inter_PU = false;
+
 			//start with split mode
 			DecodeMBSplit( out_data ); 
 			split_depth = out_data.MBSplit()[mb_yp][mb_xp]; 
@@ -800,33 +934,81 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 			//next do common_ref
 			if(split_depth  !=  0)
 			{
-				DecodeMBCom( out_data ); 
+				if (USE_COMMON_MODE_FLAG)
+					DecodeMBCom( out_data ); 
 				pstep = step; 
 				pmax = max; 
 			}
 			else
 			{
-				out_data.MBCommonMode()[mb_yp][mb_xp] = true; 
+				if (USE_COMMON_MODE_FLAG)
+					out_data.MBCommonMode()[mb_yp][mb_xp] = true; 
 				pstep = 4; 
 				pmax = 1; 
 			}
 
-			common_ref = out_data.MBCommonMode()[mb_yp][mb_xp]; 
+			//std::cerr<<std::endl<<"***** Prediction Modes: ";
+
+			if (USE_COMMON_MODE_FLAG)
+			{	common_ref = out_data.MBCommonMode()[mb_yp][mb_xp]; 
+				if (common_ref)
+				{	
+					b_yp = mb_tlb_y;
+					b_xp = mb_tlb_x;
+					DecodePredmode(out_data);
+					common_mode = out_data.Mode()[b_yp][b_xp];
+					//std::cerr<<"(Common Mode = "<<common_mode<<") ";
+				}
+			}
+
 
 			// do prediction modes
 			for (b_yp = mb_tlb_y;  b_yp < mb_tlb_y + 4;  b_yp += pstep)
 			{                
 				for (b_xp = mb_tlb_x; b_xp < mb_tlb_x + 4;  b_xp += pstep)
 				{
-					DecodePredmode(out_data); 
-					//std::cerr <<  out_data.Mode()[b_yp][b_xp];
+					if (USE_COMMON_MODE_FLAG && common_ref)
+						out_data.Mode()[b_yp][b_xp] = common_mode; 
+					else
+						DecodePredmode(out_data); 
+					
+					//std::cerr<<out_data.Mode()[b_yp][b_xp];
 
-					// propagate throughout MB                
+					// propagate throughout Prediction Unit                
 					for (int y = b_yp;  y < b_yp + pstep;  y++)
 						for (int x = b_xp;  x < b_xp + pstep;  x++)
-							out_data.Mode()[y][x] = out_data.Mode()[b_yp][b_xp];                                                         
+							out_data.Mode()[y][x] = out_data.Mode()[b_yp][b_xp];    
+
+					if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK)
+						MB_has_inter_PU = MB_has_inter_PU || (out_data.Mode()[b_yp][b_xp] != INTRA);
+
 				}
 			}
+
+			if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK && !MB_has_inter_PU)
+				std::cerr<<std::endl<<"Macroblock at ("<<mb_yp<<", "<<mb_xp<<") has ONLY intra prediction unit(s)";
+
+			if (pstep!=step)
+				std::cerr<<std::endl<<"********** step = "<<step<<",  pstep = "<<pstep<< "********** ";
+
+			if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK) 
+			{
+				if(out_data.m_use_global) // if using Global Motion
+				{
+					if(MB_has_inter_PU/*IsPartlyInterMacroBlock(out_data)*/) // if MB is not totally Intra
+					{
+						if(!out_data.m_use_global_only) // if not using Global Motion exclusively: 
+							DecodeMacroBlockMotionType(out_data); // encode whether or not it gets used for current Macro-Block		
+
+						// Flag constituent PUs as using Global/Block Motion:
+						for (b_yp = mb_tlb_y; b_yp < mb_tlb_y+4; b_yp += step)
+							for (b_xp = mb_tlb_x; b_xp < mb_tlb_x+4; b_xp += step)
+								out_data.BlockUseGlobal()[b_yp][b_xp] = out_data.MacroBlockUseGlobal()[mb_yp][mb_xp]; 
+					}
+				}
+			}
+
+
 
 			//now do all the block mvs in the mb
 			for (int j = 0; j < max; ++j)
@@ -843,17 +1025,15 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 					else // If an Inter Block: 
 					{
 						if(out_data.m_use_global_only) // if ONLY using Global Motion: 
-							UseGlobalMotionForBlock( out_data ); // Use Global Motion Vectors
+							out_data.BlockUseGlobal()[b_yp][b_xp] = true;
 
-						else // if using block (and possibly) Global Motion:	
+						else // if using block (and possibly Global) Motion:	
 						{
-							if(out_data.m_use_global) // if using Global Motion
-								DecodeBlockMotionType(out_data); // decode whether or not it gets used for current Pred. Unit
+							if (!FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK)
+								if(out_data.m_use_global) // if using Global Motion
+									DecodeBlockMotionType(out_data); // decode whether or not it gets used for current Pred. Unit
 
-							if(out_data.BlockUseGlobal()[b_yp][b_xp]) // if using Global Motion for the current Pred. Unit
-								UseGlobalMotionForBlock( out_data ); // Use Global Motion Vectors for current Pred. Unit
-
-							else // if not using Global Motion for the current Pred. Unit
+							if(!out_data.BlockUseGlobal()[b_yp][b_xp]) // if not using Global Motion for the current Pred. Unit
 							{
 								if (out_data.Mode()[b_yp][b_xp] == REF1_ONLY || out_data.Mode()[b_yp][b_xp] == REF1AND2 )
 									DecodeMv1(out_data); 
@@ -864,20 +1044,34 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 						}
 					}
 
-					//propagate throughout MB    
-					for (b_yp = ystart; b_yp < ystart+step; b_yp++)
+					//propagate throughout PU    
+					for (int b_yp2 = ystart; b_yp2 < ystart+step; b_yp2++)
 					{
-						for (b_xp = xstart; b_xp < xstart+step; b_xp++)
-						{                    
-							out_data.Vectors(1)[b_yp][b_xp].x = out_data.Vectors(1)[ystart][xstart].x; 
-							out_data.Vectors(1)[b_yp][b_xp].y = out_data.Vectors(1)[ystart][xstart].y; 
-							out_data.Vectors(2)[b_yp][b_xp].x = out_data.Vectors(2)[ystart][xstart].x; 
-							out_data.Vectors(2)[b_yp][b_xp].y = out_data.Vectors(2)[ystart][xstart].y; 
-							out_data.DC( Y_COMP )[b_yp][b_xp] = out_data.DC( Y_COMP )[ystart][xstart]; 
-							out_data.DC( U_COMP )[b_yp][b_xp] = out_data.DC( U_COMP )[ystart][xstart]; 
-							out_data.DC( V_COMP )[b_yp][b_xp] = out_data.DC( V_COMP )[ystart][xstart];
-						}//b_xp
-					}//b_yp
+						for (int b_xp2 = xstart; b_xp2 < xstart+step; b_xp2++)
+						{        
+							if(out_data.Mode()[b_yp][b_xp] == INTRA) {
+								out_data.DC( Y_COMP )[b_yp2][b_xp2] = out_data.DC( Y_COMP )[ystart][xstart]; 
+								out_data.DC( U_COMP )[b_yp2][b_xp2] = out_data.DC( U_COMP )[ystart][xstart]; 
+								out_data.DC( V_COMP )[b_yp2][b_xp2] = out_data.DC( V_COMP )[ystart][xstart];
+							}
+							else {
+								if (out_data.BlockUseGlobal()[b_yp][b_xp])
+								{
+									out_data.Vectors(1)[b_yp2][b_xp2].x = out_data.GlobalMotionVectors(1)[b_yp2][b_xp2].x; 
+									out_data.Vectors(1)[b_yp2][b_xp2].y = out_data.GlobalMotionVectors(1)[b_yp2][b_xp2].y; 
+									out_data.Vectors(2)[b_yp2][b_xp2].x = out_data.GlobalMotionVectors(2)[b_yp2][b_xp2].x; 
+									out_data.Vectors(2)[b_yp2][b_xp2].y = out_data.GlobalMotionVectors(2)[b_yp2][b_xp2].y; 
+								}
+								else 
+								{
+									out_data.Vectors(1)[b_yp2][b_xp2].x = out_data.Vectors(1)[ystart][xstart].x; 
+									out_data.Vectors(1)[b_yp2][b_xp2].y = out_data.Vectors(1)[ystart][xstart].y; 
+									out_data.Vectors(2)[b_yp2][b_xp2].x = out_data.Vectors(2)[ystart][xstart].x; 
+									out_data.Vectors(2)[b_yp2][b_xp2].y = out_data.Vectors(2)[ystart][xstart].y; 
+								}
+							}
+						}
+					}
 				}//i                    
 			}//j
 
@@ -988,6 +1182,19 @@ void MvDataCodec::DecodeBlockMotionType( MvData& out_data )
 		out_data.BlockUseGlobal()[b_yp][b_xp] = !BlockMotionTypePrediction( out_data.BlockUseGlobal() ); 
 }
 
+
+void MvDataCodec::DecodeMacroBlockMotionType( MvData& out_data )
+{
+	bool bit;
+
+	DecodeSymbol( bit , ChooseBlockMotionTypePredContext() ); 
+
+	if (bit)
+		out_data.MacroBlockUseGlobal()[mb_yp][mb_xp] = MacroBlockMotionTypePrediction( out_data.MacroBlockUseGlobal() ); 
+	else
+		out_data.MacroBlockUseGlobal()[mb_yp][mb_xp] = !MacroBlockMotionTypePrediction( out_data.MacroBlockUseGlobal() ); 
+}
+
 void MvDataCodec::DecodeMv1( MvData& out_data )
 {
 	MVector pred = Mv1Prediction( out_data.Vectors(1) , out_data.Mode() );     
@@ -1094,7 +1301,7 @@ void MvDataCodec::DecodeMv2( MvData& out_data )
 	out_data.Vectors(2)[b_yp][b_xp].y = val + pred.y; 
 }
 
-
+/*
 void MvDataCodec::UseGlobalMotionForBlock( MvData& mv_data )
 {
 	if ((mv_data.Mode()[b_yp][b_xp] == REF1_ONLY) || (mv_data.Mode()[b_yp][b_xp] == REF1AND2))
@@ -1108,6 +1315,7 @@ void MvDataCodec::UseGlobalMotionForBlock( MvData& mv_data )
 		mv_data.Vectors(2)[b_yp][b_xp].y = mv_data.GlobalMotionVectors(2)[b_yp][b_xp].y;
 	}
 }
+*/
 
 void MvDataCodec::DecodeDC( MvData& out_data )
 {

@@ -59,10 +59,9 @@ m_dc( 3 ),
 m_mb_split( ynumMB , xnumMB ),
 m_mb_common( ynumMB , xnumMB ),
 m_gm_params( Range(1 , num_refs) ),
-m_block_use_global( ynumblocks , xnumblocks )
-
+m_block_use_global( 4*ynumMB , 4*xnumMB ),
+m_macro_block_use_global( ynumMB , xnumMB )
 {
-
 	InitMvData();
 }
 
@@ -74,7 +73,8 @@ m_dc( 3 ),
 m_mb_split( ynumMB , xnumMB ),
 m_mb_common( ynumMB , xnumMB ),
 m_gm_params( Range(1 , num_refs) ),
-m_block_use_global( 4*ynumMB , 4*xnumMB )
+m_block_use_global( 4*ynumMB , 4*xnumMB ),
+m_macro_block_use_global( ynumMB , xnumMB )
 {
 	InitMvData();
 }
@@ -104,8 +104,15 @@ void MvData::InitMvData()
 	}
 
 	for (int x=0; x<m_block_use_global.LengthX(); x++) 
-		for (int y=0; y<m_block_use_global.LengthY(); y++)
+		for (int y=0; y<m_block_use_global.LengthY(); y++) 
 			m_block_use_global[y][x] = false;
+
+	for (int x=0; x<m_macro_block_use_global.LengthX(); x++) 
+		for (int y=0; y<m_macro_block_use_global.LengthY(); y++)
+			m_macro_block_use_global[y][x] = false;
+
+	m_use_global = false;
+	m_use_global_only = false; 
 
 	// Create the arrays of dc values
 	for ( int i=0 ; i<3 ; ++i )
@@ -146,12 +153,15 @@ void MvData::GenerateGlobalMotionVectors()
 			{
 				float x = (float)i + 0.5;
 				float y = (float)j + 0.5;
-
+				gmv[j][i].x = floor(params[0]*x + params[1]*y + params[4] + 0.5);
+				gmv[j][i].y = floor(params[2]*x + params[3]*y + params[5] + 0.5);
+				
+/*
 				gmv[j][i].x = int( params[0] * x ) + int( params[1] * y );
-				gmv[j][i].x = int( params[2] * x ) + int( params[3] * y );
+				gmv[j][i].y = int( params[2] * x ) + int( params[3] * y );
 				gmv[j][i].x += params[4];
 				gmv[j][i].y += params[5];
-				// ADD PROJECTIVE! 
+*/				// ADD PROJECTIVE! 
 			}
 		}
 	}
@@ -167,8 +177,8 @@ void MvData::QuantiseGlobalMotionParameters()
 		(*(m_gm_params[i]))[1] = floor( (*(m_gm_params[i]))[1] * 128 + 0.5 );
 		(*(m_gm_params[i]))[2] = floor( (*(m_gm_params[i]))[2] * 128 + 0.5 );
 		(*(m_gm_params[i]))[3] = floor( (*(m_gm_params[i]))[3] * 128 + 0.5 );
-		(*(m_gm_params[i]))[4] = floor( (*(m_gm_params[i]))[4] * 1 + 0.5 );
-		(*(m_gm_params[i]))[5] = floor( (*(m_gm_params[i]))[5] * 1 + 0.5 );
+		(*(m_gm_params[i]))[4] = floor( (*(m_gm_params[i]))[4] * 16 + 0.5 );
+		(*(m_gm_params[i]))[5] = floor( (*(m_gm_params[i]))[5] * 16 + 0.5 );
 		(*(m_gm_params[i]))[6] = floor( (*(m_gm_params[i]))[6] * 128 + 0.5 );
 		(*(m_gm_params[i]))[7] = floor( (*(m_gm_params[i]))[7] * 128 + 0.5 );
 	}
@@ -178,13 +188,12 @@ void MvData::DequantiseGlobalMotionParameters()
 {
 	for ( int i=m_gm_params.First() ; i<=m_gm_params.Last() ; ++i )
 	{
-
 		(*(m_gm_params[i]))[0] /= 128; 
 		(*(m_gm_params[i]))[1] /= 128; 
 		(*(m_gm_params[i]))[2] /= 128; 
 		(*(m_gm_params[i]))[3] /= 128; 
-		(*(m_gm_params[i]))[4] /= 1; 
-		(*(m_gm_params[i]))[5] /= 1; 
+		(*(m_gm_params[i]))[4] /= 16; 
+		(*(m_gm_params[i]))[5] /= 16; 
 		(*(m_gm_params[i]))[6] /= 128; 
 		(*(m_gm_params[i]))[7] /= 128; 
 	}

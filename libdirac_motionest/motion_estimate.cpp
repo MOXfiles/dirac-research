@@ -59,51 +59,38 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 
    // Step 1. 
    //Initial search gives vectors for each reference accurate to 1 pixel
-
     PixelMatcher pix_match( m_encparams );
     pix_match.DoSearch( my_buffer , frame_num , me_data);
 
     // Step 2. 
     // Pixel accurate vectors are then refined to 1/8 of a pixel
-
     SubpelRefine pelrefine( m_encparams );
     pelrefine.DoSubpel( my_buffer , frame_num , me_data );
 
-    // Now find BEST global motion vectors
-	GlobalMotion globalMotion( my_buffer, me_data, frame_num, m_encparams );
-	for (unsigned int i=1; i<=my_buffer.GetFrame(frame_num).GetFparams().Refs().size(); ++i)
-    {
-        std::cerr<<std::endl<<"Global Motion, ref "<<i;
-        globalMotion.ModelGlobalMotion(i);
-    }
+	// Step 3.
+	// Estimate the global motion vectors	
+	if (CONSIDER_GLOBAL_MOTION)
+	{
+		GlobalMotion globalMotion( my_buffer, me_data, frame_num, m_encparams );
+		globalMotion.ModelGlobalMotion();
+	}
 
-	// Step3.
+	// Step4.
     // We now have to decide how each macroblock should be split 
     // and which references should be used, and so on.
-
     ModeDecider my_mode_dec( m_encparams );
     my_mode_dec.DoModeDecn( my_buffer , frame_num , me_data );
 
-	// Step4.
-	// Choose between global and block motion for each prediction unit.
+	// Step5.
+	// Choose between global and block motion for each macroblock/prediction unit.
 	// Alternatively, we may want to use Global Motion only. 
-
 	MotionTypeDecider my_motion_type_dec;
-    int motion_choice = my_motion_type_dec.DoMotionTypeDecn( me_data );
-	//int motion_choice = 0; // Disable Global Motion - USED FOR TESTING ONLY!
-	
-	if (motion_choice==0)
-		me_data.SetGlobalMotionFlags(0,0); // No Global Motion
-	else if (motion_choice==1)
-		me_data.SetGlobalMotionFlags(1,1); // Only Global Motion
-	else 
-		me_data.SetGlobalMotionFlags(1,0); // Allow each Pred Unit to choose global/block motion
-	
+	if (CONSIDER_GLOBAL_MOTION)
+		my_motion_type_dec.DoMotionTypeDecn( me_data );
 
     // Finally, although not strictly part of motion estimation,
     // we have to assign DC values for chroma components for
     // blocks we're decided are intra.
-
     if (fparams.CFormat() != Yonly)
         SetChromaDC( my_buffer , frame_num , me_data );
 

@@ -49,6 +49,14 @@
 #include <libdirac_common/wavelet_utils.h>
 #include <vector>
 
+#define USE_COMMON_MODE_FLAG  true	// true : Uses a common mode flag for each Macro-Block
+									// false: Doesn't use a common mode flag.
+/* 
+	NOTE:	There are cases where MBCommonMode() is not set correctly. Sometimes, all Prediction Units in a
+			Macro-block ARE the same, but MBCommonMode() has a value of "0". This should be fixed if common 
+			motion is going to be flagged. (Comment by Marc). 
+*/
+
 namespace dirac
 {
     //! Codes and decodes all the Motion Vector data
@@ -102,6 +110,7 @@ namespace dirac
         void CodeMBCom(const MvData& in_data);    //code the MB common ref mode
         void CodePredmode(const MvData& in_data);    //code the block prediction mode
         void CodeBlockMotionType(const MvData& in_data);    //code the block motion type (i.e. global or not)
+        void CodeMacroBlockMotionType(const MvData& in_data);    //code the macro-block motion type (i.e. global or not)
         void CodeMv1(const MvData& in_data);        //code the first motion vector
         void CodeMv2(const MvData& in_data);        //code the second motion vector
         void CodeDC(const MvData& in_data);        //code the dc value of intra blocks
@@ -112,6 +121,7 @@ namespace dirac
         void DecodeMBCom( MvData& out_data);//decode the MB common ref mode
         void DecodePredmode(MvData& out_data);//decode the block prediction mode
 		void DecodeBlockMotionType(MvData& out_data);//decode the block motion type (i.e. global or not)
+		void DecodeMacroBlockMotionType(MvData& out_data);//decode the macro-block motion type (i.e. global or not)
         void DecodeMv1( MvData& out_data);    //decode the first motion vector
         void DecodeMv2( MvData& out_data);    //decode the second motion vector
 		void UseGlobalMotionForBlock( MvData& out_data);  // Use global motion for the current block
@@ -152,11 +162,14 @@ namespace dirac
         int ChooseGlobalMotionMagContext(const MvData& data, const int param) const;
         int ChooseGlobalMotionSignContext(const MvData& data, const int ref_num) const;
 
+		bool IsPartlyInterMacroBlock( MvData& in_data );
+
         //prediction stuff
         unsigned int MBSplitPrediction(const TwoDArray<int>& mbdata) const;
         bool MBCBModePrediction(const TwoDArray<bool>& mbdata) const;
         unsigned int BlockModePrediction(const TwoDArray<PredMode>& preddata) const;
         bool BlockMotionTypePrediction(const TwoDArray<bool>& preddata) const;
+        bool MacroBlockMotionTypePrediction(const TwoDArray<bool>& preddata) const;
         MVector Mv1Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
         MVector Mv2Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
         ValueType DCPrediction(const TwoDArray<ValueType>& dcdata,const TwoDArray<PredMode>& preddata) const;

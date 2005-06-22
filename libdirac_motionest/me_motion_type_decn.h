@@ -57,14 +57,19 @@ namespace dirac
         ~MotionTypeDecider();
 
         //! Does the actual decision between global and block motion
-        int DoMotionTypeDecn( MvData& in_data);
+        void DoMotionTypeDecn( MvData& in_data);
 
     private:
         MotionTypeDecider( const MotionTypeDecider& cpy );//private, body-less copy constructor: this class should not be copied
         MotionTypeDecider& operator=( const MotionTypeDecider& rhs );//private, body-less assignment=: this class should not be assigned
 
         //! Decide on a motion type for a given prediction unit (block, sub-MB or MB)
-        void DoUnitDecn( MvData& in_data );
+        void DoPredUnitDecn( MvData& in_data, int step );
+
+		// Decide if a frame should use "Some", "No" or "Only" Global Motion
+		void DoFrameDecn(MvData& in_data, int MBsUsingGlobal, int MBsNotUsingGlobal, int BlocksUsingGlobal, int BlocksNotUsingGlobal);
+
+		void UpdateGlobalMotionFlags( MvData& in_data );
 
  		int b_xp, b_yp;         //position of current block
         int mb_xp, mb_yp;		//position of current MB

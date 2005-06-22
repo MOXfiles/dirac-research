@@ -160,8 +160,8 @@ void ModeDecider::DoMBDecn()
     // Start with 4x4 modes
     DoLevelDecn(2);
     float old_best_MB_cost = m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc];
-
-    // Next do 2x2 modes
+   
+	// Next do 2x2 modes
     DoLevelDecn(1);
 
     // Do 1x1 mode if merging worked before
@@ -170,7 +170,6 @@ void ModeDecider::DoMBDecn()
         old_best_MB_cost = m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc];        
         DoLevelDecn(0);
     }
-
 }
 
 void ModeDecider::DoLevelDecn( int level )

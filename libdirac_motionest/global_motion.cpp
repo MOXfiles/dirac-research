@@ -37,7 +37,12 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_motionest/global_motion.h>
+#include <libdirac_motionest/model_global_motion.h>
+
 using namespace dirac;
+
+#include <vector>
+using std::vector;
 
 GlobalMotion::GlobalMotion(const FrameBuffer & frame_buffer,
 						   MEData & me_data,
@@ -60,26 +65,50 @@ GlobalMotion::~GlobalMotion()
 /*
 Manages global motion approximation
 */
+
+void GlobalMotion::ModelGlobalMotion()
+{	
+	
+	ModelGlobalMotion(1);
+	
+	if (m_frame_buffer.GetFrame( m_frame_number ).GetFparams().Refs().size() > 1)
+		ModelGlobalMotion(2);
+
+}
+
+
 void GlobalMotion::ModelGlobalMotion(int ref_number)
 {	
 
+	std::cerr<<std::endl<<"Global Motion : relative to reference frame "<<ref_number<<":";
+
 	// initialise inliers array
-	for (int j=0;j<m_inliers.LengthY();j++)	for (int i=0;i<m_inliers.LengthX();i++) m_inliers[j][i] = 1;
+	for (int j=0;j<m_inliers.LengthY();j++)	
+		for (int i=0;i<m_inliers.LengthX();i++) 
+			m_inliers[j][i] = 1;
 
 	// make initial approximation using full motion vector field
 	OneDArray<float> initial_params(8);
 	for (int i=0; i<8; i++) initial_params[i] = 0.0; 
 
 	// create model to approximate global motion
-	ModelAffine * model = new ModelAffine(m_me_data, m_encparams);
-	model->CalculateModelParameters(m_me_data.Vectors(ref_number), m_inliers, initial_params);
+	ModelAffine * model_affine = new ModelAffine(m_me_data, m_encparams);
+	model_affine->CalculateModelParameters(m_me_data.Vectors(ref_number), m_inliers, initial_params);
+
+	// Only using affine global motion for now: change to projective later.
+	//ModelProjective * model_projective = new ModelProjective(m_me_data, m_encparams);
+	//model_projective->CalculateModelParameters(m_me_data.Vectors(ref_number), m_inliers, initial_params);
+
+	ModelAffine * model = model_affine;
+	//ModelProjective * model = model_projective;
 
 	if (m_debug)
 	{
-		std::cerr << std::endl << "  Initial affine parameters  : ";
+		std::cerr << std::endl << "  Initial Global Motion parameters  : ";
 		std::cerr << initial_params[0] << " " << initial_params[1] << " ";
 		std::cerr << initial_params[2] << " " << initial_params[3] << " ";
 		std::cerr << initial_params[4] << " " << initial_params[5] << " ";
+		std::cerr << initial_params[6] << " " << initial_params[7] << " ";
 	}
 
 	TestGlobalMotionModel * test = new TestMvSAD(m_frame_buffer.GetFrame(m_frame_number),
@@ -88,23 +117,6 @@ void GlobalMotion::ModelGlobalMotion(int ref_number)
 		m_frame_number,
 		ref_number,
 		m_encparams);
-
-	// Only using affine global motion for now: change to projective later.
-	//ModelProjective * model_projective = new ModelProjective(m_me_data, m_encparams);
-	//model_projective->CalculateModelParameters(m_me_data.Vectors(ref_number), m_inliers, initial_params);
-
-
-/*
-	// display initial parameters
-	if (m_debug)
-	{
-	std::cerr << std::endl << "Initial projective parameters:  ";
-	std::cerr << initial_params[0] << " " << initial_params[1] << " ";
-	std::cerr << initial_params[2] << " " << initial_params[3] << " ";
-	std::cerr << initial_params[4] << " " << initial_params[5] << " ";
-	std::cerr << initial_params[6] << " " << initial_params[7] << " ";
-	}
-*/	
 
 	// test initial approximation
 	model->GenerateGlobalMotionVectors(m_gmv, initial_params);
@@ -277,8 +289,7 @@ int GlobalMotion::OutlierReject_Value(int ref_number, ModelAffine& model, TestGl
 {
 	//
 	// MARC: At the moment this gives an error. Also, not sure if just having a large motion
-	// vector is a sufficiently good reason to not use it for estimating global motion! What
-	// about the case when global motion corresponds to a large translation?
+	// vector is a sufficiently good reason to not use it for estimating global motion! 
 	//
 	RejectMotionVectorOutliers * refine;
 	refine = new RejectValue(m_frame_buffer, m_me_data, m_frame_number, ref_number, model, test, m_inliers, m_encparams);

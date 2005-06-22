@@ -40,6 +40,14 @@
 #ifndef _MOTION_H
 #define _MOTION_H
 
+// The following two flags are used for testing purposes, in order to investigate their effect.
+
+#define CONSIDER_GLOBAL_MOTION true				// true : Allow Global Motion Estimation. (If not suitable, it won't be used.)
+												// false: Don't consider Global Motion Estimation
+
+#define FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK true	// true : Global Motion choice specified for each Macro-Block
+												// false: Global Motion choice specified for each Prediction Unit
+
 namespace dirac
 {
     ////////////////////////////////////////////////////////////////
@@ -290,6 +298,7 @@ namespace dirac
 
         //! Get the blocks' global motion flags
         const TwoDArray<bool>& BlockUseGlobal() const{return m_block_use_global;}
+        const TwoDArray<bool>& MacroBlockUseGlobal() const{return m_macro_block_use_global;}
 
 
 		// Quantisation (and Inverse Quantisation) of Global Motion Parameters:
@@ -321,9 +330,9 @@ namespace dirac
         // Global motion model parameters
         OneDArray< OneDArray<float>* > m_gm_params;
 
-		// Block Global Motion Options (i.e. use global motio or use block motion)
+		// Block Global Motion Options (i.e. use global motion or use block motion)
 		TwoDArray<bool> m_block_use_global;
-
+		TwoDArray<bool> m_macro_block_use_global;
     };
 
     //! Class for all the motion estimation data

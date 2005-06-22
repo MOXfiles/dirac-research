@@ -68,7 +68,12 @@ namespace dirac
         void CalculateModelParameters(MvFloatArray &,
                                      TwoDArray<int> &,
                                      OneDArray<float>&);
-    
+		
+		//
+		void CalculateModelParametersOld(MvFloatArray &,
+                                     TwoDArray<int> &,
+                                     OneDArray<float>&);
+
         //! Generate integer global motion vector field
         void GenerateGlobalMotionVectors(MvFloatArray &,
                                          OneDArray<float> &);
