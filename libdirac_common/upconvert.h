@@ -56,9 +56,10 @@ namespace dirac
     public:
 
         //! Constructor
-        UpConverter(){}
+        UpConverter();
+
         //! Destructor
-        ~UpConverter(){};
+        ~UpConverter();
 
         //! Upconvert the picture data
         /*!
@@ -76,22 +77,23 @@ namespace dirac
         UpConverter& operator=(const UpConverter& rhs);
 
         //! Applies the filter to a row and its successor 
-        void RowLoop(PicArray& up_data, const int row_num);
+        void RowLoop(PicArray& up_data, const int row_num );
 
     private:
         //Variable to keep the loops in check
-        int xOld, yOld;
-        int xNew, yNew;
+        int m_width_old, m_height_old;
+        int m_width_new, m_height_new;
 
         //Define first set of filter parameters
-        static const int Stage_I_Size = 6;
-        static const int StageI_I = 167;
-        static const int StageI_II = -56; 
-        static const int StageI_III = 25;
-        static const int StageI_IV = -11; 
-        static const int StageI_V = 4;
-        static const int StageI_VI = -1;    
-        static const int Stage_I_Shift = 8;
+        static const int m_filter_size = 5;
+        static const int m_filter_shift = 8;
+
+        static const int m_tap0 = 167;
+        static const int m_tap1 = -56; 
+        static const int m_tap2 = 25;
+        static const int m_tap3 = -11; 
+        static const int m_tap4 = 3;
+
     };
 
 } // namespace dirac
