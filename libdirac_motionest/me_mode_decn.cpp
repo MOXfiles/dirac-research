@@ -216,7 +216,11 @@ void ModeDecider::DoLevelDecn( int level )
     {
         m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] = MB_cost;
         m_me_data_set[2]->MBSplit()[m_ymb_loc][m_xmb_loc] = level;
-        m_me_data_set[2]->MBCommonMode()[m_ymb_loc][m_xmb_loc] = false;
+        
+        if (level==1)
+            m_me_data_set[2]->MBCommonMode()[m_ymb_loc][m_xmb_loc] = false;
+        else// level is 0
+            m_me_data_set[2]->MBCommonMode()[m_ymb_loc][m_xmb_loc] = true;
 
         // Parameters of the base-level blocks corresponding to each
         // prediction unit
@@ -293,7 +297,7 @@ void ModeDecider::DoLevelDecn( int level )
  
             }// i
         }// j
-      }
+    }
 
 }
 
@@ -483,7 +487,7 @@ float ModeDecider::DoCommonMode( PredMode& predmode , const int level)
     // The total cost for the MB for each possible prediction mode
     OneDArray<float> MB_cost(4);
     for ( int i=0 ; i<4 ; ++i)
-        MB_cost[i] = ModeCost( m_xmb_loc<<2 , m_ymb_loc , PredMode(i) )*m_mode_factor[0];
+        MB_cost[i] = ModeCost( m_xmb_loc<<2 , m_ymb_loc<<2 , PredMode(i) )*m_mode_factor[0];
 
     // The limits of the prediction units
     const int xstart = m_xmb_loc <<level;
