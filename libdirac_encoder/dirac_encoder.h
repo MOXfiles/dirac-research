@@ -181,6 +181,8 @@ typedef struct
     int xbsep;
     /*! The vertical separation between blocks. Always <yblen */
     int ybsep;
+    /*! The number of recodes allowed to hit a given quality */
+    int recode;
 } dirac_encparams_t;
 
 /*! Structure that holds the parameters that set up the encoder context */

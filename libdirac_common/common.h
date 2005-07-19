@@ -709,6 +709,9 @@ namespace dirac
         //! Return the number of cycles per degree at the nominal viewing distance for the raster
         float CPD() const {return m_cpd;}
 
+        //! Return the number of recodes allowable to hit the target quality
+        int Recode() const {return m_recode;}
+
         //! Return the Lagrangian parameter to be used for I frames
         float ILambda() const {return m_I_lambda;}
 
@@ -752,6 +755,9 @@ namespace dirac
 
         //! Set the separation between L1 frames
         void SetL1Sep(const int lsep){m_L1_sep=lsep;}
+
+        //! Set the number of allowable recodes
+        void SetRecode(const int r){m_recode=r;}
 
         //! Set the amount to weight noise in the U component
         void SetUFactor(const float uf){m_ufactor=uf;}
@@ -797,7 +803,10 @@ namespace dirac
         int m_num_L1;
         
         //! Separation between L1 frames
-        int m_L1_sep;    
+        int m_L1_sep;   
+
+        //! Number of allowable recodes
+        int m_recode; 
         
         //! factor for weighting U component quantisation errors
         float m_ufactor;

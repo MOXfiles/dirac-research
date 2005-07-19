@@ -86,6 +86,7 @@ static void display_help()
     cout << "\nybsep   ulong   I  0UL           Overlapping block vertical separation";
     cout << "\ncpd     ulong   I  0UL           Perceptual weighting - vertical cycles per deg.";
     cout << "\nqf      float   I  0.0F          Overall quality factor (0.0 - 10.0)";
+    cout << "\nrecode  ulong   I  2             Number of recodes allowed to converge to target quality";
     cout << "\nverbose bool    I  false         Verbose mode";
     cout << "\nnolocal bool    I  false         Don't write diagnostics & locally decoded video";
     cout << endl;
@@ -546,6 +547,12 @@ int main (int argc, char* argv[])
         {
             i++;
              enc_ctx.enc_params.cpd = 
+                 strtoul(argv[i],NULL,10);
+        }
+        else if ( strcmp(argv[i], "-recode") == 0 )
+        {
+            i++;
+             enc_ctx.enc_params.recode = 
                  strtoul(argv[i],NULL,10);
         }
         else if ( strcmp(argv[i], "-verbose") == 0 )

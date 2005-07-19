@@ -317,6 +317,7 @@ EncoderParams::EncoderParams():
     m_qf(5.0),
     m_num_L1(0),
     m_L1_sep(0),
+    m_recode(2),
     m_ufactor(1.0),
     m_vfactor(1.0),
     m_cpd(20.0),

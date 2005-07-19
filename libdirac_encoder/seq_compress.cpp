@@ -232,7 +232,6 @@ Frame& SequenceCompressor::CompressNextFrame()
  
         // A count of how many times we've recoded
         int count = 0;
-        int max_count = 3;
 
         do
         {
@@ -248,7 +247,7 @@ Frame& SequenceCompressor::CompressNextFrame()
             recode = m_qmonitor.UpdateModel( m_fbuffer->GetFrame( m_current_display_fnum ) , 
                                              m_origbuffer->GetFrame( m_current_display_fnum ) , count );
 
-            if ( recode && count<max_count )
+            if ( recode && count<=m_encparams.Recode() )
             {
                 if ( m_encparams.Verbose() )
                     std::cerr<<std::endl<<"Recoding!";
@@ -261,7 +260,7 @@ Frame& SequenceCompressor::CompressNextFrame()
             }
 
         }
-        while ( recode && count <max_count );
+        while ( recode && count <= m_encparams.Recode() );
 
        // Finish by writing the compressed data out to file ...
        m_encparams.BitsOut().WriteFrameData();
