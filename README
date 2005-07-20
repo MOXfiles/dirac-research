@@ -298,6 +298,8 @@ xblen     : the width of blocks used for motion compensation
 yblen     : the height of blocks used for motion compensation
 xbsep     : the horizontal separation between blocks. Always <xblen
 ybsep     : the vertical separation between blocks. Always <yblen
+recode    : the number of additional re-encodings allowed for hitting the
+            target quality. The default is 2.
 cpd       : normalised viewing distance parameter, in cycles per degree.
 nolocal   : Do no generate diagnostics and locally decoded output
 
@@ -320,6 +322,12 @@ Block separations must currently be set so that an integral number of
 macroblocks fits into the frame horizontally and vertically. A macroblock is a
 4x4 set of blocks, so 4xblen must divide the frame width and 4yblen the frame
 height. 
+
+Recoding is currently allowed by the default settings. This is to allow the
+encoder to hit the target quality more accurately by discarding previous
+attempts at coding and trying again. Once the encoder has enough data to go
+on, recoding is rare, however. Recoding can be eliminated by
+setting recode=0. 
 
 4.4 Decoding
 
