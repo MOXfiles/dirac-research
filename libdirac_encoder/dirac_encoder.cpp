@@ -450,7 +450,7 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     m_encparams.SetUFactor(3.0f);
     m_encparams.SetVFactor(1.75f);
     bparams.SetYblen( enc_ctx->enc_params.yblen );
-    bparams.SetXbsep( enc_ctx->enc_params.xblen );
+    bparams.SetXblen( enc_ctx->enc_params.xblen );
     bparams.SetYbsep( enc_ctx->enc_params.ybsep );
     bparams.SetXbsep( enc_ctx->enc_params.xbsep );
 
