@@ -402,19 +402,19 @@ int main (int argc, char* argv[])
     dirac_encoder_presets_t preset = CIF;
     for (int i = 1; i < argc; i++)
     {
-        if ( strcmp (argv[i], "-CIF") == 0 )
+        if ( strcmp (argv[i], "-CIF") == 0 || strcmp (argv[i], "-cif") == 0 )
         {
             preset = CIF;
         }
-        else if ( strcmp (argv[i], "-HD720") == 0 )
+        else if ( strcmp (argv[i], "-HD720") == 0 || strcmp (argv[i], "-hd720") == 0 )
         {
             preset = HD720;
         }
-        else if ( strcmp (argv[i], "-HD1080") == 0 )
+        else if ( strcmp (argv[i], "-HD1080") == 0 || strcmp (argv[i], "-hd1080") == 0 )
         {
             preset = HD1080;
         }
-        else if ( strcmp (argv[i], "-SD576") == 0 )
+        else if ( strcmp (argv[i], "-SD576") == 0 || strcmp (argv[i], "-sd576") == 0 )
         {
             preset = SD576;
         }
