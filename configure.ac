@@ -56,7 +56,7 @@ AC_PROG_CXX
 AM_SANITY_CHECK
 AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
-
+AC_SYS_LARGEFILE
 dnl -------------------------------------------------------------------------
 dnl Check if compiling using MS VC++ compiler in msys environment on Windows
 dnl -------------------------------------------------------------------------
