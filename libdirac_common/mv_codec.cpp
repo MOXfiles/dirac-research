@@ -46,9 +46,11 @@ using namespace dirac;
 // Constructor for encoding
 MvDataCodec::MvDataCodec(BasicOutputManager* bits_out,
 						 size_t number_of_contexts,
-						 const ChromaFormat& cf)
+						 const ChromaFormat& cf,
+						 int num_ref_frames)
 						 : ArithCodec <MvData> (bits_out,number_of_contexts),
-						 m_cformat(cf)
+						 m_cformat(cf),
+						 m_num_ref_frames(num_ref_frames)
 {
 	// nada
 }        
@@ -56,9 +58,11 @@ MvDataCodec::MvDataCodec(BasicOutputManager* bits_out,
 // Constructor for decoding
 MvDataCodec::MvDataCodec(BitInputManager* bits_in,
 						 size_t number_of_contexts,
-						 const ChromaFormat& cf)
+						 const ChromaFormat& cf,
+						 int num_ref_frames)
 						 : ArithCodec <MvData> (bits_in,number_of_contexts),
-						 m_cformat(cf)
+						 m_cformat(cf),
+						 m_num_ref_frames(num_ref_frames)
 {
 	// nada
 }    
@@ -81,7 +85,7 @@ inline void MvDataCodec::Resize(const int context_num)
 
 
 inline void MvDataCodec::Update( const bool symbol , const int context_num )
-{    
+{   
 	m_context_list[context_num].IncrCount( symbol , 1 ); 
 
 	if ( m_context_list[context_num].Weight()  >= 1024 )
@@ -527,8 +531,6 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 	bool MB_has_inter_PU;
 	PredMode common_mode;
 
-	std::cerr<<std::endl<<"==> Encoder: Global Motion Flag = " << in_data.m_use_global;
-	std::cerr<<";  Global Motion Only Flag = " << in_data.m_use_global_only;
 	if (in_data.m_use_global)
 	{
 		in_data.QuantiseGlobalMotionParameters();
@@ -556,32 +558,24 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 			//next do common_ref
 			if(split_depth != 0)
 			{
-				if (USE_COMMON_MODE_FLAG)
-					CodeMBCom(in_data); 
+				CodeMBCom(in_data); 
 				pstep = step; 
 				pmax = max; 
 			}
 			else // Pred. Unit (PU) is the whole MB
 			{
-				if (USE_COMMON_MODE_FLAG)
-					in_data.MBCommonMode()[mb_yp][mb_xp] = true; 
+				in_data.MBCommonMode()[mb_yp][mb_xp] = true; 
 				pstep = 4; 
 				pmax = 1; 
 			}
 
-			//std::cerr<<std::endl<<"***** Prediction Modes: ";
-
-			if (USE_COMMON_MODE_FLAG)
+			common_ref = in_data.MBCommonMode()[mb_yp][mb_xp]; 
+			if (common_ref)
 			{
-				common_ref = in_data.MBCommonMode()[mb_yp][mb_xp]; 
-				if (common_ref)
-				{
-					b_yp = mb_tlb_y;
-					b_xp = mb_tlb_x;
-					common_mode = in_data.Mode()[b_yp][b_xp];
-					CodePredmode(in_data);
-					//std::cerr<<"(Common Mode = "<<common_mode<<") ";
-				}
+				b_yp = mb_tlb_y;
+				b_xp = mb_tlb_x;
+				common_mode = in_data.Mode()[b_yp][b_xp];
+				CodePredmode(in_data);
 			}
 
 
@@ -590,13 +584,11 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 			{
 				for (b_xp = mb_tlb_x; b_xp < mb_tlb_x+4; b_xp += pstep)
 				{
-					if (USE_COMMON_MODE_FLAG && common_ref)
+					if (common_ref)
 						in_data.Mode()[b_yp][b_xp] = common_mode; 
 					else
 						CodePredmode(in_data);
-					
-					//std::cerr<<in_data.Mode()[b_yp][b_xp];
-					
+
 					if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK)
 						MB_has_inter_PU = MB_has_inter_PU || (in_data.Mode()[b_yp][b_xp] != INTRA);
 				}
@@ -604,21 +596,15 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 
 			step = 4 >> (split_depth);   // 1, 2 or 4          
 
-			if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK && !MB_has_inter_PU)
-				std::cerr<<std::endl<<"Macroblock at ("<<mb_yp<<", "<<mb_xp<<") has ONLY intra prediction unit(s)";
-
-			if (pstep!=step)
-				std::cerr<<std::endl<<"********** step = "<<step<<",  pstep = "<<pstep<< "********** ";
-
 			if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK) 
 			{
 				if(in_data.m_use_global) // if using Global Motion
 				{
-					if(MB_has_inter_PU/*IsPartlyInterMacroBlock(in_data)*/) // if MB is not totally Intra
+					if(MB_has_inter_PU) // if MB is not totally Intra
 					{
 						if(!in_data.m_use_global_only) // if not using Global Motion exclusively: 
 							CodeMacroBlockMotionType(in_data); // encode whether or not it gets used for current Macro-Block		
-						
+
 						// Flag constituent PUs as using Global/Block Motion:
 						for (b_yp = mb_tlb_y; b_yp < mb_tlb_y+4; b_yp += step)
 							for (b_xp = mb_tlb_x; b_xp < mb_tlb_x+4; b_xp += step)
@@ -700,15 +686,13 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 
 void MvDataCodec::CodeGlobalMotionParameters(const MvData& in_data)	
 {
-	//code the global motion parameters: still a crude implementation!
-	//std::cerr << std::endl << "  Coding global motion parameters...";
-
 	int val;
 	int abs_val;
+	
 
-	for (int ref_num=1; ref_num<=2; ref_num++) // assumes there are 2 reference frames. Sometimes there is only 1, so we still need to handle this scenario in a better way.
+	for (int ref_num=1; ref_num<=m_num_ref_frames; ref_num++) 
 	{
-		for (int param=0; param<8; param++) // loop through each global motion parameter
+		for (int param=0; param<6/*8*/; param++) // loop through each global motion parameter
 		{
 			// Encode Magnitude:
 			val = (int)(in_data.GlobalMotionParameters(ref_num)[param]); 
@@ -779,6 +763,7 @@ void MvDataCodec::CodeBlockMotionType(const MvData& in_data)
 		EncodeSymbol( 1 , ChooseBlockMotionTypePredContext() );
 	else 
 		EncodeSymbol( 0 , ChooseBlockMotionTypePredContext() );
+
 }
 
 
@@ -790,6 +775,7 @@ void MvDataCodec::CodeMacroBlockMotionType(const MvData& in_data)
 		EncodeSymbol( 1 , ChooseBlockMotionTypePredContext() );
 	else 
 		EncodeSymbol( 0 , ChooseBlockMotionTypePredContext() );
+
 }
 
 
@@ -907,8 +893,6 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 	bool MB_has_inter_PU;
 	PredMode common_mode;
 
-	std::cerr<<std::endl<<"==> Decoder: Global Motion Flag = " << out_data.m_use_global;
-	std::cerr<<";  Global Motion Only Flag = " << out_data.m_use_global_only;
 	if (out_data.m_use_global)
 	{
 		DecodeGlobalMotionParameters(out_data);
@@ -934,31 +918,24 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 			//next do common_ref
 			if(split_depth  !=  0)
 			{
-				if (USE_COMMON_MODE_FLAG)
-					DecodeMBCom( out_data ); 
+				DecodeMBCom( out_data ); 
 				pstep = step; 
 				pmax = max; 
 			}
 			else
 			{
-				if (USE_COMMON_MODE_FLAG)
-					out_data.MBCommonMode()[mb_yp][mb_xp] = true; 
+				out_data.MBCommonMode()[mb_yp][mb_xp] = true; 
 				pstep = 4; 
 				pmax = 1; 
 			}
 
-			//std::cerr<<std::endl<<"***** Prediction Modes: ";
-
-			if (USE_COMMON_MODE_FLAG)
-			{	common_ref = out_data.MBCommonMode()[mb_yp][mb_xp]; 
-				if (common_ref)
-				{	
-					b_yp = mb_tlb_y;
-					b_xp = mb_tlb_x;
-					DecodePredmode(out_data);
-					common_mode = out_data.Mode()[b_yp][b_xp];
-					//std::cerr<<"(Common Mode = "<<common_mode<<") ";
-				}
+			common_ref = out_data.MBCommonMode()[mb_yp][mb_xp]; 
+			if (common_ref)
+			{	
+				b_yp = mb_tlb_y;
+				b_xp = mb_tlb_x;
+				DecodePredmode(out_data);
+				common_mode = out_data.Mode()[b_yp][b_xp];
 			}
 
 
@@ -967,12 +944,10 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 			{                
 				for (b_xp = mb_tlb_x; b_xp < mb_tlb_x + 4;  b_xp += pstep)
 				{
-					if (USE_COMMON_MODE_FLAG && common_ref)
+					if (common_ref)
 						out_data.Mode()[b_yp][b_xp] = common_mode; 
 					else
 						DecodePredmode(out_data); 
-					
-					//std::cerr<<out_data.Mode()[b_yp][b_xp];
 
 					// propagate throughout Prediction Unit                
 					for (int y = b_yp;  y < b_yp + pstep;  y++)
@@ -985,17 +960,11 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 				}
 			}
 
-			if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK && !MB_has_inter_PU)
-				std::cerr<<std::endl<<"Macroblock at ("<<mb_yp<<", "<<mb_xp<<") has ONLY intra prediction unit(s)";
-
-			if (pstep!=step)
-				std::cerr<<std::endl<<"********** step = "<<step<<",  pstep = "<<pstep<< "********** ";
-
 			if (FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK) 
 			{
 				if(out_data.m_use_global) // if using Global Motion
 				{
-					if(MB_has_inter_PU/*IsPartlyInterMacroBlock(out_data)*/) // if MB is not totally Intra
+					if(MB_has_inter_PU) // if MB is not totally Intra
 					{
 						if(!out_data.m_use_global_only) // if not using Global Motion exclusively: 
 							DecodeMacroBlockMotionType(out_data); // encode whether or not it gets used for current Macro-Block		
@@ -1078,20 +1047,18 @@ void MvDataCodec::DoWorkDecode( MvData& out_data, int num_bits)
 		}//mb_xp
 	}//mb_yp
 
-
-	//std::cerr << std::endl << out_data.Vectors(1);
 }
 
 
 void MvDataCodec::DecodeGlobalMotionParameters(MvData& out_data)	
 {
-	//decode the global motion parameters: still a crude implementation!
 	bool bit;
 	int val;
 
-	for (int ref_num=1; ref_num<=2; ref_num++) // assumes there are 2 reference frames. Sometimes there is only 1, so we still need to handle this scenario in a better way 
+	for (int ref_num=1; ref_num<=m_num_ref_frames; ref_num++) 
+	//for (int ref_num=1; ref_num<=2; ref_num++) 
 	{
-		for (int param=0; param<8; param++) // loop through each global motion parameter
+		for (int param=0; param<6/*8*/; param++) // loop through each global motion parameter
 		{
 			val = 0;
 
@@ -1304,16 +1271,16 @@ void MvDataCodec::DecodeMv2( MvData& out_data )
 /*
 void MvDataCodec::UseGlobalMotionForBlock( MvData& mv_data )
 {
-	if ((mv_data.Mode()[b_yp][b_xp] == REF1_ONLY) || (mv_data.Mode()[b_yp][b_xp] == REF1AND2))
-	{
-		mv_data.Vectors(1)[b_yp][b_xp].x = mv_data.GlobalMotionVectors(1)[b_yp][b_xp].x;
-		mv_data.Vectors(1)[b_yp][b_xp].y = mv_data.GlobalMotionVectors(1)[b_yp][b_xp].y;
-	}
-	if ((mv_data.Mode()[b_yp][b_xp] == REF2_ONLY) || (mv_data.Mode()[b_yp][b_xp] == REF1AND2))
-	{
-		mv_data.Vectors(2)[b_yp][b_xp].x = mv_data.GlobalMotionVectors(2)[b_yp][b_xp].x;
-		mv_data.Vectors(2)[b_yp][b_xp].y = mv_data.GlobalMotionVectors(2)[b_yp][b_xp].y;
-	}
+if ((mv_data.Mode()[b_yp][b_xp] == REF1_ONLY) || (mv_data.Mode()[b_yp][b_xp] == REF1AND2))
+{
+mv_data.Vectors(1)[b_yp][b_xp].x = mv_data.GlobalMotionVectors(1)[b_yp][b_xp].x;
+mv_data.Vectors(1)[b_yp][b_xp].y = mv_data.GlobalMotionVectors(1)[b_yp][b_xp].y;
+}
+if ((mv_data.Mode()[b_yp][b_xp] == REF2_ONLY) || (mv_data.Mode()[b_yp][b_xp] == REF1AND2))
+{
+mv_data.Vectors(2)[b_yp][b_xp].x = mv_data.GlobalMotionVectors(2)[b_yp][b_xp].x;
+mv_data.Vectors(2)[b_yp][b_xp].y = mv_data.GlobalMotionVectors(2)[b_yp][b_xp].y;
+}
 }
 */
 

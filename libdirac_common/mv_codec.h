@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author), Scott R Ladd, Marc Servais
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -49,14 +49,6 @@
 #include <libdirac_common/wavelet_utils.h>
 #include <vector>
 
-#define USE_COMMON_MODE_FLAG  true	// true : Uses a common mode flag for each Macro-Block
-									// false: Doesn't use a common mode flag.
-/* 
-	NOTE:	There are cases where MBCommonMode() is not set correctly. Sometimes, all Prediction Units in a
-			Macro-block ARE the same, but MBCommonMode() has a value of "0". This should be fixed if common 
-			motion is going to be flagged. (Comment by Marc). 
-*/
-
 namespace dirac
 {
     //! Codes and decodes all the Motion Vector data
@@ -76,7 +68,8 @@ namespace dirac
          */    
         MvDataCodec(BasicOutputManager* bits_out,
                     size_t number_of_contexts,
-                    const ChromaFormat & cf);
+                    const ChromaFormat & cf, 
+					int num_ref_frames);
 
         //! Constructor for decoding
             /*!
@@ -87,7 +80,8 @@ namespace dirac
          */        
         MvDataCodec(BitInputManager* bits_in,
                     size_t number_of_contexts,
-                    const ChromaFormat & cf); 
+                    const ChromaFormat & cf, 
+					int num_ref_frames); 
 
         //! Initialises the contexts    
         void InitContexts();
@@ -95,10 +89,11 @@ namespace dirac
     private:
         int MB_count;
         const ChromaFormat & m_cformat;
-
-        int b_xp, b_yp;            //position of current block
-        int mb_xp, mb_yp;        //position of current MB
-        int mb_tlb_x, mb_tlb_y;    //position of top-left block of current MB
+		int  m_num_ref_frames;		// number of reference frames
+        
+		int b_xp, b_yp;				//position of current block
+        int mb_xp, mb_yp;			//position of current MB
+        int mb_tlb_x, mb_tlb_y;		//position of top-left block of current MB
 
         // functions    
         MvDataCodec(const MvDataCodec& cpy);            //private, bodyless copy constructor: class should not be copied

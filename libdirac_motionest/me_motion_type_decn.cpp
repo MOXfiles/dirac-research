@@ -55,7 +55,7 @@ MotionTypeDecider::~MotionTypeDecider()
 }
 
 
-void MotionTypeDecider::DoMotionTypeDecn(MvData& in_data)
+void MotionTypeDecider::DoMotionTypeDecn(MvData& in_data, bool verbose)
 {
 
 	int step, split_depth; 
@@ -124,25 +124,36 @@ void MotionTypeDecider::DoMotionTypeDecn(MvData& in_data)
 	}//mb_yp
 
 	// Decide whether frame should use: "Some Global Motion", "Only Global Motion" or "No Global Motion"
-	DoFrameDecn(in_data, MBsUsingGlobal, MBsNotUsingGlobal, BlocksUsingGlobal, BlocksNotUsingGlobal);		
+	DoFrameDecn(in_data, MBsUsingGlobal, MBsNotUsingGlobal, BlocksUsingGlobal, BlocksNotUsingGlobal, verbose);		
 
 	UpdateGlobalMotionFlags(in_data); // overide block motion type choices (if necessary)
 
+	if (verbose)
+	{
+		std::cerr<<std::endl<<"  ==> Global Motion Flag = " << in_data.m_use_global;
+		std::cerr<<";  Global Motion Only Flag = " << in_data.m_use_global_only;
+	}
 }
 
-void MotionTypeDecider::DoFrameDecn(MvData& in_data, int MBsUsingGlobal, int MBsNotUsingGlobal, int BlocksUsingGlobal, int BlocksNotUsingGlobal)
+void MotionTypeDecider::DoFrameDecn(MvData& in_data, int MBsUsingGlobal, int MBsNotUsingGlobal, int BlocksUsingGlobal, int BlocksNotUsingGlobal, bool verbose)
 {
 
-	std::cerr<<std::endl<<"Macro-Blocks using global / not using global: "<<MBsUsingGlobal<<" / "<<MBsNotUsingGlobal;
-	std::cerr<<std::endl<<"Blocks using global / not using global      : "<<BlocksUsingGlobal<<" / "<<BlocksNotUsingGlobal;
+	if (verbose) 
+	{
+		std::cerr<<std::endl<<"  Macro-Blocks using global / not using global: ";
+		std::cerr<<MBsUsingGlobal<<" ("<<100*MBsUsingGlobal/(MBsUsingGlobal+MBsNotUsingGlobal)<<"%) / "<<MBsNotUsingGlobal<<" ("<<100*MBsNotUsingGlobal/(MBsUsingGlobal+MBsNotUsingGlobal)<<"%)";
 
-	if 	(FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK) // frame decision based on macro-blocks 
+		std::cerr<<std::endl<<"  Blocks using global / not using global      : ";
+		std::cerr<<BlocksUsingGlobal<<" ("<<100*BlocksUsingGlobal/(BlocksUsingGlobal+BlocksNotUsingGlobal)<<"%) / "<<BlocksNotUsingGlobal<<" ("<<100*BlocksNotUsingGlobal/(BlocksUsingGlobal+BlocksNotUsingGlobal)<<"%)";
+	}
+
+	if 	(FLAG_GLOBAL_MOTION_BY_MACRO_BLOCK) // frame decision based on macro-blocks and blocks. Flagged per Pred. Unit 
 	{
 		if (1*MBsUsingGlobal < 1*MBsNotUsingGlobal) // If less than 50% of Macro-blocks use Global Motion then
-			in_data.SetGlobalMotionFlags(0,0); //(0,0)// NO Global Motion is used
+			in_data.SetGlobalMotionFlags(0,0); // NO Global Motion is used
 
-		else if  (1*MBsUsingGlobal > 9*MBsNotUsingGlobal) // If more than 90% of MBs use Global Motion then
-			in_data.SetGlobalMotionFlags(1,1); //(1,1)// ONLY Global Motion is used
+		else if  (1*BlocksUsingGlobal > 4*BlocksNotUsingGlobal) // If more than 80% of Blocks use Global Motion then
+			in_data.SetGlobalMotionFlags(1,1); // ONLY Global Motion is used
 
 		else
 			in_data.SetGlobalMotionFlags(1,0); // Global Motion is used, but not exclusively
@@ -150,58 +161,45 @@ void MotionTypeDecider::DoFrameDecn(MvData& in_data, int MBsUsingGlobal, int MBs
 	else	// frame decision based on blocks (frame area), but flagged per Prediction Unit
 	{
 		if (1*BlocksUsingGlobal < 1*BlocksNotUsingGlobal) // If less than 50% of Blocks use Global Motion then
-			in_data.SetGlobalMotionFlags(0,0); //(0,0)// NO Global Motion is used
+			in_data.SetGlobalMotionFlags(0,0); // NO Global Motion is used
 
-		else if  (1*BlocksUsingGlobal > 9*BlocksNotUsingGlobal) // If more than 90% of MBs use Global Motion then
-			in_data.SetGlobalMotionFlags(1,1); //(1,1)// ONLY Global Motion is used
-
-		else
+		else if  (2*BlocksUsingGlobal > 8*BlocksNotUsingGlobal) // If more than 80% of MBs use Global Motion then
+			in_data.SetGlobalMotionFlags(1,1); // ONLY Global Motion is used
+		
+		else 
 			in_data.SetGlobalMotionFlags(1,0); // Global Motion is used, but not exclusively
 	}
-
 }
 
 
 
 void MotionTypeDecider::DoPredUnitDecn(MvData& in_data, int step)
 {
-	const int max_mv_SqDiff = 16;	// Squared Motion Vector comparison threshold: (16 -> Half Pixel)
+	const int max_mv_SqDiff = 4;//16	// Squared Motion Vector comparison threshold: (16-> Half Pixel, 4-> Quarter Pixel)
 
-	bool UseMeanGMV = true;			// true : GMV based on all blocks in PU 
-									// false: GMV based on top left block of PU only
+	int	gmv1x = 0;
+	int	gmv1y = 0;
+	int	gmv2x = 0;
+	int	gmv2y = 0;
 
-	int gmv1x, gmv1y, gmv2x, gmv2y;
-	if (UseMeanGMV)
+	// Global Motion Vector for the PU is the mean of the GMVs of its constituent blocks  
+	// (this allows for a more accurate comparison)
+	for (int b_yp2 = b_yp; b_yp2 < b_yp+step; b_yp2++)
 	{
-		gmv1x = 0;
-		gmv1y = 0;
-		gmv2x = 0;
-		gmv2y = 0;
-
-		// Global Motion Vector for the PU is the mean of the GMVs of its constituent blocks  
-		for (int b_yp2 = b_yp; b_yp2 < b_yp+step; b_yp2++)
+		for (int b_xp2 = b_xp; b_xp2 < b_xp+step; b_xp2++)
 		{
-			for (int b_xp2 = b_xp; b_xp2 < b_xp+step; b_xp2++)
-			{
-				gmv1x += in_data.GlobalMotionVectors(1)[b_yp2][b_xp2].x; 
-				gmv1y += in_data.GlobalMotionVectors(1)[b_yp2][b_xp2].y; 
-				gmv2x += in_data.GlobalMotionVectors(2)[b_yp2][b_xp2].x; 
-				gmv2y += in_data.GlobalMotionVectors(2)[b_yp2][b_xp2].y; 
-			}
+			gmv1x += in_data.GlobalMotionVectors(1)[b_yp2][b_xp2].x; 
+			gmv1y += in_data.GlobalMotionVectors(1)[b_yp2][b_xp2].y; 
+			gmv2x += in_data.GlobalMotionVectors(2)[b_yp2][b_xp2].x; 
+			gmv2y += in_data.GlobalMotionVectors(2)[b_yp2][b_xp2].y; 
 		}
-		gmv1x = (int)floor((float)gmv1x / (step*step) + 0.5);
-		gmv1y = (int)floor((float)gmv1y / (step*step) + 0.5);
-		gmv2x = (int)floor((float)gmv2x / (step*step) + 0.5);
-		gmv2y = (int)floor((float)gmv2y / (step*step) + 0.5);
 	}
-	else // (UseMeanGMV==false)
-	{
-		gmv1x = in_data.GlobalMotionVectors(1)[b_yp][b_xp].x; 
-		gmv1y = in_data.GlobalMotionVectors(1)[b_yp][b_xp].y; 
-		gmv2x = in_data.GlobalMotionVectors(2)[b_yp][b_xp].x; 
-		gmv2y = in_data.GlobalMotionVectors(2)[b_yp][b_xp].y; 
-	}
-
+	gmv1x = (int)floor((float)gmv1x / (step*step) + 0.5);
+	gmv1y = (int)floor((float)gmv1y / (step*step) + 0.5);
+	gmv2x = (int)floor((float)gmv2x / (step*step) + 0.5);
+	gmv2y = (int)floor((float)gmv2y / (step*step) + 0.5);
+	
+	
 	// Motion Vector for Current Prediction Unit:
 	const int mv1x = in_data.Vectors(1)[b_yp][b_xp].x; 
 	const int mv1y = in_data.Vectors(1)[b_yp][b_xp].y; 
@@ -212,9 +210,6 @@ void MotionTypeDecider::DoPredUnitDecn(MvData& in_data, int step)
 	{
 		// Calculate squared difference between Global and PU motion vectors:
 		int mv1SqDiff = (mv1x-gmv1x)*(mv1x-gmv1x) + (mv1y-gmv1y)*(mv1y-gmv1y);
-
-		//std::cerr<<std::endl<<"MV1 = ("<<mv1x<<", "<<mv1y<<"); GMV1 = ("<<gmv1x<<", "<<gmv1y<<")"; 
-		//std::cerr<<"  :  Squared Difference = " << mv1SqDiff; 
 
 		// If difference from Global Motion Vector is small, then rather use Global Motion:
 		if (mv1SqDiff <= max_mv_SqDiff)

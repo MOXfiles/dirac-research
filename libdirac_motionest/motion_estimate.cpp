@@ -21,6 +21,7 @@
 * All Rights Reserved.
 *
 * Contributor(s): Thomas Davies (Original Author)
+*				  Marc Servais
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -69,11 +70,9 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 
 	// Step 3.
 	// Estimate the global motion vectors	
+	GlobalMotion globalMotion( my_buffer, me_data, frame_num, m_encparams );
 	if (CONSIDER_GLOBAL_MOTION)
-	{
-		GlobalMotion globalMotion( my_buffer, me_data, frame_num, m_encparams );
 		globalMotion.ModelGlobalMotion();
-	}
 
 	// Step4.
     // We now have to decide how each macroblock should be split 
@@ -86,7 +85,8 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 	// Alternatively, we may want to use Global Motion only. 
 	MotionTypeDecider my_motion_type_dec;
 	if (CONSIDER_GLOBAL_MOTION)
-		my_motion_type_dec.DoMotionTypeDecn( me_data );
+		my_motion_type_dec.DoMotionTypeDecn( me_data, m_encparams.Verbose() );
+		//my_motion_type_dec.DoMotionTypeDecn( me_data, globalMotion.GlobalMotionInliers() );
 
     // Finally, although not strictly part of motion estimation,
     // we have to assign DC values for chroma components for

@@ -21,6 +21,7 @@
  * All Rights Reserved.
  *
  * Contributor(s): Chris Bowley (Original Author)
+ *                 Marc Servais
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -72,6 +73,8 @@ namespace dirac
         void ModelGlobalMotion();
 		void ModelGlobalMotion(int);
     
+		TwoDArray<int> GlobalMotionInliers() const { return m_inliers; }
+
     private :
         //! Frame buffer reference
         const FrameBuffer & m_frame_buffer;
@@ -90,9 +93,6 @@ namespace dirac
     
         //! Encoder parameters - includes original video frame size before padding
         const EncoderParams & m_encparams;
-    
-        //! DEBUG OUTPUT MODE
-        bool m_debug;
 
 		// Outlier Rejection Methods:
 		int OutlierReject_Edge(int, ModelAffine&, TestGlobalMotionModel&, int);

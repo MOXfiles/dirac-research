@@ -103,8 +103,9 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 
 				//decode mv data
 				if (m_decparams.Verbose())
-					std::cerr<<std::endl<<"Decoding motion data ...";        
-				MvDataCodec my_mv_decoder( &m_decparams.BitsIn(), NUMBER_OF_CONTEXTS, m_cformat);
+					std::cerr<<std::endl<<"Decoding motion data ...";      
+
+				MvDataCodec my_mv_decoder( &m_decparams.BitsIn(), NUMBER_OF_CONTEXTS, m_cformat, m_fparams.Refs().size());
 				my_mv_decoder.InitContexts();//may not be necessary
 				num_mv_bits = UnsignedGolombDecode( m_decparams.BitsIn() );
 
@@ -114,18 +115,19 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 				//Decompress the MV bits
 				my_mv_decoder.Decompress( *mv_data , num_mv_bits );               
 
+				/*
 				if (m_decparams.Verbose())
 				{   if (m_use_global) 
-				{
-					std::cerr << std::endl << "  Decompressed Global Motion Parameters: ";
-					for (int rr=1; rr<=2; rr++) {
-						std::cerr << std::endl << "    Ref Frame " << rr << ": ";
-						for (int pp=0; pp<8; pp++) {
-							std::cerr << mv_data->GlobalMotionParameters(rr)[pp] << ", ";
+					{
+						std::cerr << std::endl << "  Decoded Global Motion Parameters: ";
+						for (int rr=1; rr<=2; rr++) {
+							std::cerr << std::endl << "    Ref Frame " << rr << ": ";
+							for (int pp=0; pp<8; pp++)
+								std::cerr << mv_data->GlobalMotionParameters(rr)[pp] << ", ";
 						}
 					}
 				}
-				}
+				*/
 
 				if (m_use_global)
 					mv_data->GenerateGlobalMotionVectors();

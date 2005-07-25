@@ -24,6 +24,7 @@
 *                 Scott R Ladd,
 *                 Chris Bowley,
 *                 Anuradha Suraparaju
+*				  Marc Servais
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -130,8 +131,7 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer, const FrameBuffer& orig_
 		{
 			// Code the MV data
 
-			MvDataCodec my_mv_coder( &( foutput.MVOutput().Data() ) , NUMBER_OF_CONTEXTS , cformat );
-
+			MvDataCodec my_mv_coder( &( foutput.MVOutput().Data() ) , NUMBER_OF_CONTEXTS , cformat , fparams.Refs().size());
 			my_mv_coder.InitContexts();//may not be necessary
 			num_mv_bits = my_mv_coder.Compress( *m_me_data );            
 
@@ -237,3 +237,4 @@ const MEData* FrameCompressor::GetMEData() const
 
 	return m_me_data;
 }
+

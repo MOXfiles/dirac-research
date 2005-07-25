@@ -55,9 +55,7 @@ m_frame_number(frame_number),
 m_gmv(me_data.Vectors(1).LengthY(), me_data.Vectors(1).LengthX()),
 m_inliers(me_data.Vectors(1).LengthY(), me_data.Vectors(1).LengthX()),
 m_encparams(encparams)
-{
-	m_debug = true;
-}
+{}
 
 GlobalMotion::~GlobalMotion()
 {}
@@ -80,7 +78,8 @@ void GlobalMotion::ModelGlobalMotion()
 void GlobalMotion::ModelGlobalMotion(int ref_number)
 {	
 
-	std::cerr<<std::endl<<"Global Motion : relative to reference frame "<<ref_number<<":";
+	if (m_encparams.Verbose())
+		std::cerr<<std::endl<<"Global Motion : relative to reference frame "<<ref_number<<":";
 
 	// initialise inliers array
 	for (int j=0;j<m_inliers.LengthY();j++)	
@@ -102,7 +101,8 @@ void GlobalMotion::ModelGlobalMotion(int ref_number)
 	ModelAffine * model = model_affine;
 	//ModelProjective * model = model_projective;
 
-	if (m_debug)
+	/*
+	if (m_encparams.Verbose())
 	{
 		std::cerr << std::endl << "  Initial Global Motion parameters  : ";
 		std::cerr << initial_params[0] << " " << initial_params[1] << " ";
@@ -110,6 +110,7 @@ void GlobalMotion::ModelGlobalMotion(int ref_number)
 		std::cerr << initial_params[4] << " " << initial_params[5] << " ";
 		std::cerr << initial_params[6] << " " << initial_params[7] << " ";
 	}
+	*/
 
 	TestGlobalMotionModel * test = new TestMvSAD(m_frame_buffer.GetFrame(m_frame_number),
 		m_frame_buffer.GetFrame(ref_number),
@@ -121,7 +122,7 @@ void GlobalMotion::ModelGlobalMotion(int ref_number)
 	// test initial approximation
 	model->GenerateGlobalMotionVectors(m_gmv, initial_params);
 	int initial_score = test->Test(m_gmv, m_inliers);
-	if (m_debug) std::cerr << std::endl << "  Initial score (Low=Good)   = " << initial_score;
+	if (m_encparams.Verbose()) std::cerr << std::endl << "  Initial score (Low=Good)   = " << initial_score;
 
 	// ********************************************************************************
 	// reject motion vectors outliying from global motion
@@ -146,7 +147,7 @@ void GlobalMotion::ModelGlobalMotion(int ref_number)
 		m_frame_number, ref_number,	*model, *test, m_inliers);
 	filter->Refine(m_gmv, score);
 	delete filter;
-	if (m_debug) std::cerr << std::endl << "  Score after filter         = " << score;
+	if (m_encparams.Verbose()) std::cerr << std::endl << "  Score after filter         = " << score;
 
 	// ********************************************************************************
 	// done refinement process
@@ -156,8 +157,9 @@ void GlobalMotion::ModelGlobalMotion(int ref_number)
 	OneDArray<float> optimised_params(8);
 	model->CalculateModelParameters(m_gmv, m_inliers, optimised_params);
 	
+	/*
 	// display optimised parameters
-	if (m_debug)
+	if (m_encparams.Verbose())
 	{
 		std::cerr << std::endl << "  Optimised parameters       : ";
 		std::cerr << optimised_params[0] << " " << optimised_params[1] << " ";
@@ -165,26 +167,29 @@ void GlobalMotion::ModelGlobalMotion(int ref_number)
 		std::cerr << optimised_params[4] << " " << optimised_params[5] << " ";
 		std::cerr << optimised_params[6] << " " << optimised_params[7] << " ";
 	}    
+	*/
 
 	// create global motion vector fields from parameters and test  
 	model->GenerateGlobalMotionVectors(m_gmv, optimised_params);
 	int optimised_score = test->Test(m_gmv, m_inliers);
 
-	if (m_debug) std::cerr << std::endl << "  Optimised score            = " << optimised_score;
+	if (m_encparams.Verbose()) std::cerr << std::endl << "  Optimised score            = " << optimised_score;
 
 	// update model parameters (for instrumentation)
 	if (initial_score < optimised_score)  
 	{
 		m_me_data.GlobalMotionParameters(ref_number) = initial_params;
-		std::cerr << std::endl << "  Initial Score " << initial_score << " < " << optimised_score << " Optimised Score";
+		if (m_encparams.Verbose())
+			std::cerr << std::endl << "  Initial Score " << initial_score << " < " << optimised_score << " Optimised Score";
 	}
 	else
 	{
 		m_me_data.GlobalMotionParameters(ref_number) = optimised_params;
-		std::cerr << std::endl << "  Initial Score " << initial_score << " >= " << optimised_score << " Optimised Score";
+		if (m_encparams.Verbose())
+			std::cerr << std::endl << "  Initial Score " << initial_score << " >= " << optimised_score << " Optimised Score";
 	}
 
-	if (m_debug)
+	if (m_encparams.Verbose())
 	{
 		std::cerr << std::endl << "  Using parameters           : ";
 		std::cerr << m_me_data.GlobalMotionParameters(ref_number)[0] << " " << m_me_data.GlobalMotionParameters(ref_number)[1] << " ";
@@ -211,7 +216,7 @@ int GlobalMotion::OutlierReject_Edge(int ref_number, ModelAffine& model, TestGlo
 	refine = new RejectEdge(m_frame_buffer, m_me_data, m_frame_number, ref_number, model, test, m_inliers, m_encparams);
 	refine->Reject(score);
 	delete refine;
-	if (m_debug) {
+	if (m_encparams.Verbose()) {
 		std::cerr << std::endl << "  Score after edge rejection = " << score;
 		int number_of_inliers = 0;
 		for (int j=0; j<m_inliers.LengthY(); ++j) {
@@ -231,7 +236,7 @@ int GlobalMotion::OutlierReject_SAD(int ref_number, ModelAffine& model, TestGlob
 	refine = new RejectSAD(m_frame_buffer, m_me_data, m_frame_number, ref_number, model, test, m_inliers, m_encparams);
 	refine->Reject(score);
 	delete refine;
-	if (m_debug) {
+	if (m_encparams.Verbose()) {
 		std::cerr << std::endl << "  Score after SAD rejection  = " << score;
 		int number_of_inliers = 0;
 		for (int j=0; j<m_inliers.LengthY(); ++j) {
@@ -251,7 +256,7 @@ int GlobalMotion::OutlierReject_LocalMean(int ref_number, ModelAffine& model, Te
 	refine = new RejectLocal(m_frame_buffer, m_me_data, m_frame_number, ref_number, model, test, m_inliers, m_encparams);
 	refine->Reject(score);
 	delete refine;
-	if (m_debug) {
+	if (m_encparams.Verbose()) {
 		std::cerr << std::endl << "  Score after Local Mean rej.= " << score;
 		int number_of_inliers = 0;
 		for (int j=0; j<m_inliers.LengthY(); ++j) {
@@ -271,7 +276,7 @@ int GlobalMotion::OutlierReject_Intensity(int ref_number, ModelAffine& model, Te
 	refine = new RejectIntensity(m_frame_buffer, m_me_data, m_frame_number, ref_number, model, test, m_inliers, m_encparams);
 	refine->Reject(score);
 	delete refine;
-	if (m_debug) {
+	if (m_encparams.Verbose()) {
 		std::cerr << std::endl << "  Score after Intensity rej. = " << score;
 		int number_of_inliers = 0;
 		for (int j=0; j<m_inliers.LengthY(); ++j) {
@@ -288,14 +293,14 @@ int GlobalMotion::OutlierReject_Intensity(int ref_number, ModelAffine& model, Te
 int GlobalMotion::OutlierReject_Value(int ref_number, ModelAffine& model, TestGlobalMotionModel& test, int score)
 {
 	//
-	// MARC: At the moment this gives an error. Also, not sure if just having a large motion
-	// vector is a sufficiently good reason to not use it for estimating global motion! 
+	// At the moment this gives an error. Also, not sure if just having a large motion
+	// vector is a sufficiently good reason to not use it for estimating global motion!  (Marc Servais)
 	//
 	RejectMotionVectorOutliers * refine;
 	refine = new RejectValue(m_frame_buffer, m_me_data, m_frame_number, ref_number, model, test, m_inliers, m_encparams);
 	refine->Reject(score);
 	delete refine;
-	if (m_debug) {
+	if (m_encparams.Verbose()) {
 		std::cerr << std::endl << "  Score after Value reject.  = " << score;
 		int number_of_inliers = 0;
 		for (int j=0; j<m_inliers.LengthY(); ++j) {
@@ -314,7 +319,7 @@ int GlobalMotion::OutlierReject_Outlier(int ref_number, ModelAffine& model, Test
 	refine = new RejectOutlier(m_frame_buffer, m_me_data, m_frame_number, ref_number, model, test, m_inliers, m_encparams);
 	refine->Reject(score);
 	delete refine;
-	if (m_debug) {
+	if (m_encparams.Verbose()) {
 		std::cerr << std::endl << "  Score after Outlier rej.   = " << score;
 		int number_of_inliers = 0;
 		for (int j=0; j<m_inliers.LengthY(); ++j) {
