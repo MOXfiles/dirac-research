@@ -447,8 +447,8 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     m_encparams.SetNumL1(enc_ctx->enc_params.num_L1);
     m_encparams.SetCPD(enc_ctx->enc_params.cpd);
     m_encparams.SetRecode(enc_ctx->enc_params.recode);
-    m_encparams.SetUFactor(3.0f);
-    m_encparams.SetVFactor(1.75f);
+    m_encparams.SetUFactor(1.5f);
+    m_encparams.SetVFactor(0.75f);
     bparams.SetYblen( enc_ctx->enc_params.yblen );
     bparams.SetXblen( enc_ctx->enc_params.xblen );
     bparams.SetYbsep( enc_ctx->enc_params.ybsep );
@@ -776,7 +776,7 @@ static void SetEncoderParameters (dirac_encoder_context_t *enc_ctx, dirac_encode
         encparams.cpd = 20.0f;
         encparams.xblen = 16;
         encparams.yblen = 16;
-        encparams.xbsep = 10;
+        encparams.xbsep = 12;
         encparams.ybsep = 12;
         break;
     case HD1080:
