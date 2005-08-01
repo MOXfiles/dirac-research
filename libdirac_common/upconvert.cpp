@@ -44,6 +44,8 @@ UpConverter::UpConverter(){}
 
 UpConverter::~UpConverter(){}
 
+#if !defined(HAVE_MMX)
+//MMX version defined in upconver_mmx.cpp
 //Up-convert by a factor of two.
 void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
 {
@@ -133,6 +135,7 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
 
     }//y,ypos
 }
+#endif
 
 
 void UpConverter::RowLoop(PicArray&up_data, const int row_num )
