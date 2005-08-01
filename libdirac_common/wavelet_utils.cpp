@@ -39,7 +39,6 @@
 #include <libdirac_common/wavelet_utils.h>
 #include <libdirac_common/common.h>
 #include <cstdlib>
-
 using namespace dirac;
 
 // Default constructor
@@ -244,7 +243,7 @@ WaveletTransform::~WaveletTransform()
 void WaveletTransform::Transform(const Direction d, PicArray& pic_data)
 {
     int xl,yl; 
- 
+
     if (d == FORWARD)
     {
         xl=pic_data.LengthX(); 
@@ -444,7 +443,8 @@ ValueType WaveletTransform::GetMeanDCVal() const
 
 // Private functions //
 ///////////////////////
-
+// NOTEL MMX version is defined in wavelet_utils_mmx.cpp
+// the corresponding changes are made in wavelet_utils_mmx.cpp as well
 void WaveletTransform::VHFilter::Interleave( const int xp , 
                                              const int yp , 
                                              const int xl , 
@@ -971,6 +971,9 @@ void WaveletTransform::VHFilterApprox9_7::Split(const int xp ,
     DeInterleave( xp , yp , xl , yl , pic_data );
 }
 
+#if !defined(HAVE_MMX)
+// NOTEL MMX version is defined in wavelet_utils_mmx.cpp
+// the corresponding changes are made in wavelet_utils_mmx.cpp as well
 void WaveletTransform::VHFilterApprox9_7::Synth(const int xp , 
                                                 const int yp , 
                                                 const int xl , 
@@ -1057,6 +1060,7 @@ void WaveletTransform::VHFilterApprox9_7::Synth(const int xp ,
 
 
 }
+#endif
 
 void WaveletTransform::VHFilter13_5::Split(const int xp , 
                                            const int yp , 
@@ -1158,6 +1162,9 @@ void WaveletTransform::VHFilter13_5::Split(const int xp ,
     DeInterleave( xp , yp , xl , yl , pic_data );
 }
 
+#if !defined(HAVE_MMX)
+// NOTEL MMX version is defined in wavelet_utils_mmx.cpp
+// the corresponding changes are made in wavelet_utils_mmx.cpp as well
 void WaveletTransform::VHFilter13_5::Synth(const int xp ,
                                            const int yp , 
                                            const int xl ,
@@ -1258,6 +1265,7 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
 
     }// j
 } 
+#endif
 
 // Returns a perceptual noise weighting based on extending CCIR 959 values
 // assuming a two-d isotropic response. Also has a fudge factor of 20% for chroma
