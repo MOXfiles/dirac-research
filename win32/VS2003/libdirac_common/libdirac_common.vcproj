@@ -198,7 +198,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\.."
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;HAVE_MMX"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -247,7 +247,7 @@
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="3"
 				AdditionalIncludeDirectories="..\..\.."
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;HAVE_MMX"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="2"
@@ -287,7 +287,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\.."
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;HAVE_MMX"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -336,7 +336,7 @@
 				OmitFramePointers="TRUE"
 				OptimizeForProcessor="3"
 				AdditionalIncludeDirectories="..\..\.."
-				PreprocessorDefinitions="WIN32;NDEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;NDEBUG;_LIB;HAVE_MMX"
 				RuntimeLibrary="0"
 				UsePrecompiledHeader="0"
 				WarningLevel="2"
@@ -402,6 +402,9 @@
 				RelativePath="..\..\..\libdirac_common\mot_comp.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_common\mot_comp_mmx.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_common\motion.cpp">
 			</File>
 			<File
@@ -414,7 +417,13 @@
 				RelativePath="..\..\..\libdirac_common\upconvert.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_common\upconvert_mmx.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_common\wavelet_utils.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_common\wavelet_utils_mmx.cpp">
 			</File>
 		</Filter>
 		<Filter
@@ -459,6 +468,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\mot_comp.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_common\mot_comp_mmx.h">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\motion.h">
