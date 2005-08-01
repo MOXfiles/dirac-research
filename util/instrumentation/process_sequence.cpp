@@ -269,6 +269,7 @@ void ProcessSequence::DoSequence(int start, int stop)
             {
                 // look for frame number
                 m_data_in.ignore(100000, ':');
+                data_next_fnum = -1;
                 m_data_in >> data_next_fnum;
 
                 if (m_data_fnum == data_next_fnum && !m_data_in.eof())
@@ -294,6 +295,11 @@ void ProcessSequence::DoSequence(int start, int stop)
                 std::cerr << "Check buffer size. Exiting." << std::endl;
                 exit(EXIT_FAILURE);
             }
+        }
+        else
+        {
+            if (data_next_fnum == -1)
+                break;
         }
     }
 
