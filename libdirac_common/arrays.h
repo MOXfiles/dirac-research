@@ -21,8 +21,9 @@
 * All Rights Reserved.
 *
 * Contributor(s): Thomas Davies (Original Author), 
-                  Peter Meerwald (pmeerw@users.sourceforge.net)
-                  Mike Ferenduros (mike_ferenzduros@users.sourceforge.net)
+*                 Peter Meerwald (pmeerw@users.sourceforge.net)
+*                 Mike Ferenduros (mike_ferenzduros@users.sourceforge.net)
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -447,8 +448,11 @@ namespace dirac
     template <class T>
     void TwoDArray<T>::Resize(const int height, const int width)
     {
-        FreeData();
-        Init(height , width);
+        if (height != m_length_y || width != m_length_x)
+        {
+            FreeData();
+            Init(height , width);
+        }
     }
 
     //private member functions//
@@ -507,6 +511,7 @@ namespace dirac
                 delete[] m_array_of_rows[0];
             }
 
+            m_length_y = m_length_x = 0;
             // deallocate the array of rows
             delete[] m_array_of_rows;
         }    
