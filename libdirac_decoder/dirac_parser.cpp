@@ -40,6 +40,10 @@
 #include <libdirac_decoder/dirac_cppparser.h>
 #include <libdirac_decoder/dirac_parser.h>
 #include <libdirac_common/frame.h>
+#if defined (HAVE_MMX)
+#include <mmintrin.h>
+
+#endif
 using namespace dirac;
 
 #ifdef __cplusplus
@@ -159,6 +163,39 @@ static void set_component (const PicArray& pic_data,  const CompSort cs, dirac_d
     }
 
     TEST (buf != NULL);
+
+#if defined HAVE_MMX
+    int last_idx = (xl>>3)<<3;
+    __m64 two = _mm_set_pi16(2, 2, 2, 2);
+    for (int j=0 ; j<yl ;++j)
+    {
+        for (int i=0 ; i<last_idx ; i+=8 )
+        {
+            __m64 pic1 = *(__m64 *)&pic_data[j][i];
+            pic1 = _mm_add_pi16 (pic1, two);
+            pic1 =_mm_srai_pi16 (pic1, 2);
+            __m64 pic2 = *(__m64 *)(&pic_data[j][i+4]);
+            pic2 = _mm_add_pi16 (pic2, two);
+            pic2 =_mm_srai_pi16 (pic2, 2);
+            __m64 *tmp = (__m64 *)&buf[j*xl+i];
+            *tmp = _mm_packs_pu16 (pic1, pic2);
+        }//i
+    }//j
+    _mm_empty();
+
+    ValueType tempv;
+    // mop up remaining pixels
+    for (int j=0 ; j<yl ;++j)
+    {
+        for (int i=last_idx ; i<xl ; i++ )
+        {
+            tempv=pic_data[j][i]+2;
+            tempv>>=2;
+            buf[j*xl+i]=(unsigned char) tempv;                
+        }//i
+    }//j
+    return;
+#else
     ValueType tempv;
 
     for (int j=0 ; j<yl ;++j)
@@ -171,6 +208,7 @@ static void set_component (const PicArray& pic_data,  const CompSort cs, dirac_d
         }//i
 
     }//j
+#endif
 }
 
 static void set_frame_data (const  DiracParser * const parser, dirac_decoder_t *decoder)
