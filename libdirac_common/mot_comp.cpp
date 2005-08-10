@@ -226,6 +226,7 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
 
     // Size of frame component being motion compensated
     ImageCoords orig_pic_size(pic_data_out.LengthX(), pic_data_out.LengthY());
+
     const PicArray& ref1up = ref1frame.UpData( cs );
     const PicArray& ref2up = ref2frame.UpData( cs );
 
@@ -384,8 +385,6 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
                {
                     end_y = y_end_data;
                }
-               //std::cerr << "start_y=" << start_y;
-               //std::cerr << "end_y=" << end_y << std::endl;
 
              for ( int i = start_y, pos_y = 0; i < end_y; i++, pos_y++)
              {
@@ -419,8 +418,6 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
                    if (end_y > pic_data_out.LengthY())
                         end_y = pic_data_out.LengthY();
               }
-               //std::cerr << "start_y=" << start_y;
-               //std::cerr << "end_y=" << end_y << std::endl;
 #if defined (HAVE_MMX)
              CompensateComponentAddAndShift_mmx (start_y, end_y,
                                                  pic_data, pic_data_out);
@@ -482,8 +479,6 @@ void MotionCompensator::DCBlock( TwoDArray<CalcValueType> &pic_data ,
 
     //Quick process where we can just copy from the double size image.
 
-    //std::cerr << "start_y=" << start_pos.y;
-    //std::cerr << "end_y=" << end_pos.y << std::endl;
     CalcValueType *pic_curr = &pic_data[0][start_pos.x]; 
     ValueType *wt_curr = &wt_array[diff.y][diff.x]; 
     const int block_width = end_pos.x - start_pos.x;
@@ -528,6 +523,8 @@ void MotionCompensator::CreateBlock( const OLBParams &bparams ,
                                                 bool FullY , 
                                                 TwoDArray<ValueType>& WeightArray)
 {
+    const CalcValueType max_val = 32;
+
     // Create temporary arrays
     OneDArray<CalcValueType> HWts( WeightArray.LengthX() );
     OneDArray<CalcValueType> VWts( WeightArray.LengthY() );
@@ -541,35 +538,35 @@ void MotionCompensator::CreateBlock( const OLBParams &bparams ,
     for(int x = 0; x < bparams.Xblen(); ++x)
     {
         val = (float(x) - (float(bparams.Xblen()-1)/2.0))/float(bparams.Xbsep());
-        HWts[x] = static_cast<CalcValueType>( 32.0 * RaisedCosine(val,rolloffX) );
+        HWts[x] = static_cast<CalcValueType>( float(max_val) * RaisedCosine(val,rolloffX) );
         HWts[x] = std::max( HWts[x] , 1 );
-        HWts[x] = std::min( HWts[x] , 32 );
+        HWts[x] = std::min( HWts[x] , max_val );
     }// x
 
     // Window in the y direction
     for(int y = 0; y < bparams.Yblen(); ++y)
     {
         val = (float(y) - (float(bparams.Yblen()-1)/2.0))/float(bparams.Ybsep());
-        VWts[y] = static_cast<CalcValueType>( 32.0 * RaisedCosine(val,rolloffY) );
+        VWts[y] = static_cast<CalcValueType>( float(max_val) * RaisedCosine(val,rolloffY) );
         VWts[y] = std::max( VWts[y] , 1 );
-        VWts[y] = std::min( VWts[y] , 32 );
+        VWts[y] = std::min( VWts[y] , max_val );
     }// y
 
     // Rationalise to avoid rounding errors
     for(int x = HWts.Last(); x > HWts.Last()-bparams.Xoffset(); --x)
     {
-        if (HWts[x] + HWts[HWts.Last()-(x-bparams.Xbsep())] > 32)
-            HWts[HWts.Last()-(x-bparams.Xbsep())] = 32-HWts[x];
+        if (HWts[x] + HWts[HWts.Last()-(x-bparams.Xbsep())] > max_val)
+            HWts[HWts.Last()-(x-bparams.Xbsep())] = max_val-HWts[x];
         
-        else if (HWts[x] + HWts[HWts.Last()-(x-bparams.Xbsep())] < 32)
-            HWts[x] = 32-HWts[HWts.Last()-(x-bparams.Xbsep())];
+        else if (HWts[x] + HWts[HWts.Last()-(x-bparams.Xbsep())] < max_val)
+            HWts[x] = max_val-HWts[HWts.Last()-(x-bparams.Xbsep())];
     }// x 
 
     // Now reflect or pad, as appropriate
     if (!FullX)
     {
         for( int x = 0; x < (bparams.Xblen()>>1) ; ++x)
-            HWts[x] = 32;
+            HWts[x] = max_val;
     }
     else
     {
@@ -580,17 +577,17 @@ void MotionCompensator::CreateBlock( const OLBParams &bparams ,
     // Rationalise to avoid rounding errors
     for(int y = VWts.Last(); y > VWts.Last()-bparams.Yoffset(); --y)
     {
-        if (VWts[y] + VWts[VWts.Last()-(y-bparams.Ybsep())] > 32)
-            VWts[VWts.Last()-(y-bparams.Ybsep())] = 32-VWts[y];
-        else if (VWts[y] + VWts[VWts.Last()-(y-bparams.Ybsep())] < 32)
-            VWts[y] = 32-VWts[VWts.Last()-(y-bparams.Ybsep())];
+        if (VWts[y] + VWts[VWts.Last()-(y-bparams.Ybsep())] > max_val)
+            VWts[VWts.Last()-(y-bparams.Ybsep())] = max_val-VWts[y];
+        else if (VWts[y] + VWts[VWts.Last()-(y-bparams.Ybsep())] < max_val)
+            VWts[y] = max_val-VWts[VWts.Last()-(y-bparams.Ybsep())];
     }// x 
 
     // Reflect or pad, as appropriate
     if (!FullY)
     {
         for( int y = 0 ; y < (bparams.Yblen()>>1); ++y)
-            VWts[y] = 32;
+            VWts[y] = max_val;
     }
     else
     {
@@ -860,8 +857,6 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
     else if( ref_start.y + ((end_pos.y - start_pos.y)<<1 ) >= refYlen)
         do_bounds_checking = true;
      
-     //std::cerr << "start_y=" << start_pos.y;
-     //std::cerr << "end_y=" << end_pos.y << std::endl;
     if( !do_bounds_checking )
     {
         ValueType *refup_curr = &refup_data[ref_start.y][ref_start.x];
