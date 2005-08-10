@@ -264,10 +264,10 @@ SD576    : for standard definition video
 HD720    : for 1280x720 High Definition progressive video
 HD1080   : for 1920/1440x1080 High Definition progressive video [not yet supported]
 
-The other useful parameter is the quality factor qf. This is a number from 0
-to 10.  The higher the number, the better the quality. The encoder attempts to
-adapt the encoding process to produce constant quality across the sequence.
-(Due to variations in the content, it may not exactly achieve this.)
+The other useful parameter is the quality factor qf. This is a number greater 
+than 0. The higher the number, the better the quality. Typical high quality 
+is 8-10, but it will vary from sequence to sequence, sometimes higher and
+sometimes lower.
 
 Simple coding example. Code an SD sequence to high quality.
 
@@ -302,6 +302,11 @@ recode    : the number of additional re-encodings allowed for hitting the
             target quality. The default is 2.
 cpd       : normalised viewing distance parameter, in cycles per degree.
 nolocal   : Do no generate diagnostics and locally decoded output
+
+Width and height parameters are important, as default values will be
+used if these are not specified. So if you're coding, say, NTSC video
+with dimensions 704x480 then you'll need to set these as none of the
+presets will fit. When in doubt, put these values in.
 
 Using -start and -stop allows a small section to be coded, rather than the
 whole thing.
