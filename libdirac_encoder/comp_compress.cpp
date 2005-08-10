@@ -85,18 +85,12 @@ void CompCompressor::Compress(PicArray& pic_data)
     else 
         m_lambda= m_encparams.L2Lambda();
 
-     if (m_csort == U_COMP) 
+     if (m_csort == U_COMP)
          m_lambda*= m_encparams.UFactor();
      if (m_csort == V_COMP) 
          m_lambda*= m_encparams.VFactor();
 
-    WltFilter filt_sort;
-    if ( m_fsort != L2_frame )
-        filt_sort = THIRTEENFIVE;
-    else
-        filt_sort = APPROX97;
-
-    WaveletTransform wtransform( depth , filt_sort );
+    WaveletTransform wtransform( depth , m_encparams.TransformFilter() );
     wtransform.Transform( FORWARD , pic_data );
 
     // Choose all the quantisers //

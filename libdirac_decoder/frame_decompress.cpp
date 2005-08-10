@@ -184,6 +184,9 @@ bool FrameDecompressor::ReadFrameHeader( FrameParams& fparams )
              //read the frame sort
             fparams.SetFSort( FrameSort( UnsignedGolombDecode( m_decparams.BitsIn() ) ) );
 
+            //read the wavelet filter being used
+            m_decparams.SetTransformFilter( WltFilter( UnsignedGolombDecode( m_decparams.BitsIn() ) ) );
+
             if ( fparams.FSort() != I_frame ){
 
                  //if not an I-frame, read how many references there are

@@ -114,6 +114,11 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer ,
 
     }
 
+   // Set the wavelet filter
+   if ( fsort==I_frame )
+       m_encparams.SetTransformFilter( APPROX97 );
+   else
+       m_encparams.SetTransformFilter( FIVETHREE );
 
     // Write the frame header. We wait until after motion estimation, since
     // this allows us to do cut-detection and (possibly) to decide whether
@@ -224,7 +229,11 @@ void FrameCompressor::WriteFrameHeader( const FrameParams& fparams )
         UnsignedGolombCode( frame_header_op , fparams.ExpiryTime() );
 
         // Write the frame sort
-        UnsignedGolombCode( frame_header_op , (unsigned int) fparams.FSort() );        
+        UnsignedGolombCode( frame_header_op , (unsigned int) fparams.FSort() );
+
+        // Write the wavelet filter being used
+        UnsignedGolombCode( frame_header_op , (unsigned int) m_encparams.TransformFilter() );
+
         if (fparams.FSort() != I_frame)
         {        
             // If not an I-frame, write how many references there are        

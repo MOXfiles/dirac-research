@@ -67,13 +67,7 @@ void CompDecompressor::Decompress( PicArray& pic_data )
 
 	unsigned int num_band_bytes;
 
-    WltFilter filt_sort;
-    if ( fsort != L2_frame )
-        filt_sort = THIRTEENFIVE;
-    else
-        filt_sort = APPROX97;
-
-	WaveletTransform wtransform( depth , filt_sort );
+	WaveletTransform wtransform( depth , m_decparams.TransformFilter() );
 	SubbandList& bands=wtransform.BandList();
 
     // Initialise all the subbands
