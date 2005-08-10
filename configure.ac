@@ -289,10 +289,10 @@ dnl ----------------------------------------------
 dnl enable MMX optimization flag
 dnl TODO: need to fix this test
 dnl -----------------------------------------------
-AC_MSG_CHECKING([whether to enable optimizations using MMX instructions (if available)])
-AC_ARG_ENABLE(mmx, AC_HELP_STRING([--enable-mmx], [enable MMX optimization (no)]),
-[
-if test x"${enableval}" = x"yes" ; then
+AC_MSG_CHECKING([whether optimizations using MMX instructions are enabled])
+AC_ARG_ENABLE(mmx, AC_HELP_STRING([--enable-mmx], [enable MMX optimization (yes)]), [enable_mmx="${enableval}"], [enable_mmx="yes"])
+
+if test x"${enable_mmx}" = x"yes" ; then
 	case "$CXX" in
 	    g++*)
 			AC_LANG_PUSH(C++)
@@ -312,8 +312,7 @@ if test x"${enableval}" = x"yes" ; then
     esac
 else
 	AC_MSG_RESULT(no)
-fi], [AC_MSG_RESULT(no)]
-)
+fi
 
 dnl -----------------------------------------------
 dnl Setup for the cppunit testsuite
