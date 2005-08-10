@@ -412,109 +412,13 @@ namespace dirac
     //motion estimation and coding stuff
 
     //! Return the median of three motion vectors 
-    inline MVector MvMedian(const MVector& mv1,const MVector& mv2,const MVector& mv3) {
-        //takes median of each vector component    
-        MVector tmp_mv;
-
-        tmp_mv.x=mv1.x;
-        tmp_mv.x+=mv2.x;
-        tmp_mv.x+=mv3.x;
-
-        tmp_mv.x-=std::max(std::max(mv1.x,mv2.x),mv3.x);
-        tmp_mv.x-=std::min(std::min(mv1.x,mv2.x),mv3.x);
-
-        tmp_mv.y=mv1.y;
-        tmp_mv.y+=mv2.y;
-        tmp_mv.y+=mv3.y;
-
-        tmp_mv.y-=std::max(std::max(mv1.y,mv2.y),mv3.y);
-        tmp_mv.y-=std::min(std::min(mv1.y,mv2.y),mv3.y);
-
-        return tmp_mv;
-    }
+    MVector MvMedian(const MVector& mv1,const MVector& mv2,const MVector& mv3);
 
     //! Return the median of a set of motion vectors 
-    inline MVector MvMedian(const std::vector<MVector>& vect_list){
-        //more general median. Takes the median of each vector component    
-
-        MVector median;
-        int num_vals=int(vect_list.size());
-        if (num_vals>0)    {
-            int pos=0;
-            std::vector<int> ordered_vals(vect_list.size());
-            //do x first
-            ordered_vals[0]=vect_list[0].x;        
-            for (int I=1;I<num_vals;++I){
-                for (int K=0;K<I;++K){
-                    if (vect_list[I].x<ordered_vals[K]){
-                        pos=K;
-                        break;
-                    }
-                    else
-                        pos=K+1;
-                }//K
-                if (pos==I)
-                    ordered_vals[I]=vect_list[I].x;
-                else{
-                    for (int K=pos;K>=I-1;--K){
-                        ordered_vals[K+1]=ordered_vals[K];
-                    }
-                    ordered_vals[pos]=vect_list[I].x;
-                }
-            }//I
-            if (vect_list.size()%2!=0)
-                median.x=ordered_vals[(num_vals-1)/2];
-            else
-                median.x=(ordered_vals[(num_vals/2)-1]+ordered_vals[num_vals/2])/2;
-
-            //now do y
-            ordered_vals[0]=vect_list[0].y;        
-            for (int I=1;I<num_vals;++I){
-                for (int K=0;K<I;++K){
-                    if (vect_list[I].y<ordered_vals[K]){
-                        pos=K;
-                        break;
-                    }
-                    else
-                        pos=K+1;
-                }//K
-                if (pos==I)
-                    ordered_vals[I]=vect_list[I].y;
-                else{
-                    for (int K=pos;K>=I-1;--K){
-                        ordered_vals[K+1]=ordered_vals[K];
-                    }
-                    ordered_vals[pos]=vect_list[I].y;
-                }
-            }//I
-            if (num_vals%2!=0)
-                median.y=ordered_vals[(num_vals-1)/2];
-            else
-                median.y=(ordered_vals[(num_vals/2)-1]+ordered_vals[num_vals/2])/2;        
-
-        }
-        else{
-            median.x=0;
-            median.y=0;
-        }
-        return median;
-    }
+    MVector MvMedian(const std::vector<MVector>& vect_list);
 
     //! Return the mean of two motion vectors
-    inline MVector MvMean(MVector& mv1,MVector& mv2) {
-        //takes median of each vector component    
-        MVector tmp_mv;
-
-        tmp_mv.x=mv1.x;
-        tmp_mv.x+=mv2.x;
-        tmp_mv.x/=2;
-
-        tmp_mv.y=mv1.y;
-        tmp_mv.y+=mv2.y;
-        tmp_mv.y/=2;
-
-        return tmp_mv;
-    }
+    MVector MvMean(MVector& mv1,MVector& mv2);
 
     //! Return the squared length of a motion vector
     inline int Norm2(const MVector& mv){//L^2 norm of a motion vector
