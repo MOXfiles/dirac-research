@@ -163,7 +163,7 @@ typedef enum
 /*! Structure that holds the encoder specific parameters */
 typedef struct 
 {
-    /*! Quality factor 0.0 to 10.0 */
+    /*! Quality factor */
     float qf;
     /*! The separation between L1 frames */
     int L1_sep;
@@ -181,8 +181,6 @@ typedef struct
     int xbsep;
     /*! The vertical separation between blocks. Always <yblen */
     int ybsep;
-    /*! The number of recodes allowed to hit a given quality */
-    int recode;
 } dirac_encparams_t;
 
 /*! Structure that holds the parameters that set up the encoder context */
