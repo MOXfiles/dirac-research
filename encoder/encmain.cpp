@@ -68,7 +68,7 @@ static void display_help()
     cout << "\n====    ====   === ============= ===========                                       ";
     cout << "\ninput   string  I  [ required ]  Input file name";
     cout << "\noutput  string  I  [ required ]  Output file name";
-    cout << "\ncif     bool    I  true          Use CIF compression presets";
+    cout << "\nCIF     bool    I  true          Use CIF compression presets";
     cout << "\nHD720   bool    I  false         Use HD-720 compression presets";
     cout << "\nHD1080  bool    I  false         Use HD-1080 compression presets";
     cout << "\nSD576   bool    I  false         Use SD-576 compression presets";
@@ -86,7 +86,6 @@ static void display_help()
     cout << "\nybsep   ulong   I  0UL           Overlapping block vertical separation";
     cout << "\ncpd     ulong   I  0UL           Perceptual weighting - vertical cycles per deg.";
     cout << "\nqf      float   I  0.0F          Overall quality factor (0.0 - 10.0)";
-    cout << "\nrecode  ulong   I  2             Number of recodes allowed to converge to target quality";
     cout << "\nverbose bool    I  false         Verbose mode";
     cout << "\nnolocal bool    I  false         Don't write diagnostics & locally decoded video";
     cout << endl;
@@ -365,6 +364,49 @@ int GetFrameBufferSize (const dirac_encoder_context_t &enc_ctx)
     }
     return size;
 }
+const char *chroma2string (dirac_chroma_t chroma)
+{
+    switch (chroma)
+    {
+    case Yonly:
+        return "Y_ONLY";
+
+    case format422:
+        return "4:2:2";
+
+    case format444:
+        return "4:4:4";
+
+    case format420:
+        return "4:2:0";
+
+    case format411:
+        return "4:1:1";
+
+    default:
+        break;
+    }
+
+    return "Unknown";
+}
+
+void display_codec_params(dirac_encoder_context_t &enc_ctx)
+{
+    std::cout << "Sequence parameters : " << std::endl;
+    std::cout << "\theight=" << enc_ctx.seq_params.height;
+    std::cout << " width=" << enc_ctx.seq_params.width << std::endl;
+    std::cout << "\tchroma=" << chroma2string(enc_ctx.seq_params.chroma) << std::endl;
+    std::cout << "\tframe rate=" << enc_ctx.seq_params.frame_rate.numerator;
+    std::cout << "/" << enc_ctx.seq_params.frame_rate.denominator << std::endl;
+    std::cout << "Encoder parameters : " << std::endl;
+    std::cout << "\tquality factor=" << enc_ctx.enc_params.qf << std::endl;
+    std::cout << "\tGOP parameters : num_L1="  << enc_ctx.enc_params.num_L1;
+    std::cout << " L1_sep=" << enc_ctx.enc_params.L1_sep << std::endl;
+    std::cout << "\tBlock parameters : xblen="  << enc_ctx.enc_params.xblen;
+    std::cout << " yblen=" << enc_ctx.enc_params.yblen;
+    std::cout << " xbsep=" << enc_ctx.enc_params.xbsep;
+    std::cout << " ybsep=" << enc_ctx.enc_params.ybsep << std::endl;
+}
 
 int main (int argc, char* argv[])
 {
@@ -410,7 +452,7 @@ int main (int argc, char* argv[])
     dirac_encoder_presets_t preset = CIF;
     for (int i = 1; i < argc; i++)
     {
-        if ( strcmp (argv[i], "-cif") == 0 )
+        if ( strcmp (argv[i], "-CIF") == 0 )
         {
             preset = CIF;
             parsed[i] = true;
@@ -642,7 +684,7 @@ int main (int argc, char* argv[])
         if ( !parsed[i] )
         {
             all_parsed = false;
-            std::cout<<std::endl<<"Unknown option "<<argv[i];
+            std::cerr<<std::endl<<"Unknown option "<<argv[i];
         }
     }
     if ( !all_parsed )
@@ -651,7 +693,13 @@ int main (int argc, char* argv[])
         exit(1);
     }
 
+    if (strcmp (input.c_str(), output.c_str()) == 0)
+    {
+        std::cerr << "Input and output file names must be different" << std::endl;
+        exit(1);
+    }
 
+    display_codec_params(enc_ctx);
     bit_name = output + ".drc";
         
 
