@@ -56,6 +56,10 @@ namespace dirac
         QualityMonitor(EncoderParams& ep,
                        const SeqParams& sparams );
 
+
+        //! Destructor
+        ~QualityMonitor();
+
         ////////////////////////////////////////////////////////////
         //                                                        //
         //    Assumes default copy constructor,  assignment =     //
@@ -67,18 +71,18 @@ namespace dirac
             Update the quality factors, returning true if we need to recode
             \param ld_frame the locally-decoded frame
             \param orig_frame the original frame
-            \param count the number of times we've tried to code this frame before
         */
-        bool UpdateModel(const Frame& ld_frame, const Frame& orig_frame ,const int count);
+        void UpdateModel(const Frame& ld_frame, const Frame& orig_frame );
 
         //! Reset the quality factors (say if there's been a cut)
         void ResetAll();
 
+        //! Write a log of the quality to date
+        void WriteLog();
+
     private:
         //functions
 
-        //! Use the model parameters to calculate the resulting Lagrangian parameters
-        void CalcNewLambdas(const FrameSort fsort, const double slope, const double offset);
 
         //! Calculate the quality of coded wrt original picture
         double QualityVal( const PicArray& coded_data , 
@@ -103,31 +107,11 @@ namespace dirac
         //! The true picture height, minus padding
         const int m_true_yl;
 
-        // target quality values for each frame type
-        OneDArray<double> m_target_quality;
+        //! The average quality for the frame types
+        OneDArray<long double> m_quality_average;
 
-        // weighted PSNR values for last of each frame type
-        OneDArray<double> m_last_quality;
-
-        /* Default Model parameters for quality wrt to log10(lambda)
-           Model is : 
-                quality = offset + slope * log10( lambda )
-            for each lambda parameter type.
-            Default parameters will be used if it's not possible to measure
-            them, and updated using measured data
-        */
-        OneDArray<double> m_slope;
-        OneDArray<double> m_offset;
-
-        //! Lagrangian parameters for the last I, L1 and L2 frames
-        OneDArray<double> m_last_lambda;
-
-        //! The Lagrangian ME parameters
-        double m_L1_me_lambda, m_L2_me_lambda;
-
-        //! The ratio of Lagrangian ME parameters to frame motion estimation parameters
-        double m_me_ratio;
-
+        //! The number of frames of each type  
+        OneDArray<int> m_frame_total;
     };
 
 } // namespace dirac

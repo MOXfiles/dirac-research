@@ -48,150 +48,53 @@ QualityMonitor::QualityMonitor(EncoderParams& encp,
     m_cformat( sparams.CFormat() ),
     m_true_xl( sparams.Xl() ),
     m_true_yl( sparams.Yl() ),
-    m_target_quality(3),
-    m_last_quality(3),
-    m_slope(3),
-    m_offset(3),
-    m_last_lambda(3)
+    m_quality_average(3),
+    m_frame_total(3)
 {
     ResetAll();
 }
 
+QualityMonitor::~QualityMonitor()
+{}
+
 void QualityMonitor::ResetAll()
 {
-    // set target qualities
- 	m_target_quality[I_frame] = 0.28 * m_encparams.Qf()* m_encparams.Qf() + 20.0 ;
-	m_target_quality[L1_frame] = m_target_quality[I_frame] - 1.0;
-	m_target_quality[L2_frame] = m_target_quality[I_frame] - 2.0;
+    // Set the lambdas
 
-    // assume we hit those targets last time
-    m_last_quality = m_target_quality;
+    m_encparams.SetLambda( I_frame , std::pow( 10.0 , (10.0-m_encparams.Qf() )/2.5 ) );
+    m_encparams.SetLambda( L1_frame , m_encparams.ILambda()*128.0 );
+    m_encparams.SetLambda( L2_frame , m_encparams.ILambda()*512.0 );
 
-    // set defaults for the model
-     m_slope[I_frame] = -4.0;
-     m_slope[L1_frame] = -4.0;
-     m_slope[L2_frame] = -4.0;
-     m_offset[I_frame] = 38.5,
-     m_offset[L1_frame] = 43.3;
-     m_offset[L2_frame] = 43.3;
 
-    for (size_t fsort=0; fsort<3; ++fsort)
+    // Set the lambdas for motion estimation
+    const double me_ratio = 1.0;
+
+    m_encparams.SetL1MELambda( std::sqrt(m_encparams.L1Lambda())*me_ratio );
+    m_encparams.SetL2MELambda( std::sqrt(m_encparams.L2Lambda())*me_ratio );
+
+    for (int i=0; i<3 ; ++i )
     {
-        m_last_lambda[fsort] = std::pow( 10.0, (m_target_quality[fsort] - m_offset[fsort])/m_slope[fsort] );
-    }// fsort
-
-    // set a default ratio for the motion estimation lambda
-    // Exact value TBD - will incorporate stuff about blocks and so on
-    // Also need to think about how this can be adapted for sequences with more or less motion 
-
-    m_me_ratio = 0.75;
-
- 	// set up the Lagrangian parameters
-    for (size_t fsort=0; fsort<3; ++fsort)
-    {
-        m_encparams.SetLambda( FrameSort(fsort), m_last_lambda[fsort] );
-    }// fsort
-
-    m_encparams.SetL1MELambda( std::sqrt(m_encparams.L1Lambda())*m_me_ratio );
-    m_encparams.SetL2MELambda( std::sqrt(m_encparams.L2Lambda())*m_me_ratio );
-
+        m_quality_average[i] = 0.0;
+        m_frame_total[i] = 0;
+    }
 }
 
-bool QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame , const int count)
+void QualityMonitor::WriteLog()
 {
-    // The return value - true if we need to recode, false otherwise
-    bool recode = false;
+    std::cerr<<std::endl<<"Mean quality for I frames is "<<m_quality_average[I_frame]/m_frame_total[I_frame];
+    std::cerr<<std::endl<<"Mean quality for L1 frames is "<<m_quality_average[L1_frame]/m_frame_total[L1_frame];
+    std::cerr<<std::endl<<"Mean quality for L2 frames is "<<m_quality_average[L2_frame]/m_frame_total[L2_frame]<<std::endl;
+}
 
+void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame )
+{
 	const FrameSort& fsort = ld_frame.GetFparams().FSort();	
-	double target_quality;	
 
-	// Parameters relating to the last frame we measured
-	double last_lambda;
-	double last_quality;
-
-	// Parameters relating to the current frame
-	double current_lambda;
-	double current_quality;
-
-
-    // Set up local parameters for the particular frame type
-    current_lambda = m_encparams.Lambda(fsort);
-    last_lambda = m_last_lambda[fsort];
-    last_quality = m_last_quality[fsort];
-    target_quality = m_target_quality[fsort];
-
-    // Get the quality of the current frame
-	current_quality = QualityVal( ld_frame.Ydata() , orig_frame.Ydata() , 0.0 , fsort );
-
-    // Copy current data into memory for last frame data
-    m_last_lambda[fsort] = m_encparams.Lambda(fsort);
-    m_last_quality[fsort] = current_quality;
-
-	// Ok, so we've got an actual quality value to use. We know the lambda used before and the resulting
-	// quality then allows us to estimate the slope of the curve of quality versus log of lambda
-
-	if ( std::abs(current_quality - last_quality)> 0.2 && 
-         std::abs(log10(current_lambda) - log10(last_lambda)) > 0.1 ) 
-	{// if we can adjust model accurately, do so
-
-        double slope, offset;
-
-        // Calculate the slope of WPSNR versus log(lambda) from prior measurements
- 	    slope = (current_quality - last_quality)/( log10(current_lambda) - log10(last_lambda) );
- 
-        //Restrict so that the value isn't too extreme
-        slope = std::min( std::max( -10.0 , slope ), -0.1);
-
-  		// Calculate the resulting offset
-		offset = current_quality - ( log10(current_lambda) * slope );
-
-        if ( count != 1 )
-        {
-            // Update the default values using a simple recursive filter ...
-            m_slope[fsort] = (3.0*m_slope[fsort] + slope)/4.0;
-            m_offset[fsort] = (3.0*m_offset[fsort] + offset)/4.0;            
-        }
-        else
-        {
-            // .. unless we're recoding a frame for the first time            
-            m_slope[fsort] = (m_slope[fsort] + slope)/2.0;
-            m_offset[fsort] = (m_offset[fsort] + offset)/2.0;
-        }
-        m_slope[fsort] = std::min( std::max( -10.0 , m_slope[fsort] ), -1.5);
-    }
-
-    // If we need to adjust the lambdas, do so
-	if ( std::abs(current_quality - target_quality)> 0.2 )
-	{
-        // Update the lambdas as appropriate
-        float quality_diff = m_target_quality[fsort] - current_quality;
-
-        CalcNewLambdas(fsort , std::min( m_slope[fsort] , -1.0 ), quality_diff );
-    }
-
-    // if we have a large difference in quality, recode)
-    if ( std::abs( current_quality - target_quality )>1.5 )
-        recode = true;
-
-    return recode;
-}
-
-void QualityMonitor::CalcNewLambdas(const FrameSort fsort, const double slope, const double quality_diff )
-{	
-     const double clipped_quality_ratio = std::min( 2.0 , std::max( quality_diff/slope , -2.0 ) );
-
-     if ( m_encparams.Lambda(fsort) > 100001.0 && clipped_quality_ratio > 0.0 )
-         m_encparams.SetLambda(fsort, 100000.0);
-     else
-         m_encparams.SetLambda(fsort, m_encparams.Lambda(fsort) *
-                             std::pow( (double)10.0, clipped_quality_ratio ) );
-
-     if (fsort == L1_frame)
- 		m_encparams.SetL1MELambda( std::sqrt(m_encparams.L1Lambda()) * m_me_ratio );
-     else if (fsort == L2_frame)
- 		m_encparams.SetL2MELambda( std::sqrt(m_encparams.L2Lambda()) * m_me_ratio );
+	m_quality_average[fsort] += QualityVal( ld_frame.Ydata() , orig_frame.Ydata() , 0.0 , fsort );
+    m_frame_total[fsort]++;
 
 }
+
 
 double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& orig_data , double cpd , const FrameSort fsort)
 {
