@@ -201,6 +201,7 @@ Frame& SequenceCompressor::CompressNextFrame()
     // m_show_fnum is the index of the frame number that can be shown when current_fnum has been coded.
     // Var m_delay is the m_delay caused by reordering (as distinct from buffering)
 
+
     TESTM (m_last_frame_read >= 0, "Data loaded before calling CompressNextFrame");
     m_current_display_fnum = CodedToDisplay( m_current_code_fnum );
 
@@ -230,37 +231,15 @@ Frame& SequenceCompressor::CompressNextFrame()
             std::cerr<<m_current_display_fnum<<" in display order";
         }
  
-        // A count of how many times we've recoded
-        int count = 0;
+    
+        // Compress the frame//
+        ///////////////////////
 
-        do
-        {
-      
-            // Compress the frame//
-            ///////////////////////
+        m_fcoder.Compress( *m_fbuffer , *m_origbuffer , m_current_display_fnum );
 
-            m_fcoder.Compress( *m_fbuffer , *m_origbuffer , m_current_display_fnum );
-
-            ++count;
-
-            // Adjust the Lagrangian parameters and check if we need to re-do the frame
-            recode = m_qmonitor.UpdateModel( m_fbuffer->GetFrame( m_current_display_fnum ) , 
-                                             m_origbuffer->GetFrame( m_current_display_fnum ) , count );
-
-            if ( recode && count<=m_encparams.Recode() )
-            {
-                if ( m_encparams.Verbose() )
-                    std::cerr<<std::endl<<"Recoding!";
-
-                // Copy the original data back in
-                m_fbuffer->GetFrame( m_current_display_fnum ) = m_origbuffer->GetFrame( m_current_display_fnum );
-
-                // Reset the output
-                m_encparams.BitsOut().ResetFrame();
-            }
-
-        }
-        while ( recode && count <= m_encparams.Recode() );
+       // Measure the encoded frame quality
+       m_qmonitor.UpdateModel( m_fbuffer->GetFrame( m_current_display_fnum ) , 
+                               m_origbuffer->GetFrame( m_current_display_fnum ) );
 
        // Finish by writing the compressed data out to file ...
        m_encparams.BitsOut().WriteFrameData();
@@ -324,6 +303,8 @@ void SequenceCompressor::MakeSequenceReport()
     std::cerr<<std::endl<<m_encparams.BitsOut().ComponentBytes( U_COMP ) * 8<<" were U, ";
     std::cerr<<std::endl<<m_encparams.BitsOut().ComponentBytes( V_COMP ) * 8<<" were V, and ";
     std::cerr<<std::endl<<m_encparams.BitsOut().MVBytes() * 8<<" were motion vector data.";
+
+    m_qmonitor.WriteLog();
 
     std::cerr<<std::endl;
 
