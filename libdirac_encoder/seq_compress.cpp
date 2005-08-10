@@ -222,9 +222,6 @@ Frame& SequenceCompressor::CompressNextFrame()
     if ( can_encode )
     {   // We haven't coded everything, so compress the next frame
 
-        // True if we need to recode
-        bool recode = false;
-
         if ( m_encparams.Verbose() )
         {
              std::cerr<<std::endl<<std::endl<<"Compressing frame "<<m_current_code_fnum<<", ";
