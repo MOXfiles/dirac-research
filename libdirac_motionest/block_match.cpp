@@ -220,9 +220,10 @@ ValueType BlockMatcher::GetVarUp( const MVector& predmv , const MVector& mv ) co
 {
     MVector diff;
     diff.x = mv.x-predmv.x;
-    diff.y = mv.y-predmv.y;    
+    diff.y = mv.y-predmv.y;   
 
-    return Norm1( diff );
+    return std::min( Norm1( diff ) , Norm1( mv ) );
+
 }   
 
 void BlockMatcher::FindBestMatch(int xpos , int ypos ,
