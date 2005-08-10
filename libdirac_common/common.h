@@ -591,6 +591,9 @@ namespace dirac
 
         //! Return the number of accuracy bits used for motion vectors
         int MVPrecision() const { return m_mv_precision; }
+
+        //! Return the wavelet filter currently being used for frame (de)coding
+        WltFilter TransformFilter() const { return m_wlt_filter; } 
              
         // ... and Sets
         //! Set how many MBs there are horizontally
@@ -631,6 +634,9 @@ namespace dirac
             m_mv_precision = p;
         }
 
+        //! Return the wavelet filter currently being used for frame (de)coding
+        void SetTransformFilter(const WltFilter wf) { m_wlt_filter=wf; } 
+
     private:
         
         //! The number of macroblocks horizontally
@@ -665,6 +671,9 @@ namespace dirac
 
         //! The precision of motion vectors (number of accuracy bits eg 1=half-pel accuracy) 
         int m_mv_precision;
+
+        //! The wavelet filter being used
+        WltFilter m_wlt_filter;
     };
 
     //! Parameters for the encoding process
@@ -708,9 +717,6 @@ namespace dirac
 
         //! Return the number of cycles per degree at the nominal viewing distance for the raster
         float CPD() const {return m_cpd;}
-
-        //! Return the number of recodes allowable to hit the target quality
-        int Recode() const {return m_recode;}
 
         //! Return the Lagrangian parameter to be used for I frames
         float ILambda() const {return m_I_lambda;}
@@ -756,9 +762,6 @@ namespace dirac
         //! Set the separation between L1 frames
         void SetL1Sep(const int lsep){m_L1_sep=lsep;}
 
-        //! Set the number of allowable recodes
-        void SetRecode(const int r){m_recode=r;}
-
         //! Set the amount to weight noise in the U component
         void SetUFactor(const float uf){m_ufactor=uf;}
 
@@ -796,7 +799,7 @@ namespace dirac
         void SetBitsOut( SequenceOutputManager* so ){ m_bit_out=so; }
         
     private:
-        //! Quality factor (between 0 and 10)
+        //! Quality factor
         float m_qf; 
         
         //! Number of L1 frames before next I frame
@@ -804,9 +807,6 @@ namespace dirac
         
         //! Separation between L1 frames
         int m_L1_sep;   
-
-        //! Number of allowable recodes
-        int m_recode; 
         
         //! factor for weighting U component quantisation errors
         float m_ufactor;
