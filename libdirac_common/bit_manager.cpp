@@ -150,6 +150,14 @@ void BasicOutputManager::FlushOutput()
     }
 }
 
+size_t BasicOutputManager::Size() const
+{
+    if ( m_output_mask==0x80 )
+        return m_buffer.size();
+    else
+        return m_buffer.size()+1;
+}
+
 // Unit output - a subband or the MV data, for example //
 
 UnitOutputManager::UnitOutputManager(std::ostream* out_data ):
@@ -170,6 +178,11 @@ void UnitOutputManager::WriteToFile()
     m_unit_head_bytes = m_header.GetNumBytes();
     m_unit_bytes = m_unit_data_bytes + m_unit_head_bytes;
 
+}
+
+size_t UnitOutputManager::Size() const
+{
+    return m_data.Size()+m_header.Size();
 }
 
 FrameOutputManager::FrameOutputManager( std::ostream* out_data , int num_bands ) :
@@ -274,7 +287,26 @@ void FrameOutputManager::DeleteAll()
 
     // Delete frame header op
     delete m_frame_header;
-}   
+} 
+
+size_t FrameOutputManager::Size() const
+{
+    size_t size = 0;
+
+    size += m_frame_header->Size();
+
+    for ( int c=0 ; c<3 ; ++c)
+    {
+        for ( int b=0 ; b<m_data_array.LengthX() ; ++b )
+        {
+            size += m_data_array[c][b]->Size();
+        }
+    }
+
+    size += m_mv_data->Size();
+
+    return size;
+}  
 
 
 // Sequence stuff //

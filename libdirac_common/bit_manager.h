@@ -150,11 +150,11 @@ namespace dirac
             */   
             size_t GetNumBytes() const {return m_num_out_bytes;}
 
-            //! Size of the internal data cache in bytes.
+            //! Current size of the internal data cache in bytes.
             /*!
-            Size of the internal data cache in bytes.
+                Current size of the internal data cache in bytes.
             */   
-            size_t Size() const {return m_buffer.size();}
+            size_t Size() const;
 
         private:
             // Number of output bytes written
@@ -233,6 +233,12 @@ namespace dirac
 
             //! Returns the total number of header bytes written in the last unit coded. 
             const size_t GetUnitHeaderBytes() const {return m_unit_head_bytes;}
+
+            //! Current size of the internal data cache in bytes.
+            /*!
+                Current size of the internal data cache in bytes.
+            */   
+            size_t Size() const;
 
         private:
             // basic output managers for the header and data
@@ -326,6 +332,12 @@ namespace dirac
         //! Return the number of header bytes used throughout the frame
         const size_t FrameHeadBytes() const { return m_header_bytes;}
 
+        //! Current size of the internal data cache in bytes.
+        /*!
+            Current size of the internal data cache in bytes.
+        */   
+            size_t Size() const;
+
     private:
 
         // Array of subband outputs, 1 for each component and subband
@@ -382,7 +394,7 @@ namespace dirac
         //! Return a reference to the output for a single frame
         FrameOutputManager& FrameOutput(){ return m_frame_op_mgr; }
 
-        //! Return a reference to the output for a single frame
+        //! Return a reference to the output for the sequence header
         BasicOutputManager& HeaderOutput(){ return m_seq_header; }
 
         //! Return a reference to the output for the sequence trailer
