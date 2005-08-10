@@ -68,7 +68,7 @@ static void display_help()
     cout << "\n====    ====   === ============= ===========                                       ";
     cout << "\ninput   string  I  [ required ]  Input file name";
     cout << "\noutput  string  I  [ required ]  Output file name";
-    cout << "\nCIF     bool    I  true          Use CIF compression presets";
+    cout << "\ncif     bool    I  true          Use CIF compression presets";
     cout << "\nHD720   bool    I  false         Use HD-720 compression presets";
     cout << "\nHD1080  bool    I  false         Use HD-1080 compression presets";
     cout << "\nSD576   bool    I  false         Use SD-576 compression presets";
@@ -371,8 +371,16 @@ int main (int argc, char* argv[])
     /*********************************************************************************/
             /**********  command line parameter parsing*********/
 
-         /********** create params object to handle command line parameter parsing*********/
-    //To do: put parsing in a different function/constructor.
+    // An array indicating whether a parameter has been parsed
+    bool* parsed = new bool[argc];
+
+    // Program name has been parsed
+    parsed[0] = true;    
+
+    // No other parameters 
+    for (int i=1 ; i<argc ; ++i )
+        parsed[i] = false;
+
 
     // the variables we'll read parameters into
     dirac_encoder_context_t enc_ctx;
@@ -402,21 +410,25 @@ int main (int argc, char* argv[])
     dirac_encoder_presets_t preset = CIF;
     for (int i = 1; i < argc; i++)
     {
-        if ( strcmp (argv[i], "-CIF") == 0 || strcmp (argv[i], "-cif") == 0 )
+        if ( strcmp (argv[i], "-cif") == 0 )
         {
             preset = CIF;
+            parsed[i] = true;
         }
-        else if ( strcmp (argv[i], "-HD720") == 0 || strcmp (argv[i], "-hd720") == 0 )
+        else if ( strcmp (argv[i], "-HD720") == 0 )
         {
             preset = HD720;
+            parsed[i] = true;
         }
-        else if ( strcmp (argv[i], "-HD1080") == 0 || strcmp (argv[i], "-hd1080") == 0 )
+        else if ( strcmp (argv[i], "-HD1080") == 0 )
         {
             preset = HD1080;
+            parsed[i] = true;
         }
-        else if ( strcmp (argv[i], "-SD576") == 0 || strcmp (argv[i], "-sd576") == 0 )
+        else if ( strcmp (argv[i], "-SD576") == 0 )
         {
             preset = SD576;
+            parsed[i] = true;
         }
     }
 
@@ -428,46 +440,57 @@ int main (int argc, char* argv[])
     {
         if ( strcmp(argv[i], "-width") == 0 )
         {
+            parsed[i] = true;
             i++;
             enc_ctx.seq_params.width =  
                 strtoul(argv[i],NULL,10);
+            parsed[i] = true;
         }
 
         if ( strcmp(argv[i], "-height") == 0 )
         {
+            parsed[i] = true;
             i++;
             enc_ctx.seq_params.height =  
                 strtoul(argv[i],NULL,10);
+            parsed[i] = true;
         }
         
         if ( strcmp(argv[i], "-cformat") == 0 )
         {
+            parsed[i] = true;
             i++;
             enc_ctx.seq_params.chroma =  
                 (ChromaFormat)strtoul(argv[i],NULL,10);
+            parsed[i] = true;
         }
 
         if ( strcmp(argv[i], "-fr") == 0 )
         {
+            parsed[i] = true;
             i++;
             if(strncmp(argv[i], "59.94", 5)==0)
             {
-                 enc_ctx.seq_params.frame_rate.numerator=60000;
-                 enc_ctx.seq_params.frame_rate.denominator=1001;
+                parsed[i] = true;
+                enc_ctx.seq_params.frame_rate.numerator=60000;
+                enc_ctx.seq_params.frame_rate.denominator=1001;
             }
             else if(strncmp(argv[i], "23.98", 5)==0)
             {
+                parsed[i] = true;
                 enc_ctx.seq_params.frame_rate.numerator=24000; 
                 enc_ctx.seq_params.frame_rate.denominator=1001;
             }
             else if(strncmp(argv[i], "29.97", 5)==0)
             {
+                parsed[i] = true;
                 enc_ctx.seq_params.frame_rate.numerator=30000;
                 enc_ctx.seq_params.frame_rate.denominator=1001;
             }
             //test for decimal format
             else if(strcspn(argv[i], ".")!=strlen(argv[i]))
             {
+                parsed[i] = true;
                 // look for whole number
                 char* num_token = strtok(argv[i], ".");
                 int whole = strtoul(num_token,NULL,10);
@@ -491,6 +514,7 @@ int main (int argc, char* argv[])
             }
             else 
             {
+                parsed[i] = true;
                 // assume e/d format
                 char* token = strtok(argv[i], "/");
                 enc_ctx.seq_params.frame_rate.numerator =  
@@ -504,74 +528,90 @@ int main (int argc, char* argv[])
 
         if ( strcmp(argv[i], "-qf") == 0 )
         {
+            parsed[i] = true;
             i++;
             enc_ctx.enc_params.qf =  atof(argv[i]);
+            parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-L1_sep") == 0 )
         {
+            parsed[i] = true;
             i++;
             enc_ctx.enc_params.L1_sep =  
                 strtoul(argv[i],NULL,10);
+            parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-num_L1") == 0 )
         {
+            parsed[i] = true;
             i++;
             enc_ctx.enc_params.num_L1 = 
                 strtoul(argv[i],NULL,10);
+            parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-xblen") == 0 )
         {
+            parsed[i] = true;
             i++;
             enc_ctx.enc_params.xblen = 
                 strtoul(argv[i],NULL,10);
+            parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-yblen") == 0 )
         {
+            parsed[i] = true;
             i++;
              enc_ctx.enc_params.yblen = 
                  strtoul(argv[i],NULL,10);
+            parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-xbsep") == 0 )
         {
+            parsed[i] = true;
             i++;
              enc_ctx.enc_params.xbsep = 
                  strtoul(argv[i],NULL,10);
+            parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-ybsep") == 0 )
         {
+            parsed[i] = true;
             i++;
              enc_ctx.enc_params.ybsep = 
                  strtoul(argv[i],NULL,10);
+            parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-cpd") == 0 )
         {
+            parsed[i] = true;
             i++;
              enc_ctx.enc_params.cpd = 
                  strtoul(argv[i],NULL,10);
-        }
-        else if ( strcmp(argv[i], "-recode") == 0 )
-        {
-            i++;
-             enc_ctx.enc_params.recode = 
-                 strtoul(argv[i],NULL,10);
+            parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-verbose") == 0 )
         {
+            parsed[i] = true;
             verbose = true;
         }
         else if ( strcmp(argv[i], "-nolocal") == 0 )
         {
+            parsed[i] = true;
             nolocal = true;
         }
         else if ( strcmp(argv[i], "-start") == 0 )
         {
+            parsed[i] = true;
             i++;
             start_pos = strtoul(argv[i],NULL,10);
+            parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-stop") == 0 )
         {
+            parsed[i] = true;
             i++;
             end_pos = strtoul(argv[i],NULL,10);
+            parsed[i] = true;
         }
         i++;
     }//opt
@@ -585,6 +625,8 @@ int main (int argc, char* argv[])
 
     input=argv[argc-2];
     output=argv[argc-1];
+    parsed[argc-2] = true;
+    parsed[argc-1] = true;
 
     //check we have real inputs
     if ((input.length() == 0) || (output.length() ==0))
@@ -592,6 +634,23 @@ int main (int argc, char* argv[])
         display_help();
         exit(1);
     }
+
+    // check we have parsed everything
+    bool all_parsed = true;
+    for (int i=0 ; i<argc ; ++i)
+    {
+        if ( !parsed[i] )
+        {
+            all_parsed = false;
+            std::cout<<std::endl<<"Unknown option "<<argv[i];
+        }
+    }
+    if ( !all_parsed )
+    {
+        display_help();
+        exit(1);
+    }
+
 
     bit_name = output + ".drc";
         
@@ -720,11 +779,13 @@ int main (int argc, char* argv[])
     {
         outfile.write((char *)encoder->enc_buf.buffer, 
                       encoder->enc_buf.size);
-           std::cout << "The resulting bit-rate at "
-                  << (double)encoder->enc_ctx.seq_params.frame_rate.numerator/
-                      encoder->enc_ctx.seq_params.frame_rate.denominator
-                  << "Hz is " << encoder->enc_seqstats.bit_rate 
-                  << " bits/sec." << std::endl;
+
+        if ( verbose )           
+            std::cout << "The resulting bit-rate at "
+                      << (double)encoder->enc_ctx.seq_params.frame_rate.numerator/
+                          encoder->enc_ctx.seq_params.frame_rate.denominator
+                      << "Hz is " << encoder->enc_seqstats.bit_rate 
+                      << " bits/sec." << std::endl;
     }
 
    
@@ -747,5 +808,7 @@ int main (int argc, char* argv[])
     // delete frame buffer
     delete [] frame_buf;
         return EXIT_SUCCESS;
+
+    delete[] parsed;
 
 }
