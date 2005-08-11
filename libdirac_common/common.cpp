@@ -306,7 +306,21 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
     m_cbparams[0].SetXbsep( m_cbparams[1].Xbsep()*2 );
     m_cbparams[0].SetXblen( m_cbparams[1].Xblen() + m_cbparams[1].Xbsep() );
     m_cbparams[0].SetYbsep( m_cbparams[1].Ybsep()*2 );
-    m_cbparams[0].SetYblen( m_cbparams[1].Yblen() + m_cbparams[1].Xbsep() );        
+    m_cbparams[0].SetYblen( m_cbparams[1].Yblen() + m_cbparams[1].Xbsep() );
+
+    if ( m_lbparams[2].Xbsep()!=olbparams.Xbsep() ||
+         m_lbparams[2].Ybsep()!=olbparams.Ybsep() ||
+         m_lbparams[2].Xblen()!=olbparams.Xblen() ||
+         m_lbparams[2].Yblen()!=olbparams.Yblen() )
+    {
+        std::cerr<<std::endl<<"WARNING: block parameters are inconsistent or ";
+        std::cerr<<"incompatible with chroma format.";
+        std::cerr<<std::endl<<"Instead, using:";
+        std::cerr<<" xblen="<<m_lbparams[2].Xblen();
+        std::cerr<<" yblen="<<m_lbparams[2].Yblen();
+        std::cerr<<" xbsep="<<m_lbparams[2].Xbsep();
+        std::cerr<<" ybsep="<<m_lbparams[2].Ybsep();
+    }
     
 }
 
