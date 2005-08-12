@@ -209,7 +209,7 @@ if test x"${enableval}" = x"yes" ; then
 			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
 			CXXFLAGS="-DDIRAC_DEBUG -g -O0 $CXXFLAGS"
 		    # report only errors and warnings as errors
-		    CXXFLAGS="$CXXFLAGS -w1 -Werror -wr964" 
+		    CXXFLAGS="$CXXFLAGS -w1 -Werror -wr964 -wr963" 
 		    ;;
 	    cl*|CL*)
 		    # -Od turn off optimisation, -Z7 turn on debugging info
