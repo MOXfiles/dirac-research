@@ -158,20 +158,22 @@ void MEData::SetLambdaMap( const int num_refs , const float lambda )
 
     FindTransitions( transition_map1 , 1 );
 
-    for ( int j=0 ; j<m_lambda_map.LengthY() ; j++)
+    if ( num_refs==1 )
     {
-        for ( int i=0 ; i<m_lambda_map.LengthX() ; i++)
+        for ( int j=0 ; j<m_lambda_map.LengthY() ; j++)
         {
-            if ( transition_map1[j][i] )
-                m_lambda_map[j][i] = 0.0;
-            else
-                m_lambda_map[j][i] = lambda;
-            if ( i<4 || j<4 )
-                m_lambda_map[j][i] /= 5.0; 
-        }// i
-    }// j
-
-    if ( num_refs > 1 )
+            for ( int i=0 ; i<m_lambda_map.LengthX() ; i++)
+            {
+                if ( transition_map1[j][i] )
+                    m_lambda_map[j][i] = 0.0;
+                else
+                    m_lambda_map[j][i] = lambda;
+                if ( i<4 || j<4 )
+                    m_lambda_map[j][i] /= 5.0; 
+            }// i
+        }// j
+    }
+    else if ( num_refs > 1 )
     {
         FindTransitions( transition_map2 , 2 );
 
@@ -179,10 +181,15 @@ void MEData::SetLambdaMap( const int num_refs , const float lambda )
         {
             for ( int i=0 ; i<m_lambda_map.LengthX() ; i++)
             {
-                if ( transition_map1[j][i] || transition_map2[j][i] )
+                if ( transition_map1[j][i] && transition_map2[j][i] )
                     m_lambda_map[j][i] = 0.0;
+                else if (transition_map1[j][i] || transition_map2[j][i] )
+                    m_lambda_map[j][i] = lambda/4.0;
                 else
                     m_lambda_map[j][i] = lambda;
+
+                if ( i<4 || j<4 )
+                    m_lambda_map[j][i] /= 5.0; 
             }// i
         }// j
     }
@@ -219,16 +226,20 @@ void MEData::SetLambdaMap( const int level , const TwoDArray<float>& l_map , con
 
 void MEData::FindTransitions( TwoDArray<bool>& trans_map , const int ref_num )
 {
+
     const MvArray& mv_array = Vectors( ref_num );
 
     // Start with a statistical approach - determine thresholds later
 
-    // Compute mean and standard deviation of local motion vector variance //
-    /////////////////////////////////////////////////////////////////////////
+    // Compute mean and standard deviation of local SAD variance //
+    ///////////////////////////////////////////////////////////////
 
     long double total_cost = 0.0;
     long double mean_cost;
- 
+    long double sd_cost = 0.0;
+    double diff;
+    double threshold;
+
     // first, mean
     for ( int j=0 ; j<mv_array.LengthY() ; ++j )
         for ( int i=0 ; i<mv_array.LengthX() ; ++i )
@@ -238,8 +249,6 @@ void MEData::FindTransitions( TwoDArray<bool>& trans_map , const int ref_num )
                    static_cast<long double>( mv_array.LengthX()*mv_array.LengthY() );
 
     // next , Standard Deviation
-    long double sd_cost = 0.0;
-    double diff;
     
     for ( int j=0 ; j<mv_array.LengthY() ; ++j )
     {
@@ -258,14 +267,14 @@ void MEData::FindTransitions( TwoDArray<bool>& trans_map , const int ref_num )
     // ... and then the SD
     sd_cost = std::sqrt( sd_cost );
 
-    float threshold = static_cast<float>( mean_cost + 1.5*sd_cost );
+    threshold = mean_cost + 3*sd_cost;
 
     // now go through and mark those that go above the threshold
     for ( int j=0 ; j<mv_array.LengthY() ; ++j )
         for ( int i=0 ; i<mv_array.LengthX() ; ++i )
             trans_map[j][i] = ( PredCosts( ref_num )[j][i].SAD >= threshold )? true : false;
 
-//
+
     // Next look at motion-vector costs
     TwoDArray<double> val_array( mv_array.LengthY() , mv_array.LengthX() );
 
@@ -318,35 +327,34 @@ void MEData::FindTransitions( TwoDArray<bool>& trans_map , const int ref_num )
     // ... and then the SD
     sd_cost = std::sqrt( sd_cost );
 
-    threshold = static_cast<float>( mean_cost + 1.5*sd_cost );
+    threshold = mean_cost + 3*sd_cost;
 
     // now go through and mark those that go above the threshold
     for ( int j=0 ; j<mv_array.LengthY() ; ++j )
         for ( int i=0 ; i<mv_array.LengthX() ; ++i )
-//            trans_map[j][i] = ( val_array[j][i] >= threshold )? true : false;
-trans_map[j][i] = false;
+            trans_map[j][i] = ( val_array[j][i] >= threshold )? true : false;
 
-//     bool contains_trans;
+     bool contains_trans;
 
-//     for ( int j=0 ; j<mv_array.LengthY()/4 ; ++j )
-//     {
-//         for ( int i=0 ; i<mv_array.LengthX()/4 ; ++i )
-//         {     
-//             contains_trans = false;
-//             for ( int q=4*j ; q<4*(j+1) ; ++q )
-//             {
-//                 for ( int p=4*i ; p<4*(i+1) ; ++p )
-//                 {
-//                     if (trans_map[q][p])
-//                         contains_trans = true;
-//                 }// p
-//             }// q
-//             for ( int q=4*j ; q<4*(j+1) ; ++q )
-//                 for ( int p=4*i ; p<4*(i+1) ; ++p )
-//                     trans_map[q][p] = contains_trans;
+     for ( int j=0 ; j<mv_array.LengthY()/4 ; ++j )
+     {
+         for ( int i=0 ; i<mv_array.LengthX()/4 ; ++i )
+         {     
+             contains_trans = false;
+             for ( int q=4*j ; q<4*(j+1) ; ++q )
+             {
+                 for ( int p=4*i ; p<4*(i+1) ; ++p )
+                 {
+                     if (trans_map[q][p])
+                         contains_trans = true;
+                 }// p
+             }// q
+             for ( int q=4*j ; q<4*(j+1) ; ++q )
+                 for ( int p=4*i ; p<4*(i+1) ; ++p )
+                     trans_map[q][p] = contains_trans;
 
-//         }// i
-//     }// j
+         }// i
+     }// j
 
      
 }
