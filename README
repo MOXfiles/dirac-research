@@ -44,8 +44,8 @@ running the codec can be found at http://dirac.sourceforge.net/
     ./configure --enable-profile
         (to enable the g++ profiling flag -pg)
      OR
-    ./configure --enable-mmx
-        (to enable MMX optimisation)
+    ./configure --disable-mmx
+        (to disable MMX optimisation which is enabled by default)
      OR
     ./configure --enable-debug --enable-profile
         (to enable extra debug compile options and profiling options)

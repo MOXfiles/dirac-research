@@ -388,8 +388,9 @@ should be followed:
     Athlon64 and Opteron), but take care to use a portable 16byte memory
     alignment technique.
 
-  - MMX optimisation can be supported by adding --enable-mmx to ./configure
-    before building. This detects MMX availability and sets the macro HAVE_MMX.
+  - ./configure detects MMX availability and sets the macro HAVE_MMX, if 
+    MMX optimisations is available, by default. To disable MMX optimisations
+    use the --disable-mmx flag with configure.
 
 Profiling can be supported by adding the following parameter to ./configure
 before building:
