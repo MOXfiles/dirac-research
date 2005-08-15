@@ -334,6 +334,25 @@ namespace dirac
             ProbInterval m_r0;
             ProbInterval m_r1;
 
+            /*!
+            Counts m_num0 and m_num1 are scaled to 1024 before being used to
+            make probability intervals for use in the arithmetic codec. This
+            means calculating (m_num0*1024)/m_weight. m_lookup is a lookup
+            table for avoiding doing this division directly. It's defined by
+
+            m_lookup[k]=(1<<31)/m_weight
+
+            So the calculation instead becomes 
+
+            (m_num0*m_lookup[m_weight-1])>>21 
+
+            The 21 comes from 1024/(1<<31).
+ 
+            In principle we're multiplying two ints here so the result should
+            be a long int to retain overflow before the bit shift. But it turns
+            out that since m_num0<m_weight the overflow bits will always be
+            zero so everything can be done with ints. 
+            */
 			static const unsigned int m_lookup[1024]; 
           
 
