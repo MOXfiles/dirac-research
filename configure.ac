@@ -143,9 +143,48 @@ dnl Checks for optional files in doc directory.
 dnl algorithm documentation is not distributed in
 dnl the release. It is available only from CVS
 dnl -----------------------------------------------
-AC_CHECK_FILE(doc/algorithm/algorithm.htm,[HAVE_ALGO="true"], [HAVE_ALGO="false"])
+AC_CHECK_FILE($srcdir/doc/documentation/algorithm/algorithm/index.htm,[HAVE_ALGO="true"], [HAVE_ALGO="false"])
 AM_CONDITIONAL(HAVE_ALGO, $HAVE_ALGO)
 
+dnl -----------------------------------------------
+dnl Checks for optional files in doc directory.
+dnl Enhancements is not distributed in
+dnl the release. It is available only from CVS
+dnl -----------------------------------------------
+AC_CHECK_FILE($srcdir/doc/documentation/algorithm/enhancements/index.htm,[HAVE_ENHANCE="true"], [HAVE_ENHANCE="false"])
+AM_CONDITIONAL(HAVE_ENHANCE, $HAVE_ENHANCE)
+
+dnl -----------------------------------------------
+dnl Checks for optional files in doc directory.
+dnl Global Motion documentation is not distributed in
+dnl the release. It is available only from CVS
+dnl -----------------------------------------------
+AC_CHECK_FILE($srcdir/doc/documentation/algorithm/global_motion/index.htm,[HAVE_GM="true"], [HAVE_GM="false"])
+AM_CONDITIONAL(HAVE_GM, $HAVE_GM)
+
+dnl -----------------------------------------------
+dnl Checks for optional files in doc directory.
+dnl Upconversion doc is not distributed in
+dnl the release. It is available only from CVS
+dnl -----------------------------------------------
+AC_CHECK_FILE($srcdir/doc/documentation/algorithm/upconversion/index.htm,[HAVE_UPCONV="true"], [HAVE_UPCONV="false"])
+AM_CONDITIONAL(HAVE_UPCONV, $HAVE_UPCONV)
+
+dnl -----------------------------------------------
+dnl Checks for optional files in doc directory.
+dnl programmer's guide is not distributed in
+dnl the release. It is available only from CVS
+dnl -----------------------------------------------
+AC_CHECK_FILE($srcdir/doc/documentation/code/programmers_guide/index.htm,[HAVE_PROG="true"], [HAVE_PROG="false"])
+AM_CONDITIONAL(HAVE_PROG, $HAVE_PROG)
+
+dnl -----------------------------------------------
+dnl Checks for optional files in doc directory.
+dnl Diagnostics tools docs are is not distributed in
+dnl the release. It is available only from CVS
+dnl -----------------------------------------------
+AC_CHECK_FILE($srcdir/doc/documentation/tools/diagnostics/index.htm,[HAVE_DIAG="true"], [HAVE_DIAG="false"])
+AM_CONDITIONAL(HAVE_DIAG, $HAVE_DIAG)
 
 dnl -----------------------------------------------
 dnl Setup for the testsuite
