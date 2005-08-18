@@ -85,11 +85,12 @@ static void display_help()
     cout << "\nxbsep   ulong   I  0UL           Overlapping block horizontal separation";
     cout << "\nybsep   ulong   I  0UL           Overlapping block vertical separation";
     cout << "\ncpd     ulong   I  0UL           Perceptual weighting - vertical cycles per deg.";
-    cout << "\nqf      float   I  0.0F          Overall quality factor (0.0 - 10.0)";
+    cout << "\nqf      float   I  0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
     cout << "\nverbose bool    I  false         Verbose mode";
     cout << "\nnolocal bool    I  false         Don't write diagnostics & locally decoded video";
     cout << endl;
 }
+
 
 
 bool WritePicData (std::ofstream &fdata, dirac_encoder_t *encoder)
