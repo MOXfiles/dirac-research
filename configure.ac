@@ -329,7 +329,7 @@ dnl enable MMX optimization flag
 dnl TODO: need to fix this test
 dnl -----------------------------------------------
 AC_MSG_CHECKING([whether optimizations using MMX instructions are enabled])
-AC_ARG_ENABLE(mmx, AC_HELP_STRING([--enable-mmx], [enable MMX optimization (yes)]), [enable_mmx="${enableval}"], [enable_mmx="yes"])
+AC_ARG_ENABLE(mmx, AC_HELP_STRING([--enable-mmx], [enable MMX optimization (default=yes)]), [enable_mmx="${enableval}"], [enable_mmx="yes"])
 
 if test x"${enable_mmx}" = x"yes" ; then
 	case "$CXX" in
