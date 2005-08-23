@@ -1,3 +1,763 @@
+2005-08-23 11:46  asuraparaju
+
+	* NEWS: Added 0.5.3 release notes
+
+2005-08-23 11:14  asuraparaju
+
+	* doc/documentation.html: Having trouble creating a pdf document in
+	  which MathML is rendered correctly.  Hence a pdf version of the
+	  Algorithm document cannot be generated at the moment.  Removed
+	  broken link to Algorithm pdf until this problem can be fixed.
+
+2005-08-22 13:51  asuraparaju
+
+	* configure.ac: Update the help string for enable-mmx configure
+	  argument to make it clear that MMX opts are enabled by default.
+	  The user will have to explcitly specify --enable-mmmx=no or
+	  --disable-mmx to disable MMX opts.
+
+2005-08-19 13:41  asuraparaju
+
+	* extras/patches/: README_transcode-1.0.0_dirac-0.5.x_patch,
+	  transcode-1.0.0-dirac-0.5.x.patch: Dirac patch for
+	  transcode-1.0.0. This patch is not a standalone patch and will be
+	  effective only if the ffmpeg library it uses is built with the
+	  dirac patch applied.
+
+2005-08-19 13:38  asuraparaju
+
+	* extras/patches/README_MPlayer-1.0pre7_dirac-0.5.x_patch: Updated
+	  notes for dirac v0.5.3
+
+2005-08-19 13:36  asuraparaju
+
+	* extras/patches/: FFMpeg-20050806-dirac-0.5.x.patch,
+	  README_FFMpeg-20050806-dirac-0.5.x_patch: Dirac patch for ffmpeg
+	  cvs snapshot dated 06-Aug-2005. Note that this has been tested
+	  with CVS versions as late at 16-Aug-2006 but the CVS snapshots
+	  past 06-Aug-2005 are not available for download on the FFmpeg
+	  server.
+
+2005-08-19 13:34  asuraparaju
+
+	* extras/patches/README_transcode-0.6.14_dirac-0.5.x_patch: Updated
+	  for dirac v0.5.3
+
+2005-08-19 13:33  asuraparaju
+
+	* extras/patches/: README_ffmpeg-0.4.9-pre1-dirac-0.5.x_patch,
+	  ffmpeg-0.4.9-pre1-dirac-0.5.x.patch: Updated patch for
+	  dirac-0.5.3. Changed license to LGPL. Fixed bug in setting the
+	  quality factor where the quality factor lookup table was uint8_t
+	  instead of float which was causing the qf to be truncated to
+	  uint8_t.  dirac_decode_frame now correctly returns the number of
+	  bytes it consumed. This is a fix for bug 1246767.
+
+2005-08-18 09:30  tjdwave
+
+	* encoder/encmain.cpp: Clarified CLI error message.
+
+2005-08-18 09:27  tjdwave
+
+	* README: Refactored the encoding instructions so that they're much
+	  clearer.
+
+2005-08-16 15:37  asuraparaju
+
+	* libdirac_common/arith_codec.h: Removed DOS line-breaks.
+
+2005-08-16 10:37  asuraparaju
+
+	* doc/Makefile.am: Fix problem with install targer in main doc
+	  directory
+
+2005-08-15 18:21  asuraparaju
+
+	* doc/Makefile.am: Fixed bug where make was failing when built in a
+	  distribtion
+
+2005-08-15 17:48  asuraparaju
+
+	* doc/: Makefile.am,
+	  documentation/code/programmers_guide/Makefile.am: Ensured that
+	  all required files are installed correctly when using the install
+	  target of make.
+
+2005-08-15 17:18  asuraparaju
+
+	* doc/documentation/: Makefile.am, tools/diagnostics/Makefile.am:
+	  Changes related to documents directory restructure
+
+2005-08-15 17:11  asuraparaju
+
+	* configure.ac, doc/Makefile.am,
+	  doc/documentation/algorithm/Makefile.am,
+	  doc/documentation/algorithm/enhancements/Makefile.am,
+	  doc/documentation/algorithm/global_motion/Makefile.am,
+	  doc/documentation/algorithm/upconversion/Makefile.am,
+	  doc/documentation/tools/Makefile.am: Changes related to
+	  documentation tree restructure
+
+2005-08-15 16:09  asuraparaju
+
+	* doc/: Makefile.am, documentation/algorithm/Makefile.am,
+	  documentation/algorithm/algorithm/Makefile.am,
+	  documentation/code/Makefile.am,
+	  documentation/code/api/Makefile.am,
+	  documentation/code/api/dirac_api.doxygen,
+	  documentation/code/api/dirac_api.doxygen.in,
+	  documentation/code/api/dirac_api_foot.html,
+	  documentation/code/api/dirac_api_head.html,
+	  documentation/code/programmers_guide/Makefile.am: Changes related
+	  to documentation tree restructure.
+
+2005-08-15 12:26  asuraparaju
+
+	* doc/documentation/algorithm/enhancements/: 050var_wlt.htm,
+	  130alt_bin.htm: Checking in missed doc files missed out in
+	  earlier website docs check in.
+
+2005-08-15 12:22  asuraparaju
+
+	* doc/: browser_compatibility.html, contact.html,
+	  documentation.html, faq.html, getting_involved.html, index.html,
+	  licenses.html, overview.html, styles.css, template.html,
+	  template2.html, todo.html,
+	  documentation/algorithm/algorithm/block_data.htm,
+	  documentation/algorithm/algorithm/index.htm,
+	  documentation/algorithm/algorithm/intra_pred.htm,
+	  documentation/algorithm/algorithm/intro.htm,
+	  documentation/algorithm/algorithm/mb_structs.htm,
+	  documentation/algorithm/algorithm/mot_est.htm,
+	  documentation/algorithm/algorithm/mot_est_and_comp.htm,
+	  documentation/algorithm/algorithm/mv_coding_arch.htm,
+	  documentation/algorithm/algorithm/mv_data_coding.htm,
+	  documentation/algorithm/algorithm/mv_data_pred.htm,
+	  documentation/algorithm/algorithm/mv_entropy_code.htm,
+	  documentation/algorithm/algorithm/olb_mc.xht,
+	  documentation/algorithm/algorithm/overall_arch.htm,
+	  documentation/algorithm/algorithm/overall_arch_svg.htm,
+	  documentation/algorithm/algorithm/parent_child.htm,
+	  documentation/algorithm/algorithm/quantisation.xht,
+	  documentation/algorithm/algorithm/rdo.htm,
+	  documentation/algorithm/algorithm/rdo_mot_est.xht,
+	  documentation/algorithm/algorithm/subband_rdo.xht,
+	  documentation/algorithm/algorithm/temporal_prediction_structures.htm,
+	  documentation/algorithm/algorithm/toc.htm,
+	  documentation/algorithm/algorithm/transform_coding.htm,
+	  documentation/algorithm/algorithm/transform_coding_arch.htm,
+	  documentation/algorithm/algorithm/var_size.htm,
+	  documentation/algorithm/algorithm/wlt_coeff_coding.xht,
+	  documentation/algorithm/algorithm/wlt_transform.xht,
+	  documentation/algorithm/algorithm/figs/fig1.dia,
+	  documentation/algorithm/algorithm/figs/fig1.gif,
+	  documentation/algorithm/algorithm/figs/fig1.jpg,
+	  documentation/algorithm/algorithm/figs/fig1.png,
+	  documentation/algorithm/algorithm/figs/fig1.svg,
+	  documentation/algorithm/algorithm/figs/fig10.dia,
+	  documentation/algorithm/algorithm/figs/fig10.gif,
+	  documentation/algorithm/algorithm/figs/fig10.jpg,
+	  documentation/algorithm/algorithm/figs/fig10.png,
+	  documentation/algorithm/algorithm/figs/fig10.svg,
+	  documentation/algorithm/algorithm/figs/fig12.dia,
+	  documentation/algorithm/algorithm/figs/fig12.gif,
+	  documentation/algorithm/algorithm/figs/fig12.jpg,
+	  documentation/algorithm/algorithm/figs/fig12.png,
+	  documentation/algorithm/algorithm/figs/fig12.svg,
+	  documentation/algorithm/algorithm/figs/fig15.dia,
+	  documentation/algorithm/algorithm/figs/fig15.gif,
+	  documentation/algorithm/algorithm/figs/fig15.jpg,
+	  documentation/algorithm/algorithm/figs/fig15.png,
+	  documentation/algorithm/algorithm/figs/fig15.svg,
+	  documentation/algorithm/algorithm/figs/fig16.dia,
+	  documentation/algorithm/algorithm/figs/fig16.gif,
+	  documentation/algorithm/algorithm/figs/fig16.jpg,
+	  documentation/algorithm/algorithm/figs/fig16.png,
+	  documentation/algorithm/algorithm/figs/fig16.svg,
+	  documentation/algorithm/algorithm/figs/fig17.dia,
+	  documentation/algorithm/algorithm/figs/fig17.gif,
+	  documentation/algorithm/algorithm/figs/fig17.jpg,
+	  documentation/algorithm/algorithm/figs/fig17.png,
+	  documentation/algorithm/algorithm/figs/fig17.svg,
+	  documentation/algorithm/algorithm/figs/fig18.dia,
+	  documentation/algorithm/algorithm/figs/fig18.gif,
+	  documentation/algorithm/algorithm/figs/fig18.jpg,
+	  documentation/algorithm/algorithm/figs/fig18.png,
+	  documentation/algorithm/algorithm/figs/fig18.svg,
+	  documentation/algorithm/algorithm/figs/fig19.cgm,
+	  documentation/algorithm/algorithm/figs/fig19.dia,
+	  documentation/algorithm/algorithm/figs/fig19.gif,
+	  documentation/algorithm/algorithm/figs/fig19.jpg,
+	  documentation/algorithm/algorithm/figs/fig19.png,
+	  documentation/algorithm/algorithm/figs/fig19.svg,
+	  documentation/algorithm/algorithm/figs/fig19.wmf,
+	  documentation/algorithm/algorithm/figs/fig1_100.svg,
+	  documentation/algorithm/algorithm/figs/fig1_10000.dia,
+	  documentation/algorithm/algorithm/figs/fig1_10000.svg,
+	  documentation/algorithm/algorithm/figs/fig1_mod.svg,
+	  documentation/algorithm/algorithm/figs/fig1_px.svg,
+	  documentation/algorithm/algorithm/figs/fig2.dia,
+	  documentation/algorithm/algorithm/figs/fig2.gif,
+	  documentation/algorithm/algorithm/figs/fig2.jpg,
+	  documentation/algorithm/algorithm/figs/fig2.png,
+	  documentation/algorithm/algorithm/figs/fig2.svg,
+	  documentation/algorithm/algorithm/figs/fig20.dia,
+	  documentation/algorithm/algorithm/figs/fig20.gif,
+	  documentation/algorithm/algorithm/figs/fig20.jpg,
+	  documentation/algorithm/algorithm/figs/fig20.png,
+	  documentation/algorithm/algorithm/figs/fig20.svg,
+	  documentation/algorithm/algorithm/figs/fig21.dia,
+	  documentation/algorithm/algorithm/figs/fig21.gif,
+	  documentation/algorithm/algorithm/figs/fig21.jpg,
+	  documentation/algorithm/algorithm/figs/fig21.png,
+	  documentation/algorithm/algorithm/figs/fig21.svg,
+	  documentation/algorithm/algorithm/figs/fig22.dia,
+	  documentation/algorithm/algorithm/figs/fig22.gif,
+	  documentation/algorithm/algorithm/figs/fig22.jpg,
+	  documentation/algorithm/algorithm/figs/fig22.png,
+	  documentation/algorithm/algorithm/figs/fig22.svg,
+	  documentation/algorithm/algorithm/figs/fig23.dia,
+	  documentation/algorithm/algorithm/figs/fig23.gif,
+	  documentation/algorithm/algorithm/figs/fig23.jpg,
+	  documentation/algorithm/algorithm/figs/fig23.png,
+	  documentation/algorithm/algorithm/figs/fig23.svg,
+	  documentation/algorithm/algorithm/figs/fig2_webdraw.svg,
+	  documentation/algorithm/algorithm/figs/fig3.bmp,
+	  documentation/algorithm/algorithm/figs/fig3.dia,
+	  documentation/algorithm/algorithm/figs/fig3.gif,
+	  documentation/algorithm/algorithm/figs/fig3.jpg,
+	  documentation/algorithm/algorithm/figs/fig3.png,
+	  documentation/algorithm/algorithm/figs/fig3.svg,
+	  documentation/algorithm/algorithm/figs/fig3_a.svg,
+	  documentation/algorithm/algorithm/figs/fig4.dia,
+	  documentation/algorithm/algorithm/figs/fig4.gif,
+	  documentation/algorithm/algorithm/figs/fig4.jpg,
+	  documentation/algorithm/algorithm/figs/fig4.png,
+	  documentation/algorithm/algorithm/figs/fig4.svg,
+	  documentation/algorithm/algorithm/figs/fig4_dia.svg,
+	  documentation/algorithm/algorithm/figs/fig5.dia,
+	  documentation/algorithm/algorithm/figs/fig5.gif,
+	  documentation/algorithm/algorithm/figs/fig5.jpg,
+	  documentation/algorithm/algorithm/figs/fig5.png,
+	  documentation/algorithm/algorithm/figs/fig5.svg,
+	  documentation/algorithm/algorithm/figs/fig6.dia,
+	  documentation/algorithm/algorithm/figs/fig6.gif,
+	  documentation/algorithm/algorithm/figs/fig6.jpg,
+	  documentation/algorithm/algorithm/figs/fig6.png,
+	  documentation/algorithm/algorithm/figs/fig6.svg,
+	  documentation/algorithm/algorithm/figs/fig7.jpg,
+	  documentation/algorithm/algorithm/figs/fig8.dia,
+	  documentation/algorithm/algorithm/figs/fig8.gif,
+	  documentation/algorithm/algorithm/figs/fig8.jpg,
+	  documentation/algorithm/algorithm/figs/fig8.png,
+	  documentation/algorithm/algorithm/figs/fig8.svg,
+	  documentation/algorithm/algorithm/figs/fig9.dia,
+	  documentation/algorithm/algorithm/figs/fig9.gif,
+	  documentation/algorithm/algorithm/figs/fig9.jpg,
+	  documentation/algorithm/algorithm/figs/fig9.png,
+	  documentation/algorithm/algorithm/figs/fig9.svg,
+	  documentation/algorithm/enhancements/010version_num.htm,
+	  documentation/algorithm/enhancements/020precision.htm,
+	  documentation/algorithm/enhancements/030index_tables.htm,
+	  documentation/algorithm/enhancements/040bit_stream.htm,
+	  documentation/algorithm/enhancements/060var_blocks.htm,
+	  documentation/algorithm/enhancements/070var_mv_precn.htm,
+	  documentation/algorithm/enhancements/080multi_ref.htm,
+	  documentation/algorithm/enhancements/090nl_quant.htm,
+	  documentation/algorithm/enhancements/100multi_quant.htm,
+	  documentation/algorithm/enhancements/110spatially_var_quant.htm,
+	  documentation/algorithm/enhancements/120wt_ref.htm,
+	  documentation/algorithm/enhancements/140pred_ctx.htm,
+	  documentation/algorithm/enhancements/150ctx_update.htm,
+	  documentation/algorithm/enhancements/160intra_ctxs.htm,
+	  documentation/algorithm/enhancements/170global_motion.htm,
+	  documentation/algorithm/enhancements/180skipped.htm,
+	  documentation/algorithm/enhancements/190mv_trace.htm,
+	  documentation/algorithm/enhancements/200interlace.htm,
+	  documentation/algorithm/enhancements/index.htm,
+	  documentation/algorithm/enhancements/toc.htm,
+	  documentation/algorithm/global_motion/affine.htm,
+	  documentation/algorithm/global_motion/code.htm,
+	  documentation/algorithm/global_motion/index.htm,
+	  documentation/algorithm/global_motion/intro.htm,
+	  documentation/algorithm/global_motion/optimising.htm,
+	  documentation/algorithm/global_motion/projective.htm,
+	  documentation/algorithm/global_motion/projective_2.htm,
+	  documentation/algorithm/global_motion/toc.htm,
+	  documentation/algorithm/global_motion/images/abc.jpg,
+	  documentation/algorithm/global_motion/images/affine_1.jpg,
+	  documentation/algorithm/global_motion/images/affine_2.jpg,
+	  documentation/algorithm/global_motion/images/affine_3.jpg,
+	  documentation/algorithm/global_motion/images/affine_4.jpg,
+	  documentation/algorithm/global_motion/images/affine_5.jpg,
+	  documentation/algorithm/global_motion/images/affine_v_error.jpg,
+	  documentation/algorithm/global_motion/images/arrow_up.gif,
+	  documentation/algorithm/global_motion/images/code_1.jpg,
+	  documentation/algorithm/global_motion/images/code_2.jpg,
+	  documentation/algorithm/global_motion/images/code_3.jpg,
+	  documentation/algorithm/global_motion/images/code_4.jpg,
+	  documentation/algorithm/global_motion/images/next.gif,
+	  documentation/algorithm/global_motion/images/optimising_1.jpg,
+	  documentation/algorithm/global_motion/images/optimising_2.jpg,
+	  documentation/algorithm/global_motion/images/optimising_3.jpg,
+	  documentation/algorithm/global_motion/images/optimising_4.jpg,
+	  documentation/algorithm/global_motion/images/optimising_5.jpg,
+	  documentation/algorithm/global_motion/images/optimising_fi.jpg,
+	  documentation/algorithm/global_motion/images/prev.gif,
+	  documentation/algorithm/global_motion/images/projective_1.jpg,
+	  documentation/algorithm/global_motion/images/projective_10.jpg,
+	  documentation/algorithm/global_motion/images/projective_11.jpg,
+	  documentation/algorithm/global_motion/images/projective_2.jpg,
+	  documentation/algorithm/global_motion/images/projective_3.jpg,
+	  documentation/algorithm/global_motion/images/projective_4.jpg,
+	  documentation/algorithm/global_motion/images/projective_5.jpg,
+	  documentation/algorithm/global_motion/images/projective_6.jpg,
+	  documentation/algorithm/global_motion/images/projective_7.jpg,
+	  documentation/algorithm/global_motion/images/projective_8.jpg,
+	  documentation/algorithm/global_motion/images/projective_9.jpg,
+	  documentation/algorithm/global_motion/images/projective_e.jpg,
+	  documentation/algorithm/global_motion/images/projective_e_2.jpg,
+	  documentation/algorithm/global_motion/images/projective_ec.jpg,
+	  documentation/algorithm/global_motion/images/projective_m_1.jpg,
+	  documentation/algorithm/global_motion/images/projective_w.jpg,
+	  documentation/algorithm/global_motion/images/toc.gif,
+	  documentation/algorithm/upconversion/downconv.htm,
+	  documentation/algorithm/upconversion/downconv_code.htm,
+	  documentation/algorithm/upconversion/downconv_filt.htm,
+	  documentation/algorithm/upconversion/index.htm,
+	  documentation/algorithm/upconversion/intro.htm,
+	  documentation/algorithm/upconversion/results.htm,
+	  documentation/algorithm/upconversion/results_down.htm,
+	  documentation/algorithm/upconversion/results_up.htm,
+	  documentation/algorithm/upconversion/toc.htm,
+	  documentation/algorithm/upconversion/upconv.htm,
+	  documentation/algorithm/upconversion/upconv_basic.htm,
+	  documentation/algorithm/upconversion/upconv_filt.htm,
+	  documentation/algorithm/upconversion/upconv_opt.htm,
+	  documentation/algorithm/upconversion/upconv_opt_arith.htm,
+	  documentation/algorithm/upconversion/upconv_opt_io.htm,
+	  documentation/algorithm/upconversion/upconv_opt_other.htm,
+	  documentation/algorithm/upconversion/images/image1.jpg,
+	  documentation/algorithm/upconversion/images/image2.jpg,
+	  documentation/algorithm/upconversion/images/image3.jpg,
+	  documentation/algorithm/upconversion/images/image4.jpg,
+	  documentation/algorithm/upconversion/images/image5.jpg,
+	  documentation/algorithm/upconversion/images/image6.jpg,
+	  documentation/algorithm/upconversion/images/next.gif,
+	  documentation/algorithm/upconversion/images/prev.gif,
+	  documentation/algorithm/upconversion/images/toc.gif,
+	  documentation/code/programmers_guide/common_data_structs.htm,
+	  documentation/code/programmers_guide/decoder_api.htm,
+	  documentation/code/programmers_guide/decoder_api_example.htm,
+	  documentation/code/programmers_guide/decoder_api_functions.htm,
+	  documentation/code/programmers_guide/decoder_api_overview.htm,
+	  documentation/code/programmers_guide/decoder_api_reference.htm,
+	  documentation/code/programmers_guide/decoder_data_structs.htm,
+	  documentation/code/programmers_guide/decoding.htm,
+	  documentation/code/programmers_guide/encoder_api.htm,
+	  documentation/code/programmers_guide/encoder_api_example.htm,
+	  documentation/code/programmers_guide/encoder_api_functions.htm,
+	  documentation/code/programmers_guide/encoder_api_overview.htm,
+	  documentation/code/programmers_guide/encoder_api_reference.htm,
+	  documentation/code/programmers_guide/encoder_data_structs.htm,
+	  documentation/code/programmers_guide/encoding.htm,
+	  documentation/code/programmers_guide/index.htm,
+	  documentation/code/programmers_guide/input_formats.htm,
+	  documentation/code/programmers_guide/intro.htm,
+	  documentation/code/programmers_guide/key.htm,
+	  documentation/code/programmers_guide/overview.htm,
+	  documentation/code/programmers_guide/software.htm,
+	  documentation/code/programmers_guide/toc.htm,
+	  documentation/code/programmers_guide/images/arrow_right.gif,
+	  documentation/code/programmers_guide/images/arrow_up.gif,
+	  documentation/code/programmers_guide/images/image1.jpg,
+	  documentation/code/programmers_guide/images/image2.jpg,
+	  documentation/code/programmers_guide/images/image3.jpg,
+	  documentation/code/programmers_guide/images/next.gif,
+	  documentation/code/programmers_guide/images/prev.gif,
+	  documentation/code/programmers_guide/images/toc.gif,
+	  documentation/publications/dirac-handout-lude-04-2004.pdf,
+	  documentation/support/test.html,
+	  documentation/tools/diagnostics/index.htm,
+	  documentation/tools/diagnostics/intro.htm,
+	  documentation/tools/diagnostics/operation.htm,
+	  documentation/tools/diagnostics/operation_buffer.htm,
+	  documentation/tools/diagnostics/operation_code.htm,
+	  documentation/tools/diagnostics/operation_des.htm,
+	  documentation/tools/diagnostics/operation_trans.htm,
+	  documentation/tools/diagnostics/over.htm,
+	  documentation/tools/diagnostics/over_diag.htm,
+	  documentation/tools/diagnostics/over_intr.htm,
+	  documentation/tools/diagnostics/over_oper.htm,
+	  documentation/tools/diagnostics/overlay.htm,
+	  documentation/tools/diagnostics/overlay_gmv.htm,
+	  documentation/tools/diagnostics/overlay_mv.htm,
+	  documentation/tools/diagnostics/overlay_mv_arr.htm,
+	  documentation/tools/diagnostics/overlay_mv_clr.htm,
+	  documentation/tools/diagnostics/overlay_pred.htm,
+	  documentation/tools/diagnostics/overlay_sad.htm,
+	  documentation/tools/diagnostics/overlay_split.htm,
+	  documentation/tools/diagnostics/toc.htm,
+	  documentation/tools/diagnostics/images/image1.jpg,
+	  documentation/tools/diagnostics/images/image2.jpg,
+	  documentation/tools/diagnostics/images/image3.jpg,
+	  documentation/tools/diagnostics/images/image4.jpg,
+	  documentation/tools/diagnostics/images/image5.jpg,
+	  documentation/tools/diagnostics/images/image6.jpg,
+	  documentation/tools/diagnostics/images/image7.jpg,
+	  documentation/tools/diagnostics/images/image8.jpg,
+	  documentation/tools/diagnostics/images/next.gif,
+	  documentation/tools/diagnostics/images/prev.gif,
+	  documentation/tools/diagnostics/images/toc.gif,
+	  images/arrow_right.gif, images/arrow_right_indent.gif,
+	  images/arrow_up.gif, images/black_pixel.jpg,
+	  images/dirac_banner.jpg, images/icon_html.gif,
+	  images/icon_pdf.gif, images/icon_txt.gif, images/icon_zip.gif:
+	  Committing website documentation to CVS
+
+2005-08-15 11:24  asuraparaju
+
+	* doc/faq.htm: Removing unwanted files in doc restructure
+
+2005-08-15 08:34  tjdwave
+
+	* libdirac_common/arith_codec.h: Added comment explaining look-up
+	  table operation.
+
+2005-08-12 11:58  asuraparaju
+
+	* configure.ac: Include an extra flag to suppress warnings when
+	  compiling in debug mode using icc.
+
+2005-08-12 11:57  asuraparaju
+
+	* README, README.developers: MMX optimisations are enabled by
+	  default. Provided instructions as to how to disable it.
+
+2005-08-12 10:26  tjdwave
+
+	* libdirac_common/motion.cpp: Reinstated transition detection code.
+	  This means that mode decision is kinder when a transition in the
+	  motion vector field is detected, giving better quality in motion
+	  transition areas.
+
+2005-08-11 11:44  tjdwave
+
+	* libdirac_common/arith_codec.h: Added Pete Bleackley's code to use
+	  a look-up table for division.
+
+2005-08-11 08:21  tjdwave
+
+	* libdirac_common/common.cpp: Added a warning when impossible block
+	  parameters are being used, and the encoder changes them.
+
+2005-08-10 17:50  asuraparaju
+
+	* libdirac_common/: wavelet_utils.cpp, wavelet_utils_mmx.cpp:
+	  Optimised 5_3 wavelet synthesis function, VHFilter5_3::Synth,
+	  using MMX instructions resulting in  6 percent speed improvement
+	  in decoding SD.
+
+2005-08-10 17:48  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: Fix g++ warning about unused
+	  variable recode.
+
+2005-08-10 17:47  asuraparaju
+
+	* encoder/encmain.cpp: Print error message and exit if input and
+	  output file names are the same.  Changed back cif preset option
+	  to uppercase. Sequence and encoder params currently being used
+	  are displayed on standard out before actual coding starts.
+
+2005-08-10 17:45  asuraparaju
+
+	* configure.ac: MMX optimisations are enabled by default. Use
+	  --disable-mmx to explicitly disable them.
+
+2005-08-10 09:13  tjdwave
+
+	* README: Added modified instructions for -qf and advice about
+	  -width and -height.
+
+2005-08-10 09:06  tjdwave
+
+	* libdirac_motionest/block_match.cpp: Changed motion vector bitrate
+	  measure so that transitions from foreground to background and
+	  vice-versa are not penalised.
+
+2005-08-10 09:04  tjdwave
+
+	* libdirac_encoder/seq_compress.cpp: Removed recoding: superfluous
+	  now there is no CQ coding.
+
+2005-08-10 09:02  tjdwave
+
+	* libdirac_encoder/: quality_monitor.cpp, quality_monitor.h:
+	  Removed constant quality encoding control mechanism, because it
+	  worked too poorly for varied sequences. Instead, QualityMonitor
+	  just monitors quality and encoder control reverts to constant
+	  Lagrangian parameters.
+
+	  The magic numbers chosen may not work for all sequences or all
+	  video standards but will do for the moment.
+
+2005-08-10 08:57  tjdwave
+
+	* libdirac_decoder/comp_decompress.cpp,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/frame_compress.cpp: Changed default wavelet
+	  filters to fast filters APPROX97 and FIVETHREE.  Wavelet filter
+	  type is now signalled in the frame header so that changing these
+	  filters just changes the encoder. (This is now consistent with
+	  the spec).
+
+2005-08-10 08:50  tjdwave
+
+	* libdirac_common/: motion.cpp, motion.h: Fixed bug with way median
+	  is calculated. Removed large inline functions from .h and placed
+	  in .cpp for clarity.
+
+2005-08-10 08:48  tjdwave
+
+	* libdirac_common/mot_comp.cpp: Minor tidy of the way that
+	  weighting matrices are computed.
+
+2005-08-10 08:44  tjdwave
+
+	* libdirac_common/: common.cpp, common.h: Removed recode parameter.
+	  Added a CodecParams parameter for the wavelet filter being used,
+	  to support signalling this in the bitstream, rather than
+	  selecting by frame type. (This is in the spec).
+
+2005-08-10 08:42  tjdwave
+
+	* libdirac_common/: bit_manager.cpp, bit_manager.h: Added support
+	  for finding out the current size of bit buffers. This will
+	  support future CBR implementations and calculations of bit rate
+	  on the fly.
+
+2005-08-10 08:40  tjdwave
+
+	* libdirac_encoder/: dirac_encoder.cpp, dirac_encoder.h: Removed
+	  recode option. Set block parameters for HD720 the same as for SD
+	  to get around bug 1245129.  Need to fix padding and edge issues
+	  to fully resolve this bug.
+
+2005-08-10 08:27  tjdwave
+
+	* encoder/encmain.cpp: Added feature to print out help if there's
+	  an unrecognised/unparsed option.  Removed recode feature.
+
+2005-08-01 17:14  asuraparaju
+
+	* libdirac_decoder/dirac_parser.cpp: Speed up set_component
+	  function using MMX optimisation.
+
+2005-08-01 17:14  asuraparaju
+
+	* libdirac_common/arrays.h: In TwoDArray<T>::Resize, free and
+	  reallocate data only if the new dimensions differ from the old
+	  one.
+
+2005-08-01 17:12  asuraparaju
+
+	* win32/VS2003/:
+	  DiracDecoder/libdirac_decoder/libdirac_decoder.vcproj,
+	  libdirac_common/libdirac_common.vcproj: Define HAVE_MMX macro for
+	  mmx enabled targets.
+
+2005-08-01 17:11  asuraparaju
+
+	* util/instrumentation/process_sequence.cpp: Fix uninitialised
+	  memory read bug reported by Valgrind on reaching end of sequence.
+
+2005-08-01 17:10  asuraparaju
+
+	* unit_tests/: motion_comp_test.cpp, motion_comp_test.h: Test all
+	  MV precision values - from pixel to an eighth of a pixel.
+
+2005-08-01 17:10  asuraparaju
+
+	* libdirac_common/wavelet_utils_mmx.cpp: Reimplement
+	  VHFilterApprox9_7::Synth and VHFilter13_5::Synth using MMX
+	  optimisation.
+
+2005-08-01 17:09  asuraparaju
+
+	* libdirac_common/upconvert_mmx.cpp: Reimplemented
+	  UpConverter::DoUpConverter function using MMX optimisation.
+
+2005-08-01 17:07  asuraparaju
+
+	* libdirac_common/: mot_comp_mmx.cpp, mot_comp_mmx.h:
+	  Implementation of QuarterPixel::CompensateBlock function using
+	  MMX optimisation.
+
+2005-08-01 17:06  asuraparaju
+
+	* libdirac_common/wavelet_utils.cpp: MMX version of Wavelet
+	  sythesis functions are used if MMX is enabled.
+
+2005-08-01 17:05  asuraparaju
+
+	* libdirac_common/upconvert.cpp: MMX version of DoUpConverter is
+	  used if MMX is enabled.
+
+2005-08-01 17:04  asuraparaju
+
+	* libdirac_common/: mot_comp.cpp, mot_comp.h: Modified the block
+	  weights to be of type short to make efficient use of MMX
+	  instructions. Modified CompensateComponente to make more
+	  efficient use of data in cache. MMX versions of CompensateBlock
+	  are used if MMX is enabled.
+
+2005-08-01 17:04  asuraparaju
+
+	* libdirac_common/Makefile.am: Include new mmx optimisation source
+	  files and headers.
+
+2005-07-26 10:39  tjdwave
+
+	* libdirac_encoder/dirac_encoder.cpp: Reduced chroma weighting
+	  factors in order to increase chroma fidelity - chroma bit rates
+	  should increase from about 5% of total for 420 to 7.5% of total.
+	  Changed default block separation for HD720 preset to remove block
+	  edge overlaps at the top of the screen. This may be returned to
+	  the old settings when we know why they caused the problem.
+
+2005-07-25 18:01  mservais
+
+	* libdirac_common/motion.cpp, libdirac_common/motion.h,
+	  libdirac_common/mv_codec.cpp, libdirac_common/mv_codec.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_motionest/global_motion.cpp,
+	  libdirac_motionest/global_motion.h,
+	  libdirac_motionest/me_motion_type_decn.cpp,
+	  libdirac_motionest/me_motion_type_decn.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/pixel_match.cpp: Minor bug fixes and added
+	  some extra comments
+
+2005-07-22 18:09  asuraparaju
+
+	* configure.ac: updated revision to 0.5.3
+
+2005-07-22 18:09  asuraparaju
+
+	* libdirac_common/bit_manager.h: Updated bitstream version to 0.5
+	  since the bitstream is no longer compatible with dirac-0.5.2
+
+2005-07-22 12:59  asuraparaju
+
+	* configure.ac: Include macro AC_SYS_LARGEFILE to overcome the 2GB
+	  i/o file limit.  Fix for bug #1212581.
+
+2005-07-21 09:11  tjdwave
+
+	* encoder/encmain.cpp: Made presets non-case-sensitive.
+
+2005-07-20 10:29  tjdwave
+
+	* libdirac_encoder/dirac_encoder.cpp: Fixed bug where block
+	  parameters were being set incorrectly.
+
+2005-07-20 09:43  tjdwave
+
+	* README: Added text about recode CLI option.
+
+2005-07-19 16:39  tjdwave
+
+	* encoder/encmain.cpp, libdirac_common/common.cpp,
+	  libdirac_common/common.h, libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/dirac_encoder.h,
+	  libdirac_encoder/seq_compress.cpp: Added -recode parameter. If
+	  -recode [n] is present, then the encoder will recode up to n
+	  times (ie will encoder up to n+1 times).
+
+2005-07-19 15:17  tjdwave
+
+	* libdirac_common/mv_codec.cpp,
+	  libdirac_motionest/me_mode_decn.cpp: Fixed bug 1240709. Common
+	  mode is now used to reduce encoding of prediction modes. Common
+	  mode was also being set incorrectly in the motion estimation
+	  process, which caused divergence between the encoder and decoder
+	  values.  Since common mode wasn't used, this bug was masked
+	  before. Both now fixed.
+
+2005-07-08 10:26  tjdwave
+
+	* libdirac_common/: upconvert.cpp, upconvert.h: Incorporated patch
+	  1211899. This tidies up the code and makes it confirm to dirac
+	  coding conventions, and also uses a smaller filter. This commit
+	  differs from the patch in that the filter is not reduced to 6
+	  taps but is reducted to 10 taps instead.  In the future, variable
+	  filter coefficients may be supported via templated polymorphism.
+
+2005-06-22 17:52  mservais
+
+	* libdirac_common/motion.cpp, libdirac_common/motion.h,
+	  libdirac_common/mv_codec.cpp, libdirac_common/mv_codec.h,
+	  libdirac_motionest/filter_weighted_local.cpp,
+	  libdirac_motionest/global_motion.cpp,
+	  libdirac_motionest/global_motion.h,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_motion_type_decn.cpp,
+	  libdirac_motionest/me_motion_type_decn.h,
+	  libdirac_motionest/model_affine.cpp,
+	  libdirac_motionest/model_affine.h,
+	  libdirac_motionest/model_projective.cpp,
+	  libdirac_motionest/model_projective.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/pixel_match.cpp: When using global motion (but
+	  not exclusively global motion), the global motion decisions can
+	  now be flagged either per Prediction Unit or per Macro-Block.
+
+	  Also, the use of a Common Mode for each Macro-Block is now
+	  possible. (This had not been fully implemented before.)
+
+2005-06-10 15:15  tjdwave
+
+	* libdirac_encoder/quality_monitor.cpp,
+	  libdirac_motionest/block_match.cpp: Fixed bug with computing MV
+	  costs. Incorporated patch 1216297 for quality measurement.
+
+2005-06-10 11:52  tjdwave
+
+	* libdirac_encoder/dirac_encoder.cpp: Changed default block height
+	  and width for motion compensation to 24 by 24 pixels from 20 by
+	  20. Separation remains 16 by 16. The result is reduced blockiness
+	  in areas of poor motion prediction. Downside is slower encoder,
+	  but the block parameters are merely scaled-up versions of the SD
+	  parameters.
+
+2005-05-26 19:48  asuraparaju
+
+	* extras/patches/ffmpeg-0.4.9-pre1-dirac-0.5.x.patch: Fixed bug
+	  1209053. Frame size parameters are now fetched from the AV
+	  context before setting frame size. Also fixed a bug where quality
+	  factor was not being set correctly.
+
+2005-05-26 16:20  stuart_hc
+
+	* tests/samples.at: Fix bug 1209017: use -width/-height instead of
+	  -x/-y
+
+2005-05-26 16:01  stuart_hc
+
+	* encoder/encmain.cpp: Fix bug 1209017: use -width/-height instead
+	  of -x/-y Also fix SEGV when incorrect -cformat parameter is
+	  passed.
+
+2005-05-26 15:59  stuart_hc
+
+	* README: Fix bug 1209017: use -width/-height instead of -x/-y
+
+2005-05-25 14:30  asuraparaju
+
+	* ChangeLog: [no log message]
 2005-05-25 13:51  asuraparaju
 
 	* README.release: Add ffmpeg patch to checklist
