@@ -1,3 +1,25 @@
+dirac_0.5.3
+===========
+- Fixed encoder CLI. Added rigorous command line input checks . 
+  The encoder exits with error message when command line argument is not 
+  valid.
+- Fixed HD block size to improve motion compensation and prediction
+- Fixed bug with computing MV costs.
+- MMX opts to wavelet transform, motion compensation and upconversion which
+  improved decoder speed by 25-30%.
+- Improved chroma fidelity by increasing bits allocated to chroma
+- Wavelet filter type is part of bitstream.
+- Fixed bug with the way median is calculated in motion prediction.
+- Replaced constant quality encoding control mechanism with a mechanism
+  that used constant constant Lagrangian paramemters. 
+- MMX optimisations are automatically used if underlying architecture
+  supports it.
+- Improved motion estimation.
+- Modified arithmetic coding to use a look-up table for division.
+
+- Patches: 1211899, 1216297
+- Bugs: 1209017, 1209053, 1212581, 1245129, 1240709
+
 dirac_0.5.2
 ===========
   - Changed encoder command line interface to accept all encoding parameters.
