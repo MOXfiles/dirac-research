@@ -695,6 +695,9 @@ namespace dirac
         
          // Gets ...
 
+        //! Get whether we're doing lossless coding
+        float Lossless() const {return m_lossless;}
+
         //! Get the quality factor
         float Qf() const {return m_qf;}
 
@@ -753,6 +756,9 @@ namespace dirac
         
         // ... and Sets
 
+        //! Set whether we're doing lossless coding
+        void SetLossless(const bool l){m_lossless = l;}
+
         //! Set the quality factor
         void SetQf(const float qfac){m_qf=qfac;}
 
@@ -799,6 +805,9 @@ namespace dirac
         void SetBitsOut( SequenceOutputManager* so ){ m_bit_out=so; }
         
     private:
+        //! A flag indicating we're doing lossless coding
+        bool m_lossless;
+
         //! Quality factor
         float m_qf; 
         

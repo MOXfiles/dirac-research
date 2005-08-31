@@ -164,6 +164,8 @@ typedef enum
 typedef struct 
 {
     /*! Quality factor */
+    bool lossless;
+    /*! Quality factor */
     float qf;
     /*! The separation between L1 frames */
     int L1_sep;
@@ -241,7 +243,8 @@ typedef struct
 
      Encoder params:
      Preset           Field          Value
-     CIF              qf             7
+     CIF              lossless       false
+                      qf             7
                       L1_sep         3
                       num_L1         11
                       cpd            20.0
@@ -250,7 +253,8 @@ typedef struct
                       xbsep          8
                       ybsep          8
 
-     SD576            qf             7
+     SD576            lossless       false
+                      qf             7
                       L1_sep         3
                       num_L1         3
                       cpd            32.0
@@ -259,7 +263,8 @@ typedef struct
                       xbsep          8
                       ybsep          8
 
-     HD720            qf             7
+     HD720            lossless       false
+                      qf             7
                       L1_sep         3
                       num_L1         7
                       cpd            20.0
@@ -268,7 +273,8 @@ typedef struct
                       xbsep          10
                       ybsep          12
 
-     HD1080           qf             7
+     HD1080           lossless       false
+                      qf             7
                       L1_sep         3
                       num_L1         3
                       cpd            32.0

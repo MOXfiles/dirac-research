@@ -61,21 +61,33 @@ void QualityMonitor::ResetAll()
 {
     // Set the lambdas
 
-    m_encparams.SetLambda( I_frame , std::pow( 10.0 , (10.0-m_encparams.Qf() )/2.5 ) );
-    m_encparams.SetLambda( L1_frame , m_encparams.ILambda()*128.0 );
-    m_encparams.SetLambda( L2_frame , m_encparams.ILambda()*512.0 );
-
-
-    // Set the lambdas for motion estimation
-    const double me_ratio = 1.0;
-
-    m_encparams.SetL1MELambda( std::sqrt(m_encparams.L1Lambda())*me_ratio );
-    m_encparams.SetL2MELambda( std::sqrt(m_encparams.L2Lambda())*me_ratio );
-
-    for (int i=0; i<3 ; ++i )
+    if ( !m_encparams.Lossless() )
     {
-        m_quality_average[i] = 0.0;
-        m_frame_total[i] = 0;
+        m_encparams.SetLambda( I_frame , std::pow( 10.0 , (10.0-m_encparams.Qf() )/2.5 ) );
+        m_encparams.SetLambda( L1_frame , m_encparams.ILambda()*128.0 );
+        m_encparams.SetLambda( L2_frame , m_encparams.ILambda()*512.0 );
+
+
+        // Set the lambdas for motion estimation
+        const double me_ratio = 1.0;
+
+        m_encparams.SetL1MELambda( std::sqrt(m_encparams.L1Lambda())*me_ratio );
+        m_encparams.SetL2MELambda( std::sqrt(m_encparams.L2Lambda())*me_ratio );
+
+        for (int i=0; i<3 ; ++i )
+        {
+            m_quality_average[i] = 0.0;
+            m_frame_total[i] = 0;
+        }// i
+    }
+    else
+    {
+        m_encparams.SetLambda( I_frame , 0.0 );
+        m_encparams.SetLambda( L1_frame , 0.0 );
+        m_encparams.SetLambda( L2_frame , 0.0 );
+
+        m_encparams.SetL1MELambda( 0.0 );
+        m_encparams.SetL2MELambda( 0.0 );
     }
 }
 

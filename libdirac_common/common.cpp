@@ -329,7 +329,8 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
 //Default constructor    
 EncoderParams::EncoderParams():
     CodecParams(),
-    m_qf(5.0),
+    m_lossless(false),
+    m_qf(7.0),
     m_num_L1(0),
     m_L1_sep(0),
     m_ufactor(1.0),

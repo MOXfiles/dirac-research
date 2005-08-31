@@ -61,33 +61,34 @@ static void display_help()
 {
     cout << "\nDIRAC wavelet video coder.";
     cout << "\n";
-    cout << "\nUsage: progname -<flag1> [<flag_val>] ... <input1> <input2> ...";
+    cout << "\nUsage: progname -<flag1> [<flag1_val>] ... <input> <output>";
     cout << "\nIn case of multiple assignment to the same parameter, the last holds.";
     cout << "\n";
-    cout << "\nName    Type   I/O Default Value Description";
-    cout << "\n====    ====   === ============= ===========                                       ";
-    cout << "\ninput   string  I  [ required ]  Input file name";
-    cout << "\noutput  string  I  [ required ]  Output file name";
-    cout << "\nCIF     bool    I  true          Use CIF compression presets";
-    cout << "\nHD720   bool    I  false         Use HD-720 compression presets";
-    cout << "\nHD1080  bool    I  false         Use HD-1080 compression presets";
-    cout << "\nSD576   bool    I  false         Use SD-576 compression presets";
-    cout << "\nwidth   ulong   I  Preset        Width of frame";
-    cout << "\nheight  ulong   I  Preset        Length of frame";
-    cout << "\ncformat ulong   I  Yonly         Chroma format 0=Yonly 1=422 2=444 3=420 4=411";
-    cout << "\nfr      ulong   I  Preset        Frame rate(s) (e.n or e/n format)";
-    cout << "\nstart   ulong   I  0UL           Frame number to start encoding from";
-    cout << "\nstop    ulong   I  EOF           Frame number after which encoding finishes";
-    cout << "\nL1_sep  ulong   I  0UL           Separation of L1 frames";
-    cout << "\nnum_L1  ulong   I  0UL           Number of L1 frames";
-    cout << "\nxblen   ulong   I  0UL           Overlapping block horizontal length";
-    cout << "\nyblen   ulong   I  0UL           Overlapping block vertical length";
-    cout << "\nxbsep   ulong   I  0UL           Overlapping block horizontal separation";
-    cout << "\nybsep   ulong   I  0UL           Overlapping block vertical separation";
-    cout << "\ncpd     ulong   I  0UL           Perceptual weighting - vertical cycles per deg.";
-    cout << "\nqf      float   I  0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
-    cout << "\nverbose bool    I  false         Verbose mode";
-    cout << "\nnolocal bool    I  false         Don't write diagnostics & locally decoded video";
+    cout << "\nName     Type    Default Value Description";
+    cout << "\n====     ====    ============= ===========                                       ";
+    cout << "\ninput    string  [ required ]  Input file name";
+    cout << "\noutput   string  [ required ]  Output file name";
+    cout << "\nCIF      bool    true          Use CIF compression presets";
+    cout << "\nHD720    bool    false         Use HD-720 compression presets";
+    cout << "\nHD1080   bool    false         Use HD-1080 compression presets";
+    cout << "\nSD576    bool    false         Use SD-576 compression presets";
+    cout << "\nwidth    ulong   Preset        Width of frame";
+    cout << "\nheight   ulong   Preset        Length of frame";
+    cout << "\ncformat  ulong   Yonly         Chroma format 0=Yonly 1=422 2=444 3=420 4=411";
+    cout << "\nfr       ulong   Preset        Frame rate(s) (e.n or e/n format)";
+    cout << "\nstart    ulong   0UL           Frame number to start encoding from";
+    cout << "\nstop     ulong   EOF           Frame number after which encoding finishes";
+    cout << "\nL1_sep   ulong   0UL           Separation of L1 frames";
+    cout << "\nnum_L1   ulong   0UL           Number of L1 frames";
+    cout << "\nxblen    ulong   0UL           Overlapping block horizontal length";
+    cout << "\nyblen    ulong   0UL           Overlapping block vertical length";
+    cout << "\nxbsep    ulong   0UL           Overlapping block horizontal separation";
+    cout << "\nybsep    ulong   0UL           Overlapping block vertical separation";
+    cout << "\ncpd      ulong   0UL           Perceptual weighting - vertical cycles per deg.";
+    cout << "\nqf       float   0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
+    cout << "\nlossless bool    false         Lossless coding (overrides qf)";
+    cout << "\nverbose  bool    false         Verbose mode";
+    cout << "\nnolocal  bool    false         Don't write diagnostics & locally decoded video";
     cout << endl;
 }
 
@@ -575,6 +576,11 @@ int main (int argc, char* argv[])
             i++;
             enc_ctx.enc_params.qf =  atof(argv[i]);
             parsed[i] = true;
+        }
+        else if ( strcmp(argv[i], "-lossless") == 0 )
+        {
+            parsed[i] = true;
+            enc_ctx.enc_params.lossless = true;
         }
         else if ( strcmp(argv[i], "-L1_sep") == 0 )
         {

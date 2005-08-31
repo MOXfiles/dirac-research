@@ -235,11 +235,30 @@ void CompCompressor::SelectQuantisers( PicArray& pic_data ,
                                        const bool using_multi_quants )
 {
     // Select all the quantizers
-    for ( int b=bands.Length() ; b>=1 ; --b )
+    if ( !m_encparams.Lossless() )
     {
-        bands(b).SetUsingMultiQuants( using_multi_quants );
-        est_bits[b] = SelectMultiQuants( pic_data , bands , b );
-    }// b
+        for ( int b=bands.Length() ; b>=1 ; --b )
+        {
+            bands(b).SetUsingMultiQuants( using_multi_quants );
+            est_bits[b] = SelectMultiQuants( pic_data , bands , b );
+        }// b
+    }
+    else
+    {
+        for ( int b=bands.Length() ; b>=1 ; --b )
+        {
+            bands(b).SetUsingMultiQuants( false );
+            bands(b).SetQIndex( 0 );
+            TwoDArray<CodeBlock>& blocks = bands(b).GetCodeBlocks();
+            for (int j=0; j<blocks.LengthY() ;++j)
+            {
+                for (int i=0; i<blocks.LengthX() ;++i)
+                {
+                    blocks[j][i].SetQIndex( 0 );
+                }// i
+            }// j
+        }// b
+    }
 }
 
 int CompCompressor::SelectMultiQuants( PicArray& pic_data , SubbandList& bands , const int band_num )
