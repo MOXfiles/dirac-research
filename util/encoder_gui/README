@@ -1,0 +1,71 @@
+Dirac Encoder GUI application
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Last revised by Thomas Davies 7 September 2005
+dirac@bbc.co.uk
+
+INSTALLATION
+~~~~~~~~~~~~
+
+Requires Qt 4.0 to be installed. 
+
+In the GUI directory, to build the application type
+
+qmake -project
+
+followed by 
+
+qmake
+
+followed by
+
+make
+
+This will produce an executable with the name of this directory (encoder_gui).
+
+RUNNING THE PROGRAM
+~~~~~~~~~~~~~~~~~~~
+
+Type 
+
+encoder_gui
+
+at the command line to call up the GUI. The GUI calls the Dirac command-line
+tool in the main Dirac package. The encoder parameters are the same as the 
+command-line package, which is documented in the main README file in the 
+Dirac distribution.
+
+To encode, select the preset that most closely matches the video you're
+encoding. This sets sequence and encoding parameters which can then be
+overridden. Select input and output video by typing in the location, or 
+by using the browse window. You can indicate filenames by specifying the name
+with or without extension. For example, specifying
+
+test_in
+
+as the input will set the input video as test_in.yuv, but you can also select
+
+test_in.yuv
+
+WARNING!: at the moment the GUI calls up dirac_encoder only in the current 
+directory, i.e. the directory from which the encoder was started up. 
+
+This will change in future. 
+
+LICENSING
+~~~~~~~~~
+
+The Dirac GUI software is licensed under the GPL version 2. A copy of this
+licence is including in the file named COPYING in this directory.
+
+This licence is required in order to use the Qt libraries in an open
+source distribution.
+
+AUTHORS
+~~~~~~~
+
+This software was written by David Marston of BBC Research and Development.
+
+
+
+
