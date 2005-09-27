@@ -78,17 +78,7 @@ void CompCompressor::Compress(PicArray& pic_data)
     Subband node;
 
     //set up Lagrangian params    
-/*
-    if (m_fsort == I_frame) 
-        m_lambda= m_encparams.ILambda();
-    else
-    {
-        if (m_fsort == L1_frame) 
-            m_lambda= m_encparams.L1Lambda();
-        else 
-            m_lambda= m_encparams.L2Lambda();
-    }
-*/
+
     m_lambda= m_encparams.Lambda( m_fsort );
 
     if (m_csort == U_COMP)
