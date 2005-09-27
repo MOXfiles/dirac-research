@@ -69,7 +69,7 @@ void QualityMonitor::ResetAll()
 
 
         // Set the lambdas for motion estimation
-        const double me_ratio = 1.0;
+        const double me_ratio = 2.0;
 
         m_encparams.SetL1MELambda( std::sqrt(m_encparams.L1Lambda())*me_ratio );
         m_encparams.SetL2MELambda( std::sqrt(m_encparams.L2Lambda())*me_ratio );
