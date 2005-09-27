@@ -134,63 +134,6 @@ namespace dirac
         static const code_t CODE_MSB     = ((0xffff + 1) >> 1);
         static const code_t CODE_2ND_MSB = ((0xffff + 1) >> 2);
 
-        //! A class for encapsulating interval fractions for use in arithmetic coding.
-        /*!
-             A class for encapsulating a subinterval of the unit interval [0,1) 
-             (0<=x<1) as a start value and a stop value (numerators) considered
-             as numbers between 0 and 1024 inclusive.
-         */
-        class ProbInterval
-        {
-        public:
-            //! Constructor.
-            ProbInterval()
-              : m_start(0),
-                m_stop(1024)
-              {}
-
-            //! Value constructor
-            ProbInterval( calc_t start , calc_t stop)
-            {
-                m_start  = start;
-                m_stop   = stop;
-            }
-
-            //! Copy constructor
-            ProbInterval(const ProbInterval& rhs)
-              : m_start(rhs.m_start),
-                m_stop(rhs.m_stop){ }
-
-            //! Assignment 
-            ProbInterval & operator = (const ProbInterval& rhs)
-            {
-                m_start  = rhs.m_start;
-                m_stop   = rhs.m_stop;
-                return *this;
-            }
-
-            //! Get the start value    
-            calc_t Start() const { return m_start; }
-
-            //! Get the stop value    
-            calc_t Stop() const  { return m_stop; }
-
-            //! Sets the values    
-            void SetValues(const calc_t start , const calc_t stop)
-            { 
-                m_start = start;
-                m_stop = stop; 
-            }
-
-        private:
-            //! The m_start value. 
-            calc_t m_start;    
-
-            //! The m_stop value.Should be >=m_start. 
-            calc_t m_stop;
-
-        };
-
         //! A class for binary contexts.
         /*!
             A class for binary contexts. Stores probabilities for 0 and 1 in 
@@ -222,9 +165,8 @@ namespace dirac
             Context(const Context & cpy)
               : m_num0( cpy.m_num0 ),
                 m_num1( cpy.m_num1 ),
-                m_weight( cpy.m_weight ),
-                m_r0( cpy.m_r0 ),
-                m_r1( cpy.m_r1 )
+                m_snum0( cpy.m_snum0 ),
+                m_weight( cpy.m_weight )
             {}
 
             //! Assignment=
@@ -232,9 +174,8 @@ namespace dirac
             {
                 m_num0 = rhs.m_num0;
                 m_num1 = rhs.m_num1;
+                m_snum0 = rhs.m_snum0;
                 m_weight = rhs.m_weight;
-                m_r0  = rhs.m_r0;
-                m_r1  = rhs.m_r1;
                 return *this;
             }
 
@@ -251,14 +192,17 @@ namespace dirac
                 m_num1 = cnt1;
                 m_weight = cnt0 + cnt1;
 
-                SetRanges();
+                SetScaledCount();
             }
 
             //! Returns the count of zeroes.
-            calc_t GetCount0() const { return m_num0; }    
+            calc_t GetCount0() const { return m_num0; } 
+
+            //! Returns the scaled count of zeroes.
+            calc_t GetScaledCount0() const { return m_snum0; }
 
             //! Returns the count of ones.
-            calc_t GetCount1() const { return m_num1; }    
+            calc_t GetCount1() const { return m_num1; }
 
             //! Returns the count of all symbols.
             calc_t Weight() const { return m_weight; }    
@@ -278,7 +222,7 @@ namespace dirac
                 m_weight++;
 
                 if ( m_weight & 1 )
-                    SetRanges();
+                    SetScaledCount();
             }
 
              //! Divide the counts by 2, making sure neither ends up 0.
@@ -291,37 +235,24 @@ namespace dirac
 
                 m_weight = m_num0 + m_num1;
 
-                SetRanges();
+                SetScaledCount();
             }
-
-            //! Return the triple associated with Symbol.    
-            const ProbInterval & GetProbInterval( const bool symbol ) const { return (symbol ? m_r1 : m_r0); }
 
             //! Given a number, return the corresponding symbol and triple.
             /*!
                 Given a number, return the corresponding symbol and triple.
             */
-            bool GetSymbol(const calc_t num, const calc_t factor , ProbInterval & prob_val) const
+            bool GetSymbol(const calc_t num, const calc_t factor) const
             {
-                if (num < m_r0.Stop()*factor)
-                {
-                    prob_val = m_r0;
+                if (num < m_snum0*factor)
                     return false; //ie zero
-                }
-                else
-                {
-                    prob_val = m_r1;
-                    return true; //ie 1
-                }
+
+                return true; //ie 1
             } 
 
-            inline void SetRanges()
+            inline void SetScaledCount()
             {
-                // Updates the probability ranges
-                const calc_t end0( ( m_num0 * m_lookup[m_weight-1] ) >> 21 );
-
-                m_r0.SetValues( 0 , end0 );
-                m_r1.SetValues( end0 , 1024 );    
+                m_snum0 = ( m_num0 * m_lookup[m_weight-1] ) >> 21;
 
             }
 
@@ -329,10 +260,9 @@ namespace dirac
             calc_t m_num0;
             calc_t m_num1;
 
+            calc_t m_snum0;
+
             calc_t m_weight;
-            
-            ProbInterval m_r0;
-            ProbInterval m_r1;
 
             /*!
             Counts m_num0 and m_num1 are scaled to 1024 before being used to
@@ -385,9 +315,6 @@ namespace dirac
         //! Initialises the Encoder
         void InitEncoder();
 
-        //! encodes a triple and writes to output
-        void EncodeProbInterval(const ProbInterval & prob_interval , const calc_t range );
-
         //! encodes a symbol and writes to output
         void EncodeSymbol(const bool symbol, const int context_num);    
 
@@ -403,9 +330,6 @@ namespace dirac
 
         //! Initialise the Decoder
         void InitDecoder();                    
-
-        //! Remove the symbol from the coded input stream
-        void RemFromStream(const ProbInterval & prob_interval , const calc_t range);
 
         //! Decodes a symbol given a context number
         bool DecodeSymbol( const int context_num );
@@ -536,14 +460,17 @@ namespace dirac
         InitContexts();
     }
 
+
     template<class T>
-    void ArithCodec<T>::EncodeProbInterval( const ProbInterval& prob_interval , const calc_t range)
+    void ArithCodec<T>::EncodeSymbol(const bool symbol, const int context_num)
     {
-        //formulae given we know we're binary coding    
-        if ( !prob_interval.Start() ) // prob_interval.Start()=0, so symbol is 0, so m_low_code unchanged 
-            m_high_code = m_low_code + static_cast<code_t>( ( ( range * prob_interval.Stop() )>>10 ) - 1 );
-        else //symbol is 1, so m_high_code unchanged
-            m_low_code += static_cast<code_t>(( range * prob_interval.Start() ) >>10 );                
+        const calc_t range( static_cast<calc_t>( m_high_code - m_low_code ) + 1 );
+        const calc_t interval_count0( ( m_context_list[context_num].GetScaledCount0()*range )>>10 );
+
+        if ( !symbol )
+            m_high_code = m_low_code + static_cast<code_t>( interval_count0 - 1 );
+        else
+            m_low_code += static_cast<code_t>( interval_count0 );
 
         do
         {
@@ -560,20 +487,14 @@ namespace dirac
                 m_low_code  ^= CODE_2ND_MSB;
                 m_high_code ^= CODE_2ND_MSB;
             }
-            else return ;
+            else break;
 
             m_low_code  <<= 1;
             m_high_code <<= 1;
             m_high_code ++;
         }
         while ( true );
-    }
 
-    template<class T>
-    inline void ArithCodec<T>::EncodeSymbol(const bool symbol, const int context_num)
-    {
-        const calc_t range( static_cast<calc_t>( m_high_code - m_low_code ) + 1 );
-        EncodeProbInterval( m_context_list[context_num].GetProbInterval(symbol) , range );
         Update( symbol , context_num );
     }
 
@@ -598,10 +519,9 @@ namespace dirac
         ReadAllData();
 
         //Read in a full word of data
-        code_t i;
         m_code = 0;
 
-        for ( i = 0; i < (8 * sizeof(code_t)); i++ )
+        for ( unsigned int i = 0; i < (8 * sizeof(code_t)); i++ )
         {
             m_code <<= 1;
 
@@ -615,13 +535,20 @@ namespace dirac
     }
 
     template<class T>
-    void ArithCodec<T>::RemFromStream( const ProbInterval& prob_interval , const calc_t range )
+    bool ArithCodec<T>::DecodeSymbol( const int context_num )
     {
-        if( !prob_interval.Start() )//prob_interval.Start()=0, so symbol is 0, so m_low_code unchanged 
-            m_high_code = m_low_code + static_cast<code_t>( ( ( range * prob_interval.Stop() )>>10 ) - 1 );
 
-        else//symbol is 1, so m_high_code unchanged
-            m_low_code += static_cast<code_t>(( range * prob_interval.Start() )>>10 );        
+        const calc_t count( ( ( static_cast<calc_t>( m_code - m_low_code ) + 1 )<<10 ) - 1 );
+        const calc_t range( static_cast<calc_t>( m_high_code - m_low_code ) + 1 );
+        bool symbol( m_context_list[context_num].GetSymbol( count , range ) );
+
+        const calc_t interval_count0( ( m_context_list[context_num].GetScaledCount0()*range )>>10 );
+
+        if( !symbol )
+            m_high_code = m_low_code + static_cast<code_t>( interval_count0 - 1 );
+
+        else
+            m_low_code += static_cast<code_t>( interval_count0 );        
 
         do
         {        
@@ -635,7 +562,7 @@ namespace dirac
                 m_low_code  ^= CODE_2ND_MSB;
                 m_high_code ^= CODE_2ND_MSB;
             }        
-            else return;
+            else break;
 
             m_low_code  <<= 1;
 
@@ -647,20 +574,6 @@ namespace dirac
 
         } while ( true );
 
-    }
-
-    template<class T>
-    inline bool ArithCodec<T>::DecodeSymbol( const int context_num )
-    {
-        ProbInterval limits;
-
-        const calc_t count( ( ( static_cast<calc_t>( m_code - m_low_code ) + 1 )<<10 ) - 1 );
-
-        const calc_t range( static_cast<calc_t>( m_high_code - m_low_code ) + 1 );
-
-        bool symbol( m_context_list[context_num].GetSymbol( count , range , limits ) );
-
-        RemFromStream( limits , range );
         Update(  symbol , context_num );
 
         return symbol;
