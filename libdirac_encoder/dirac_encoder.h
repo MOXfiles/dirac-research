@@ -164,7 +164,7 @@ typedef enum
 typedef struct 
 {
     /*! Quality factor */
-    bool lossless;
+    int lossless;
     /*! Quality factor */
     float qf;
     /*! The separation between L1 frames */
