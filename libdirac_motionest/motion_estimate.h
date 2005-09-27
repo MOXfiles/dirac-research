@@ -76,7 +76,7 @@ namespace dirac
         ~MotionEstimator(){}
 
         //! Do the motion estimation
-        bool DoME(const FrameBuffer& my_buffer , int frame_num , MEData& me_data);
+        void DoME(const FrameBuffer& my_buffer , int frame_num , MEData& me_data);
 
     private:
         //! Copy constructor: private, body-less - class should not be copied
@@ -93,9 +93,6 @@ namespace dirac
 
         //! Called by previous fn for each block
         ValueType GetChromaBlockDC(const PicArray& pic_data, int xloc,int yloc,int split);
-
-        //! Analyses the ME data and returns true if a cut is detected, false otherwise
-        bool IsACut( const MEData& ) const;
 
         // Member variables
 

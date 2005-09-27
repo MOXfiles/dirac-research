@@ -50,7 +50,7 @@ MotionEstimator::MotionEstimator( const EncoderParams& encp ):
     m_encparams( encp )
 {}
 
-bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& me_data)
+void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& me_data)
 {
 
     const FrameParams& fparams = my_buffer.GetFrame(frame_num).GetFparams();
@@ -60,6 +60,19 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 
     PixelMatcher pix_match( m_encparams );
     pix_match.DoSearch( my_buffer , frame_num , me_data);
+
+    float lambda;
+    // Get the references
+    const std::vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();
+
+    const int num_refs = refs.size();
+    if ( fparams.FSort() == L1_frame )
+        lambda = m_encparams.L1MELambda();
+    else
+        lambda = m_encparams.L2MELambda();
+
+    // Set up the lambda to be used
+    me_data.SetLambdaMap( num_refs , lambda );
 
     // Step 2. 
     // Pixel accurate vectors are then refined to sub-pixel accuracy
@@ -81,29 +94,7 @@ bool MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
     if (fparams.CFormat() != Yonly)
         SetChromaDC( my_buffer , frame_num , me_data );
 
-    // Shift the vectors to remove redundant accuracy bits     
-    MvArray& mvector1 = me_data.Vectors( 1 );
-    for (int j=0 ; j<mvector1.LengthY() ; j++)
-    {
-        for (int i=0 ; i<mvector1.LengthX() ; i++)
-        {
-            mvector1[j][i].x >>= ( 3-m_encparams.MVPrecision() );
-            mvector1[j][i].y >>= ( 3-m_encparams.MVPrecision() );
-        }// i
-    }// j
-
-    MvArray& mvector2 = me_data.Vectors( 2 );
-    for (int j=0 ; j<mvector2.LengthY() ; j++)
-    {
-        for (int i=0 ; i<mvector2.LengthX() ; i++)
-        {
-            mvector2[j][i].x >>= ( 3-m_encparams.MVPrecision() );
-            mvector2[j][i].y >>= ( 3-m_encparams.MVPrecision() );
-        }// i
-    }// j
-
-    return IsACut( me_data );
-
+//return false;
 }
 
 ValueType MotionEstimator::GetChromaBlockDC(const PicArray& pic_data,
@@ -200,63 +191,4 @@ void MotionEstimator::SetChromaDC( const FrameBuffer& my_buffer , int frame_num 
     SetChromaDC( my_buffer.GetComponent( frame_num , U_COMP) , mv_data , U_COMP );
     SetChromaDC( my_buffer.GetComponent( frame_num , V_COMP) , mv_data , V_COMP );
 
-}
-
-bool MotionEstimator::IsACut( const MEData& me_data ) const
-{
-    // Count the number of intra blocks
-    const TwoDArray<PredMode>& modes = me_data.Mode();
-
-    int count_intra = 0;
-    for ( int j=0 ; j<modes.LengthY() ; ++j )
-    {
-        for ( int i=0 ; i<modes.LengthX() ; ++i )
-        {
-            if ( modes[j][i] == INTRA )
-                count_intra++;
-        }
-    }// j
-    
-    double intra_percent = 100.0*static_cast<double>( count_intra ) / 
-                           static_cast<double>( modes.LengthX() * modes.LengthY() );
-
-    if ( m_encparams.Verbose() )
-        std::cerr<<std::endl<<intra_percent<<"% of blocks are intra   ";
-
-    // Check the size of SAD errors across reference 1    
-    const TwoDArray<MvCostData>& pcosts = me_data.PredCosts( 1 );
-
-    // averege SAD across all relevant blocks
-    long double sad_average = 0.0;
-    // average SAD in a given block
-    long double block_average; 
-    // the block parameters
-    const OLBParams& bparams = m_encparams.LumaBParams( 2 ); 
-    //the count of the relevant blocks
-    int block_count = 0;
-
-    for ( int j=0 ; j<pcosts.LengthY() ; ++j )
-    {
-        for ( int i=0 ; i<pcosts.LengthX() ; ++i )
-        {
-
-            if ( modes[j][i] == REF1_ONLY || modes[j][i] == REF1AND2 )
-            {
-                block_average = pcosts[j][i].SAD /
-                                static_cast<long double>( bparams.Xblen() * bparams.Yblen() * 4 );
-                sad_average += block_average;
-                block_count++;
-            }
-
-        }// i
-    }// j
-
-    if ( block_count != 0)
-        sad_average /= static_cast<long double>( block_count );
-   
-    if ( (sad_average > 30.0) || (intra_percent > 50.0) )
-        return true;
-    else
-        return false;
-  
 }
