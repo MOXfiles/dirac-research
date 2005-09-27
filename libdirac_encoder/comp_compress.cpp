@@ -78,17 +78,23 @@ void CompCompressor::Compress(PicArray& pic_data)
     Subband node;
 
     //set up Lagrangian params    
+/*
     if (m_fsort == I_frame) 
         m_lambda= m_encparams.ILambda();
-    else if (m_fsort == L1_frame) 
-        m_lambda= m_encparams.L1Lambda();
-    else 
-        m_lambda= m_encparams.L2Lambda();
+    else
+    {
+        if (m_fsort == L1_frame) 
+            m_lambda= m_encparams.L1Lambda();
+        else 
+            m_lambda= m_encparams.L2Lambda();
+    }
+*/
+    m_lambda= m_encparams.Lambda( m_fsort );
 
-     if (m_csort == U_COMP)
-         m_lambda*= m_encparams.UFactor();
-     if (m_csort == V_COMP) 
-         m_lambda*= m_encparams.VFactor();
+    if (m_csort == U_COMP)
+        m_lambda*= m_encparams.UFactor();
+    if (m_csort == V_COMP) 
+        m_lambda*= m_encparams.VFactor();
 
     WaveletTransform wtransform( depth , m_encparams.TransformFilter() );
     wtransform.Transform( FORWARD , pic_data );
@@ -147,9 +153,11 @@ void CompCompressor::Compress(PicArray& pic_data)
 
     }//b
 
-    // Transform back into the picture domain
-    wtransform.Transform( BACKWARD , pic_data );
-
+    if ( m_fsort!= L2_frame || m_encparams.LocalDecode() )
+    {
+        // Transform back into the picture domain
+        wtransform.Transform( BACKWARD , pic_data );
+    }
 }
 
 void CompCompressor::WriteBandHeader( BasicOutputManager& hdr_out , const Subband& band , 
