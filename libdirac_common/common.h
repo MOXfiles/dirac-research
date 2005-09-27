@@ -695,6 +695,9 @@ namespace dirac
         
          // Gets ...
 
+        //! Returns a flag indicating that we're doing local decoding
+        bool LocalDecode() const {return m_loc_decode;}
+
         //! Get whether we're doing lossless coding
         float Lossless() const {return m_lossless;}
 
@@ -756,6 +759,9 @@ namespace dirac
         
         // ... and Sets
 
+        //! Sets a flag indicating that we're producing a locally decoded o/p
+        void SetLocalDecode( const bool decode ){m_loc_decode=decode;}
+
         //! Set whether we're doing lossless coding
         void SetLossless(const bool l){m_lossless = l;}
 
@@ -805,6 +811,10 @@ namespace dirac
         void SetBitsOut( SequenceOutputManager* so ){ m_bit_out=so; }
         
     private:
+
+        //! Flag indicating we're doing local decoding
+        bool m_loc_decode;
+      
         //! A flag indicating we're doing lossless coding
         bool m_lossless;
 
