@@ -38,6 +38,7 @@
  * or the LGPL.
  * ***** END LICENSE BLOCK ***** */
 
+#include <time.h>
 #include <iostream>
 #include <limits>
 #include <fstream>
@@ -780,6 +781,10 @@ int main (int argc, char* argv[])
 
     int frames_written = 0;
     dirac_encoder_state_t state;
+
+    clock_t start_t, stop_t;
+    start_t = clock();
+
     do 
     {
         if (ReadPicData( ip_pic_ptr, frame_buf, frame_size ) == true)
@@ -828,6 +833,8 @@ int main (int argc, char* argv[])
 
     } while (frames_written <= (end_pos - start_pos));
 
+    stop_t = clock();
+
     encoder->enc_buf.buffer = video_buf;
     encoder->enc_buf.size = VIDEO_BUFFER_SIZE;
     if (dirac_encoder_end_sequence( encoder ) > 0)
@@ -841,6 +848,11 @@ int main (int argc, char* argv[])
                           encoder->enc_ctx.seq_params.frame_rate.denominator
                       << "Hz is " << encoder->enc_seqstats.bit_rate 
                       << " bits/sec." << std::endl;
+
+        if ( verbose )
+            std::cout<<"Time per frame: "<<
+                    (double)(stop_t-start_t)/(double)(CLOCKS_PER_SEC*frames_written);
+            std::cout<<std::endl<<std::endl;
     }
 
    
