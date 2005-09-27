@@ -67,7 +67,7 @@ ModeDecider::ModeDecider( const EncoderParams& encp):
    m_level_factor[2] = 1.0f;
 
     for (int i=0 ; i<=2 ; ++i)
-        m_mode_factor[i] = 160.0*std::pow(0.8 , 2-i);
+        m_mode_factor[i] = 80.0*std::pow(0.8 , 2-i);
 }
 
 
@@ -123,9 +123,19 @@ void ModeDecider::DoModeDecn(const FrameBuffer& my_buffer, int frame_num, MEData
             ref2 = refs[1];
             m_ref2_updata = &(my_buffer.GetUpComponent( ref2 , Y_COMP));
             // Create an object for computing bi-directional prediction calculations            
-            m_bicheckdiff = new BiBChkBlockDiffUp( *m_ref1_updata ,
-                                                 *m_ref2_updata ,
-                                                 *m_pic_data );
+
+            if ( m_encparams.MVPrecision()==3 )
+                m_bicheckdiff = new BiBlockEighthPel( *m_ref1_updata ,
+                                                      *m_ref2_updata ,
+                                                      *m_pic_data );
+            else if ( m_encparams.MVPrecision()==2 )
+                m_bicheckdiff = new BiBlockQuarterPel( *m_ref1_updata ,
+                                                       *m_ref2_updata ,
+                                                       *m_pic_data );
+            else
+                m_bicheckdiff = new BiBlockHalfPel( *m_ref1_updata ,
+                                                    *m_ref2_updata ,
+                                                    *m_pic_data );
         }
         else
         {    
@@ -298,7 +308,6 @@ void ModeDecider::DoLevelDecn( int level )
             }// i
         }// j
     }
-
 }
 
 
@@ -329,8 +338,7 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
 
     for ( int j=0 ; j<2 ; ++j )
         for (int i=0 ; i<2 ; ++i )
-            AddNewVlist( cand_list , guide_data.Vectors(1)[guide_ypos+j][guide_xpos+i] , 1 , 1 , 
-                         1<<( 3-m_encparams.MVPrecision() ) );
+            AddNewVlist( cand_list , guide_data.Vectors(1)[guide_ypos+j][guide_xpos+i] , 0 , 0 );
 
     if (xblock>0 && yblock>0)
         mv_pred = MvMedian( m_me_data_set[2]->Vectors(1)[yblock][xblock-1] ,
@@ -347,8 +355,11 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
         mv_pred.y = 0;
     }
 
-    BlockMatcher my_bmatch1( *m_pic_data , *m_ref1_updata , m_encparams.LumaBParams(level) ,
-                                                     me_data.Vectors(1) , me_data.PredCosts(1) );
+    BlockMatcher my_bmatch1( *m_pic_data , 
+                             *m_ref1_updata , 
+                              m_encparams.LumaBParams(level) ,
+                              m_encparams.MVPrecision(),
+                              me_data.Vectors(1) , me_data.PredCosts(1) );
     me_data.PredCosts(1)[ypos][xpos].total = 100000000.0f;
     my_bmatch1.FindBestMatchSubp( xpos , ypos , cand_list, mv_pred, lambda );
 
@@ -359,8 +370,7 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
 
         for ( int j=0 ; j<2 ; ++j )
             for (int i=0 ; i<2 ; ++i )
-                AddNewVlist( cand_list , guide_data.Vectors(2)[guide_ypos+j][guide_xpos+i] , 1 , 1 ,
-                             1<<( 3-m_encparams.MVPrecision() ) );
+                AddNewVlist( cand_list , guide_data.Vectors(2)[guide_ypos+j][guide_xpos+i] , 0 , 0 );
 
         if (xblock>0 && yblock>0)
             mv_pred = MvMedian( m_me_data_set[2]->Vectors(2)[yblock][xblock-1] ,
@@ -377,8 +387,11 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
              mv_pred.y = 0;
         }
 
-        BlockMatcher my_bmatch2( *m_pic_data , *m_ref2_updata , m_encparams.LumaBParams(level) ,
-                                                     me_data.Vectors(2) , me_data.PredCosts(2) );
+        BlockMatcher my_bmatch2( *m_pic_data , 
+                                 *m_ref2_updata , 
+                                 m_encparams.LumaBParams(level) ,
+                                 m_encparams.MVPrecision(),
+                                 me_data.Vectors(2) , me_data.PredCosts(2) );
         me_data.PredCosts(2)[ypos][xpos].total = 100000000.0f;
         my_bmatch2.FindBestMatchSubp( xpos , ypos , cand_list, mv_pred, lambda );
 
@@ -449,13 +462,12 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
 
         // Finally, calculate the cost if we were to use bi-predictions //
         /****************************************************************/
-
         mode_cost = ModeCost( xpos , ypos , REF1AND2 )*m_mode_factor[level];
 
         me_data.BiPredCosts()[ypos][xpos].mvcost =
                                        me_data.PredCosts(1)[ypos][xpos].mvcost+
                                        me_data.PredCosts(2)[ypos][xpos].mvcost;
-        
+
         me_data.BiPredCosts()[ypos][xpos].SAD = m_bicheckdiff->Diff(dparams , 
                                                   me_data.Vectors(1)[ypos][xpos] , 
                                                   me_data.Vectors(2)[ypos][xpos] );
@@ -520,8 +532,8 @@ float ModeDecider::DoCommonMode( PredMode& predmode , const int level)
     {
         if ( MB_cost[REF2_ONLY]<MB_cost[predmode] )
             predmode = REF2_ONLY;
-         if ( MB_cost[REF1AND2]<MB_cost[predmode] )
-             predmode = REF1AND2;
+        if ( MB_cost[REF1AND2]<MB_cost[predmode] )
+            predmode = REF1AND2;
     }
  
     return MB_cost[predmode];
@@ -584,5 +596,5 @@ float ModeDecider::ModeCost(const int xindex , const int yindex ,
 
 float ModeDecider::GetDCVar( const ValueType dc_val , const ValueType dc_pred)
 {
-    return 8.0*std::abs( static_cast<float>( dc_val - dc_pred ) );
+    return 4.0*std::abs( static_cast<float>( dc_val - dc_pred ) );
 }

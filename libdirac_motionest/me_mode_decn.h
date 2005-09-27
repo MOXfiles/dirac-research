@@ -151,7 +151,7 @@ namespace dirac
         int num_refs;
 
         IntraBlockDiff* m_intradiff;
-        BiBChkBlockDiffUp* m_bicheckdiff;
+        BiBlockDiff* m_bicheckdiff;
 
         //position variables, used in all the mode decisions
         int m_xmb_loc,m_ymb_loc;    //coords of the current MB
