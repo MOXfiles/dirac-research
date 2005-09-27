@@ -111,6 +111,8 @@ namespace dirac
         // and is used to control the variation in the motion vector field.
         MVector m_mv_prediction;
 
+    private:
+
         // Functions
 
         //! Make down-converted pictures
@@ -128,10 +130,10 @@ namespace dirac
 
         //! Match the picture data 
         void MatchPic(const PicArray& ref_data , const PicArray& pic_data , MEData& me_data ,
-                      const MvData& guide_data, int ref_id);
+                      const MvData& guide_data, const int ref_id);
 
         //! Do a given block
-        void DoBlock(int xpos, int ypos , 
+        void DoBlock(const int xpos, const int ypos , 
                      TwoDArray<MvCostData>& pred_costs,
                      MvArray& mv_array,
                      const MvArray& guide_array,
