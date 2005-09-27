@@ -110,6 +110,7 @@ namespace dirac
             \param ref_data the reference picture component
             \param pic_data    the picture being matched
             \param bparams    the (overlapped) block parameters to be used for the matching
+            \param precision  the number of bits of precision being used for estimation
             \param mv_array   the array of vectors we're going to write into
             \param cost_array the array of costs we're going to write into
 
@@ -117,8 +118,11 @@ namespace dirac
         BlockMatcher( const PicArray& ref_data , 
                       const PicArray& pic_data , 
                       const OLBParams& bparams ,
+                      const int precision , 
                       const MvArray& mv_array ,
                       const TwoDArray< MvCostData >& cost_array);
+
+        ~BlockMatcher();
 
         //! Find the best matching vector from a list of candidates
         /*!
@@ -129,10 +133,10 @@ namespace dirac
                \param  mv_prediction  the prediction for the motion vector
                \param  lambda  the Lagrangian parameter    
         */
-        void FindBestMatch(int xpos , int ypos,
-                           const CandidateList& cand_list,
-                           const MVector& mv_prediction,
-                           float lambda);
+        void FindBestMatchPel(const int xpos , const int ypos,
+                              const CandidateList& cand_list,
+                              const MVector& mv_prediction,
+                              const float lambda);
 
         //! Find the best matching vector from a list of candidates, to sub-pixel accuracy (TBC: merge with FindBestMatch)
         /*!
@@ -143,10 +147,14 @@ namespace dirac
                \param  mv_prediction  the prediction for the motion vector
                \param  lambda  the Lagrangian parameter    
         */
-        void FindBestMatchSubp(int xpos, int ypos,
+        void FindBestMatchSubp( const int xpos, const int ypos,
                                 const CandidateList& cand_list,
                                 const MVector& mv_prediction,
-                                float lambda);
+                                const float lambda);
+
+        void RefineMatchSubp(const int xpos, const int ypos,
+                             const MVector& mv_prediction,
+                             const float lambda);
 
         //! Get a measure of the difference between a motion vector and a prediction
         /*!
@@ -164,6 +172,8 @@ namespace dirac
         */
         ValueType GetVarUp( const MVector& predmv , const MVector& mv ) const;
 
+        void SetPrecision( const int n ){ m_precision = n; }
+
     private:
         // Local copies of the picture and reference
         const PicArray& m_pic_data;
@@ -177,10 +187,9 @@ namespace dirac
 
         // Block difference elements. Will choose between them depending 
         // on whether we're at the edge of the picture
-        SimpleBlockDiff m_simplediff;
-        BChkBlockDiff m_checkdiff;
-        SimpleBlockDiffUp m_simplediffup;
-        BChkBlockDiffUp m_checkdiffup;
+        PelBlockDiff m_peldiff;
+
+        OneDArray<BlockDiffUp* > m_subpeldiff;
 
         // The block parameters we're using
         OLBParams m_bparams;
@@ -188,6 +197,9 @@ namespace dirac
         // The maximum variations allowed in calculating motion vector costs
         const int m_var_max;
         const int m_var_max_up;
+
+        // The motion vector precision
+        int m_precision;
 
     };
 

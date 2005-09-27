@@ -45,7 +45,8 @@ using std::vector;
 namespace dirac
 {
 
-void AddNewVlist( CandidateList& vect_list, const MVector& mv, const int xr , const int yr , const int step )
+void AddNewVlist( CandidateList& vect_list, const MVector& mv, 
+                  const int xr , const int yr , const int step )
 {
       //Creates a new motion vector list in a square region around mv
 
@@ -191,20 +192,33 @@ void AddVect(CandidateList& vect_list,const MVector& mv,int list_num)
     
 }
 
-BlockMatcher::BlockMatcher( const PicArray& pic_data , const PicArray& ref_data , const OLBParams& bparams ,
-                            const MvArray& mv_array , const TwoDArray< MvCostData >& cost_array):
+BlockMatcher::BlockMatcher( const PicArray& pic_data , 
+                            const PicArray& ref_data , 
+                            const OLBParams& bparams ,
+                            const int precision , 
+                            const MvArray& mv_array , 
+                            const TwoDArray< MvCostData >& cost_array):
     m_pic_data(pic_data), 
     m_ref_data(ref_data),
     m_mv_array(mv_array),
     m_cost_array(cost_array),
-    m_simplediff( ref_data , pic_data ), //NB: ORDER!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-    m_checkdiff( ref_data , pic_data ),
-    m_simplediffup( ref_data , pic_data ),
-    m_checkdiffup( ref_data , pic_data ),
+    m_peldiff( ref_data , pic_data ), //NB: ORDER!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    m_subpeldiff( 3 ),
     m_bparams( bparams ),
     m_var_max( (pic_data.LengthX()+pic_data.LengthY() )/216 ),
-    m_var_max_up( (pic_data.LengthX()+pic_data.LengthY() )/27 )
-{}
+    m_var_max_up( (pic_data.LengthX()+pic_data.LengthY() )/27 ),
+    m_precision( precision )
+{
+    m_subpeldiff[0] = new BlockDiffHalfPel( ref_data, pic_data ); 
+    m_subpeldiff[1] = new BlockDiffQuarterPel( ref_data, pic_data );
+    m_subpeldiff[2] = new BlockDiffEighthPel( ref_data, pic_data );
+}
+
+BlockMatcher::~BlockMatcher()
+{
+    for (int i=0; i<3; ++i )
+        delete m_subpeldiff[i];
+}
 
 
 ValueType BlockMatcher::GetVar( const MVector& predmv , const MVector& mv ) const
@@ -226,21 +240,16 @@ ValueType BlockMatcher::GetVarUp( const MVector& predmv , const MVector& mv ) co
 
 }   
 
-void BlockMatcher::FindBestMatch(int xpos , int ypos ,
-                                 const CandidateList& cand_list,
-                                 const MVector& mv_prediction,
-                                 float lambda)
+void BlockMatcher::FindBestMatchPel(const int xpos , const int ypos ,
+                                    const CandidateList& cand_list,
+                                    const MVector& mv_prediction,
+                                    const float lambda)
 {
     BlockDiffParams dparams;
     dparams.SetBlockLimits( m_bparams , m_pic_data , xpos , ypos);
-    lambda /= m_bparams.Xblen()*m_bparams.Yblen();
-    lambda *= dparams.Xl()*dparams.Yl();
     
-    // Pointer to either a simple block diff object, or a bounds-checking one
-    BlockDiff* mydiff;
-
-       //now test against the offsets in the MV list to get the lowest cost//
-      //////////////////////////////////////////////////////////////////////    
+    //now test against the offsets in the MV list to get the lowest cost//
+    //////////////////////////////////////////////////////////////////////    
 
     // Numbers of the lists to do more searching in
     vector<int> list_nums; 
@@ -253,38 +262,29 @@ void BlockMatcher::FindBestMatch(int xpos , int ypos ,
 
     // First test the first in each of the lists to choose which lists to pursue
 
-    MvCostData best_costs;
     // Initialise so that we choose a valid vector to start with!
-    best_costs.total=100000000.0f;
+    float best_cost( 100000000.0f );
+
     MVector best_mv( cand_list[0][0] );
 
-    MVector cand_mv;
-    MvCostData cand_costs;
+
+    float cand_cost;
 
     for (size_t lnum=0 ; lnum<cand_list.size() ; ++lnum )
     {
 
-        cand_mv = cand_list[lnum][0];
-        cand_costs.mvcost = GetVar( mv_prediction , cand_mv );
+        cand_cost = m_peldiff.Diff( dparams , cand_list[lnum][0] );
 
-        // See whether we need to do bounds checking or not
-        if (( dparams.Xp()+cand_mv.x )<0 || ( dparams.Xp()+dparams.Xl()+cand_mv.x) >= m_ref_data.LengthX() ||
-            (dparams.Yp()+cand_mv.y)<0 || (dparams.Yp()+dparams.Yl()+cand_mv.y) >= m_ref_data.LengthY() )
-            mydiff = &m_checkdiff;
-        else
-            mydiff = &m_simplediff;    
-
-        cand_costs.SAD = mydiff->Diff( dparams , cand_mv );
-        cand_costs.SetTotal( lambda );
-
-        if ( cand_costs.total < best_costs.total)
+        if ( cand_cost < best_cost)
         {
-            best_costs = cand_costs;
-            best_mv = cand_mv ;
-
+            best_cost = cand_cost;
+            best_mv = cand_list[lnum][0] ;
         }
 
-        list_costs[lnum] = cand_costs.total;
+        list_costs[lnum] = cand_cost;
+
+        if (cand_cost<dparams.Xl()*dparams.Yl()*4)
+            return;
 
     }// lnum
 
@@ -303,13 +303,14 @@ void BlockMatcher::FindBestMatch(int xpos , int ypos ,
     for ( int lnum=0 ; lnum<list_costs.Length() ; ++lnum)
     {
         // Only do lists whose 1st element isn't too far off best
-        if ( list_costs[lnum] < 1.5*min_cost ) // (value of 1.5 TBD) 
+        if ( list_costs[lnum] < 1.5*min_cost ) 
             list_nums.push_back( lnum );
     }// lnum
 
 
     // Ok, now we know which lists to pursue. Just go through all of them //
     ////////////////////////////////////////////////////////////////////////
+
     int list_num;
 
     for ( size_t num=0 ; num<list_nums.size() ; ++num)
@@ -318,25 +319,10 @@ void BlockMatcher::FindBestMatch(int xpos , int ypos ,
 
         for (size_t i=1 ; i<cand_list[list_num].size() ; ++i)
         {//start at 1 since did 0 above
-
-            cand_mv = cand_list[list_num][i];
-            cand_costs.mvcost =  GetVar( mv_prediction , cand_mv);
-            
-            if ((dparams.Xp()+cand_mv.x)<0 || (dparams.Xp()+dparams.Xl()+cand_mv.x) > m_ref_data.LengthX() ||
-                (dparams.Yp()+cand_mv.y)<0 || (dparams.Yp()+dparams.Yl()+cand_mv.y) > m_ref_data.LengthY() )
-                mydiff = &m_checkdiff;
-            else
-                mydiff = &m_simplediff;
-
-            cand_costs.SAD = mydiff->Diff( dparams , cand_mv );
-            cand_costs.SetTotal( lambda );
-            
-            if ( cand_costs.total < best_costs.total)
-            {
-                best_costs = cand_costs;
-                best_mv = cand_mv;
-
-            }
+            m_peldiff.Diff( dparams , 
+                            cand_list[list_num][i] , 
+                            best_cost , 
+                            best_mv);
         }// i
     }// num
 
@@ -344,26 +330,22 @@ void BlockMatcher::FindBestMatch(int xpos , int ypos ,
     /////////////////////////////////////
 
     m_mv_array[ypos][xpos] = best_mv;
-    m_cost_array[ypos][xpos] = best_costs;
+    m_cost_array[ypos][xpos].SAD = best_cost;
+    m_cost_array[ypos][xpos].mvcost = GetVar( mv_prediction , best_mv);
+    m_cost_array[ypos][xpos].SetTotal( lambda );
 }
 
-
-
-
-void BlockMatcher::FindBestMatchSubp(int xpos, int ypos,
+void BlockMatcher::FindBestMatchSubp( const int xpos, const int ypos,
                                       const CandidateList& cand_list,
                                       const MVector& mv_prediction,
-                                      float lambda)
+                                      const float lambda)
 {
 
     BlockDiffParams dparams;
     dparams.SetBlockLimits( m_bparams , m_pic_data , xpos , ypos);    
 
-    // Pointer to either a simple block diff object, or a bounds-checking one
-    BlockDiff* mydiff;
-
-       //now test against the offsets in the MV list to get the lowest cost//
-      //////////////////////////////////////////////////////////////////////    
+    //now test against the offsets in the MV list to get the lowest cost//
+    //////////////////////////////////////////////////////////////////////    
 
     // Numbers of the lists to do more searching in
     vector<int> list_nums; 
@@ -371,11 +353,9 @@ void BlockMatcher::FindBestMatchSubp(int xpos, int ypos,
     // Costs of the initial vectors in each list
     OneDArray<float> list_costs( cand_list.size() );
 
-    // The minimum cost so far
-    float min_cost;    
-
     // First test the first in each of the lists to choose which lists to pursue
     MvCostData best_costs( m_cost_array[ypos][xpos] );
+    best_costs.total = 100000000.0f;
     MVector best_mv( m_mv_array[ypos][xpos] );
 
     MvCostData cand_costs;
@@ -383,83 +363,20 @@ void BlockMatcher::FindBestMatchSubp(int xpos, int ypos,
 
     for (size_t list_num=0 ; list_num<cand_list.size() ; ++list_num )
     {
-
-        cand_mv = cand_list[list_num][0];
-        cand_costs.mvcost = GetVarUp( mv_prediction , cand_mv );
-
-        // See whether we need to do bounds checking or not
-        if (   (( dparams.Xp()<<1 )+(cand_mv.x>>2))<0 
-            || ((( dparams.Xp()+dparams.Xl() )<<1)+(cand_mv.x>>2)) >= m_ref_data.LengthX()
-            || (( dparams.Yp()<<1)+(cand_mv.y>>2))<0 
-            || (((dparams.Yp()+dparams.Yl())<<1)+(cand_mv.y>>2)) >= m_ref_data.LengthY() )
-            mydiff = &m_checkdiffup;
-        else
-            mydiff = &m_simplediffup;    
-
-        cand_costs.SAD = mydiff->Diff( dparams , cand_mv );
-        cand_costs.SetTotal( lambda );
- 
-       if (cand_costs.total< best_costs.total)
+        for (size_t i=0 ; i<cand_list[list_num].size() ; ++i )
         {
-            best_costs = cand_costs;
-            best_mv = cand_mv;
-        }
-        
-        list_costs[list_num] = cand_costs.total;
-    }// list_num
-
-
-    // Select which lists we're going to use //
-    ///////////////////////////////////////////
-
-    min_cost = list_costs[0];
-
-    for ( int lnum=1 ; lnum<list_costs.Length() ; ++lnum)
-    {
-        if ( list_costs[lnum]<min_cost )
-            min_cost = list_costs[lnum];
-    }// lnum
-
-    for ( int lnum=0 ; lnum<list_costs.Length() ; ++lnum )
-    {
-        // Only do lists whose 1st element isn't too far off best
-        if ( list_costs[lnum] < 1.5*min_cost ) // (value of 1.5 TBD) 
-            list_nums.push_back( lnum );
-    }// lnum
-
-    // Ok, now we know which lists to pursue. Just go through all of them //
-    ////////////////////////////////////////////////////////////////////////
-    int list_num;
-
-    for ( size_t num=0 ; num<list_nums.size() ; ++num)
-    {
-        list_num = list_nums[num];
-
-        for (size_t i=1 ; i<cand_list[list_num].size() ; ++i)
-        {//start at 1 since did 0 above
-
             cand_mv = cand_list[list_num][i];
             cand_costs.mvcost = GetVarUp( mv_prediction , cand_mv );
 
-            if (   (( dparams.Xp()<<1 )+( cand_mv.x>>2 ))<0 
-                || ((( dparams.Xp()+dparams.Xl() )<<1)+( cand_mv.x>>2 )) >= m_ref_data.LengthX()
-                || (( dparams.Yp()<<1 )+( cand_mv.y>>2 ))<0 
-                || ((( dparams.Yp()+dparams.Yl() )<<1)+(cand_mv.y>>2)) >= m_ref_data.LengthY() )
-                 mydiff = &m_checkdiffup;
-            else
-                mydiff = &m_simplediffup;
+            m_subpeldiff[m_precision-1]->Diff( dparams,
+                                               cand_mv ,
+                                               cand_costs.mvcost,
+                                               lambda,
+                                               best_costs ,
+                                               best_mv);
+        }// 
+    }// list_num
 
-            cand_costs.SAD = mydiff->Diff( dparams , cand_mv );
-            cand_costs.SetTotal( lambda );
-
-            if (cand_costs.total< best_costs.total)
-            {
-                best_costs = cand_costs;
-                best_mv = cand_mv;
-            }
-
-        }// i
-    }// num
 
     // Write the results in the arrays //
     /////////////////////////////////////
@@ -468,4 +385,146 @@ void BlockMatcher::FindBestMatchSubp(int xpos, int ypos,
      m_cost_array[ypos][xpos] = best_costs;   
 
 }
+void BlockMatcher::RefineMatchSubp(const int xpos, const int ypos,
+                                   const MVector& mv_prediction,
+                                   const float lambda)
+{
+
+    BlockDiffParams dparams;
+    dparams.SetBlockLimits( m_bparams , m_pic_data , xpos , ypos);
+
+    m_cost_array[ypos][xpos].mvcost = GetVarUp( mv_prediction, 
+                                                m_mv_array[ypos][xpos]<<m_precision );
+    m_cost_array[ypos][xpos].SetTotal( lambda );
+
+    // Initialise to the best pixel value
+    MvCostData best_costs( m_cost_array[ypos][xpos] );
+    MVector pel_mv( m_mv_array[ypos][xpos] );
+    MVector best_mv( pel_mv );
+
+    // If the integer value is good enough, bail out
+    if ( best_costs.SAD < 4*dparams.Xl()*dparams.Yl() )
+    {
+        m_mv_array[ypos][xpos] = m_mv_array[ypos][xpos]<<m_precision;
+        return;
+    }
+
+    // Next, test the predictor. If that's good enough, bail out
+    MvCostData pred_costs;
+    pred_costs.mvcost = 0;
+    pred_costs.SAD = m_subpeldiff[m_precision-1]->Diff( dparams, mv_prediction);
+    pred_costs.total = pred_costs.SAD;
+    
+    if (pred_costs.SAD<4*dparams.Xl()*dparams.Yl() )
+    {
+        m_mv_array[ypos][xpos] = mv_prediction;
+        m_cost_array[ypos][xpos] = pred_costs;
+        return;   
+    }
+
+    // Now, let's see if we can do better than this 
+ 
+    MvCostData cand_costs;
+    MVector cand_mv, old_best_mv;
+
+    for (int i=1; i<=m_precision; ++i )
+    {
+        best_mv = best_mv<<1;
+        MVector temp_best_mv = best_mv;
+
+        // Do a neighbourhood of best_mv
+
+        // Stage 1 - look at the 4 nearest points
+        cand_mv.x = best_mv.x - 1;
+        cand_mv.y = best_mv.y;
+        m_subpeldiff[i-1]->Diff( dparams, cand_mv ,
+                                 GetVarUp( mv_prediction, 
+                                           cand_mv<<(m_precision-i) ) ,
+                                 lambda , best_costs ,
+                                 temp_best_mv);
+        cand_mv.x = best_mv.x + 1;
+        cand_mv.y = best_mv.y;
+        m_subpeldiff[i-1]->Diff( dparams, cand_mv ,
+                                 GetVarUp( mv_prediction, 
+                                           cand_mv<<(m_precision-i) ) ,
+                                 lambda , best_costs ,
+                                 temp_best_mv);
+        cand_mv.x = best_mv.x;
+        cand_mv.y = best_mv.y - 1;
+        m_subpeldiff[i-1]->Diff( dparams, cand_mv ,
+                                 GetVarUp( mv_prediction, 
+                                           cand_mv<<(m_precision-i) ) ,
+                                 lambda , best_costs ,
+                                 temp_best_mv);
+        cand_mv.x = best_mv.x;
+        cand_mv.y = best_mv.y + 1;
+        m_subpeldiff[i-1]->Diff( dparams, cand_mv ,
+                                 GetVarUp( mv_prediction, 
+                                           cand_mv<<(m_precision-i) ) ,
+                                 lambda , best_costs ,
+                                 temp_best_mv);
+
+        // Stage 2. If we've done better than the original value, 
+        // look at the other two neighbours 
+        if ( temp_best_mv.x != best_mv.x )
+        {
+            MVector new_best_mv = temp_best_mv;
+            cand_mv.x = new_best_mv.x;
+            cand_mv.y = new_best_mv.y - 1;
+            m_subpeldiff[i-1]->Diff( dparams, cand_mv ,
+                                     GetVarUp( mv_prediction, 
+                                               cand_mv<<(m_precision-i) ) ,
+                                     lambda , best_costs ,
+                                     temp_best_mv);
+
+            cand_mv.x = new_best_mv.x;
+            cand_mv.y = new_best_mv.y + 1;
+            m_subpeldiff[i-1]->Diff( dparams, cand_mv ,
+                                     GetVarUp( mv_prediction, 
+                                               cand_mv<<(m_precision-i) ) ,
+                                     lambda , best_costs ,
+                                     temp_best_mv);
+        }
+        else if ( temp_best_mv.y != best_mv.y )
+        {
+            MVector new_best_mv = temp_best_mv;
+            cand_mv.x = new_best_mv.x - 1;
+            cand_mv.y = new_best_mv.y;
+            m_subpeldiff[i-1]->Diff( dparams, cand_mv ,
+                                     GetVarUp( mv_prediction, 
+                                               cand_mv<<(m_precision-i) ) ,
+                                     lambda , best_costs ,
+                                     temp_best_mv);
+
+            cand_mv.x = new_best_mv.x + 1;
+            cand_mv.y = new_best_mv.y;
+            m_subpeldiff[i-1]->Diff( dparams, cand_mv ,
+                                     GetVarUp( mv_prediction, 
+                                               cand_mv<<(m_precision-i) ) ,
+                                     lambda , best_costs ,
+                                     temp_best_mv);
+        } 
+
+        best_mv = temp_best_mv;
+
+        // Bail out if we can't do better than 10% worse than the predictor at
+        // each stage
+        if ( best_costs.total>1.1*pred_costs.total )
+        {
+            m_mv_array[ypos][xpos] = mv_prediction;
+            m_cost_array[ypos][xpos] = pred_costs;
+            return;   
+        }
+
+    }//i
+
+
+    // Write the results in the arrays //
+    /////////////////////////////////////
+
+     m_mv_array[ypos][xpos] = best_mv;
+     m_cost_array[ypos][xpos] = best_costs;   
+
+}
+
 } // namespace dirac
