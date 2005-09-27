@@ -235,8 +235,9 @@ Frame& SequenceCompressor::CompressNextFrame()
         m_fcoder.Compress( *m_fbuffer , *m_origbuffer , m_current_display_fnum );
 
        // Measure the encoded frame quality
-       m_qmonitor.UpdateModel( m_fbuffer->GetFrame( m_current_display_fnum ) , 
-                               m_origbuffer->GetFrame( m_current_display_fnum ) );
+       if ( m_encparams.LocalDecode() )
+           m_qmonitor.UpdateModel( m_fbuffer->GetFrame( m_current_display_fnum ) , 
+                                   m_origbuffer->GetFrame( m_current_display_fnum ) );
 
        // Finish by writing the compressed data out to file ...
        m_encparams.BitsOut().WriteFrameData();
@@ -301,7 +302,8 @@ void SequenceCompressor::MakeSequenceReport()
     std::cerr<<std::endl<<m_encparams.BitsOut().ComponentBytes( V_COMP ) * 8<<" were V, and ";
     std::cerr<<std::endl<<m_encparams.BitsOut().MVBytes() * 8<<" were motion vector data.";
 
-    m_qmonitor.WriteLog();
+    if ( m_encparams.LocalDecode() )
+        m_qmonitor.WriteLog();
 
     std::cerr<<std::endl;
 
