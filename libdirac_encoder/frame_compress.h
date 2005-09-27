@@ -105,6 +105,11 @@ namespace dirac
         //! Write the frame compression header
         void WriteFrameHeader(const FrameParams& fparams);
 
+        //! Analyses the ME data and returns true if a cut is detected, false otherwise
+        void AnalyseMEData( const MEData& );
+
+    private:
+
         //member variables
         // a local copy of the encoder params
         EncoderParams& m_encparams;
@@ -126,6 +131,12 @@ namespace dirac
         
         // True if motion estimation data is available
         bool m_medata_avail;
+
+        // True if we have detected a cut
+        bool m_is_a_cut;
+
+        // The proportion of intra blocks that motion estimation has found
+        double m_intra_ratio;
     };
 
 } // namespace dirac

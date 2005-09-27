@@ -102,10 +102,11 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer ,
 
         // Motion estimate first
         MotionEstimator my_motEst( m_encparams );
-        bool is_a_cut = my_motEst.DoME( orig_buffer , fnum , *m_me_data );
+        my_motEst.DoME( orig_buffer , fnum , *m_me_data );
 
         // If we have a cut, and an L1 frame, then turn into an I-frame
-        if ( is_a_cut )
+        AnalyseMEData( *m_me_data );
+        if ( m_is_a_cut )
         {
             my_frame.SetFrameSort( I_frame );
             if ( m_encparams.Verbose() )
@@ -172,10 +173,12 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer ,
         //motion compensate again if necessary
         if ( fsort != I_frame )
         {
-            MotionCompensator::CompensateFrame( m_encparams , ADD , 
-                                                my_buffer , fnum , 
-                                                *m_me_data );
-
+            if ( fsort!= L2_frame || m_encparams.LocalDecode() )
+            {
+                MotionCompensator::CompensateFrame( m_encparams , ADD , 
+                                                    my_buffer , fnum , 
+                                                    *m_me_data );
+            }
             // Set me data available flag
             m_medata_avail = true;
         }//?fsort
@@ -268,4 +271,63 @@ const MEData* FrameCompressor::GetMEData() const
     TESTM (m_medata_avail == true, "ME Data available");
 
     return m_me_data;
+}
+
+void FrameCompressor::AnalyseMEData( const MEData& me_data )
+{
+    // Count the number of intra blocks
+    const TwoDArray<PredMode>& modes = me_data.Mode();
+
+    int count_intra = 0;
+    for ( int j=0 ; j<modes.LengthY() ; ++j )
+    {
+        for ( int i=0 ; i<modes.LengthX() ; ++i )
+        {
+            if ( modes[j][i] == INTRA )
+                count_intra++;
+        }
+    }// j
+    
+    m_intra_ratio = 100.0*static_cast<double>( count_intra ) / 
+                          static_cast<double>( modes.LengthX() * modes.LengthY() );
+
+    if ( m_encparams.Verbose() )
+        std::cerr<<std::endl<<m_intra_ratio<<"% of blocks are intra   ";
+
+    // Check the size of SAD errors across reference 1    
+    const TwoDArray<MvCostData>& pcosts = me_data.PredCosts( 1 );
+
+    // averege SAD across all relevant blocks
+    long double sad_average = 0.0;
+    // average SAD in a given block
+    long double block_average; 
+    // the block parameters
+    const OLBParams& bparams = m_encparams.LumaBParams( 2 ); 
+    //the count of the relevant blocks
+    int block_count = 0;
+
+    for ( int j=0 ; j<pcosts.LengthY() ; ++j )
+    {
+        for ( int i=0 ; i<pcosts.LengthX() ; ++i )
+        {
+
+            if ( modes[j][i] == REF1_ONLY || modes[j][i] == REF1AND2 )
+            {
+                block_average = pcosts[j][i].SAD /
+                                static_cast<long double>( bparams.Xblen() * bparams.Yblen() * 4 );
+                sad_average += block_average;
+                block_count++;
+            }
+
+        }// i
+    }// j
+
+    if ( block_count != 0)
+        sad_average /= static_cast<long double>( block_count );
+   
+    if ( (sad_average > 30.0) || (m_intra_ratio > 50.0) )
+        m_is_a_cut = true;
+    else
+        m_is_a_cut = false;
+  
 }
