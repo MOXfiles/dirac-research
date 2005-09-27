@@ -235,25 +235,25 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
     TwoDArray<CalcValueType> pic_data(m_bparams.Yblen(), pic_data_out.LengthX(), 0 );
 
     // Factors to compensate for subsampling of chroma
-    int xscale_factor = 1;
-    int yscale_factor = 1;
+    int xscale_shift = 0;
+    int yscale_shift = 0;
 
     if ( cs != Y_COMP )
     {
         if (m_cformat == format420)
         {
-            xscale_factor = 2;
-            yscale_factor = 2;
+            xscale_shift = 1;
+            yscale_shift = 1;
         }
         else if (m_cformat == format422)
         {
-            xscale_factor = 2;
-            yscale_factor = 1;
+            xscale_shift = 1;
+            yscale_shift = 0;
         }
         else if (m_cformat == format411)
         {
-            xscale_factor = 4;
-            yscale_factor = 1;
+            xscale_shift = 2;
+            yscale_shift = 0;
         }
 
     } 
@@ -334,29 +334,29 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
             if(block_mode == REF1_ONLY)
             {
                 mv1 = (*mv_array1)[yblock][xblock];
-                mv1.x /= xscale_factor;
-                mv1.y /= yscale_factor;
+                mv1.x >>= xscale_shift;
+                mv1.y >>= yscale_shift;
 
                 CompensateBlock(pic_data, orig_pic_size, ref1up, mv1, pos, m_block_weights[wgt_idx]);
             }
             else if (block_mode == REF2_ONLY)
             {                
                 mv2 = (*mv_array2)[yblock][xblock];
-                mv2.x /= xscale_factor;
-                mv2.y /= yscale_factor;
+                mv2.x >>= xscale_shift;
+                mv2.y >>= yscale_shift;
 
                 CompensateBlock(pic_data, orig_pic_size, ref2up, mv2, pos, m_block_weights[wgt_idx]);
             }
             else if(block_mode == REF1AND2)
             {
                 mv1 = (*mv_array1)[yblock][xblock];
-                mv1.x /= xscale_factor;
-                mv1.y /= yscale_factor;
+                mv1.x >>= xscale_shift;
+                mv1.y >>= yscale_shift;
 
                 CompensateBlock(pic_data, orig_pic_size, ref1up, mv1, pos, m_half_block_weights[wgt_idx]);
                 mv2 = (*mv_array2)[yblock][xblock];
-                mv2.x /= xscale_factor;
-                mv2.y /= yscale_factor;
+                mv2.x >>= xscale_shift;
+                mv2.y >>= yscale_shift;
 
                 CompensateBlock(pic_data, orig_pic_size, ref2up, mv2, pos, m_half_block_weights[wgt_idx]);                    
             }
@@ -538,7 +538,7 @@ void MotionCompensator::CreateBlock( const OLBParams &bparams ,
     for(int x = 0; x < bparams.Xblen(); ++x)
     {
         val = (float(x) - (float(bparams.Xblen()-1)/2.0))/float(bparams.Xbsep());
-        HWts[x] = static_cast<CalcValueType>( float(max_val) * RaisedCosine(val,rolloffX) );
+        HWts[x] = static_cast<CalcValueType>( float(max_val) * RaisedCosine(val,rolloffX)+0.5 );
         HWts[x] = std::max( HWts[x] , 1 );
         HWts[x] = std::min( HWts[x] , max_val );
     }// x
@@ -547,20 +547,10 @@ void MotionCompensator::CreateBlock( const OLBParams &bparams ,
     for(int y = 0; y < bparams.Yblen(); ++y)
     {
         val = (float(y) - (float(bparams.Yblen()-1)/2.0))/float(bparams.Ybsep());
-        VWts[y] = static_cast<CalcValueType>( float(max_val) * RaisedCosine(val,rolloffY) );
+        VWts[y] = static_cast<CalcValueType>( float(max_val) * RaisedCosine(val,rolloffY)+0.5 );
         VWts[y] = std::max( VWts[y] , 1 );
         VWts[y] = std::min( VWts[y] , max_val );
     }// y
-
-    // Rationalise to avoid rounding errors
-    for(int x = HWts.Last(); x > HWts.Last()-bparams.Xoffset(); --x)
-    {
-        if (HWts[x] + HWts[HWts.Last()-(x-bparams.Xbsep())] > max_val)
-            HWts[HWts.Last()-(x-bparams.Xbsep())] = max_val-HWts[x];
-        
-        else if (HWts[x] + HWts[HWts.Last()-(x-bparams.Xbsep())] < max_val)
-            HWts[x] = max_val-HWts[HWts.Last()-(x-bparams.Xbsep())];
-    }// x 
 
     // Now reflect or pad, as appropriate
     if (!FullX)
@@ -573,15 +563,6 @@ void MotionCompensator::CreateBlock( const OLBParams &bparams ,
         for( int x = 0; x < (bparams.Xblen()>>1); ++x)
             HWts[x] = HWts[HWts.Last()-x];
     }
-
-    // Rationalise to avoid rounding errors
-    for(int y = VWts.Last(); y > VWts.Last()-bparams.Yoffset(); --y)
-    {
-        if (VWts[y] + VWts[VWts.Last()-(y-bparams.Ybsep())] > max_val)
-            VWts[VWts.Last()-(y-bparams.Ybsep())] = max_val-VWts[y];
-        else if (VWts[y] + VWts[VWts.Last()-(y-bparams.Ybsep())] < max_val)
-            VWts[y] = max_val-VWts[VWts.Last()-(y-bparams.Ybsep())];
-    }// x 
 
     // Reflect or pad, as appropriate
     if (!FullY)
