@@ -872,18 +872,20 @@ extern DllExport dirac_encoder_state_t
 
     try
     {
-        compressor->CompressNextFrame();
-        if (compressor->GetEncodedData (encoder) < 0)
-            ret_stat = ENC_STATE_INVALID;
-        else
+        if (compressor->CompressNextFrame() != 0)
         {
-            if (encoder->enc_buf.size > 0)
+            if (compressor->GetEncodedData (encoder) < 0)
+                ret_stat = ENC_STATE_INVALID;
+            else
             {
-                ret_stat = ENC_STATE_AVAIL;
-            }
+                if (encoder->enc_buf.size > 0)
+                {
+                    ret_stat = ENC_STATE_AVAIL;
+                }
     
-            if (encoder->enc_ctx.decode_flag)
-                compressor->GetDecodedData(encoder);
+                if (encoder->enc_ctx.decode_flag)
+                    compressor->GetDecodedData(encoder);
+            }
         }
     }
     catch (...)
