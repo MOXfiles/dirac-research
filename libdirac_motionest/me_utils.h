@@ -62,7 +62,9 @@ namespace dirac
             m_xp(x_p),
             m_yp(y_p),
             m_xl(x_l),
-            m_yl(y_l)
+            m_yl(y_l),
+            m_xend(x_l+x_p),
+            m_yend(y_l+y_p)
         {}
 
         ////////////////////////////////////////////////////////////////////
@@ -92,13 +94,20 @@ namespace dirac
         //! Return the block height
         const int Yl() const {return m_yl;}
 
+        //! Return the block horizontal endpoint
+        const int Xend() const {return m_xend;}
+
+        //! Return the block vertical endpoint
+        const int Yend() const {return m_yend;}
+
     private: 
 
         int m_xp;
         int m_yp;
         int m_xl;
         int m_yl;
-
+        int m_xend;
+        int m_yend;
     };
 
     //////////////////////////////////////////////////
@@ -121,18 +130,18 @@ namespace dirac
         //! Destructor    
         virtual ~BlockDiff(){}
 
-        //! Do the actual difference - virtual function must be overridden
+        //! Do the difference, returning SAD
         /*!
-            Do the actual difference
-            \param    dparams    the parameters in which costs, block parameters etc are stored
-            \param    mv    the motion vector being used 
+            Do the difference, returning SAD
+            \param    dparams block parameters
+            \param    mv      the motion vector being used 
         */
         virtual float Diff(  const BlockDiffParams& dparams , const MVector& mv )=0;
 
     protected:
 
-        const PicArray& pic_data;
-        const PicArray& ref_data;
+        const PicArray& m_pic_data;
+        const PicArray& m_ref_data;
 
     private:
         //! Private, bodyless copy-constructor: class should not be copied
@@ -142,8 +151,8 @@ namespace dirac
         BlockDiff& operator=( const BlockDiff& rhs );    
     };
 
-    //! A class for doing block differences without bounds-checking, inherited from BlockDiff
-    class SimpleBlockDiff: public BlockDiff
+    //! A class for doing block differences to pixel accuracy, inherited from BlockDiff
+    class PelBlockDiff: public BlockDiff
     {
     public:
         //! Constructor, initialising the reference and picture data
@@ -152,51 +161,38 @@ namespace dirac
              \param  ref  the reference picture
              \param  pic  the picture being matched
         */
-        SimpleBlockDiff( const PicArray& ref , const PicArray& pic );
+        PelBlockDiff( const PicArray& ref , const PicArray& pic );
 
-        //! Do the actual difference without bounds checking
+        //! Do the difference, returning SAD
         /*!
-            Do the actual difference without bounds checking
-            \param    dparams    the parameters in which costs, block parameters etc are stored
-            \param    mv    the motion vector being used 
+            Do the difference, returning SAD
+            \param    dparams    block parameters
+            \param    mv         the motion vector being used 
         */
         float Diff(  const BlockDiffParams& dparams , const MVector& mv );
 
-    private:
-        //! Private, bodyless copy-constructor: class should not be copied
-        SimpleBlockDiff(const SimpleBlockDiff& cpy);
-
-       //! Private, bodyless assignment=: class should not be assigned
-        SimpleBlockDiff& operator=(const SimpleBlockDiff& rhs);
-    };
-
-    //! A class for doing block differences with bounds-checking, inherited from BlockDiff
-    class BChkBlockDiff: public BlockDiff
-    {
-    public:
-        //! Constructor, initialising the reference and picture data
-        /*
-             Constructor, initialising the reference and picture data
-             \param  ref  the reference picture
-             \param  pic  the picture being matched
-        */
-        BChkBlockDiff( const PicArray& ref , const PicArray& pic );
-
-        //! Do the actual difference with bounds checking
+        //! Do the difference, overwriting the best MV so far if appropriate
         /*!
-            Do the actual difference with bounds checking
-            \param    dparams    the parameters in which costs, block parameters etc are stored
-            \param    mv    the motion vector being used 
-        */    
-        float Diff(  const BlockDiffParams& dparams , const MVector& mv );
+            Do the difference, overwriting the best MV so far if appropriate,
+            and bailing out if we do worse
+            \param    dparams    block parameters
+            \param    mv         the motion vector being used 
+            \param    best_sum   the best SAD value obtain yet
+            \param    best_mv    the MV giving the best SAD value so far    
+        */
+        void Diff(  const BlockDiffParams& dparams ,
+                    const MVector& mv ,
+                    float& best_sum , 
+                    MVector& best_mv ); 
 
     private:
         //! Private, bodyless copy-constructor: class should not be copied
-        BChkBlockDiff(const BChkBlockDiff& cpy); 
+        PelBlockDiff(const PelBlockDiff& cpy);
 
        //! Private, bodyless assignment=: class should not be assigned
-        BChkBlockDiff& operator=(const BChkBlockDiff& rhs);
+        PelBlockDiff& operator=(const PelBlockDiff& rhs);
     };
+
 
     //! A class for calculating the difference between a block and its DC value (average)
     class IntraBlockDiff
@@ -209,10 +205,10 @@ namespace dirac
         */
         IntraBlockDiff( const PicArray& pic );
 
-        //! Do the actual difference
+        //! Do the difference, returning SAD
         /*!
-            Do the actual difference
-            \param    dparams    the parameters in which costs, block parameters etc are stored
+            Do the difference, returning SAD
+            \param    dparams    block parameters
             \param    dc_val     DC value
         */        
         float Diff( const BlockDiffParams& dparams , ValueType& dc_val );
@@ -224,7 +220,7 @@ namespace dirac
         //! Private, bodyless assignment=: class should not be assigned
         IntraBlockDiff& operator=(const IntraBlockDiff& rhs);
 
-        const PicArray& pic_data;
+        const PicArray& m_pic_data;
     };
 
     //! A virtual class for bi-directional differences
@@ -243,19 +239,19 @@ namespace dirac
         //! Virtual destructor
         virtual ~BiBlockDiff( ) {}
 
-        //! Do the actual difference
+        //! Do the difference, returning SAD
         /*!
-            Do the actual difference
-            \param    dparams    the parameters in which costs, block parameters etc are stored
-            \param    mv1    the motion vector being used for reference 1
-            \param    mv2    the motion vector being used for reference 2
+            Do the difference, returning SAD
+            \param    dparams block parameters
+            \param    mv1     the motion vector being used for reference 1
+            \param    mv2     the motion vector being used for reference 2
         */        
         virtual float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 )=0;
 
     protected:
-        const PicArray& pic_data;
-        const PicArray& ref_data1;
-        const PicArray& ref_data2;
+        const PicArray& m_pic_data;
+        const PicArray& m_ref_data1;
+        const PicArray& m_ref_data2;
 
     private:
         //! Private, bodyless copy-constructor: class should not be copied
@@ -265,136 +261,112 @@ namespace dirac
         BiBlockDiff& operator=(const BiBlockDiff& rhs);
     };
 
+    // Classes where the reference is upconverted //
+    //////////////////////////////////////////////// 
+    //! A virtual class for doing differences with sub-pixel vectors
+     class BlockDiffUp: public BlockDiff
+     {
+     
+     public:
 
-    //! A class for bi-directional differences with two references, and no bounds checking
-    class BiSimpleBlockDiff: public BiBlockDiff
-    {
-    public:
+         //! Constructor, initialising the reference and picture data
+         /*
+              Constructor, initialising the reference and picture data
+              \param  ref  the reference picture
+              \param  pic  the picture being matched
+         */
+         BlockDiffUp( const PicArray& ref , const PicArray& pic );
 
-        //! Constructor, initialising the references and picture data
-        /*
-             Constructor, initialising the references and picture data
-             \param  ref1  the first reference picture
-             \param  ref2  the second reference picture
-             \param  pic  the picture being matched
+         //! Destructor
+         virtual ~BlockDiffUp(){}
+
+        //! Do the difference, returning SAD
+        /*!
+            Do the difference, returning SAD
+            \param    dparams    block parameters
+            \param    mv         the motion vector being used 
         */
-        BiSimpleBlockDiff( const PicArray& ref1 , const PicArray& ref2 , const PicArray& pic);
+         virtual float Diff(  const BlockDiffParams& dparams , const MVector& mv )=0;
 
-        //! Do the actual difference without bounds checking
+        //! Do the actual difference, overwriting the best MV so far if appropriate
         /*!
-            Do the actual difference without bounds checking
-            \param    dparams    the parameters in which costs, block parameters etc are stored
-            \param    mv1    the motion vector being used for reference 1
-            \param    mv2    the motion vector being used for reference 2
-        */        
-        float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 );
-
-    private:
-        //! Private, bodyless copy-constructor: class should not be copied
-        BiSimpleBlockDiff(const BiSimpleBlockDiff& cpy);
-
-        //! Private, bodyless assignment=: class should not be assigned
-        BiSimpleBlockDiff& operator=(const BiSimpleBlockDiff& rhs);    
-                                                                    
-    };
-
-    //! A class for bi-directional differences with two references, with bounds checking
-    class BiBChkBlockDiff: public BiBlockDiff
-    {
-    public:
-        //! Constructor, initialising the references and picture data
-        BiBChkBlockDiff( const PicArray& ref1 , const PicArray& ref2 , const PicArray& pic );
-
-        //! Do the actual difference with bounds checking
-        /*!
-            Do the actual difference with bounds checking
-            \param    dparams    the parameters in which costs, block parameters etc are stored
-            \param    mv1    the motion vector being used for reference 1
-            \param    mv2    the motion vector being used for reference 2
-        */        
-        float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 );
-
-    private:
-        //! Private, bodyless copy-constructor: class should not be copied
-        BiBChkBlockDiff(const BiBChkBlockDiff& cpy);             
-
-        //! Private, bodyless assignment=: class should not be assigned
-        BiBChkBlockDiff& operator=(const BiBChkBlockDiff& rhs);     
-                                                                
-    };
-
-    // Classes where the reference is upconverted
-
-    //! An abstract class for doing block differences with an upconverted reference
-    class BlockDiffUp: public BlockDiff
-    {
-    public:    
-        //! Constructor, initialising the reference and picture data
-        /*
-             Constructor, initialising the reference and picture data
-             \param  ref  the reference picture
-             \param  pic  the picture being matched
+            Do the actual difference, overwriting the best MV so far if appropriate,
+            and bailing out if we do worse
+            \param    dparams    block parameters
+            \param    mv         the motion vector being used 
+            \param    mvcost     the (prediction) cost of the motion vector mv 
+            \param    lambda     the weighting to be given to mvcost
+            \param    best_costs the best Lagrangian costs obtained yet
+            \param    best_mv    the MV giving the best Lagrangian costs so far    
         */
-        BlockDiffUp( const PicArray& ref , const PicArray& pic);
+         virtual void Diff( const BlockDiffParams& dparams,
+                            const MVector& mv ,
+                            const float mvcost,
+                            const float lambda,
+                            MvCostData& best_costs ,
+                            MVector& best_mv)=0;
+     private:
+         //! Private, bodyless copy-constructor: class should not be copied
+         BlockDiffUp(const BlockDiffUp& cpy);
 
-        //! Destructor
-        virtual ~BlockDiffUp(){}
-
-        //! Do the actual difference
-        /*!
-            Do the actual difference
-            \param    dparams    the parameters in which costs, block parameters etc are stored
-            \param    mv    the motion vector being used 
-        */     
-        virtual float Diff(  const BlockDiffParams& dparams , const MVector& mv )=0;
-
-    protected:
-         //! A lookup table to simplify the 1/8 pixel accuracy code
-        int InterpLookup[9][4];
-
-    private:
-        //! Private, bodyless copy-constructor: class should not be copied
-        BlockDiffUp(const BlockDiffUp& cpy); 
-                                                        
-        //! Private, bodyless assignment=: class should not be assigned
-        BlockDiffUp& operator=(const BlockDiffUp& rhs);
-                                                        
-    };
-
-    //! A class for doing block differences without bounds-checking with upconverted references, inherited from BlockDiffUp
-    class SimpleBlockDiffUp: public BlockDiffUp
+         //! Private, bodyless assignment=: class should not be assigned
+         BlockDiffUp& operator=(const BlockDiffUp& rhs);
+     };
+ 
+    //! A class for doing differences with half-pixel accurate vectors
+    class BlockDiffHalfPel: public BlockDiffUp
     {
+
     public:
         //! Constructor, initialising the reference and picture data
         /*
-             Constructor, initialising the reference and picture data
-             \param  ref  the reference picture
-             \param  pic  the picture being matched
+              Constructor, initialising the reference and picture data
+              \param  ref  the reference picture
+              \param  pic  the picture being matched
         */
-        SimpleBlockDiffUp( const PicArray& ref , const PicArray& pic );
+        BlockDiffHalfPel( const PicArray& ref , const PicArray& pic );
 
         //! Destructor
-        ~SimpleBlockDiffUp(){}
+        ~BlockDiffHalfPel(){}
 
-        //! Do the actual difference without bounds checking
+        //! Do the difference, returning SAD
         /*!
-            Do the actual difference without bounds checking
-            \param    dparams    the parameters in which costs, block parameters etc are stored
-            \param    mv    the motion vector being used 
-        */        
+            Do the difference, returning SAD
+            \param    dparams    block parameters
+            \param    mv         the motion vector being used 
+        */
         float Diff(  const BlockDiffParams& dparams , const MVector& mv );
 
+        //! Do the actual difference, overwriting the best MV so far if appropriate
+        /*!
+            Do the actual difference, overwriting the best MV so far if appropriate,
+            and bailing out if we do worse
+            \param    dparams    block parameters
+            \param    mv         the motion vector being used 
+            \param    mvcost     the (prediction) cost of the motion vector mv 
+            \param    lambda     the weighting to be given to mvcost
+            \param    best_costs the best Lagrangian costs obtained yet
+            \param    best_mv    the MV giving the best Lagrangian costs so far    
+        */
+        void Diff( const BlockDiffParams& dparams,
+                    const MVector& mv ,
+                    const float mvcost,
+                    const float lambda,
+                    MvCostData& best_costs ,
+                    MVector& best_mv);
+
     private:
         //! Private, bodyless copy-constructor: class should not be copied
-        SimpleBlockDiffUp(const SimpleBlockDiffUp& cpy);
+        BlockDiffHalfPel(const BlockDiffHalfPel& cpy);
 
         //! Private, bodyless assignment=: class should not be assigned
-        SimpleBlockDiffUp& operator=(const SimpleBlockDiffUp& rhs);
+        BlockDiffHalfPel& operator=(const BlockDiffHalfPel& rhs);
+
     };
 
-    //! A class for doing block differences with bounds-checking with upconverted references, inherited from BlockDiffUp
-    class BChkBlockDiffUp: public BlockDiffUp{
-
+    //! A class for doing differences with quarter-pixel accurate vectors
+    class BlockDiffQuarterPel: public BlockDiffUp
+    {
     public:
         //! Constructor, initialising the reference and picture data
         /*
@@ -402,65 +374,96 @@ namespace dirac
              \param  ref  the reference picture
              \param  pic  the picture being matched
         */
-        BChkBlockDiffUp(const PicArray& ref,const PicArray& pic);
+        BlockDiffQuarterPel( const PicArray& ref , const PicArray& pic );
 
         //! Destructor
-        ~BChkBlockDiffUp(){}
+        ~BlockDiffQuarterPel(){}
 
-        //! Do the actual difference with bounds checking
+        //! Do the difference, returning SAD
         /*!
-            Do the actual difference with bounds checking
-            \param    dparams    the parameters in which costs, block parameters etc are stored
-            \param    mv    the motion vector being used 
-        */        
+            Do the difference, returning SAD
+            \param    dparams    block parameters
+            \param    mv         the motion vector being used 
+        */
         float Diff(  const BlockDiffParams& dparams , const MVector& mv );
+
+        //! Do the actual difference, overwriting the best MV so far if appropriate
+        /*!
+            Do the actual difference, overwriting the best MV so far if appropriate,
+            and bailing out if we do worse
+            \param    dparams    block parameters
+            \param    mv         the motion vector being used 
+            \param    mvcost     the (prediction) cost of the motion vector mv 
+            \param    lambda     the weighting to be given to mvcost
+            \param    best_costs the best Lagrangian costs obtained yet
+            \param    best_mv    the MV giving the best Lagrangian costs so far    
+        */
+        void Diff( const BlockDiffParams& dparams,
+                   const MVector& mv ,
+                   const float mvcost,
+                   const float lambda,
+                   MvCostData& best_costs ,
+                   MVector& best_mv);
+
     private:
         //! Private, bodyless copy-constructor: class should not be copied
-        BChkBlockDiffUp(const BChkBlockDiffUp& cpy);
+        BlockDiffQuarterPel(const BlockDiffQuarterPel& cpy);
 
         //! Private, bodyless assignment=: class should not be assigned
-        BChkBlockDiffUp& operator=(const BChkBlockDiffUp& rhs);    
+        BlockDiffQuarterPel& operator=(const BlockDiffQuarterPel& rhs);
     };
 
-    //! An abstract class for doing block differences with two upconverted references
-    class BiBlockDiffUp: public BiBlockDiff
+    //! A class for doing differences with eighth-pixel accurate vectors
+    class BlockDiffEighthPel: public BlockDiffUp
     {
-    public:    
-        //! Constructor, initialising the references and picture data
+    public:
+        //! Constructor, initialising the reference and picture data
         /*
              Constructor, initialising the reference and picture data
-             \param  ref1  the first reference picture
-             \param  ref2  the second reference picture
+             \param  ref  the reference picture
              \param  pic  the picture being matched
         */
-        BiBlockDiffUp( const PicArray& ref1 , const PicArray& ref2 , const PicArray& pic);
+        BlockDiffEighthPel( const PicArray& ref , const PicArray& pic );
 
         //! Destructor
-        virtual ~BiBlockDiffUp(){}
+        ~BlockDiffEighthPel(){}
 
-        //! Do the actual difference
+        //! Do the difference, returning SAD
         /*!
-            Do the actual difference
-            \param    dparams    the block parameters
-            \param    mv1    the motion vector being used for reference 1
-            \param    mv2    the motion vector being used for reference 2
-        */ 
-        virtual float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 )=0;
-    protected:
-         //! A lookup table to simplify the 1/8 pixel accuracy code
-        int InterpLookup[9][4];
+            Do the difference, returning SAD
+            \param    dparams    block parameters
+            \param    mv         the motion vector being used 
+        */
+        float Diff(  const BlockDiffParams& dparams , const MVector& mv );
+
+        //! Do the actual difference, overwriting the best MV so far if appropriate
+        /*!
+            Do the actual difference, overwriting the best MV so far if appropriate,
+            and bailing out if we do worse
+            \param    dparams    block parameters
+            \param    mv         the motion vector being used 
+            \param    mvcost     the (prediction) cost of the motion vector mv 
+            \param    lambda     the weighting to be given to mvcost
+            \param    best_costs the best Lagrangian costs obtained yet
+            \param    best_mv    the MV giving the best Lagrangian costs so far    
+        */
+        void Diff( const BlockDiffParams& dparams,
+                    const MVector& mv ,
+                    const float mvcost,
+                    const float lambda,
+                    MvCostData& best_costs ,
+                    MVector& best_mv);
 
     private:
         //! Private, bodyless copy-constructor: class should not be copied
-        BiBlockDiffUp(const BlockDiffUp& cpy); 
-                                                        
+        BlockDiffEighthPel(const BlockDiffEighthPel& cpy);
+
         //! Private, bodyless assignment=: class should not be assigned
-        BiBlockDiffUp& operator=(const BlockDiffUp& rhs);
-                                                        
+        BlockDiffEighthPel& operator=(const BlockDiffEighthPel& rhs);
     };
 
-    //! A class for doing bi-directional block differences without bounds checking
-    class BiSimpleBlockDiffUp: public BiBlockDiffUp
+    //! A class for computing a bidirection difference for half-pel vectors
+    class BiBlockHalfPel: public BiBlockDiff
     {
     public:
         //! Constructor, initialising the references and picture data
@@ -470,26 +473,26 @@ namespace dirac
              \param  ref2  the second reference picture
              \param  pic  the picture being matched
         */
-        BiSimpleBlockDiffUp( const PicArray& ref1 , const PicArray& ref2 , const PicArray& pic );
+        BiBlockHalfPel( const PicArray& ref1 , const PicArray& ref2 , const PicArray& pic );
 
-        //! Do the actual difference without bounds checking
+        //! Do the difference, returning SAD
         /*!
-            Do the actual difference without bounds checking
-            \param    dparams    the parameters in which costs, block parameters etc are stored
-            \param    mv1    the motion vector being used for reference 1
-            \param    mv2    the motion vector being used for reference 2
+            Do the difference, returning SAD
+            \param    dparams block parameters
+            \param    mv1     the motion vector being used for reference 1
+            \param    mv2     the motion vector being used for reference 2
         */        
         float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 );
     private:
         //! Private, bodyless copy-constructor: class should not be copied
-        BiSimpleBlockDiffUp(const BiSimpleBlockDiffUp& cpy);
+        BiBlockHalfPel(const BiBlockHalfPel& cpy);
 
         //! Private, bodyless assignment=: class should not be assigned
-        BiSimpleBlockDiffUp& operator=(const BiSimpleBlockDiffUp& rhs);
+        BiBlockHalfPel& operator=(const BiBlockHalfPel& rhs);
     };
 
-    //! A class for doing  bi-directional block differences with bounds checking
-    class BiBChkBlockDiffUp: public BiBlockDiffUp
+    //! A class for computing a bidirection difference for quarter-pel vectors
+    class BiBlockQuarterPel: public BiBlockDiff
     {
     public:
         //! Constructor, initialising the references and picture data
@@ -499,22 +502,52 @@ namespace dirac
              \param  ref2  the second reference picture
              \param  pic  the picture being matched
         */
-        BiBChkBlockDiffUp( const PicArray& ref , const PicArray& ref2 , const PicArray& pic );
+        BiBlockQuarterPel( const PicArray& ref1 , const PicArray& ref2 , const PicArray& pic );
 
-        //! Do the actual difference with bounds checking
+        //! Do the difference, returning SAD
         /*!
-            Do the actual difference with bounds checking
-            \param    dparams    the parameters in which costs, block parameters etc are stored
+            Do the difference, returning SAD
+            \param    dparams block parameters
             \param    mv1    the motion vector being used for reference 1
             \param    mv2    the motion vector being used for reference 2
-        */    
+        */        
+        float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 );
+
+    private:
+        //! Private, bodyless copy-constructor: class should not be copied
+        BiBlockQuarterPel(const BiBlockQuarterPel& cpy);
+
+        //! Private, bodyless assignment=: class should not be assigned
+        BiBlockQuarterPel& operator=(const BiBlockQuarterPel& rhs);
+    };
+
+    //! A class for computing a bidirection difference for eighth-pel vectors
+    class BiBlockEighthPel: public BiBlockDiff
+    {
+    public:
+        //! Constructor, initialising the references and picture data
+        /*
+             Constructor, initialising the reference and picture data
+             \param  ref1  the first reference picture
+             \param  ref2  the second reference picture
+             \param  pic  the picture being matched
+        */
+        BiBlockEighthPel( const PicArray& ref1 , const PicArray& ref2 , const PicArray& pic );
+
+        //! Do the difference, returning SAD
+        /*!
+            Do the difference, returning SAD
+            \param    dparams block parameters
+            \param    mv1     the motion vector being used for reference 1
+            \param    mv2     the motion vector being used for reference 2
+        */        
         float Diff(  const BlockDiffParams& dparams , const MVector& mv1 , const MVector& mv2 );
     private:
         //! Private, bodyless copy-constructor: class should not be copied
-        BiBChkBlockDiffUp(const BiBChkBlockDiffUp& cpy);
+        BiBlockEighthPel(const BiBlockEighthPel& cpy);
 
         //! Private, bodyless assignment=: class should not be assigned
-        BiBChkBlockDiffUp& operator=(const BiBChkBlockDiffUp& rhs);    
+        BiBlockEighthPel& operator=(const BiBlockEighthPel& rhs);
     };
 
 } // namespace dirac

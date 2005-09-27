@@ -50,7 +50,7 @@ using namespace dirac;
 #include <algorithm>
 
 void BlockDiffParams::SetBlockLimits( const OLBParams& bparams ,
-                                      const PicArray& pic_data , 
+                                      const PicArray& m_pic_data , 
                                       const int xbpos , const int ybpos)
 {
     const int loc_xp = xbpos * bparams.Xbsep() - bparams.Xoffset();
@@ -63,8 +63,11 @@ void BlockDiffParams::SetBlockLimits( const OLBParams& bparams ,
     m_yl = bparams.Yblen() - m_yp + loc_yp;
 
      //constrain block lengths to fall within the picture
-    m_xl = ( ( m_xp + m_xl - 1) > pic_data.LastX() ) ? ( pic_data.LastX() + 1 - m_xp ): m_xl;
-    m_yl = ( ( m_yp + m_yl - 1) > pic_data.LastY() ) ? ( pic_data.LastY() + 1 - m_yp ) : m_yl;
+    m_xl = ( ( m_xp + m_xl - 1) > m_pic_data.LastX() ) ? ( m_pic_data.LastX() + 1 - m_xp ): m_xl;
+    m_yl = ( ( m_yp + m_yl - 1) > m_pic_data.LastY() ) ? ( m_pic_data.LastY() + 1 - m_yp ) : m_yl;
+
+    m_xend = m_xp+m_xl;
+    m_yend = m_yp+m_yl;
 
 }
 
@@ -73,115 +76,171 @@ void BlockDiffParams::SetBlockLimits( const OLBParams& bparams ,
 // Constructors ...
 
 BlockDiff::BlockDiff(const PicArray& ref,const PicArray& pic) :
-    pic_data( pic ),
-    ref_data( ref )
+    m_pic_data( pic ),
+    m_ref_data( ref )
 {}
 
-SimpleBlockDiff::SimpleBlockDiff( const PicArray& ref , const PicArray& pic ) :
+PelBlockDiff::PelBlockDiff( const PicArray& ref , const PicArray& pic ) :
     BlockDiff( ref , pic )
 {}
-
-BChkBlockDiff::BChkBlockDiff( const PicArray& ref , const PicArray& pic ) :
-    BlockDiff( ref , pic )
-{}    
 
 IntraBlockDiff::IntraBlockDiff( const PicArray& pic ) :
-    pic_data( pic )
+    m_pic_data( pic )
 {}
 
 BiBlockDiff::BiBlockDiff( const PicArray& ref1 , const PicArray& ref2 ,
                           const PicArray& pic) :
-    pic_data( pic ),
-    ref_data1( ref1 ),
-    ref_data2( ref2 )
+    m_pic_data( pic ),
+    m_ref_data1( ref1 ),
+    m_ref_data2( ref2 )
 {}
 
-BiSimpleBlockDiff::BiSimpleBlockDiff( const PicArray& ref1 , const PicArray& ref2 ,
-                                      const PicArray& pic) :
-    BiBlockDiff(ref1 , ref2 , pic)
-{}
-
-BiBChkBlockDiff::BiBChkBlockDiff( const PicArray& ref1 , const PicArray& ref2 ,
-                                  const PicArray& pic ) :
-    BiBlockDiff(ref1 , ref2 , pic)
-{}
-
-BlockDiffUp::BlockDiffUp( const PicArray& ref , const PicArray& pic):
+BlockDiffUp::BlockDiffUp( const PicArray& ref , const PicArray& pic ):
     BlockDiff( ref , pic )
 {}
 
-SimpleBlockDiffUp::SimpleBlockDiffUp( const PicArray& ref , const PicArray& pic ) :
+BlockDiffHalfPel::BlockDiffHalfPel( const PicArray& ref , const PicArray& pic ) :
     BlockDiffUp( ref , pic )
 {}
 
-BChkBlockDiffUp::BChkBlockDiffUp(const PicArray& ref,const PicArray& pic) :
+BlockDiffQuarterPel::BlockDiffQuarterPel( const PicArray& ref , const PicArray& pic ) :
     BlockDiffUp( ref , pic )
 {}
 
-BiBlockDiffUp::BiBlockDiffUp( const PicArray& ref1 , const PicArray& ref2 , 
-                              const PicArray& pic) :
-    BiBlockDiff( ref1 , ref2 , pic )
+BlockDiffEighthPel::BlockDiffEighthPel( const PicArray& ref , const PicArray& pic ) :
+    BlockDiffUp( ref , pic )
 {}
 
-BiSimpleBlockDiffUp::BiSimpleBlockDiffUp( const PicArray& ref1 , const PicArray& ref2 ,
+BiBlockHalfPel::BiBlockHalfPel( const PicArray& ref1 , const PicArray& ref2 ,
                                           const PicArray& pic ):
-    BiBlockDiffUp( ref1 , ref2 , pic)
+    BiBlockDiff( ref1 , ref2 , pic)
 {}
 
-BiBChkBlockDiffUp::BiBChkBlockDiffUp( const PicArray& ref1 , const PicArray& ref2 , 
-                                      const PicArray& pic ) :
-    BiBlockDiffUp( ref1 , ref2 , pic)
+BiBlockQuarterPel::BiBlockQuarterPel( const PicArray& ref1 , const PicArray& ref2 ,
+                                          const PicArray& pic ):
+    BiBlockDiff( ref1 , ref2 , pic)
 {}
+
+BiBlockEighthPel::BiBlockEighthPel( const PicArray& ref1 , const PicArray& ref2 ,
+                                          const PicArray& pic ):
+    BiBlockDiff( ref1 , ref2 , pic)
+{}
+
 
 // Difference functions ...
 
-float SimpleBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv )
+float PelBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv )
 {
-#if HAVE_MMX
-    if (dparams.Xl() % 2 == 0) {
-       return static_cast<float>(simple_block_diff_mmx_4(dparams, mv, pic_data, ref_data));
-    }
-#endif /* HAVE_MMX */
 
     ValueType diff;    
-
     CalcValueType sum( 0 );
 
-    for (int j=dparams.Yp() ; j != dparams.Yp()+dparams.Yl() ; ++j )
+    const ImageCoords ref_start( dparams.Xp()+mv.x , dparams.Yp()+mv.y );
+    const ImageCoords ref_stop( dparams.Xend()+mv.x , dparams.Yend()+mv.y );
+    
+    bool bounds_check( false );
+
+    if ( ref_start.x<0 || 
+         ref_stop.x >= m_ref_data.LengthX() ||
+         ref_start.y<0 || 
+         ref_stop.y >= m_ref_data.LengthY() )
+        bounds_check = true;
+
+    if ( !bounds_check )
     {
-        for(int i=dparams.Xp() ; i!= dparams.Xp()+dparams.Xl() ; ++i )
+//#if HAVE_MMX
+//        if (dparams.Xl() % 2 == 0) {
+//           return static_cast<float>(simple_block_diff_mmx_4(dparams, mv, m_pic_data, m_ref_data));
+//        }
+//#endif /* HAVE_MMX */
+
+        for (int j=dparams.Yp() ; j != dparams.Yp()+dparams.Yl() ; ++j )
         {
-            diff = pic_data[j][i]-ref_data[j+mv.y][i+mv.x];
-            sum += std::abs( diff );
-        }// i
-    }// j
+            for(int i=dparams.Xp() ; i!= dparams.Xp()+dparams.Xl() ; ++i )
+            {
+                diff = m_pic_data[j][i]-m_ref_data[j+mv.y][i+mv.x];
+                sum += std::abs( diff );
+            }// i
+        }// j
+    }
+    else
+    {
+        for ( int j=dparams.Yp() ; j!=dparams.Yp()+dparams.Yl() ; ++j )
+        { 
+            for( int i=dparams.Xp() ; i!=dparams.Xp()+dparams.Xl() ; ++i )
+            {
+                diff = m_pic_data[j][i] - m_ref_data[BChk(j+mv.y , m_ref_data.LengthY())][BChk(i+mv.x , m_ref_data.LengthX())];
+                sum += std::abs( diff );
 
-	
+            }// i
+        }// j
 
+    }
+    
     return static_cast<float>( sum );
 }
 
-float BChkBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv )
+void PelBlockDiff::Diff( const BlockDiffParams& dparams, 
+                         const MVector& mv,
+                         float& best_sum,
+                         MVector& best_mv )
 {
 
-    const int xmax = ref_data.LengthX();
-    const int ymax = ref_data.LengthY();
-
-    ValueType diff;
-
+    ValueType diff;    
     CalcValueType sum( 0 );
 
-    for ( int j=dparams.Yp() ; j!=dparams.Yp()+dparams.Yl() ; ++j )
-    {
-        for( int i=dparams.Xp() ; i!=dparams.Xp()+dparams.Xl() ; ++i )
-        {
-            diff = pic_data[j][i] - ref_data[BChk(j+mv.y , ymax)][BChk(i+mv.x , xmax)];
-            sum += std::abs( diff );
+    const ImageCoords ref_start( dparams.Xp()+mv.x , dparams.Yp()+mv.y );
+    const ImageCoords ref_stop( dparams.Xend()+mv.x , dparams.Yend()+mv.y );
 
-        }// i
-    }// j
+    ValueType *pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+    const int pic_next( m_pic_data.LengthX() - dparams.Xl() ); // - go down a row and back along
     
-    return static_cast<float>( sum );
+    bool bounds_check( false );
+
+    if ( ref_start.x<0 || 
+         ref_stop.x >= m_ref_data.LengthX() ||
+         ref_start.y<0 || 
+         ref_stop.y >= m_ref_data.LengthY() )
+        bounds_check = true;
+
+    if ( !bounds_check )
+    {
+
+        ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
+
+        for( int y=dparams.Yl(); y>0; --y, pic_curr+=pic_next, ref_curr+=pic_next )
+        {
+            for( int x=dparams.Xl(); x>0; --x, ++pic_curr, ++ref_curr )
+            {
+                diff = (*pic_curr)-(*ref_curr);
+                sum += std::abs( diff );
+            }// x
+
+            if ( sum>=best_sum )
+                return;
+
+        }// y
+    }
+    else
+    {
+        for ( int j=dparams.Yp() ; j<dparams.Yend() ; ++j )
+        { 
+            for( int i=dparams.Xp() ; i<dparams.Xend() ; ++i )
+            {
+                diff = m_pic_data[j][i] - m_ref_data[BChk(j+mv.y , m_ref_data.LengthY())][BChk(i+mv.x , m_ref_data.LengthX())];
+                sum += std::abs( diff );
+
+            }// i
+
+            if ( sum>=best_sum )
+                return;
+
+        }// j
+    }
+
+    best_sum = sum;
+    best_mv = mv;
+    
 }
 
 float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
@@ -193,7 +252,7 @@ float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
 
     for ( int j=dparams.Yp() ; j!=dparams.Yp()+dparams.Yl() ; ++j)
         for(int i=dparams.Xp(); i!=dparams.Xp()+dparams.Xl() ; ++i )
-            int_dc += static_cast<int>( pic_data[j][i] );
+            int_dc += static_cast<int>( m_pic_data[j][i] );
 
     int_dc /= ( dparams.Xl() * dparams.Yl() );
 
@@ -204,296 +263,1278 @@ float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
     ValueType dc( dc_val<<2 );
     CalcValueType intra_cost( 0 );
 
-    for (int j=dparams.Yp(); j!=dparams.Yp()+dparams.Yl() ; ++j)
-        for( int i=dparams.Xp() ; i!=dparams.Xp()+dparams.Xl() ;++i )
-            intra_cost += std::abs( pic_data[j][i] - dc );
+    for (int j=dparams.Yp(); j<dparams.Yend() ; ++j)
+        for( int i=dparams.Xp() ; i<dparams.Xend() ;++i )
+            intra_cost += std::abs( m_pic_data[j][i] - dc );
     
     return static_cast<float>( intra_cost );
 }
 
-float BiSimpleBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2){
 
-    CalcValueType sum( 0 );
+float BlockDiffHalfPel::Diff(  const BlockDiffParams& dparams , 
+                                      const MVector& mv )
+{
+   //Where to start in the upconverted image
+    const ImageCoords ref_start( ( dparams.Xp()<<1 ) + mv.x ,( dparams.Yp()<<1 ) + mv.y );
+    const ImageCoords ref_stop( ref_start.x+(dparams.Xl()<<1) , ref_start.y+(dparams.Yl()<<1));
 
-    ValueType diff;
+    ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+    const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
 
-    for ( int j=dparams.Yp(); j!=dparams.Yp()+dparams.Yl(); ++j )
+    bool bounds_check( false );
+
+    if ( ref_start.x<0 || 
+         ref_stop.x >= m_ref_data.LengthX() ||
+         ref_start.y<0 || 
+         ref_stop.y >= m_ref_data.LengthY() )
+        bounds_check = true;
+
+    float sum( 0 );
+
+    if ( !bounds_check )
     {
-        for( int i=dparams.Xp() ; i!=dparams.Xp()+dparams.Xl() ; ++i )
+        ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
+        const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+
+        for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
         {
-            diff = pic_data[j][i]-( ( ref_data1[j+mv1.y][i+mv1.x] + 1 )>>1 );
-            diff -= ( ( ref_data2[j+mv2.y][i+mv2.x] + 1 )>>1 );
+            for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+            {
+                sum += std::abs( *ref_curr - *pic_curr );
+            }// x
+        }// y
 
-            sum += std::abs( diff );
-        }// i
-    }// j
+    }
+    else
+    {
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+        for( int y=dparams.Yl(), ry=ref_start.y, by=BChk(ry,m_ref_data.LengthY()); 
+             y>0; 
+             --y, pic_curr+=pic_next, ry+=2 , by=BChk(ry,m_ref_data.LengthY()))
+        {
+             for( int x=dparams.Xl() , rx=ref_start.x , bx=BChk(rx,m_ref_data.LengthX()); 
+                  x>0 ; 
+                  --x, ++pic_curr, rx+=2 , bx=BChk(rx,m_ref_data.LengthX()))
+             {
+                 sum += std::abs( m_ref_data[by][bx] -*pic_curr);
+             }// x
+        }// y
 
-    return static_cast<float>( sum );
+    }
+
+    return sum;
+
 }
 
-float BiBChkBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv1,const MVector& mv2){
-
-    ValueType diff;
-    const int xmax1 = ref_data1.LengthX();
-    const int ymax1 = ref_data1.LengthY();
-
-    const int xmax2 = ref_data2.LengthX();
-    const int ymax2 = ref_data2.LengthY();
-
-    CalcValueType sum( 0 );
-
-    for ( int j=dparams.Yp() ; j!=dparams.Yp() + dparams.Yl() ; ++j )
-    {
-        for( int i=dparams.Xp() ; i!=dparams.Xp() + dparams.Xl() ; ++i )
-        {
-            diff = pic_data[j][i]-( ( ref_data1[BChk(j+mv1.y , ymax1)][BChk(i+mv1.x , xmax1)] + 1 )>>1 );
-            diff -= ( ( ref_data2[BChk(j+mv2.y , ymax2)][BChk(i+mv2.x , xmax2)] + 1 )>>1 );
-
-            sum += std::abs( diff );       
-        }// i
-    }// j
-
-    return static_cast<float>( sum );
-}
-
-
-float SimpleBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& mv )
+void BlockDiffHalfPel::Diff( const BlockDiffParams& dparams,
+                                   const MVector& mv ,
+                                   const float mvcost,
+                                   const float lambda,
+                                   MvCostData& best_costs ,
+                                   MVector& best_mv )
 {
 
-    //Coordinates in the image being written to
-    const ImageCoords StartPos(dparams.Xp(),dparams.Yp());
-    const ImageCoords EndPos(StartPos.x+dparams.Xl(),StartPos.y+dparams.Yl());
+    //Where to start in the upconverted image
+    const ImageCoords ref_start( ( dparams.Xp()<<1 ) + mv.x ,( dparams.Yp()<<1 ) + mv.y );
+    const ImageCoords ref_stop( ref_start.x+(dparams.Xl()<<1) , ref_start.y+(dparams.Yl()<<1));
 
-    //the rounded motion vectors, accurate to 1/2 pel
-    //NB: bitshift rounds negative numbers DOWN, as required    
-    const MVector roundvec(mv.x>>2,mv.y>>2);
+    ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+    const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
 
-    //remainder, giving 1/8 pel accuracy, needed for linear interp
-    const MVector rmdr(mv.x-(roundvec.x<<2),mv.y-(roundvec.y<<2));
+    bool bounds_check( false );
 
-    //Set up the start point in the reference image.    
-    const ImageCoords RefStart((StartPos.x<<1) + roundvec.x,(StartPos.y<<1) + roundvec.y);
+    if ( ref_start.x<0 || 
+         ref_stop.x >= m_ref_data.LengthX() ||
+         ref_start.y<0 || 
+         ref_stop.y >= m_ref_data.LengthY() )
+        bounds_check = true;
 
+    const float start_val( mvcost*lambda );
+    float sum( start_val );
 
-    //weights for doing linear interpolation, calculated from the remainder values
+    if ( !bounds_check )
+    {
+        ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
+        const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
 
-    const ValueType TLweight((4-rmdr.x)*(4-rmdr.y));
-    const ValueType TRweight(rmdr.x*(4-rmdr.y));
-    const ValueType BLweight((4-rmdr.x)*rmdr.y);
-    const ValueType BRweight(rmdr.x*rmdr.y);    
+        for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+        {
+            for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+            {
+                sum += std::abs( *ref_curr - *pic_curr );
+            }// x
 
-#if HAVE_MMX
-    if ((EndPos.x - StartPos.x) % 2 == 0) {
-		ValueType weights[4] = {TRweight, TLweight, BRweight, BLweight};
+            if ( sum>=best_costs.total )
+                return;
 
-         return static_cast<float>(simple_block_diff_up_mmx_4(pic_data, ref_data, StartPos, EndPos, RefStart, weights));
+        }// y
+
     }
-#endif /* HAVE_MMX */
+    else
+    {
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+        for( int y=dparams.Yl(), ry=ref_start.y, by=BChk(ry,m_ref_data.LengthY()); 
+             y>0; 
+             --y, pic_curr+=pic_next, ry+=2 , by=BChk(ry,m_ref_data.LengthY()))
+        {
+             for( int x=dparams.Xl() , rx=ref_start.x , bx=BChk(rx,m_ref_data.LengthX()); 
+                  x>0 ; 
+                  --x, ++pic_curr, rx+=2 , bx=BChk(rx,m_ref_data.LengthX()))
+             {
+                 sum += std::abs( m_ref_data[by][bx] -*pic_curr);
+             }// x
 
-    CalcValueType sum( 0 );
+             if ( sum>=best_costs.total )
+                return;
 
-    ValueType temp;    
+        }// y
 
-    for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2){
-        for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2){
-            temp = (
-                    TLweight * ref_data[uY][uX] +
-                    TRweight * ref_data[uY][uX+1] +
-                    BLweight * ref_data[uY+1][uX] +
-                    BRweight * ref_data[uY+1][uX+1] +
-                    8
-                    )>>4;
+    }
 
-            sum += std::abs( pic_data[c][l] - temp );
-        }//l
-    }//c
-    return static_cast<float>( sum ); 
+    best_mv = mv;
+    best_costs.total = sum;
+    best_costs.mvcost = mvcost;
+    best_costs.SAD = sum - start_val;
 }
 
-float BChkBlockDiffUp::Diff(  const BlockDiffParams& dparams, const MVector& mv )
+float BlockDiffQuarterPel::Diff(  const BlockDiffParams& dparams , const MVector& mv )
+{
+   // Set up the start point in the reference image by rounding the motion vector
+    // to 1/2 pel accuracy.NB: bit shift rounds negative values DOWN, as required
+    const MVector roundvec( mv.x>>1 , mv.y>>1 );
+
+    //Get the remainder after rounding. NB rmdr values always 0 or 1
+    const MVector rmdr( mv.x & 1 , mv.y & 1 );
+
+    //Where to start in the upconverted image
+    const ImageCoords ref_start( ( dparams.Xp()<<1 ) + roundvec.x ,( dparams.Yp()<<1 ) + roundvec.y );
+    const ImageCoords ref_stop( ref_start.x+(dparams.Xl()<<1) , ref_start.y+(dparams.Yl()<<1));
+
+    ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+    const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
+
+    bool bounds_check( false );
+
+    if ( ref_start.x<0 || 
+         ref_stop.x >= m_ref_data.LengthX() ||
+         ref_start.y<0 || 
+         ref_stop.y >= m_ref_data.LengthY() )
+        bounds_check = true;
+
+    float sum( 0.0f );
+
+    CalcValueType temp;
+
+    if ( !bounds_check )
+    {
+        ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
+        const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+
+        if( rmdr.x == 0 && rmdr.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    sum += std::abs( *ref_curr - *pic_curr );
+                }// x
+            }// y
+        }
+        else if( rmdr.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[1] ) +
+                                1
+                            ) >> 1;
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+            }// y
+        }
+        else if( rmdr.x == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[m_ref_data.LengthX()] ) +
+                                1
+                            ) >> 1;
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+            }// y
+        }
+        else
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[1] ) +
+                                CalcValueType( ref_curr[m_ref_data.LengthX()+0] ) +
+                                CalcValueType( ref_curr[m_ref_data.LengthX()+1] ) +
+                                2
+                            ) >> 2;
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+            }// y
+        }
+    }
+    else
+    {
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+
+       // weights for doing linear interpolation, calculated from the remainder values
+        const ValueType linear_wts[4] = {  (2 - rmdr.x) * (2 - rmdr.y),    //tl
+                                           rmdr.x * (2 - rmdr.y),          //tr
+                                           (2 - rmdr.x) * rmdr.y,          //bl
+                                           rmdr.x * rmdr.y };              //br
+
+        const int refXlen( m_ref_data.LengthX() );
+        const int refYlen( m_ref_data.LengthY() );
+
+        for(int y = dparams.Yp(), uY = ref_start.y,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen);
+            y < dparams.Yend(); ++y, uY += 2,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen))
+        {
+            for(int x = dparams.Xp(), uX = ref_start.x,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen);
+                x < dparams.Xend(); ++x, uX += 2,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen))
+            {
+ 
+                temp = (     linear_wts[0] * CalcValueType( m_ref_data[BuY][BuX] ) +
+                             linear_wts[1] * CalcValueType( m_ref_data[BuY][BuX1] ) +
+                             linear_wts[2] * CalcValueType( m_ref_data[BuY1][BuX] )+
+                             linear_wts[3] * CalcValueType( m_ref_data[BuY1][BuX1] ) +
+                             2
+                        ) >> 2;
+                sum += std::abs( temp - m_pic_data[y][x] );
+            }// x
+        }// y
+
+    }
+
+    return sum;
+
+}
+
+void BlockDiffQuarterPel::Diff( const BlockDiffParams& dparams,
+                                   const MVector& mv ,
+                                   const float mvcost,
+                                   const float lambda,
+                                   MvCostData& best_costs ,
+                                   MVector& best_mv)
 {
 
-    //the picture sizes
-    const int DoubleXdim=ref_data.LengthX();
-    const int DoubleYdim=ref_data.LengthY();
+    // Set up the start point in the reference image by rounding the motion vector
+    // to 1/2 pel accuracy.NB: bit shift rounds negative values DOWN, as required
+    const MVector roundvec( mv.x>>1 , mv.y>>1 );
 
-    //Coordinates in the image being written to
-    const ImageCoords StartPos(dparams.Xp(),dparams.Yp());
-    const ImageCoords EndPos(StartPos.x+dparams.Xl(),StartPos.y+dparams.Yl());
+    //Get the remainder after rounding. NB rmdr values always 0 or 1
+    const MVector rmdr( mv.x & 1 , mv.y & 1 );
 
-    //the rounded motion vectors, accurate to 1/2 pel
-    //NB: bitshift rounds negative numbers DOWN, as required    
-    const MVector roundvec(mv.x>>2,mv.y>>2);
+    //Where to start in the upconverted image
+    const ImageCoords ref_start( ( dparams.Xp()<<1 ) + roundvec.x ,( dparams.Yp()<<1 ) + roundvec.y );
+    const ImageCoords ref_stop( ref_start.x+(dparams.Xl()<<1) , ref_start.y+(dparams.Yl()<<1));
 
-    //remainder, giving 1/8 pel accuracy, needed for linear interp
-    const MVector rmdr(mv.x-(roundvec.x<<2),mv.y-(roundvec.y<<2));
+    ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+    const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
 
-    //Set up the start point in the reference image.    
-    const ImageCoords RefStart((StartPos.x<<1) + roundvec.x,(StartPos.y<<1) + roundvec.y);
+    bool bounds_check( false );
+
+    if ( ref_start.x<0 || 
+         ref_stop.x >= m_ref_data.LengthX() ||
+         ref_start.y<0 || 
+         ref_stop.y >= m_ref_data.LengthY() )
+        bounds_check = true;
+
+    const float start_val( mvcost*lambda );
+    float sum( start_val );
+
+    CalcValueType temp;
+
+    if ( !bounds_check )
+    {
+        ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
+        const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+
+        if( rmdr.x == 0 && rmdr.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    sum += std::abs( *ref_curr - *pic_curr );
+                }// x
+                
+                if ( sum>=best_costs.total )
+                    return;
+
+            }// y
+        }
+        else if( rmdr.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[1] ) +
+                                1
+                            ) >> 1;
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+                
+                if ( sum>=best_costs.total )
+                    return;
+
+            }// y
+        }
+        else if( rmdr.x == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[m_ref_data.LengthX()] ) +
+                                1
+                            ) >> 1;
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+                
+                if ( sum>=best_costs.total )
+                    return;
+
+            }// y
+        }
+        else
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[1] ) +
+                                CalcValueType( ref_curr[m_ref_data.LengthX()+0] ) +
+                                CalcValueType( ref_curr[m_ref_data.LengthX()+1] ) +
+                                2
+                            ) >> 2;
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+                
+                if ( sum>=best_costs.total )
+                    return;
+
+            }// y
+        }
+    }
+    else
+    {
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+
+       // weights for doing linear interpolation, calculated from the remainder values
+        const ValueType linear_wts[4] = {  (2 - rmdr.x) * (2 - rmdr.y),    //tl
+                                           rmdr.x * (2 - rmdr.y),          //tr
+                                           (2 - rmdr.x) * rmdr.y,          //bl
+                                           rmdr.x * rmdr.y };              //br
+
+        const int refXlen( m_ref_data.LengthX() );
+        const int refYlen( m_ref_data.LengthY() );
+
+        for(int y = dparams.Yl(), uY = ref_start.y,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen);
+            y > 0; --y, uY += 2,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen))
+        {
+            for(int x = dparams.Xl(), uX = ref_start.x,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen);
+                x > 0 ; --x, uX += 2,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen))
+            {
+ 
+                temp = (     linear_wts[0] * CalcValueType( m_ref_data[BuY][BuX] ) +
+                             linear_wts[1] * CalcValueType( m_ref_data[BuY][BuX1] ) +
+                             linear_wts[2] * CalcValueType( m_ref_data[BuY1][BuX] )+
+                             linear_wts[3] * CalcValueType( m_ref_data[BuY1][BuX1] ) +
+                             2
+                        ) >> 2;
+                sum += std::abs( temp - m_pic_data[y][x] );
+            }// x
+                
+            if ( sum>=best_costs.total )
+                return;
+
+        }// y
+
+    }
+
+    // Since we've got here, we must have beaten the best cost to date
+
+    best_mv = mv;
+    best_costs.total = sum;
+    best_costs.mvcost = mvcost;
+    best_costs.SAD = sum - start_val;
+}
+
+float BlockDiffEighthPel::Diff(  const BlockDiffParams& dparams , const MVector& mv )
+{
+   //Set up the start point in the reference image by rounding the motion vector
+    //NB: bit shift rounds negative values DOWN, as required
+    const MVector roundvec( mv.x>>2 , mv.y>>2 );
+
+    //Get the remainder after rounding. NB rmdr values always 0,1,2 or 3
+    const MVector rmdr( mv.x & 3 , mv.y & 3 );
+
+    //Where to start in the upconverted image
+    const ImageCoords ref_start( ( dparams.Xp()<<1 ) + roundvec.x ,( dparams.Yp()<<1 ) + roundvec.y );
+    const ImageCoords ref_stop( ref_start.x+(dparams.Xl()<<1) , ref_start.y+(dparams.Yl()<<1));
+
+    ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+    const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
 
     //weights for doing linear interpolation, calculated from the remainder values
-    const ValueType    TLweight((4-rmdr.x)*(4-rmdr.y));
-    const ValueType    TRweight(rmdr.x*(4-rmdr.y));
-    const ValueType    BLweight((4-rmdr.x)*rmdr.y);
-    const ValueType    BRweight(rmdr.x*rmdr.y);    
+    const ValueType linear_wts[4] = {  (4 - rmdr.x) * (4 - rmdr.y),    //tl
+                                       rmdr.x * (4 - rmdr.y),          //tr
+                                       (4 - rmdr.x) * rmdr.y,          //bl
+                                       rmdr.x * rmdr.y };              //br
 
-#if HAVE_MMX
-    if ((EndPos.x - StartPos.x) % 2 == 0) {
-		ValueType weights[4] = {TRweight, TLweight, BRweight, BLweight};
+    bool bounds_check( false );
 
-         return static_cast<float>(bchk_block_diff_up_mmx_2(pic_data, ref_data, StartPos, EndPos, RefStart, weights));
+    if ( ref_start.x<0 || 
+         ref_stop.x >= m_ref_data.LengthX() ||
+         ref_start.y<0 || 
+         ref_stop.y >= m_ref_data.LengthY() )
+        bounds_check = true;
+
+    float sum( 0.0f );
+
+    CalcValueType temp;
+
+    if ( !bounds_check )
+    {
+        ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
+        const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+
+        if( rmdr.x == 0 && rmdr.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    sum += CalcValueType( std::abs( ref_curr[0] - *pic_curr ) );
+                }// x
+            }// y
+        }
+        else if( rmdr.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    temp = ((    linear_wts[0] * CalcValueType( ref_curr[0] ) +
+                                 linear_wts[1] * CalcValueType( ref_curr[1] ) +
+                                 8
+                            ) >> 4);
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+            }// y
+        }
+        else if( rmdr.x == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    temp = ((    linear_wts[0] * CalcValueType( ref_curr[0] ) +
+                                 linear_wts[2] * CalcValueType( ref_curr[m_ref_data.LengthX()+0] ) +
+                                       8
+                                   ) >> 4);
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+            }// y
+        }
+        else
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    temp = ((    linear_wts[0] * CalcValueType( ref_curr[0] ) +
+                                 linear_wts[1] * CalcValueType( ref_curr[1] ) +
+                                 linear_wts[2] * CalcValueType( ref_curr[m_ref_data.LengthX()+0] ) +
+                                 linear_wts[3] * CalcValueType( ref_curr[m_ref_data.LengthX()+1] ) +
+                                 8
+                            ) >> 4);
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+            }// y
+        }
     }
-#endif /* HAVE_MMX */
+    else
+    {
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+       const int refXlen( m_ref_data.LengthX() );
+       const int refYlen( m_ref_data.LengthY() );
 
-    CalcValueType sum( 0 );
+       for(int y = dparams.Yp(), uY = ref_start.y,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen);
+            y < dparams.Yend(); ++y, uY += 2,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen))
+        {
+            for(int x = dparams.Xp(), uX = ref_start.x,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen);
+                x < dparams.Xend(); ++x, uX += 2,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen))
+            {
+    
+                temp = ( linear_wts[0] * CalcValueType( m_ref_data[BuY][BuX] ) +
+                         linear_wts[1] * CalcValueType( m_ref_data[BuY][BuX1] ) +
+                         linear_wts[2] * CalcValueType( m_ref_data[BuY1][BuX] )+
+                         linear_wts[3] * CalcValueType( m_ref_data[BuY1][BuX1] ) +
+                         8
+                        ) >> 4;
+                sum += std::abs( temp - m_pic_data[y][x] );
+            }// x
+        }// y
+
+    }
+
+    return sum;
+}
+
+void BlockDiffEighthPel::Diff( const BlockDiffParams& dparams,
+                                   const MVector& mv ,
+                                   const float mvcost,
+                                   const float lambda,
+                                   MvCostData& best_costs ,
+                                   MVector& best_mv)
+{
+    //Set up the start point in the reference image by rounding the motion vector
+    //NB: bit shift rounds negative values DOWN, as required
+    const MVector roundvec( mv.x>>2 , mv.y>>2 );
+
+    //Get the remainder after rounding. NB rmdr values always 0,1,2 or 3
+    const MVector rmdr( mv.x & 3 , mv.y & 3 );
+
+    //Where to start in the upconverted image
+    const ImageCoords ref_start( ( dparams.Xp()<<1 ) + roundvec.x ,( dparams.Yp()<<1 ) + roundvec.y );
+    const ImageCoords ref_stop( ref_start.x+(dparams.Xl()<<1) , ref_start.y+(dparams.Yl()<<1));
+
+    ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+    const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
+
+    //weights for doing linear interpolation, calculated from the remainder values
+    const ValueType linear_wts[4] = {  (4 - rmdr.x) * (4 - rmdr.y),    //tl
+                                       rmdr.x * (4 - rmdr.y),          //tr
+                                       (4 - rmdr.x) * rmdr.y,          //bl
+                                       rmdr.x * rmdr.y };              //br
+
+    bool bounds_check( false );
+
+    if ( ref_start.x<0 || 
+         ref_stop.x >= m_ref_data.LengthX() ||
+         ref_start.y<0 || 
+         ref_stop.y >= m_ref_data.LengthY() )
+        bounds_check = true;
+
+    const float start_val( mvcost*lambda );
+    float sum( start_val );
+
+    CalcValueType temp;
+
+    if ( !bounds_check )
+    {
+        ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
+        const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+
+        if( rmdr.x == 0 && rmdr.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    sum += CalcValueType( std::abs( ref_curr[0] - *pic_curr ) );
+                }// x
+                
+                if ( sum>=best_costs.total )
+                    return;
+
+            }// y
+        }
+        else if( rmdr.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    temp = ((    linear_wts[0] * CalcValueType( ref_curr[0] ) +
+                                 linear_wts[1] * CalcValueType( ref_curr[1] ) +
+                                 8
+                            ) >> 4);
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+                
+                if ( sum>=best_costs.total )
+                    return;
+
+            }// y
+        }
+        else if( rmdr.x == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    temp = ((    linear_wts[0] * CalcValueType( ref_curr[0] ) +
+                                 linear_wts[2] * CalcValueType( ref_curr[m_ref_data.LengthX()+0] ) +
+                                       8
+                                   ) >> 4);
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+                
+                if ( sum>=best_costs.total )
+                    return;
+
+            }// y
+        }
+        else
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
+                {
+                    temp = ((    linear_wts[0] * CalcValueType( ref_curr[0] ) +
+                                 linear_wts[1] * CalcValueType( ref_curr[1] ) +
+                                 linear_wts[2] * CalcValueType( ref_curr[m_ref_data.LengthX()+0] ) +
+                                 linear_wts[3] * CalcValueType( ref_curr[m_ref_data.LengthX()+1] ) +
+                                 8
+                            ) >> 4);
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+                
+                if ( sum>=best_costs.total )
+                    return;
+
+            }// y
+        }
+    }
+    else
+    {
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+       const int refXlen( m_ref_data.LengthX() );
+       const int refYlen( m_ref_data.LengthY() );
+
+       for(int y = dparams.Yp(), uY = ref_start.y,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen);
+            y < dparams.Yend(); ++y, uY += 2,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen))
+        {
+            for(int x = dparams.Xp(), uX = ref_start.x,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen);
+                x < dparams.Xend(); ++x, uX += 2,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen))
+            {
+    
+                temp = ( linear_wts[0] * CalcValueType( m_ref_data[BuY][BuX] ) +
+                         linear_wts[1] * CalcValueType( m_ref_data[BuY][BuX1] ) +
+                         linear_wts[2] * CalcValueType( m_ref_data[BuY1][BuX] )+
+                         linear_wts[3] * CalcValueType( m_ref_data[BuY1][BuX1] ) +
+                         8
+                        ) >> 4;
+                sum += std::abs( temp - m_pic_data[y][x] );
+            }// x
+                
+            if ( sum>=best_costs.total )
+                return;
+
+        }// y
+
+    }
+
+    // If we've got here we must have done better than the best costs so far
+    best_mv = mv;
+    best_costs.total = sum;
+    best_costs.mvcost = mvcost;
+    best_costs.SAD = sum - start_val;
+}
+
+float BiBlockHalfPel::Diff(  const BlockDiffParams& dparams , 
+                             const MVector& mv1 ,
+                             const MVector& mv2 )
+{
+    // First create a difference array, and subtract the reference 1 data into it
+    TwoDArray<ValueType> diff_array( dparams.Yl() , dparams.Xl() );
+
+    //Where to start in the upconverted images
+    const ImageCoords ref_start1( ( dparams.Xp()<<1 ) + mv1.x ,( dparams.Yp()<<1 ) + mv1.y );
+    const ImageCoords ref_stop1( ref_start1.x+(dparams.Xl()<<1) , ref_start1.y+(dparams.Yl()<<1));
+
+    const ImageCoords ref_start2( ( dparams.Xp()<<1 ) + mv2.x ,( dparams.Yp()<<1 ) + mv2.y );
+    const ImageCoords ref_stop2( ref_start2.x+(dparams.Xl()<<1) , ref_start2.y+(dparams.Yl()<<1));
+
+    ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+    const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
+
+    ValueType* diff_curr = &diff_array[0][0];
+
+    bool bounds_check( false );
+
+    if ( ref_start1.x<0 || 
+         ref_stop1.x >= m_ref_data1.LengthX() ||
+         ref_start1.y<0 || 
+         ref_stop1.y >= m_ref_data1.LengthY() )
+        bounds_check = true;
+
+    if ( !bounds_check )
+    {
+        ValueType *ref_curr = &m_ref_data1[ref_start1.y][ref_start1.x];
+        const int ref_next( (m_ref_data1.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+
+        for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next)
+        {
+            for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+            {
+                *diff_curr = ( (*pic_curr)<<1 ) - *ref_curr;
+
+            }// x
+        }// y
+
+    }
+    else
+    {
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+        for( int y=dparams.Yl(), ry=ref_start1.y, by=BChk(ry,m_ref_data1.LengthY()); 
+             y>0; 
+             --y, pic_curr+=pic_next, ry+=2 , by=BChk(ry,m_ref_data1.LengthY()))
+        {
+             for( int x=dparams.Xl() , rx=ref_start1.x , bx=BChk(rx,m_ref_data1.LengthX()); 
+                  x>0 ; 
+                  --x, ++pic_curr, rx+=2 , ++diff_curr, bx=BChk(rx,m_ref_data1.LengthX()))
+             {
+                 *diff_curr = ( (*pic_curr)<<1 ) - m_ref_data1[by][bx];
+             }// x
+        }// y
+
+    }
+
+    // Now do the other reference
+
+    bounds_check = false;
+
+    if ( ref_start2.x<0 || 
+         ref_stop2.x >= m_ref_data2.LengthX() ||
+         ref_start2.y<0 || 
+         ref_stop2.y >= m_ref_data2.LengthY() )
+        bounds_check = true;
+
+    float sum( 0 );
+
+    diff_curr = &diff_array[0][0];
     ValueType temp;
 
-    for(int c = StartPos.y, uY = RefStart.y; c < EndPos.y; ++c, uY += 2)
+    if ( !bounds_check )
     {
-        for(int l = StartPos.x, uX = RefStart.x; l < EndPos.x; ++l, uX += 2)
+        ValueType *ref_curr = &m_ref_data2[ref_start2.y][ref_start2.x];
+        const int ref_next( (m_ref_data2.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+
+        for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next)
         {
-            temp = (
-                    TLweight * ref_data[BChk(uY,DoubleYdim)][BChk(uX,DoubleXdim)] +
-                    TRweight * ref_data[BChk(uY,DoubleYdim)][BChk(uX+1,DoubleXdim)] +
-                    BLweight * ref_data[BChk(uY+1,DoubleYdim)][BChk(uX,DoubleXdim)] +
-                    BRweight * ref_data[BChk(uY+1,DoubleYdim)][BChk(uX+1,DoubleXdim)] +
-                    8
-                    )>>4;
+            for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+            {
+                temp = (*diff_curr - *ref_curr )>>1;
+                sum += std::abs( temp );
 
-            sum += ( std::abs( pic_data[c][l] - temp ) );
-        }//l
-    }//c    
+            }// x
+        }// y
 
-    return static_cast<float>( sum );
-
-}
-
-float BiSimpleBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& mv1, const MVector& mv2){
-
-    //the start and end points in the current frame
-    const ImageCoords StartPos(dparams.Xp(),dparams.Yp());//Coordinates in the current image
-    const ImageCoords EndPos(StartPos.x+dparams.Xl(),StartPos.y+dparams.Yl());    
-
-    //the motion vectors rounded to 1/2 pel accuracy
-    const MVector roundvec1(mv1.x>>2,mv1.y>>2);
-    const MVector roundvec2(mv2.x>>2,mv2.y>>2);
-
-    //the remainders giving 1/8 pel accuracy    
-    const MVector rmdr1(mv1.x-(roundvec1.x<<2),mv1.y-(roundvec1.y<<2));
-    const MVector rmdr2(mv2.x-(roundvec2.x<<2),mv2.y-(roundvec2.y<<2));
-
-    //the starting points of the reference blocks in the reference images, to 1/2 pel accuracy
-    const ImageCoords RefStart1((StartPos.x<<1) + roundvec1.x,(StartPos.y<<1) + roundvec1.y);
-    const ImageCoords RefStart2((StartPos.x<<1) + roundvec2.x,(StartPos.y<<1) + roundvec2.y);
-
-    //weights for doing linear interpolation, calculated from the remainder values
-    const ValueType    TLweight1((4-rmdr1.x)*(4-rmdr1.y));
-    const ValueType    TRweight1(rmdr1.x*(4-rmdr1.y));
-    const ValueType    BLweight1((4-rmdr1.x)*rmdr1.y);
-    const ValueType    BRweight1(rmdr1.x*rmdr1.y);        
-
-    const ValueType    TLweight2((4-rmdr2.x)*(4-rmdr2.y));
-    const ValueType    TRweight2(rmdr2.x*(4-rmdr2.y));
-    const ValueType    BLweight2((4-rmdr2.x)*rmdr2.y);
-    const ValueType    BRweight2(rmdr2.x*rmdr2.y);        
-
-    CalcValueType temp;
-
-    CalcValueType sum( 0 );
-
-    for(int c = StartPos.y, uY1 = RefStart1.y,uY2=RefStart2.y; c < EndPos.y; ++c, uY1 += 2,uY2 += 2){
-        for(int l = StartPos.x, uX1 = RefStart1.x,uX2=RefStart2.x; l < EndPos.x; ++l, uX1 += 2, uX2 += 2){
-            temp = (
-                    TLweight1 * ref_data1[uY1][uX1] +
-                    TRweight1 * ref_data1[uY1][uX1+1] +
-                    BLweight1 * ref_data1[uY1+1][uX1] +
-                    BRweight1 * ref_data1[uY1+1][uX1+1] +
-                    16
-                    )>>5;
-
-            temp += (
-                    TLweight2 * ref_data2[uY2][uX2] +
-                    TRweight2 * ref_data2[uY2][uX2+1] +
-                    BLweight2 * ref_data2[uY2+1][uX2] +
-                    BRweight2 * ref_data2[uY2+1][uX2+1] +
-                    16
-                    )>>5;
-
-            sum += std::abs( pic_data[c][l] - temp );
-        }//l
-    }//c    
-
-    return static_cast<float>( sum );   
-}
-
-float BiBChkBlockDiffUp::Diff( const BlockDiffParams& dparams, const MVector& mv1, const MVector& mv2)
-{
-    //as above, but with bounds checking
-    const int xmax1 = ref_data1.LengthX(); 
-    const int ymax1 = ref_data1.LengthY();
-    const int xmax2 = ref_data2.LengthX(); 
-    const int ymax2 = ref_data2.LengthY();    
-
-    //the start and end points in the current frame
-    const ImageCoords StartPos(dparams.Xp(),dparams.Yp());//Coordinates in the current image
-    const ImageCoords EndPos(StartPos.x+dparams.Xl(),StartPos.y+dparams.Yl());    
-
-    //the motion vectors rounded to 1/2 pel accuracy
-    const MVector roundvec1(mv1.x>>2,mv1.y>>2);
-    const MVector roundvec2(mv2.x>>2,mv2.y>>2);
-
-    //the remainders giving 1/8 pel accuracy    
-    const MVector rmdr1(mv1.x-(roundvec1.x<<2),mv1.y-(roundvec1.y<<2));
-    const MVector rmdr2(mv2.x-(roundvec2.x<<2),mv2.y-(roundvec2.y<<2));
-
-    //the starting points of the reference blocks in the reference images, to 1/2 pel accuracy
-    const ImageCoords RefStart1((StartPos.x<<1) + roundvec1.x,(StartPos.y<<1) + roundvec1.y);
-    const ImageCoords RefStart2((StartPos.x<<1) + roundvec2.x,(StartPos.y<<1) + roundvec2.y);
-
-    //weights for doing linear interpolation, calculated from the remainder values
-    const ValueType TLweight1((4-rmdr1.x)*(4-rmdr1.y));
-    const ValueType TRweight1(rmdr1.x*(4-rmdr1.y));
-    const ValueType BLweight1((4-rmdr1.x)*rmdr1.y);
-    const ValueType BRweight1(rmdr1.x*rmdr1.y);        
-
-    const ValueType TLweight2((4-rmdr2.x)*(4-rmdr2.y));
-    const ValueType TRweight2(rmdr2.x*(4-rmdr2.y));
-    const ValueType BLweight2((4-rmdr2.x)*rmdr2.y);
-    const ValueType BRweight2(rmdr2.x*rmdr2.y);        
-
-#if HAVE_MMX
-    if ((EndPos.x - StartPos.x) % 2 == 0) {
-		ValueType weights[2][4] = 
-			{{TRweight1, TLweight1, TRweight2, TLweight2},
-			 {BRweight1, BLweight1, BRweight2, BLweight2}};
-         return static_cast<float>(bibchk_block_diff_up_mmx_2(pic_data, ref_data1, ref_data2, StartPos, EndPos, RefStart1, RefStart2, weights));
     }
-#endif /* HAVE_MMX */
-
-    CalcValueType temp;
-    CalcValueType sum( 0 );
-
-    for(int c = StartPos.y, uY1 = RefStart1.y,uY2=RefStart2.y; c < EndPos.y; ++c, uY1 += 2,uY2 += 2)
+    else
     {
-        for(int l = StartPos.x, uX1 = RefStart1.x,uX2=RefStart2.x; l < EndPos.x; ++l, uX1 += 2, uX2 += 2)
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+        for( int y=dparams.Yl(), ry=ref_start2.y, by=BChk(ry,m_ref_data2.LengthY()); 
+             y>0; 
+             --y, pic_curr+=pic_next, ry+=2 , by=BChk(ry,m_ref_data2.LengthY()))
         {
-            temp = (
-                    TLweight1 * ref_data1[BChk(uY1,ymax1)][BChk(uX1,xmax1)] +
-                    TRweight1 * ref_data1[BChk(uY1,ymax1)][BChk(uX1+1,xmax1)] +
-                    BLweight1 * ref_data1[BChk(uY1+1,ymax1)][BChk(uX1,xmax1)] +
-                    BRweight1 * ref_data1[BChk(uY1+1,ymax1)][BChk(uX1+1,xmax1)] +
-                    16)>>5;
+             for( int x=dparams.Xl() , rx=ref_start2.x , bx=BChk(rx,m_ref_data2.LengthX()); 
+                  x>0 ; 
+                  --x, ++pic_curr, rx+=2 , ++diff_curr, bx=BChk(rx,m_ref_data2.LengthX()))
+             {
+                temp = (*diff_curr - m_ref_data2[by][bx] )>>1;
+                sum += std::abs( temp );
+             }// x
+        }// y
 
-            temp += (
-                    TLweight2 * ref_data2[BChk(uY2,ymax2)][BChk(uX2,xmax2)] +
-                    TRweight2 * ref_data2[BChk(uY2,ymax2)][BChk(uX2+1,xmax2)] +
-                    BLweight2 * ref_data2[BChk(uY2+1,ymax2)][BChk(uX2,xmax2)] +
-                    BRweight2 * ref_data2[BChk(uY2+1,ymax2)][BChk(uX2+1,xmax2)]+
-                    16)>>5;
+    }
 
-            sum += std::abs( pic_data[c][l] - temp );
-        }//l
-    }//c
+    return sum;
 
-    return static_cast<float>( sum );
+}
+
+float BiBlockQuarterPel::Diff(  const BlockDiffParams& dparams , 
+                             const MVector& mv1 ,
+                             const MVector& mv2 )
+{
+    // First create a difference array, and subtract the reference 1 data into it
+    TwoDArray<ValueType> diff_array( dparams.Yl() , dparams.Xl() );
+
+   // Set up the start point in the reference images by rounding the motion vectors
+    // to 1/2 pel accuracy.NB: bit shift rounds negative values DOWN, as required
+    const MVector roundvec1 ( mv1.x>>1 , mv1.y>>1 );
+    const MVector roundvec2 ( mv2.x>>1 , mv2.y>>1 );
+
+   //Get the remainders after rounding. NB rmdr values always 0 or 1
+    const MVector rmdr1( mv1.x & 1 , mv1.y & 1 );
+    const MVector rmdr2( mv2.x & 1 , mv2.y & 1 );
+
+    //Where to start in the upconverted images
+    const ImageCoords ref_start1( ( dparams.Xp()<<1 ) + roundvec1.x ,( dparams.Yp()<<1 ) + roundvec1.y );
+    const ImageCoords ref_stop1( ref_start1.x+(dparams.Xl()<<1) , ref_start1.y+(dparams.Yl()<<1));
+
+    const ImageCoords ref_start2( ( dparams.Xp()<<1 ) + roundvec2.x ,( dparams.Yp()<<1 ) + roundvec2.y );
+    const ImageCoords ref_stop2( ref_start2.x+(dparams.Xl()<<1) , ref_start2.y+(dparams.Yl()<<1));
+
+    ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+    const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
+
+    ValueType* diff_curr = &diff_array[0][0];
+
+    bool bounds_check( false );
+
+    if ( ref_start1.x<0 || 
+         ref_stop1.x >= m_ref_data1.LengthX() ||
+         ref_start1.y<0 || 
+         ref_stop1.y >= m_ref_data1.LengthY() )
+        bounds_check = true;
+
+    ValueType temp;
+
+    if ( !bounds_check )
+    {
+        ValueType *ref_curr = &m_ref_data1[ref_start1.y][ref_start1.x];
+        const int ref_next( (m_ref_data1.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+
+
+
+        if( rmdr1.x == 0 && rmdr1.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    *diff_curr = ( (*pic_curr)<<1 ) - *ref_curr;
+                }// x
+            }// y
+        }
+        else if( rmdr1.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[1] ) +
+                                1
+                            ) >> 1;
+
+                    *diff_curr = ( (*pic_curr)<<1 ) - temp;
+                }// x
+            }// y
+        }
+        else if( rmdr1.x == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[m_ref_data1.LengthX()] ) +
+                                1
+                            ) >> 1;
+                  *diff_curr = ( (*pic_curr)<<1 ) - temp;
+                }// x
+            }// y
+        }
+        else
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[1] ) +
+                                CalcValueType( ref_curr[m_ref_data1.LengthX()+0] ) +
+                                CalcValueType( ref_curr[m_ref_data1.LengthX()+1] ) +
+                                2
+                            ) >> 2;
+                  *diff_curr = ( (*pic_curr)<<1 ) - temp;
+                }// x
+            }// y
+        }
+
+
+    }
+    else
+    {
+        const ValueType linear_wts[4] = {  (2 - rmdr1.x) * (2 - rmdr1.y),    //tl
+                                           rmdr1.x * (2 - rmdr1.y),          //tr
+                                           (2 - rmdr1.x) * rmdr1.y,          //bl
+                                           rmdr1.x * rmdr1.y };              //br
+
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+        for( int y=dparams.Yl(), ry=ref_start1.y, by=BChk(ry,m_ref_data1.LengthY()), by1=BChk(ry+1,m_ref_data1.LengthY()); 
+             y>0; 
+             --y, pic_curr+=pic_next, ry+=2 , by=BChk(ry,m_ref_data1.LengthY()), by1=BChk(ry+1,m_ref_data1.LengthY()) )
+        {
+             for( int x=dparams.Xl() , rx=ref_start1.x , bx=BChk(rx,m_ref_data1.LengthX()), bx1=BChk(rx+1,m_ref_data1.LengthX()); 
+                  x>0 ; 
+                  --x, ++pic_curr, rx+=2 , ++diff_curr, bx=BChk(rx,m_ref_data1.LengthX()), bx1=BChk(rx+1,m_ref_data1.LengthX()))
+             {
+                temp = (     linear_wts[0] * CalcValueType( m_ref_data1[by][bx] ) +
+                             linear_wts[1] * CalcValueType( m_ref_data1[by][bx1] ) +
+                             linear_wts[2] * CalcValueType( m_ref_data1[by1][bx] )+
+                             linear_wts[3] * CalcValueType( m_ref_data1[by1][bx1] ) +
+                             2
+                        ) >> 2;
+                 *diff_curr = ( (*pic_curr)<<1 ) - temp;
+             }// x
+        }// y
+    }
+
+    // Now do the other reference
+
+    bounds_check = false;
+
+    if ( ref_start2.x<0 || 
+         ref_stop2.x >= m_ref_data2.LengthX() ||
+         ref_start2.y<0 || 
+         ref_stop2.y >= m_ref_data2.LengthY() )
+        bounds_check = true;
+
+    float sum( 0 );
+
+    diff_curr = &diff_array[0][0];
+
+    if ( !bounds_check )
+    {
+        ValueType *ref_curr = &m_ref_data2[ref_start2.y][ref_start2.x];
+        const int ref_next( (m_ref_data2.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+
+
+
+        if( rmdr2.x == 0 && rmdr2.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    sum += std::abs( (*diff_curr - *ref_curr)>>1 );
+                }// x
+            }// y
+        }
+        else if( rmdr2.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[1] ) +
+                                1
+                            ) >> 1;
+
+                    sum += std::abs( (*diff_curr - temp)>>1 );
+                }// x
+            }// y
+        }
+        else if( rmdr2.x == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[m_ref_data2.LengthX()] ) +
+                                1
+                            ) >> 1;
+                    sum += std::abs( (*diff_curr - temp)>>1 );
+                }// x
+            }// y
+        }
+        else
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[1] ) +
+                                CalcValueType( ref_curr[m_ref_data2.LengthX()+0] ) +
+                                CalcValueType( ref_curr[m_ref_data2.LengthX()+1] ) +
+                                2
+                            ) >> 2;
+                    sum += std::abs( (*diff_curr - temp)>>1 );
+                }// x
+            }// y
+        }
+
+    }
+    else
+    {
+        const ValueType linear_wts[4] = {  (2 - rmdr2.x) * (2 - rmdr2.y),    //tl
+                                           rmdr2.x * (2 - rmdr2.y),          //tr
+                                           (2 - rmdr2.x) * rmdr2.y,          //bl
+                                           rmdr2.x * rmdr2.y };              //br
+
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+        for( int y=dparams.Yl(), ry=ref_start1.y, by=BChk(ry,m_ref_data2.LengthY()),by1=BChk(ry+1,m_ref_data2.LengthY()); 
+             y>0; 
+             --y, pic_curr+=pic_next, ry+=2 , by=BChk(ry,m_ref_data2.LengthY()),by1=BChk(ry+1,m_ref_data2.LengthY()))
+        {
+             for( int x=dparams.Xl() , rx=ref_start1.x , bx=BChk(rx,m_ref_data2.LengthX()), bx1=BChk(rx+1,m_ref_data2.LengthX()); 
+                  x>0 ; 
+                  --x, ++pic_curr, rx+=2 , ++diff_curr, bx=BChk(rx,m_ref_data2.LengthX()), bx1=BChk(rx+1,m_ref_data2.LengthX()))
+             {
+                temp = (     linear_wts[0] * CalcValueType( m_ref_data2[by][bx] ) +
+                             linear_wts[1] * CalcValueType( m_ref_data2[by][bx1] ) +
+                             linear_wts[2] * CalcValueType( m_ref_data2[by1][bx] )+
+                             linear_wts[3] * CalcValueType( m_ref_data2[by1][bx1] ) +
+                             2
+                        ) >> 2;
+                sum += std::abs( (*diff_curr - temp)>>1 );
+             }// x
+        }// y
+    }
+
+    return sum;
+
+}
+
+float BiBlockEighthPel::Diff(  const BlockDiffParams& dparams , 
+                             const MVector& mv1 ,
+                             const MVector& mv2 )
+{
+
+    // First create a difference array, and subtract the reference 1 data into it
+    TwoDArray<ValueType> diff_array( dparams.Yl() , dparams.Xl() );
+
+   // Set up the start point in the reference images by rounding the motion vectors
+    // to 1/2 pel accuracy.NB: bit shift rounds negative values DOWN, as required
+    const MVector roundvec1 ( mv1.x>>2 , mv1.y>>2 );
+    const MVector roundvec2 ( mv2.x>>2 , mv2.y>>2 );
+
+   //Get the remainders after rounding. NB rmdr values always 0-3
+    const MVector rmdr1( mv1.x & 3 , mv1.y & 3 );
+    const MVector rmdr2( mv2.x & 3 , mv2.y & 3 );
+
+    //weights for doing linear interpolation, calculated from the remainder values
+    const ValueType linear_wts1[4] = {  (4 - rmdr1.x) * (4 - rmdr1.y),    //tl
+                                       rmdr1.x * (4 - rmdr1.y),          //tr
+                                       (4 - rmdr1.x) * rmdr1.y,          //bl
+                                       rmdr1.x * rmdr1.y };              //br
+    const ValueType linear_wts2[4] = {  (4 - rmdr2.x) * (4 - rmdr2.y),    //tl
+                                       rmdr2.x * (4 - rmdr2.y),          //tr
+                                       (4 - rmdr2.x) * rmdr2.y,          //bl
+                                       rmdr2.x * rmdr2.y };              //br
+
+    //Where to start in the upconverted images
+    const ImageCoords ref_start1( ( dparams.Xp()<<1 ) + roundvec1.x ,( dparams.Yp()<<1 ) + roundvec1.y );
+    const ImageCoords ref_stop1( ref_start1.x+(dparams.Xl()<<1) , ref_start1.y+(dparams.Yl()<<1));
+
+    const ImageCoords ref_start2( ( dparams.Xp()<<1 ) + roundvec2.x ,( dparams.Yp()<<1 ) + roundvec2.y );
+    const ImageCoords ref_stop2( ref_start2.x+(dparams.Xl()<<1) , ref_start2.y+(dparams.Yl()<<1));
+
+    ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+    const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
+
+    ValueType* diff_curr = &diff_array[0][0];
+
+    bool bounds_check( false );
+
+    if ( ref_start1.x<0 || 
+         ref_stop1.x >= m_ref_data1.LengthX() ||
+         ref_start1.y<0 || 
+         ref_stop1.y >= m_ref_data1.LengthY() )
+        bounds_check = true;
+
+    ValueType temp;
+
+    if ( !bounds_check )
+    {
+        ValueType *ref_curr = &m_ref_data1[ref_start1.y][ref_start1.x];
+        const int ref_next( (m_ref_data1.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+
+        if( rmdr1.x == 0 && rmdr1.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    *diff_curr = ( (*pic_curr)<<1 ) - *ref_curr;
+                }// x
+            }// y
+        }
+        else if( rmdr1.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    temp = ((    linear_wts1[0] * CalcValueType( ref_curr[0] ) +
+                                 linear_wts1[1] * CalcValueType( ref_curr[1] ) +
+                                 8
+                            ) >> 4);
+
+                    *diff_curr = ( (*pic_curr)<<1 ) - temp;
+                }// x
+            }// y
+        }
+        else if( rmdr1.x == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    temp = ((    linear_wts1[0] * CalcValueType( ref_curr[0] ) +
+                                 linear_wts1[2] * CalcValueType( ref_curr[m_ref_data1.LengthX()+0] ) +
+                                       8
+                                   ) >> 4);
+
+                    *diff_curr = ( (*pic_curr)<<1 ) - temp;
+                }// x
+            }// y
+        }
+        else
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    temp = ((    linear_wts1[0] * CalcValueType( ref_curr[0] ) +
+                                 linear_wts1[1] * CalcValueType( ref_curr[1] ) +
+                                 linear_wts1[2] * CalcValueType( ref_curr[m_ref_data1.LengthX()+0] ) +
+                                 linear_wts1[3] * CalcValueType( ref_curr[m_ref_data1.LengthX()+1] ) +
+                                 8
+                            ) >> 4);
+                  *diff_curr = ( (*pic_curr)<<1 ) - temp;
+                }// x
+            }// y
+        }
+
+
+    }
+    else
+    {
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+        for( int y=dparams.Yl(), ry=ref_start1.y, by=BChk(ry,m_ref_data1.LengthY()), by1=BChk(ry+1,m_ref_data1.LengthY()); 
+             y>0; 
+             --y, pic_curr+=pic_next, ry+=2 , by=BChk(ry,m_ref_data1.LengthY()), by1=BChk(ry+1,m_ref_data1.LengthY()) )
+        {
+             for( int x=dparams.Xl() , rx=ref_start1.x , bx=BChk(rx,m_ref_data1.LengthX()), bx1=BChk(rx+1,m_ref_data1.LengthX()); 
+                  x>0 ; 
+                  --x, ++pic_curr, rx+=2 , ++diff_curr, bx=BChk(rx,m_ref_data1.LengthX()), bx1=BChk(rx+1,m_ref_data1.LengthX()))
+             {
+                temp = (     linear_wts1[0] * CalcValueType( m_ref_data1[by][bx] ) +
+                             linear_wts1[1] * CalcValueType( m_ref_data1[by][bx1] ) +
+                             linear_wts1[2] * CalcValueType( m_ref_data1[by1][bx] )+
+                             linear_wts1[3] * CalcValueType( m_ref_data1[by1][bx1] ) +
+                             8
+                        ) >> 4;
+                 *diff_curr = ( (*pic_curr)<<1 ) - temp;
+             }// x
+        }// y
+    }
+
+    // Now do the other reference
+
+    bounds_check = false;
+
+    if ( ref_start2.x<0 || 
+         ref_stop2.x >= m_ref_data2.LengthX() ||
+         ref_start2.y<0 || 
+         ref_stop2.y >= m_ref_data2.LengthY() )
+        bounds_check = true;
+
+    float sum( 0 );
+
+    diff_curr = &diff_array[0][0];
+
+    if ( !bounds_check )
+    {
+        ValueType *ref_curr = &m_ref_data2[ref_start2.y][ref_start2.x];
+        const int ref_next( (m_ref_data2.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+
+        if( rmdr2.x == 0 && rmdr2.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    sum += std::abs( (*diff_curr - *ref_curr)>>1 );
+                }// x
+            }// y
+        }
+        else if( rmdr2.y == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    temp = ((    linear_wts2[0] * CalcValueType( ref_curr[0] ) +
+                                 linear_wts2[1] * CalcValueType( ref_curr[1] ) +
+                                 8
+                            ) >> 4);
+
+                    sum += std::abs( (*diff_curr - temp)>>1 );
+                }// x
+            }// y
+        }
+        else if( rmdr2.x == 0 )
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    temp = ((    linear_wts2[0] * CalcValueType( ref_curr[0] ) +
+                                 linear_wts2[2] * CalcValueType( ref_curr[m_ref_data2.LengthX()+0] ) +
+                                       8
+                                   ) >> 4);
+
+                    sum += std::abs( (*diff_curr - temp)>>1 );
+                }// x
+            }// y
+        }
+        else
+        {
+            for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2, ++diff_curr )
+                {
+                    temp = ((    linear_wts2[0] * CalcValueType( ref_curr[0] ) +
+                                 linear_wts2[1] * CalcValueType( ref_curr[1] ) +
+                                 linear_wts2[2] * CalcValueType( ref_curr[m_ref_data2.LengthX()+0] ) +
+                                 linear_wts2[3] * CalcValueType( ref_curr[m_ref_data2.LengthX()+1] ) +
+                                 8
+                            ) >> 4);
+                    sum += std::abs( (*diff_curr - temp)>>1 );
+                }// x
+            }// y
+        }
+
+    }
+    else
+    {
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+        for( int y=dparams.Yl(), ry=ref_start1.y, by=BChk(ry,m_ref_data2.LengthY()),by1=BChk(ry+1,m_ref_data2.LengthY()); 
+             y>0; 
+             --y, pic_curr+=pic_next, ry+=2 , by=BChk(ry,m_ref_data2.LengthY()),by1=BChk(ry+1,m_ref_data2.LengthY()))
+        {
+             for( int x=dparams.Xl() , rx=ref_start1.x , bx=BChk(rx,m_ref_data2.LengthX()), bx1=BChk(rx+1,m_ref_data2.LengthX()); 
+                  x>0 ; 
+                  --x, ++pic_curr, rx+=2 , ++diff_curr, bx=BChk(rx,m_ref_data2.LengthX()), bx1=BChk(rx+1,m_ref_data2.LengthX()))
+             {
+                temp = (     linear_wts2[0] * CalcValueType( m_ref_data2[by][bx] ) +
+                             linear_wts2[1] * CalcValueType( m_ref_data2[by][bx1] ) +
+                             linear_wts2[2] * CalcValueType( m_ref_data2[by1][bx] )+
+                             linear_wts2[3] * CalcValueType( m_ref_data2[by1][bx1] ) +
+                             8
+                        ) >> 4;
+                sum += std::abs( (*diff_curr - temp)>>1 );
+             }// x
+        }// y
+    }
+
+    return sum;
+
 }
