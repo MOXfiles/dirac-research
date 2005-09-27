@@ -442,6 +442,7 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     TEST (enc_ctx != NULL);
     OLBParams bparams(12, 12, 8, 8);
 
+    m_encparams.SetLocalDecode(enc_ctx->decode_flag);
     m_encparams.SetQf(enc_ctx->enc_params.qf);
     m_encparams.SetLossless(enc_ctx->enc_params.lossless);
     m_encparams.SetL1Sep(enc_ctx->enc_params.L1_sep);
