@@ -35,6 +35,7 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
+#include <libdirac_common/dirac_assertions.h>
 #include <libdirac_motionest/me_utils_mmx.h>
 
 #if defined HAVE_MMX
@@ -42,37 +43,39 @@ using namespace dirac;
 
 namespace dirac
 {
-    union u_sum
+    typedef union 
     {
         int  i[2];
+        short  h[4];
         __m64 m;
-    } u_sum;
+    } u_mmx_val;
 
     CalcValueType simple_block_diff_mmx_4 ( 
             const BlockDiffParams& dparams, const MVector& mv, 
-            const PicArray& pic_data, const PicArray& ref_data)
+            const PicArray& pic_data, const PicArray& ref_data,
+			CalcValueType i_best_sum)
     {
-        __m64 sum = _mm_set_pi32(0, 0);
+		u_mmx_val u_sum;
 
+		u_sum.i[0] = u_sum.i[1] = 0;
 
         ValueType *src = &(pic_data[dparams.Yp()][dparams.Xp()]);
         ValueType *refd = &(ref_data[dparams.Yp()+mv.y][dparams.Xp()+mv.x]);
 
         int height = dparams.Yl();
         int width = dparams.Xl();
-        int ext_width = width + (width&2);
-        int pic_next = (pic_data.LengthX() - ext_width);
-        int ref_next = (ref_data.LengthX() - ext_width);
-        while (height--)
+        int stopX = (width>>2)<<2;
+        int pic_next = (pic_data.LengthX() - width);
+        int ref_next = (ref_data.LengthX() - width);
+		CalcValueType mop_sum = 0;
+        for (int j = 0; j < height; j++)
         {
-            for (int i = 0; i < ext_width; i+=4) 
+            for (int i = 0; i < stopX; i+=4) 
             {
-                __m64 pic = *(__m64 *)src;
-                __m64 ref = *(__m64 *)refd;
                 // pic - ref
-                pic = _mm_sub_pi16 (pic, ref);
+                __m64 pic = _mm_sub_pi16 (*(__m64 *)src, *(__m64 *)refd);
                 // abs (pic - ref)
-                ref = _mm_srai_pi16(pic, 15);
+                __m64 ref = _mm_srai_pi16(pic, 15);
                 pic = _mm_xor_si64(pic, ref);
                 pic = _mm_sub_pi16 (pic, ref);
                 // sum += abs(pic -ref)
@@ -80,253 +83,1051 @@ namespace dirac
                 ref = _mm_unpackhi_pi16(pic, ref);
                 pic = _mm_unpacklo_pi16(pic, pic);
                 pic = _mm_srai_pi32 (pic, 16);
-                if ( (i + 4) <= width)
-                {
-                    pic = _mm_add_pi32 (pic, ref);
-                }
-                sum = _mm_add_pi32 (sum, pic);
+                pic = _mm_add_pi32 (pic, ref);
+                u_sum.m = _mm_add_pi32 (u_sum.m, pic);
                 src += 4;
                 refd += 4;
             }
+			for (int i = stopX; i < width; i++)
+			{
+				mop_sum += std::abs(*src - *refd);
+				src++;
+				refd++;
+			}
+			if ((u_sum.i[0] + u_sum.i[1] + mop_sum) >= i_best_sum)
+			{
+				_mm_empty();
+				return i_best_sum;
+			}
             src += pic_next;
             refd += ref_next;
         }
-        u_sum.m = sum;
         _mm_empty();
 
-        return u_sum.i[0] + u_sum.i[1];
+        return  u_sum.i[0] + u_sum.i[1] + mop_sum;
     }
 
 
-    CalcValueType simple_block_diff_up_mmx_4(
+    CalcValueType simple_intra_block_diff_mmx_4 ( 
+            const BlockDiffParams& dparams, 
+            const PicArray& pic_data, ValueType &dc_val)
+    {
+		__m64 tmp = _mm_set_pi16(0, 0, 0, 0);
+		u_mmx_val u_sum;
+		u_sum.i[0] = u_sum.i[1] = 0;
+
+        ValueType *src = &(pic_data[dparams.Yp()][dparams.Xp()]);
+
+        int height = dparams.Yl();
+        int width = dparams.Xl();
+        int stopX = (width>>2)<<2;
+        int pic_next = (pic_data.LengthX() - width);
+		CalcValueType mop_sum = 0;
+        for (int j = 0; j < height; j++)
+        {
+            for (int i = 0; i < stopX; i+=4) 
+            {
+                __m64 pic = *(__m64 *)src;
+                // sum += (pic)
+                tmp = _mm_xor_si64(tmp, tmp);
+                tmp = _mm_unpackhi_pi16(pic, tmp);
+                pic = _mm_unpacklo_pi16(pic, pic);
+                pic = _mm_srai_pi32 (pic, 16);
+                pic = _mm_add_pi32 (pic, tmp);
+                u_sum.m = _mm_add_pi32 (u_sum.m, pic);
+                src += 4;
+            }
+			// Mop up
+			for (int i = stopX; i < width; ++i)
+			{
+				mop_sum += *src;
+				src++;
+			}
+            src += pic_next;
+        }
+
+        CalcValueType int_dc =  (u_sum.i[0] + u_sum.i[1] + mop_sum)/(width*height);
+
+		// Just give dc to 8-bit accuracy
+		dc_val = static_cast<ValueType>( (int_dc+2)>>2 );
+
+		// Now compute the resulting SAD
+		__m64 dc = _mm_set_pi16 ( dc_val<<2, dc_val <<2 , dc_val <<2 , dc_val <<2 );
+		u_sum.m = _mm_xor_si64(u_sum.m, u_sum.m); // initialise sum to 0
+		mop_sum = 0;
+        
+		src = &(pic_data[dparams.Yp()][dparams.Xp()]);
+		for (int j = 0; j < height; ++j)
+		{
+			for (int i = 0; i < stopX; i+=4)
+			{
+				__m64 pic = *(__m64 *)src;
+				// pic - dc
+				pic = _mm_sub_pi16 (pic, dc);
+				// abs (pic - dc)
+				tmp = _mm_srai_pi16(pic, 15);
+				pic = _mm_xor_si64(pic, tmp);
+				pic = _mm_sub_pi16 (pic, tmp);
+				// sum += abs(pic -dc)
+				tmp = _mm_xor_si64(tmp, tmp);
+				tmp = _mm_unpackhi_pi16(pic, tmp);
+            	pic = _mm_unpacklo_pi16(pic, pic);
+            	pic = _mm_srai_pi32 (pic, 16);
+                pic = _mm_add_pi32 (pic, tmp);
+            	u_sum.m = _mm_add_pi32 (u_sum.m, pic);
+            	src += 4;
+			}
+			// Mop up
+			for (int i = stopX; i < width; ++i)
+			{
+				mop_sum += std::abs(*src - (dc_val<<2));
+				src++;
+			}
+			src += pic_next;
+		}
+		CalcValueType intra_cost = u_sum.i[0] + u_sum.i[1] + mop_sum;
+		_mm_empty();
+
+    	return intra_cost;
+
+    }
+
+    /* 
+	* NOTE: we are not doing any bounds checks here. This function must
+	* be invoked only when the reference images start and stop fall
+	* withing bounds
+	*/
+    float simple_block_diff_up_mmx_4(
             const PicArray& pic_data, const PicArray& ref_data, 
             const ImageCoords& start_pos, const ImageCoords& end_pos, 
-            const ImageCoords &ref_start, const ValueType weights[4])
+            const ImageCoords& ref_start, const ImageCoords& ref_stop,
+			const MVector& rmdr, float cost_so_far, 
+			float best_total_cost_so_far)
     {
-        ValueType *pic = &pic_data[start_pos.y][start_pos.x];
-        ValueType *ref_up = &ref_data[ref_start.y][ref_start.x];
+        ValueType *pic_curr = &pic_data[start_pos.y][start_pos.x];
+        ValueType *ref_curr = &ref_data[ref_start.y][ref_start.x];
 
         const int width = end_pos.x - start_pos.x;
         int height = end_pos.y - start_pos.y;
-        const int refup_stride = ref_data.LengthX();
+        const int ref_stride = ref_data.LengthX();
 
         // go down a row and back up
         const int pic_next = pic_data.LengthX() - width;
         // go down 2 rows and back up
-        const int refup_next = ref_data.LengthX()*2 - width*2;
+        const int ref_next = ref_data.LengthX()*2 - width*2;
 
-        __m64 sum = _mm_set_pi32(0, 0);
-        __m64 eight = _mm_set_pi32(8, 8);
+		TESTM (ref_start.x>=0 && ref_stop.x < ref_data.LengthX() &&
+				ref_start.y>=0 && ref_stop.y < ref_data.LengthY(), 
+				"Reference image coordinates withing bounds");
 
-        __m64 weights1 = _mm_set_pi16(weights[0], weights[1], weights[0], weights[1]);
-        __m64 weights2 = _mm_set_pi16(weights[2], weights[3], weights[2], weights[3]);
-
-
-        while ( height--)
-        {
-            int count = width >>1; // handle 2 pic_data values at a time
-            while (count--)
+		CalcValueType sum = 0;
+		CalcValueType mop_sum(0);
+		int stopX = (width>>2)<<2;
+		__m64 m_sum = _mm_set_pi16(0, 0, 0, 0);
+		u_mmx_val u_sum;
+		if (rmdr.x == 0 && rmdr.y == 0 )
+		{
+			//std::cerr << "Inmmx routine rmdr.x = rmdr.y = 0" << std::endl;
+#if 1
+			for( int y=0; y < height; y++, pic_curr+=pic_next, ref_curr+=ref_next )
+			{
+				m_sum = _mm_xor_si64 (m_sum, m_sum);
+				mop_sum= 0;
+				for( int x=0; x < stopX; x+=4, pic_curr+=4, ref_curr+=8 )
+				{
+					__m64 pic = *(__m64 *)pic_curr;
+					__m64 ref = _mm_unpacklo_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					__m64 ref2 = _mm_unpackhi_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					ref = _mm_unpacklo_pi16 ( ref, ref2);
+					// ref - pic
+            		pic = _mm_sub_pi16 (pic, ref);
+            		// abs (ref - pic)
+            		ref = _mm_srai_pi16(pic, 15);
+            		pic = _mm_xor_si64(pic, ref);
+            		pic = _mm_sub_pi16 (pic, ref);
+            		// sum += abs(ref -pic)
+					/** 
+					* Since we are re-initialising m_sum with every loop
+					* maybe we don't need the following since overflow may
+					* not occur
+            		ref = _mm_xor_si64(ref, ref);
+            		ref = _mm_unpackhi_pi16(pic, ref);
+            		pic = _mm_unpacklo_pi16(pic, pic);
+            		pic = _mm_srai_pi32 (pic, 16);
+            		pic = _mm_add_pi32 (pic, ref);
+            		m_sum = _mm_add_pi32 (m_sum, pic);
+					**/
+            		m_sum = _mm_add_pi16 (m_sum, pic);
+				}
+				// mopup;
+				for (int x = stopX; x < width; ++x, ++pic_curr,ref_curr+=2)
+				{
+					mop_sum += std::abs (*ref_curr - *pic_curr);
+				}
+				u_sum.m = m_sum;
+				//sum += (u_sum.i[0] + u_sum.i[1] + mop_sum);
+				sum += (u_sum.h[0] + u_sum.h[1] + u_sum.h[2] + u_sum.h[3] + mop_sum);
+				_mm_empty();
+				if ((sum + cost_so_far )>= best_total_cost_so_far)
+				{
+					return best_total_cost_so_far;
+				}
+			}
+			_mm_empty();
+			return sum + cost_so_far;
+#else
+			float sum = cost_so_far;
+            for( int y=0; y < height; ++y, pic_curr+=pic_next, ref_curr+=ref_next )
             {
-                __m64 ref1 = *(__m64 *)(ref_up);
-                __m64 ref2 = *(__m64 *)(ref_up+refup_stride);
-                // multiply by weights
-                ref1 = _mm_madd_pi16 (ref1, weights1);
-                // multiply by weights
-                ref2 = _mm_madd_pi16 (ref2, weights2);
-                // temp wo +8 or shr 4
-                ref1 = _mm_add_pi32 (ref1, ref2);
-                // add eight to temp
-                ref1 = _mm_add_pi32 (ref1, eight);
-                // shift temp >>4
-                ref1 = _mm_srai_pi32 (ref1, 4);
+                for( int x=0; x < width; ++x, ++pic_curr, ref_curr+=2 )
+                {
+                    sum += std::abs( *ref_curr - *pic_curr );
+                }// x
                 
-                // load pic_data into ref2
-                ref2 = _mm_xor_si64(ref2, ref2);
-                ref2 = _mm_unpacklo_pi16 (*(__m64 *)pic, ref2);
-                // pic_data - temp
-                ref1 =_mm_sub_pi32 (ref1, ref2);
-                // abs (pic_data - temp)
-                ref2 = _mm_srai_pi32(ref1, 31);
-                ref1 = _mm_xor_si64 (ref1, ref2);
-                ref1 = _mm_sub_pi32 (ref1, ref2);
-                // sum += abs(pic_data - temp)
-                sum = _mm_add_pi32 (sum, ref1);
+                if ( sum>= best_total_cost_so_far)
+                    return best_total_cost_so_far;
 
-                ref_up +=4;
-                pic += 2;
-            }
-            ref_up += refup_next;
-            pic += pic_next;
+            }// y
+			return sum;
+#endif
+
+		}
+		else if( rmdr.y == 0 )
+        {
+#if 1
+			__m64 m_one = _mm_set_pi16(1, 1, 1, 1);
+			for( int y=0; y < height; y++, pic_curr+=pic_next, ref_curr+=ref_next )
+			{
+				m_sum = _mm_xor_si64 (m_sum, m_sum);
+				mop_sum= 0;
+				for( int x=0; x < stopX; x+=4, pic_curr+=4, ref_curr+=8 )
+				{
+					// Load ref
+					__m64 m1 = _mm_unpacklo_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					__m64 m2 = _mm_unpackhi_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					// m3 = words 0 2 4 6 of ref_curr
+					__m64 m3 = _mm_unpacklo_pi16 ( m1, m2);
+					// m2 = words 1 3 5 7 of ref_curr
+					m2 = _mm_unpackhi_pi16 ( m1, m2);
+					// (ref_curr[0] + ref_curr[1] + 1)>>1
+					m3 = _mm_add_pi16 (m3, m2);
+					m3 = _mm_add_pi16 (m3, m_one);
+					m3 = _mm_srai_pi16 (m3, 1);
+					// ref - pic
+            		m1 = _mm_sub_pi16 (*(__m64 *)pic_curr, m3);
+            		// abs (ref - pic)
+            		m3 = _mm_srai_pi16(m1, 15);
+            		m1 = _mm_xor_si64(m1, m3);
+            		m1 = _mm_sub_pi16 (m1, m3);
+            		// sum += abs(ref -pic)
+					/** 
+					* Since we are re-initialising m_sum with every loop
+					* maybe we don't need the following since overflow may
+					* not occur
+            		ref = _mm_xor_si64(ref, ref);
+            		ref = _mm_unpackhi_pi16(pic, ref);
+            		pic = _mm_unpacklo_pi16(pic, pic);
+            		pic = _mm_srai_pi32 (pic, 16);
+            		pic = _mm_add_pi32 (pic, ref);
+            		m_sum = _mm_add_pi32 (m_sum, pic);
+					**/
+            		m_sum = _mm_add_pi16 (m_sum, m1);
+				}
+				// mopup;
+				for (int x = stopX; x < width; ++x, ++pic_curr,ref_curr+=2)
+				{
+					CalcValueType temp = (ref_curr[0] + ref_curr[1]+1)>>1;
+					mop_sum += std::abs (temp - *pic_curr);
+				}
+				u_sum.m = m_sum;
+				//sum += (u_sum.i[0] + u_sum.i[1] + mop_sum);
+				sum += (u_sum.h[0] + u_sum.h[1] + u_sum.h[2] + u_sum.h[3] + mop_sum);
+				_mm_empty();
+				if ((sum + cost_so_far )>= best_total_cost_so_far)
+				{
+					return best_total_cost_so_far;
+				}
+			}
+			_mm_empty();
+			return sum + cost_so_far;
+#else
+			//std::cerr << "Inmmx routine rmdr.y == 0" << std::endl;
+			CalcValueType sum(0);
+            for( int y=0; y < height; ++y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=0; x < width; ++x, ++pic_curr, ref_curr+=2 )
+                {
+                    CalcValueType temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[1] ) +
+                                1
+                            ) >> 1;
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+                
+                if ( (sum+cost_so_far)>=best_total_cost_so_far)
+                    return best_total_cost_so_far;
+
+            }// y
+			return sum+cost_so_far;
+#endif
         }
+		else if( rmdr.x == 0 )
+        {
+#if 1
+			__m64 m_one = _mm_set_pi16(1, 1, 1, 1);
+			for( int y=0; y < height; y++, pic_curr+=pic_next, ref_curr+=ref_next )
+			{
+				m_sum = _mm_xor_si64 (m_sum, m_sum);
+				mop_sum= 0;
+				for( int x=0; x < stopX; x+=4, pic_curr+=4, ref_curr+=8 )
+				{
+					// Load ref
+					__m64 m1 = _mm_unpacklo_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					__m64 m2 = _mm_unpackhi_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					// m1 = words 0 2 4 6 of ref_curr
+					m1 = _mm_unpacklo_pi16 ( m1, m2);
+					// m2 = words 0 2 4 6 of ref_curr+ref_stride
+					m2 = _mm_unpacklo_pi16 (*(__m64 *)(ref_curr+ref_stride), *(__m64 *)(ref_curr+ref_stride+4));
+					__m64 m3 = _mm_unpackhi_pi16 (*(__m64 *)(ref_curr+ref_stride), *(__m64 *)(ref_curr+ref_stride+4));
+					m2 = _mm_unpacklo_pi16 (m2, m3);
+					
+					// (ref_curr[0] + ref_curr[ref_stride] + 1)>>1
+					m1 = _mm_add_pi16 (m1, m2);
+					m1 = _mm_add_pi16 (m1, m_one);
+					m1 = _mm_srai_pi16 (m1, 1);
+					// ref - pic
+            		m1 = _mm_sub_pi16 (*(__m64 *)pic_curr, m1);
+            		// abs (ref - pic)
+            		m3 = _mm_srai_pi16(m1, 15);
+            		m1 = _mm_xor_si64(m1, m3);
+            		m1 = _mm_sub_pi16 (m1, m3);
+            		// sum += abs(ref -pic)
+            		m_sum = _mm_add_pi16 (m_sum, m1);
+				}
+				// mopup;
+				for (int x = stopX; x < width; ++x, ++pic_curr,ref_curr+=2)
+				{
+					CalcValueType temp = (ref_curr[0] + ref_curr[ref_stride]+1)>>1;
+					mop_sum += std::abs (temp - *pic_curr);
+				}
+				u_sum.m = m_sum;
+				//sum += (u_sum.i[0] + u_sum.i[1] + mop_sum);
+				sum += (u_sum.h[0] + u_sum.h[1] + u_sum.h[2] + u_sum.h[3] + mop_sum);
+				_mm_empty();
+				if ((sum + cost_so_far )>= best_total_cost_so_far)
+				{
+					return best_total_cost_so_far;
+				}
+			}
+			_mm_empty();
+			return sum + cost_so_far;
+#else
+			CalcValueType sum(0);
+            for( int y=0; y < height; ++y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=0; x < width; ++x, ++pic_curr, ref_curr+=2 )
+                {
+					CalcValueType temp = (ref_curr[0] + ref_curr[ref_stride]+1)>>1;
+					sum += std::abs (temp - *pic_curr);
+                }// x
+                
+                if ( (sum+cost_so_far)>=best_total_cost_so_far)
+                    return best_total_cost_so_far;
 
-        u_sum.m = sum;
-        _mm_empty();
+            }// y
+			return sum+cost_so_far;
+#endif
+        }
+		else
+        {
+#if 1
+			__m64 m_two = _mm_set_pi32(2, 2);
+			__m64 m_one = _mm_set_pi16(1, 1, 1, 1);
+			// processing four pic_data values at a time
+			for( int y=0; y < height; y++, pic_curr+=pic_next, ref_curr+=ref_next )
+			{
+				m_sum = _mm_xor_si64 (m_sum, m_sum);
+				mop_sum= 0;
+				for( int x=0; x < stopX; x+=4, pic_curr+=4, ref_curr+=8 )
+				{
+					// Load ref
+					// m1 = words 0 1 2 3 of line 0 ref_curr
+					__m64 m1 = *(__m64 *)ref_curr;
+					// m1 = words 0 1 2 3 of line 1 of ref_curr
+					__m64 m2 = *(__m64 *)(ref_curr+ref_stride);
+					// (ref_curr[0] + ref_curr[1] + 
+					// ref_curr[ref_stride] + ref_curr[ref_stride+1] + 2) >>2
+					m1 = _mm_add_pi16 (m1, m2);
+					m1 = _mm_madd_pi16 (m1, m_one);
+					m1 = _mm_add_pi32 (m1, m_two);
+					m1 = _mm_srai_pi32 (m1, 2);
 
-        return u_sum.i[0] + u_sum.i[1];
+
+					// m2 = words 4 5 6 7 of line 0 ref_curr
+					__m64 m3 = *(__m64 *)(ref_curr+4);
+					// m1 = words 4 5 6 7 of line 1 of ref_curr
+					m2 = *(__m64 *)(ref_curr+4+ref_stride);
+					// (ref_curr[0] + ref_curr[1] + 
+					// ref_curr[ref_stride] + ref_curr[ref_stride+1] + 2) >>2
+					m3 = _mm_add_pi16 (m3, m2);
+					m3 = _mm_madd_pi16 (m3, m_one);
+					m3 = _mm_add_pi32 (m3, m_two);
+					m3 = _mm_srai_pi32 (m3, 2);
+
+					m1 = _mm_packs_pi32 (m1, m3);
+
+					// load first four values pic_data
+					m2 = *(__m64 *)pic_curr;
+					
+					// ref - pic
+            		m1 = _mm_sub_pi16 (m1, m2);
+            		// abs (ref - pic)
+            		m2 = _mm_srai_pi16(m1, 15);
+            		m1 = _mm_xor_si64(m1, m2);
+            		m1 = _mm_sub_pi16(m1, m2);
+            		// sum += abs(ref -pic)
+            		m_sum = _mm_add_pi16 (m_sum, m1);
+				}
+				// mopup;
+				for (int x = stopX; x < width; ++x, ++pic_curr,ref_curr+=2)
+				{
+					CalcValueType temp = (ref_curr[0] + ref_curr[1] +
+						ref_curr[ref_stride] + ref_curr[ref_stride+1]+2)>>2;
+					mop_sum += std::abs (temp - *pic_curr);
+				}
+				u_sum.m = m_sum;
+				sum += (u_sum.h[0] + u_sum.h[1] + u_sum.h[2] + u_sum.h[3] + mop_sum);
+				_mm_empty();
+				if ((sum + cost_so_far )>= best_total_cost_so_far)
+				{
+					return best_total_cost_so_far;
+				}
+			}
+			_mm_empty();
+			return sum + cost_so_far;
+#else
+			//std::cerr << "Inmmx routine rmdr.y == 0" << std::endl;
+			CalcValueType sum(0);
+            for( int y=0; y < height; ++y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=0; x < width; ++x, ++pic_curr, ref_curr+=2 )
+                {
+                    CalcValueType temp = ( CalcValueType( ref_curr[0] ) +
+                               		   CalcValueType( ref_curr[1] ) +
+                               		   CalcValueType( ref_curr[ref_stride] ) +
+                               		   CalcValueType( ref_curr[ref_stride+1] ) +
+                                	   2
+                            ) >> 2;
+                    sum += std::abs( temp - *pic_curr );
+                }// x
+                
+                if ( (sum+cost_so_far)>=best_total_cost_so_far)
+                    return best_total_cost_so_far;
+
+            }// y
+			return sum+cost_so_far;
+#endif
+        }
+	return cost_so_far;
+    }
+
+    /* 
+	* NOTE: we are not doing any bounds checks here. This function must
+	* be invoked only when the reference images start and stop fall
+	* withing bounds
+	*/
+    void simple_biblock_diff_pic_mmx_4(
+            const PicArray& pic_data, const PicArray& ref_data, 
+			TwoDArray<ValueType>& diff,
+            const ImageCoords& start_pos, const ImageCoords& end_pos, 
+            const ImageCoords& ref_start, const ImageCoords& ref_stop,
+			const MVector& rmdr)
+    {
+        ValueType *pic_curr = &pic_data[start_pos.y][start_pos.x];
+        ValueType *ref_curr = &ref_data[ref_start.y][ref_start.x];
+        ValueType *diff_curr = &diff[0][0];
+
+        const int width = end_pos.x - start_pos.x;
+        int height = end_pos.y - start_pos.y;
+        const int ref_stride = ref_data.LengthX();
+
+        // go down a row and back up
+        const int pic_next = pic_data.LengthX() - width;
+        // go down 2 rows and back up
+        const int ref_next = ref_data.LengthX()*2 - width*2;
+
+		TESTM (ref_start.x>=0 && ref_stop.x < ref_data.LengthX() &&
+				ref_start.y>=0 && ref_stop.y < ref_data.LengthY(), 
+				"Reference image coordinates withing bounds");
+
+		int stopX = (width>>2)<<2;
+		if (rmdr.x == 0 && rmdr.y == 0 )
+		{
+			//std::cerr << "Inmmx routine rmdr.x = rmdr.y = 0" << std::endl;
+#if 1
+			for( int y=0; y < height; y++, pic_curr+=pic_next, ref_curr+=ref_next)
+			{
+				for( int x=0; x < stopX; x+=4, pic_curr+=4, ref_curr+=8, diff_curr += 4 )
+				{
+					__m64 pic = *(__m64 *)pic_curr;
+					// pic << 1
+					pic = _mm_slli_pi16(pic, 1);
+					// load ref
+					__m64 ref = _mm_unpacklo_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					__m64 ref2 = _mm_unpackhi_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					ref = _mm_unpacklo_pi16 ( ref, ref2);
+					// pic<<1 - ref
+            		*(__m64 *)diff_curr = _mm_sub_pi16 (pic, ref);
+				}
+				// mopup;
+				for (int x = stopX; x < width; ++x, ++pic_curr, ++diff_curr, ref_curr+=2)
+				{
+					*diff_curr = ((*pic_curr)<<1) - *ref_curr;
+				}
+			}
+#else
+            for( int y=0; y < height; ++y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=0; x < width; ++x, ++pic_curr, ++diff_curr, ref_curr+=2 )
+                {
+					*diff_curr = ((*pic_curr)<<1) - *ref_curr;
+                }// x
+            }// y
+#endif
+		}
+		else if( rmdr.y == 0 )
+        {
+#if 1
+			__m64 m_one = _mm_set_pi16(1, 1, 1, 1);
+			for( int y=0; y < height; y++, pic_curr+=pic_next, ref_curr+=ref_next )
+			{
+				for( int x=0; x < stopX; x+=4, pic_curr+=4, diff_curr += 4, ref_curr+=8 )
+				{
+					// Load ref
+					__m64 m1 = _mm_unpacklo_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					__m64 m2 = _mm_unpackhi_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					// m3 = words 0 2 4 6 of ref_curr
+					__m64 m3 = _mm_unpacklo_pi16 ( m1, m2);
+					// m2 = words 1 3 5 7 of ref_curr
+					m2 = _mm_unpackhi_pi16 ( m1, m2);
+					// (ref_curr[0] + ref_curr[1] + 1)>>1
+					m3 = _mm_add_pi16 (m3, m2);
+					m3 = _mm_add_pi16 (m3, m_one);
+					m3 = _mm_srai_pi16 (m3, 1);
+					// pic << 1
+					m1 = _mm_slli_pi16(*(__m64 *)pic_curr, 1);
+					// diff = pic - ref
+            		*(__m64 *)diff_curr = _mm_sub_pi16 (m1, m3);
+				}
+				// mopup;
+				for (int x = stopX; x < width; ++x, ++pic_curr, ++diff_curr, ref_curr+=2)
+				{
+					CalcValueType temp = (ref_curr[0] + ref_curr[1]+1)>>1;
+					*diff_curr = ((*pic_curr)<<1) - temp;
+				}
+			}
+#else
+			//std::cerr << "Inmmx routine rmdr.y == 0" << std::endl;
+            for( int y=0; y < height; ++y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=0; x < width; ++x, ++pic_curr, ++diff_curr, ref_curr+=2 )
+                {
+                    CalcValueType temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[1] ) +
+                                1
+                            ) >> 1;
+					*diff_curr = ((*pic_curr)<<1) - temp;
+                }// x
+                
+            }// y
+#endif
+        }
+		else if( rmdr.x == 0 )
+        {
+#if 1
+			__m64 m_one = _mm_set_pi16(1, 1, 1, 1);
+			for( int y=0; y < height; y++, pic_curr+=pic_next, ref_curr+=ref_next )
+			{
+				for( int x=0; x < stopX; x+=4, pic_curr+=4, diff_curr +=4, ref_curr+=8 )
+				{
+					// Load ref
+					__m64 m1 = _mm_unpacklo_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					__m64 m2 = _mm_unpackhi_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					// m1 = words 0 2 4 6 of ref_curr
+					m1 = _mm_unpacklo_pi16 ( m1, m2);
+					// m2 = words 0 2 4 6 of ref_curr+ref_stride
+					m2 = _mm_unpacklo_pi16 (*(__m64 *)(ref_curr+ref_stride), *(__m64 *)(ref_curr+ref_stride+4));
+					__m64 m3 = _mm_unpackhi_pi16 (*(__m64 *)(ref_curr+ref_stride), *(__m64 *)(ref_curr+ref_stride+4));
+					m2 = _mm_unpacklo_pi16 (m2, m3);
+					
+					// (ref_curr[0] + ref_curr[ref_stride] + 1)>>1
+					m1 = _mm_add_pi16 (m1, m2);
+					m1 = _mm_add_pi16 (m1, m_one);
+					m1 = _mm_srai_pi16 (m1, 1);
+					// pic << 1
+            		m2 = _mm_slli_pi16 (*(__m64 *)pic_curr, 1);
+            		// diff = pic<<1 - ref)
+            		*(__m64 *)diff_curr = _mm_sub_pi16(m2, m1 );
+				}
+				// mopup;
+				for (int x = stopX; x < width; ++x, ++pic_curr, ++diff_curr, ref_curr+=2)
+				{
+					CalcValueType temp = (ref_curr[0] + ref_curr[ref_stride]+1)>>1;
+					*diff_curr = ((*pic_curr)<<1) - temp;
+				}
+			}
+#else
+			//std::cerr << "Inmmx routine rmdr.y == 0" << std::endl;
+            for( int y=0; y < height; ++y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=0; x < width; ++x, ++pic_curr, ++diff_curr, ref_curr+=2 )
+                {
+                    CalcValueType temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[1] ) +
+                                1
+                            ) >> 1;
+					*diff_curr = ((*pic_curr)<<1) - temp;
+                }// x
+            }// y
+#endif
+        }
+		else
+        {
+#if 1
+			__m64 m_two = _mm_set_pi32(2, 2);
+			__m64 m_one = _mm_set_pi16(1, 1, 1, 1);
+			// processing four pic_data values at a time
+			for( int y=0; y < height; y++, pic_curr+=pic_next, ref_curr+=ref_next )
+			{
+				for( int x=0; x < stopX; x+=4, pic_curr+=4, diff_curr+=4, ref_curr+=8 )
+				{
+					// Load ref
+					// m1 = words 0 1 2 3 of line 0 ref_curr
+					__m64 m1 = *(__m64 *)ref_curr;
+					// m1 = words 0 1 2 3 of line 1 of ref_curr
+					__m64 m2 = *(__m64 *)(ref_curr+ref_stride);
+					// (ref_curr[0] + ref_curr[1] + 
+					// ref_curr[ref_stride] + ref_curr[ref_stride+1] + 2) >>2
+					m1 = _mm_add_pi16 (m1, m2);
+					m1 = _mm_madd_pi16 (m1, m_one);
+					m1 = _mm_add_pi32 (m1, m_two);
+					m1 = _mm_srai_pi32 (m1, 2);
+
+					// m2 = words 4 5 6 7 of line 0 ref_curr
+					__m64 m3 = *(__m64 *)(ref_curr+4);
+					// m1 = words 4 5 6 7 of line 1 of ref_curr
+					m2 = *(__m64 *)(ref_curr+4+ref_stride);
+					// (ref_curr[0] + ref_curr[1] + 
+					// ref_curr[ref_stride] + ref_curr[ref_stride+1] + 2) >>2
+					m3 = _mm_add_pi16 (m3, m2);
+					m3 = _mm_madd_pi16 (m3, m_one);
+					m3 = _mm_add_pi32 (m3, m_two);
+					m3 = _mm_srai_pi32 (m3, 2);
+
+					m1 = _mm_packs_pi32 (m1, m3);
+
+					// load first four values pic_data and <<1
+					m2 = _mm_slli_pi16 (*(__m64 *)pic_curr, 1);
+					
+					// pic<<1 - ref
+            		*(__m64 *)diff_curr = _mm_sub_pi16 (m2, m1);
+				}
+				// mopup;
+				for (int x = stopX; x < width; ++x, ++pic_curr,++diff_curr, ref_curr+=2)
+				{
+					CalcValueType temp = (ref_curr[0] + ref_curr[1] +
+						ref_curr[ref_stride] + ref_curr[ref_stride+1]+2)>>2;
+					*diff_curr = ((*pic_curr)<<1) - temp;
+				}
+			}
+#else
+			//std::cerr << "Inmmx routine rmdr.y == 0" << std::endl;
+			CalcValueType sum(0);
+            for( int y=0; y < height; ++y, pic_curr+=pic_next, ref_curr+=ref_next )
+            {
+                for( int x=0; x < width; ++x, ++pic_curr, ++diff_curr, ref_curr+=2 )
+                {
+                    CalcValueType temp = ( CalcValueType( ref_curr[0] ) +
+                               		   CalcValueType( ref_curr[1] ) +
+                               		   CalcValueType( ref_curr[ref_stride] ) +
+                               		   CalcValueType( ref_curr[ref_stride+1] ) +
+                                	   2
+                            ) >> 2;
+					*diff_curr = ((*pic_curr)<<1) - temp;
+                }// x
+                
+            }// y
+#endif
+        }
+	_mm_empty();
+	return;
+    }
+
+    /* 
+	* NOTE: we are not doing any bounds checks here. This function must
+	* be invoked only when the reference images start and stop fall
+	* withing bounds
+	*/
+    CalcValueType simple_biblock_diff_up_mmx_4(
+            const TwoDArray<ValueType>& diff_data, const PicArray& ref_data, 
+            const ImageCoords& ref_start, const ImageCoords& ref_stop,
+			const MVector& rmdr)
+    {
+        ValueType *diff_curr = &diff_data[0][0];
+        ValueType *ref_curr = &ref_data[ref_start.y][ref_start.x];
+
+        const int width = diff_data.LengthX();
+        int height = diff_data.LengthY();
+        const int ref_stride = ref_data.LengthX();
+
+        // go down 2 rows and back up
+        const int ref_next = ref_data.LengthX()*2 - width*2;
+
+		TESTM (ref_start.x>=0 && ref_stop.x < ref_data.LengthX() &&
+				ref_start.y>=0 && ref_stop.y < ref_data.LengthY(), 
+				"Reference image coordinates withing bounds");
+
+		CalcValueType mop_sum(0);
+		int stopX = (width>>2)<<2;
+		__m64 m_sum = _mm_set_pi16(0, 0, 0, 0);
+		u_mmx_val u_sum;
+		if (rmdr.x == 0 && rmdr.y == 0 )
+		{
+			//std::cerr << "Inmmx routine rmdr.x = rmdr.y = 0" << std::endl;
+#if 1
+			for( int y=0; y < height; y++, ref_curr+=ref_next )
+			{
+				for( int x=0; x < stopX; x+=4, diff_curr+=4, ref_curr+=8 )
+				{
+					u_mmx_val diff = *(u_mmx_val *)diff_curr;
+					__m64 ref = _mm_unpacklo_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					__m64 ref2 = _mm_unpackhi_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					ref = _mm_unpacklo_pi16 ( ref, ref2);
+					// diff - ref
+            		diff.m = _mm_sub_pi16 (diff.m, ref);
+					// (diff - ref)>>1
+            		diff.m = _mm_srai_pi16 (diff.m, 1);
+            		// abs (diff - ref)
+            		ref = _mm_srai_pi16(diff.m, 15);
+            		diff.m = _mm_xor_si64(diff.m, ref);
+            		diff.m = _mm_sub_pi16 (diff.m, ref);
+            		// sum += abs(ref -pic)
+            		ref = _mm_xor_si64(ref, ref);
+            		ref = _mm_unpackhi_pi16(diff.m, ref);
+            		diff.m = _mm_unpacklo_pi16(diff.m, diff.m);
+            		diff.m = _mm_srai_pi32 (diff.m, 16);
+            		diff.m = _mm_add_pi32 (diff.m, ref);
+            		m_sum = _mm_add_pi32 (m_sum, diff.m);
+				}
+				// mopup;
+				for (int x = stopX; x < width; ++x, ++diff_curr,ref_curr+=2)
+				{
+					mop_sum += std::abs ((*diff_curr - *ref_curr)>>1);
+				}
+			}
+			u_sum.m = m_sum;
+			_mm_empty();
+			return u_sum.i[0] + u_sum.i[1] + mop_sum;
+#else
+			CalcValueType sum(0);
+            for( int y=0; y < height; ++y, ref_curr+=ref_next )
+            {
+                for( int x=0; x < width; ++x, ++diff_curr, ref_curr+=2 )
+                {
+                    sum += std::abs( (*diff_curr - *ref_curr)>>1 );
+                }// x
+                
+            }// y
+			return sum;
+#endif
+
+		}
+		else if( rmdr.y == 0 )
+        {
+#if 1
+			__m64 m_one = _mm_set_pi16(1, 1, 1, 1);
+			for( int y=0; y < height; y++, ref_curr+=ref_next )
+			{
+				for( int x=0; x < stopX; x+=4, diff_curr+=4, ref_curr+=8 )
+				{
+					// Load ref
+					__m64 m1 = _mm_unpacklo_pi16 (((u_mmx_val *)ref_curr)->m, ((u_mmx_val *)(ref_curr+4))->m);
+					__m64 m2 = _mm_unpackhi_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					// m3 = words 0 2 4 6 of ref_curr
+					__m64 m3 = _mm_unpacklo_pi16 ( m1, m2);
+					// m2 = words 1 3 5 7 of ref_curr
+					m2 = _mm_unpackhi_pi16 ( m1, m2);
+					// (ref_curr[0] + ref_curr[1] + 1)>>1
+					m3 = _mm_add_pi16 (m3, m2);
+					m3 = _mm_add_pi16 (m3, m_one);
+					m3 = _mm_srai_pi16 (m3, 1);
+					// diff - pic
+            		m1 = _mm_sub_pi16 (*(__m64 *)diff_curr, m3);
+					// (diff - pic)>>1
+            		m1 = _mm_srai_pi16 (m1, 1);
+            		// abs (diff-ref)>>1
+            		m3 = _mm_srai_pi16(m1, 15);
+            		m1 = _mm_xor_si64(m1, m3);
+            		m1 = _mm_sub_pi16 (m1, m3);
+            		// sum += abs(diff-ref)>>1
+            		m2 = _mm_xor_si64(m2, m2);
+            		m2 = _mm_unpackhi_pi16(m1, m2);
+            		m1 = _mm_unpacklo_pi16(m1, m1);
+            		m1 = _mm_srai_pi32 (m1, 16);
+            		m1 = _mm_add_pi32 (m1, m2);
+            		m_sum = _mm_add_pi32 (m_sum, m1);
+				}
+				// mopup;
+				for (int x = stopX; x < width; ++x, ++diff_curr,ref_curr+=2)
+				{
+					CalcValueType temp = (ref_curr[0] + ref_curr[1]+1)>>1;
+					mop_sum += std::abs ((*diff_curr - temp)>>1);
+				}
+			}
+			u_sum.m = m_sum;
+			_mm_empty();
+			return (u_sum.i[0] + u_sum.i[1] + mop_sum);
+#else
+			//std::cerr << "Inmmx routine rmdr.y == 0" << std::endl;
+			CalcValueType sum(0);
+            for( int y=0; y < height; ++y, ref_curr+=ref_next )
+            {
+                for( int x=0; x < width; ++x, ++diff_curr, ref_curr+=2 )
+                {
+                    CalcValueType temp = (    CalcValueType( ref_curr[0] ) +
+                                CalcValueType( ref_curr[1] ) +
+                                1
+                            ) >> 1;
+                    sum += std::abs( (*diff_curr - temp)>>1 );
+                }// x
+            }// y
+			return sum;
+#endif
+        }
+		else if( rmdr.x == 0 )
+        {
+#if 1
+			__m64 m_one = _mm_set_pi16(1, 1, 1, 1);
+			for( int y=0; y < height; y++, ref_curr+=ref_next )
+			{
+				for( int x=0; x < stopX; x+=4, diff_curr+=4, ref_curr+=8 )
+				{
+					// Load ref
+					__m64 m1 = _mm_unpacklo_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					__m64 m2 = _mm_unpackhi_pi16 (*(__m64 *)ref_curr, *(__m64 *)(ref_curr+4));
+					// m1 = words 0 2 4 6 of ref_curr
+					m1 = _mm_unpacklo_pi16 ( m1, m2);
+					// m2 = words 0 2 4 6 of ref_curr+ref_stride
+					m2 = _mm_unpacklo_pi16 (*(__m64 *)(ref_curr+ref_stride), *(__m64 *)(ref_curr+ref_stride+4));
+					__m64 m3 = _mm_unpackhi_pi16 (*(__m64 *)(ref_curr+ref_stride), *(__m64 *)(ref_curr+ref_stride+4));
+					m2 = _mm_unpacklo_pi16 (m2, m3);
+					
+					// (ref_curr[0] + ref_curr[ref_stride] + 1)>>1
+					m1 = _mm_add_pi16 (m1, m2);
+					m1 = _mm_add_pi16 (m1, m_one);
+					m1 = _mm_srai_pi16 (m1, 1);
+					// diff - ref
+            		m1 = _mm_sub_pi16 (*(__m64 *)diff_curr, m1);
+					// (diff - ref)>>1
+            		m1 = _mm_srai_pi16 (m1, 1);
+            		// abs ((diff - pic)>>1)
+            		m3 = _mm_srai_pi16(m1, 15);
+            		m1 = _mm_xor_si64(m1, m3);
+            		m1 = _mm_sub_pi16 (m1, m3);
+            		// sum += abs(ref -pic)
+            		m2 = _mm_xor_si64(m2, m2);
+            		m2 = _mm_unpackhi_pi16(m1, m2);
+            		m1 = _mm_unpacklo_pi16(m1, m1);
+            		m1 = _mm_srai_pi32 (m1, 16);
+            		m1 = _mm_add_pi32 (m1, m2);
+            		m_sum = _mm_add_pi32 (m_sum, m1);
+				}
+				// mopup;
+				for (int x = stopX; x < width; ++x, ++diff_curr,ref_curr+=2)
+				{
+					CalcValueType temp = (ref_curr[0] + ref_curr[ref_stride]+1)>>1;
+					mop_sum += std::abs ( (*diff_curr - temp)>>1 );
+				}
+			}
+			u_sum.m = m_sum;
+			_mm_empty();
+			return (u_sum.i[0] + u_sum.i[1] + mop_sum);
+#else
+			CalcValueType sum(0);
+            for( int y=0; y < height; ++y, ref_curr+=ref_next )
+            {
+                for( int x=0; x < width; ++x, ++diff_curr, ref_curr+=2 )
+                {
+					CalcValueType temp = (ref_curr[0] + ref_curr[ref_stride]+1)>>1;
+					sum += std::abs ( (*diff_curr - temp)>>1 );
+                }// x
+            }// y
+			return sum;
+#endif
+        }
+		else
+        {
+#if 1
+			__m64 m_two = _mm_set_pi32(2, 2);
+			__m64 m_one = _mm_set_pi16(1, 1, 1, 1);
+			// processing four pic_data values at a time
+			for( int y=0; y < height; y++, ref_curr+=ref_next )
+			{
+				for( int x=0; x < stopX; x+=4, diff_curr+=4, ref_curr+=8 )
+				{
+					// Load ref
+					// m1 = words 0 1 2 3 of line 0 ref_curr
+					__m64 m1 = *(__m64 *)ref_curr;
+					// m1 = words 0 1 2 3 of line 1 of ref_curr
+					__m64 m2 = *(__m64 *)(ref_curr+ref_stride);
+					// (ref_curr[0] + ref_curr[1] + 
+					// ref_curr[ref_stride] + ref_curr[ref_stride+1] + 2) >>2
+					m1 = _mm_add_pi16 (m1, m2);
+					m1 = _mm_madd_pi16 (m1, m_one);
+					m1 = _mm_add_pi32 (m1, m_two);
+					m1 = _mm_srai_pi32 (m1, 2);
+
+					// m2 = words 4 5 6 7 of line 0 ref_curr
+					__m64 m3 = *(__m64 *)(ref_curr+4);
+					// m1 = words 4 5 6 7 of line 1 of ref_curr
+					m2 = *(__m64 *)(ref_curr+4+ref_stride);
+					// (ref_curr[0] + ref_curr[1] + 
+					// ref_curr[ref_stride] + ref_curr[ref_stride+1] + 2) >>2
+					m3 = _mm_add_pi16 (m3, m2);
+					m3 = _mm_madd_pi16 (m3, m_one);
+					m3 = _mm_add_pi32 (m3, m_two);
+					m3 = _mm_srai_pi32 (m3, 2);
+					m1 = _mm_packs_pi32 (m1, m3);
+
+					// load first four values pic_data
+					m2 = *(__m64 *)diff_curr;
+					
+					// diff - ref
+            		m1 = _mm_sub_pi16 (m2, m1);
+					// (diff - ref)>>1
+            		m1 = _mm_srai_pi16 (m1, 1);
+            		// abs (diff - ref)>>1
+            		m2 = _mm_srai_pi16(m1, 15);
+            		m1 = _mm_xor_si64(m1, m2);
+            		m1 = _mm_sub_pi16(m1, m2);
+            		// sum += abs(ref -pic)>>1
+					m1 = _mm_madd_pi16(m1, m_one);
+            		m_sum = _mm_add_pi32 (m_sum, m1);
+				}
+				// mopup;
+				for (int x = stopX; x < width; ++x, ++diff_curr,ref_curr+=2)
+				{
+					CalcValueType temp = (ref_curr[0] + ref_curr[1] +
+						ref_curr[ref_stride] + ref_curr[ref_stride+1]+2)>>2;
+					mop_sum += std::abs ( (*diff_curr - temp)>>1 );
+				}
+			}
+			u_sum.m = m_sum;
+			_mm_empty();
+			return (u_sum.i[0] + u_sum.i[1] + mop_sum);
+#else
+			CalcValueType sum(0);
+            for( int y=0; y < height; ++y, ref_curr+=ref_next )
+            {
+                for( int x=0; x < width; ++x, ++diff_curr, ref_curr+=2 )
+                {
+                    CalcValueType temp = ( CalcValueType( ref_curr[0] ) +
+                               		   CalcValueType( ref_curr[1] ) +
+                               		   CalcValueType( ref_curr[ref_stride] ) +
+                               		   CalcValueType( ref_curr[ref_stride+1] ) +
+                                	   2
+                            ) >> 2;
+                    sum += std::abs( (*diff_curr - temp)>>1 );
+                }// x
+            }// y
+			return sum;
+#endif
+        }
+	return 0;
     }
 
     inline void check_active_columns(
-            int x, int xmax, ValueType act_cols1[4], 
-            ValueType act_cols2[4], ValueType *row1, ValueType *row2)
+            int x, int xmax, ValueType act_cols1[4],ValueType *row1)
     {
         // check if we need any clipping
         if (x >= 0 && (x+3) < xmax) {
             // special case, nothing to do
             memcpy(act_cols1, &row1[x], 4 * sizeof(ValueType));
-            memcpy(act_cols2, &row2[x], 4 * sizeof(ValueType));
         }
-        else {
-            act_cols1[0] = row1[BChk(x,xmax)];
-            act_cols2[0] = row2[BChk(x,xmax)];
-            act_cols1[1] = row1[BChk(x+1,xmax)];
-            act_cols2[1] = row2[BChk(x+1,xmax)];
-            act_cols1[2] = row1[BChk(x+2,xmax)];
-            act_cols2[2] = row2[BChk(x+2,xmax)];
-            act_cols1[3] = row1[BChk(x+3,xmax)];
-            act_cols2[3] = row2[BChk(x+3,xmax)];
+        else if (x < 0)
+		{
+			act_cols1[0] = row1[0];
+			//act_cols1[1] = (x + 1) < 0 ? row1[0] : row1[x+1];
+			//act_cols1[2] = (x + 2) < 0 ? row1[0] : row1[x+2];
+			//act_cols1[3] = (x + 3) < 0 ? row1[0] : row1[x+3];
+			for (int i = 1; i < 4; ++i)
+			{
+				act_cols1[i] = (x + i) < 0 ? row1[0] : row1[x+i];
+			} 
+		}
+        else
+		{
+			for (int i = 0; i < 3; ++i)
+			{
+				act_cols1[i] = (x + i) < xmax ? row1[x+i] : row1[xmax-1];
+			} 
+			act_cols1[3] =  row1[xmax-1];
         }
     }
-
-    CalcValueType bchk_block_diff_up_mmx_2(
-            const PicArray& pic_data, const PicArray& ref_data, 
-            const ImageCoords& start_pos, const ImageCoords& end_pos, 
-            const ImageCoords &ref_start, const ValueType weights[4])
+    
+	CalcValueType bchk_simple_block_diff_mmx_4 ( 
+            const BlockDiffParams& dparams, const MVector& mv, 
+            const PicArray& pic_data, const PicArray& ref_data,
+			CalcValueType i_best_sum)
     {
-        const int double_xdim=ref_data.LengthX();
-        const int double_ydim=ref_data.LengthY();
+		u_mmx_val u_sum;
+		u_mmx_val u_ref;
+		u_sum.i[0] = u_sum.i[1]= 0;
+    
+		ValueType *src = &(pic_data[dparams.Yp()][dparams.Xp()]);
+		ImageCoords ref_start(dparams.Xp()+mv.x, dparams.Yp()+mv.y);
 
-        __m64 sum = _mm_set_pi32(0, 0);
-        __m64 eight = _mm_set_pi32(8, 8);
-        
-        __m64 weights1 = _mm_set_pi16(weights[0], weights[1], weights[0], weights[1]);
-        __m64 weights2 = _mm_set_pi16(weights[2], weights[3], weights[2], weights[3]);
-
-        ValueType active_columns1[4];
-        ValueType active_columns2[4];
-
-        for(int c = start_pos.y, uY = ref_start.y; c < end_pos.y; ++c, uY += 2)
+        int height = dparams.Yl();
+        int width = dparams.Xl();
+        int stopX = (width>>2)<<2;
+        int pic_next = (pic_data.LengthX() - width);
+		CalcValueType mop_sum = 0;
+        for (int j = 0; j < height; j++)
         {
-            for(int l = start_pos.x, uX = ref_start.x; l < end_pos.x; l+=2, uX += 4)
+            for (int i = 0; i < stopX; i+=4) 
             {
-                check_active_columns(uX, double_xdim, active_columns1, active_columns2, ref_data[BChk(uY,double_ydim)], ref_data[BChk(uY+1,double_ydim)]);
-
-                __m64 col1 = *(__m64 *)active_columns1;
-                __m64 col2 = *(__m64 *)active_columns2;
-                // multiply ref_data by weights
-                col1 = _mm_madd_pi16 (col1, weights1);
-                // multiply ref_data by weights
-                col2 = _mm_madd_pi16 (col2, weights2);
-                // temp. value 1 w/o add-8, shr-4
-                col1 = _mm_add_pi32 (col1, col2);
-                // add 8
-                col1 = _mm_add_pi32 (col1, eight);
-                // shift right by 4
-                col1 = _mm_srai_pi32 (col1, 4);
-
-                // load pic_data
-                col2 = _mm_xor_si64(col2, col2);
-                col2 = _mm_unpacklo_pi16 (*(__m64 *)&pic_data[c][l], col2);
-
-                // pic_data - temp
-                col1 =_mm_sub_pi32 (col1, col2);
-                // calculate absolute value
-                col2 = _mm_srai_pi32(col1, 31);
-                col1 = _mm_xor_si64 (col1, col2);
-                col1 = _mm_sub_pi32 (col1, col2);
-
-                // sum += abs (pic_data - temp)
-                sum = _mm_add_pi32 (sum, col1);
-            }//l
-        }//c
-
-        u_sum.m = sum;
+				check_active_columns(ref_start.x+i, ref_data.LengthX(), u_ref.h, ref_data[BChk(ref_start.y+j, ref_data.LengthY())]);
+                // pic - ref
+                __m64 pic = _mm_sub_pi16 (*(__m64 *)src, u_ref.m);
+                // abs (pic - ref)
+                u_ref.m = _mm_srai_pi16(pic, 15);
+                pic = _mm_xor_si64(pic, u_ref.m);
+                pic = _mm_sub_pi16 (pic, u_ref.m);
+                // sum += abs(pic -ref)
+                u_ref.m = _mm_xor_si64(u_ref.m, u_ref.m);
+                u_ref.m = _mm_unpackhi_pi16(pic, u_ref.m);
+                pic = _mm_unpacklo_pi16(pic, pic);
+                pic = _mm_srai_pi32 (pic, 16);
+                pic = _mm_add_pi32 (pic, u_ref.m);
+                u_sum.m = _mm_add_pi32 (u_sum.m, pic);
+                src += 4;
+            }
+			for (int i = stopX; i < width; i++)
+			{
+				mop_sum += std::abs(*src - 
+					ref_data[BChk(j+ref_start.y , ref_data.LengthY())][BChk(i+ref_start.x , ref_data.LengthX())]);
+				src++;
+			}
+			if ((u_sum.i[0] + u_sum.i[1] + mop_sum) >= i_best_sum)
+			{
+				_mm_empty();
+				return i_best_sum;
+			}
+            src += pic_next;
+        }
         _mm_empty();
 
-        return u_sum.i[0] + u_sum.i[1];
-    }
-
-
-    CalcValueType bibchk_block_diff_up_mmx_2(
-            const PicArray& pic_data, const PicArray& ref_data1, 
-            const PicArray& ref_data2, const ImageCoords& start_pos, 
-            const ImageCoords& end_pos, const ImageCoords &ref_start1, 
-            const ImageCoords &ref_start2, const ValueType weights[2][4])
-    {
-        //as above, but with bounds checking
-        const int xmax1 = ref_data1.LengthX();
-        const int ymax1 = ref_data1.LengthY();
-        const int xmax2 = ref_data2.LengthX();
-        const int ymax2 = ref_data2.LengthY();
-
-        __m64 sum = _mm_set_pi32(0, 0);
-        __m64 sixteen = _mm_set_pi32(16, 16);
-        __m64 temp;
-
-        __m64 weights1 = _mm_set_pi16(weights[0][0], weights[0][1], weights[0][0], weights[0][1]);
-        __m64 weights2 = _mm_set_pi16(weights[1][0], weights[1][1], weights[1][0], weights[1][1]);
-        __m64 weights3 = _mm_set_pi16(weights[0][2], weights[0][3], weights[0][2], weights[0][3]);
-        __m64 weights4 = _mm_set_pi16(weights[1][2], weights[1][3], weights[1][2], weights[1][3]);
-
-        ValueType active_columns1[4];
-        ValueType active_columns2[4];
-        ValueType active_columns3[4];
-        ValueType active_columns4[4];
-
-        for(int c = start_pos.y, uY1 = ref_start1.y,uY2=ref_start2.y; c < end_pos.y; ++c, uY1 += 2,uY2 += 2)
-        {
-            for(int l = start_pos.x, uX1 = ref_start1.x,uX2=ref_start2.x; l < end_pos.x; l+=2, uX1 += 4, uX2 += 4)
-            {
-                check_active_columns(uX1, xmax1, active_columns1, active_columns2, ref_data1[BChk(uY1,ymax1)], ref_data1[BChk(uY1+1,ymax1)]);
-
-                check_active_columns(uX2, xmax2, active_columns3, active_columns4, ref_data2[BChk(uY2,ymax2)], ref_data2[BChk(uY2+1,ymax2)]);
-
-                __m64 col1 = *(__m64 *)active_columns1;
-                __m64 col2 = *(__m64 *)active_columns2;
-                // multiply ref_data by weights
-                col1 = _mm_madd_pi16 (col1, weights1);
-                // multiply ref_data by weights
-                col2 = _mm_madd_pi16 (col2, weights2);
-                // temp. value 1 w/o add-16, shr-5
-                temp = _mm_add_pi32 (col1, col2);
-                // add 16
-                temp = _mm_add_pi32 (temp, sixteen);
-                // shift right by 5
-                temp = _mm_srai_pi32 (temp, 5);
-
-                col1 = *(__m64 *)active_columns3;
-                col2 = *(__m64 *)active_columns4;
-                // multiply ref_data by weights
-                col1 = _mm_madd_pi16 (col1, weights3);
-                // multiply ref_data by weights
-                col2 = _mm_madd_pi16 (col2, weights4);
-                // temp. value 1 w/o add-16, shr-5
-                col1 = _mm_add_pi32 (col1, col2);
-                // add 16
-                col1 = _mm_add_pi32 (col1, sixteen);
-                // shift right by 5
-                col1 = _mm_srai_pi32 (col1, 5);
-                temp = _mm_add_pi32 (temp, col1);
-
-                // load pic_data
-                col1 = _mm_xor_si64(col1, col1);
-                col1 = _mm_unpacklo_pi16 (*(__m64 *)&pic_data[c][l], col1);
-                // pic_data - temp
-                col1 =_mm_sub_pi32 (col1, temp);
-                // calculate absolute value
-                col2 = _mm_srai_pi32(col1, 31);
-                col1 = _mm_xor_si64 (col1, col2);
-                col1 = _mm_sub_pi32 (col1, col2);
-
-                // sum += abs (pic_data - temp)
-                sum = _mm_add_pi32 (sum, col1);
-
-            }//l
-        }//c
-
-        u_sum.m = sum;
-        _mm_empty();
-
-        return u_sum.i[0] + u_sum.i[1];
+        return  u_sum.i[0] + u_sum.i[1] + mop_sum;
     }
 }
 #endif
