@@ -237,7 +237,6 @@ ValueType BlockMatcher::GetVarUp( const MVector& predmv , const MVector& mv ) co
     diff.y = mv.y-predmv.y;   
 
     return std::min( Norm1( diff ) , Norm1( mv ) );
-
 }   
 
 void BlockMatcher::FindBestMatchPel(const int xpos , const int ypos ,
@@ -282,9 +281,6 @@ void BlockMatcher::FindBestMatchPel(const int xpos , const int ypos ,
         }
 
         list_costs[lnum] = cand_cost;
-
-        if (cand_cost<dparams.Xl()*dparams.Yl()*4)
-            return;
 
     }// lnum
 
@@ -403,7 +399,7 @@ void BlockMatcher::RefineMatchSubp(const int xpos, const int ypos,
     MVector best_mv( pel_mv );
 
     // If the integer value is good enough, bail out
-    if ( best_costs.SAD < 4*dparams.Xl()*dparams.Yl() )
+    if ( best_costs.SAD < 2*dparams.Xl()*dparams.Yl() )
     {
         m_mv_array[ypos][xpos] = m_mv_array[ypos][xpos]<<m_precision;
         return;
@@ -415,7 +411,7 @@ void BlockMatcher::RefineMatchSubp(const int xpos, const int ypos,
     pred_costs.SAD = m_subpeldiff[m_precision-1]->Diff( dparams, mv_prediction);
     pred_costs.total = pred_costs.SAD;
     
-    if (pred_costs.SAD<4*dparams.Xl()*dparams.Yl() )
+    if (pred_costs.SAD<2*dparams.Xl()*dparams.Yl() )
     {
         m_mv_array[ypos][xpos] = mv_prediction;
         m_cost_array[ypos][xpos] = pred_costs;
