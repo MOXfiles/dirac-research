@@ -23,7 +23,8 @@
 * Contributor(s):    Richard Felton (Original Author),
                     Thomas Davies,
                     Scott R Ladd,
-                    Peter Bleackley
+                    Peter Bleackley,
+                    Steve Bearcroft
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -134,6 +135,7 @@ namespace dirac
         static const code_t CODE_MSB     = ((0xffff + 1) >> 1);
         static const code_t CODE_2ND_MSB = ((0xffff + 1) >> 2);
 
+
         //! A class for binary contexts.
         /*!
             A class for binary contexts. Stores probabilities for 0 and 1 in 
@@ -163,19 +165,17 @@ namespace dirac
 
             //! Copy constructor
             Context(const Context & cpy)
-              : m_num0( cpy.m_num0 ),
-                m_num1( cpy.m_num1 ),
-                m_snum0( cpy.m_snum0 ),
-                m_weight( cpy.m_weight )
+              : m_num0( cpy.m_num0 ),               
+                m_weight( cpy.m_weight ),
+                m_prob0( cpy.m_prob0 )
             {}
 
             //! Assignment=
             Context & operator=(const Context& rhs)
             {
                 m_num0 = rhs.m_num0;
-                m_num1 = rhs.m_num1;
-                m_snum0 = rhs.m_snum0;
                 m_weight = rhs.m_weight;
+                m_prob0  = rhs.m_prob0;
                 return *this;
             }
 
@@ -189,20 +189,10 @@ namespace dirac
             void SetCounts(const int cnt0, const int cnt1)
             {
                 m_num0 = cnt0;
-                m_num1 = cnt1;
                 m_weight = cnt0 + cnt1;
 
-                SetScaledCount();
-            }
-
-            //! Returns the count of zeroes.
-            calc_t GetCount0() const { return m_num0; } 
-
-            //! Returns the scaled count of zeroes.
-            calc_t GetScaledCount0() const { return m_snum0; }
-
-            //! Returns the count of ones.
-            calc_t GetCount1() const { return m_num1; }
+                SetRanges();
+            }   
 
             //! Returns the count of all symbols.
             calc_t Weight() const { return m_weight; }    
@@ -214,29 +204,31 @@ namespace dirac
              */    
             inline void IncrCount( const bool symbol )
             {
-                if ( symbol ) 
-                    m_num1++; 
-                else 
+                if (! symbol ) 
                     m_num0++;
 
                 m_weight++;
 
                 if ( m_weight & 1 )
-                    SetScaledCount();
+                    SetRanges();
             }
 
              //! Divide the counts by 2, making sure neither ends up 0.
             inline void HalveCounts()
             {
+                calc_t num1 = m_weight - m_num0;
                 m_num0 >>= 1;
                 m_num0++;
-                m_num1 >>= 1;
-                m_num1++;
+                num1 >>= 1;
+                num1++;
 
-                m_weight = m_num0 + m_num1;
+                m_weight = m_num0 + num1;
 
-                SetScaledCount();
+                SetRanges();
             }
+
+            //! Return the triple associated with Symbol.    
+            const calc_t & GetScaledProb0( ) const { return m_prob0; }
 
             //! Given a number, return the corresponding symbol and triple.
             /*!
@@ -244,25 +236,29 @@ namespace dirac
             */
             bool GetSymbol(const calc_t num, const calc_t factor) const
             {
-                if (num < m_snum0*factor)
-                    return false; //ie zero
-
-                return true; //ie 1
+                return (num >= (m_prob0*factor));
             } 
 
-            inline void SetScaledCount()
+            inline void SetRanges()
             {
-                m_snum0 = ( m_num0 * m_lookup[m_weight-1] ) >> 21;
-
+                // Updates the probability ranges
+                m_prob0 =( ( m_num0 * m_lookup[m_weight-1] ) >> 21 );
             }
+
+            inline void Update( const bool symbol )
+            {
+                IncrCount( symbol );
+
+                if ( Weight() >= 1024 )
+                    HalveCounts();
+            }
+
 
         private:
             calc_t m_num0;
-            calc_t m_num1;
-
-            calc_t m_snum0;
-
             calc_t m_weight;
+
+            calc_t m_prob0;    
 
             /*!
             Counts m_num0 and m_num1 are scaled to 1024 before being used to
@@ -283,12 +279,11 @@ namespace dirac
             out that since m_num0<m_weight the overflow bits will always be
             zero so everything can be done with ints. 
             */
-			static const unsigned int m_lookup[1024]; 
+            static const unsigned int m_lookup[1024]; 
           
 
         };
 
-		
     protected:
 
         //virtual codec functions (to be overridden)
@@ -298,7 +293,7 @@ namespace dirac
         virtual void InitContexts()=0;                                        
 
         //! The method by which the counts are updated.
-        void Update( const bool symbol , const int context_num );    
+        void Update( const bool symbol , Context& ctx );    
 
         //! The method by which _all_ the counts are resized.
         virtual void ResetAll()=0;
@@ -460,17 +455,18 @@ namespace dirac
         InitContexts();
     }
 
-
     template<class T>
-    void ArithCodec<T>::EncodeSymbol(const bool symbol, const int context_num)
+    inline void ArithCodec<T>::EncodeSymbol(const bool symbol, const int context_num)
     {
-        const calc_t range( static_cast<calc_t>( m_high_code - m_low_code ) + 1 );
-        const calc_t interval_count0( ( m_context_list[context_num].GetScaledCount0()*range )>>10 );
+        Context& ctx  = m_context_list[context_num];
 
-        if ( !symbol )
-            m_high_code = m_low_code + static_cast<code_t>( interval_count0 - 1 );
-        else
-            m_low_code += static_cast<code_t>( interval_count0 );
+        const calc_t range_prob( static_cast<calc_t>( (m_high_code - m_low_code ) + 1) * ctx.GetScaledProb0() );
+
+        //formulae given we know we're binary coding    
+        if ( !symbol ) // symbol is 0, so m_low_code unchanged 
+            m_high_code = m_low_code + static_cast<code_t>( ( ( range_prob  )>>10 ) - 1 );
+        else //symbol is 1, so m_high_code unchanged
+            m_low_code += static_cast<code_t>(( range_prob ) >>10 );                
 
         do
         {
@@ -494,8 +490,8 @@ namespace dirac
             m_high_code ++;
         }
         while ( true );
-
-        Update( symbol , context_num );
+        
+        ctx.Update( symbol );
     }
 
     template<class T>
@@ -519,9 +515,10 @@ namespace dirac
         ReadAllData();
 
         //Read in a full word of data
+        code_t i;
         m_code = 0;
 
-        for ( unsigned int i = 0; i < (8 * sizeof(code_t)); i++ )
+        for ( i = 0; i < (8 * sizeof(code_t)); i++ )
         {
             m_code <<= 1;
 
@@ -534,21 +531,24 @@ namespace dirac
         m_underflow = 0;
     }
 
+ 
+
     template<class T>
-    bool ArithCodec<T>::DecodeSymbol( const int context_num )
+    inline bool ArithCodec<T>::DecodeSymbol( const int context_num )
     {
+        Context& ctx  = m_context_list[context_num];
 
         const calc_t count( ( ( static_cast<calc_t>( m_code - m_low_code ) + 1 )<<10 ) - 1 );
-        const calc_t range( static_cast<calc_t>( m_high_code - m_low_code ) + 1 );
-        bool symbol( m_context_list[context_num].GetSymbol( count , range ) );
 
-        const calc_t interval_count0( ( m_context_list[context_num].GetScaledCount0()*range )>>10 );
+        const calc_t range_prob( ( m_high_code - m_low_code  + 1)* ctx.GetScaledProb0() );
 
-        if( !symbol )
-            m_high_code = m_low_code + static_cast<code_t>( interval_count0 - 1 );
+        bool symbol( count >= range_prob );
 
-        else
-            m_low_code += static_cast<code_t>( interval_count0 );        
+        if( !symbol )//prob_interval.Start()=0, so symbol is 0, so m_low_code unchanged 
+            m_high_code = m_low_code + static_cast<code_t>( ( ( range_prob )>>10 ) - 1 );
+
+        else//symbol is 1, so m_high_code unchanged
+            m_low_code += static_cast<code_t>(( range_prob )>>10 );        
 
         do
         {        
@@ -574,7 +574,7 @@ namespace dirac
 
         } while ( true );
 
-        Update(  symbol , context_num );
+        ctx.Update( symbol );
 
         return symbol;
     }
@@ -607,20 +607,9 @@ namespace dirac
 
         return bool( ( (*m_data_ptr) >> m_input_bits_left ) & 1 );
     }
-
-    template<class T>
-    inline void ArithCodec<T>::Update( const bool symbol , const int context_num )
-    {
-        Context& ctx = m_context_list[context_num];
-
-        ctx.IncrCount( symbol );
     
-        if ( ctx.Weight() >= 1024 )
-            ctx.HalveCounts();
-    }
-	
-	template<class T>
-	const unsigned int ArithCodec<T>::Context::m_lookup[1024] = {0x80000000,
+    template<class T>
+    const unsigned int ArithCodec<T>::Context::m_lookup[1024] = {0x80000000,
 0x40000000,0x2AAAAAAA,0x20000000,0x19999999,0x15555555,0x12492492,0x10000000,0xE38E38E,
 0xCCCCCCC,0xBA2E8BA,0xAAAAAAA,0x9D89D89,0x9249249,0x8888888,0x8000000,
 0x7878787,0x71C71C7,0x6BCA1AF,0x6666666,0x6186186,0x5D1745D,0x590B216,
