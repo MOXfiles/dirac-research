@@ -883,10 +883,10 @@ extern DllExport dirac_encoder_state_t
                     ret_stat = ENC_STATE_AVAIL;
                 }
     
-                if (encoder->enc_ctx.decode_flag)
-                    compressor->GetDecodedData(encoder);
             }
         }
+        if (encoder->enc_ctx.decode_flag)
+            compressor->GetDecodedData(encoder);
     }
     catch (...)
     {
