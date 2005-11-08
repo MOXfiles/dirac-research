@@ -117,13 +117,14 @@ void BandCodec::DoWorkCode(PicArray& in_data)
     m_coeff_count = 0;
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
+        CodeBlock *block = block_list[j];
         for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
         {
-            EncodeSymbol(block_list[j][i].Skipped() , BLOCK_SKIP_CTX );
-            if ( !block_list[j][i].Skipped() )
-                CodeCoeffBlock( block_list[j][i] , in_data );
+            EncodeSymbol(block[i].Skipped() , BLOCK_SKIP_CTX );
+            if ( !block[i].Skipped() )
+                CodeCoeffBlock( block[i] , in_data );
             else
-                SetToVal( block_list[j][i] , in_data , 0 );
+                SetToVal( block[i] , in_data , 0 );
         }// i
     }// j
 
@@ -243,13 +244,14 @@ void BandCodec::DoWorkDecode( PicArray& out_data )
     m_coeff_count = 0;
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
+        CodeBlock *block = block_list[j];
         for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
         {
-            block_list[j][i].SetSkip( DecodeSymbol( BLOCK_SKIP_CTX ) );
-            if ( !block_list[j][i].Skipped() )
-                DecodeCoeffBlock( block_list[j][i] , out_data );
+            block[i].SetSkip( DecodeSymbol( BLOCK_SKIP_CTX ) );
+            if ( !block[i].Skipped() )
+                DecodeCoeffBlock( block[i] , out_data );
             else
-                SetToVal( block_list[j][i] , out_data , 0 );
+                SetToVal( block[i] , out_data , 0 );
 
         }// i
     }// j
@@ -295,16 +297,19 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
     
     for ( int ypos=ybeg , m_pypos=ypbeg; ypos<yend ;++ypos , m_pypos=(( ypos-ybeg )>>1)+ypbeg)
     {
+        ValueType *p_out_data = out_data[m_pypos];
+        ValueType *c_out_data_1 = out_data[ypos-1];
+        ValueType *c_out_data_2 = out_data[ypos];
         for ( int xpos=xbeg , m_pxpos=xpbeg ; xpos<xend ;++xpos,m_pxpos=((xpos-xbeg)>>1)+xpbeg)
         {
             if (xpos == m_node.Xp())
-                m_nhood_sum=(ypos!=m_node.Yp()) ? std::abs(out_data[ypos-1][xpos]): 0;
+                m_nhood_sum=(ypos!=m_node.Yp()) ? std::abs(c_out_data_1[xpos]): 0;
             else
                 m_nhood_sum=(ypos!=m_node.Yp()) ? 
-                (std::abs(out_data[ypos-1][xpos]) + std::abs(out_data[ypos][xpos-1])) 
-              : std::abs(out_data[ypos][xpos-1]);
+                (std::abs(c_out_data_1[xpos]) + std::abs(c_out_data_2[xpos-1])) 
+              : std::abs(c_out_data_2[xpos-1]);
 
-            m_parent_notzero = static_cast<bool>( out_data[m_pypos][m_pxpos] );            
+            m_parent_notzero = ( p_out_data[m_pxpos] != 0 );            
             DecodeVal( out_data , xpos , ypos );
 
         }// xpos
