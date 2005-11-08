@@ -150,13 +150,13 @@ namespace dirac
              *       *                  *
            *           *                  *
         */
-        void CreateBlock(const OLBParams &bparams, bool FullX, bool FullY, TwoDArray<ValueType>& WeightArray);
+        void CreateBlock(int xblen, int yblen, int xbsep, int ybsep, bool FullX, bool FullY, TwoDArray<ValueType>& WeightArray);
 
         //! Flips the values in an array in the x direction
-        void FlipX(const TwoDArray<ValueType>& Original, const OLBParams &bparams, TwoDArray<ValueType>& Flipped);
+        void FlipX(const TwoDArray<ValueType>& Original, int xblen, int yblen, TwoDArray<ValueType>& Flipped);
 
         //! Flips the values in an array in the y direction.
-        void FlipY(const TwoDArray<ValueType>& Original, const OLBParams &bparams, TwoDArray<ValueType>& Flipped);
+        void FlipY(const TwoDArray<ValueType>& Original, int xblen, int yblen, TwoDArray<ValueType>& Flipped);
 
         //! Motion-compensate a block. Pure virtual. SubClasses need to define it
         virtual void CompensateBlock( TwoDArray<CalcValueType>& pic_data , 
@@ -183,7 +183,10 @@ namespace dirac
         OLBParams m_bparams;
         TwoDArray<ValueType>* m_block_weights;
         TwoDArray<ValueType>* m_half_block_weights;
-
+        TwoDArray<ValueType>* m_macro_block_weights;
+        TwoDArray<ValueType>* m_half_macro_block_weights;
+        TwoDArray<ValueType>* m_sub_block_weights;
+        TwoDArray<ValueType>* m_half_sub_block_weights;
     };
 
     //! Pixel precision Motion compensator class. 
