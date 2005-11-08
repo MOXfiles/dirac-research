@@ -47,17 +47,15 @@ typedef union
     int i[2];
 } u_sum;
 
+#define mmx_add(pic1, pic2, tap, sum1, sum2) \
+    tmp = _mm_add_pi16 (*(__m64 *)pic1, *(__m64 *)pic2); \
+    m1 = _mm_mullo_pi16 (tmp, tap); \
+    m2 = _mm_mulhi_pi16 (tmp, tap); \
+    tmp = _mm_unpackhi_pi16 (m1, m2); \
+    m1 = _mm_unpacklo_pi16 (m1, m2); \
+    *sum1 = _mm_add_pi32 (*sum1, m1); \
+    *sum2 = _mm_add_pi32 (*sum2, tmp);
 
-inline void mmx_add (const short *pic1, const short *pic2, const __m64 tap, const __m64 zero, __m64 *sum1, __m64 *sum2)
-{
-    __m64 tmp = _mm_add_pi16 (*(__m64 *)pic1, *(__m64 *)pic2);
-    __m64 m1 = _mm_unpacklo_pi16 ( tmp, zero);
-    __m64 m2 = _mm_unpackhi_pi16 ( tmp, zero);
-    m1 = _mm_madd_pi16 (m1, tap);
-    m2 = _mm_madd_pi16 (m2, tap);
-    *sum1 = _mm_add_pi32 (*sum1, m1);
-    *sum2 = _mm_add_pi32 (*sum2, m2);
-}
 
 // Upconvert by a factor of 2
 void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
@@ -73,16 +71,16 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
     u_sum sum2;
     int ypos(0);
 
-    static __m64 zero = _mm_set_pi16(0, 0, 0, 0);
-    static __m64 tap0 = _mm_set_pi16 (0, m_tap0, 0, m_tap0);
-    static __m64 tap1 = _mm_set_pi16 (0, m_tap1, 0, m_tap1);
-    static __m64 tap2 = _mm_set_pi16 (0, m_tap2, 0, m_tap2);
-    static __m64 tap3 = _mm_set_pi16 (0, m_tap3, 0, m_tap3);
-    static __m64 tap4 = _mm_set_pi16 (0, m_tap4, 0, m_tap4);
+    static __m64 tap0 = _mm_set_pi16 (m_tap0, m_tap0, m_tap0, m_tap0);
+    static __m64 tap1 = _mm_set_pi16 (m_tap1, m_tap1, m_tap1, m_tap1);
+    static __m64 tap2 = _mm_set_pi16 (m_tap2, m_tap2, m_tap2, m_tap2);
+    static __m64 tap3 = _mm_set_pi16 (m_tap3, m_tap3, m_tap3, m_tap3);
+    static __m64 tap4 = _mm_set_pi16 (m_tap4, m_tap4, m_tap4, m_tap4);
 
     //There are three y loops to cope with the leading edge, middle 
     //and trailing edge of each column.
 
+    __m64 tmp, m1, m2;
     for(int y = 0 ; y < m_filter_size; ++y , ypos += 2)
     {
 
@@ -102,11 +100,11 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
 
             //Work out the next pixel from filtered values.
             //Excuse the complicated ternary stuff but it sorts out the edge
-            mmx_add (&pic_data[y][x], &pic_data[y+1][x], tap0, zero, &sum1.m, &sum2.m);
-            mmx_add (&pic_data[(y>=1)?(y-1):0][x], &pic_data[y+2][x], tap1, zero, &sum1.m, &sum2.m);
-            mmx_add (&pic_data[(y>=2)?(y-2):0][x], &pic_data[y+3][x], tap2, zero, &sum1.m, &sum2.m);
-            mmx_add (&pic_data[(y>=3)?(y-3):0][x], &pic_data[y+4][x], tap3, zero, &sum1.m, &sum2.m);
-            mmx_add (&pic_data[(y>=4)?(y-4):0][x], &pic_data[y+5][x], tap4, zero, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[y][x], &pic_data[y+1][x], tap0, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[(y>=1)?(y-1):0][x], &pic_data[y+2][x], tap1, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[(y>=2)?(y-2):0][x], &pic_data[y+3][x], tap2, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[(y>=3)?(y-3):0][x], &pic_data[y+4][x], tap3, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[(y>=4)?(y-4):0][x], &pic_data[y+5][x], tap4, &sum1.m, &sum2.m);
 
             sum1.m = _mm_srai_pi32 (sum1.m, m_filter_shift);
             sum2.m = _mm_srai_pi32 (sum2.m, m_filter_shift);
@@ -135,11 +133,11 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
             up_data[ypos][xpos+4] = pic_data[y][x+2];
             up_data[ypos][xpos+6] = pic_data[y][x+3];
 
-            mmx_add (&pic_data[y][x], &pic_data[y+1][x], tap0, zero, &sum1.m, &sum2.m);
-            mmx_add (&pic_data[y-1][x], &pic_data[y+2][x], tap1, zero, &sum1.m, &sum2.m);
-            mmx_add (&pic_data[y-2][x], &pic_data[y+3][x], tap2, zero, &sum1.m, &sum2.m);
-            mmx_add (&pic_data[y-3][x], &pic_data[y+4][x], tap3, zero, &sum1.m, &sum2.m);
-            mmx_add (&pic_data[y-4][x], &pic_data[y+5][x], tap4, zero, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[y][x], &pic_data[y+1][x], tap0, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[y-1][x], &pic_data[y+2][x], tap1, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[y-2][x], &pic_data[y+3][x], tap2, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[y-3][x], &pic_data[y+4][x], tap3, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[y-4][x], &pic_data[y+5][x], tap4, &sum1.m, &sum2.m);
 
             sum1.m = _mm_srai_pi32 (sum1.m, m_filter_shift);
             sum2.m = _mm_srai_pi32 (sum2.m, m_filter_shift);
@@ -170,11 +168,11 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
 
             //Work out the next pixel from filtered values.
             //Excuse the complicated ternary stuff but it sorts out the edge
-            mmx_add (&pic_data[y][x], &pic_data[((y+1)<m_height_old)?(y+1):(m_height_old-1)][x], tap0, zero, &sum1.m, &sum2.m);
-            mmx_add (&pic_data[y-1][x], &pic_data[((y+2)<m_height_old)?(y+2):(m_height_old-1)][x], tap1, zero, &sum1.m, &sum2.m);
-            mmx_add (&pic_data[y-2][x], &pic_data[((y+3)<m_height_old)?(y+3):(m_height_old-1)][x], tap2, zero, &sum1.m, &sum2.m);
-            mmx_add (&pic_data[y-3][x], &pic_data[((y+4)<m_height_old)?(y+4):(m_height_old-1)][x], tap3, zero, &sum1.m, &sum2.m);
-            mmx_add (&pic_data[y-4][x], &pic_data[((y+5)<m_height_old)?(y+5):(m_height_old-1)][x], tap4, zero, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[y][x], &pic_data[((y+1)<m_height_old)?(y+1):(m_height_old-1)][x], tap0, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[y-1][x], &pic_data[((y+2)<m_height_old)?(y+2):(m_height_old-1)][x], tap1, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[y-2][x], &pic_data[((y+3)<m_height_old)?(y+3):(m_height_old-1)][x], tap2, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[y-3][x], &pic_data[((y+4)<m_height_old)?(y+4):(m_height_old-1)][x], tap3, &sum1.m, &sum2.m);
+            mmx_add (&pic_data[y-4][x], &pic_data[((y+5)<m_height_old)?(y+5):(m_height_old-1)][x], tap4, &sum1.m, &sum2.m);
 
             sum1.m = _mm_srai_pi32 (sum1.m, m_filter_shift);
             sum2.m = _mm_srai_pi32 (sum2.m, m_filter_shift);
