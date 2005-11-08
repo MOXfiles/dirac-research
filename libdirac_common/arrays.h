@@ -226,9 +226,12 @@ namespace dirac
 
     template <class T> 
     void OneDArray<T>::Resize(int l)
-    {    
-        FreePtr();
-        Init(l);
+    {
+		if (l != m_length)
+		{
+        	FreePtr();
+        	Init(l);
+		}
     }
 
     //private member functions//
