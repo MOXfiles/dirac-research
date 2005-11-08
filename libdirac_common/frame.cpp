@@ -57,7 +57,10 @@ Frame::Frame(const FrameParams& fp):
     m_V_data(0),
     m_upY_data(0),
     m_upU_data(0),
-    m_upV_data(0)
+    m_upV_data(0),
+    m_redo_upYdata(false),
+    m_redo_upUdata(false),
+    m_redo_upVdata(false)
 {
     Init();
 }
@@ -69,7 +72,10 @@ Frame::Frame( const Frame& cpy ):
     m_V_data(0),
     m_upY_data(0),
     m_upU_data(0),
-    m_upV_data(0)
+    m_upV_data(0),
+    m_redo_upYdata(cpy.m_redo_upYdata),
+    m_redo_upUdata(cpy.m_redo_upUdata),
+    m_redo_upVdata(cpy.m_redo_upVdata)
 {
     const ChromaFormat& cformat = m_fparams.CFormat();
 
@@ -111,26 +117,29 @@ Frame& Frame::operator=(const Frame& rhs)
     if ( &rhs != this)
     {
         m_fparams=rhs.m_fparams;
+        m_redo_upYdata = rhs.m_redo_upYdata;
+        m_redo_upUdata = rhs.m_redo_upUdata;
+        m_redo_upVdata = rhs.m_redo_upVdata;
         const ChromaFormat& cformat=m_fparams.CFormat();
 
         // Delete current data
         ClearData();
 
-        // Copy the data across        
-        m_Y_data= new PicArray( *(rhs.m_Y_data) );
-
-        if ( rhs.m_upY_data != 0)
+        // Copy the data across
+        m_Y_data = new PicArray( *(rhs.m_Y_data) );
+        
+        if (rhs.m_upY_data != 0)
             m_upY_data = new PicArray( *(rhs.m_upY_data) );
 
         if (cformat != Yonly)
         {
-            m_U_data= new PicArray( *(rhs.m_U_data) );            
-            if (rhs.m_upU_data!=0)
-                m_upU_data = new PicArray(*(rhs.m_upU_data) );
+            m_U_data = new PicArray( *(rhs.m_U_data) );
+            if ( rhs.m_upU_data != 0 )
+                m_upU_data = new PicArray( *(rhs.m_upU_data) );
 
-            m_V_data= new PicArray( *(rhs.m_V_data) );            
-            if (rhs.m_upV_data!=0)
-                m_upV_data= new PicArray( *(rhs.m_upV_data) );
+            m_V_data = new PicArray( *(rhs.m_V_data) );
+            if ( rhs.m_upV_data != 0 )
+                m_upV_data = new PicArray( *(rhs.m_upV_data) );
         }
     }
 
@@ -202,15 +211,17 @@ const PicArray& Frame::Data(CompSort cs) const
 
 PicArray& Frame::UpYdata()
 {
-    if (m_upY_data != 0)
+    if (m_upY_data != 0 && m_redo_upYdata == false)
         return *m_upY_data;
     else
     {//we have to do the upconversion
 
-        m_upY_data = new PicArray( 2*m_Y_data->LengthY() , 2*m_Y_data->LengthX() );
+        if (m_upY_data == 0)
+            m_upY_data = new PicArray( 2*m_Y_data->LengthY() , 2*m_Y_data->LengthX() );
         UpConverter myupconv;
         myupconv.DoUpConverter( *m_Y_data , *m_upY_data );
 
+        m_redo_upYdata = false;
         return *m_upY_data;
 
     }
@@ -218,15 +229,16 @@ PicArray& Frame::UpYdata()
 
 PicArray& Frame::UpUdata()
 {
-    if (m_upU_data != 0)
+    if (m_upU_data != 0 && m_redo_upUdata == false)
         return *m_upU_data;
     else
     {//we have to do the upconversion
 
-        m_upU_data = new PicArray(2*m_U_data->LengthY() , 2*m_U_data->LengthX());
+        if (m_upU_data ==0)
+            m_upU_data = new PicArray(2*m_U_data->LengthY() , 2*m_U_data->LengthX());
         UpConverter myupconv;
         myupconv.DoUpConverter( *m_U_data , *m_upU_data );
-
+        m_redo_upUdata = false;
         return *m_upU_data;
 
     }
@@ -234,14 +246,16 @@ PicArray& Frame::UpUdata()
 
 PicArray& Frame::UpVdata()
 {
-    if (m_upV_data != 0)
+    if (m_upV_data != 0 && m_redo_upVdata == false)
         return *m_upV_data;
     else
     {//we have to do the upconversion
-    
-        m_upV_data = new PicArray( 2*m_V_data->LengthY() , 2*m_V_data->LengthX() );
+   
+           if (m_upV_data ==0)
+            m_upV_data = new PicArray( 2*m_V_data->LengthY() , 2*m_V_data->LengthX() );
         UpConverter myupconv;
         myupconv.DoUpConverter( *m_V_data , *m_upV_data );
+        m_redo_upVdata = false;
 
         return *m_upV_data;
 
@@ -260,7 +274,7 @@ PicArray& Frame::UpData(CompSort cs)
 
 const PicArray& Frame::UpYdata() const
 {
-    if (m_upY_data != 0)
+    if (m_upY_data != 0 && m_redo_upYdata == false)
         return *m_upY_data;
     else
     {
@@ -269,11 +283,13 @@ const PicArray& Frame::UpYdata() const
         //the object as viewable from outside. So the pointers to the upconveted data have been 
         //declared mutable.
 
-        m_upY_data = new PicArray( 2*m_Y_data->LengthY() , 2*m_Y_data->LengthX() );
+        if (m_upY_data == 0)
+            m_upY_data = new PicArray( 2*m_Y_data->LengthY() , 2*m_Y_data->LengthX() );
 
         UpConverter myupconv;
         myupconv.DoUpConverter( *m_Y_data , *m_upY_data );
 
+        m_redo_upYdata = false;
         return *m_upY_data;
 
     }
@@ -281,7 +297,7 @@ const PicArray& Frame::UpYdata() const
 
 const PicArray& Frame::UpUdata() const
 {
-    if (m_upU_data != 0)
+    if (m_upU_data != 0 && m_redo_upUdata == false)
         return *m_upU_data;
     else
     {
@@ -290,10 +306,12 @@ const PicArray& Frame::UpUdata() const
         //the object as viewable from outside. So the pointers to the upconveted data have been 
         //declared mutable.
 
-        m_upU_data = new PicArray( 2*m_U_data->LengthY() , 2*m_U_data->LengthX() );
+        if (m_upU_data == 0)
+            m_upU_data = new PicArray( 2*m_U_data->LengthY() , 2*m_U_data->LengthX() );
 
         UpConverter myupconv;
         myupconv.DoUpConverter( *m_U_data , *m_upU_data );
+        m_redo_upUdata = false;
 
         return *m_upU_data;
 
@@ -302,7 +320,7 @@ const PicArray& Frame::UpUdata() const
 
 const PicArray& Frame::UpVdata() const
 {
-    if (m_upV_data != 0)
+    if (m_upV_data != 0 && m_redo_upVdata == false)
         return *m_upV_data;
     else
     {
@@ -311,10 +329,12 @@ const PicArray& Frame::UpVdata() const
         //the object as viewable from outside. So the pointers to the upconveted data have been 
         //declared mutable.
  
-        m_upV_data = new PicArray( 2*m_V_data->LengthY() , 2*m_V_data->LengthX() );
+        if (m_upV_data == 0)
+            m_upV_data = new PicArray( 2*m_V_data->LengthY() , 2*m_V_data->LengthX() );
 
         UpConverter myupconv;
         myupconv.DoUpConverter( *m_V_data , *m_upV_data );
+        m_redo_upVdata = false;
 
         return *m_upV_data;
 
@@ -436,4 +456,20 @@ void Frame::ClearData()
         delete m_upV_data;
         m_upV_data = 0;
     }
+}
+
+void Frame::ReconfigFrame(const FrameParams &fp )
+{
+
+    FrameParams old_fp = m_fparams;
+    m_fparams = fp;
+    m_redo_upYdata = m_redo_upUdata = m_redo_upVdata = true;
+
+    // HAve frame dimensions  or Chroma format changed ?
+    if (m_fparams.Xl() == old_fp.Xl() && m_fparams.Yl() == old_fp.Yl() &&
+        m_fparams.CFormat() == old_fp.CFormat())
+        return;
+
+    // Frame dimensions have changed. Re-initialise
+    Init();
 }

@@ -197,6 +197,9 @@ namespace dirac
     private:
         //! the buffer storing all the values
         std::vector<Frame*> m_frame_data;
+        
+        //! the flags that specifies if the frame is currently in use or not
+        std::vector<bool> m_frame_in_use;
 
         //!the map from frame numbers to position in the buffer
         std::map<unsigned int,unsigned int> m_fnum_map;

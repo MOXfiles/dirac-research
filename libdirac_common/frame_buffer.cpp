@@ -87,8 +87,10 @@ FrameBuffer::FrameBuffer(const FrameBuffer& cpy)
 
     // next create new arrays, copying from the initialising buffer
     m_frame_data.resize(cpy.m_frame_data.size());
+    m_frame_in_use.resize(cpy.m_frame_in_use.size());
     for (size_t i=0 ; i<m_frame_data.size() ; ++i){
         m_frame_data[i] = new Frame( *(cpy.m_frame_data[i]) );
+        m_frame_in_use[i] = cpy.m_frame_in_use[i];
     }//i
 
     // now copy the map
@@ -110,9 +112,11 @@ FrameBuffer& FrameBuffer::operator=(const FrameBuffer& rhs){
 
         // next create new arrays, copying from the rhs
         m_frame_data.resize(rhs.m_frame_data.size());
+        m_frame_in_use.resize(rhs.m_frame_in_use.size());
         for (size_t i=0 ; i<m_frame_data.size() ; ++i)
         {
             m_frame_data[i] = new Frame( *(rhs.m_frame_data[i]) );
+            m_frame_in_use[i] = rhs.m_frame_in_use[i];
         }//i
 
         // now copy the map
@@ -129,7 +133,6 @@ FrameBuffer::~FrameBuffer()
 {
     for (size_t i=0 ; i<m_frame_data.size() ;++i)
         delete m_frame_data[i];
-
 }
 
 Frame& FrameBuffer::GetFrame( unsigned int fnum )
@@ -228,26 +231,59 @@ void FrameBuffer::PushFrame(unsigned int frame_num)
 {// Put a new frame onto the top of the stack using built-in frame parameters
  // with frame number frame_num
     m_fparams.SetFrameNum(frame_num);
-    Frame* fptr = new Frame(m_fparams);
-
-    // add the frame to the buffer
-    m_frame_data.push_back(fptr);
+    int new_frame_pos = -1;
+    // First check if an unused frame is available in the buffer
+    for (int i = 0; i < (int)m_frame_in_use.size(); ++i)
+    {
+        if (m_frame_in_use[i] == false)
+        {
+            new_frame_pos = i;
+            m_frame_data[i]->ReconfigFrame(m_fparams);
+            m_frame_in_use[i] = true;
+            break;
+        }
+    }
+    if (new_frame_pos == -1)
+    {
+        // No unused frames in buffer. Allocate a new frame
+        Frame* fptr = new Frame(m_fparams);
+        // add the frame to the buffer
+        m_frame_data.push_back(fptr);
+        m_frame_in_use.push_back(true);
+        new_frame_pos = m_frame_data.size()-1;
+    }
     
     // put the frame number into the index table
-    std::pair<unsigned int,unsigned int> temp_pair(m_fparams.FrameNum() , m_frame_data.size()-1);
+    std::pair<unsigned int,unsigned int> temp_pair(m_fparams.FrameNum() , new_frame_pos);
     m_fnum_map.insert(temp_pair);
 }
 
 void FrameBuffer::PushFrame( const FrameParams& fp )
 {// Put a new frame onto the top of the stack
 
-    Frame* fptr = new Frame(fp);
-
-    // add the frame to the buffer
-    m_frame_data.push_back(fptr);
-
+    int new_frame_pos = -1;
+    // First check if an unused frame is available in the buffer
+    for (int i = 0; i < (int)m_frame_in_use.size(); ++i)
+    {
+        if (m_frame_in_use[i] == false)
+        {
+            new_frame_pos = i;
+            m_frame_data[i]->ReconfigFrame(fp);
+            m_frame_in_use[i] = true;
+            break;
+        }
+    }
+    if (new_frame_pos == -1)
+    {
+        // No unused frames in buffer. Allocate a new frame
+        Frame* fptr = new Frame(fp);
+        // add the frame to the buffer
+        m_frame_data.push_back(fptr);
+        new_frame_pos = m_frame_data.size()-1;
+        m_frame_in_use.push_back(true);
+    }
     // put the frame number into the index table
-    std::pair<unsigned int,unsigned int> temp_pair(fp.FrameNum() , m_frame_data.size()-1);
+    std::pair<unsigned int,unsigned int> temp_pair(fp.FrameNum() , new_frame_pos);
     m_fnum_map.insert(temp_pair);
 }
 
@@ -255,14 +291,31 @@ void FrameBuffer::PushFrame( const Frame& frame )
 {
     // Put a copy of a new frame onto the top of the stack
 
-    Frame* fptr = new Frame( frame );
+    int new_frame_pos = -1;
+    // First check if an unused frame is available in the buffer
+    for (int i = 0; i < (int)m_frame_in_use.size(); ++i)
+    {
+        if (m_frame_in_use[i] == false)
+        {
+            *m_frame_data[i] = frame;
+            new_frame_pos = i;
+            m_frame_in_use[i] = true;
+            break;
+        }
+    }
+    if (new_frame_pos == -1)
+    {
+        // No unused frames in buffer. Allocate a new frame
+        Frame* fptr = new Frame( frame );
 
-    // Add the frame to the buffer
-    m_frame_data.push_back(fptr);
+        // Add the frame to the buffer
+        m_frame_data.push_back(fptr);
+        new_frame_pos = m_frame_data.size()-1;
+        m_frame_in_use.push_back(true);
+    }
 
     // Put the frame number into the index table
-    std::pair<unsigned int,unsigned int> tmp_pair(frame.GetFparams().FrameNum() ,
-                                                   m_frame_data.size()-1);
+    std::pair<unsigned int,unsigned int> tmp_pair(frame.GetFparams().FrameNum() , new_frame_pos);
     m_fnum_map.insert(tmp_pair);
 }
 
@@ -271,7 +324,7 @@ void FrameBuffer::PushFrame(StreamPicInput* picin,const FrameParams& fp)
     //Read a frame onto the top of the stack
 
     PushFrame(fp);
-    picin->ReadNextFrame( *(m_frame_data[m_frame_data.size()-1]) );
+    picin->ReadNextFrame( GetFrame(fp.FrameNum()) );
 }
 
 void FrameBuffer::PushFrame(StreamPicInput* picin, unsigned int fnum)
@@ -288,20 +341,20 @@ void FrameBuffer::Remove(unsigned int pos)
 
     if (pos<m_frame_data.size())
     {
-
-        delete m_frame_data[pos];
-
-        m_frame_data.erase(m_frame_data.begin()+pos,m_frame_data.begin()+pos+1);
+        //flag that frame is no longer in use
+        m_frame_in_use[pos] = false;
 
          //make a new map
         m_fnum_map.clear();
         for (size_t i=0 ; i<m_frame_data.size() ; ++i)
         {
-            tmp_pair = new std::pair<unsigned int,unsigned int>( m_frame_data[i]->GetFparams().FrameNum() , i);
-            m_fnum_map.insert(*tmp_pair);
-            delete tmp_pair;
+            if (m_frame_in_use[i] == true)
+            {
+                tmp_pair = new std::pair<unsigned int,unsigned int>( m_frame_data[i]->GetFparams().FrameNum() , i);
+                m_fnum_map.insert(*tmp_pair);
+                delete tmp_pair;
+            }
         }//i
-
     }
 }
 
@@ -310,7 +363,7 @@ void FrameBuffer::Clean(int fnum)
 
     for (size_t i=0 ; i<m_frame_data.size() ; ++i)
     {
-        if ((m_frame_data[i]->GetFparams().FrameNum() + m_frame_data[i]->GetFparams().ExpiryTime() ) <= fnum)
+        if (m_frame_in_use[i] == true && (m_frame_data[i]->GetFparams().FrameNum() + m_frame_data[i]->GetFparams().ExpiryTime() ) <= fnum)
             Remove(i);
     }//i
 }

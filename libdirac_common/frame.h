@@ -74,6 +74,9 @@ namespace dirac
         //! Sets the frame sort
         void SetFrameSort( const FrameSort fs ){m_fparams.SetFSort( fs ); }
 
+        //! Reconfigures the the framend to the new parameters. 
+        void ReconfigFrame( const FrameParams &fp );
+
         //! Returns the luma data array
         PicArray& Ydata() {return *m_Y_data;}
 
@@ -144,7 +147,12 @@ namespace dirac
         void ClearData();
 
         //! Clip an individual component
-        void ClipComponent(PicArray& pic_data);    
+        void ClipComponent(PicArray& pic_data);
+
+        //! Flag that upconversion needs to be re-done
+        mutable bool m_redo_upYdata;
+        mutable bool m_redo_upUdata;
+        mutable bool m_redo_upVdata;
     };
 
 } // namespace dirac
