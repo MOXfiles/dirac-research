@@ -740,6 +740,9 @@ void WaveletTransform::VHFilterDaub9_7::Synth (const int xp ,
 
 } 
 
+#if !defined HAVE_MMX
+// NOTE: MMX version is defined in wavelet_utils_mmx.cpp
+// the corresponding changes are made in wavelet_utils_mmx.cpp as well
 void WaveletTransform::VHFilter5_3::Split(const int xp , 
                                           const int yp , 
                                           const int xl , 
@@ -815,7 +818,7 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
     DeInterleave( xp , yp , xl , yl , pic_data );
 }
 
-#if !defined HAVE_MMX
+
 // NOTE: MMX version is defined in wavelet_utils_mmx.cpp
 // the corresponding changes are made in wavelet_utils_mmx.cpp as well
 void WaveletTransform::VHFilter5_3::Synth(const int xp ,

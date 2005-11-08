@@ -640,6 +640,7 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
     Interleave_mmx( xp , yp , xl , yl , pic_data );  
 }
 
+//Opts - Attempt1
 void WaveletTransform::VHFilter5_3::Synth(const int xp ,
                                           const int yp , 
                                           const int xl , 
@@ -662,48 +663,46 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
 
     // Next, do the vertical synthesis
     // First lifting stage
-
     int xstop = (xend>>2)<<2;
+    
+    // Begin the top edge
+    ValueType *row1, *row2, *row3, *row4;
 
-    // Begin with the bottom edge
-    ValueType *row1 = &pic_data[yend-1][xp];
-    ValueType *row2 = &pic_data[yend-2][xp];
-    ValueType *row3 = &pic_data[yend-3][xp];
+    row1 = &pic_data[yp][xp];
+    row2 = &pic_data[yp+1][xp];
     for ( i = xp ; i < xstop ; i+=4)
     {
-        __m64 tmp = _mm_add_pi16 (*(__m64 *)row3, *(__m64 *)row1);
+        __m64 tmp = _mm_add_pi16 (*(__m64 *)row2, *(__m64 *)row2);
         tmp = _mm_srai_pi16(tmp, 2);
-        *(__m64 *)row2 = _mm_sub_pi16 (*(__m64*)row2, tmp);
+        *(__m64 *)row1 = _mm_sub_pi16 (*(__m64*)row1, tmp);
 
-        tmp = _mm_add_pi16 (*(__m64 *)row2, *(__m64 *)row2);
-        tmp = _mm_srai_pi16(tmp, 1);
-        *(__m64 *)row1 = _mm_add_pi16 (*(__m64*)row1, tmp);
         row1 += 4;
         row2 += 4;
-        row3 += 4;
-    }// i
-    // Mop up
+    }
+    // Mopup
     for ( i = xstop ; i < xend ; ++i)
     {
-        predict.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
-        update.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
+        predict.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
     }// i
+
+
     // Next, do the middle bit
-    for ( k = yend-3 ; k>yp+1 ; k-=2)
+    for ( k = yp+2 ; k < yend-2 ; k+=2)
     {
-        ValueType *row1 = &pic_data[k][xp];
+        ValueType *row1 = &pic_data[k-2][xp];
         ValueType *row2 = &pic_data[k-1][xp];
-        ValueType *row3 = &pic_data[k-2][xp];
+        ValueType *row3 = &pic_data[k][xp];
         ValueType *row4 = &pic_data[k+1][xp];
+
         for ( i = xp ; i < xstop ; i+=4)
         {
-            __m64 tmp = _mm_add_pi16 (*(__m64 *)row3, *(__m64 *)row1);
+            __m64 tmp = _mm_add_pi16 (*(__m64 *)row4, *(__m64 *)row2);
             tmp = _mm_srai_pi16(tmp, 2);
-            *(__m64 *)row2 = _mm_sub_pi16 (*(__m64*)row2, tmp);
+            *(__m64 *)row3 = _mm_sub_pi16 (*(__m64*)row3, tmp);
 
-            tmp = _mm_add_pi16 (*(__m64 *)row4, *(__m64 *)row2);
+            tmp = _mm_add_pi16 (*(__m64 *)row1, *(__m64 *)row3);
             tmp = _mm_srai_pi16(tmp, 1);
-            *(__m64 *)row1 = _mm_add_pi16 (*(__m64*)row1, tmp);
+            *(__m64 *)row2 = _mm_add_pi16 (*(__m64*)row2, tmp);
             row1 += 4;
             row2 += 4;
             row3 += 4;
@@ -713,54 +712,439 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
         //Mopup
         for ( i = xstop ; i < xend ; ++i)
         {
-            predict.Filter( pic_data[k-1][i] , pic_data[k-2][i] , pic_data[k][i] );
-            update.Filter( pic_data[k][i] , pic_data[k+1][i] , pic_data[k-1][i] );
+            predict.Filter( pic_data[k][i] , pic_data[k+1][i] , pic_data[k-1][i] );
+            update.Filter( pic_data[k-1][i] , pic_data[k-2][i] , pic_data[k][i] );
         }// i
     }// j
-    // Then do the top edge
-    row1 = &pic_data[yp][xp];
-    row2 = &pic_data[yp+1][xp];
-    row3 = &pic_data[yp+2][xp];
+    
+    // Finally with the bottom edge
+    row1 = &pic_data[yend-4][xp];
+    row2 = &pic_data[yend-3][xp];
+    row3 = &pic_data[yend-2][xp];
+    row4 = &pic_data[yend-1][xp];
+
     for ( i = xp ; i < xstop ; i+=4)
     {
-        __m64 tmp = _mm_add_pi16 (*(__m64 *)row2, *(__m64 *)row2);
+        __m64 tmp = _mm_add_pi16 (*(__m64 *)row2, *(__m64 *)row4);
         tmp = _mm_srai_pi16(tmp, 2);
-        *(__m64 *)row1 = _mm_sub_pi16 (*(__m64*)row1, tmp);
+        *(__m64 *)row3 = _mm_sub_pi16 (*(__m64*)row3, tmp);
 
         tmp = _mm_add_pi16 (*(__m64 *)row3, *(__m64 *)row1);
         tmp = _mm_srai_pi16(tmp, 1);
         *(__m64 *)row2 = _mm_add_pi16 (*(__m64*)row2, tmp);
+
+        tmp = _mm_add_pi16 (*(__m64 *)row3, *(__m64 *)row3);
+        tmp = _mm_srai_pi16(tmp, 1);
+        *(__m64 *)row4 = _mm_add_pi16 (*(__m64*)row4, tmp);
+
         row1 += 4;
         row2 += 4;
         row3 += 4;
-    }
-    // Mopup
+        row4 += 4;
+    }// i
+    // mopup
     for ( i = xstop ; i < xend ; ++i)
     {
-        predict.Filter( pic_data[yp][i] , pic_data[yp+1][i] , pic_data[yp+1][i] );
-        update.Filter( pic_data[yp+1][i] , pic_data[yp+2][i] , pic_data[yp][i] );
+        predict.Filter( pic_data[yend-2][i] , pic_data[yend-3][i] , pic_data[yend-1][i] );
+        update.Filter( pic_data[yend-3][i] , pic_data[yend-2][i] , pic_data[yend-4][i] );
+        update.Filter( pic_data[yend-1][i] , pic_data[yend-2][i] , pic_data[yend-2][i] );
     }// i
 
+
     // Next do the horizontal synthesis
-    for (j = yend-1;  j >= yp ; --j)
+    for (j = yp;  j < yend ; ++j)
     {
         // First lifting stage 
         line_data = &pic_data[j][xp];
 
-        predict.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] ); 
-        update.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] );
-
-        for ( k = xl-3;  k > 1; k-=2)
-        { 
-            predict.Filter( line_data[k-1] , line_data[k-2] , line_data[k] );
-            update.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
-        }// i
-
         predict.Filter( line_data[0] , line_data[1] , line_data[1] );
-        update.Filter( line_data[1] , line_data[2] , line_data[0] );
+
+        for ( k = 2;  k < xl -2; k+=2)
+        { 
+            predict.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
+            update.Filter( line_data[k-1] , line_data[k-2] , line_data[k] );
+        }// i
+        
+        predict.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] ); 
+        update.Filter( line_data[xl-3] , line_data[xl-2] , line_data[xl-4] );
+        update.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] );
 
     }
     _mm_empty();
 }
 
+#if 0
+//Opts Attempt 2
+void WaveletTransform::VHFilter5_3::Synth(const int xp ,
+                                          const int yp , 
+                                          const int xl , 
+                                          const int yl , 
+                                          PicArray& pic_data)
+{
+    int i,j,k;
+    const int yend( yp+yl );
+
+    const int xl2 (xl>>1);
+    const int ymid (yp + (yl>>1));
+    const PredictStepShift< 2 > predict;
+    const UpdateStepShift< 1 > update;
+
+    ValueType* line_data;
+
+
+    // Next, do the vertical synthesis
+    // First lifting stage
+
+    int xstop = (xl>>2)<<2;
+
+    ValueType *row1, *row2, *row3, *row4;
+    // First do the top edge
+    row1 = &pic_data[yp][xp];
+    row2 = &pic_data[ymid][xp];
+    for ( i = 0 ; i < xstop ; i+=4)
+    {
+        __m64 tmp = _mm_add_pi16 (*(__m64 *)row2, *(__m64 *)row2);
+        tmp = _mm_srai_pi16(tmp, 2);
+        *(__m64 *)row1 = _mm_sub_pi16 (*(__m64*)row1, tmp);
+        row1+=4;
+        row2+=4;
+    }// i
+
+    //mopup
+    for ( i = xstop ; i < xl ; ++i)
+    {
+        predict.Filter( *row1 , *row2 , *row2);
+        ++row1;
+        ++row2;
+    }// i
+
+    // Next, do the middle bit
+    for ( k = 1 ; k < ymid-1 ; ++k)
+    {
+        row1 = &pic_data[k-1][xp];
+        row2 = &pic_data[k][xp];
+        row3 = &pic_data[ymid+k-1][xp];
+        row4 = &pic_data[ymid+k][xp];
+
+        for ( i = 0 ; i < xstop ; i+=4)
+        {
+            __m64 tmp = _mm_add_pi16 (*(__m64 *)row3, *(__m64 *)row4);
+            tmp = _mm_srai_pi16(tmp, 2);
+            *(__m64 *)row2 = _mm_sub_pi16 (*(__m64*)row2, tmp);
+
+            tmp = _mm_add_pi16 (*(__m64 *)row2, *(__m64 *)row1);
+            tmp = _mm_srai_pi16(tmp, 1);
+            *(__m64 *)row3 = _mm_add_pi16 (*(__m64*)row3, tmp);
+            
+            row1 += 4;
+            row2 += 4;
+            row3 += 4;
+            row4 += 4;
+        }// i
+
+        for ( i = xstop ; i < xl ; ++i)
+        {
+            predict.Filter( *row2 , *row4 , *row3 );
+            update.Filter( *row3 , *row2 , *row1 );
+            ++row1;
+            ++row2;
+            ++row3;
+            ++row4;
+        }// i
+    }// j
+
+
+    // Finally with the bottom edge
+    row1 = &pic_data[ymid-2][xp];
+    row2 = &pic_data[ymid-1][xp];
+    row3 = &pic_data[yend-2][xp];
+    row4 = &pic_data[yend-1][xp];
+    for ( i = xp ; i< xstop ; i+=4)
+    {
+        __m64 tmp = _mm_add_pi16 (*(__m64 *)row3, *(__m64 *)row4);
+        tmp = _mm_srai_pi16(tmp, 2);
+        *(__m64 *)row2 = _mm_sub_pi16 (*(__m64*)row2, tmp);
+
+        tmp = _mm_add_pi16 (*(__m64 *)row2, *(__m64 *)row1);
+        tmp = _mm_srai_pi16(tmp, 1);
+        *(__m64 *)row3 = _mm_add_pi16 (*(__m64*)row3, tmp);
+           
+        tmp = _mm_add_pi16 (*(__m64 *)row2, *(__m64 *)row2);
+        tmp = _mm_srai_pi16(tmp, 1);
+        *(__m64 *)row4 = _mm_add_pi16 (*(__m64*)row4, tmp);
+           
+        row1 += 4;
+        row2 += 4;
+        row3 += 4;
+        row4 += 4;
+    }// i
+    // mopup
+    for ( i = xstop ; i< xl ; ++i)
+    {
+        predict.Filter( *row2 , *row3 , *row4 );
+        update.Filter( *row3 , *row1 , *row2 );
+        update.Filter( *row4 , *row2 , *row2 );
+        ++row1;
+        ++row2;
+        ++row3;
+        ++row4;
+    }// i
+
+    // Next do the horizontal synthesis
+    xstop = (((xl2 - 2)>>2)<<2) + 1;
+    //xstop = 1;
+    for (j = yp;  j < yend ; ++j)
+    {
+        // First lifting stage 
+        line_data = &pic_data[j][xp];
+        predict.Filter( line_data[0] , line_data[xl2] , line_data[xl2] );
+
+        for ( k = 1;  k < xstop; k+=4)
+        { 
+            //predict.Filter( line_data[k] , line_data[xl2+k] , line_data[xl2+k-1] );
+            __m64 m1 = _mm_add_pi16 (*(__m64 *)(line_data+xl2+k), *(__m64 *)(line_data+xl2+k-1));
+            m1 = _mm_srai_pi16 (m1, 2);
+            *(__m64 *)(line_data+k) = _mm_sub_pi16 (*(__m64 *)(line_data+k), m1);
+
+            //update.Filter( line_data[xl2+k-1] , line_data[k] , line_data[k-1] );
+            m1 = _mm_add_pi16 (*(__m64 *)(line_data+k), *(__m64 *)(line_data+k-1));
+            m1 = _mm_srai_pi16(m1, 1);
+            *(__m64 *)(line_data+xl2+k-1) = _mm_add_pi16 (*(__m64*)(line_data+xl2+k-1), m1);
+            
+            row1 += 4;
+            row2 += 4;
+            row3 += 4;
+            row4 += 4;
+        }// i
+
+
+        for ( k = xstop;  k < xl2-1; ++k)
+        { 
+            predict.Filter( line_data[k] , line_data[xl2+k] , line_data[xl2+k-1] );
+            update.Filter( line_data[xl2+k-1] , line_data[k] , line_data[k-1] );
+        }// i
+
+        predict.Filter( line_data[xl2-1] , line_data[xl-2] , line_data[xl-1] ); 
+        update.Filter( line_data[xl-2] , line_data[xl2-2] , line_data[xl2-1] );
+        update.Filter( line_data[xl-1] , line_data[xl2-1] , line_data[xl2-1] );
+    }
+    _mm_empty();
+    
+    // Finally interleave subbands
+    Interleave_mmx( xp , yp , xl , yl , pic_data );
+}
+#endif
+
+
+void DeInterleave_mmx( const int xp , 
+                 const int yp , 
+                 const int xl , 
+                 const int yl , 
+                 PicArray &pic_data)
+{
+    const int xl2( xl>>1);
+    const int yl2( yl>>1);
+    const int yend( yp + yl );
+
+    if (pic_data.LengthX() > t_temp_data.LengthX() ||
+        pic_data.LengthY() > t_temp_data.LengthY())
+    {
+        t_temp_data.Resize(pic_data.LengthY(), pic_data.LengthX());
+    }
+
+    // Make a temporary copy of the subband
+    for (int j = yp; j<yend ; j++ )
+        memcpy( t_temp_data[j-yp] , pic_data[j]+xp , xl * sizeof( ValueType ) );
+
+    int stopx = (xl2>>2)<<2;
+    
+    for (int j = yp, s=0; j<(yp+yl2) ; j++, s+=2)
+    {
+        ValueType *tmp1 = &t_temp_data[s][0];
+        ValueType *out1 = &pic_data[j][xp];
+        ValueType *out2 = &pic_data[j][xl2];
+        int r = xp;
+        for (int i = 0; i<xp+stopx ; i+=4 , r+=8)
+        {
+            __m64 m1 = _mm_unpacklo_pi16 (*(__m64 *)tmp1, *(__m64 *)(tmp1+4));
+            __m64 m2 = _mm_unpackhi_pi16 (*(__m64 *)tmp1, *(__m64 *)(tmp1+4));
+            *(__m64 *)out1 = _mm_unpacklo_pi16 (m1, m2);
+            *(__m64 *)out2 = _mm_unpackhi_pi16 (m1, m2);
+            out1 += 4;
+            out2 += 4;
+            tmp1+=8;
+        }
+        //mopup
+        for (int i = xp+stopx; i < xp+xl2; ++i, r+=2)
+        {
+            pic_data[j][i] = t_temp_data[s][r];
+            pic_data[j][i+xl2] = t_temp_data[s][r+1];
+        }
+    }// j 
+
+    for (int j = yl2, s=1; j< yend ; j++, s+=2)
+    {
+        ValueType *tmp1 = &t_temp_data[s][0];
+        ValueType *out1 = &pic_data[j][xp];
+        ValueType *out2 = &pic_data[j][xl2];
+        int r = xp;
+        for (int i = 0; i<xp+stopx ; i+=4 , r+=8)
+        {
+            __m64 m1 = _mm_unpacklo_pi16 (*(__m64 *)tmp1, *(__m64 *)(tmp1+4));
+            __m64 m2 = _mm_unpackhi_pi16 (*(__m64 *)tmp1, *(__m64 *)(tmp1+4));
+            *(__m64 *)out1 = _mm_unpacklo_pi16 (m1, m2);
+            *(__m64 *)out2 = _mm_unpackhi_pi16 (m1, m2);
+            out1 += 4;
+            out2 += 4;
+            tmp1+=8;
+        }
+        //mopup
+        for (int i = xp+stopx; i < xp+xl2; ++i, r+=2)
+        {
+            pic_data[j][i] = t_temp_data[s][r];
+            pic_data[j][i+xl2] = t_temp_data[s][r+1];
+        }
+    }// j 
+    _mm_empty();
+}
+
+void WaveletTransform::VHFilter5_3::Split(const int xp , 
+                                          const int yp , 
+                                          const int xl , 
+                                          const int yl , 
+                                          PicArray& pic_data)
+{
+    //version based on integer-like types
+    //using edge-extension rather than reflection
+
+    const int xend=xp+xl;
+    const int yend=yp+yl;
+    const int xl2 = xl>>1;
+    const int yl2 = yl>>1;
+
+    ValueType* line_data; 
+
+    // Positional variables
+    int i,j,k; 
+  
+    // Objects to do lifting stages 
+    // (in revese order and type from synthesis)
+    const PredictStepShift< 1 > predict;
+    const UpdateStepShift< 2 > update;
+
+    // Lastly, have to reorder so that subbands are no longer interleaved
+    DeInterleave_mmx( xp , yp , xl , yl , pic_data );
+     //first do horizontal 
+
+    for (j = yp;  j < yend; ++j)
+    {
+        // First lifting stage
+        line_data = &pic_data[j][xp];                 
+
+        predict.Filter( line_data[xp+xl2] , line_data[1] , line_data[0] );
+        update.Filter( line_data[0] , line_data[xp+xl2] , line_data[xp+xl2] );
+
+        for (k = 1; k < xp+xl2-1; k+=1)
+        {
+            predict.Filter( line_data[xp+xl2+k] , line_data[k+1] , line_data[k] );
+            update.Filter(  line_data[k] , line_data[xp+xl2+k-1] , line_data[xp+xl2+k] );
+        }// i
+        
+        predict.Filter( line_data[xl-1] , line_data[xp+xl2-1] , line_data[xp+xl2-1] );
+        update.Filter( line_data[xp+xl2-1] , line_data[xl-2] , line_data[xl-1] );
+
+    }// j
+
+    // next do vertical
+
+    // First lifting stage
+
+    // top edge - j=xp
+    int stopX = (xl>>2)<<2;
+    ValueType *in_val = &pic_data[yp+yl2][xp];
+    ValueType *val1 = &pic_data[1][xp];
+    ValueType *val2 = &pic_data[0][xp];
+    for ( i = xp ; i<(xp+stopX); i+=4)
+    {
+        //predict.Filter( pic_data[yp+yl2][i] , pic_data[1][i] , pic_data[0][i] );
+        __m64 m1 = _mm_add_pi16 (*(__m64 *)val1, *(__m64 *)val2);
+        m1 = _mm_srai_pi16(m1, 1);
+        *(__m64 *)in_val = _mm_sub_pi16 (*(__m64 *)in_val, m1);
+
+        //update.Filter( pic_data[0][i] , pic_data[yp+yl2][i] , pic_data[yp+yl2][i] );
+        m1 = _mm_add_pi16 (*(__m64 *)in_val, *(__m64 *)in_val);
+        m1 = _mm_srai_pi16(m1, 2);
+        *(__m64 *)val2 = _mm_add_pi16 (*(__m64 *)val2, m1);
+        in_val += 4;
+        val1 += 4;
+        val2 += 4;
+    }// i
+    // mopup
+    for ( i = xp+stopX ; i<xend ; ++ i)
+    {
+        predict.Filter( pic_data[yp+yl2][i] , pic_data[1][i] , pic_data[0][i] );
+        update.Filter( pic_data[0][i] , pic_data[yp+yl2][i] , pic_data[yp+yl2][i] );
+    }// i
+
+    // middle bit
+    for (k = 1 ; k<yp+yl2-1 ; k+=1)
+    {
+        ValueType *in_val = &pic_data[yp+yl2+k][xp];
+        ValueType *in_val2 = &pic_data[yp+yl2+k-1][xp];
+        ValueType *val1 = &pic_data[k+1][xp];
+        ValueType *val2 = &pic_data[k][xp];
+        for ( i = xp ; i<xp+stopX ; i+=4)
+        {
+            //predict.Filter( pic_data[yp+yl2+k][i] , pic_data[k+1][i] , pic_data[k][i] );
+            __m64 m1 = _mm_add_pi16 (*(__m64 *)val1, *(__m64 *)val2);
+            m1 = _mm_srai_pi16(m1, 1);
+            *(__m64 *)in_val = _mm_sub_pi16 (*(__m64 *)in_val, m1);
+            
+            //update.Filter( pic_data[k][i] , pic_data[yp+yl2+k-1][i] , pic_data[yp+yl2+k][i] );
+            m1 = _mm_add_pi16 (*(__m64 *)in_val, *(__m64 *)in_val2);
+            m1 = _mm_srai_pi16(m1, 2);
+            *(__m64 *)val2 = _mm_add_pi16 (*(__m64 *)val2, m1);
+
+            in_val += 4;
+            in_val2 += 4;
+            val1 += 4;
+            val2 += 4;
+        }// i
+
+        //mopup
+        for ( i = xp+stopX ; i<xend ; ++ i)
+        {
+            predict.Filter( pic_data[yp+yl2+k][i] , pic_data[k+1][i] , pic_data[k][i] );
+            update.Filter( pic_data[k][i] , pic_data[yp+yl2+k-1][i] , pic_data[yp+yl2+k][i] );
+        }// i
+    }// j
+
+    in_val = &pic_data[yend-1][xp];
+    val2 = &pic_data[yp+yl2-1][xp];
+    ValueType *in_val2 = &pic_data[yend-2][xp];
+    // bottom edge
+    for ( i = xp ; i<xp+stopX ; i+=4)
+    {
+        //predict.Filter( pic_data[yend-1][i] , pic_data[yp+yl2-1][i] , pic_data[yp+yl2-1][i] );
+        __m64 m1 = _mm_add_pi16 (*(__m64 *)val2, *(__m64 *)val2);
+        m1 = _mm_srai_pi16(m1, 1);
+        *(__m64 *)in_val = _mm_sub_pi16 (*(__m64 *)in_val, m1);
+       
+       //update.Filter( pic_data[yp+yl2-1][i] , pic_data[yend-2][i] , pic_data[yend-1][i] );
+        m1 = _mm_add_pi16 (*(__m64 *)in_val2, *(__m64 *)in_val);
+        m1 = _mm_srai_pi16(m1, 2);
+        *(__m64 *)val2 = _mm_add_pi16 (*(__m64 *)val2, m1);
+
+        in_val += 4;
+        in_val2 += 4;
+        val2 += 4;
+    }// i
+    // mopup
+    for ( i = xp+stopX ; i<xend ; ++ i)
+    {
+        predict.Filter( pic_data[yend-1][i] , pic_data[yp+yl2-1][i] , pic_data[yp+yl2-1][i] );
+        update.Filter( pic_data[yp+yl2-1][i] , pic_data[yend-2][i] , pic_data[yend-1][i] );
+    }// i
+    _mm_empty();
+}
 #endif
