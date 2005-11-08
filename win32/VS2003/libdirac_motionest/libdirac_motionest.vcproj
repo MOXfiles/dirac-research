@@ -381,6 +381,9 @@
 				RelativePath="..\..\..\libdirac_motionest\downconvert.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_motionest\downconvert_mmx.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_motionest\me_mode_decn.cpp">
 			</File>
 			<File

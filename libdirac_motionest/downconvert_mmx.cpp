@@ -20,8 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Richard Felton (Original Author), 
-*                 Thomas Davies
+* Contributor(s): Anuradha Suraparaju (Original Author)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -39,15 +38,26 @@
 #include <libdirac_motionest/downconvert.h>
 using namespace dirac;
 
-DownConverter::DownConverter()
-{}
+#if defined (HAVE_MMX)
+#include <mmintrin.h>
+
+typedef union 
+{
+    __m64 m;
+    int i[2];
+} u_sum;
 
 
-#if !defined(HAVE_MMX)
+#define mmx_add(pic1,pic2,tap,zero,sum1,sum2) \
+    tmp = _mm_add_pi16 (*(__m64 *)pic1, *(__m64 *)pic2);    \
+    m1 = _mm_unpacklo_pi16 ( tmp, zero);    \
+    m2 = _mm_unpackhi_pi16 ( tmp, zero);    \
+    m1 = _mm_madd_pi16 (m1, tap);    \
+    m2 = _mm_madd_pi16 (m2, tap);    \
+    *sum1 = _mm_add_pi32 (*sum1, m1);    \
+    *sum2 = _mm_add_pi32 (*sum2, m2);    \
+
 //General function - does some admin and calls the correct function
-//NOTE: The mmx version of this function is defined in downconvert_mmx.cpp
-//Ensusre that changes made in this function are reflected in the mmx version
-//as well.
 void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data)
 {
     //Down-convert by a factor of two.
@@ -64,6 +74,20 @@ void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data)
     //There are three y loops to cope with the leading edge, middle 
     //and trailing edge of each column.
     colpos=0;
+
+    static __m64 zero = _mm_set_pi16(0, 0, 0, 0);
+    static __m64 tap0 = _mm_set_pi16 (0, StageI_I, 0, StageI_I);
+    static __m64 tap1 = _mm_set_pi16 (0, StageI_II, 0, StageI_II);
+    static __m64 tap2 = _mm_set_pi16 (0, StageI_III, 0, StageI_III);
+    static __m64 tap3 = _mm_set_pi16 (0, StageI_IV, 0, StageI_IV);
+    static __m64 tap4 = _mm_set_pi16 (0, StageI_V, 0, StageI_V);
+    static __m64 tap5 = _mm_set_pi16 (0, StageI_VI, 0, StageI_VI);
+    static __m64 round = _mm_set_pi32 ( 1<<(StageI_Shift-1), 1<<(StageI_Shift-1));
+
+    u_sum sum1, sum2;
+    __m64 tmp, m1, m2;
+
+    int stopX = (xlen >> 2)<<2;
     for( int y=0; y<Stage_I_Size*2 ; y+=2 , colpos++ )
     {
         // We are filtering each column but doing it bit by bit.
@@ -71,7 +95,33 @@ void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data)
         // there is a much greater chance the data we need will
         // be in the cache.
 
-        for( int x=0 ; x<xlen ; x++ )
+        for( int x=0 ; x<stopX ; x+=4 )
+        {            
+            // In down conversion we interpolate every pixel
+            // so there is no copying.
+            // Excuse the complicated ternary stuff but it sorts out the edge
+            sum1.m = _mm_set_pi32 (0, 0);
+            sum2.m = _mm_set_pi32 (0, 0);
+
+            mmx_add (&old_data[y][x], &old_data[y+1][x], tap0, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[((y-1)>=0)?(y-1):0][x] , &old_data[y+2][x], tap1, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[((y-2)>=0)?(y-2):0][x] , &old_data[y+3][x], tap2, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[((y-3)>=0)?(y-3):0][x] , &old_data[y+4][x], tap3, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[((y-4)>=0)?(y-4):0][x] , &old_data[y+5][x], tap4, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[((y-5)>=0)?(y-5):0][x] , &old_data[y+6][x], tap5, zero, &sum1.m, &sum2.m);
+
+            sum1.m = _mm_add_pi32 (sum1.m, round);
+            sum2.m = _mm_add_pi32 (sum2.m, round);
+            sum1.m = _mm_srai_pi32 (sum1.m, StageI_Shift);
+            sum2.m = _mm_srai_pi32 (sum2.m, StageI_Shift);
+            m_row_buffer[x] = sum1.i[0];
+            m_row_buffer[x+1] = sum1.i[1];
+            m_row_buffer[x+2] = sum2.i[0];
+            m_row_buffer[x+3] = sum2.i[1];
+        }// x
+        _mm_empty();
+
+        for( int x=stopX ; x<xlen ; x++ )
         {            
             // In down conversion we interpolate every pixel
             // so there is no copying.
@@ -95,9 +145,34 @@ void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data)
     // from the filter section.
     for( int y=Stage_I_Size*2 ; y<ylen-Stage_I_Size*2 ; y+=2 , colpos++ )
     {
-        for( int x=0 ; x<xlen ; x++ )
-        {
+        for( int x=0 ; x<stopX ; x+=4 )
+        {            
+            // In down conversion we interpolate every pixel
+            // so there is no copying.
+            // Excuse the complicated ternary stuff but it sorts out the edge
+            sum1.m = _mm_set_pi32 (0, 0);
+            sum2.m = _mm_set_pi32 (0, 0);
 
+            mmx_add (&old_data[y][x], &old_data[y+1][x], tap0, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[y-1][x] , &old_data[y+2][x], tap1, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[y-2][x] , &old_data[y+3][x], tap2, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[y-3][x] , &old_data[y+4][x], tap3, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[y-4][x] , &old_data[y+5][x], tap4, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[y-5][x] , &old_data[y+6][x], tap5, zero, &sum1.m, &sum2.m);
+
+            sum1.m = _mm_add_pi32 (sum1.m, round);
+            sum2.m = _mm_add_pi32 (sum2.m, round);
+            sum1.m = _mm_srai_pi32 (sum1.m, StageI_Shift);
+            sum2.m = _mm_srai_pi32 (sum2.m, StageI_Shift);
+            m_row_buffer[x] = sum1.i[0];
+            m_row_buffer[x+1] = sum1.i[1];
+            m_row_buffer[x+2] = sum2.i[0];
+            m_row_buffer[x+3] = sum2.i[1];
+        }// x
+        _mm_empty();
+
+        for( int x=stopX ; x<xlen ; x++ )
+        {
             sum =  (old_data[y][x]   + old_data[y+1][x])*StageI_I;
             sum += (old_data[y-1][x] + old_data[y+2][x])*StageI_II;
             sum += (old_data[y-2][x] + old_data[y+3][x])*StageI_III;
@@ -117,7 +192,34 @@ void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data)
 
     for( int y=ylen-(Stage_I_Size*2) ; y<ylen-1 ; y+=2 , colpos++ )
     {
-        for( int x=0; x<xlen ; x++ )
+        for( int x=0 ; x<stopX ; x+=4 )
+        {            
+            // In down conversion we interpolate every pixel
+            // so there is no copying.
+            // Excuse the complicated ternary stuff but it sorts out the edge
+            sum1.m = _mm_set_pi32 (0, 0);
+            sum2.m = _mm_set_pi32 (0, 0);
+
+            mmx_add (&old_data[y][x], &old_data[((y+1)<ylen)?(y+1):(ylen-1)][x], tap0, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[y-1][x] , &old_data[((y+2)<ylen)?(y+2):(ylen-1)][x], tap1, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[y-2][x] , &old_data[((y+3)<ylen)?(y+3):(ylen-1)][x], tap2, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[y-3][x] , &old_data[((y+4)<ylen)?(y+4):(ylen-1)][x], tap3, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[y-4][x] , &old_data[((y+5)<ylen)?(y+5):(ylen-1)][x], tap4, zero, &sum1.m, &sum2.m);
+            mmx_add(&old_data[y-5][x] , &old_data[((y+6)<ylen)?(y+6):(ylen-1)][x], tap5, zero, &sum1.m, &sum2.m);
+
+            sum1.m = _mm_add_pi32 (sum1.m, round);
+            sum2.m = _mm_add_pi32 (sum2.m, round);
+            sum1.m = _mm_srai_pi32 (sum1.m, StageI_Shift);
+            sum2.m = _mm_srai_pi32 (sum2.m, StageI_Shift);
+
+            m_row_buffer[x] = sum1.i[0];
+            m_row_buffer[x+1] = sum1.i[1];
+            m_row_buffer[x+2] = sum2.i[0];
+            m_row_buffer[x+3] = sum2.i[1];
+        }// x
+        _mm_empty();
+
+        for( int x=stopX; x<xlen ; x++ )
         {
 
             sum =  (old_data[y][x]   + old_data[((y+1)<ylen)?(y+1):(ylen-1)][x])*StageI_I;
@@ -142,63 +244,3 @@ void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data)
 
 }
 #endif
-
-
-// The loop over the columns is the same every time so lends itself to isolation
-// as an individual function.
-void DownConverter::RowLoop( const int colpos , const PicArray& old_data , PicArray& new_data)
-{
-
-     //Calculation variables
-    int sum;
-    const int xlen = 2*new_data.LengthX();
-    int linepos=0;    
-
-     // Leading Column Edge
-     // Similar loops to the x case in ByHalf_opto, for explanation look there.
-     // Note the factor of two difference as we only want to fill in every other
-     // line as the others have already been created by the line loops.
-
-    for( int x=0; x<(2*Stage_I_Size) ; x+=2 , linepos++ )
-    {
-        sum =  (m_row_buffer[((x)>=0)?(x):0]     + m_row_buffer[x+1])*StageI_I;
-        sum += (m_row_buffer[((x-1)>=0)?(x-1):0] + m_row_buffer[x+2])*StageI_II;
-        sum += (m_row_buffer[((x-2)>=0)?(x-2):0] + m_row_buffer[x+3])*StageI_III;
-        sum += (m_row_buffer[((x-3)>=0)?(x-3):0] + m_row_buffer[x+4])*StageI_IV;
-        sum += (m_row_buffer[((x-4)>=0)?(x-4):0] + m_row_buffer[x+5])*StageI_V;
-        sum += (m_row_buffer[((x-5)>=0)?(x-5):0] + m_row_buffer[x+6])*StageI_VI;
-        sum += 1<<(StageI_Shift-1);//do rounding right
-
-        new_data[colpos][linepos] = sum >> StageI_Shift;
-
-    }
-     //Middle of column
-    for( int x=(2*Stage_I_Size) ; x<xlen-(2*Stage_I_Size) ; x+=2 , linepos++) 
-    {
-        sum =  (m_row_buffer[x]   + m_row_buffer[x+1])*StageI_I;
-        sum += (m_row_buffer[x-1] + m_row_buffer[x+2])*StageI_II;
-        sum += (m_row_buffer[x-2] + m_row_buffer[x+3])*StageI_III;
-        sum += (m_row_buffer[x-3] + m_row_buffer[x+4])*StageI_IV;
-        sum += (m_row_buffer[x-4] + m_row_buffer[x+5])*StageI_V;
-        sum += (m_row_buffer[x-5] + m_row_buffer[x+6])*StageI_VI;
-        sum += 1<<(StageI_Shift-1);//do rounding right
-
-        new_data[colpos][linepos] = sum >> StageI_Shift;
-
-    }
-     //Trailing column edge
-    for( int x=xlen-(2*Stage_I_Size) ; x< xlen-1 ; x+=2 , linepos++ )
-    {
-        sum =  (m_row_buffer[x]   + m_row_buffer[((x+1)<xlen)?(x+1):(xlen-1)])*StageI_I;
-        sum += (m_row_buffer[x-1] + m_row_buffer[((x+2)<xlen)?(x+2):(xlen-1)])*StageI_II;
-        sum += (m_row_buffer[x-2] + m_row_buffer[((x+3)<xlen)?(x+3):(xlen-1)])*StageI_III;
-        sum += (m_row_buffer[x-3] + m_row_buffer[((x+4)<xlen)?(x+4):(xlen-1)])*StageI_IV;
-        sum += (m_row_buffer[x-4] + m_row_buffer[((x+5)<xlen)?(x+5):(xlen-1)])*StageI_V;
-        sum += (m_row_buffer[x-5] + m_row_buffer[((x+6)<xlen)?(x+6):(xlen-1)])*StageI_VI;
-        sum += 1<<(StageI_Shift-1);//do rounding right
-
-        new_data[colpos][linepos] = sum >> StageI_Shift;
-
-    }
-
-}
