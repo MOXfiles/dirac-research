@@ -132,8 +132,8 @@ namespace dirac
 
         // NOTE: These macros imply an unsigned 16-bit operand
         static const code_t CODE_MAX     = 0xffff;
-        static const code_t CODE_MSB     = ((0xffff + 1) >> 1);
-        static const code_t CODE_2ND_MSB = ((0xffff + 1) >> 2);
+        static const code_t CODE_MSB     = 0x8000;
+        static const code_t CODE_2ND_MSB = 0x4000;
 
 
         //! A class for binary contexts.
