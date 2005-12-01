@@ -39,6 +39,13 @@
 
 using namespace dirac;
 
+const BandCodec::ContextTriple BandCodec::m_context_triples[BandCodec::lastCTXTAlias] = { 
+                                                            {Z_BIN1z_CTX,  Z_BIN2_CTX,  Z_BIN5plus_CTX},  // Z_z_CTXT
+                                                            {Z_BIN1nz_CTX, Z_BIN2_CTX,  Z_BIN5plus_CTX},  // Z_nz_CTXT
+                                                            {NZ_BIN1z_CTX, NZ_BIN2_CTX, NZ_BIN5plus_CTX}, // NZ_z_CTXT
+                                                            {NZ_BIN1b_CTX, NZ_BIN2_CTX, NZ_BIN5plus_CTX}, // NZ_b_CTXT
+                                                            {NZ_BIN1a_CTX, NZ_BIN2_CTX, NZ_BIN5plus_CTX}};// NZ_a_CTXT
+
 //! Constructor for encoding.
 BandCodec::BandCodec(BasicOutputManager* bits_out,
                      size_t number_of_contexts,
@@ -124,7 +131,7 @@ void BandCodec::DoWorkCode(PicArray& in_data)
             if ( !block[i].Skipped() )
                 CodeCoeffBlock( block[i] , in_data );
             else
-                SetToVal( block[i] , in_data , 0 );
+                ClearBlock (block[i] , in_data);
         }// i
     }// j
 
@@ -191,15 +198,33 @@ void BandCodec::CodeVal( PicArray& in_data , const int xpos , const int ypos , c
     int abs_val( std::abs(val) );
     abs_val *= m_qfinv;
     abs_val >>= 17;
-
-    for ( int bin=1 ; bin<=abs_val ; ++bin )
-        EncodeSymbol( 0 , ChooseContext( bin ) );
-
-    EncodeSymbol( 1 , ChooseContext( abs_val+1 ) );
-
-    in_data[ypos][xpos] = 0;
-    if ( abs_val )
+    const ContextTriple& ctxt = ChooseContexts();
+    
+    if (abs_val != 0)
     {
+        EncodeSymbol( 0, ctxt.firstContext );
+
+        int count = 1;
+        int curr_context = ctxt.secondContext;
+
+        while ( curr_context != ctxt.endContext && count < abs_val)
+        {                                   
+            EncodeSymbol( 0, curr_context );
+            ++curr_context;
+            ++count;
+        }
+
+        if (curr_context == ctxt.endContext)
+        {
+            while (count < abs_val)
+            {            
+                ++count;
+                EncodeSymbol( 0, curr_context );
+            }
+        } 
+
+        EncodeSymbol( 1, curr_context );
+
         abs_val *= m_qf;
         in_data[ypos][xpos] = static_cast<ValueType>( abs_val );                
         
@@ -215,7 +240,12 @@ void BandCodec::CodeVal( PicArray& in_data , const int xpos , const int ypos , c
             in_data[ypos][xpos] -= m_offset;
         }
     }
-    
+    else
+    {
+        in_data[ypos][xpos] = 0;
+        EncodeSymbol( 1, ctxt.firstContext );
+    }
+  
     m_coeff_count++;
     
     if (m_coeff_count > m_reset_coeff_num)
@@ -251,7 +281,7 @@ void BandCodec::DoWorkDecode( PicArray& out_data )
             if ( !block[i].Skipped() )
                 DecodeCoeffBlock( block[i] , out_data );
             else
-                SetToVal( block[i] , out_data , 0 );
+                ClearBlock (block[i] , out_data);
 
         }// i
     }// j
@@ -319,33 +349,38 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
 
 void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const int ypos )
 {
-    ValueType val = 0;
-    bool bit;
-    int  bin = 1;
-    
-    do
+    const ContextTriple& ctxt = ChooseContexts();
+    ValueType& out_pixel = out_data[ypos][xpos];
+    if (!DecodeSymbol( ctxt.firstContext ))
     {
-        bit = DecodeSymbol( ChooseContext( bin ) );
-        
-        if (!bit)
-            val++;
-        
-        bin++;
-    }
-    while (!bit);            
+        int curr_context = ctxt.secondContext;
 
-    out_data[ypos][xpos] = val;
-    
-    if ( out_data[ypos][xpos] )
+        out_pixel = 1;
+        
+        while ( curr_context != ctxt.endContext && !DecodeSymbol( curr_context ))
+        {                   
+            ++out_pixel;
+            ++curr_context;
+        }
+
+        if (curr_context == ctxt.endContext)
+        {
+            while (!DecodeSymbol( curr_context ))
+            {            
+                ++out_pixel;
+            }
+        } 
+
+        out_pixel *= m_qf;
+        out_pixel += m_offset;       
+        if ( !DecodeSymbol( ChooseSignContext(out_data, xpos, ypos)) )
+            out_pixel = -out_pixel;
+    }
+    else
     {
-        out_data[ypos][xpos] *= m_qf;
-        out_data[ypos][xpos] += m_offset;
-        bit = DecodeSymbol( ChooseSignContext( out_data , xpos , ypos ) );
+        out_pixel = 0;
     }
     
-    if ( !bit )
-        out_data[ypos][xpos] =- out_data[ypos][xpos];
-
     m_coeff_count++;
     
     if (m_coeff_count>m_reset_coeff_num)
@@ -355,49 +390,29 @@ void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const int ypos 
     }
 }
 
-int BandCodec::ChooseContext( const int bin_number ) const
+const BandCodec::ContextTriple& BandCodec::ChooseContexts() const
 {
-    //condition on neighbouring values and parent values
-
+    ContextTripleAliases ct;
     if (!m_parent_notzero && (m_pxp != 0 || m_pyp != 0))
-    {
-        if (bin_number == 1)
-        {
-            if(m_nhood_sum == 0)
-                return Z_BIN1z_CTX;
-            else
-                return Z_BIN1nz_CTX;
-        }
-        else if(bin_number == 2)
-            return Z_BIN2_CTX;
-        else if(bin_number == 3)
-            return Z_BIN3_CTX;
-        else if(bin_number == 4)
-            return Z_BIN4_CTX;
+    {    
+        if(m_nhood_sum == 0)
+            ct = Z_z_CTXT;
         else
-            return Z_BIN5plus_CTX;
+            ct = Z_nz_CTXT;
     }
     else
-    {
-        if (bin_number == 1)
-        {
-            if(m_nhood_sum == 0)
-                return NZ_BIN1z_CTX;
-            else if (m_nhood_sum>m_cut_off_point)
-                return NZ_BIN1b_CTX;
-            else
-                return NZ_BIN1a_CTX;
-        }
-        else if(bin_number == 2)
-            return NZ_BIN2_CTX;
-        else if(bin_number == 3)
-            return NZ_BIN3_CTX;
-        else if(bin_number == 4)
-            return NZ_BIN4_CTX;
+    {   
+        if(m_nhood_sum == 0)
+            ct = NZ_z_CTXT;
+        else if (m_nhood_sum>m_cut_off_point)
+            ct = NZ_b_CTXT;
         else
-            return NZ_BIN5plus_CTX;
+            ct = NZ_a_CTXT;
     }
+    return m_context_triples[ct];
 }
+
+
 
 int BandCodec::ChooseSignContext( const PicArray& data , const int xpos , const int ypos ) const
 {    
@@ -439,15 +454,22 @@ void BandCodec::SetToVal( const CodeBlock& code_block , PicArray& pic_data , con
 {
     for (int j=code_block.Ystart() ; j<code_block.Yend() ; j++)
     {
-        for (int i=code_block.Xstart() ; i<code_block.Xend() ; i++)
-        {
+          for (int i=code_block.Xstart() ; i<code_block.Xend() ; i++)
+           {
             pic_data[j][i] = val;
+           }// i
+    }// j
+}
 
-        }// i
+void BandCodec::ClearBlock( const CodeBlock& code_block , PicArray& pic_data)
+{
+    for (int j=code_block.Ystart() ; j<code_block.Yend() ; j++)
+    {
+        ValueType *pic = &pic_data[j][code_block.Xstart()];
+        memset (pic, 0, (code_block.Xend()-code_block.Xstart())*sizeof(ValueType));
     }// j
 
 }
-
 //////////////////////////////////////////////////////////////////////////////////
 //Now for special class for LF bands (since we don't want/can't refer to parent)//
 //////////////////////////////////////////////////////////////////////////////////
@@ -470,7 +492,7 @@ void LFBandCodec::DoWorkCode(PicArray& in_data)
             if ( !block_list[j][i].Skipped() )
                 CodeCoeffBlock( block_list[j][i] , in_data );
             else
-                SetToVal( block_list[j][i] , in_data , 0 );
+                ClearBlock (block_list[j][i] , in_data);
         }// i
     }// j
 }
@@ -532,7 +554,7 @@ void LFBandCodec::DoWorkDecode(PicArray& out_data )
             if ( !block_list[j][i].Skipped() )
                 DecodeCoeffBlock( block_list[j][i] , out_data );
             else
-                SetToVal( block_list[j][i] , out_data , 0 );
+                ClearBlock (block_list[j][i] , out_data);
         }// i
     }// j
 

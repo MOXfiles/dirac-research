@@ -92,7 +92,10 @@ namespace dirac
         void DecodeVal(PicArray& out_data , const int xpos , const int ypos );
 
         //! Set a code block area to a given value
-        void SetToVal( const CodeBlock& code_block , PicArray& pic_data , const ValueType val);
+        inline void SetToVal( const CodeBlock& code_block , PicArray& pic_data , const ValueType val);
+
+        //! Set all block values to 0
+        inline void ClearBlock( const CodeBlock& code_block , PicArray& pic_data);
 
     private:
         //functions
@@ -105,8 +108,29 @@ namespace dirac
         virtual void DecodeCoeffBlock(const CodeBlock& code_block , PicArray& out_data);
 
         void ResetAll();
-    
-        int ChooseContext( const int bin_number) const;
+
+        // structure used to select the contexts used to encode / decode a symbol
+        typedef struct 
+        {
+            int firstContext;
+            int secondContext;
+            int endContext;
+        } ContextTriple;
+
+        typedef enum ContextTripleAliases
+        {
+            Z_z_CTXT,
+            Z_nz_CTXT,
+            NZ_z_CTXT,
+            NZ_b_CTXT,
+            NZ_a_CTXT,
+            lastCTXTAlias
+        } ;
+
+        static const ContextTriple m_context_triples[lastCTXTAlias];
+
+        const ContextTriple& ChooseContexts() const;
+
         int ChooseSignContext(const PicArray& data , const int xpos , const int ypos ) const;
 
         //! Private, bodyless copy constructor: class should not be copied
