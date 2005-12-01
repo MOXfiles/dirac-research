@@ -53,7 +53,8 @@ inline void check_active_columns(
         memcpy(act_cols1, &row1[x], 4 * sizeof(ValueType));
         memcpy(act_cols2, &row2[x], 4 * sizeof(ValueType));
     }
-    else {
+    else
+    {
         act_cols1[0] = row1[BChk(x,xmax)];
         act_cols2[0] = row2[BChk(x,xmax)];
         act_cols1[1] = row1[BChk(x+1,xmax)];
@@ -166,6 +167,7 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
                     m1 = _mm_unpacklo_pi16 (m1, m3);
 
                     m1 = _mm_add_pi16 (m1, m2);
+                    
                     m1 = _mm_add_pi16 (m1, round);
                     m1 = _mm_srai_pi16 (m1, 1);
 
@@ -294,6 +296,9 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
 
         int uX, uY, c, l;
         int stopX = (block_width>>1)<<1;
+#ifdef _MSC_VER
+        stopX -= 2;
+#endif
         __m64 m_two = _mm_set_pi32 (2, 2);
         __m64 m_zero = _mm_set_pi32 (0, 0);
         
@@ -350,11 +355,9 @@ namespace dirac
         {
             for ( int j =  pic_data_out.FirstX(); j < stopX; j+=4)
             {
-                __m64 in1 = *(__m64 *)pic_row;
-                in1 = _mm_add_pi32 (in1, max_val);
+                __m64 in1 = _mm_add_pi32 (*(__m64 *)pic_row, max_val);
                 in1 = _mm_srai_pi32 (in1, 11);
-                __m64 in2 = *(__m64 *)(pic_row+2);
-                in2 = _mm_add_pi32 (in2, max_val);
+                __m64 in2 = _mm_add_pi32 (*(__m64 *)(pic_row+2), max_val);
                 in2 = _mm_srai_pi32 (in2, 11);
                 in1 = _mm_packs_pi32 (in1, in2);
                 __m64 *out = (__m64 *)out_row;
@@ -365,8 +368,8 @@ namespace dirac
                for ( int j =stopX; j <= pic_data_out.LastX(); j++)
                {
                    *out_row += static_cast<ValueType>( (*pic_row + 1024) >> 11 ); 
-                ++out_row;
-                ++pic_row;
+                    ++out_row;
+                    ++pic_row;
                }
          }
         _mm_empty();
