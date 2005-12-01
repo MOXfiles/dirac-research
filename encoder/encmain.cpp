@@ -89,7 +89,7 @@ static void display_help()
     cout << "\nqf       float   0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
     cout << "\nlossless bool    false         Lossless coding (overrides qf)";
     cout << "\nverbose  bool    false         Verbose mode";
-    cout << "\nnolocal  bool    false         Don't write diagnostics & locally decoded video";
+    cout << "\nlocal    bool    false         Write diagnostics & locally decoded video";
     cout << endl;
 }
 
@@ -440,7 +440,7 @@ int main (int argc, char* argv[])
     int start_pos = 0;
     int end_pos = -1;
     bool verbose = false;
-    bool nolocal = false;
+    bool nolocal = true;
 
     memset (&enc_ctx, 0, sizeof(dirac_encoder_context_t));
     if (argc<3)//need at least 3 arguments - the program name, an input and 
@@ -644,10 +644,10 @@ int main (int argc, char* argv[])
             parsed[i] = true;
             verbose = true;
         }
-        else if ( strcmp(argv[i], "-nolocal") == 0 )
+        else if ( strcmp(argv[i], "-local") == 0 )
         {
             parsed[i] = true;
-            nolocal = true;
+            nolocal = false;
         }
         else if ( strcmp(argv[i], "-start") == 0 )
         {
@@ -734,11 +734,16 @@ int main (int argc, char* argv[])
 
     // open the decoded ouput file
     std::string output_name_yuv = output + ".yuv";
-    std::ofstream outyuv(output_name_yuv.c_str(),std::ios::out | std::ios::binary);
+    std::string output_name_imt = output + ".imt";
+    std::ofstream *outyuv = NULL, *outimt = NULL;
+    
+    if (nolocal == false)
+    {
+        outyuv = new std::ofstream(output_name_yuv.c_str(),std::ios::out | std::ios::binary);
 
       // open the diagnostics ouput file
-    std::string output_name_imt = output + ".imt";
-    std::ofstream outimt(output_name_imt.c_str(),std::ios::out | std::ios::binary);
+        outimt = new std::ofstream(output_name_imt.c_str(),std::ios::out | std::ios::binary);
+    }
 
    /********************************************************************/
     //do the work!!
@@ -777,7 +782,8 @@ int main (int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
-    WriteSequenceHeader ( outimt, encoder );
+    if (outimt)
+        WriteSequenceHeader ( *outimt, encoder );
 
     int frames_written = 0;
     dirac_encoder_state_t state;
@@ -826,8 +832,8 @@ int main (int argc, char* argv[])
                 break;
             }
 
-            WritePicData (outyuv, encoder);
-            WriteDiagnosticsData (outimt, encoder);
+            WritePicData (*outyuv, encoder);
+            WriteDiagnosticsData (*outimt, encoder);
 
         } while (state == ENC_STATE_AVAIL);
 
@@ -863,11 +869,18 @@ int main (int argc, char* argv[])
      // close the bitstream file
     outfile.close();
      // close the decoded output file
-    outyuv.close();
+    if (outyuv)
+    {
+        outyuv->close();
+        delete outyuv;
+    }
    
      // close the decoded output header file
-    outimt.close();
-
+     if (outimt)
+     {
+        outimt->close();
+        delete outimt;
+     }
     // close the pic data file
     ip_pic_ptr.close();
 
