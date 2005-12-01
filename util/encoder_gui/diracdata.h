@@ -41,6 +41,7 @@ public:
     short sep_l1;
     char fname_in[1000];
     char fname_out[1000];
+    bool local;
 };
 
 #endif

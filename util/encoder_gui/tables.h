@@ -29,7 +29,7 @@
 
 #define MIN_QUALITY 0
 #define MAX_QUALITY 15
-#define DEF_QUALITY 10
+#define DEF_QUALITY 7
 
 #define MIN_WIDTH 160
 #define MAX_WIDTH 2560

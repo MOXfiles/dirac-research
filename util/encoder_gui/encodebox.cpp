@@ -42,7 +42,7 @@ void MyDialog::createEncodeBox()
         
     encode_widget->setVisible(false);
     //encode_widget2->setVisible(true);
-	
+    
     QLabel *label1 = new QLabel(tr("Prefered viewing distance (CPD)"));
     QLabel *label2 = new QLabel(tr("Motion compensation block width (xblen)"));
     QLabel *label3 = new QLabel(tr("Motion compensation block height (yblen)"));
@@ -138,20 +138,20 @@ void MyDialog::showEncode(void)
     if (encode_widget->isVisible() == false)
     {
         encode_widget->show();
-	//encode_widget2->show();
+    //encode_widget2->show();
         encode_more->setText(tr("Hide"));
         encodeGroupBox->setFixedHeight(390);
-	reportGroupBox->setFixedHeight(30);
-	report_widget->hide();
+        reportGroupBox->setFixedHeight(30);
+        report_widget->hide();
     }
     else 
     {
         encode_widget->hide();
-	//encode_widget2->show();
+    //encode_widget2->show();
         encode_more->setText(tr("Show"));
         encodeGroupBox->setFixedHeight(130);
-	reportGroupBox->setFixedHeight(250);
-	report_widget->show();
+        reportGroupBox->setFixedHeight(250);
+        report_widget->show();
     } 
 }
 

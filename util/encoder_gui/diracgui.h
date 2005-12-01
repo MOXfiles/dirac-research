@@ -45,6 +45,7 @@
 #include <QComboBox>
 #include <QListWidget>
 #include <QThread>
+#include <QCheckBox>
 //#include "tables.h"
 
 #include "diracdata.h"
@@ -83,6 +84,7 @@ public:
     QLineEdit *output_file_text;
     QLabel *input_file_name;
     QLabel *output_file_name;
+    QCheckBox *local_output;
 
     QLabel *reportrun;
         

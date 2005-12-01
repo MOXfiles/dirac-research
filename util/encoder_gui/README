@@ -47,10 +47,7 @@ as the input will set the input video as test_in.yuv, but you can also select
 
 test_in.yuv
 
-WARNING!: at the moment the GUI calls up dirac_encoder only in the current 
-directory, i.e. the directory from which the encoder was started up. 
-
-This will change in future. 
+WARNING!: The GUI calls up dirac_encoder by searching in the PATH variable. 
 
 LICENSING
 ~~~~~~~~~

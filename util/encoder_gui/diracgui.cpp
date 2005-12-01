@@ -43,7 +43,7 @@ MyDialog::MyDialog(QDialog *parent)
     createEncodeBox();
     createReportBox();
            
-    done = new QPushButton("Done");
+    done = new QPushButton("Encode");
     done->setFont(QFont("Sans Serif", 12, QFont::Bold));
     done->setEnabled(false);
     QPushButton *reset = new QPushButton("Reset");
@@ -56,8 +56,8 @@ MyDialog::MyDialog(QDialog *parent)
     connect(quit, SIGNAL(clicked()), qApp, SLOT(quit()));
     connect(done, SIGNAL(clicked()), this, SLOT(doneValues()));
     connect(reset, SIGNAL(clicked()), this, SLOT(setReset()));
-    connect(help, SIGNAL(clicked()), this, SLOT(help()));	    
-	    
+    connect(help, SIGNAL(clicked()), this, SLOT(help()));
+   
     QHBoxLayout *buttons = new QHBoxLayout;
     buttons->addWidget(done);
     buttons->addWidget(reset);
@@ -112,6 +112,8 @@ void MyDialog::setReset(void)
     strcpy(dirac_data.fname_out, "");
     input_file_name->setText("Input file: <I>Nothing</I>");
     output_file_name->setText("Output files: <I>Nothing</I>");
+    dirac_data.local = false;
+    local_output->setChecked(false);
 }
 
 

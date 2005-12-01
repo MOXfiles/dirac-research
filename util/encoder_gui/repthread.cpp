@@ -50,10 +50,12 @@ void RepThread::report()
 
     if (!isRunning())
     {
+        fprintf (stderr, "Thread not running\n");
         start(LowPriority);
     }
     else
     {
+        fprintf (stderr, "Thread Running\n");
         restart = true;
         cond.wakeOne();
     }
@@ -65,7 +67,7 @@ void RepThread::run()
     FILE *op_ptr;
     char buf[1000];
                 
-    sprintf(cmd, "./dirac_encoder -width %d -height %d -fr %f -cformat %d -qf %d -cpd %d -xblen %d -yblen %d -xbsep %d -ybsep %d -start %ld -stop %ld -num_L1 %d -L1_sep %d %s %s", 
+    sprintf(cmd, "dirac_encoder -width %d -height %d -fr %f -cformat %d -qf %d -cpd %d -xblen %d -yblen %d -xbsep %d -ybsep %d -start %ld -stop %ld -num_L1 %d -L1_sep %d %s %s %s", 
        local_data.frame_width,
        local_data.frame_height,
        local_data.frame_rate,
@@ -80,6 +82,7 @@ void RepThread::run()
        local_data.stop,
        local_data.num_l1,
        local_data.sep_l1,
+       local_data.local ? "-local" : "",
        local_data.fname_in,
        local_data.fname_out);
        
@@ -92,16 +95,16 @@ void RepThread::run()
          
     while (fgets(buf, 100, op_ptr))
     {
-	if (restart)
-	    break;
-	if (abort)
-	    break;
-	    
-	QString qbuf = QString(buf);
-	emit RepMessage(qbuf);
+        if (restart)
+            break;
+        if (abort)
+            break;
+        
+        QString qbuf = QString(buf);
+        emit RepMessage(qbuf);
 
-	fflush(stdout);
-	fflush(op_ptr); 
+        fflush(stdout);
+        fflush(op_ptr); 
     }
      
     pclose(op_ptr);

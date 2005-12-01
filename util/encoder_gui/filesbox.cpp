@@ -43,7 +43,9 @@ void MyDialog::createFilesBox()
     input_file_name->setText("Input file: <I>Nothing</I>");
     output_file_name = new QLabel;
     output_file_name->setText("Output files: <I>Nothing</I>");
-    
+    QLabel local_output_label;
+    local_output = new QCheckBox; 
+    local_output->setText ("Locally Decoded Output");
     infile_valid = false;
     outfile_valid = false;
     
@@ -54,6 +56,7 @@ void MyDialog::createFilesBox()
     fileButtons->addWidget(output_file, 2, 0);
     fileButtons->addWidget(input_file_name, 1, 0, 1, 2);
     fileButtons->addWidget(output_file_name, 3, 0, 1, 2);
+    fileButtons->addWidget(local_output, 4, 0);
     
     filesGroupBox->setLayout(fileButtons);
     
@@ -64,6 +67,8 @@ void MyDialog::createFilesBox()
     connect(input_file_text, SIGNAL(returnPressed()),
             this, SLOT(textInputFile()));
     connect(output_file_text, SIGNAL(returnPressed()),
+            this, SLOT(textOutputFile()));
+    connect(local_output, SIGNAL(released()),
             this, SLOT(textOutputFile()));
 }    
   
@@ -92,20 +97,20 @@ void MyDialog::useInputFile(QString fileName)
     
     if (!fileName.isEmpty())
     {
-        input_file_text->setText(fileName);	
+        input_file_text->setText(fileName);    
         strcpy(dirac_data.fname_in, fileName.toAscii());
-	infile_valid = true;
+    infile_valid = true;
 
-	dot = checkExtn(dirac_data.fname_in, extn);
-	
-	if (strcmp(extn, ".yuv") == 0)
-	{
-	    int i = strlen(dirac_data.fname_in);
-	    dirac_data.fname_in[i - 4] = 0;
-	}
+    dot = checkExtn(dirac_data.fname_in, extn);
+    
+    if (strcmp(extn, ".yuv") == 0)
+    {
+        int i = strlen(dirac_data.fname_in);
+        dirac_data.fname_in[i - 4] = 0;
+    }
 
-	sprintf(txt, "Input file: %s.yuv", basename(dirac_data.fname_in)); 
-	input_file_name->setText(txt);
+    sprintf(txt, "Input file: %s.yuv", basename(dirac_data.fname_in)); 
+    input_file_name->setText(txt);
     }
     else
     {
@@ -120,7 +125,7 @@ void MyDialog::useInputFile(QString fileName)
 void MyDialog::openOutputFile()
 {
     QString fileName = QFileDialog::getSaveFileName(this,
-                                    tr("Open File"), QDir::currentPath());
+                                  tr("Open File"), QDir::currentPath());
     useOutputFile(fileName);
 }
 
@@ -129,28 +134,40 @@ void MyDialog::useOutputFile(QString fileName)
     char extn[6];
     bool dot;
     char txt[500];
-    
-    if (!fileName.isEmpty())
+   
+    if (strcmp (fileName.toAscii(), "No file") == 0)
+        return;
+
+    if (!fileName.isEmpty() )
     {
-        output_file_text->setText(fileName);	
+        output_file_text->setText(fileName);    
         strcpy(dirac_data.fname_out, fileName.toAscii());
-	outfile_valid = true;
-	
-	dot = checkExtn(dirac_data.fname_out, extn);
+    outfile_valid = true;
+    
+    dot = checkExtn(dirac_data.fname_out, extn);
 
-	if (strcmp(extn, ".yuv") == 0 || 
-	    strcmp(extn, ".drc") == 0 || 
-	    strcmp(extn, ".imt") == 0)
-	{
-	    int i = strlen(dirac_data.fname_out);
-	    dirac_data.fname_out[i - 4] = 0;
-	}
+    if (strcmp(extn, ".yuv") == 0 || 
+        strcmp(extn, ".drc") == 0 || 
+        strcmp(extn, ".imt") == 0)
+    {
+        int i = strlen(dirac_data.fname_out);
+        dirac_data.fname_out[i - 4] = 0;
+    }
 
-	sprintf(txt, "Output files: %s.yuv, %s.drc, %s.imt",
-		basename(dirac_data.fname_out),
-		basename(dirac_data.fname_out),
-		basename(dirac_data.fname_out)); 
-	output_file_name->setText(txt);    }
+    if (local_output->isChecked())
+    {
+        dirac_data.local = true;
+        sprintf(txt, "Output files: %s.yuv, %s.drc, %s.imt",
+            basename(dirac_data.fname_out),
+            basename(dirac_data.fname_out),
+            basename(dirac_data.fname_out)); 
+    }
+    else
+    {
+        dirac_data.local = false;
+        sprintf(txt, "Output files: %s.drc", basename(dirac_data.fname_out));
+    }
+    output_file_name->setText(txt);    }
     else
     {
         QMessageBox::information(this, tr("Dirac"),
