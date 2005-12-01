@@ -445,6 +445,10 @@ namespace dirac
             //! Return a correction factor to compensate for non-unity power gain of high-pass filter
             double GetHighFactor() const { return 0.81649658;}
 
+#ifdef HAVE_MMX
+            inline void HorizSynth (int xp, int xl, int ystart, int yend, PicArray &pic_data);
+#endif
+
         };
 
         //! Class to do an approximation to Daubechies (9,7) but with just two lifting steps
