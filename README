@@ -209,7 +209,7 @@ Example.
   Step 4.
 
   Run the encoder. This will produce a locally decoded output in the
-  same format.
+  same format if the locally decoded output is enabled using the -local flag.
 
   Step 5.
 
@@ -258,12 +258,12 @@ dirac_encoder [options] file_in file_out
 This will compress file_in.yuv and produce an output file_out.drc of compressed
 data. 
 
-By default it will also produce a locally decoded output file_out.yuv and
-instrumentation data file_out.imt (for debugging the encoder and of interest to
-developers only).
+A locally decoded output file_out.yuv and instrumentation data file_out.imt 
+(for debugging the encoder and of interest to developers only) are also 
+produced if the -local flag is enabled on the command line.
 
-There are a large number of optional parameters that can be used to run the encoder,
-all of which are listed below. To encode video you need three types of 
+There are a large number of optional parameters that can be used to run the 
+encoder, all of which are listed below. To encode video you need three types of 
 parameter need to be set:
 
 a) quality factor
@@ -362,15 +362,16 @@ Other options. The encoder also supports some other options, which are
 verbose   : turn on verbosity (if you don't, you won't see the final bitrate!)
 start     : code from this frame number
 stop      : code up until this frame number
-nolocal   : Do not generate diagnostics and locally decoded output
+local     : Generate diagnostics and locally decoded output
+lossless  : Lossless coding.
 
 Using -start and -stop allows a small section to be coded, rather than the
 whole thing.
 
-By default the encoder produces diagnostic information about motion vectors
-that can be used to debug the encoder algorithm. It also produces a locally
-decoded picture so that you don't have to run the decoder to see what the
-pictures are like. -nolocal turns both these features off.
+If the -local flag is present in the command line, the encoder produces 
+diagnostic information about motion vectors that can be used to debug the 
+encoder algorithm. It also produces a locally decoded picture so that you 
+don't have to run the decoder to see what the pictures are like. 
 
 4.4 Decoding
 
