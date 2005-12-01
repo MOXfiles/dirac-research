@@ -185,11 +185,11 @@ void MotionCompensator::ReConfig()
 
     int blocks_per_mb_row = m_cparams.XNumBlocks()/m_cparams.XNumMB();
     int blocks_per_sb_row = blocks_per_mb_row>>1;
-    int mb_xlen = m_bparams.Xblen()*4 - (m_bparams.Xblen()-m_bparams.Xbsep())*3;
+    int mb_xlen = m_bparams.Xblen()*blocks_per_mb_row - (m_bparams.Xblen()-m_bparams.Xbsep())*(blocks_per_mb_row-1);
     int mb_ylen = m_bparams.Yblen();
     int mb_xsep = mb_xlen - (m_bparams.Xblen()-m_bparams.Xbsep());
     int mb_ysep = m_bparams.Ybsep();
-    int sb_xlen = m_bparams.Xblen()*2 - (m_bparams.Xblen()-m_bparams.Xbsep());
+    int sb_xlen = m_bparams.Xblen()*blocks_per_sb_row - (m_bparams.Xblen()-m_bparams.Xbsep())*(blocks_per_sb_row-1);
     int sb_ylen = m_bparams.Yblen();
     int sb_xsep = sb_xlen - (m_bparams.Xblen() - m_bparams.Xbsep());
     int sb_ysep = m_bparams.Ybsep();
