@@ -45,6 +45,8 @@ using namespace dirac;
 
 static TwoDArray<ValueType> t_temp_data;
 
+#if 0
+//Attempt1
 inline void Interleave_mmx( const int xp , 
                     const int yp , 
                     const int xl , 
@@ -70,62 +72,105 @@ inline void Interleave_mmx( const int xp ,
     for (int j = 0, s=yp; j<yl2 ; j++, s+=2)
     {
         ValueType *tmp1 = &t_temp_data[j][0];
-        ValueType *tmp2 = &t_temp_data[j][xl2];
-        __m64 *out = (__m64 *)&pic_data[s][xp];
+        ValueType *out = &pic_data[s][xp];
         for (int i = 0 , t = xp ; i<xp+stopx ; i+=4 , t+=8)
         {
             __m64 m1 = *(__m64 *)tmp1;
-            __m64 m2 = *(__m64 *)tmp2;
-            *out = _mm_unpacklo_pi16 (m1, m2);    
-            ++out;
-            *out = _mm_unpackhi_pi16 (m1, m2);    
-            ++out;
+            __m64 m2 = *(__m64 *)(tmp1+xl2);
+            *(__m64 *)out = _mm_unpacklo_pi16 (m1, m2);    
+            out+=4;
+            *(__m64 *)out = _mm_unpackhi_pi16 (m1, m2);    
+            out+=4;
             tmp1 += 4;
-            tmp2 += 4;
+        }
+        for (int i = xp+stopx , r=2*(xp+stopx) ; i<xl2 ; i++ , r += 2)
+        {
+            *out = *tmp1;
+            ++out;
+            *out = *(tmp1+xl2);
+            ++out;
+            ++tmp1;
         }
     }// j 
     
     for (int j = yl2, s=yp+1 ; j<yl ; j++ , s += 2)
     {
         ValueType *tmp1 = &t_temp_data[j][0];
-        ValueType *tmp2 = &t_temp_data[j][xl2];
-        __m64 *out = (__m64 *)&pic_data[s][xp];
+        //ValueType *tmp2 = &t_temp_data[j][xl2];
+        ValueType *out = &pic_data[s][xp];
         for (int i = 0 , t=xp; i<stopx ; i+=4 , t += 8)
         {
             __m64 m1 = *(__m64 *)tmp1;
-            __m64 m2 = *(__m64 *)tmp2;
-            *out = _mm_unpacklo_pi16 (m1, m2);
-            ++out;
-            *out = _mm_unpackhi_pi16 (m1, m2);    
-            ++out;
+            __m64 m2 = *(__m64 *)(tmp1+xl2);
+            *(__m64 *)out = _mm_unpacklo_pi16 (m1, m2);
+            out+=4;
+            *(__m64 *)out = _mm_unpackhi_pi16 (m1, m2);    
+            out+=4;
             tmp1 += 4;
-            tmp2 += 4;
+        }
+        for (int i = stopx , r=2*(xp+stopx) ; i<xl2 ; i++ , r += 2)
+        {
+            *out = *tmp1;
+            ++out;
+            *out = *(tmp1+xl2);
+            ++out;
+            ++tmp1;
         }
     }// j 
 
-    // Mop up
-    if (stopx != xl2)
-    {
-        for (int j = 0, s=yp; j<yl2 ; j++, s+=2)
-        {
-            ValueType *pic = pic_data[s];
-            ValueType *tmp = t_temp_data[j];
-            for (int i = stopx , r=2*(xp+stopx) ; i<xl2 ; i++ , r += 2)
-                pic[r] = tmp[i];
-            for (int i = xl2+stopx, r=2*(xp+stopx)+1; i<xl ; i++ , r += 2)
-                pic[r] = tmp[i];
-        }// j 
+    _mm_empty();
+}
+#endif
 
-        for (int j = yl2, s=yp+1 ; j<yl ; j++ , s += 2)
-        {
-            ValueType *pic = pic_data[s];
-            ValueType *tmp = t_temp_data[j];
-            for (int i = stopx , r=2*stopx ; i<xl2 ; i++ , r += 2)
-                pic[r] = tmp[i];
-            for (int i = xl2+stopx, r=2*(xp+stopx)+1; i<xl ; i++ , r += 2)
-                pic[r] = tmp[i];
-        }
+inline void Interleave_mmx( const int xp , 
+                    const int yp , 
+                    const int xl , 
+                    const int yl , 
+                    PicArray& pic_data)
+{
+    const int xl2( xl>>1);
+    const int yl2( yl>>1);
+    const int yend( yp + yl );
+
+    if (pic_data.LengthX() > t_temp_data.LengthX() ||
+        pic_data.LengthY() > t_temp_data.LengthY())
+    {
+        t_temp_data.Resize(pic_data.LengthY(), pic_data.LengthX());
     }
+
+    // Make a temporary copy of the subband. We are doing a vertical
+    // interleave while copying
+    for (int j = yp, s=0; j<yp+yl2 ; j++, s+=2 )
+        memcpy( t_temp_data[s] , pic_data[j]+xp , xl * sizeof( ValueType ) );
+    for (int j = yp+yl2, s=1; j<yend ; j++, s+=2 )
+        memcpy( t_temp_data[s] , pic_data[j]+xp , xl * sizeof( ValueType ) );
+
+    int stopx = (xl2>>2)<<2;
+    // Re-order to horizontally interleave
+    for (int j = 0, s=yp; j<yl ; j++, ++s)
+    {
+        ValueType *tmp1 = &t_temp_data[j][0];
+        ValueType *out = &pic_data[s][xp];
+        for (int i = 0 , t = xp ; i<xp+stopx ; i+=4 , t+=8)
+        {
+            __m64 m1 = *(__m64 *)tmp1;
+            __m64 m2 = *(__m64 *)(tmp1+xl2);
+            *(__m64 *)out = _mm_unpacklo_pi16 (m1, m2);    
+            out+=4;
+            *(__m64 *)out = _mm_unpackhi_pi16 (m1, m2);    
+            out+=4;
+            tmp1 += 4;
+        }
+        for (int i = xp+stopx , r=2*(xp+stopx) ; i<xl2 ; i++ , r += 2)
+        {
+            *out = *tmp1;
+            ++out;
+            *out = *(tmp1+xl2);
+            ++out;
+            ++tmp1;
+        }
+    }// j 
+    
     _mm_empty();
 }
 
@@ -640,6 +685,7 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
     Interleave_mmx( xp , yp , xl , yl , pic_data );  
 }
 
+#if 0
 //Opts - Attempt1
 void WaveletTransform::VHFilter5_3::Synth(const int xp ,
                                           const int yp , 
@@ -772,6 +818,7 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
     }
     _mm_empty();
 }
+#endif
 
 #if 0
 //Opts Attempt 2
@@ -934,6 +981,162 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
     Interleave_mmx( xp , yp , xl , yl , pic_data );
 }
 #endif
+
+//Attempt 3
+
+inline void WaveletTransform::VHFilter5_3::HorizSynth (int xp, int xl, int ystart, int yend, PicArray &pic_data)
+{
+    static const PredictStepShift< 2 > predict;
+    static const UpdateStepShift< 1 > update;
+    int j, k;
+    // Next do the horizontal synthesis
+    for (j = ystart;  j <= yend ; ++j)
+    {
+        // First lifting stage 
+        ValueType *line_data = &pic_data[j][xp];
+
+        predict.Filter( line_data[0] , line_data[1] , line_data[1] );
+
+        for ( k = 2;  k < xl -2; k+=2)
+        { 
+            predict.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
+            update.Filter( line_data[k-1] , line_data[k-2] , line_data[k] );
+        }// i
+        
+        predict.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] ); 
+        update.Filter( line_data[xl-3] , line_data[xl-2] , line_data[xl-4] );
+        update.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] );
+    }
+}
+
+void WaveletTransform::VHFilter5_3::Synth(const int xp ,
+                                          const int yp , 
+                                          const int xl , 
+                                          const int yl , 
+                                          PicArray &pic_data)
+{
+    int i, k;
+
+    const int xend( xp+xl );
+    const int yend( yp+yl );
+
+    const PredictStepShift< 2 > predict;
+    const UpdateStepShift< 1 > update;
+
+    int horiz_start = 0;
+    int horiz_end = 0;
+
+    // Firstly reorder to interleave subbands, so that subsequent calculations 
+    // can be in-place
+    Interleave_mmx( xp , yp , xl , yl , pic_data );
+
+    // Next, do the vertical synthesis
+    // First lifting stage
+    int xstop = (xend>>2)<<2;
+    
+    // Begin the top edge
+    ValueType *row1, *row2, *row3, *row4;
+
+    row1 = &pic_data[yp][xp];
+    row2 = &pic_data[yp+1][xp];
+    for ( i = xp ; i < xstop ; i+=4)
+    {
+        __m64 tmp = _mm_add_pi16 (*(__m64 *)row2, *(__m64 *)row2);
+        tmp = _mm_srai_pi16(tmp, 2);
+        *(__m64 *)row1 = _mm_sub_pi16 (*(__m64*)row1, tmp);
+
+        row1 += 4;
+        row2 += 4;
+    }
+    // Mopup
+    for ( i = xstop ; i < xend ; ++i)
+    {
+        predict.Filter( *row1, *row2, *row2 );
+        ++row1;
+        ++row2;
+    }// i
+
+
+    // Next, do the middle bit
+    for ( k = yp+2 ; k < yend-2 ; k+=2)
+    {
+        ValueType *row1 = &pic_data[k-2][xp];
+        ValueType *row2 = &pic_data[k-1][xp];
+        ValueType *row3 = &pic_data[k][xp];
+        ValueType *row4 = &pic_data[k+1][xp];
+
+        for ( i = xp ; i < xstop ; i+=4)
+        {
+            __m64 tmp = _mm_add_pi16 (*(__m64 *)row4, *(__m64 *)row2);
+            tmp = _mm_srai_pi16(tmp, 2);
+            *(__m64 *)row3 = _mm_sub_pi16 (*(__m64*)row3, tmp);
+
+            tmp = _mm_add_pi16 (*(__m64 *)row1, *(__m64 *)row3);
+            tmp = _mm_srai_pi16(tmp, 1);
+            *(__m64 *)row2 = _mm_add_pi16 (*(__m64*)row2, tmp);
+            row1 += 4;
+            row2 += 4;
+            row3 += 4;
+            row4 += 4;
+        }// i
+
+        //Mopup
+        for ( i = xstop ; i < xend ; ++i)
+        {
+            predict.Filter( *row3, *row2, *row4 );
+            update.Filter( *row2, *row1, *row3 );
+            ++row1;
+            ++row2;
+            ++row3;
+            ++row4;
+        }// i
+        horiz_end = k - 2;
+        // Do the horizontal synthesis
+        HorizSynth (xp, xl, horiz_start, horiz_end, pic_data);
+        horiz_start = horiz_end + 1;
+    }// j
+    
+    // Finally with the bottom edge
+    row1 = &pic_data[yend-4][xp];
+    row2 = &pic_data[yend-3][xp];
+    row3 = &pic_data[yend-2][xp];
+    row4 = &pic_data[yend-1][xp];
+
+    for ( i = xp ; i < xstop ; i+=4)
+    {
+        __m64 tmp = _mm_add_pi16 (*(__m64 *)row2, *(__m64 *)row4);
+        tmp = _mm_srai_pi16(tmp, 2);
+        *(__m64 *)row3 = _mm_sub_pi16 (*(__m64*)row3, tmp);
+
+        tmp = _mm_add_pi16 (*(__m64 *)row3, *(__m64 *)row1);
+        tmp = _mm_srai_pi16(tmp, 1);
+        *(__m64 *)row2 = _mm_add_pi16 (*(__m64*)row2, tmp);
+
+        tmp = _mm_add_pi16 (*(__m64 *)row3, *(__m64 *)row3);
+        tmp = _mm_srai_pi16(tmp, 1);
+        *(__m64 *)row4 = _mm_add_pi16 (*(__m64*)row4, tmp);
+
+        row1 += 4;
+        row2 += 4;
+        row3 += 4;
+        row4 += 4;
+    }// i
+    // mopup
+    for ( i = xstop ; i < xend ; ++i)
+    {
+        predict.Filter( *row3, *row2, *row4 );
+        update.Filter( *row2, *row1, *row3 );
+        update.Filter( *row4, *row3, *row3 );
+        ++row1;
+        ++row2;
+        ++row3;
+        ++row4;
+    }// i
+
+    _mm_empty();
+    // Last lines of horizontal synthesis
+    HorizSynth (xp, xl, horiz_start, yend-1, pic_data);
+}
 
 
 void DeInterleave_mmx( const int xp , 
