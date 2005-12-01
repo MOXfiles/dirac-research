@@ -81,6 +81,7 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
     //and trailing edge of each column.
 
     __m64 tmp, m1, m2;
+    __m64 zero = _mm_set_pi16 (0, 0, 0, 0);
     for(int y = 0 ; y < m_filter_size; ++y , ypos += 2)
     {
 
@@ -88,16 +89,18 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
         //This means our main loop is in the x direction and
         //there is a much greater chance the data we need will
         //be in the cache.
+        ValueType *up = &up_data[ypos][0];
+        ValueType *pic = &pic_data[y][0];
+        for (int x = 0; x < m_width_old; x+=4 , pic+=4, up +=8 )
+        {
+            *(__m64 *)up = _mm_unpacklo_pi16 (*(__m64 *)pic, zero);
+            *(__m64 *)(up+4) = _mm_unpackhi_pi16 (*(__m64 *)pic, zero);
+        }
         for(int x = 0 , xpos = 0; x < m_width_old; x+=4 , xpos+=8 )
         {
             sum1.m = _mm_set_pi32 (0, 0);
             sum2.m = _mm_set_pi32 (0, 0);
             
-            up_data[ypos][xpos] = pic_data[y][x];
-            up_data[ypos][xpos+2] = pic_data[y][x+1];
-            up_data[ypos][xpos+4] = pic_data[y][x+2];
-            up_data[ypos][xpos+6] = pic_data[y][x+3];
-
             //Work out the next pixel from filtered values.
             //Excuse the complicated ternary stuff but it sorts out the edge
             mmx_add (&pic_data[y][x], &pic_data[y+1][x], tap0, &sum1.m, &sum2.m);
@@ -109,10 +112,8 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
             sum1.m = _mm_srai_pi32 (sum1.m, m_filter_shift);
             sum2.m = _mm_srai_pi32 (sum2.m, m_filter_shift);
             
-            up_data[ypos+1][xpos] = sum1.i[0];
-            up_data[ypos+1][xpos+2] = sum1.i[1];
-            up_data[ypos+1][xpos+4] = sum2.i[0];
-            up_data[ypos+1][xpos+6] = sum2.i[1];
+            *(__m64 *)&up_data[ypos+1][xpos] = sum1.m;
+            *(__m64 *)&up_data[ypos+1][xpos+4] = sum2.m;
         }// x, xpos
 
         // The row loop.
@@ -123,15 +124,18 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
     // from the filter section.
     for(int y = m_filter_size; y < m_height_old - m_filter_size; ++y , ypos += 2)
     {
+        ValueType *up = &up_data[ypos][0];
+        ValueType *pic = &pic_data[y][0];
+        for (int x = 0; x < m_width_old; x+=4 , pic+=4, up +=8 )
+        {
+            *(__m64 *)up = _mm_unpacklo_pi16 (*(__m64 *)pic, zero);
+            *(__m64 *)(up+4) = _mm_unpackhi_pi16 (*(__m64 *)pic, zero);
+        }
         for(int x = 0 , xpos=0; x < m_width_old; x+=4 , xpos+=8 )
         {
 
             sum1.m = _mm_set_pi32 (0, 0);
             sum2.m = _mm_set_pi32 (0, 0);
-            up_data[ypos][xpos] = pic_data[y][x];
-            up_data[ypos][xpos+2] = pic_data[y][x+1];
-            up_data[ypos][xpos+4] = pic_data[y][x+2];
-            up_data[ypos][xpos+6] = pic_data[y][x+3];
 
             mmx_add (&pic_data[y][x], &pic_data[y+1][x], tap0, &sum1.m, &sum2.m);
             mmx_add (&pic_data[y-1][x], &pic_data[y+2][x], tap1, &sum1.m, &sum2.m);
@@ -142,10 +146,8 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
             sum1.m = _mm_srai_pi32 (sum1.m, m_filter_shift);
             sum2.m = _mm_srai_pi32 (sum2.m, m_filter_shift);
             
-            up_data[ypos+1][xpos] = sum1.i[0];
-            up_data[ypos+1][xpos+2] = sum1.i[1];
-            up_data[ypos+1][xpos+4] = sum2.i[0];
-            up_data[ypos+1][xpos+6] = sum2.i[1];
+            *(__m64 *)&up_data[ypos+1][xpos] = sum1.m;
+            *(__m64 *)&up_data[ypos+1][xpos+4] = sum2.m;
 
         }// x,xpos
         RowLoop(up_data, ypos);
@@ -156,16 +158,18 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
     // filter calcs but in the second parameter.    
     for(int y = m_height_old - m_filter_size; y < m_height_old; ++y , ypos+=2)
     {
+        ValueType *up = &up_data[ypos][0];
+        ValueType *pic = &pic_data[y][0];
+        for (int x = 0; x < m_width_old; x+=4 , pic+=4, up +=8 )
+        {
+            *(__m64 *)up = _mm_unpacklo_pi16 (*(__m64 *)pic, zero);
+            *(__m64 *)(up+4) = _mm_unpackhi_pi16 (*(__m64 *)pic, zero);
+        }
         for(int x = 0 , xpos=0 ; x < m_width_old; x+=4 , xpos+=8)
         {
             sum1.m = _mm_set_pi32 (0, 0);
             sum2.m = _mm_set_pi32 (0, 0);
             
-            up_data[ypos][xpos] = pic_data[y][x];
-            up_data[ypos][xpos+2] = pic_data[y][x+1];
-            up_data[ypos][xpos+4] = pic_data[y][x+2];
-            up_data[ypos][xpos+6] = pic_data[y][x+3];
-
             //Work out the next pixel from filtered values.
             //Excuse the complicated ternary stuff but it sorts out the edge
             mmx_add (&pic_data[y][x], &pic_data[((y+1)<m_height_old)?(y+1):(m_height_old-1)][x], tap0, &sum1.m, &sum2.m);
@@ -177,10 +181,8 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
             sum1.m = _mm_srai_pi32 (sum1.m, m_filter_shift);
             sum2.m = _mm_srai_pi32 (sum2.m, m_filter_shift);
             
-            up_data[ypos+1][xpos] = sum1.i[0];
-            up_data[ypos+1][xpos+2] = sum1.i[1];
-            up_data[ypos+1][xpos+4] = sum2.i[0];
-            up_data[ypos+1][xpos+6] = sum2.i[1];
+            *(__m64 *)&up_data[ypos+1][xpos] = sum1.m;
+            *(__m64 *)&up_data[ypos+1][xpos+4] = sum2.m;
 
         }//x,xpos
         RowLoop(up_data, ypos);
