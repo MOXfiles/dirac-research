@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (c) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author),
+*                 Scott R Ladd,
+*                 Steve Bearcroft
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
