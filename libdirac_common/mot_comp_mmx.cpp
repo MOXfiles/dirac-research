@@ -296,7 +296,7 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
 
         int uX, uY, c, l;
         int stopX = (block_width>>1)<<1;
-#ifdef _MSC_VER
+#ifdef WIN32
         stopX -= 2;
 #endif
         __m64 m_two = _mm_set_pi32 (2, 2);
