@@ -1,3 +1,382 @@
+2005-12-05 12:38  asuraparaju
+
+	* NEWS: Updated with 0.5.4 release notes
+
+2005-12-05 12:33  asuraparaju
+
+	* extras/patches/: FFMpeg-20051205-dirac-0.5.x.patch,
+	  README_FFMpeg-20051205-dirac-0.5.x_patch: FFMpeg patch for cvs
+	  version dated 05-Dec-2005.
+
+2005-12-05 12:32  asuraparaju
+
+	* extras/patches/: README_FFMpeg-20050806-dirac-0.5.x_patch,
+	  README_ffmpeg-0.4.9-pre1-dirac-0.5.x_patch: Updated instruction
+	  for latest Dirac release
+
+2005-12-05 12:26  asuraparaju
+
+	* extras/patches/README_MPlayer-1.0pre7_dirac-0.5.x_patch: Updated
+	  instructions to use latest release of Dirac and MPlayer
+
+2005-12-02 16:25  asuraparaju
+
+	* libdirac_common/mot_comp_mmx.cpp: Fix bug with uninitialised
+	  memory reads when compiling in msys-g++ environment.
+
+2005-12-02 10:16  asuraparaju
+
+	* libdirac_common/: band_codec.cpp, band_codec.h: Added Steve
+	  Bearcroft to list of contributors.
+
+2005-12-01 14:34  asuraparaju
+
+	* README: Changes to reflect the new/modified options of the
+	  command line encoder dirac_encoder.
+
+2005-12-01 14:30  asuraparaju
+
+	* AUTHORS: Updated contributor list.
+
+2005-12-01 14:30  asuraparaju
+
+	* configure.ac: Updated release id to 0.5.4
+
+2005-12-01 14:29  asuraparaju
+
+	* tests/: colourbars.at, samples.at: Changes due to modified
+	  dirac_encoder command line. Include the -local option to generate
+	  diagnostics and locally decoded data to use in comparison and
+	  instrumentation tests.
+
+2005-12-01 14:27  asuraparaju
+
+	* encoder/encmain.cpp: Generation of Diagnostics data and locally
+	  decoded output is now disabled by default. To enable this use the
+	  commandline option -local.
+
+2005-12-01 14:26  asuraparaju
+
+	* libdirac_common/upconvert_mmx.cpp: Mods to make
+	  Upconverter::DoUpconverter function more efficient
+
+2005-12-01 14:25  asuraparaju
+
+	* libdirac_common/wavelet_utils.h: New function
+	  VHFilter5_3::HorizSynth which is used only when MMX opts are
+	  enabled. This function is used to interleave horizontal synthesis
+	  with vertical synthesis to make the wavelet syntheis function
+	  slightly more efficient.
+
+2005-12-01 14:22  asuraparaju
+
+	* libdirac_common/: band_codec.cpp, band_codec.h: New function
+	  ClearBlock to set all values in block to 0 more efficiently.
+	  Applied BandCodec optimisation part of patch 1303281 which make
+	  DecodeVal function more efficient.
+
+2005-12-01 14:12  asuraparaju
+
+	* libdirac_common/wavelet_utils_mmx.cpp: Minor mods to optimise
+	  VHFilter5_3::Split further.
+
+2005-12-01 14:10  asuraparaju
+
+	* libdirac_common/mot_comp_mmx.cpp: Minor changes to ensure that
+	  uninitialised memory reads do not cause crashes when compiled
+	  using MS VC++. Note that the data read from unitialised memory is
+	  not being used but still causes problems on some platforms.
+
+2005-12-01 14:06  asuraparaju
+
+	* libdirac_common/mot_comp.cpp: Using calculated values of blocks
+	  per macro block row and blocks per sub-block row instead of
+	  hardcoded values.
+
+2005-12-01 14:02  asuraparaju
+
+	* util/encoder_gui/: README, diracdata.h, diracgui.cpp, diracgui.h,
+	  encodebox.cpp, encoder_gui.pro, filesbox.cpp, repthread.cpp,
+	  tables.h: Included option in GUI to disable the creation of
+	  diagnostics data file and locally decoded output. dirac_encoder
+	  need no longer be in the current working directory but in any
+	  directory in the PATH variable.
+
+2005-11-15 15:35  asuraparaju
+
+	* libdirac_common/arith_codec.h: Minor cosmetic difference as to
+	  how CODE_MSB and CODE_2ND_MSB are initialised to make their usage
+	  more obvious.
+
+2005-11-15 15:33  asuraparaju
+
+	* doc/Makefile.am: Fix problem with install target
+
+2005-11-08 11:45  asuraparaju
+
+	* libdirac_common/band_codec.cpp: Minor changes in DoWorkCode,
+	  DoWorkDecode and DecodeCoeffBlock functions in the way 2-D arrays
+	  are accessed which resulted in a slight decoding speed
+	  improvement.
+
+2005-11-08 11:43  asuraparaju
+
+	* libdirac_common/upconvert_mmx.cpp: Minor changes to DoUpConverter
+	  routine to give slight improvement in uoconversion speed.
+
+2005-11-08 11:41  asuraparaju
+
+	* libdirac_common/arrays.h: In Resize function in OneDArray class,
+	  dealloc and realloc data only if the new and old array sizes are
+	  different.
+
+2005-11-08 11:40  asuraparaju
+
+	* libdirac_common/: wavelet_utils.cpp, wavelet_utils_mmx.cpp:
+	  Optimised WaveletTransform::VHFilter5_3::Split using MMX
+	  instructions. Minor mods to WaveletTransform::VHFilter5_3::Synth
+	  function improve speed slightly.
+
+2005-11-08 11:37  asuraparaju
+
+	* libdirac_motionest/Makefile.am,
+	  libdirac_motionest/downconvert.cpp,
+	  libdirac_motionest/downconvert_mmx.cpp,
+	  win32/VS2003/libdirac_motionest/libdirac_motionest.vcproj:
+	  Optimised DoDownConverter routine using MMX instructions
+
+2005-11-08 11:34  asuraparaju
+
+	* libdirac_common/: mot_comp.cpp, mot_comp.h, mot_comp_mmx.cpp:
+	  Modified motion compensation so that it take Macro-Block
+	  splitting mode into consideration when compensating a row of
+	  blocks. Depending on the macroblock split mode, 1,2 or 4 blocks
+	  of reference data are used to calculate the motion compensated
+	  data. This sped up the default quarter pixel block motion
+	  compensation routine by an average of 20-23% for a 2Mbps Dirac
+	  bitstream.
+
+2005-11-08 11:26  asuraparaju
+
+	* libdirac_common/: frame.cpp, frame.h, frame_buffer.cpp,
+	  frame_buffer.h: Changes to FrameBuffer handling. Deleting old
+	  frames and allocating new frames is quite expensive. So instead
+	  of deleting frames no longer required in the frame buffer, they
+	  are flagged "not in use". So the next time a new reference frame
+	  has to be inserted in the Frame buffer, the first frame "not in
+	  use" is used to store the new frame. An overall improvement of
+	  6-7 percent in decoding speed for a 2Mbps bitstream resulted.
+
+2005-10-17 12:06  asuraparaju
+
+	* libdirac_encoder/dirac_encoder.cpp: Fixed bug #1328565. Now
+	  ensuring that all locally decoded frames are available for
+	  output.
+
+2005-10-11 14:02  tjdwave
+
+	* libdirac_common/arith_codec.h: Incorporated Steve Bearcroft's
+	  speed-up patch, with some minor typographical changes for
+	  clarity.
+
+2005-10-11 10:00  tjdwave
+
+	* libdirac_motionest/block_match.cpp: Added patch 1309571 which
+	  fixes the quality degradation introduced in the motion estimation
+	  speed-ups.
+
+2005-10-07 11:17  asuraparaju
+
+	* libdirac_motionest/: me_utils.cpp, me_utils_mmx.cpp,
+	  me_utils_mmx.h: Applied MMX optimisations to modified ME
+	  routines. This is an initial version that improves Motion
+	  Estimation speed by 30% resulting in a 20% improvement in
+	  encoding speed overall. This is work in progress.
+
+2005-09-27 14:44  dirac_dev
+
+	* libdirac_encoder/dirac_encoder.h: Replaced boolean with int.
+	  C-compilers (eg. ffmpeg) complain about C++ constructs.
+
+2005-09-27 14:08  tjdwave
+
+	* libdirac_encoder/quality_monitor.cpp: Set the motion estimation
+	  factor to compensate for the default search precision being at
+	  1/4 pel (as this is the default precision) rather than 1/8th pel.
+
+2005-09-27 14:07  tjdwave
+
+	* libdirac_motionest/: motion_estimate.cpp, motion_estimate.h:
+	  Removed cut detection, which is now in the FrameCompressor class.
+	  Removed the kludge which scaled the motion vector precisions. All
+	  motion estimation is now at the selected precision.
+
+2005-09-27 14:01  tjdwave
+
+	* libdirac_motionest/: me_mode_decn.cpp, me_mode_decn.h: Use
+	  specific matching classes for different pixel accuracies. Reduced
+	  search ranges for increased speed.
+
+2005-09-27 13:59  tjdwave
+
+	* libdirac_motionest/me_subpel.cpp: Removed calculation of lambda
+	  map. Simplified class by using the specific subpixel refinement
+	  matching function.
+
+2005-09-27 13:55  tjdwave
+
+	* libdirac_motionest/: pixel_match.cpp, pixel_match.h: Search
+	  ranges restricted to improve motion estimation speed.
+
+2005-09-27 13:52  tjdwave
+
+	* libdirac_motionest/: block_match.cpp, block_match.h: Refactored
+	  the BlockMatcher class. There are now three functions for finding
+	  a best match - finding the pixel-accurate best match, refining
+	  this to sub-pixel accuracy, and also finding a best match from a
+	  list at sub-pixel level.  These matching functions contain
+	  shortcuts to speed up matching as follows.
+
+	  FindBestMatchPel: - The predictors are each searched first, and
+	  if their SAD values are small then the search ends.  - bailout
+	  functions are used for calculating matching costs for the
+	  remaining candidates
+
+	  RefineMatchSubpel: - The predictor from neighbouring (previously
+	  refined) vectors is tested first. If there's a small SAD, then
+	  the search ends - Pixel-accurate vectors are refined to half-pel
+	  vectors by searching the 4 closest half-pel positions (shown as
+	  X) first:  X XOX  X
+
+	  If one of these is better than the pixel-accurate value, then the
+	  two nearest values in the immediate neighbourhood of the
+	  pixel-accurate value are also searched, eg the Y values below:
+
+	  YXY XOX  X
+
+	  This two-stage procedure is followed again in refining to
+	  quarter- and eighth-pel.  - At each stage of refinement, if we're
+	  10% worse than the value derived for the predictor, we end the
+	  search.
+
+	  FindBestMatchSubpel: - bailout functions are used
+
+2005-09-27 13:40  tjdwave
+
+	* libdirac_motionest/: me_utils.cpp, me_utils.h: Reorganised
+	  classes for doing SAD calculations at pixel and sub-pixel
+	  accuracy. Distinct classes for half-, quarter- and eighth-pixel
+	  matching have been created. These are present also in 'bailout'
+	  form so that you can leave the calculation as soon as you know
+	  that you're not going to beat the best match so far.	These mods
+	  support speeding up motion estimation, and hence the encoder
+	  generally.
+
+2005-09-27 12:25  asuraparaju
+
+	* libdirac_encoder/dirac_encoder.cpp: Fixed bug# 1291478. Now
+	  ensuring that dirac_encoder_output returns ENC_STATE_BUFFER when
+	  data is not loaded into the encoder.
+
+2005-09-27 12:21  asuraparaju
+
+	*
+	  doc/documentation/code/programmers_guide/decoder_api_functions.htm:
+	  Bug fix: 1291481. Corrected return value in dirac_parse function
+	  prototype.
+
+2005-09-27 10:21  tjdwave
+
+	* libdirac_encoder/seq_compress.cpp: The quality measurement model
+	  can only be calculated correctly if reconstructed compressed
+	  video is available, which isn't the case if we're not doing local
+	  decoding. In this case, calculating and outputting these values
+	  is disabled.
+
+2005-09-27 10:16  tjdwave
+
+	* libdirac_encoder/: frame_compress.cpp, frame_compress.h: Moved
+	  the analysis of whether or not we have a cut into FrameCompressor
+	  class and out of motion estimation classes.
+
+	  Also, only do motion compensation on L2 frames if local decoding
+	  is required.	This is because, by definition, L2 frames can't be
+	  references and so can be left in a partially reconstructed state
+	  if local decoding isn't required, which improves encoding speed.
+
+2005-09-27 10:12  tjdwave
+
+	* libdirac_encoder/dirac_encoder.cpp: Added support for local
+	  decoding flag, so that local decoding can be avoided for speed.
+
+2005-09-27 10:09  tjdwave
+
+	* libdirac_encoder/comp_compress.cpp: Removed commented-out code.
+
+2005-09-27 10:09  tjdwave
+
+	* libdirac_encoder/comp_compress.cpp: Inverse wavelet transform is
+	  now only done for L2 frames if local decoding is required. This
+	  is because L2 frames are (by definition) not used for reference
+	  and can be left in a partially reconstructed state if local
+	  decoding isn't needed.
+
+2005-09-27 09:54  tjdwave
+
+	* libdirac_common/mot_comp.cpp: Introduced unbiased rounding into
+	  calculation of weighting matrices. This allows the subsequent
+	  rationalisation of the values to be avoided. Also, chroma scale
+	  factors applied to motion vectors have been replaced by shift
+	  factors, so that bitshifts can be used instead of divisions for
+	  greater efficiency.
+
+2005-09-27 09:50  tjdwave
+
+	* libdirac_common/: common.cpp, common.h: Added support for an
+	  encode params flag indicating whether we're doing local decoding.
+	  Local decoding can then be omitted for greater efficiency.
+
+2005-09-27 09:44  tjdwave
+
+	* decoder/decmain.cpp: Made timing info only output in verbose
+	  mode.
+
+2005-09-27 09:43  tjdwave
+
+	* encoder/encmain.cpp: Added timing data for encoding.
+
+2005-09-27 09:40  tjdwave
+
+	* libdirac_common/arith_codec.h: Simplified ArithCodec class so
+	  that probality intervals aren't used.
+
+2005-09-07 15:29  tjdwave
+
+	* util/encoder_gui/: COPYING, README, diracdata.h, diracgui.cpp,
+	  diracgui.h, encodebox.cpp, encoder_gui.pro, filesbox.cpp,
+	  main.cpp, presetbox.cpp, qualitybox.cpp, reportbox.cpp,
+	  repthread.cpp, repthread.h, tables.cpp, tables.h, videobox.cpp:
+	  Adding files for Dirac encoder GUI.
+
+2005-09-07 10:41  tjdwave
+
+	* doc/DiracSpecV0.1.doc: Version 0.1 superceded by version 0.9 now
+	  in CVS.
+
+2005-09-07 10:39  tjdwave
+
+	* doc/DiracSpec0.9.pdf: Added decoder semantics and revised
+	  bitstream structure.
+
+2005-08-31 14:42  tjdwave
+
+	* encoder/encmain.cpp, libdirac_common/common.cpp,
+	  libdirac_common/common.h, libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/dirac_encoder.h,
+	  libdirac_encoder/quality_monitor.cpp: Added support for lossless
+	  I-frame and long-GOP coding, with CLI option.
+
 2005-08-23 11:46  asuraparaju
 
 	* NEWS: Added 0.5.3 release notes
