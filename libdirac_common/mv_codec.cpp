@@ -470,7 +470,7 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
             
             m_MB_count++;
     
-            if (m_MB_count > m_reset_num)
+            if (m_MB_count == m_reset_num)
             {
                  m_MB_count = 0;
                  ResetAll();
@@ -717,7 +717,7 @@ void MvDataCodec::DoWorkDecode( MvData& out_data)
 
             m_MB_count++;
     
-            if (m_MB_count > m_reset_num)
+            if (m_MB_count == m_reset_num)
             {
                  m_MB_count = 0;
                  ResetAll();
