@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Peter Meerwald (pmeerw@users.sourceforge.net)
+* Contributor(s): Thomas Davies (Original Author), 
+*                 Peter Meerwald (pmeerw@users.sourceforge.net)
+*                 Steve Bearcroft (bearcrsw@users.sourceforge.net)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -765,11 +767,11 @@ void BlockDiffQuarterPel::Diff( const BlockDiffParams& dparams,
         const int refXlen( m_ref_data.LengthX() );
         const int refYlen( m_ref_data.LengthY() );
 
-        for(int y = dparams.Yl(), uY = ref_start.y,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen);
-            y > 0; --y, uY += 2,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen))
+        for(int y = dparams.Yp(), uY = ref_start.y,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen);
+            y < dparams.Yend(); ++y, uY += 2,BuY=BChk(uY,refYlen),BuY1=BChk(uY+1,refYlen))
         {
-            for(int x = dparams.Xl(), uX = ref_start.x,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen);
-                x > 0 ; --x, uX += 2,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen))
+            for(int x = dparams.Xp(), uX = ref_start.x,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen);
+                x < dparams.Xend(); ++x, uX += 2,BuX=BChk(uX,refXlen),BuX1=BChk(uX+1,refXlen))
             {
  
                 temp = (     linear_wts[0] * CalcValueType( m_ref_data[BuY][BuX] ) +
@@ -1412,11 +1414,11 @@ float BiBlockQuarterPel::Diff(  const BlockDiffParams& dparams ,
                                            rmdr2.x * rmdr2.y };              //br
 
         // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
-        for( int y=dparams.Yl(), ry=ref_start1.y, by=BChk(ry,m_ref_data2.LengthY()),by1=BChk(ry+1,m_ref_data2.LengthY()); 
+        for( int y=dparams.Yl(), ry=ref_start2.y, by=BChk(ry,m_ref_data2.LengthY()),by1=BChk(ry+1,m_ref_data2.LengthY()); 
              y>0; 
              --y, pic_curr+=pic_next, ry+=2 , by=BChk(ry,m_ref_data2.LengthY()),by1=BChk(ry+1,m_ref_data2.LengthY()))
         {
-             for( int x=dparams.Xl() , rx=ref_start1.x , bx=BChk(rx,m_ref_data2.LengthX()), bx1=BChk(rx+1,m_ref_data2.LengthX()); 
+             for( int x=dparams.Xl() , rx=ref_start2.x , bx=BChk(rx,m_ref_data2.LengthX()), bx1=BChk(rx+1,m_ref_data2.LengthX()); 
                   x>0 ; 
                   --x, ++pic_curr, rx+=2 , ++diff_curr, bx=BChk(rx,m_ref_data2.LengthX()), bx1=BChk(rx+1,m_ref_data2.LengthX()))
              {
