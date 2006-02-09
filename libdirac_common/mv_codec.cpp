@@ -371,7 +371,7 @@ inline MVector MvDataCodec::Mv2Prediction(const MvArray & mvarray,
 inline ValueType MvDataCodec::DCPrediction(const TwoDArray < ValueType > & dcdata,
                                            const TwoDArray < PredMode > & preddata) const
 {
-    std::vector < int >  nbrs; 
+    std::vector < unsigned int >  nbrs; 
     PredMode pmode;
     ValueType result = 128; 
     
@@ -379,15 +379,15 @@ inline ValueType MvDataCodec::DCPrediction(const TwoDArray < ValueType > & dcdat
     {
         pmode = preddata[m_b_yp-1][m_b_xp]; 
         if (pmode == INTRA) 
-            nbrs.push_back(int(dcdata[m_b_yp-1][m_b_xp])); 
+            nbrs.push_back( (unsigned int) dcdata[m_b_yp-1][m_b_xp] ); 
         
         pmode = preddata[m_b_yp-1][m_b_xp-1]; 
         if (pmode == INTRA)
-            nbrs.push_back(int(dcdata[m_b_yp-1][m_b_xp-1])); 
+            nbrs.push_back((unsigned int)dcdata[m_b_yp-1][m_b_xp-1] ); 
         
         pmode = preddata[m_b_yp][m_b_xp-1]; 
         if (pmode == INTRA)        
-            nbrs.push_back(int(dcdata[m_b_yp][m_b_xp-1])); 
+            nbrs.push_back( (unsigned int) dcdata[m_b_yp][m_b_xp-1] ); 
         
         if (nbrs.size() > 0)
             result = ValueType(GetMean(nbrs));     

@@ -430,15 +430,6 @@ namespace dirac
         return abs(mv.x)+abs(mv.y);
     }
 
-    //! Return the mean of a set of integer values
-    inline int GetMean(std::vector<int>& values){
-        int sum=0;
-        for (unsigned int I=0;I<values.size();++I)
-            sum+=values[I];
-        sum/=int(values.size());
-        return sum;
-    }
-
     //! Return the mean of a set of unsigned integer values
     inline unsigned int GetMean(std::vector<unsigned int>& values){
         int sum=0;
