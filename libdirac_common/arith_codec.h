@@ -209,8 +209,7 @@ namespace dirac
 
                 m_weight++;
 
-                if ( m_weight & 1 )
-                    SetRanges();
+                SetRanges();
             }
 
              //! Divide the counts by 2, making sure neither ends up 0.
