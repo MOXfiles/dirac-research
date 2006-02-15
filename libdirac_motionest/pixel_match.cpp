@@ -169,11 +169,17 @@ void PixelMatcher::MakeMEDataHierarchy(const OneDArray< PicArray*>& down_data,
     int xnumblocks , ynumblocks;
     const OLBParams bparams = m_encparams.LumaBParams(2);
 
+    // We might not have an integral number of Macroblocks and blocks in 
+    // a picture. So we go start of with the number of macroblocks in the
+    // full size picture and calculate the number of in the downsized pics
+    // from this.
+    xnumblocks = m_encparams.XNumBlocks();
+    ynumblocks = m_encparams.YNumBlocks();
     for (int i=1 ; i<=m_depth;++i)
     {
 
-        xnumblocks = down_data[i]->LengthX()/bparams.Xbsep();
-        ynumblocks = down_data[i]->LengthY()/bparams.Ybsep();
+        xnumblocks = xnumblocks>>1;
+        ynumblocks = ynumblocks>>1;
 
         if (( down_data[i]->LengthX() )%bparams.Xbsep() != 0)
             xnumblocks++;
@@ -321,7 +327,7 @@ void PixelMatcher::DoBlock(const int xpos, const int ypos ,
 
     // Use guide from lower down if one exists
     if ( m_level<m_depth )
-        AddNewVlist( m_cand_list , guide_array[ ypos>>1 ][ xpos>>1 ] * 2 , m_xr , m_yr );
+        AddNewVlist( m_cand_list , guide_array[ BChk(ypos>>1, guide_array.LengthY()) ][ BChk(xpos>>1, guide_array.LengthX()) ] * 2 , m_xr , m_yr );
 
     // use the spatial prediction, also, as a guide
     if (m_level<m_depth)

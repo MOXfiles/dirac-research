@@ -133,6 +133,10 @@ BiBlockEighthPel::BiBlockEighthPel( const PicArray& ref1 , const PicArray& ref2 
 
 float PelBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv )
 {
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        return 0;
+    }
 
     CalcValueType sum( 0 );
 
@@ -152,15 +156,15 @@ float PelBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv )
 #if defined(HAVE_MMX)
         return static_cast<float>(simple_block_diff_mmx_4(dparams, mv, m_pic_data, m_ref_data, INT_MAX));
 #else
-    	ValueType diff;    
-        for ( int j=dparams.Yp() ; j!=dparams.Yp()+dparams.Yl() ; ++j )
+        ValueType diff;    
+        for ( int j=dparams.Yp() ; j<dparams.Yp()+dparams.Yl() ; ++j )
         { 
-        	for(int i=dparams.Xp() ; i!= dparams.Xp()+dparams.Xl() ; ++i )
-        	{
-            	diff = m_pic_data[j][i]-m_ref_data[j+mv.y][i+mv.x];
-            	sum += std::abs( diff );
-        	}// i
-    	}// j
+            for(int i=dparams.Xp() ; i< dparams.Xp()+dparams.Xl() ; ++i )
+            {
+                diff = m_pic_data[j][i]-m_ref_data[j+mv.y][i+mv.x];
+                sum += std::abs( diff );
+            }// i
+        }// j
 #endif /* HAVE_MMX */
     }
     else
@@ -168,10 +172,10 @@ float PelBlockDiff::Diff( const BlockDiffParams& dparams, const MVector& mv )
 #if defined (HAVE_MMX)
         return static_cast<float>(bchk_simple_block_diff_mmx_4(dparams, mv, m_pic_data, m_ref_data, INT_MAX));
 #else
-    	ValueType diff;    
-        for ( int j=dparams.Yp() ; j!=dparams.Yp()+dparams.Yl() ; ++j )
+        ValueType diff;    
+        for ( int j=dparams.Yp() ; j < dparams.Yp()+dparams.Yl() ; ++j )
         { 
-            for( int i=dparams.Xp() ; i!=dparams.Xp()+dparams.Xl() ; ++i )
+            for( int i=dparams.Xp() ; i < dparams.Xp()+dparams.Xl() ; ++i )
             {
                 diff = m_pic_data[j][i] - m_ref_data[BChk(j+mv.y , m_ref_data.LengthY())][BChk(i+mv.x , m_ref_data.LengthX())];
                 sum += std::abs( diff );
@@ -190,6 +194,10 @@ void PelBlockDiff::Diff( const BlockDiffParams& dparams,
                          float& best_sum,
                          MVector& best_mv )
 {
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        return;
+    }
 
     CalcValueType sum( 0 );
 
@@ -208,16 +216,16 @@ void PelBlockDiff::Diff( const BlockDiffParams& dparams,
     {
 #if defined (HAVE_MMX)
         sum  = simple_block_diff_mmx_4(dparams, mv, m_pic_data, m_ref_data, static_cast<int>(best_sum));
-	    if (sum < best_sum)
-	    {
-   		    best_sum = sum;
-   			best_mv = mv;
-	    }
-	    return; 
+        if (sum < best_sum)
+        {
+               best_sum = sum;
+               best_mv = mv;
+        }
+        return; 
 #else
-    	ValueType diff;    
-    	ValueType *pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
-    	const int pic_next( m_pic_data.LengthX() - dparams.Xl() ); // - go down a row and back along
+        ValueType diff;    
+        ValueType *pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+        const int pic_next( m_pic_data.LengthX() - dparams.Xl() ); // - go down a row and back along
     
 
         ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
@@ -239,15 +247,15 @@ void PelBlockDiff::Diff( const BlockDiffParams& dparams,
     else
     {
 #if defined (HAVE_MMX)
-       	sum = (bchk_simple_block_diff_mmx_4(dparams, mv, m_pic_data, m_ref_data, static_cast<int>(best_sum)));
-		if (sum < best_sum)
-		{
-			best_sum = sum;
-			best_mv = mv;
-		}
-		return;
+           sum = (bchk_simple_block_diff_mmx_4(dparams, mv, m_pic_data, m_ref_data, static_cast<int>(best_sum)));
+        if (sum < best_sum)
+        {
+            best_sum = sum;
+            best_mv = mv;
+        }
+        return;
 #else
-    	ValueType diff;    
+        ValueType diff;    
         for ( int j=dparams.Yp() ; j<dparams.Yend() ; ++j )
         { 
             for( int i=dparams.Xp() ; i<dparams.Xend() ; ++i )
@@ -271,18 +279,23 @@ void PelBlockDiff::Diff( const BlockDiffParams& dparams,
 
 float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
 {
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        dc_val = 0;
+        return 0;
+    }
 
      //computes the cost if block is predicted by its dc component
 #if defined(HAVE_MMX)
-	CalcValueType intra_cost =
-			simple_intra_block_diff_mmx_4 (dparams, m_pic_data, dc_val);
+    CalcValueType intra_cost =
+            simple_intra_block_diff_mmx_4 (dparams, m_pic_data, dc_val);
 
 #ifdef DIRAC_DEBUG
     CalcValueType int_dc( 0 );
-	ValueType non_mmx_dc(0);
+    ValueType non_mmx_dc(0);
 
-    for ( int j=dparams.Yp() ; j!=dparams.Yp()+dparams.Yl() ; ++j)
-        for(int i=dparams.Xp(); i!=dparams.Xp()+dparams.Xl() ; ++i )
+    for ( int j=dparams.Yp() ; j<dparams.Yp()+dparams.Yl() ; ++j)
+        for(int i=dparams.Xp(); i<dparams.Xp()+dparams.Xl() ; ++i )
             int_dc += static_cast<int>( m_pic_data[j][i] );
 
     int_dc /= ( dparams.Xl() * dparams.Yl() );
@@ -298,22 +311,22 @@ float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
         for( int i=dparams.Xp() ; i<dparams.Xend() ;++i )
             non_mmx_intra_cost += std::abs( m_pic_data[j][i] - dc );
 
-	if (non_mmx_dc != dc_val || non_mmx_intra_cost != intra_cost)
-	{
-		std::cerr << "MMX vals: dc=" << dc_val;
-		std::cerr << " cost=" << intra_cost << std::endl;
-		//print_arr (pic_data, width[i%5], height[i%5]);
-		std::cerr << "non-MMX vals: dc=" << non_mmx_dc;
-		std::cerr << " cost=" << non_mmx_intra_cost << std::endl;
-	}
+    if (non_mmx_dc != dc_val || non_mmx_intra_cost != intra_cost)
+    {
+        std::cerr << "MMX vals: dc=" << dc_val;
+        std::cerr << " cost=" << intra_cost << std::endl;
+        //print_arr (pic_data, width[i%5], height[i%5]);
+        std::cerr << "non-MMX vals: dc=" << non_mmx_dc;
+        std::cerr << " cost=" << non_mmx_intra_cost << std::endl;
+    }
 #endif
     return static_cast<float>( intra_cost );
 #else
 
     CalcValueType int_dc( 0 );
 
-    for ( int j=dparams.Yp() ; j!=dparams.Yp()+dparams.Yl() ; ++j)
-        for(int i=dparams.Xp(); i!=dparams.Xp()+dparams.Xl() ; ++i )
+    for ( int j=dparams.Yp() ; j<dparams.Yp()+dparams.Yl() ; ++j)
+        for(int i=dparams.Xp(); i<dparams.Xp()+dparams.Xl() ; ++i )
             int_dc += static_cast<int>( m_pic_data[j][i] );
 
     int_dc /= ( dparams.Xl() * dparams.Yl() );
@@ -337,6 +350,10 @@ float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
 float BlockDiffHalfPel::Diff(  const BlockDiffParams& dparams , 
                                       const MVector& mv )
 {
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        return 0;
+    }
    //Where to start in the upconverted image
     const ImageCoords ref_start( ( dparams.Xp()<<1 ) + mv.x ,( dparams.Yp()<<1 ) + mv.y );
     const ImageCoords ref_stop( ref_start.x+(dparams.Xl()<<1) , ref_start.y+(dparams.Yl()<<1));
@@ -355,18 +372,18 @@ float BlockDiffHalfPel::Diff(  const BlockDiffParams& dparams ,
     if ( !bounds_check )
     {
 #if defined (HAVE_MMX)
-		MVector rmdr(0,0);
-		const ImageCoords start_pos(dparams.Xp(), dparams.Yp());
-		const ImageCoords end_pos(dparams.Xp() + dparams.Xl(), dparams.Yp() + dparams.Yl());
-		sum = simple_block_diff_up_mmx_4 (m_pic_data, m_ref_data,
-										start_pos, end_pos,
-										ref_start, ref_stop,
-										rmdr,
-										sum,
-										static_cast<float>(INT_MAX));
+        MVector rmdr(0,0);
+        const ImageCoords start_pos(dparams.Xp(), dparams.Yp());
+        const ImageCoords end_pos(dparams.Xp() + dparams.Xl(), dparams.Yp() + dparams.Yl());
+        sum = simple_block_diff_up_mmx_4 (m_pic_data, m_ref_data,
+                                        start_pos, end_pos,
+                                        ref_start, ref_stop,
+                                        rmdr,
+                                        sum,
+                                        static_cast<float>(INT_MAX));
 #else
-    	ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
-    	const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
+        ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+        const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
         ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
         const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
 
@@ -383,8 +400,8 @@ float BlockDiffHalfPel::Diff(  const BlockDiffParams& dparams ,
     else
     {
         // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
-    	ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
-    	const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
+        ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+        const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
         for( int y=dparams.Yl(), ry=ref_start.y, by=BChk(ry,m_ref_data.LengthY()); 
              y>0; 
              --y, pic_curr+=pic_next, ry+=2 , by=BChk(ry,m_ref_data.LengthY()))
@@ -410,6 +427,10 @@ void BlockDiffHalfPel::Diff( const BlockDiffParams& dparams,
                                    MvCostData& best_costs ,
                                    MVector& best_mv )
 {
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        return; 
+    }
 
     //Where to start in the upconverted image
     const ImageCoords ref_start( ( dparams.Xp()<<1 ) + mv.x ,( dparams.Yp()<<1 ) + mv.y );
@@ -430,21 +451,21 @@ void BlockDiffHalfPel::Diff( const BlockDiffParams& dparams,
     if ( !bounds_check )
     {
 #if defined (HAVE_MMX)
-		
-		const ImageCoords start_pos(dparams.Xp(), dparams.Yp());
-		const ImageCoords end_pos(dparams.Xp() + dparams.Xl(), dparams.Yp() + dparams.Yl());
-		MVector rmdr(0,0);
-		sum = simple_block_diff_up_mmx_4 (m_pic_data, m_ref_data,
-										start_pos, end_pos,
-										ref_start, ref_stop,
-										rmdr,
-										sum,
-										best_costs.total);
+        
+        const ImageCoords start_pos(dparams.Xp(), dparams.Yp());
+        const ImageCoords end_pos(dparams.Xp() + dparams.Xl(), dparams.Yp() + dparams.Yl());
+        MVector rmdr(0,0);
+        sum = simple_block_diff_up_mmx_4 (m_pic_data, m_ref_data,
+                                        start_pos, end_pos,
+                                        ref_start, ref_stop,
+                                        rmdr,
+                                        sum,
+                                        best_costs.total);
         if ( sum>=best_costs.total )
             return;
 #else
-   		ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
-   		const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
+           ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+           const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
         ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
         const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
 
@@ -464,8 +485,8 @@ void BlockDiffHalfPel::Diff( const BlockDiffParams& dparams,
     else
     {
         // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
-   		ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
-   		const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
+           ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+           const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
         for( int y=dparams.Yl(), ry=ref_start.y, by=BChk(ry,m_ref_data.LengthY()); 
              y>0; 
              --y, pic_curr+=pic_next, ry+=2 , by=BChk(ry,m_ref_data.LengthY()))
@@ -492,6 +513,10 @@ void BlockDiffHalfPel::Diff( const BlockDiffParams& dparams,
 
 float BlockDiffQuarterPel::Diff(  const BlockDiffParams& dparams , const MVector& mv )
 {
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        return 0; 
+    }
    // Set up the start point in the reference image by rounding the motion vector
     // to 1/2 pel accuracy.NB: bit shift rounds negative values DOWN, as required
     const MVector roundvec( mv.x>>1 , mv.y>>1 );
@@ -511,29 +536,29 @@ float BlockDiffQuarterPel::Diff(  const BlockDiffParams& dparams , const MVector
         bounds_check = true;
 
     float sum( 0.0f );
-   	CalcValueType temp;
+       CalcValueType temp;
 
 
     if ( !bounds_check )
     {
 #if defined (HAVE_MMX)
-		const ImageCoords start_pos(dparams.Xp(), dparams.Yp());
-		const ImageCoords end_pos(dparams.Xp() + dparams.Xl(), dparams.Yp() + dparams.Yl());
+        const ImageCoords start_pos(dparams.Xp(), dparams.Yp());
+        const ImageCoords end_pos(dparams.Xp() + dparams.Xl(), dparams.Yp() + dparams.Yl());
            
-		sum = simple_block_diff_up_mmx_4 (m_pic_data, m_ref_data,
-										start_pos, end_pos,
-										ref_start, ref_stop,
-										rmdr,
-										sum,
-										static_cast<float>(INT_MAX));
+        sum = simple_block_diff_up_mmx_4 (m_pic_data, m_ref_data,
+                                        start_pos, end_pos,
+                                        ref_start, ref_stop,
+                                        rmdr,
+                                        sum,
+                                        static_cast<float>(INT_MAX));
 
 #else
-	    ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
+        ValueType* pic_curr = &m_pic_data[dparams.Yp()][dparams.Xp()];
         const int pic_next( m_pic_data.LengthX() - dparams.Xl() );// go down a row and back up
         if( rmdr.x == 0 && rmdr.y == 0 )
         {
-        	ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
-        	const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+            ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
+            const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
             for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
             {
                 for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
@@ -544,8 +569,8 @@ float BlockDiffQuarterPel::Diff(  const BlockDiffParams& dparams , const MVector
         }
         else if( rmdr.y == 0 )
         {
-        	ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
-        	const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+            ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
+            const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
             for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
             {
                 for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
@@ -560,8 +585,8 @@ float BlockDiffQuarterPel::Diff(  const BlockDiffParams& dparams , const MVector
         }
         else if( rmdr.x == 0 )
         {
-        	ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
-        	const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+            ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
+            const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
             for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
             {
                 for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
@@ -576,8 +601,8 @@ float BlockDiffQuarterPel::Diff(  const BlockDiffParams& dparams , const MVector
         }
         else
         {
-        	ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
-        	const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
+            ValueType *ref_curr = &m_ref_data[ref_start.y][ref_start.x];
+            const int ref_next( (m_ref_data.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
             for( int y=dparams.Yl(); y > 0; --y, pic_curr+=pic_next, ref_curr+=ref_next )
             {
                 for( int x=dparams.Xl(); x > 0; --x, ++pic_curr, ref_curr+=2 )
@@ -637,6 +662,10 @@ void BlockDiffQuarterPel::Diff( const BlockDiffParams& dparams,
                                    MvCostData& best_costs ,
                                    MVector& best_mv)
 {
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        return; 
+    }
 
     // Set up the start point in the reference image by rounding the motion vector
     // to 1/2 pel accuracy.NB: bit shift rounds negative values DOWN, as required
@@ -665,15 +694,15 @@ void BlockDiffQuarterPel::Diff( const BlockDiffParams& dparams,
     if ( !bounds_check )
     {
 #if defined (HAVE_MMX)
-		const ImageCoords start_pos(dparams.Xp(), dparams.Yp());
-		const ImageCoords end_pos(dparams.Xp() + dparams.Xl(), dparams.Yp() + dparams.Yl());
+        const ImageCoords start_pos(dparams.Xp(), dparams.Yp());
+        const ImageCoords end_pos(dparams.Xp() + dparams.Xl(), dparams.Yp() + dparams.Yl());
         
-		sum = simple_block_diff_up_mmx_4 (m_pic_data, m_ref_data,
-										start_pos, end_pos,
-										ref_start, ref_stop,
-										rmdr,
-										sum,
-										best_costs.total);
+        sum = simple_block_diff_up_mmx_4 (m_pic_data, m_ref_data,
+                                        start_pos, end_pos,
+                                        ref_start, ref_stop,
+                                        rmdr,
+                                        sum,
+                                        best_costs.total);
 
         if ( sum>=best_costs.total )
             return;
@@ -800,6 +829,10 @@ void BlockDiffQuarterPel::Diff( const BlockDiffParams& dparams,
 
 float BlockDiffEighthPel::Diff(  const BlockDiffParams& dparams , const MVector& mv )
 {
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        return 0; 
+    }
    //Set up the start point in the reference image by rounding the motion vector
     //NB: bit shift rounds negative values DOWN, as required
     const MVector roundvec( mv.x>>2 , mv.y>>2 );
@@ -927,6 +960,10 @@ void BlockDiffEighthPel::Diff( const BlockDiffParams& dparams,
                                    MvCostData& best_costs ,
                                    MVector& best_mv)
 {
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        return; 
+    }
     //Set up the start point in the reference image by rounding the motion vector
     //NB: bit shift rounds negative values DOWN, as required
     const MVector roundvec( mv.x>>2 , mv.y>>2 );
@@ -1076,6 +1113,10 @@ float BiBlockHalfPel::Diff(  const BlockDiffParams& dparams ,
                              const MVector& mv1 ,
                              const MVector& mv2 )
 {
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        return 0; 
+    }
     // First create a difference array, and subtract the reference 1 data into it
     TwoDArray<ValueType> diff_array( dparams.Yl() , dparams.Xl() );
 
@@ -1188,6 +1229,10 @@ float BiBlockQuarterPel::Diff(  const BlockDiffParams& dparams ,
                              const MVector& mv1 ,
                              const MVector& mv2 )
 {
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        return 0; 
+    }
     // First create a difference array, and subtract the reference 1 data into it
     TwoDArray<ValueType> diff_array( dparams.Yl() , dparams.Xl() );
 
@@ -1225,13 +1270,13 @@ float BiBlockQuarterPel::Diff(  const BlockDiffParams& dparams ,
     if ( !bounds_check )
     {
 #if defined (HAVE_MMX)
-		const ImageCoords start_pos(dparams.Xp(), dparams.Yp());
-		const ImageCoords end_pos(dparams.Xp() + dparams.Xl(), dparams.Yp() + dparams.Yl());
+        const ImageCoords start_pos(dparams.Xp(), dparams.Yp());
+        const ImageCoords end_pos(dparams.Xp() + dparams.Xl(), dparams.Yp() + dparams.Yl());
         
-		simple_biblock_diff_pic_mmx_4 (m_pic_data, m_ref_data1, diff_array,
-									start_pos, end_pos,
-									ref_start1, ref_stop1,
-									rmdr1);
+        simple_biblock_diff_pic_mmx_4 (m_pic_data, m_ref_data1, diff_array,
+                                    start_pos, end_pos,
+                                    ref_start1, ref_stop1,
+                                    rmdr1);
 #else
         ValueType *ref_curr = &m_ref_data1[ref_start1.y][ref_start1.x];
         const int ref_next( (m_ref_data1.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
@@ -1342,10 +1387,10 @@ float BiBlockQuarterPel::Diff(  const BlockDiffParams& dparams ,
 
 
 #if defined (HAVE_MMX)
-			sum = static_cast<float>( simple_biblock_diff_up_mmx_4 (diff_array, 
-												m_ref_data2,
-												ref_start2, ref_stop2,
-												rmdr2) );
+            sum = static_cast<float>( simple_biblock_diff_up_mmx_4 (diff_array, 
+                                                m_ref_data2,
+                                                ref_start2, ref_stop2,
+                                                rmdr2) );
 #else
         ValueType *ref_curr = &m_ref_data2[ref_start2.y][ref_start2.x];
         const int ref_next( (m_ref_data2.LengthX() - dparams.Xl())*2 );// go down 2 rows and back up
@@ -1441,6 +1486,10 @@ float BiBlockEighthPel::Diff(  const BlockDiffParams& dparams ,
                              const MVector& mv1 ,
                              const MVector& mv2 )
 {
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        return 0; 
+    }
 
     // First create a difference array, and subtract the reference 1 data into it
     TwoDArray<ValueType> diff_array( dparams.Yl() , dparams.Xl() );
