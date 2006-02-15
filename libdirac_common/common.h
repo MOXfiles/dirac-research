@@ -437,7 +437,7 @@ namespace dirac
         /*!
            Frame chroma format is set Frame sort defaults to I frame.
         */    
-        FrameParams(const ChromaFormat& cf, int xlen, int ylen);
+        FrameParams(const ChromaFormat& cf, int xlen, int ylen, int c_xlen, int c_ylen);
         
         //! Constructor
         /*!
@@ -466,11 +466,17 @@ namespace dirac
         //! Returns the chroma format of the frame
         const ChromaFormat& CFormat() const{return m_cformat;}
         
-        //! Returns the width of the frame
+        //! Returns the luma width of the frame
         int Xl() const{return m_xl;}
         
-        //! Returns the height of the frame
+        //! Returns the luma height of the frame
         int Yl() const{return m_yl;}
+        
+        //! Returns the chroma width of the frame
+        int ChromaXl() const{return m_chroma_xl;}
+        
+        //! Returns the chroma height of the frame
+        int ChromaYl() const{return m_chroma_yl;}
         
         //! Returns the type of the frame (I, L1 or L2)
         const FrameSort& FSort() const {return m_fsort;}
@@ -510,10 +516,10 @@ namespace dirac
         //! The chroma format
         ChromaFormat m_cformat;
         
-        //! Frame width
+        //! Frame luma width
         int m_xl;
         
-        //!    Frame height
+        //! Frame luma height
         int m_yl;
         
         //! The frame sort
@@ -530,6 +536,12 @@ namespace dirac
         
         //! The frame number, in temporal order
         int m_fnum;        
+        
+        //! Chroma length
+        int m_chroma_xl;        
+        
+        //! Chroma height
+        int m_chroma_yl;        
     };
 
 //    //! Operator for inputting block parameters

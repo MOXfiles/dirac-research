@@ -100,47 +100,64 @@ m_show_fnum(-1)
     int xl_chroma=m_sparams.Xl() / x_chroma_fac;
     int yl_chroma=m_sparams.Yl() / y_chroma_fac;
 
+    xpad_chroma = ypad_chroma = 0;
+    
+    // The frame dimensions must be a multiple of 2^(transform_depth)
+    // For the moment, we'll fix the transform depth to be 4, so we need 
+    // divisibility by 16. In the future we'll want arbitrary transform 
+    // depths.
+
+    if ( xl_chroma%16 != 0 )
+        xpad_chroma=( ( xl_chroma/16 ) + 1 )*16 - xl_chroma;
+    if ( yl_chroma%16 != 0)
+        ypad_chroma = ( ( yl_chroma/16 ) + 1 )*16 - yl_chroma;    
+
+    int xpad_chroma_len = xl_chroma+xpad_chroma;
+    int ypad_chroma_len = yl_chroma+ypad_chroma;
+    
+
     //make sure we have enough macroblocks to cover the pictures 
-    m_decparams.SetXNumMB( m_sparams.Xl() / m_decparams.LumaBParams(0).Xbsep() );
-    m_decparams.SetYNumMB( m_sparams.Yl() / m_decparams.LumaBParams(0).Ybsep() );
-    if ( m_decparams.XNumMB() * m_decparams.ChromaBParams(0).Xbsep() < xl_chroma )
+    m_decparams.SetXNumMB( xpad_chroma_len / m_decparams.ChromaBParams(0).Xbsep() );
+    m_decparams.SetYNumMB( ypad_chroma_len / m_decparams.ChromaBParams(0).Ybsep() );
+    if ( m_decparams.XNumMB() * m_decparams.ChromaBParams(0).Xbsep() < xpad_chroma_len )
     {
         m_decparams.SetXNumMB( m_decparams.XNumMB() + 1 );
-        xpad_chroma = m_decparams.XNumMB() * m_decparams.ChromaBParams(0).Xbsep() - xl_chroma;
     }
-    else
-        xpad_chroma=0;
 
-    if (m_decparams.YNumMB()*m_decparams.ChromaBParams(0).Ybsep()<yl_chroma)
+    if (m_decparams.YNumMB()*m_decparams.ChromaBParams(0).Ybsep()< ypad_chroma_len)
     {
         m_decparams.SetYNumMB( m_decparams.YNumMB() + 1 );
-        ypad_chroma=m_decparams.YNumMB()*m_decparams.ChromaBParams(0).Ybsep()-yl_chroma;
     }
-    else
-        ypad_chroma=0;    
 
-    //Now we have an integral number of macroblocks in a picture and we set the number of blocks
+    int xpad_len = m_sparams.Xl();
+    int ypad_len = m_sparams.Yl();
+    xpad_luma = ypad_luma = 0;
+    
+    // The frame dimensions must be a multiple of 2^(transform_depth)
+    // For the moment, we'll fix the transform depth to be 4, so we need 
+    // divisibility by 16. In the future we'll want arbitrary transform 
+    // depths.
+
+    if ( xpad_len%16 != 0 )
+        xpad_luma=( ( xpad_len/16 ) + 1 )*16 - xpad_len;
+    if ( ypad_len%16 != 0)
+        ypad_luma = ( ( ypad_len/16 ) + 1 )*16 - ypad_len;    
+
+    xpad_len += xpad_luma;
+    ypad_len += ypad_luma;
+
+    // NOTE: do we need to recalulate the number of MacroBlocks here???
+
+    // Note that we do not have an integral number of macroblocks in a picture
+    // So it is possible that part of a macro-block and some blocks can fall
+    // of the edge of the true picture. We need to take this into 
+    // consideration while doing Motion Compensation
     m_decparams.SetXNumBlocks( 4*m_decparams.XNumMB() );
     m_decparams.SetYNumBlocks( 4*m_decparams.YNumMB() );
 
-    //Next we work out the additional padding due to the wavelet transform
-    //For the moment, we'll fix the transform depth to be 4, so we need divisibility by 16.
-    //In the future we'll want arbitrary transform depths. It's sufficient to check for
-    //chroma only
-
-    int xpad_len = xl_chroma+xpad_chroma;
-    int ypad_len = yl_chroma+ypad_chroma;
-
-    if ( xpad_len%16 != 0 )
-        xpad_chroma=( ( xpad_len/16 ) + 1 )*16 - xl_chroma;
-    if ( ypad_len%16 != 0)
-        ypad_chroma = ( ( ypad_len/16 ) + 1 )*16 - yl_chroma;    
-
-    xpad_luma = xpad_chroma*x_chroma_fac;
-    ypad_luma = ypad_chroma*y_chroma_fac;
 
     //set up padded picture sizes, based on original picture sizes, the block parameters and the wavelet transform depth
-    m_fbuffer= new FrameBuffer( m_sparams.CFormat() , m_sparams.Xl() + xpad_luma , m_sparams.Yl() + ypad_luma );
+    m_fbuffer= new FrameBuffer( m_sparams.CFormat() , xpad_len, ypad_len, xpad_chroma_len, ypad_chroma_len );
 
     m_fdecoder = new FrameDecompressor (m_decparams , m_sparams.CFormat() );
 }
@@ -244,6 +261,10 @@ void SequenceDecompressor::ReadStreamHeader()
     m_decparams.SetYNumBlocks( int(UnsignedGolombDecode( m_decparams.BitsIn())) );
     m_decparams.SetXNumMB( m_decparams.XNumBlocks()/4 );
     m_decparams.SetYNumMB( m_decparams.YNumBlocks()/4 );
+
+    //Set the original picture dimensions
+    m_decparams.SetOrigXl(m_sparams.Xl());
+    m_decparams.SetOrigYl(m_sparams.Yl());
 
     //chroma format
     m_sparams.SetCFormat( ChromaFormat(UnsignedGolombDecode( m_decparams.BitsIn())) );        

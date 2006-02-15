@@ -65,11 +65,13 @@ namespace dirac
             prediction structure is to be determined on the fly. 
 
             \param    cf    the Chroma format of frames in the buffer
-            \param    xlen    the width of frames in the buffer
-            \param    ylen    the hieght of frames in the buffer
+            \param    xlen    the luma width of frames in the buffer
+            \param    ylen    the luma height of frames in the buffer
+            \param    c_xlen  the chroma width of frames in the buffer
+            \param    c_ylen  the chroma height of frames in the buffer
 
         */
-        FrameBuffer(ChromaFormat cf,int xlen,int ylen);
+        FrameBuffer(ChromaFormat cf,int xlen,int ylen, int c_xlen, int c_ylen);
 
         //! Constructor
         /*!
@@ -80,11 +82,13 @@ namespace dirac
 
             \param    cf    the Chroma format of frames in the buffer
             \param    L1sep    the number of Layer 2 frames between Layer 1 frames
-            \param    xlen    the width of frames in the buffer
-            \param    ylen    the hieght of frames in the buffer
+            \param    xlen    the luma width of frames in the buffer
+            \param    ylen    the luma height of frames in the buffer
+            \param    c_xlen  the chroma width of frames in the buffer
+            \param    c_ylen  the chroma height of frames in the buffer
 
         */
-        FrameBuffer(ChromaFormat cf,int L1sep,int xlen, int ylen);
+        FrameBuffer(ChromaFormat cf,int L1sep,int xlen, int ylen, int c_xlen, int c_ylen);
 
         //! Constructor
         /*!
@@ -97,10 +101,12 @@ namespace dirac
             \param    cf    the Chroma format of frames in the buffer
             \param    numL1    the number of Layer 1 frames before the next I frame. 0 means that there is only one I frame.
             \param    L1sep    the number of Layer 2 frames between Layer 1 frames
-            \param    xlen    the width of frames in the buffer
-            \param    ylen    the hieght of frames in the buffer
+            \param    xlen    the luma width of frames in the buffer
+            \param    ylen    the luma height of frames in the buffer
+            \param    c_xlen  the chroma width of frames in the buffer
+            \param    c_ylen  the chroma height of frames in the buffer
         */    
-        FrameBuffer(ChromaFormat cf,int numL1,int L1sep,int xlen,int ylen);
+        FrameBuffer(ChromaFormat cf,int numL1,int L1sep,int xlen,int ylen, int c_xlen, int c_ylen);
 
         //! Copy constructor
         /*!

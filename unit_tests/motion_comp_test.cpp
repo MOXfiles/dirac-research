@@ -108,7 +108,7 @@ void MotionCompTest::testZeroMotionComp()
 
 void MotionCompTest::testZeroMotionComp(int precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE);
+    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
     CodecParams cp;
     OLBParams bparams(12, 12, 8, 8);
 
@@ -117,6 +117,8 @@ void MotionCompTest::testZeroMotionComp(int precision)
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
+    cp.SetOrigXl( X_SIZE );
+    cp.SetOrigYl( Y_SIZE );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
@@ -125,7 +127,7 @@ void MotionCompTest::testZeroMotionComp(int precision)
     
     MvData* mv_data = setupMV1Data(cp, 0, 0, REF1_ONLY);
 
-    FrameParams fp(format420, X_SIZE, Y_SIZE);
+    FrameParams fp(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
 
     fp.SetFSort(I_frame);
     fp.SetFrameNum(0);
@@ -166,13 +168,15 @@ void MotionCompTest::testAddandSubMotionComp()
 
 void MotionCompTest::testAddandSubMotionComp(int precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE);
+    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
     CodecParams cp;
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
     cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
+    cp.SetOrigXl( X_SIZE );
+    cp.SetOrigYl( Y_SIZE );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
@@ -180,7 +184,7 @@ void MotionCompTest::testAddandSubMotionComp(int precision)
     
     MvData* mv_data = setupMV1Data(cp, 5, 5, REF1_ONLY);
 
-    FrameParams fp(format420, X_SIZE, Y_SIZE);
+    FrameParams fp(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
 
     fp.SetFSort(I_frame);
     fp.SetFrameNum(0);
@@ -219,13 +223,15 @@ void MotionCompTest::testL2_frame()
 
 void MotionCompTest::testL2_frame(int precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE);
+    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
     CodecParams cp;
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
     cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
+    cp.SetOrigXl( X_SIZE );
+    cp.SetOrigYl( Y_SIZE );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
@@ -233,7 +239,7 @@ void MotionCompTest::testL2_frame(int precision)
     
     MvData* mv_data = setupMV1Data(cp, 5, 5, REF1_ONLY);
 
-    FrameParams fp(format420, X_SIZE, Y_SIZE);
+    FrameParams fp(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
 
     fp.SetFSort(I_frame);
     fp.SetFrameNum(0);
@@ -265,12 +271,14 @@ void MotionCompTest::testL2_frame(int precision)
 
 void MotionCompTest::testI_frame()
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE);
+    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
     CodecParams cp;
     OLBParams bparams(12, 12, 8, 8);
     cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
+    cp.SetOrigXl( X_SIZE );
+    cp.SetOrigYl( Y_SIZE );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
@@ -279,7 +287,7 @@ void MotionCompTest::testI_frame()
     
     MvData* mv_data = setupMV1Data(cp, 5, 5, REF1_ONLY);
 
-    FrameParams fp(format420, X_SIZE, Y_SIZE);
+    FrameParams fp(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
 
     fp.SetFSort(I_frame);
     fp.SetFrameNum(0);
@@ -312,13 +320,15 @@ void MotionCompTest::testRef2()
 
 void MotionCompTest::testRef2(int precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE);
+    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
     CodecParams cp;
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
     cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
+    cp.SetOrigXl( X_SIZE );
+    cp.SetOrigYl( Y_SIZE );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
@@ -328,7 +338,7 @@ void MotionCompTest::testRef2(int precision)
     MvData* mv_data = setupMV1Data(cp, 5, 5, REF2_ONLY);
     setupMV2Data(mv_data, 0, 0);
 
-    FrameParams fp(format420, X_SIZE, Y_SIZE);
+    FrameParams fp(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
 
     fp.SetFSort(I_frame);
     fp.SetFrameNum(0);
@@ -370,13 +380,15 @@ void MotionCompTest::testRef1and2()
 
 void MotionCompTest::testRef1and2(int precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE);
+    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
     CodecParams cp;
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
     cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
+    cp.SetOrigXl( X_SIZE );
+    cp.SetOrigYl( Y_SIZE );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
@@ -390,7 +402,7 @@ void MotionCompTest::testRef1and2(int precision)
     MvData* mv_data2 = setupMV1Data(cp, 5, 5, REF1AND2);
     setupMV2Data(mv_data2, 7, 3);
 
-    FrameParams fp(format420, X_SIZE, Y_SIZE);
+    FrameParams fp(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
 
     fp.SetFSort(I_frame);
     fp.SetFrameNum(0);

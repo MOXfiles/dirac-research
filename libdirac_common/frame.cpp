@@ -159,37 +159,14 @@ void Frame::Init()
      m_Y_data=new PicArray( m_fparams.Yl() , m_fparams.Xl());
      m_Y_data->SetCSort( Y_COMP );
 
-     if(cformat == format422) 
+     if(cformat != Yonly && cformat != formatNK) 
      {
-         m_U_data = new PicArray( m_fparams.Yl() , m_fparams.Xl()/2 ); 
+         m_U_data = new PicArray( m_fparams.ChromaYl() , m_fparams.ChromaXl() ); 
          m_U_data->SetCSort( U_COMP );
 
-         m_V_data = new PicArray( m_fparams.Yl() , m_fparams.Xl()/2 );
+         m_V_data = new PicArray( m_fparams.ChromaYl() , m_fparams.ChromaXl() );
          m_V_data->SetCSort( V_COMP );
      }
-     else if (cformat == format420)
-     {
-         m_U_data = new PicArray( m_fparams.Yl()/2 , m_fparams.Xl()/2 );
-         m_U_data->SetCSort( U_COMP );
-
-         m_V_data = new PicArray( m_fparams.Yl()/2 , m_fparams.Xl()/2 ); 
-         m_V_data->SetCSort(V_COMP);
-     }
-     else if (cformat == format411)
-     {
-         m_U_data = new PicArray( m_fparams.Yl() , m_fparams.Xl()/4 );
-         m_U_data->SetCSort( U_COMP );
-
-         m_V_data = new PicArray( m_fparams.Yl() , m_fparams.Xl()/4 );
-         m_V_data->SetCSort( V_COMP );
-     }
-     else if (cformat==format444){
-         m_U_data = new PicArray( m_fparams.Yl() , m_fparams.Xl() ); 
-         m_U_data->SetCSort( U_COMP );
-
-         m_V_data = new PicArray( m_fparams.Yl() , m_fparams.Xl() );
-         m_V_data->SetCSort( V_COMP );
-    }
     //(other formats all assumed to be Yonly
 }
 

@@ -66,7 +66,7 @@ FrameDecompressor::~FrameDecompressor()
 
 bool FrameDecompressor::ReadFrameHeader(const FrameBuffer& my_buffer)
 {
-    FrameParams my_fparams (m_cformat , my_buffer.GetFParams().Xl(), my_buffer.GetFParams().Yl());
+    FrameParams my_fparams (m_cformat , my_buffer.GetFParams().Xl(), my_buffer.GetFParams().Yl(), my_buffer.GetFParams().ChromaXl(), my_buffer.GetFParams().ChromaYl());
      //Get the frame header (which includes the frame number)
     m_fparams = my_fparams; 
     m_read_header = ReadFrameHeader(m_fparams);
