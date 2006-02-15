@@ -211,6 +211,7 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
     //as the equivalent parameters for sub-MBs and MBs.
     //Does NOT set the number of blocks or macroblocks, as padding may be required.
 
+    OLBParams tmp_olbparams = olbparams;
     // Factors for scaling chroma blocks
     int xcfactor,ycfactor; 
  
@@ -236,57 +237,76 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
         ycfactor = 1;
     }
 
-    m_lbparams[2] = olbparams;
-    
-    // Check the separations aren't too small
-    m_lbparams[2].SetXbsep( std::max(m_lbparams[2].Xbsep() , 4) );
-    m_lbparams[2].SetYbsep( std::max(m_lbparams[2].Ybsep() , 4) );
-
-    // Check the lengths aren't too big (100% is max roll-off)
-    m_lbparams[2].SetXblen( std::min(m_lbparams[2].Xbsep()*2 , m_lbparams[2].Xblen()) );
-    m_lbparams[2].SetYblen( std::min(m_lbparams[2].Ybsep()*2 , m_lbparams[2].Yblen()) );
-    
-    // Check overlap is divisible by 2
-    if (( m_lbparams[2].Xblen() - m_lbparams[2].Xbsep() )%2 != 0)
-        m_lbparams[2].SetXblen( m_lbparams[2].Xblen()-1 );
-    if (( m_lbparams[2].Yblen() - m_lbparams[2].Ybsep() )%2 != 0)
-        m_lbparams[2].SetYblen( m_lbparams[2].Yblen()-1 );
-
-    // Check there's now sufficient overlap  
-    m_lbparams[2].SetXblen( std::max(m_lbparams[2].Xbsep()+2 , m_lbparams[2].Xblen()) );
-    m_lbparams[2].SetYblen( std::max(m_lbparams[2].Ybsep()+2 , m_lbparams[2].Yblen()) );
-
-
-    // If the overlapped blocks don't work for the chroma format, we have to iterate
-    if ( (m_lbparams[2].Xbsep()%xcfactor != 0) || (m_lbparams[2].Ybsep()%ycfactor != 0) )
+    // Loop until block level luma and chroma parameters satisfy all conditions
+    do
     {
+        m_lbparams[2] = tmp_olbparams;
+        
+        // Check there's now sufficient overlap,
+        // XBLEN > XBSEP, YBLEN > YBSEP
+        m_lbparams[2].SetXblen( std::max(m_lbparams[2].Xbsep()+1 , m_lbparams[2].Xblen()) );
+        m_lbparams[2].SetYblen( std::max(m_lbparams[2].Ybsep()+1 , m_lbparams[2].Yblen()) );
+
+
+        // Check the lengths aren't too big (100% is max roll-off)
+        // XBLEN <= 2*XBSEP, YBLEN <= 2*YBSEP
+        m_lbparams[2].SetXblen( std::min(m_lbparams[2].Xbsep()*2 , m_lbparams[2].Xblen()) );
+        m_lbparams[2].SetYblen( std::min(m_lbparams[2].Ybsep()*2 , m_lbparams[2].Yblen()) );
+    
+
+        // If the overlapped blocks don't work for the chroma format, we have to iterate
         OLBParams new_olbparams( m_lbparams[2] );
 
-        if (m_lbparams[2].Xbsep()%xcfactor != 0)
-            new_olbparams.SetXbsep( ( (m_lbparams[2].Xbsep()/xcfactor) + 1 )*xcfactor );
+        // Test if XBSEP % CHROMA_H_FACTOR == 0 && yBSEP % CHROMA_V_FACTOR == 0
+        if ( (m_lbparams[2].Xbsep()%xcfactor != 0) || (m_lbparams[2].Ybsep()%ycfactor != 0) )
+        {
+            // luma XBSEP and/or YBSEP not multiples of chroma factor
+            // Increment XBSEP and YBSEP so that they are multiples of chroma
+            // factor.
+            if (m_lbparams[2].Xbsep()%xcfactor != 0)
+            {
+                new_olbparams.SetXbsep( ( (m_lbparams[2].Xbsep()/xcfactor) + 1 )*xcfactor );
+                new_olbparams.SetXblen( std::max( new_olbparams.Xbsep()+1 , olbparams.Xblen() ) );
+            }
 
-        if (m_lbparams[2].Ybsep()%ycfactor != 0)
-            new_olbparams.SetYbsep( ( (m_lbparams[2].Ybsep()/ycfactor) + 1 )*ycfactor );
+            if (m_lbparams[2].Ybsep()%ycfactor != 0)
+            {
+                new_olbparams.SetYbsep( ( (m_lbparams[2].Ybsep()/ycfactor) + 1 )*ycfactor );
+                new_olbparams.SetYblen( std::max( new_olbparams.Ybsep()+1 , olbparams.Yblen() ) );
+            }
+              // Loop again with new luma block params 
+            tmp_olbparams = new_olbparams;
+        }
+        else
+        {
+            // Now compute the resulting chroma block params
+            // XBSEP_CHROMA=XBSEP//CHROMA_H_FACTOR
+            m_cbparams[2].SetXbsep( m_lbparams[2].Xbsep()/xcfactor );
+            // YBSEP_CHROMA=YBSEP//CHROMA_H_FACTOR
+            m_cbparams[2].SetYbsep( m_lbparams[2].Ybsep()/ycfactor );
+            m_cbparams[2].SetXblen( std::max(m_lbparams[2].Xblen()/xcfactor , m_cbparams[2].Xbsep()+1) );
+            m_cbparams[2].SetYblen( std::max(m_lbparams[2].Yblen()/ycfactor , m_cbparams[2].Ybsep()+1) );
+            bool recalc = false;
+            // Check the lengths aren't too big (100% is max roll-off)
+            // XBLEN_CHROMA <= 2*XBSEP_CHROMA, YBLEN_CHROMA <= 2*YBSEP_CHROMA
+            if (m_cbparams[2].Xblen() > 2*m_cbparams[2].Xbsep())
+            {
+                new_olbparams.SetXbsep( ( (m_lbparams[2].Xbsep()/xcfactor) + 1 )*xcfactor );
+                recalc = true;
+            }
+            if ( m_cbparams[2].Yblen() > 2*m_cbparams[2].Ybsep() )
+            {
+                 new_olbparams.SetYbsep( ( (m_lbparams[2].Ybsep()/ycfactor) + 1 ) *ycfactor );
+                recalc = true;
+            }
+            if (recalc)
+                tmp_olbparams = new_olbparams;
+            else
+                break;
+        }
+    
+   } while(true); 
 
-        new_olbparams.SetXblen( std::max( new_olbparams.Xbsep()+2 , olbparams.Xblen() ) );
-        new_olbparams.SetYblen( std::max( new_olbparams.Xbsep()+2 , olbparams.Xblen() ) );
-        
-        SetBlockSizes( new_olbparams , cformat );
-    }
-    
-    // Now compute the resulting chroma block params
-
-    m_cbparams[2].SetXbsep( m_lbparams[2].Xbsep()/xcfactor );
-    m_cbparams[2].SetYbsep( m_lbparams[2].Ybsep()/ycfactor );
-    m_cbparams[2].SetXblen( std::max(m_lbparams[2].Xblen()/xcfactor , m_cbparams[2].Xbsep()+2) );
-    m_cbparams[2].SetYblen( std::max(m_lbparams[2].Yblen()/ycfactor , m_cbparams[2].Ybsep()+2) );
-    
-    //check overlap is divisible by 2
-    if (( m_cbparams[2].Xblen() - m_cbparams[2].Xbsep() )%2 != 0)
-        m_cbparams[2].SetXblen( m_cbparams[2].Xblen()+1 );
-    if (( m_cbparams[2].Yblen() - m_cbparams[2].Ybsep() )%2 != 0)
-        m_cbparams[2].SetYblen( m_cbparams[2].Yblen()+1 );
-    
     //Now work out the overlaps for splitting levels 1 and 0
     m_lbparams[1].SetXbsep( m_lbparams[2].Xbsep()*2 );
     m_lbparams[1].SetXblen( m_lbparams[2].Xblen() + m_lbparams[2].Xbsep() );
@@ -313,15 +333,14 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
          m_lbparams[2].Xblen()!=olbparams.Xblen() ||
          m_lbparams[2].Yblen()!=olbparams.Yblen() )
     {
-        std::cerr<<std::endl<<"WARNING: block parameters are inconsistent or ";
-        std::cerr<<"incompatible with chroma format.";
-        std::cerr<<std::endl<<"Instead, using:";
-        std::cerr<<" xblen="<<m_lbparams[2].Xblen();
-        std::cerr<<" yblen="<<m_lbparams[2].Yblen();
-        std::cerr<<" xbsep="<<m_lbparams[2].Xbsep();
-        std::cerr<<" ybsep="<<m_lbparams[2].Ybsep();
+        std::cout<<std::endl<<"WARNING: block parameters are inconsistent or ";
+        std::cout<<"incompatible with chroma format.";
+        std::cout<<std::endl<<"Instead, using:";
+        std::cout<<" xblen="<<m_lbparams[2].Xblen();
+        std::cout<<" yblen="<<m_lbparams[2].Yblen();
+        std::cout<<" xbsep="<<m_lbparams[2].Xbsep();
+        std::cout<<" ybsep="<<m_lbparams[2].Ybsep() << std::endl;
     }
-    
 }
 
 //EncoderParams functions
@@ -425,12 +444,14 @@ m_output(false)
 {}    
 
 // Constructor 
-FrameParams::FrameParams(const ChromaFormat& cf, int xlen, int ylen):
+FrameParams::FrameParams(const ChromaFormat& cf, int xlen, int ylen, int c_xlen, int c_ylen):
     m_cformat(cf),
     m_xl(xlen),
     m_yl(ylen),
     m_fsort(I_frame),
-    m_output(false)
+    m_output(false),
+    m_chroma_xl(c_xlen),
+    m_chroma_yl(c_ylen)
 {}
 
 // Constructor
@@ -447,7 +468,29 @@ FrameParams::FrameParams(const SeqParams& sparams):
     m_yl(sparams.Yl()),
     m_fsort(I_frame),
     m_output(false)
-{}
+{
+    m_chroma_xl = m_chroma_yl = 0;
+    if(m_cformat == format422) 
+    {
+        m_chroma_xl = m_xl/2;
+        m_chroma_yl = m_yl;
+    }
+    else if (m_cformat == format420)
+    {
+        m_chroma_xl = m_xl/2;
+        m_chroma_yl = m_yl/2;
+    }
+    else if (m_cformat == format411)
+    {
+        m_chroma_xl = m_xl/4;
+        m_chroma_yl = m_yl;
+    }
+    else if (m_cformat==format444)
+    {
+        m_chroma_xl = m_xl;
+        m_chroma_yl = m_yl;
+    }
+}
 
 // Constructor
 FrameParams::FrameParams(const SeqParams& sparams, const FrameSort& fs):
@@ -456,7 +499,29 @@ FrameParams::FrameParams(const SeqParams& sparams, const FrameSort& fs):
     m_yl(sparams.Yl()),
     m_fsort(fs),
     m_output(false)
-{}
+{
+    m_chroma_xl = m_chroma_yl = 0;
+    if(m_cformat == format422) 
+    {
+        m_chroma_xl = m_xl/2;
+        m_chroma_yl = m_yl;
+    }
+    else if (m_cformat == format420)
+    {
+        m_chroma_xl = m_xl/2;
+        m_chroma_yl = m_yl/2;
+    }
+    else if (m_cformat == format411)
+    {
+        m_chroma_xl = m_xl/4;
+        m_chroma_yl = m_yl;
+    }
+    else if (m_cformat==format444)
+    {
+        m_chroma_xl = m_xl;
+        m_chroma_yl = m_yl;
+    }
+}
 
 QuantiserLists::QuantiserLists()
 : 
