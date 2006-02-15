@@ -50,7 +50,8 @@
 namespace dirac
 {
 
-    void CompensateComponentAddAndShift_mmx (int start_y, int end_y, 
+    void CompensateComponentAddAndShift_mmx (int start_y, int end_y,
+                                           const ImageCoords& orig_pic_size, 
                                            TwoDArray<CalcValueType> &comp_data, 
                                            PicArray &pic_data_out);
 }

@@ -75,6 +75,10 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
 {
     //Coordinates in the image being written to.
     const ImageCoords start_pos( std::max(pos.x,0) , std::max(pos.y,0) );
+    // check that we are doing MC within true pic boundaries
+    if (start_pos.x >= orig_pic_size.x || start_pos.y >= orig_pic_size.y)
+        return;
+
     const ImageCoords end_pos( std::min( pos.x + wt_array.LengthX() , orig_pic_size.x ) , 
                                std::min( pos.y + wt_array.LengthY() , orig_pic_size.y ) );
 
@@ -95,7 +99,11 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
     //An additional stage to make sure the block to be copied does not fall outside
     //the reference image.
     const int refXlen = refup_data.LengthX();
-    const int refYlen = refup_data.LengthY();
+    //const int refYlen = refup_data.LengthY();
+    
+    const int trueRefXlen = orig_pic_size.x << 1;
+    const int trueRefYlen = orig_pic_size.y << 1;
+
     CalcValueType *pic_curr = &pic_data[0][start_pos.x];
     ValueType *wt_curr = &wt_array[diff.y][diff.x];
 
@@ -110,11 +118,11 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
     //the upvconverted reference image.
     if( ref_start.x < 0 ) 
         do_bounds_checking = true;
-    else if( ref_start.x + ((end_pos.x - start_pos.x)<<1 ) >= refXlen )
+    else if( ref_start.x + ((end_pos.x - start_pos.x)<<1 ) >= trueRefXlen )
         do_bounds_checking = true;
     if( ref_start.y < 0 ) 
         do_bounds_checking = true;
-    else if( ref_start.y + ((end_pos.y - start_pos.y)<<1 ) >= refYlen)
+    else if( ref_start.y + ((end_pos.y - start_pos.y)<<1 ) >= trueRefYlen)
         do_bounds_checking = true;
 
     if( !do_bounds_checking )
@@ -297,7 +305,7 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
         int uX, uY, c, l;
         int stopX = (block_width>>1)<<1;
 #ifdef WIN32
-        stopX -= 2;
+        stopX = stopX > 2 ? stopX - 2 : 0;
 #endif
         __m64 m_two = _mm_set_pi32 (2, 2);
         __m64 m_zero = _mm_set_pi32 (0, 0);
@@ -306,7 +314,7 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
        {
            for(l = 0, uX = ref_start.x; l < stopX; l+=2, pic_curr+=2, wt_curr+=2, uX += 4)
            {
-                  check_active_columns(uX, refup_data.LengthX(), act_cols1, act_cols2, refup_data[BChk(uY, refup_data.LengthY())], refup_data[BChk(uY+1, refup_data.LengthY())]);
+                  check_active_columns(uX, trueRefXlen, act_cols1, act_cols2, refup_data[BChk(uY, trueRefYlen)], refup_data[BChk(uY+1, trueRefYlen)]);
 
                 __m64 m1 = *(__m64 *)act_cols1;
                 __m64 m2 = *(__m64 *)act_cols2;
@@ -326,7 +334,7 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
            for(l = stopX, uX=ref_start.x + stopX*2; l < block_width; ++l, ++pic_curr, ++wt_curr, uX += 2)
            {
                    //std::cerr << "In mopup : stopX=" << stopX << " block_width=" << block_width<< std::endl;
-                  check_active_columns(uX, refup_data.LengthX(), act_cols1, act_cols2, refup_data[BChk(uY, refup_data.LengthY())], refup_data[BChk(uY+1, refup_data.LengthY())]);
+                  check_active_columns(uX, trueRefXlen, act_cols1, act_cols2, refup_data[BChk(uY, trueRefYlen)], refup_data[BChk(uY+1, trueRefYlen)]);
 
                *pic_curr += ((     linear_wts[0] * CalcValueType( act_cols1[0] ) +
                                         linear_wts[1] * CalcValueType( act_cols1[1] ) +
@@ -343,12 +351,23 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
 namespace dirac
 {
     void CompensateComponentAddAndShift_mmx (int start_y, int end_y, 
+                                           const ImageCoords& orig_pic_size,
                                            TwoDArray<CalcValueType> &comp_data, 
                                            PicArray &pic_data_out)
     {
-
-        int stopX = pic_data_out.FirstX() + ((pic_data_out.LengthX()>>2)<<2);
-        __m64 max_val = _mm_set_pi32 (1024, 1024);
+        if (start_y >= end_y)
+            return;
+#ifdef RAISED_COSINE
+        const int round_val = 1024;
+        const int shift_bits = 11;
+#else
+        const int round_val = 64;
+        const int shift_bits = 7;
+#endif
+        int stopX = pic_data_out.FirstX() + ((orig_pic_size.x>>2)<<2);
+        int x_end_truepic_data = pic_data_out.FirstX() + orig_pic_size.x;
+        int x_end_data = pic_data_out.FirstX() + pic_data_out.LengthX();
+        __m64 max_val = _mm_set_pi32 (round_val, round_val);
            CalcValueType *pic_row = &comp_data[0][comp_data.FirstX()];
            ValueType *out_row = &pic_data_out[start_y][pic_data_out.FirstX()];
         for ( int i = start_y; i < end_y; i++)
@@ -356,21 +375,30 @@ namespace dirac
             for ( int j =  pic_data_out.FirstX(); j < stopX; j+=4)
             {
                 __m64 in1 = _mm_add_pi32 (*(__m64 *)pic_row, max_val);
-                in1 = _mm_srai_pi32 (in1, 11);
+                in1 = _mm_srai_pi32 (in1, shift_bits);
                 __m64 in2 = _mm_add_pi32 (*(__m64 *)(pic_row+2), max_val);
-                in2 = _mm_srai_pi32 (in2, 11);
+                in2 = _mm_srai_pi32 (in2, shift_bits);
                 in1 = _mm_packs_pi32 (in1, in2);
                 __m64 *out = (__m64 *)out_row;
                 *out = _mm_add_pi16 (in1, *out);
                 pic_row += 4;
                 out_row += 4;
             }
-               for ( int j =stopX; j <= pic_data_out.LastX(); j++)
-               {
-                   *out_row += static_cast<ValueType>( (*pic_row + 1024) >> 11 ); 
-                    ++out_row;
-                    ++pic_row;
-               }
+            for ( int j =stopX; j < x_end_truepic_data; j++)
+            {
+                *out_row += static_cast<ValueType>( (*pic_row + round_val) >> shift_bits ); 
+                ++out_row;
+                ++pic_row;
+            }
+            // Now pad past the true picture with the last true pic val in
+            // current row
+            ValueType last_true_val = *(out_row - 1);
+            for ( int j = x_end_truepic_data; j < x_end_data; ++j)
+            {
+                *out_row = last_true_val;
+                ++out_row;
+                ++pic_row;
+            }
          }
         _mm_empty();
    }

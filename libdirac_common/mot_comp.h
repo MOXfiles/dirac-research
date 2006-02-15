@@ -138,6 +138,10 @@ namespace dirac
         // to them. This function facilitates the calculations
         float RaisedCosine(float t, float B);
 
+        // Overlapping blocks are acheived by applying a 2D linear shape
+        // to them. This function facilitates the calculations
+        float Linear(float t, float B);
+
         //! Calculates a weighting block.
         /*! 
             Params defines the block parameters so the relevant weighting 
