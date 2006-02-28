@@ -48,22 +48,22 @@ namespace dirac {
                 table[weight]= (max_lookup+weight/2)/weight;
             done = true;
         };
-    };
+    }
 
     ArithCodecBase::ArithCodecBase(BasicOutputManager * bits_out, size_t number_of_contexts):
+        m_context_list( number_of_contexts ),
         m_bit_count( 0 ),
         m_bit_output( bits_out ),
-        m_decode_data_ptr( 0 ),
-        m_context_list( number_of_contexts )
+        m_decode_data_ptr( 0 )
     {
         // nothing needed here
     }
 
     ArithCodecBase::ArithCodecBase(BitInputManager * bits_in, size_t number_of_contexts):
+        m_context_list( number_of_contexts ),
         m_bit_count( 0 ),
         m_bit_input( bits_in ),
-        m_decode_data_ptr( 0 ),
-        m_context_list( number_of_contexts )
+        m_decode_data_ptr( 0 )
     {
         // nothing needed here
     }
