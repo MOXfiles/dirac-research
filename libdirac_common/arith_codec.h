@@ -13,7 +13,7 @@
 * WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for
 * the specific language governing rights and limitations under the License.
 *
-* The Original Code is BBC Research and Development m_code.
+* The Original Code is BBC Research and Development code.
 *
 * The Initial Developer of the Original Code is the British Broadcasting
 * Corporation.
@@ -26,7 +26,7 @@
                     Peter Bleackley,
                     Steve Bearcroft,
                     Anuradha Suraparaju,
-					Tim Borer
+                    Tim Borer (major refactor February 2006)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -61,12 +61,296 @@
 #ifdef _MSC_VER // define types for MSVC compiler on Windows
     typedef unsigned short    uint16_t;
     typedef unsigned _int32    uint32_t;
+    typedef unsigned _int64    uint64_t;
 #else // include header file for types for Linux
     #include <inttypes.h>
 #endif
 
 namespace dirac
 {
+    //! Lookup Table Class (for Arithmetic Coding Contexts)
+    /*!
+        This is a class that implements a lookup table for use by the context
+        class used for arithmetic coding.
+    */
+    class ContextLookupTable {
+        public:
+
+            //! Constructor for Arithmetic Coding context lookup table
+            /*!
+                Initialises the lookup table if not already done,
+                else does nothing.
+            */
+            ContextLookupTable();
+
+            //! Returns value of the lookup table
+            inline static int lookup(int weight);
+        private:
+            static int table[256];
+    };
+
+    class Context: private ContextLookupTable {
+    public:
+
+        //! Default Constructor.
+        /*!
+        Default constructor initialises counts to 1 each of 0 and 1.
+        */ 
+        inline Context();
+
+        //Class is POD
+        //Use built in copy constructor, assignment and destructor.
+
+        //! Sets the counts according to the input.
+        inline void SetCounts( unsigned int cnt0, unsigned int cnt1);
+
+        //! Returns the count of all symbols.
+        inline unsigned int Weight() const;
+
+        //! Divide the counts by 2, making sure neither ends up 0.
+        inline void HalveCounts();
+
+        //! Returns estimate of probability of 0 (false) scaled to 2**16
+        inline unsigned int GetScaledProb0( ) const;
+
+        //! Updates context counts
+        inline void Update( bool symbol );
+
+    private:
+
+        int m_count0;
+        int m_count1;
+    };
+
+
+    class ArithCodecBase {
+
+    public:
+
+        //! Constructor for encoding
+        /*!
+            Creates an ArithCodec object to decode input based on a set of
+            parameters.
+            \param        bits_out     output for encoded bits
+            \param    number_of_contexts    the number of contexts used
+        */   
+        ArithCodecBase(BasicOutputManager * bits_out, size_t number_of_contexts);
+
+        //! Constructor for decoding
+        /*!
+            Creates an ArithCodec object to decode input based on a set of 
+            parameters.
+            \param    bits_in               source of bits to be decoded
+            \param    number_of_contexts    the number of contexts used
+         */
+        ArithCodecBase(BitInputManager * bits_in, size_t number_of_contexts);
+
+        //! Destructor
+        /*!
+            Destructor is virtual as this class is abstract.
+         */
+        virtual ~ArithCodecBase();
+
+    protected:
+
+        //virtual codec functions (to be overridden)
+        ////////////////////////////////////////////
+
+        //! The method by which the contexts are initialised
+        virtual void InitContexts()=0;    
+
+        //! The method by which _all_ the counts are resized.
+        virtual void ResetAll()=0;
+
+        //core encode functions
+        ////////////////////////////
+
+        //! Initialises the Encoder
+        void InitEncoder();
+
+        //! encodes a symbol and writes to output
+        inline void EncodeSymbol(const bool symbol, const int context_num);    
+
+        //! flushes the output of the encoder.
+        void FlushEncoder();
+
+        int ByteCount() const;     
+
+        // core decode functions
+        ////////////////////////////
+
+        //! Initialise the Decoder
+        void InitDecoder(int num_bytes);                    
+
+        //! Decodes a symbol given a context number
+        inline bool DecodeSymbol( int context_num );
+        
+        //! List of contexts
+        std::vector<Context> m_context_list;
+
+    private:
+        
+        //! private, bodyless copy constructor: class should not be copied
+        ArithCodecBase(const ArithCodecBase & cpy);
+
+        //! private, bodyless copy operator=: class should not be assigned
+        ArithCodecBase & operator = (const ArithCodecBase & rhs);
+             
+        // Encode functions
+        ////////////////////////////
+
+        //! Shift  bit out of codeword
+        inline void ShiftBitOut();
+
+        //! Output bits from encoder
+        inline void OutputBits();
+             
+        // Decode functions
+        ////////////////////////////
+
+        //! Read all the data in
+        void ReadAllData(int num_bytes);
+
+        //! Shift new bit into codeword
+        inline void ShiftBitIn();
+
+        //! Read in a bit of data
+        inline bool InputBit();
+        
+        // use explicity type sizes for portability
+        typedef uint32_t code_t;
+//        typedef uint16_t code_t;
+        typedef uint32_t calc_t;
+
+        // NOTE: These constants imply an unsigned 16-bit operand
+        static const code_t CODE_MAX         = 0xFFFF;
+        static const code_t CODE_MSB         = 0x8000;
+        static const code_t CODE_2ND_MSB     = 0x4000;
+
+        // Codec data
+        ////////////////////////////
+        
+        //! count of the total number of bits input or output
+        int m_bit_count;
+
+        //! Start of the current code range
+        code_t m_low_code;
+
+        //! End of the current code range
+        code_t m_high_code;
+
+        // For encoder only
+
+        //! Manages interface with file/stream
+        BitInputManager* m_bit_input;
+
+        //! Number of underflow bits
+        int m_underflow;
+
+        // For decoder only               
+
+        //! Manages interface with file/stream. Can be header or data
+        BasicOutputManager* m_bit_output;
+
+        //! A pointer to the data for reading in
+        char* m_decode_data_ptr;
+
+        //! A point to the byte currently being read
+        char* m_data_ptr;
+
+        //! The index of the bit of the byte being read
+        int m_input_bits_left;
+
+        //! The present input code
+        code_t m_code;
+
+    };
+
+    inline bool ArithCodecBase::DecodeSymbol( int context_num )
+    {
+        //Shift bits in until MSBs are different.
+        while ( (m_high_code^m_low_code)<CODE_MSB ) {
+            ShiftBitIn();
+        }
+
+        // Delete 2nd MSBs until they are the same to prevent underflow
+        while ((m_low_code & CODE_2ND_MSB) && !(m_high_code & CODE_2ND_MSB) ) {
+            // We have high = 10xxxxx and low = 01xxxxx,
+            // so we're straddling 1/2-way point - a condition known as
+            // underflow. We flip the 2nd highest bit. Combined with the
+            // subsequent bitshift, this has the effect of doubling the
+            // [low,high] interval width about 1/2
+            m_code      ^= CODE_2ND_MSB;
+            m_low_code  ^= CODE_2ND_MSB;
+            m_high_code ^= CODE_2ND_MSB;
+            ShiftBitIn();
+        }
+        // Determine the next symbol value by placing code within the [low,high]interval.
+
+        // Fetch the statistical context to be used
+        Context& ctx  = m_context_list[context_num];
+
+        // Decode as per specification
+        //const uint64_t count = (static_cast<uint64_t>(m_code - m_low_code) + 1)<<16;
+        //const uint64_t range_prob = (m_high_code - m_low_code + 1) * ctx.GetScaledProb0();
+        //bool symbol( count > range_prob );
+
+        // Optimised decode for 32 bit word width
+        const uint32_t count = ((static_cast<uint32_t>(m_code - m_low_code) + 1)<<16)-1;
+        const uint32_t range_prob = (m_high_code-m_low_code + 1)*ctx.GetScaledProb0();
+        const bool symbol = (count>=range_prob); 
+
+        // Update the statistical context
+        ctx.Update( symbol );
+
+        // Rescale the interval
+        if( symbol )    //symbol is 1, so m_high_code unchanged
+            m_low_code += static_cast<code_t>(( range_prob )>>16 );
+        else            //symbol is 0, so m_low_code unchanged
+            m_high_code = m_low_code + static_cast<code_t>(((range_prob)>>16) - 1);
+
+        return symbol;
+    }
+
+    void ArithCodecBase::EncodeSymbol(const bool symbol, const int context_num)
+    {
+        // Delete 2nd MSBs until they are the same to prevent underflow
+        while ( (m_low_code & CODE_2ND_MSB) && !(m_high_code & CODE_2ND_MSB) ) {
+            // We have high = 10xxxxx and low = 01xxxxx,
+            // so we're straddling 1/2-way point - a condition known as
+            // underflow. We flip the 2nd highest bit. Combined with the
+            // subsequent bitshift, this has the effect of doubling the
+            // [low,high] interval width about 1/2
+            m_underflow += 1;
+            m_low_code  ^= CODE_2ND_MSB;
+            m_high_code ^= CODE_2ND_MSB;
+            ShiftBitOut();
+        }
+
+        // Adjust high and low (rescale interval) based on the symbol we are encoding
+
+        Context& ctx = m_context_list[context_num];
+
+        const calc_t range_prob =
+            static_cast<calc_t>(m_high_code - m_low_code + 1) * ctx.GetScaledProb0();
+
+        if ( symbol )    //symbol is 1, so m_high_code unchanged
+            m_low_code += static_cast<code_t>(( range_prob ) >>16 );
+        else             // symbol is 0, so m_low_code unchanged
+            m_high_code = m_low_code + static_cast<code_t>( ( ( range_prob  )>>16 ) - 1 );
+
+        // Update the statistical context
+        ctx.Update( symbol );
+
+        //Shift bits out until MSBs are different.
+        while ( (m_high_code^m_low_code)<CODE_MSB ) {
+            OutputBits();
+            ShiftBitOut();
+        }
+    }
+
+
+
     //! Abstract binary arithmetic coding class
     /*!
         This is an abtract binary arithmetic encoding class, used as the base
@@ -74,9 +358,9 @@ namespace dirac
         \param        T        a container (most probably, or array) type
     */
 
-
     template<class T> //T is container/array type
     class ArithCodec
+        : public ArithCodecBase
     {
     public:
 
@@ -102,7 +386,7 @@ namespace dirac
         /*!
             Destructor is virtual as this class is abstract.
          */ 
-        virtual ~ArithCodec();
+        virtual ~ArithCodec() {}
 
         //! Compresses the input and returns the number of bits written. 
         /*!
@@ -128,299 +412,28 @@ namespace dirac
 
     protected:
 
-        // use explicity type sizes for portability
-        typedef uint16_t code_t;
-        typedef uint32_t calc_t;
-
-        // NOTE: These macros imply an unsigned 16-bit operand
-        static const code_t CODE_MAX         = 0xffff;
-        static const code_t CODE_MSB         = 0x8000;
-        static const code_t HALFPT_MINUS_ONE = 0x7FFF;
-        static const code_t CODE_2ND_MSB     = 0x4000;
-
-
-        //! A class for binary contexts.
-        /*!
-            A class for binary contexts. Stores probabilities for 0 and 1 in 
-            terms of counts of numbers of occurrences, and also as Triples 
-            partitioning the interval [0,1) into two parts [0,p) and [p,1). 
-         */
-        class Context
-        {
-        public:
-            //! Default Constructor.
-            /*!
-                Default constructor initialises counts to 1 each of 0 and 1.
-             */    
-            Context()
-            {
-				InitLookup();
-                SetCounts( 1 , 1 );
-            }
-
-            //! Constructor.
-            /*!
-                Constructor initialises the counts to those set.
-             */    
-            Context(int cnt0,int cnt1)
-            {
-				InitLookup();
-                SetCounts( cnt0 , cnt1 );
-            }
-
-            //! Copy constructor
-            Context(const Context & cpy)
-              : m_num0( cpy.m_num0 ),               
-                m_weight( cpy.m_weight ),
-                m_prob0( cpy.m_prob0 )
-            {}
-
-            //! Assignment=
-            Context & operator=(const Context& rhs)
-            {
-                m_num0 = rhs.m_num0;
-                m_weight = rhs.m_weight;
-                m_prob0  = rhs.m_prob0;
-                return *this;
-            }
-
-            //! Destructor
-            ~Context() {}
-
-            //! Sets the counts according to the input.
-            /*!
-                Sets the counts, and then the triples to reflect the counts.
-             */    
-            void SetCounts(const int cnt0, const int cnt1)
-            {
-                m_num0 = cnt0;
-                m_weight = cnt0 + cnt1;
-
-                SetRanges();
-            }   
-
-            //! Returns the count of all symbols.
-            calc_t Weight() const { return m_weight; }    
-
-            //! Increment the count by 1
-            /*!
-                Increment the count of symbol by 1.
-                \param    symbol    the symbol whose count is to be incremented (false=0, true=1)
-             */    
-            inline void IncrCount( const bool symbol )
-            {
-                if ( !symbol ) 
-                    m_num0++;
-
-                m_weight++;
-
-                SetRanges();
-            }
-
-             //! Divide the counts by 2, making sure neither ends up 0.
-
-            inline void HalveCounts()
-            {
-                calc_t num1 = m_weight - m_num0;
-                m_num0 >>= 1;
-                m_num0++;
-                num1 >>= 1;
-                num1++;
-
-                m_weight = m_num0 + num1;
-
-                SetRanges();
-            }
-
-            //! Return the triple associated with Symbol.    
-            const calc_t & GetScaledProb0( ) const { return m_prob0; }
-
-            //! Given a number, return the corresponding symbol and triple.
-            /*!
-                Given a number, return the corresponding symbol and triple.
-            */
-            bool GetSymbol(const calc_t num, const calc_t factor) const
-            {
-                return (num >= (m_prob0*factor));
-            } 
-
-            inline void SetRanges()
-            {
-                // Updates the probability ranges
-                m_prob0 = m_num0 * m_lookup[m_weight];
-            }
-
-            inline void Update( const bool symbol )
-            {
-                IncrCount( symbol );
-
-                if ( m_weight >= 256 )
-                    HalveCounts();
-            }
-
-
-        private:
-            calc_t m_num0;
-            calc_t m_weight;
-
-            calc_t m_prob0;
-
-
-            /*!
-            Counts m_num0 and m_num1 are scaled to 2**16 before being used to
-			before being used to make probability intervals for use in the
-			arithmetic codec. This means calculating (m_num0*max_prob)/m_weight.
-			m_lookup is a lookup table for avoiding doing this division directly.
-			It's defined by
-
-            m_lookup[k]=( (1<<16)+(k/2) )/m_weight
-
-            So the calculation instead becomes 
-
-            m_num0*m_lookup[m_weight]
-			
-            */
-			static unsigned int m_lookup[256]; 
-
-            //! This calculates all the values of m_lookup
-            static void InitLookup();
-          
-        };
-
-    protected:
-
-        //virtual codec functions (to be overridden)
-        ////////////////////////////////////////////
-
-        //! The method by which the contexts are initialised
-        virtual void InitContexts()=0;                                        
-
-        //! The method by which the counts are updated.
-        void Update( const bool symbol , Context& ctx );    
-
-        //! The method by which _all_ the counts are resized.
-        virtual void ResetAll()=0;
-
         //virtual encode-only functions
         /////////////////////////////// 
 
         //! Does the work of actually coding the data 
-        virtual void DoWorkCode(T & in_data) = 0;    
-
-        //core encode-only functions
-        ////////////////////////////
-
-        //! Initialises the Encoder
-        void InitEncoder();
-
-        //! encodes a symbol and writes to output
-        void EncodeSymbol(const bool symbol, const int context_num);    
-
-        //! flushes the output of the encoder.
-        void FlushEncoder(); 
+        virtual void DoWorkCode(T & in_data) = 0; 
 
         //! virtual decode-only functions    
         /////////////////////////////// 
-        virtual void DoWorkDecode(T & out_data)=0;    
-
-        // core decode-only functions
-        ////////////////////////////
-
-        //! Initialise the Decoder
-        void InitDecoder();                    
-
-        //! Decodes a symbol given a context number
-        bool DecodeSymbol( const int context_num );
-
-    private:
-        //! count of the total number of bits input or output
-        int m_bit_count;                        
-
-        //! max number of bits to be input
-        int m_max_count;                        
-
-        //! Number of underflow bits
-        int m_underflow;                        
-
-        //! The present input code
-        code_t m_code;                    
-
-        //! Start of the current code range
-        code_t m_low_code;                        
-
-        //! End of the current code range
-        code_t m_high_code;                    
-
-        // Parameters for controlling coding/decoding
-        // codec_params_type cparams;        
-
-        //! Manages interface with file/stream
-        BitInputManager* m_bit_input;                
-
-        //! Manages interface with file/stream. Can be header or data
-        BasicOutputManager* m_bit_output;
-
-        //! private, bodyless copy constructor: class should not be copied
-        ArithCodec(const ArithCodec & cpy);
-
-        //! private, bodyless copy operator=: class should not be assigned
-        ArithCodec & operator = (const ArithCodec & rhs);
-
-        // For decoder only (could extend to the encoder later)
-
-        //! A pointer to the data for reading in
-        char* m_decode_data_ptr;
-
-        //! A point to the byte currently being read
-        char* m_data_ptr;
-
-        //! The index of the bit of the byte being read
-        int m_input_bits_left;
-
-    private:
-
-        //! Decoder-only function: read all the data in
-        void ReadAllData();
-
-        //! Read in a bit of data
-        inline bool InputBit();
-
-    protected:
-
-        //! List of contexts
-        std::vector<Context> m_context_list;    
-    };
+        virtual void DoWorkDecode(T & out_data)=0;
+   };
 
     //Implementation - core functions
     /////////////////////////////////
 
     template<class T>
-    ArithCodec<T>::ArithCodec(BitInputManager* bits_in, size_t number_of_contexts)
-      : m_bit_count( 0 ),
-        m_bit_input( bits_in ),
-        m_decode_data_ptr( 0 ),
-        m_context_list( number_of_contexts )
-    {
-        // nothing needed here
-    }    
+    ArithCodec<T>::ArithCodec(BitInputManager* bits_in, size_t number_of_contexts):
+        ArithCodecBase(bits_in, number_of_contexts) {}
 
     //! Constructor for encoding
     template<class T>
-    ArithCodec<T>::ArithCodec(BasicOutputManager* bits_out, size_t number_of_contexts)
-      : m_bit_count( 0 ),
-        m_bit_output( bits_out ),
-        m_decode_data_ptr( 0 ),
-        m_context_list( number_of_contexts )
-    {
-        // nothing needed here
-    }    
-
-    template<class T>
-    ArithCodec<T>::~ArithCodec()
-    {
-        if ( m_decode_data_ptr )
-            delete[] m_decode_data_ptr;
-    }
+    ArithCodec<T>::ArithCodec(BasicOutputManager* bits_out, size_t number_of_contexts):
+        ArithCodecBase(bits_out, number_of_contexts) {}
 
     template<class T>
     int ArithCodec<T>::Compress(T &in_data)
@@ -428,203 +441,43 @@ namespace dirac
         InitEncoder();                
         DoWorkCode(in_data);
         FlushEncoder();
-
-        int byte_count( m_bit_count/8);
-        if ( (byte_count*8)<m_bit_count )
-            byte_count++;
-
-        return byte_count;
+        return ByteCount();
     }
 
     template<class T>
     void ArithCodec<T>::Decompress( T &out_data, const int num_bytes )
     {
-        m_max_count = num_bytes;
-        InitDecoder();
+        InitDecoder(num_bytes);
         DoWorkDecode( out_data );
     }
 
-    template<class T>
-    void ArithCodec<T>::InitEncoder()
-    {
-        // Set the m_code word stuff
-        m_low_code  = 0;
-        m_high_code = CODE_MAX;
-        m_underflow = 0;
+    void ArithCodecBase::ShiftBitOut() {
+        // Shift out top-most bit and increment high value
+        m_high_code <<= 1;
+        m_high_code  &= CODE_MAX;
+        m_high_code  += 1;
+        m_low_code  <<= 1;
+        m_low_code   &= CODE_MAX;
+      }
 
-        InitContexts();
+    void ArithCodecBase::OutputBits() {
+        m_bit_output->OutputBit( m_high_code & CODE_MSB, m_bit_count);
+        for (; m_underflow > 0; m_underflow-- )
+            m_bit_output->OutputBit(~m_high_code & CODE_MSB, m_bit_count);
+    }
+    
+    void ArithCodecBase::ShiftBitIn() {
+        m_high_code <<= 1;
+        m_high_code  &= CODE_MAX;
+        m_high_code  += 1;
+        m_low_code  <<= 1;
+        m_low_code   &= CODE_MAX;
+        m_code      <<= 1;
+        m_code       &= CODE_MAX;
+        m_code       += InputBit();
     }
 
-    template<class T>
-    inline void ArithCodec<T>::EncodeSymbol(const bool symbol, const int context_num)
-    {
-        // Step 1: adjust high and low based on the symbol we've encoded
-
-        Context& ctx  = m_context_list[context_num];
-
-        const calc_t range_prob( static_cast<calc_t>( (m_high_code - m_low_code ) + 1) * ctx.GetScaledProb0() );
-
-        //formulae given we know we're binary coding    
-        if ( !symbol ) // symbol is 0, so m_low_code unchanged 
-            m_high_code = m_low_code + static_cast<code_t>( ( ( range_prob  )>>16 ) - 1 );
-        else //symbol is 1, so m_high_code unchanged
-            m_low_code += static_cast<code_t>(( range_prob ) >>16 );          
-
-        // Update the statistical context
-        ctx.Update( symbol );
-
-        // Shift out enough bits to determine the interval so far
-        do
-        {
-            // Efficient check that high and low have different MSB
-            if ( (m_high_code^m_low_code)>HALFPT_MINUS_ONE )
-            {
-                if ( (m_low_code & CODE_2ND_MSB) && !(m_high_code & CODE_2ND_MSB) )
-                {
-                    // We have high = 10xxxxx and low = 01xxxxx so we're straddling 1/2-way point -
-                    // a condition known as underflow
-                    m_underflow ++;
-
-                    // We flip the 2nd highest bit. Combined with the subsequent bitshift, this
-                    // has the effect of doubling the [low,high] interval width about 1/2
-                    m_low_code  ^= CODE_2ND_MSB;
-                    m_high_code ^= CODE_2ND_MSB;
-                }        
-                else break;
-            }
-            else
-            {
-                // We must have the same MSB, so we can output it together
-                // with any accumulated underflow bits
-               
-                m_bit_output->OutputBit( m_high_code & CODE_MSB, m_bit_count);
-                for (; m_underflow > 0; m_underflow-- )
-                    m_bit_output->OutputBit(~m_high_code & CODE_MSB, m_bit_count);
-            }
-      
-            // Shift out top-most bit and increment high value
-            m_high_code <<= 1;
-            ++m_high_code;
-
-            m_low_code <<= 1;
-        }
-        while ( true ); 
-    }
-
-    template<class T>
-    void ArithCodec<T>::FlushEncoder()
-    {
-        // Flushes the output
-        m_bit_output->OutputBit(m_low_code & CODE_2ND_MSB,m_bit_count);
-        m_underflow++;
-
-        while ( m_underflow-- > 0 )
-            m_bit_output->OutputBit(~m_low_code & CODE_2ND_MSB, m_bit_count);
-    }
-
-    template<class T>
-    void ArithCodec<T>::InitDecoder()
-    {
-        InitContexts();
-
-        m_input_bits_left = 8; 
-
-        ReadAllData();
-
-        //Read in a full word of data
-        code_t i;
-        m_code = 0;
-
-        for ( i = 0; i < (8 * sizeof(code_t)); i++ )
-        {
-            m_code <<= 1;
-
-            if ( InputBit() )
-                m_code++;
-        }
-
-        m_low_code  = 0;
-        m_high_code = CODE_MAX;
-        m_underflow = 0;
-    }
-
-
-    template<class T>
-    inline bool ArithCodec<T>::DecodeSymbol( const int context_num )
-    {
-        // Step 1: Input as many bits as we can to distinguish high and low.
-        // This step mirrors Step 2 in encoding. We could have done it after
-        // determining the encoded value, to be symmetric with encoding, but
-        // that would cause spurious bits to be input after decoding the last
-        // symbol
-
-        do
-        {
-            // Efficient check that high and low have different MSB
-            if ( (m_high_code^m_low_code)>HALFPT_MINUS_ONE )
-            {
-                if ( (m_low_code & CODE_2ND_MSB) && !(m_high_code & CODE_2ND_MSB) )
-                {
-                    // We have high = 10xxxxx and low = 01xxxxx so we're straddling 1/2-way point -
-                    // a condition known as underflow
-                    // We flip the 2nd highest bit. Combined with the subsequent bitshift, this
-                    // has the effect of doubling the [low,high] interval width about 1/2
-
-                    m_code      ^= CODE_2ND_MSB;
-                    m_low_code  ^= CODE_2ND_MSB;
-                    m_high_code ^= CODE_2ND_MSB;
-                }        
-                else break;
-            }
-        
-            m_high_code <<= 1;
-            ++m_high_code;
-
-            m_low_code <<= 1;
-
-            m_code      <<= 1;
-            m_code += InputBit();
-        }
-        while ( true );
-
-        // Step 2: determine the next symbol value by placing code within the [low,high]
-        // interval, and rescale the interval
-
-        Context& ctx  = m_context_list[context_num];
-        const calc_t count( ( ( static_cast<calc_t>( m_code - m_low_code ) + 1 )<<16 ) - 1 );
-        const calc_t range_prob( ( m_high_code - m_low_code  + 1)* ctx.GetScaledProb0() );
-
-        bool symbol( count >= range_prob );
-
-        if( !symbol )//prob_interval.Start()=0, so symbol is 0, so m_low_code unchanged 
-            m_high_code = m_low_code + static_cast<code_t>( ( ( range_prob )>>16 ) - 1 );
-
-        else//symbol is 1, so m_high_code unchanged
-            m_low_code += static_cast<code_t>(( range_prob )>>16 ); 
-
-        // Update the statistical context
-        ctx.Update( symbol );
-
-        return symbol;
-    }
-
-    template<class T>
-    void ArithCodec<T>::ReadAllData()
-    {
-       if ( m_decode_data_ptr )
-           delete[] m_decode_data_ptr;
-
-       m_decode_data_ptr = new char[m_max_count+2];
-       m_bit_input->InputBytes( m_decode_data_ptr , m_max_count );
-
-       m_decode_data_ptr[m_max_count] = 0;
-       m_decode_data_ptr[m_max_count+1] = 0;
-
-       m_data_ptr = m_decode_data_ptr;
-    }
-
-    template<class T>
-    inline bool ArithCodec<T>::InputBit()
+    inline bool ArithCodecBase::InputBit()
     {
         if (m_input_bits_left == 0)
         {
@@ -636,20 +489,54 @@ namespace dirac
         return bool( ( (*m_data_ptr) >> m_input_bits_left ) & 1 );
     }
 
-    
-    template<class T>
-	void ArithCodec<T>::Context::InitLookup(){
-		static bool done = false;
-        static int max_lookup = 1<<16;
-		if (!done) {
-			for (int weight=1; weight<256; ++weight)
-				m_lookup[weight]= (max_lookup+weight/2)/weight;
-			done = true;
-		}
-	}
-    
-    template<class T>
-    unsigned int ArithCodec<T>::Context::m_lookup[256];
+    Context::Context():
+        m_count0(1), m_count1(1) {}
+
+    void Context::SetCounts( unsigned int cnt0, unsigned int cnt1) {
+        m_count0 = cnt0;
+        m_count1 = cnt1;
+    }
+
+    unsigned int Context::Weight() const {
+        return m_count0+m_count1;
+    }
+
+    void Context::HalveCounts() {
+        m_count0 >>= 1;
+        ++m_count0;
+        m_count1 >>= 1;
+        ++m_count1;
+    }
+
+    //  The probability of a binary input/output symbol is estimated
+    //  from past counts of 0 and 1 for symbols in the same context.
+    //  Probability is estimated as:
+    //      probability of 0 = count0/(count0+count1)
+    //  Probability is re-calculated for every symbol.
+    //  To avoid the division a lookup table is used.
+    //  This is a fixed point implementation so probability is scaled to
+    //  a range of 0 to 2**16.
+    //  The value of (count0+count1) is known as "weight".
+    //  The lookup table precalculates the values of:
+    //      lookup(weight) = ((1<<16)+weight/2)/weight
+    //  The probability calculation becomes:
+    //      probability of = count0 * lookup(weight)
+    int unsigned Context::GetScaledProb0() const {
+        return m_count0*lookup(m_count0+m_count1);
+    }
+
+    void Context::Update( bool symbol ) {
+        if ( !symbol )
+            ++m_count0;
+        else
+            ++m_count1;
+        if ( Weight() >= 256 )
+            HalveCounts();
+    }
+
+    int ContextLookupTable::lookup(int weight) {
+        return table[weight];
+    }
 
 }// end dirac namespace
 
