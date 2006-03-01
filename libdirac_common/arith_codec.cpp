@@ -38,12 +38,12 @@
 
 namespace dirac {
 
-    int ContextLookupTable::table[256];
+    unsigned int ContextLookupTable::table[256];
 
     ContextLookupTable::ContextLookupTable() {
         static bool done = false;
         if (!done) {
-            int max_lookup = 1<<16;
+            unsigned int max_lookup = 1<<16;
             for (int weight=1; weight<256; ++weight)
                 table[weight]= (max_lookup+weight/2)/weight;
             done = true;

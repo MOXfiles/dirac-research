@@ -58,14 +58,6 @@
 #include <libdirac_common/bit_manager.h>
 #include <vector>
 
-#ifdef _MSC_VER // define types for MSVC compiler on Windows
-    typedef unsigned short    uint16_t;
-    typedef unsigned _int32    uint32_t;
-    typedef unsigned _int64    uint64_t;
-#else // include header file for types for Linux
-    #include <inttypes.h>
-#endif
-
 namespace dirac
 {
     //! Lookup Table Class (for Arithmetic Coding Contexts)
@@ -84,9 +76,9 @@ namespace dirac
             ContextLookupTable();
 
             //! Returns value of the lookup table
-            inline static int lookup(int weight);
+            inline static unsigned int lookup(int weight);
         private:
-            static int table[256];
+            static unsigned int table[256];
     };
 
     class Context: private ContextLookupTable {
@@ -216,16 +208,11 @@ namespace dirac
 
         //! Read in a bit of data
         inline bool InputBit();
-        
-        // use explicity type sizes for portability
-        typedef uint32_t code_t;
-//        typedef uint16_t code_t;
-        typedef uint32_t calc_t;
 
         // NOTE: These constants imply an unsigned 16-bit operand
-        static const code_t CODE_MAX         = 0xFFFF;
-        static const code_t CODE_MSB         = 0x8000;
-        static const code_t CODE_2ND_MSB     = 0x4000;
+        static const unsigned int CODE_MAX         = 0xFFFF;
+        static const unsigned int CODE_MSB         = 0x8000;
+        static const unsigned int CODE_2ND_MSB     = 0x4000;
 
         // Codec data
         ////////////////////////////
@@ -234,10 +221,10 @@ namespace dirac
         int m_bit_count;
 
         //! Start of the current code range
-        code_t m_low_code;
+        unsigned int m_low_code;
 
         //! End of the current code range
-        code_t m_high_code;
+        unsigned int m_high_code;
 
         // For encoder only
 
@@ -262,7 +249,7 @@ namespace dirac
         int m_input_bits_left;
 
         //! The present input code
-        code_t m_code;
+        unsigned int m_code;
 
     };
 
@@ -290,24 +277,20 @@ namespace dirac
         // Fetch the statistical context to be used
         Context& ctx  = m_context_list[context_num];
 
-        // Decode as per specification
-        //const uint64_t count = (static_cast<uint64_t>(m_code - m_low_code) + 1)<<16;
-        //const uint64_t range_prob = (m_high_code - m_low_code + 1) * ctx.GetScaledProb0();
-        //bool symbol( count > range_prob );
-
-        // Optimised decode for 32 bit word width
-        const uint32_t count = ((static_cast<uint32_t>(m_code - m_low_code) + 1)<<16)-1;
-        const uint32_t range_prob = (m_high_code-m_low_code + 1)*ctx.GetScaledProb0();
-        const bool symbol = (count>=range_prob); 
+        // Decode as per updated specification
+        const unsigned int count = m_code - m_low_code + 1;
+        const unsigned int range_prob =
+            ((m_high_code - m_low_code + 1) * ctx.GetScaledProb0())>>16;
+        bool symbol = ( count > range_prob );
 
         // Update the statistical context
         ctx.Update( symbol );
 
         // Rescale the interval
         if( symbol )    //symbol is 1, so m_high_code unchanged
-            m_low_code += static_cast<code_t>(( range_prob )>>16 );
+            m_low_code += range_prob;
         else            //symbol is 0, so m_low_code unchanged
-            m_high_code = m_low_code + static_cast<code_t>(((range_prob)>>16) - 1);
+            m_high_code = m_low_code + range_prob - 1;
 
         return symbol;
     }
@@ -331,13 +314,13 @@ namespace dirac
 
         Context& ctx = m_context_list[context_num];
 
-        const calc_t range_prob =
-            static_cast<calc_t>(m_high_code - m_low_code + 1) * ctx.GetScaledProb0();
+        const unsigned int range_prob =
+            ((m_high_code - m_low_code + 1) * ctx.GetScaledProb0())>>16;
 
         if ( symbol )    //symbol is 1, so m_high_code unchanged
-            m_low_code += static_cast<code_t>(( range_prob ) >>16 );
+            m_low_code += range_prob;
         else             // symbol is 0, so m_low_code unchanged
-            m_high_code = m_low_code + static_cast<code_t>( ( ( range_prob  )>>16 ) - 1 );
+            m_high_code = m_low_code + range_prob - 1 ;
 
         // Update the statistical context
         ctx.Update( symbol );
@@ -534,7 +517,7 @@ namespace dirac
             HalveCounts();
     }
 
-    int ContextLookupTable::lookup(int weight) {
+    unsigned int ContextLookupTable::lookup(int weight) {
         return table[weight];
     }
 
