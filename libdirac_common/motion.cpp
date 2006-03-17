@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Chris Bowley
+* Contributor(s): Thomas Davies (Original Author),
+*                 Chris Bowley,
+*                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -58,7 +60,8 @@ MvData::MvData( const int xnumMB, const int ynumMB ,
     m_dc( 3 ),
     m_mb_split( ynumMB , xnumMB ),
     m_mb_common( ynumMB , xnumMB ),
-    m_gm_params( Range(1 , num_refs) )
+    m_gm_params( Range(1 , num_refs) ),
+    m_num_refs(num_refs)
 {
 
     InitMvData();
@@ -71,7 +74,8 @@ MvData::MvData( const int xnumMB , const int ynumMB , const int num_refs ):
     m_dc( 3 ),
     m_mb_split( ynumMB , xnumMB ),
     m_mb_common( ynumMB , xnumMB ),
-    m_gm_params( Range(1 , num_refs) )
+    m_gm_params( Range(1 , num_refs) ),
+    m_num_refs(num_refs)
 {
     InitMvData();
 }

@@ -92,39 +92,39 @@ void EntropyCorrector::Init()
     {
         if ( i == m_Yfctrs.LastX() )
         {        
-            m_Yfctrs[I_frame][i] = 1.0;
-            m_Ufctrs[I_frame][i] = 1.0;
-            m_Vfctrs[I_frame][i] = 1.0;
-            m_Yfctrs[L1_frame][i] = 0.85;
-            m_Ufctrs[L1_frame][i] = 0.85;
-            m_Vfctrs[L1_frame][i] = 0.85;
-            m_Yfctrs[L2_frame][i] = 0.85;
-            m_Ufctrs[L2_frame][i] = 0.85;
-            m_Vfctrs[L2_frame][i] = 0.85;
+            m_Yfctrs[I_frame][i] = 1.0f;
+            m_Ufctrs[I_frame][i] = 1.0f;
+            m_Vfctrs[I_frame][i] = 1.0f;
+            m_Yfctrs[L1_frame][i] = 0.85f;
+            m_Ufctrs[L1_frame][i] = 0.85f;
+            m_Vfctrs[L1_frame][i] = 0.85f;
+            m_Yfctrs[L2_frame][i] = 0.85f;
+            m_Ufctrs[L2_frame][i] = 0.85f;
+            m_Vfctrs[L2_frame][i] = 0.85f;
         }
         else if ( i >= m_Yfctrs.LastX()-3 )
         {
-            m_Yfctrs[I_frame][i] = 0.85;
-            m_Ufctrs[I_frame][i] = 0.85;
-            m_Vfctrs[I_frame][i] = 0.85;
-            m_Yfctrs[L1_frame][i] = 0.75;
-            m_Ufctrs[L1_frame][i] = 0.75;
-            m_Vfctrs[L1_frame][i] = 0.75;
-            m_Yfctrs[L2_frame][i] = 0.75;
-            m_Ufctrs[L2_frame][i] = 0.75;
-            m_Vfctrs[L2_frame][i] = 0.75;            
+            m_Yfctrs[I_frame][i] = 0.85f;
+            m_Ufctrs[I_frame][i] = 0.85f;
+            m_Vfctrs[I_frame][i] = 0.85f;
+            m_Yfctrs[L1_frame][i] = 0.75f;
+            m_Ufctrs[L1_frame][i] = 0.75f;
+            m_Vfctrs[L1_frame][i] = 0.75f;
+            m_Yfctrs[L2_frame][i] = 0.75f;
+            m_Ufctrs[L2_frame][i] = 0.75f;
+            m_Vfctrs[L2_frame][i] = 0.75f;            
         }
         else
         {
-            m_Yfctrs[I_frame][i] = 0.75;
-            m_Ufctrs[I_frame][i] = 0.75;
-            m_Vfctrs[I_frame][i] = 0.75;
-            m_Yfctrs[L1_frame][i] = 0.75;
-            m_Ufctrs[L1_frame][i] = 0.75;
-            m_Vfctrs[L1_frame][i] = 0.75;
-            m_Yfctrs[L2_frame][i] = 0.75;
-            m_Ufctrs[L2_frame][i] = 0.75;
-            m_Vfctrs[L2_frame][i] = 0.75;            
+            m_Yfctrs[I_frame][i] = 0.75f;
+            m_Ufctrs[I_frame][i] = 0.75f;
+            m_Vfctrs[I_frame][i] = 0.75f;
+            m_Yfctrs[L1_frame][i] = 0.75f;
+            m_Ufctrs[L1_frame][i] = 0.75f;
+            m_Vfctrs[L1_frame][i] = 0.75f;
+            m_Yfctrs[L2_frame][i] = 0.75f;
+            m_Ufctrs[L2_frame][i] = 0.75f;
+            m_Vfctrs[L2_frame][i] = 0.75f;            
         }
     }//i
     

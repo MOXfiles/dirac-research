@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Chris Bowley
+* Contributor(s): Thomas Davies (Original Author),
+*                 Chris Bowley,
+*                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -217,8 +219,8 @@ namespace dirac
             \param  ynumblocks  the number of blocks vertically
             \param  num_refs  the number of references being used for the frame
         */
-        MvData( const int xnumMB, int ynumMB , 
-                const int xnumblocks, int ynumblocks ,  const int num_refs = 2);
+        MvData( const int xnumMB, const int ynumMB , 
+                const int xnumblocks, const int ynumblocks ,  const int num_refs);
 
         //! Constructor
         /*! 
@@ -227,7 +229,7 @@ namespace dirac
             \param  ynumMB  the number of MBs vertically
             \param  num_refs  the number of references being used for the frame
         */
-        MvData( const int xnumMB, int ynumMB ,  const int num_refs = 2);
+        MvData( const int xnumMB, const int ynumMB ,  const int num_refs);
 
         //! Destructor
         ~MvData();
@@ -276,6 +278,9 @@ namespace dirac
 
         //! Get the global motion model parameters
         const OneDArray<float>& GlobalMotionParameters(const int ref_id) const { return *( m_gm_params[ref_id] ); }
+        
+        //! Return the number of reference frames
+        const unsigned int NumRefs()const {return m_num_refs;}
 
     private:
         // Initialises the arrays of data
@@ -301,6 +306,9 @@ namespace dirac
 
         // Global motion model parameters
         OneDArray< OneDArray<float>* > m_gm_params;
+
+        // Number of reference frames
+        const unsigned int m_num_refs;
     };
 
     //! Class for all the motion estimation data

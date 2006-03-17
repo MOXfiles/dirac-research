@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author),
+*                 Scott R Ladd,
+*                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -58,7 +60,7 @@ MvDataCodec::MvDataCodec(BitInputManager* bits_in,
   : ArithCodec <MvData> (bits_in,number_of_contexts),
     m_MB_count( 0 ),
     m_reset_num( 32 ),
-	m_cformat(cf)
+    m_cformat(cf)
 {}    
 
 void MvDataCodec::InitContexts() 
@@ -258,7 +260,8 @@ inline bool MvDataCodec::MBCBModePrediction(const TwoDArray <bool> & cbm_data) c
     return result; 
 }
 
-inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode > & preddata) const
+inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode > & preddata,
+                                                     const unsigned int num_refs) const
 {
     unsigned int result = (unsigned int)(REF1_ONLY);
     
@@ -273,12 +276,13 @@ inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode 
 
         result = num_ref1_nbrs>>1;
 
-        num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp] ) ) & 2; 
-        num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp-1] ) ) & 2; 
-        num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp][m_b_xp-1] ) ) & 2; 
-        num_ref2_nbrs >>= 1;
-
-        result ^= ( (num_ref2_nbrs>>1)<<1 );
+        if ( num_refs==2) {
+            num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp] ) ) & 2;
+            num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp-1] ) ) & 2;
+            num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp][m_b_xp-1] ) ) & 2;
+            num_ref2_nbrs >>= 1;
+            result ^= ( (num_ref2_nbrs>>1)<<1 );
+        }
     }
     else if (m_b_xp > 0 && m_b_yp == 0)
         result = (unsigned int)( preddata[0][m_b_xp-1] ); 
@@ -513,13 +517,16 @@ void MvDataCodec::CodePredmode(const MvData& in_data)
 {
     // Xor with the prediction so we predict whether REF1 is used or REF2 is
     // used, separately
-    unsigned int residue = in_data.Mode()[m_b_yp][m_b_xp] ^ BlockModePrediction( in_data.Mode() ); 
+    unsigned int residue = in_data.Mode()[m_b_yp][m_b_xp] ^
+        BlockModePrediction( in_data.Mode(), in_data.NumRefs() ); 
     
     // Code REF1 part of the prediction residue (ie the first bit)
     EncodeSymbol( residue & 1 , PMODE_BIT0_CTX );
 
     // Code REF2 part of the prediction residue (ie the second bit)
-    EncodeSymbol( residue & 2 , PMODE_BIT1_CTX );
+    if (in_data.NumRefs()==2) {
+        EncodeSymbol( residue & 2 , PMODE_BIT1_CTX );
+    }
 
 }
 
@@ -704,9 +711,13 @@ void MvDataCodec::DoWorkDecode( MvData& out_data)
                         for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
                         {                    
                             out_data.Vectors(1)[m_b_yp][m_b_xp].x = out_data.Vectors(1)[ystart][xstart].x; 
-                            out_data.Vectors(1)[m_b_yp][m_b_xp].y = out_data.Vectors(1)[ystart][xstart].y; 
-                            out_data.Vectors(2)[m_b_yp][m_b_xp].x = out_data.Vectors(2)[ystart][xstart].x; 
-                            out_data.Vectors(2)[m_b_yp][m_b_xp].y = out_data.Vectors(2)[ystart][xstart].y; 
+                            out_data.Vectors(1)[m_b_yp][m_b_xp].y = out_data.Vectors(1)[ystart][xstart].y;  
+
+                            if (out_data.NumRefs()==2) {
+                                out_data.Vectors(2)[m_b_yp][m_b_xp].x = out_data.Vectors(2)[ystart][xstart].x;
+                                out_data.Vectors(2)[m_b_yp][m_b_xp].y = out_data.Vectors(2)[ystart][xstart].y;
+                            }
+
                             out_data.DC( Y_COMP )[m_b_yp][m_b_xp] = out_data.DC( Y_COMP )[ystart][xstart]; 
                             out_data.DC( U_COMP )[m_b_yp][m_b_xp] = out_data.DC( U_COMP )[ystart][xstart]; 
                             out_data.DC( V_COMP )[m_b_yp][m_b_xp] = out_data.DC( V_COMP )[ystart][xstart]; 
@@ -767,10 +778,13 @@ void MvDataCodec::DecodePredmode( MvData& out_data )
     residue = (unsigned int) bit;
 
     // Decode REF2 part of the prediction residue (ie the second bit)
-    bit = DecodeSymbol( PMODE_BIT1_CTX );
-    residue |= ( (unsigned int) bit ) << 1;
+    if (out_data.NumRefs()==2) {
+        bit = DecodeSymbol( PMODE_BIT1_CTX );
+        residue |= ( (unsigned int) bit ) << 1;
+    }
     
-    out_data.Mode()[m_b_yp][m_b_xp] = PredMode( BlockModePrediction (out_data.Mode() ) ^ residue ); 
+    out_data.Mode()[m_b_yp][m_b_xp] =
+        PredMode( BlockModePrediction(out_data.Mode(), out_data.NumRefs()) ^ residue ); 
 }
 
 void MvDataCodec::DecodeMv1( MvData& out_data )

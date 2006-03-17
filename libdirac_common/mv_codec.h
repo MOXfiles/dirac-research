@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author),
+*                 Scott R Ladd,
+*                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -160,7 +162,7 @@ namespace dirac
         //prediction stuff
         unsigned int MBSplitPrediction(const TwoDArray<int>& mbdata) const;
         bool MBCBModePrediction(const TwoDArray<bool>& mbdata) const;
-        unsigned int BlockModePrediction(const TwoDArray<PredMode>& preddata) const;
+        unsigned int BlockModePrediction(const TwoDArray<PredMode>& preddata, const unsigned int num_refs) const;
         MVector Mv1Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
         MVector Mv2Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
         ValueType DCPrediction(const TwoDArray<ValueType>& dcdata,const TwoDArray<PredMode>& preddata) const;

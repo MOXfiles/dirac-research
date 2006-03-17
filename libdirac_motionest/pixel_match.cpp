@@ -21,6 +21,7 @@
 * All Rights Reserved.
 *
 * Contributor(s): Thomas Davies (Original Author)
+*                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -187,7 +188,7 @@ void PixelMatcher::MakeMEDataHierarchy(const OneDArray< PicArray*>& down_data,
         if (( down_data[i]->LengthY() )%bparams.Ybsep() != 0)
             ynumblocks++;
 
-        me_data_set[i] = new MEData( 0 , 0 , xnumblocks , ynumblocks );
+        me_data_set[i] = new MEData( 0 , 0 , xnumblocks , ynumblocks, 2 );
     }// i
 
 }

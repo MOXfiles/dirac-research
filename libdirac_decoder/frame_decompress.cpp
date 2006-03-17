@@ -21,8 +21,9 @@
 * All Rights Reserved.
 *
 * Contributor(s): Thomas Davies (Original Author), 
-*                 Scott R Ladd
-*                 Anuradha Suraparaju
+*                 Scott R Ladd,
+*                 Anuradha Suraparaju,
+*                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -97,7 +98,7 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 
             if ( fsort != I_frame )
             {//do all the MV stuff        
-                mv_data = new MvData( m_decparams.XNumMB() , m_decparams.YNumMB() );
+                mv_data = new MvData( m_decparams.XNumMB() , m_decparams.YNumMB(), m_fparams.NumRefs() );
 
                  //decode mv data
                 if (m_decparams.Verbose())

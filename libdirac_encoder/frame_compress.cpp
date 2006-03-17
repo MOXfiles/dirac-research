@@ -23,7 +23,8 @@
 * Contributor(s): Thomas Davies (Original Author), 
 *                 Scott R Ladd,
 *                 Chris Bowley,
-*                 Anuradha Suraparaju
+*                 Anuradha Suraparaju,
+*                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -98,7 +99,7 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer ,
         // Set the precision to quarter pixel as standard
         m_encparams.SetMVPrecision( 2 );
 
-        m_me_data = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB());
+        m_me_data = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB(), fparams.NumRefs());
 
         // Motion estimate first
         MotionEstimator my_motEst( m_encparams );

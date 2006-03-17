@@ -20,7 +20,8 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Chris Bowley (Original Author)
+* Contributor(s): Chris Bowley (Original Author),
+*                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -173,8 +174,7 @@ void ProcessSequence::AddFrameEntry()
         m_data_in >> mv_xnum;
 
         // create motion data object
-        // *** remove comments around last argument when encoder uses variable number of references ***
-        m_data_array[new_index].me_data = new MEData(mb_xnum, mb_ynum, mv_xnum, mv_ynum /*, total_refs */);
+        m_data_array[new_index].me_data = new MEData(mb_xnum, mb_ynum, mv_xnum, mv_ynum , total_refs );
 
         m_data_array[new_index].frame_params.SetFrameNum(m_data_fnum);
 

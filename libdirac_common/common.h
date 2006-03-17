@@ -495,6 +495,9 @@ namespace dirac
         
         //! Returns non-const C++ referece to the vector of reference frames, to allow them to be set
         std::vector<int>& Refs(){return m_refs;}
+
+        //! Return the number of reference frames
+        const unsigned int NumRefs()const {return m_refs.size();}
         
         
         // ... Sets

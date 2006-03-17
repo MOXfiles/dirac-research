@@ -20,7 +20,8 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author)
+* Contributor(s): Thomas Davies (Original Author),
+*                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -92,7 +93,7 @@ void ModeDecider::DoModeDecn(const FrameBuffer& my_buffer, int frame_num, MEData
     // Initialise // 
     ////////////////
 
-    fsort = my_buffer.GetFrame(frame_num).GetFparams().FSort();
+    const FrameSort fsort = my_buffer.GetFrame(frame_num).GetFparams().FSort();
     if (fsort != I_frame)
     {
         // Extract the references
@@ -105,9 +106,9 @@ void ModeDecider::DoModeDecn(const FrameBuffer& my_buffer, int frame_num, MEData
 
         // Set up the hierarchy of motion vector data objects
         m_me_data_set[0] = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB() , 
-                                       m_encparams.XNumBlocks()/4 , m_encparams.YNumBlocks()/4 );
+                                       m_encparams.XNumBlocks()/4 , m_encparams.YNumBlocks()/4, num_refs );
         m_me_data_set[1] = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB() , 
-                                       m_encparams.XNumBlocks()/2 , m_encparams.YNumBlocks()/2 );
+                                       m_encparams.XNumBlocks()/2 , m_encparams.YNumBlocks()/2, num_refs );
 
         m_me_data_set[2] = &me_data;
 
