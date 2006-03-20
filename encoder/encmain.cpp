@@ -224,8 +224,7 @@ bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
             }
             fdata << std::endl;
 
-            // FIXME: MEData is always created with num_refs set to 2
-            // if (instr.num_refs > 1)
+            if (instr.num_refs > 1)
             {
                 for (int j=0; j<instr.mv_ylen; j++)
                 {
@@ -266,8 +265,7 @@ bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
                 }
             }
 
-            // FIXME: MEData is always created with num_refs set to 2
-            for (int k = 0; k < 2; k++)
+            for (int k = 0; k < instr.num_refs; k++)
             {
                 fdata << std::endl;
                 for (int j=0; j<instr.mv_ylen; j++)

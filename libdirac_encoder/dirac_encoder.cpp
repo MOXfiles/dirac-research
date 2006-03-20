@@ -363,9 +363,7 @@ void DiracEncoder::GetInstrumentationData (dirac_encoder_t *encoder)
     copy_2dArray (m_enc_medata->Mode(), instr->pred_mode);
     copy_2dArray (m_enc_medata->IntraCosts(), instr->intra_costs);
 
-    // FIXME: Always allocating for bipred_costs even though no data available
-    //  Since medata is always created assuming two references
-    // if (instr->num_refs > 1)
+    if (instr->num_refs > 1)
     {
         copy_mv_cost (m_enc_medata->BiPredCosts(), instr->bipred_costs);
     }
@@ -378,10 +376,7 @@ void DiracEncoder::GetInstrumentationData (dirac_encoder_t *encoder)
         copy_2dArray (m_enc_medata->DC( V_COMP ), instr->dc_vcomp);
     }
 
-    // FIXME: Always allocating for bipred_costs even though no data available
-    //  Since medata is always created assuming two references
-    // for (int i=1; i<=instr->num_refs; ++i)
-    for (int i=1; i<=2; ++i)
+     for (int i=1; i<=instr->num_refs; ++i)
     {
         copy_mv (m_enc_medata->Vectors(i), instr->mv[i-1]);
         copy_mv_cost (m_enc_medata->PredCosts(i), instr->pred_costs[i-1]);
