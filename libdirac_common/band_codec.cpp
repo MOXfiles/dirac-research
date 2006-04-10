@@ -198,8 +198,19 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
 void BandCodec::CodeVal( PicArray& in_data , const int xpos , const int ypos , const ValueType val )
 {
     int abs_val( std::abs(val) );
+
+    /* Quantise absolute value by dividing by quantisation factor. Can also use lookup table m_qfinv, 
+       as in
+
     abs_val *= m_qfinv;
     abs_val >>= 17;
+
+    but must be sure that we have sufficient dynamic range for abs_val, for all levels of wavelet
+    decomposition (up to 6). On a 64 bit processor, could make abs_val 64 bits and this would be 
+    faster than division.
+    */
+    abs_val /= m_qf;
+
     const ContextTriple& ctxt = ChooseContexts();
     
     if (abs_val != 0)
