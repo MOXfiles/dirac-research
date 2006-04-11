@@ -71,7 +71,7 @@ void MotionCompTest::tearDown()
 
 MvData* setupMV1Data(CodecParams& cp, int mv_x, int mv_y, PredMode mode)
 {
-    MvData* mv_data = new MvData(cp.XNumMB(),cp.YNumMB(),cp.XNumBlocks(),cp.YNumBlocks());
+    MvData* mv_data = new MvData(cp.XNumMB(),cp.YNumMB(),cp.XNumBlocks(),cp.YNumBlocks(), 2);
     MvArray& arr = mv_data->Vectors(1);
     for (int i =arr.FirstY(); i <= arr.LastY(); i++)
     {
