@@ -255,14 +255,29 @@ namespace dirac
 
     inline bool ArithCodecBase::DecodeSymbol( int context_num )
     {
-        //Shift bits in until MSBs are different.
-        while ( (m_high_code^m_low_code)<CODE_MSB ) {
+        // NB: loops could be while loops predicated on the break conditions
+        // However, each loop reads in a bit, so the max number of bits 
+        // input is the coding word-length - 16 here. This means the 
+        // iterations can be bounded (and the loop unrolled if desired).
+        // Admittedly, this syntax is pig-ugly and while loops would be
+        // prettier.
+
+        // Shift bits in until MSBs are different.
+        for (int i=0; i<16; ++i )
+        {
+            // Shift bits in until MSBs are different.
+            if ( (m_high_code^m_low_code)>=CODE_MSB )
+                break;
+
             ShiftBitIn();
         }
 
-        // Delete 2nd MSBs until they are the same to prevent underflow
-        while ((m_low_code & CODE_2ND_MSB) && !(m_high_code & CODE_2ND_MSB) ) {
-            // We have high = 10xxxxx and low = 01xxxxx,
+        for (int i=0; i<16; ++i )
+        {
+            if ( !(m_low_code & CODE_2ND_MSB) || (m_high_code & CODE_2ND_MSB) )
+                break;
+
+            // If we're here, we have high = 10xxxxx and low = 01xxxxx,
             // so we're straddling 1/2-way point - a condition known as
             // underflow. We flip the 2nd highest bit. Combined with the
             // subsequent bitshift, this has the effect of doubling the
@@ -272,6 +287,7 @@ namespace dirac
             m_high_code ^= CODE_2ND_MSB;
             ShiftBitIn();
         }
+
         // Determine the next symbol value by placing code within the [low,high]interval.
 
         // Fetch the statistical context to be used
@@ -297,9 +313,20 @@ namespace dirac
 
     void ArithCodecBase::EncodeSymbol(const bool symbol, const int context_num)
     {
+        // NB: loops could be while loops predicated on the break conditions
+        // However, each loop reads in a bit, so the max number of bits 
+        // input is the coding word-length - 16 here. This means the 
+        // iterations can be bounded (and the loop unrolled if desired).
+        // Admittedly, this syntax is pig-ugly and while loops would be
+        // prettier.
+
         // Delete 2nd MSBs until they are the same to prevent underflow
-        while ( (m_low_code & CODE_2ND_MSB) && !(m_high_code & CODE_2ND_MSB) ) {
-            // We have high = 10xxxxx and low = 01xxxxx,
+         for (int i=0; i<16; ++i )
+        {
+            if ( !(m_low_code & CODE_2ND_MSB) || (m_high_code & CODE_2ND_MSB) )
+                break;
+
+            // If we're here, we have high = 10xxxxx and low = 01xxxxx,
             // so we're straddling 1/2-way point - a condition known as
             // underflow. We flip the 2nd highest bit. Combined with the
             // subsequent bitshift, this has the effect of doubling the
@@ -325,8 +352,11 @@ namespace dirac
         // Update the statistical context
         ctx.Update( symbol );
 
-        //Shift bits out until MSBs are different.
-        while ( (m_high_code^m_low_code)<CODE_MSB ) {
+        // Shift bits out until MSBs are different.
+        for (int i=0; i<16; ++i )
+        {
+            if ( (m_high_code^m_low_code)>=CODE_MSB )
+                break;
             OutputBits();
             ShiftBitOut();
         }
@@ -434,7 +464,8 @@ namespace dirac
         DoWorkDecode( out_data );
     }
 
-    void ArithCodecBase::ShiftBitOut() {
+    void ArithCodecBase::ShiftBitOut()
+    {
         // Shift out top-most bit and increment high value
         m_high_code <<= 1;
         m_high_code  &= CODE_MAX;
@@ -443,13 +474,15 @@ namespace dirac
         m_low_code   &= CODE_MAX;
       }
 
-    void ArithCodecBase::OutputBits() {
+    void ArithCodecBase::OutputBits()
+    {
         m_bit_output->OutputBit( m_high_code & CODE_MSB, m_bit_count);
         for (; m_underflow > 0; m_underflow-- )
             m_bit_output->OutputBit(~m_high_code & CODE_MSB, m_bit_count);
     }
     
-    void ArithCodecBase::ShiftBitIn() {
+    void ArithCodecBase::ShiftBitIn() 
+    {
         m_high_code <<= 1;
         m_high_code  &= CODE_MAX;
         m_high_code  += 1;
@@ -472,19 +505,23 @@ namespace dirac
         return bool( ( (*m_data_ptr) >> m_input_bits_left ) & 1 );
     }
 
+
     Context::Context():
         m_count0(1), m_count1(1) {}
 
-    void Context::SetCounts( unsigned int cnt0, unsigned int cnt1) {
+    void Context::SetCounts( unsigned int cnt0, unsigned int cnt1) 
+    {
         m_count0 = cnt0;
         m_count1 = cnt1;
     }
 
-    unsigned int Context::Weight() const {
+    unsigned int Context::Weight() const 
+    {
         return m_count0+m_count1;
     }
 
-    void Context::HalveCounts() {
+    void Context::HalveCounts() 
+    {
         m_count0 >>= 1;
         ++m_count0;
         m_count1 >>= 1;
@@ -504,11 +541,13 @@ namespace dirac
     //      lookup(weight) = ((1<<16)+weight/2)/weight
     //  The probability calculation becomes:
     //      probability of = count0 * lookup(weight)
-    int unsigned Context::GetScaledProb0() const {
+    int unsigned Context::GetScaledProb0() const 
+    {
         return m_count0*lookup(m_count0+m_count1);
     }
 
-    void Context::Update( bool symbol ) {
+    void Context::Update( bool symbol ) 
+   {
         if ( !symbol )
             ++m_count0;
         else
