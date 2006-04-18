@@ -41,13 +41,6 @@
 
 using namespace dirac;
 
-const BandCodec::ContextTriple BandCodec::m_context_triples[BandCodec::lastCTXTAlias] = { 
-                                                            {Z_BIN1z_CTX,  Z_BIN2_CTX,  Z_BIN5plus_CTX},  // Z_z_CTXT
-                                                            {Z_BIN1nz_CTX, Z_BIN2_CTX,  Z_BIN5plus_CTX},  // Z_nz_CTXT
-                                                            {NZ_BIN1z_CTX, NZ_BIN2_CTX, NZ_BIN5plus_CTX}, // NZ_z_CTXT
-                                                            {NZ_BIN1b_CTX, NZ_BIN2_CTX, NZ_BIN5plus_CTX}, // NZ_b_CTXT
-                                                            {NZ_BIN1a_CTX, NZ_BIN2_CTX, NZ_BIN5plus_CTX}};// NZ_a_CTXT
-
 //! Constructor for encoding.
 BandCodec::BandCodec(BasicOutputManager* bits_out,
                      size_t number_of_contexts,
@@ -195,70 +188,65 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
 
 }
 
-void BandCodec::CodeVal( PicArray& in_data , const int xpos , const int ypos , const ValueType val )
+inline void BandCodec::CodeVal( PicArray& in_data , 
+                                const int xpos , 
+                                const int ypos , 
+                                const ValueType val )
 {
-    int abs_val( std::abs(val) );
+    /*
+    Coefficient magnitude value is coded using interleaved exp-Golomb 
+    coding for binarisation. In this scheme, a value N>=0 is coded by 
+    writing N+1 in binary form of a 1 followed by K other bits: 1bbbbbbb 
+    (adding 1 ensures there'll be a leading 1). These K bits ("info bits") 
+    are interleaved with K zeroes ("follow bits") each of which means 
+    "another bit coming", followed by a terminating 1:
+     
+        0b0b0b ...0b1
+     
+    (Conventional exp-Golomb coding has the K zeroes at the beginning, followed
+    by the 1 i.e 00...01bb .. b, but interleaving allows the decoder to run a
+    single loop and avoid counting the number of zeroes, sparing a register.)
 
-    /* Quantise absolute value by dividing by quantisation factor. Can also use lookup table m_qfinv, 
-       as in
-
-    abs_val *= m_qfinv;
-    abs_val >>= 17;
-
-    but must be sure that we have sufficient dynamic range for abs_val, for all levels of wavelet
-    decomposition (up to 6). On a 64 bit processor, could make abs_val 64 bits and this would be 
-    faster than division.
+    All bits are arithmetically coded. The follow bits have separate contexts
+    based on position, and have different contexts from the info bits. 
     */
+
+    unsigned int abs_val( std::abs(val) );
     abs_val /= m_qf;
 
-    const ContextTriple& ctxt = ChooseContexts();
-    
-    if (abs_val != 0)
+    const int N = abs_val+1;
+    int num_follow_zeroes=0;
+
+    while ( N >= (1<<num_follow_zeroes) )
+        ++num_follow_zeroes;
+    --num_follow_zeroes; 
+
+    for ( int i=num_follow_zeroes-1, c=1; i>=0; --i, ++c )
     {
-        EncodeSymbol( 0, ctxt.firstContext );
+        EncodeSymbol( 0, ChooseFollowContext( c ) );
+        EncodeSymbol( N&(1<<i), ChooseInfoContext() );
+    }
+    EncodeSymbol( 1, ChooseFollowContext( num_follow_zeroes+1 ) );
 
-        int count = 1;
-        int curr_context = ctxt.secondContext;
+    in_data[ypos][xpos] = static_cast<ValueType>( abs_val );
 
-        while ( curr_context != ctxt.endContext && count < abs_val)
-        {                                   
-            EncodeSymbol( 0, curr_context );
-            ++curr_context;
-            ++count;
-        }
+    if ( abs_val )
+    {
+        // Must code sign bits and reconstruct
+        in_data[ypos][xpos] *= m_qf;
+        in_data[ypos][xpos] += m_offset;
 
-        if (curr_context == ctxt.endContext)
-        {
-            while (count < abs_val)
-            {            
-                ++count;
-                EncodeSymbol( 0, curr_context );
-            }
-        } 
-
-        EncodeSymbol( 1, curr_context );
-
-        abs_val *= m_qf;
-        in_data[ypos][xpos] = static_cast<ValueType>( abs_val );                
-        
         if ( val>0 )
         {
             EncodeSymbol( 1 , ChooseSignContext( in_data , xpos , ypos ) );
-            in_data[ypos][xpos] += m_offset;
         }
         else
         {
             EncodeSymbol( 0 , ChooseSignContext( in_data , xpos , ypos ) );
             in_data[ypos][xpos]  = -in_data[ypos][xpos];
-            in_data[ypos][xpos] -= m_offset;
         }
     }
-    else
-    {
-        in_data[ypos][xpos] = 0;
-        EncodeSymbol( 1, ctxt.firstContext );
-    }
-  
+
     m_coeff_count++;
     
     if (m_coeff_count > m_reset_coeff_num)
@@ -360,40 +348,49 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
 }
 
 
-void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const int ypos )
+inline void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const int ypos )
 {
-    const ContextTriple& ctxt = ChooseContexts();
+    /*
+    Coefficient magnitude value is coded using interleaved exp-Golomb 
+    coding for binarisation. In this scheme, a value N>=0 is coded by 
+    writing N+1 in binary form of a 1 followed by K other bits: 1bbbbbbb 
+    (adding 1 ensures there'll be a leading 1). These K bits ("info bits") 
+    are interleaved with K zeroes ("follow bits") each of which means 
+    "another bit coming", followed by a terminating 1:
+     
+        0b0b0b ...0b1
+     
+    (Conventional exp-Golomb coding has the K zeroes at the beginning, followed
+    by the 1 i.e 00...01bb .. b, but interleaving allows the decoder to run a
+    single loop and avoid counting the number of zeroes, sparing a register.)
+
+    All bits are arithmetically coded. The follow bits have separate contexts
+    based on position, and have different contexts from the info bits. 
+    */
+
     ValueType& out_pixel = out_data[ypos][xpos];
-    if (!DecodeSymbol( ctxt.firstContext ))
+
+    out_pixel = 1;
+    int bit_count=1;
+    
+    while ( !DecodeSymbol( ChooseFollowContext( bit_count ) ) )
     {
-        int curr_context = ctxt.secondContext;
+        out_pixel <<= 1;
+        out_pixel |= DecodeSymbol( ChooseInfoContext() );
+        bit_count++;
+    };
+    --out_pixel;
 
-        out_pixel = 1;
-        
-        while ( curr_context != ctxt.endContext && !DecodeSymbol( curr_context ))
-        {                   
-            ++out_pixel;
-            ++curr_context;
-        }
-
-        if (curr_context == ctxt.endContext)
-        {
-            while (!DecodeSymbol( curr_context ))
-            {            
-                ++out_pixel;
-            }
-        } 
-
+    if ( out_pixel )
+    {
         out_pixel *= m_qf;
-        out_pixel += m_offset;       
+        out_pixel += m_offset;
+     
         if ( !DecodeSymbol( ChooseSignContext(out_data, xpos, ypos)) )
             out_pixel = -out_pixel;
+
     }
-    else
-    {
-        out_pixel = 0;
-    }
-    
+
     m_coeff_count++;
     
     if (m_coeff_count>m_reset_coeff_num)
@@ -403,31 +400,66 @@ void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const int ypos 
     }
 }
 
-const BandCodec::ContextTriple& BandCodec::ChooseContexts() const
+inline int BandCodec::ChooseFollowContext( const int bin_number ) const 
 {
-    ContextTripleAliases ct;
+    //condition on neighbouring values and parent values
+
     if (!m_parent_notzero && (m_pxp != 0 || m_pyp != 0))
-    {    
-        if(m_nhood_sum == 0)
-            ct = Z_z_CTXT;
-        else
-            ct = Z_nz_CTXT;
+    {
+        switch ( bin_number )
+        {
+            case 1 :
+                if(m_nhood_sum == 0)
+                    return Z_FBIN1z_CTX;
+
+                return Z_FBIN1nz_CTX;
+
+            case 2 :
+                return Z_FBIN2_CTX;
+            case 3 :
+                return Z_FBIN3_CTX;
+            case 4 :
+                return Z_FBIN4_CTX;
+            case 5 :
+                return Z_FBIN5_CTX;
+            default :
+                return Z_FBIN6plus_CTX;
+        }
     }
     else
-    {   
-        if(m_nhood_sum == 0)
-            ct = NZ_z_CTXT;
-        else if (m_nhood_sum>m_cut_off_point)
-            ct = NZ_b_CTXT;
-        else
-            ct = NZ_a_CTXT;
+    {
+        switch ( bin_number )
+        {
+            case 1 :
+                if(m_nhood_sum == 0)
+                    return NZ_FBIN1z_CTX;
+                else if (m_nhood_sum>m_cut_off_point)
+                    return NZ_FBIN1b_CTX;
+
+                return NZ_FBIN1a_CTX;
+
+            case 2 :
+                return NZ_FBIN2_CTX;
+            case 3 :
+                return NZ_FBIN3_CTX;
+            case 4 :
+                return NZ_FBIN4_CTX;
+            case 5 :
+                return NZ_FBIN5_CTX;
+            default :
+                return NZ_FBIN6plus_CTX;
+        }
+
     }
-    return m_context_triples[ct];
+
 }
 
+inline int BandCodec::ChooseInfoContext() const 
+{
+    return INFO_CTX;
+}
 
-
-int BandCodec::ChooseSignContext( const PicArray& data , const int xpos , const int ypos ) const
+inline int BandCodec::ChooseSignContext( const PicArray& data , const int xpos , const int ypos ) const
 {    
     if ( m_node.Yp()==0 && m_node.Xp()!=0 )
     {

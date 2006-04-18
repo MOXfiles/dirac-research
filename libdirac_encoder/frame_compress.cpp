@@ -148,7 +148,7 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer ,
             // If we're using block motion vectors, code them
             if ( m_use_block_mv )
             {
-                MvDataCodec my_mv_coder( &( foutput.MVOutput().Data() ) , 50 , cformat);
+                MvDataCodec my_mv_coder( &( foutput.MVOutput().Data() ) , 45 , cformat);
 
                 my_mv_coder.InitContexts();//may not be necessary
                 num_mv_bits = my_mv_coder.Compress( *m_me_data );            

@@ -80,86 +80,113 @@ namespace dirac
     //! Contexts used for coefficient coding
     enum CtxAliases
     {//used for residual coding
-        SIGN0_CTX,          //0     -sign, previous symbol is 0
-        SIGN_POS_CTX,       //1     -sign, previous symbol is +ve
-        SIGN_NEG_CTX,       //2     -sign, previous symbol is -ve
+        SIGN0_CTX,          // -sign, previous symbol is 0
+        SIGN_POS_CTX,       // -sign, previous symbol is +ve
+        SIGN_NEG_CTX,       // -sign, previous symbol is -ve
         
+        // Follow bit contexts
+        Z_FBIN1z_CTX,       // -bin 1, parent is zero, neighbours zero
+        Z_FBIN1nz_CTX,      // -bin 1, parent is zero, neighbours non-zero
+        Z_FBIN2_CTX,        // -bin 2, parent is zero
+        Z_FBIN3_CTX,        // -bin 3, parent is zero
+        Z_FBIN4_CTX,        // -bin 4, parent is zero
+        Z_FBIN5_CTX,        // -bin 5, parent is zero
+        Z_FBIN6plus_CTX,    // -bins 6 plus, parent is zero
         
-        Z_BIN1z_CTX,        //3     -bin 1, parent is zero, neighbours zero
-        Z_BIN1nz_CTX,       //4     -bin 1, parent is zero, neighbours non-zero
-        Z_BIN2_CTX,         //5     -bin 2, parent is zero
-        Z_BIN3_CTX,         //6     -bin 3, parent is zero
-        Z_BIN4_CTX,         //7     -bin 4, parent is zero
-        Z_BIN5plus_CTX,     //8     -bins 5 plus, parent is zero
+        NZ_FBIN1z_CTX,      // -bin 1, parent is non-zero, neighbours zero
+        NZ_FBIN1a_CTX,      // -bin 1, parent is non-zero, neighbours small
+        NZ_FBIN1b_CTX,      // -bin 1, parent is non-zero, neighbours large
+        NZ_FBIN2_CTX,       // -bin 2, parent is non-zero
+        NZ_FBIN3_CTX,       // -bin 3, parent is non-zero
+        NZ_FBIN4_CTX,       // -bin 4, parent is non-zero
+        NZ_FBIN5_CTX,       // -bin 5, parent is non-zero
+        NZ_FBIN6plus_CTX,   // -bins 6 plus, parent is non-zero
         
-        NZ_BIN1z_CTX,       //9     -bin 1, parent is non-zero, neighbours zero
-        NZ_BIN1a_CTX,       //10    -bin 1, parent is non-zero, neighbours small
-        NZ_BIN1b_CTX,       //11    -bin 1, parent is non-zero, neighbours large
-        NZ_BIN2_CTX,        //12    -bin 2, parent is non-zero
-        NZ_BIN3_CTX,        //13    -bin 3, parent is non-zero
-        NZ_BIN4_CTX,        //14    -bin 4, parent is non-zero
-        NZ_BIN5plus_CTX,    //15    -bins 5 plus, parent is non-zero
-        
-        BLOCK_SKIP_CTX      //16    - blocks are skipped
+        // Information bit contexts
+        INFO_CTX,
+
+        BLOCK_SKIP_CTX      //- blocks are skipped
     };
 
     //! Contexts used for MV data coding
     enum MvCtxAliases
     {
+        // DC value contexts //
+        ///////////////////////
+
+        // Luma        
+        YDC_FBIN1_CTX,       // -bin 1 of follow bits
+        YDC_FBIN2plus_CTX,   // -remaining follow bins
+        YDC_INFO_CTX,        // -info bit context
+        YDC_SIGN_CTX,        // -sign context
+
+        UDC_FBIN1_CTX,       
+        UDC_FBIN2plus_CTX,   
+        UDC_INFO_CTX,
+        UDC_SIGN_CTX,      
+
+        VDC_FBIN1_CTX,       
+        VDC_FBIN2plus_CTX,   
+        VDC_INFO_CTX,
+        VDC_SIGN_CTX,      
         
-        YDC_BIN1_CTX,       //0     -1st bin of DC value for Y
-        YDC_BIN2plus_CTX,   //1     -remaining DC bins
-        YDC_SIGN0_CTX,      //2     -sign of Y DC value, previous value 0
-        UDC_BIN1_CTX,       //3     --ditto
-        UDC_BIN2plus_CTX,   //4     --for
-        UDC_SIGN0_CTX,      //5     --U
-        VDC_BIN1_CTX,       //6     --and
-        VDC_BIN2plus_CTX,   //7     --V
-        VDC_SIGN0_CTX,      //8     --components
+
+        // Motion vector contexts //
+        ////////////////////////////
+
+        REF1x_FBIN1_CTX,     // -bin 1 of follow bits
+        REF1x_FBIN2_CTX,     // -bin 2 of follow bits
+        REF1x_FBIN3_CTX,     // -bin 3 of follows bits
+        REF1x_FBIN4_CTX,     // -bin 4 of follow bits
+        REF1x_FBIN5plus_CTX, // -bins 5 plus of follow bits
+
+        REF1x_INFO_CTX,      // context for information bits 
+
+        REF1x_SIGN_CTX,      // -sign
         
-        REF1x_BIN1_CTX,     //9     -bin 1, REF1 x vals
-        REF1x_BIN2_CTX,     //10    -bin 2, REF1 x vals
-        REF1x_BIN3_CTX,     //11    -bin 3, REF1 x vals
-        REF1x_BIN4_CTX,     //12    -bin 4, REF1 x vals
-        REF1x_BIN5plus_CTX, //13    -bin 5, REF1 x vals
-        REF1x_SIGN0_CTX,    //14    -sign, REF1 x vals, previous value 0
-        REF1x_SIGNP_CTX,    //15    -sign, REF1 x vals, previous value +ve
-        REF1x_SIGNN_CTX,    //16    -sign, REF1 x vals, previous value -ve
+
+        REF1y_FBIN1_CTX,     
+        REF1y_FBIN2_CTX,     
+        REF1y_FBIN3_CTX,     
+        REF1y_FBIN4_CTX,     
+        REF1y_FBIN5plus_CTX, 
+
+        REF1y_INFO_CTX,
+
+        REF1y_SIGN_CTX,            
+
+        REF2x_FBIN1_CTX,     
+        REF2x_FBIN2_CTX,     
+        REF2x_FBIN3_CTX,     
+        REF2x_FBIN4_CTX,     
+        REF2x_FBIN5plus_CTX, 
+
+        REF2x_INFO_CTX,
+
+        REF2x_SIGN_CTX,    
         
-        REF1y_BIN1_CTX,     //17    -bin 1, REF1 y vals
-        REF1y_BIN2_CTX,     //18    -bin 2, REF1 y vals
-        REF1y_BIN3_CTX,     //19    -bin 3, REF1 y vals
-        REF1y_BIN4_CTX,     //20    -bin 4, REF1 y vals
-        REF1y_BIN5plus_CTX, //21    -bin 5, REF1 y vals
-        REF1y_SIGN0_CTX,    //22    -sign, REF1 y vals, previous value 0
-        REF1y_SIGNP_CTX,    //23    -sign, REF1 y vals, previous value +ve
-        REF1y_SIGNN_CTX,    //24    -sign, REF1 y vals, previous value -ve
+        REF2y_FBIN1_CTX,     
+        REF2y_FBIN2_CTX,     
+        REF2y_FBIN3_CTX,     
+        REF2y_FBIN4_CTX,     
+        REF2y_FBIN5plus_CTX, 
+
+        REF2y_INFO_CTX,
+
+        REF2y_SIGN_CTX,    
         
-        REF2x_BIN1_CTX,     //25    -bin 1, REF2 x vals
-        REF2x_BIN2_CTX,     //26    -bin 2, REF2 x vals
-        REF2x_BIN3_CTX,     //27    -bin 3, REF2 x vals
-        REF2x_BIN4_CTX,     //28    -bin 4, REF2 x vals
-        REF2x_BIN5plus_CTX, //29    -bin 5, REF2 x vals
-        REF2x_SIGN0_CTX,    //30    -sign, REF2 x vals, previous value 0
-        REF2x_SIGNP_CTX,    //31    -sign, REF1 y vals, previous value +ve
-        REF2x_SIGNN_CTX,    //32    -sign, REF1 y vals, previous value -ve
+
+        // Prediction mode contexts
+
+        PMODE_BIT0_CTX,     // -bit 0, prediction mode value
+        PMODE_BIT1_CTX,     // -bin 1, prediction mode value
         
-        REF2y_BIN1_CTX,     //33    -bin 1, REF2 y vals
-        REF2y_BIN2_CTX,     //34    -bin 2, REF2 y vals
-        REF2y_BIN3_CTX,     //35    -bin 3, REF2 y vals
-        REF2y_BIN4_CTX,     //36    -bin 4, REF2 y vals
-        REF2y_BIN5plus_CTX, //37    -bin 5, REF2 y vals
-        REF2y_SIGN0_CTX,    //38    -sign, REF2 y vals, previous value 0
-        REF2y_SIGNP_CTX,    //39    -sign, REF2 y vals, previous value +ve
-        REF2y_SIGNN_CTX,    //40    -sign, REF2 y vals, previous value -ve
         
-        PMODE_BIT0_CTX,     //41    -bit 0, prediction mode value
-        PMODE_BIT1_CTX,     //42    -bin 1, prediction mode value
-        
-        MB_CMODE_CTX,       //43    -context for MB common block mode
-        MB_SPLIT_BIN1_CTX,  //44    -bin1, MB split mode vals
-        MB_SPLIT_BIN2_CTX   //45    -bin2, MB split mode vals. Bin 3 not required
-        
+        // Macroblock contexts
+       
+        MB_CMODE_CTX,       // -context for MB common block mode
+        MB_SPLIT_BIN1_CTX,  // -bin 1, MB split mode vals
+        MB_SPLIT_BIN2_CTX   // -bin 2, MB split mode vals. Bin 3 not required
     };
 
 

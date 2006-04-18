@@ -142,30 +142,52 @@ namespace dirac
         // Context stuff    
         void ResetAll();
 
-        int ChooseMBSContext(const MvData& data, const int BinNumber) const;
-        int ChooseMBCContext(const MvData& data) const;
-        int ChooseREF1xContext(const MvData& data, const int BinNumber) const;
-        int ChooseREF1xSignContext(const MvData& data) const;
-        int ChooseREF1yContext(const MvData& data, const int BinNumber) const;
-        int ChooseREF1ySignContext(const MvData& data) const;
-        int ChooseREF2xContext(const MvData& data, const int BinNumber) const;
-        int ChooseREF2xSignContext(const MvData& data) const;
-        int ChooseREF2yContext(const MvData& data, const int BinNumber) const;
-        int ChooseREF2ySignContext(const MvData& data) const;
-        int ChooseYDCContext(const MvData& data, const int BinNumber) const;
-        int ChooseUDCContext(const MvData& data, const int BinNumber) const;
-        int ChooseVDCContext(const MvData& data, const int BinNumber) const;
-        int ChooseYDCSignContext(const MvData& data) const;
-        int ChooseUDCSignContext(const MvData& data) const;
-        int ChooseVDCSignContext(const MvData& data) const;
+        inline int ChooseMBSContext(const MvData& data, const int bin_number) const;
+        inline int ChooseMBCContext(const MvData& data) const;
+
+        inline int ChooseREF1xFollowContext( const int bin_number) const;
+        inline int ChooseREF1xInfoContext() const;
+        inline int ChooseREF1xSignContext() const;
+
+        inline int ChooseREF1yFollowContext(const int bin_number) const;
+        inline int ChooseREF1yInfoContext() const;
+        inline int ChooseREF1ySignContext() const;
+
+        inline int ChooseREF2xFollowContext(const int bin_number) const;
+        inline int ChooseREF2xInfoContext() const;
+        inline int ChooseREF2xSignContext() const;
+
+        inline int ChooseREF2yFollowContext( const int bin_number) const;
+        inline int ChooseREF2yInfoContext() const;
+        inline int ChooseREF2ySignContext() const;
+
+        inline int ChooseYDCFollowContext(const int bin_number) const;
+        inline int ChooseYDCInfoContext() const;
+        inline int ChooseYDCSignContext() const;
+
+        inline int ChooseUDCFollowContext( const int bin_number) const;
+        inline int ChooseUDCInfoContext() const;
+        inline int ChooseUDCSignContext() const;
+
+        inline int ChooseVDCFollowContext( const int bin_number) const;
+        inline int ChooseVDCInfoContext() const;
+        inline int ChooseVDCSignContext() const;
 
         //prediction stuff
         unsigned int MBSplitPrediction(const TwoDArray<int>& mbdata) const;
+
         bool MBCBModePrediction(const TwoDArray<bool>& mbdata) const;
-        unsigned int BlockModePrediction(const TwoDArray<PredMode>& preddata, const unsigned int num_refs) const;
-        MVector Mv1Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
-        MVector Mv2Prediction(const MvArray& mvarray,const TwoDArray<PredMode>& preddata) const;
-        ValueType DCPrediction(const TwoDArray<ValueType>& dcdata,const TwoDArray<PredMode>& preddata) const;
+
+        unsigned int BlockModePrediction(const TwoDArray<PredMode>& preddata,
+                                         const unsigned int num_refs) const;
+        MVector Mv1Prediction( const MvArray& mvarray,
+                               const TwoDArray<PredMode>& preddata) const;
+
+        MVector Mv2Prediction( const MvArray& mvarray, 
+                               const TwoDArray<PredMode>& preddata) const;
+
+        ValueType DCPrediction( const TwoDArray<ValueType>& dcdata,
+                                const TwoDArray<PredMode>& preddata) const;
     };
 
 }// end namepace dirac

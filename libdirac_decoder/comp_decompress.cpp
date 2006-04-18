@@ -63,7 +63,7 @@ void CompDecompressor::Decompress( PicArray& pic_data )
 
     // A pointer to the object(s) we'll be using for coding the bands
 	BandCodec* bdecoder;
-    const size_t CONTEXTS_REQUIRED( 24 );
+    const size_t CONTEXTS_REQUIRED( 20 );
 
 	unsigned int num_band_bytes;
 

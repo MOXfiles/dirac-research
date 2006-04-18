@@ -73,7 +73,7 @@ void CompCompressor::Compress(PicArray& pic_data)
     // A pointer to an object for outputting the subband data
     UnitOutputManager* band_op;
 
-    const size_t CONTEXTS_REQUIRED = 24;
+    const size_t CONTEXTS_REQUIRED = 20;
 
     Subband node;
 

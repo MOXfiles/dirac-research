@@ -88,10 +88,10 @@ namespace dirac
 
     protected:
         //! Code an individual quantised value and perform inverse-quantisation
-        void CodeVal( PicArray& in_data , const int xpos , const int ypos , const ValueType val);
+        inline void CodeVal( PicArray& in_data , const int xpos , const int ypos , const ValueType val);
 
         //! Decode an individual quantised value and perform inverse-quantisation
-        void DecodeVal(PicArray& out_data , const int xpos , const int ypos );
+        inline void DecodeVal(PicArray& out_data , const int xpos , const int ypos );
 
         //! Set a code block area to a given value
         inline void SetToVal( const CodeBlock& code_block , PicArray& pic_data , const ValueType val);
@@ -111,29 +111,14 @@ namespace dirac
 
         void ResetAll();
 
-        // structure used to select the contexts used to encode / decode a symbol
-        typedef struct 
-        {
-            int firstContext;
-            int secondContext;
-            int endContext;
-        } ContextTriple;
+        //! A function for choosing the context for "follow bits"
+        inline int ChooseFollowContext( const int bin_number ) const;
 
-        typedef enum ContextTripleAliases
-        {
-            Z_z_CTXT,
-            Z_nz_CTXT,
-            NZ_z_CTXT,
-            NZ_b_CTXT,
-            NZ_a_CTXT,
-            lastCTXTAlias
-        } ;
+        //! A function for choosing the context for "information bits"
+        inline int ChooseInfoContext() const;
 
-        static const ContextTriple m_context_triples[lastCTXTAlias];
-
-        const ContextTriple& ChooseContexts() const;
-
-        int ChooseSignContext(const PicArray& data , const int xpos , const int ypos ) const;
+        //! A function for choosing the context for sign bits
+        inline int ChooseSignContext(const PicArray& data , const int xpos , const int ypos ) const;
 
         //! Private, bodyless copy constructor: class should not be copied
         BandCodec(const BandCodec& cpy);

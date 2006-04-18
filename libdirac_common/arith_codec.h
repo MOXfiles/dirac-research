@@ -114,7 +114,6 @@ namespace dirac
         int m_count1;
     };
 
-
     class ArithCodecBase {
 
     public:
@@ -268,7 +267,6 @@ namespace dirac
             // Shift bits in until MSBs are different.
             if ( (m_high_code^m_low_code)>=CODE_MSB )
                 break;
-
             ShiftBitIn();
         }
 
@@ -288,7 +286,8 @@ namespace dirac
             ShiftBitIn();
         }
 
-        // Determine the next symbol value by placing code within the [low,high]interval.
+        // Determine the next symbol value by placing code within
+        // the [low,high] interval.
 
         // Fetch the statistical context to be used
         Context& ctx  = m_context_list[context_num];
@@ -481,7 +480,7 @@ namespace dirac
             m_bit_output->OutputBit(~m_high_code & CODE_MSB, m_bit_count);
     }
     
-    void ArithCodecBase::ShiftBitIn() 
+    inline void ArithCodecBase::ShiftBitIn() 
     {
         m_high_code <<= 1;
         m_high_code  &= CODE_MAX;
@@ -495,6 +494,7 @@ namespace dirac
 
     inline bool ArithCodecBase::InputBit()
     {
+
         if (m_input_bits_left == 0)
         {
             m_data_ptr++;
