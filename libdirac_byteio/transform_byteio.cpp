@@ -105,7 +105,7 @@ void TransformByteIO::Output()
     else
     {
         OutputBit(true);
-        OutputUnGolombValue(m_cparams.TransformDepth());
+        OutputVarLengthUint(m_cparams.TransformDepth());
     }
     
     // Spatial Partition flag
@@ -117,8 +117,8 @@ void TransformByteIO::Output()
         if (!m_cparams.DefaultSpatialPartition())
         {
             // non-default partitoning
-            OutputUnGolombValue(m_cparams.MaxXBlocks());
-            OutputUnGolombValue(m_cparams.MaxYBlocks());
+            OutputVarLengthUint(m_cparams.MaxXBlocks());
+            OutputVarLengthUint(m_cparams.MaxYBlocks());
         }
         // Multiple quantisers flag
         OutputBit(m_cparams.MultiQuants());
@@ -139,13 +139,13 @@ void TransformByteIO::Input()
 
     // Transform filter
     if (InputBit())
-        m_cparams.SetTransformFilter(static_cast<WltFilter>(InputUnGolombValue()));
+        m_cparams.SetTransformFilter(static_cast<WltFilter>(InputVarLengthUint()));
     else
         m_cparams.SetTransformFilter(m_default_cparams.TransformFilter());
 
     // transform depth
     if (InputBit())
-         m_cparams.SetTransformDepth(InputUnGolombValue());
+         m_cparams.SetTransformDepth(InputVarLengthUint());
     else
         m_cparams.SetTransformDepth(m_default_cparams.TransformDepth());
 
@@ -160,9 +160,9 @@ void TransformByteIO::Input()
         {
             // if not using default spatial partitioning
             // max horiz coeff blocks
-            m_cparams.SetMaxXBlocks(InputUnGolombValue());
+            m_cparams.SetMaxXBlocks(InputVarLengthUint());
             // max vertical coeff blocks
-            m_cparams.SetMaxYBlocks(InputUnGolombValue());
+            m_cparams.SetMaxYBlocks(InputVarLengthUint());
         }
         // Multiple quantisers flag
         m_cparams.SetMultiQuants(InputBit());

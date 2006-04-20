@@ -67,7 +67,7 @@ SubbandByteIO::~SubbandByteIO()
 bool SubbandByteIO::Input()
 {
     // read length of Arith-coded data block
-    m_band_data_length = InputUnGolombValue();
+    m_band_data_length = InputVarLengthUint();
 
     // set skip flag if no data
     m_subband.SetSkip(m_band_data_length==0 ? true : false);
@@ -80,7 +80,7 @@ bool SubbandByteIO::Input()
     }
 
      // If we're not skipped, we need a quantisation index for the subband
-    m_subband.SetQIndex(InputUnGolombValue() );
+    m_subband.SetQIndex(InputVarLengthUint() );
 
        if ( !m_subband.UsingMultiQuants() )
        {
@@ -108,7 +108,7 @@ const string SubbandByteIO::GetBytes()
     ByteIO byte_io;
 
     // output size
-    byte_io.OutputUnGolombValue(GetSize());
+    byte_io.OutputVarLengthUint(GetSize());
 
     // check for zero-length sub-band
     if(GetSize()==0)
@@ -118,7 +118,7 @@ const string SubbandByteIO::GetBytes()
     }
 
     // output quantisation
-    byte_io.OutputUnGolombValue(m_subband.QIndex());
+    byte_io.OutputVarLengthUint(m_subband.QIndex());
 
     // byte align
     byte_io.ByteAlignOutput();

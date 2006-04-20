@@ -61,7 +61,7 @@ SeqParamsByteIO::~SeqParamsByteIO()
 void SeqParamsByteIO::Input()
 {
     // input video-format & set all parameters to default
-    VideoFormat video_format = IntToVideoFormat(InputUnGolombValue());
+    VideoFormat video_format = IntToVideoFormat(InputVarLengthUint());
     if(video_format==VIDEO_FORMAT_UNDEFINED)
          DIRAC_THROW_EXCEPTION(
                     ERR_INVALID_VIDEO_FORMAT,
@@ -85,7 +85,7 @@ void SeqParamsByteIO::Input()
 void SeqParamsByteIO::Output()
 {
     // output video format
-    OutputUnGolombValue(static_cast<int>(m_seq_params.GetVideoFormat()));
+    OutputVarLengthUint(static_cast<int>(m_seq_params.GetVideoFormat()));
 
     // output image size
     OutputImageSize();
@@ -108,7 +108,7 @@ void SeqParamsByteIO::InputChromaFormat()
         return;
 
     // set chroma
-    ChromaFormat chroma_format = IntToChromaFormat(InputUnGolombValue());
+    ChromaFormat chroma_format = IntToChromaFormat(InputVarLengthUint());
     if(chroma_format==formatNK)
         DIRAC_THROW_EXCEPTION(
                     ERR_INVALID_CHROMA_FORMAT,
@@ -125,10 +125,10 @@ void SeqParamsByteIO::InputImageSize()
         return;
 
     // set custom width
-    m_seq_params.SetXl(InputUnGolombValue());
+    m_seq_params.SetXl(InputVarLengthUint());
 
     // set custom height
-    m_seq_params.SetYl(InputUnGolombValue());
+    m_seq_params.SetYl(InputVarLengthUint());
 }
 
 void SeqParamsByteIO::InputVideoDepth()
@@ -142,7 +142,7 @@ void SeqParamsByteIO::InputVideoDepth()
                     "Dirac does not support default video-depth",
                     SEVERITY_ACCESSUNIT_ERROR)
 
-    int video_depth = InputUnGolombValue();
+    int video_depth = InputVarLengthUint();
     // NOTE: FIXME - support all valid video depths
     if(video_depth!=10)
         DIRAC_THROW_EXCEPTION(
@@ -165,7 +165,7 @@ void SeqParamsByteIO::OutputChromaFormat()
         return;
 
     // output chroma index
-    OutputUnGolombValue(static_cast<int>(m_seq_params.CFormat()));
+    OutputVarLengthUint(static_cast<int>(m_seq_params.CFormat()));
 }
 
 void SeqParamsByteIO::OutputImageSize()
@@ -181,8 +181,8 @@ void SeqParamsByteIO::OutputImageSize()
         return;
 
     // set custom X and Y
-    OutputUnGolombValue(m_seq_params.Xl());
-    OutputUnGolombValue(m_seq_params.Yl());
+    OutputVarLengthUint(m_seq_params.Xl());
+    OutputVarLengthUint(m_seq_params.Yl());
 
 }
 
@@ -197,6 +197,6 @@ void SeqParamsByteIO::OutputVideoDepth()
         return;
 
     // output video depth
-    OutputUnGolombValue(static_cast<int>(m_seq_params.GetVideoDepth()));
+    OutputVarLengthUint(static_cast<int>(m_seq_params.GetVideoDepth()));
 }
 

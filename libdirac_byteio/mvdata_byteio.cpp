@@ -108,7 +108,7 @@ void MvDataByteIO::Input()
     // Byte Alignment
     ByteAlignInput();
     // Input block data size
-    m_block_size = InputUnGolombValue();
+    m_block_size = InputVarLengthUint();
     // Byte Alignment
     ByteAlignInput();
 }
@@ -134,7 +134,7 @@ void MvDataByteIO::Output()
     ByteAlignOutput();
     
     //Output size of block data
-    OutputUnGolombValue(m_block_data.GetSize());
+    OutputVarLengthUint(m_block_data.GetSize());
     // Flush output for byte alignment
     OutputCurrentByte();
 }
@@ -162,17 +162,17 @@ void MvDataByteIO::OutputBlockParams()
     // output custom block params flag 
     // NOTE: FIXME - need to check if we can set just block inder
     unsigned int pidx = BlockParametersIndex(olb_params);
-    OutputUnGolombValue(pidx);
+    OutputVarLengthUint(pidx);
     if (pidx == 0) // custom block params
     {
         // output Xblen
-        OutputUnGolombValue(olb_params.Xblen());
+        OutputVarLengthUint(olb_params.Xblen());
         // output Yblen
-        OutputUnGolombValue(olb_params.Yblen());
+        OutputVarLengthUint(olb_params.Yblen());
         // output Xbsep
-        OutputUnGolombValue(olb_params.Xbsep());
+        OutputVarLengthUint(olb_params.Xbsep());
         // output Ybsep
-        OutputUnGolombValue(olb_params.Ybsep());
+        OutputVarLengthUint(olb_params.Ybsep());
     }
 }
 
@@ -184,19 +184,19 @@ void MvDataByteIO::InputBlockParams()
 
        if (InputBit())
     {
-        unsigned int p_idx = InputUnGolombValue();
+        unsigned int p_idx = InputVarLengthUint();
         // FIXME : the default values from block params table must be set
         // elsehwere
         if (p_idx == 0)
         {
             // Input Xblen
-            olb_params.SetXblen(InputUnGolombValue());
+            olb_params.SetXblen(InputVarLengthUint());
             // Input Yblen
-            olb_params.SetYblen(InputUnGolombValue());
+            olb_params.SetYblen(InputVarLengthUint());
             // Input Xbsep
-            olb_params.SetXbsep(InputUnGolombValue());
+            olb_params.SetXbsep(InputVarLengthUint());
             // Input Ybsep
-            olb_params.SetYbsep(InputUnGolombValue());
+            olb_params.SetYbsep(InputVarLengthUint());
         }
         else
             SetDefaultBlockParameters (olb_params, p_idx);
@@ -216,7 +216,7 @@ void MvDataByteIO::OutputMVPrecision()
     if (m_cparams.MVPrecision() != m_default_cparams.MVPrecision())
     {
         OutputBit(true);
-        OutputUnGolombValue(m_cparams.MVPrecision());
+        OutputVarLengthUint(m_cparams.MVPrecision());
     }
     else
         OutputBit(false);
@@ -226,7 +226,7 @@ void MvDataByteIO::InputMVPrecision()
 {
     // Input Motion vector precision
     if (InputBit())
-        m_cparams.SetMVPrecision(InputUnGolombValue());
+        m_cparams.SetMVPrecision(InputVarLengthUint());
     else
         m_cparams.SetMVPrecision(m_default_cparams.MVPrecision());
 }
@@ -246,7 +246,7 @@ void MvDataByteIO::InputGlobalMotionParams()
     if (InputBit())
     {
         m_cparams.SetUsingGlobalMotion(true);
-        // NOTE: FIXME - output actual global motion params in future
+        // NOTE: FIXME - input actual global motion params in future
         DIRAC_THROW_EXCEPTION(
                     ERR_UNSUPPORTED_STREAM_DATA,
                     "Cannot handle global motion parameters",
@@ -268,11 +268,11 @@ void MvDataByteIO::OutputFramePredictionMode()
         OutputBit(true);
         if (!m_cparams.Interlace())
         {
-            OutputUnGolombValue(IT_PROGRESSIVE);
+            OutputVarLengthUint(IT_PROGRESSIVE);
         }
         else
         {
-               OutputUnGolombValue(m_cparams.TopFieldFirst() ?
+               OutputVarLengthUint(m_cparams.TopFieldFirst() ?
                                  IT_INTERLACED_TFF: IT_INTERLACED_BFF);
         }
     }
@@ -284,7 +284,7 @@ void MvDataByteIO::InputFramePredictionMode()
     {
         m_cparams.SetTopFieldFirst(true);
 
-        switch(InputUnGolombValue())
+        switch(InputVarLengthUint())
         {
         case 0:
             m_cparams.SetInterlace(false);
@@ -327,13 +327,13 @@ void MvDataByteIO::OutputFrameWeights()
     {
            OutputBit(true);
         // Output weight precision bits
-        OutputUnGolombValue(m_cparams.FrameWeightsBits());
+        OutputVarLengthUint(m_cparams.FrameWeightsBits());
         // Output Ref1 weight
-        OutputSignedGolombValue(m_cparams.Ref1Weight());
+        OutputVarLengthInt(m_cparams.Ref1Weight());
         if (m_fparams.Refs().size() > 1)
         {
             // Output Ref1 weight
-            OutputSignedGolombValue(m_cparams.Ref2Weight());
+            OutputVarLengthInt(m_cparams.Ref2Weight());
         }
     }
     else
@@ -346,10 +346,15 @@ void MvDataByteIO::InputFrameWeights()
 {
     if (InputBit())
     {
-        m_cparams.SetFrameWeightsPrecision(InputUnGolombValue());
-        m_cparams.SetRef1Weight(InputSignedGolombValue());
+        m_cparams.SetFrameWeightsPrecision(InputVarLengthUint());
+        m_cparams.SetRef1Weight(InputVarLengthInt());
         if (m_fparams.Refs().size() > 1)
-            m_cparams.SetRef2Weight(InputSignedGolombValue());
+            m_cparams.SetRef2Weight(InputVarLengthInt());
+        
+        DIRAC_THROW_EXCEPTION(
+                    ERR_UNSUPPORTED_STREAM_DATA,
+                    "Cannot handle non-default picture weights",
+                    SEVERITY_FRAME_ERROR)
     }
     else
     {

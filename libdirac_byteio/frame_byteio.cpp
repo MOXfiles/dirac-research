@@ -122,14 +122,14 @@ bool FrameByteIO::Input()
     SetReferenceType();
 
     // input frame offset
-    m_frame_num = InputSignedGolombValue();
+    m_frame_num = InputVarLengthInt();
     m_frame_params.SetFrameNum(m_accessunit_fnum+m_frame_num);
 
     // input reference frame numbers
     InputReferenceFrames();
     
     // input retired frames
-    int val = InputUnGolombValue();
+    int val = InputVarLengthUint();
     // input retired frames
     std::vector<int>& retd_list = m_frame_params.RetiredFrames();
     retd_list.resize(val);
@@ -137,7 +137,7 @@ bool FrameByteIO::Input()
     {
         for (size_t i = 0; i < retd_list.size(); ++i)
         {
-            int offset = InputSignedGolombValue();
+            int offset = InputVarLengthInt();
             retd_list[i] = m_accessunit_fnum + offset;
         }
     }
@@ -181,22 +181,22 @@ int FrameByteIO::GetSize() const
 void FrameByteIO::Output()
 {
     // output frame offset
-    OutputSignedGolombValue(m_frame_num - m_accessunit_fnum);
+    OutputVarLengthInt(m_frame_num - m_accessunit_fnum);
 
     if(m_frame_params.GetFrameType()==INTER_FRAME)
     {
         // output reference frame numbers
         const std::vector<int>& refs = m_frame_params.Refs();
         for(size_t i=0; i < refs.size() && i < MAX_NUM_REFS; ++i)
-            OutputSignedGolombValue(refs[i] - m_accessunit_fnum);
+            OutputVarLengthInt(refs[i] - m_accessunit_fnum);
     }
 
     // output retired frames
     const std::vector<int>& retd_list = m_frame_params.RetiredFrames();
-    OutputUnGolombValue(retd_list.size());
+    OutputVarLengthUint(retd_list.size());
     for (size_t i = 0; i < retd_list.size(); ++i)
     {
-        OutputSignedGolombValue(retd_list[i] - m_accessunit_fnum);
+        OutputVarLengthInt(retd_list[i] - m_accessunit_fnum);
     }
 
     // byte align output
@@ -242,7 +242,7 @@ void FrameByteIO::InputReferenceFrames()
     vector<int>& refs = m_frame_params.Refs();
     refs.resize(ref_count);
     for(int i=0; i < ref_count; ++i)
-        refs[i]=m_accessunit_fnum+InputSignedGolombValue();
+        refs[i]=m_accessunit_fnum+InputVarLengthInt();
 }
 
 void FrameByteIO::SetFrameType()

@@ -73,19 +73,19 @@ ParseParamsByteIO::~ParseParamsByteIO()
 void ParseParamsByteIO::Input()
 {
     // input AU Frame number
-    m_accessunit_fnum = InputUnIntValue(PP_AU_FRAME_NUM_SIZE);
+    m_accessunit_fnum = InputFixedLengthUint(PP_AU_FRAME_NUM_SIZE);
     
     ParseParams def_parse_params(m_accessunit_fnum);
    
     //input version
-    m_parse_params.SetMajorVersion(InputUnGolombValue());
-    m_parse_params.SetMinorVersion(InputUnGolombValue());
+    m_parse_params.SetMajorVersion(InputVarLengthUint());
+    m_parse_params.SetMinorVersion(InputVarLengthUint());
 
     // input profile
-    m_parse_params.SetProfile(InputUnGolombValue());
+    m_parse_params.SetProfile(InputVarLengthUint());
 
     // input level
-    m_parse_params.SetLevel(InputUnGolombValue());
+    m_parse_params.SetLevel(InputVarLengthUint());
 
     std::ostringstream errstr;
     // FIXME: for the time being all should be a perfect match until
@@ -125,18 +125,18 @@ void ParseParamsByteIO::Input()
 void ParseParamsByteIO::Output()
 {
     // output AU Frame number
-    OutputUnIntValue(m_accessunit_fnum, PP_AU_FRAME_NUM_SIZE);
+    OutputFixedLengthUint(m_accessunit_fnum, PP_AU_FRAME_NUM_SIZE);
  
     //:TODO implement
     // output version
-    OutputUnGolombValue(0);
-    OutputUnGolombValue(1);
+    OutputVarLengthUint(0);
+    OutputVarLengthUint(1);
 
     // output profile
-    OutputUnGolombValue(0);
+    OutputVarLengthUint(0);
 
     // output level
-    OutputUnGolombValue(0);
+    OutputVarLengthUint(0);
 }
 
 int ParseParamsByteIO::GetIdNumber() const

@@ -112,9 +112,9 @@ bool ParseUnitByteIO::Input()
     m_parse_code = InputUnByte();
 
     // input parse-offsets
-    m_next_parse_offset = InputUnIntValue(PU_NEXT_PARSE_OFFSET_SIZE);
+    m_next_parse_offset = InputFixedLengthUint(PU_NEXT_PARSE_OFFSET_SIZE);
 
-    m_previous_parse_offset = InputUnIntValue(PU_PREVIOUS_PARSE_OFFSET_SIZE);
+    m_previous_parse_offset = InputFixedLengthUint(PU_PREVIOUS_PARSE_OFFSET_SIZE);
 
     return true;
 }
@@ -167,14 +167,21 @@ const string ParseUnitByteIO::GetBytes()
     stringstream parse_string;
     parse_string << PU_PREFIX;
     parse_string << CalcParseCode();
-    
-    unsigned char *cp = (unsigned char *) &m_next_parse_offset;
-    for(int i=0; i < PU_NEXT_PARSE_OFFSET_SIZE; ++i, ++cp)
-        parse_string << (*cp);
-    cp = (unsigned char *) &m_previous_parse_offset;
-    for(int i=0; i < PU_PREVIOUS_PARSE_OFFSET_SIZE; ++i, ++cp)
-        parse_string << (*cp);
-  
+   
+    //FIXME : Need to do this properly.
+    // Write the parse offsets in Big Endian format
+    for(int i=PU_NEXT_PARSE_OFFSET_SIZE-1; i >= 0; --i)
+    {
+        unsigned char cp = (m_next_parse_offset>>(i*8)) & 0xff; 
+        parse_string << cp;
+    }
+
+    for(int i=PU_PREVIOUS_PARSE_OFFSET_SIZE-1; i >= 0; --i)
+    {
+        unsigned char cp = (m_previous_parse_offset>>(i*8)) & 0xff; 
+        parse_string << cp;
+    }
+
     return parse_string.str() + ByteIO::GetBytes();
 }
 
@@ -267,7 +274,7 @@ bool ParseUnitByteIO::SyncToUnitStart()
         
     }
 
-	// Clear the eof flag and throw an error.
+    // Clear the eof flag and throw an error.
     mp_stream->clear();
     DIRAC_THROW_EXCEPTION(ERR_END_OF_STREAM,
                           "End of stream",

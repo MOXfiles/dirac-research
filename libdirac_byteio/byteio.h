@@ -123,10 +123,10 @@ namespace dirac
         void ByteAlignOutput();
 
          /**
-        * Ouputs an integer in Golomb unsigned integer format
+        * Ouputs an unsigned integer in interleaved exp Golomb format
         *@param value Integer to be output
         */
-        void OutputUnGolombValue(const int& value);
+        void OutputVarLengthUint(const unsigned int& value);
 
     protected:
 
@@ -163,26 +163,29 @@ namespace dirac
         }
 
         /**
-        * Reads an integer in Golomb signed integer formar
+        * Reads an integer in interleaved exp-Golomb format
         *return Signed integer read
         */
-        int InputSignedGolombValue();
+        int InputVarLengthInt();
 
         /**
-        * Reads an integer in Golomb unsigned integer format
-        *@return Integer read
+        * Reads an unsigned integer in interleaved exp Golomb format
+        *@return Unsigned Integer read
         */
-        int InputUnGolombValue();
+        unsigned int InputVarLengthUint();
 
         /**
-        * Reads an integer from the stream
-        *@param byte_size Integer byte-size
+        * Reads a fixed length unsigned integer from the stream in big endian
+        *@param byte_size Number of bytes in fixed length integer 
+        *@return Unsigned Integer read 
         */
-        inline int InputUnIntValue(const int byte_size) { 
+        inline unsigned int InputFixedLengthUint(const int byte_size) { 
            unsigned int val=0; 
-           unsigned char* cp = (unsigned char *) &val;
-           for(int i=0; i < byte_size; ++i, ++cp)
-               *cp = mp_stream->get();
+           for(int i=0; i < byte_size; ++i)
+           {
+               val <<= 8;
+               val += (unsigned char)mp_stream->get();
+           }
            m_num_bytes+=byte_size;
            return val;
         } 
@@ -238,17 +241,21 @@ namespace dirac
         * Outputs an integer in Golomb signed integer format
         *@param val Integer to be output
         */ 
-       void OutputSignedGolombValue(const int val);
+       void OutputVarLengthInt(const int val);
 
        /**
-       * Output unsigned int value
+       * Output unsigned int value in big endian format
+       * @param val Integer to be output
+       * @param length number of bytes in val to output
        */
-       inline void OutputUnIntValue(const int& value, const int& length)
-       {    const unsigned int val = static_cast<unsigned int>(value);
-            unsigned char *cp = (unsigned char *) &val;
-            for(int i=0; i < length; ++i, ++cp)
-                *mp_stream << (*cp);
-            m_num_bytes+=length;
+       inline void OutputFixedLengthUint(const unsigned int& value, const int& length)
+       {
+           for(int i=length-1; i >=0 ; --i)
+           {
+              unsigned char cp = (value>>(i*8))&0xff; 
+               *mp_stream << cp;
+           }
+           m_num_bytes+=length;
        }
        
        /**

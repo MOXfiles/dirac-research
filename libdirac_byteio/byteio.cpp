@@ -116,47 +116,33 @@ bool ByteIO::InputBit()
 #endif
 }
 
-int ByteIO::InputSignedGolombValue()
+int ByteIO::InputVarLengthInt()
 {
 
-    int val = InputUnGolombValue();
+    int val = InputVarLengthUint();
     bool bit;
 
      //get the sign
     if (val != 0)
     {
         bit = InputBit();
-        if (!bit )
+        if (bit )
             val = -val;
     }
     return val;        
 }
 
-int ByteIO::InputUnGolombValue()
+unsigned int ByteIO::InputVarLengthUint()
 {
-    unsigned int M = 0;
-    unsigned int info = 0;
-    bool bit = 0;
-    unsigned int val = 0;
-
-    do
+    unsigned int value = 1;
+    while (!InputBit())
     {
-        bit = InputBit();
-        if (bit == BIT_ZERO)
-            M++;
+        value <<= 1;
+        if (InputBit())
+            value +=1; 
     }
-    while( bit==BIT_ZERO && M<64 );//terminate if the number is too big!
-
-    //now get the M info bits    
-    for ( unsigned int i=0 ; i<M ; ++i)
-    {
-        bit = InputBit();
-        if (bit == BIT_ONE )
-            info |= (1<<i);
-    }// i    
-    val = (1<<M) -1 + info;
-
-    return static_cast<int>(val);
+    --value;
+    return value;
 }
 
 
@@ -183,40 +169,32 @@ void ByteIO::OutputBit(const bool& bit)
         ++m_current_pos;
 }
 
-void ByteIO::OutputSignedGolombValue(const int val)
+void ByteIO::OutputVarLengthInt(const int val)
 {
     //output magnitude
-    OutputUnGolombValue(abs(val));
+    OutputVarLengthUint(abs(val));
 
     //do sign
-    if (val>0) OutputBit(1);
-    else if (val<0) OutputBit(0);
+    if (val<0) OutputBit(1);
+    else if (val>0) OutputBit(0);
 }
 
-void ByteIO::OutputUnGolombValue(const int& value)
+void ByteIO::OutputVarLengthUint(const unsigned int& value)
 {
-    // convert to colomb format
-    unsigned int u_value = static_cast<const unsigned int>(value);
-    unsigned int M = 0;
-    unsigned int info;
+    unsigned int val = value+1;
 
-    u_value++;
-    while (u_value>1)
-        {//get the log base 2 of val.
-        u_value >>= 1;
-        M++;        
-    }
-    info = value - (1<<M) + 1;
+    int num_follow_zeroes = 0;
 
-    //add length M+1 prefix
-    for ( unsigned int i=1 ; i<=M ; ++i)
+    while (val >= (1U <<num_follow_zeroes))
+        ++num_follow_zeroes;
+    --num_follow_zeroes;
+
+    for (int i=num_follow_zeroes-1; i>=0; --i)
+    {
         OutputBit(BIT_ZERO);
-    
+        OutputBit(val&(1<<i));
+    }
     OutputBit(BIT_ONE);
-
-    //add info bits
-    for (unsigned int i=0 ; i<M ;++i)
-        OutputBit( info & (1<<i) );        
 }
 
 void ByteIO::RemoveRedundantBytes(const int size)

@@ -120,7 +120,7 @@ void DisplayParamsByteIO::InputAspectRatio()
         return;
 
     // read index value
-    int aspect_ratio_index = InputUnGolombValue();
+    int aspect_ratio_index = InputVarLengthUint();
     AspectRatioType aspect_ratio=IntToAspectRatioType(aspect_ratio_index);
     if(aspect_ratio==ASPECT_RATIO_UNDEFINED)
     DIRAC_THROW_EXCEPTION(
@@ -135,8 +135,8 @@ void DisplayParamsByteIO::InputAspectRatio()
     else
     {
         // read num/denom
-        int numerator = InputUnGolombValue();
-        int denominator = InputUnGolombValue();
+        int numerator = InputVarLengthUint();
+        int denominator = InputVarLengthUint();
         m_src_params.SetAspectRatio(numerator, denominator);
     }
 
@@ -148,10 +148,10 @@ void DisplayParamsByteIO::InputCleanArea()
     if(!clean_area_flag)
         return;
 
-    m_src_params.SetCleanWidth( InputUnGolombValue() );
-    m_src_params.SetCleanHeight( InputUnGolombValue() );
-    m_src_params.SetLeftOffset( InputUnGolombValue() );
-    m_src_params.SetTopOffset( InputUnGolombValue() );
+    m_src_params.SetCleanWidth( InputVarLengthUint() );
+    m_src_params.SetCleanHeight( InputVarLengthUint() );
+    m_src_params.SetLeftOffset( InputVarLengthUint() );
+    m_src_params.SetTopOffset( InputVarLengthUint() );
 }
 
 void DisplayParamsByteIO::InputColourMatrix()
@@ -161,7 +161,7 @@ void DisplayParamsByteIO::InputColourMatrix()
         return;
 
     // read index value
-    int colour_matrix_index = InputUnGolombValue();
+    int colour_matrix_index = InputVarLengthUint();
     m_src_params.SetColourMatrixIndex(colour_matrix_index);
 }
 
@@ -172,7 +172,7 @@ void DisplayParamsByteIO::InputColourPrimaries()
         return;
 
     // read index value
-    int colour_primaries_index = InputUnGolombValue();
+    int colour_primaries_index = InputVarLengthUint();
     m_src_params.SetColourPrimariesIndex(colour_primaries_index);
 }
 
@@ -183,7 +183,7 @@ void DisplayParamsByteIO::InputColourSpecification()
         return;
 
     // read index value
-    int colour_spec_index = InputUnGolombValue();
+    int colour_spec_index = InputVarLengthUint();
     if(colour_spec_index!=0)
     {
         m_src_params.SetColourSpecification( colour_spec_index );
@@ -202,7 +202,7 @@ void DisplayParamsByteIO::InputFrameRate()
     if(!fr_flag)
         return;
 
-    int frame_rate_index = InputUnGolombValue();
+    int frame_rate_index = InputVarLengthUint();
     FrameRateType frame_rate=IntToFrameRateType(frame_rate_index);
     if(frame_rate==FRAMERATE_UNDEFINED)
         DIRAC_THROW_EXCEPTION(
@@ -217,8 +217,8 @@ void DisplayParamsByteIO::InputFrameRate()
     else
     {
         // read num/denom
-        int numerator = InputUnGolombValue();
-        int denominator = InputUnGolombValue();
+        int numerator = InputVarLengthUint();
+        int denominator = InputVarLengthUint();
         m_src_params.SetFrameRate(numerator, denominator);
     }
 }
@@ -252,7 +252,7 @@ void DisplayParamsByteIO::InputSignalRange()
         return;
 
     // read index value
-    int signal_range_index = InputUnGolombValue();
+    int signal_range_index = InputVarLengthUint();
     SignalRangeType signal_range = IntToSignalRangeType(signal_range_index);
     if(signal_range==SIGNAL_RANGE_UNDEFINED)
         DIRAC_THROW_EXCEPTION(
@@ -267,11 +267,11 @@ void DisplayParamsByteIO::InputSignalRange()
     else
     {
         // read luma values
-        m_src_params.SetLumaOffset( InputUnGolombValue() );
-        m_src_params.SetLumaExcursion( InputUnGolombValue() );
+        m_src_params.SetLumaOffset( InputVarLengthUint() );
+        m_src_params.SetLumaExcursion( InputVarLengthUint() );
         // read chroma values
-        m_src_params.SetChromaOffset( InputUnGolombValue() );
-        m_src_params.SetChromaExcursion( InputUnGolombValue() );
+        m_src_params.SetChromaOffset( InputVarLengthUint() );
+        m_src_params.SetChromaExcursion( InputVarLengthUint() );
     }
 }
 
@@ -282,7 +282,7 @@ void DisplayParamsByteIO::InputTransferFunction()
         return;
 
     // read index value
-    int trans_fun_index = InputUnGolombValue();
+    int trans_fun_index = InputVarLengthUint();
     m_src_params.SetTransferFunctionIndex(trans_fun_index);
 }
 
@@ -299,12 +299,12 @@ void DisplayParamsByteIO::OutputAspectRatio()
        OutputBit(1);
 
     // Frame rate index
-    OutputUnGolombValue(m_src_params.AspectRatioIndex());
+    OutputVarLengthUint(m_src_params.AspectRatioIndex());
     
     if (!m_src_params.AspectRatioIndex()) // i,e. custom value
     {
-        OutputUnGolombValue(m_src_params.AspectRatio().m_num);
-        OutputUnGolombValue(m_src_params.AspectRatio().m_denom);
+        OutputVarLengthUint(m_src_params.AspectRatio().m_num);
+        OutputVarLengthUint(m_src_params.AspectRatio().m_denom);
     }
 }
 
@@ -317,10 +317,10 @@ void DisplayParamsByteIO::OutputCleanArea()
         m_src_params.TopOffset() != m_default_src_params.TopOffset())
     {
         OutputBit(1); // non-default value
-        OutputUnGolombValue(m_src_params.CleanWidth());
-        OutputUnGolombValue(m_src_params.CleanHeight());
-        OutputUnGolombValue(m_src_params.LeftOffset());
-        OutputUnGolombValue(m_src_params.TopOffset());
+        OutputVarLengthUint(m_src_params.CleanWidth());
+        OutputVarLengthUint(m_src_params.CleanHeight());
+        OutputVarLengthUint(m_src_params.LeftOffset());
+        OutputVarLengthUint(m_src_params.TopOffset());
     }
     else
         OutputBit(0); // default value
@@ -340,7 +340,7 @@ void DisplayParamsByteIO::OutputColourSpecification()
     // Non-defaults
        OutputBit(1);
     // Output Colour specification index
-    OutputUnGolombValue(m_src_params.ColourSpecificationIndex());
+    OutputVarLengthUint(m_src_params.ColourSpecificationIndex());
 
     if (!m_src_params.ColourSpecificationIndex()) // i,e, custom values
     {
@@ -353,7 +353,7 @@ void DisplayParamsByteIO::OutputColourSpecification()
         else
         {
             OutputBit(1);
-            OutputUnGolombValue(m_src_params.ColourPrimariesIndex());
+            OutputVarLengthUint(m_src_params.ColourPrimariesIndex());
         }
 
         // Output Colour Matrix
@@ -365,7 +365,7 @@ void DisplayParamsByteIO::OutputColourSpecification()
         else
         {
             OutputBit(1);
-            OutputUnGolombValue(m_src_params.ColourMatrixIndex());
+            OutputVarLengthUint(m_src_params.ColourMatrixIndex());
         }
 
         // Output TransferFunction
@@ -377,7 +377,7 @@ void DisplayParamsByteIO::OutputColourSpecification()
         else
         {
             OutputBit(1);
-            OutputUnGolombValue(m_src_params.TransferFunctionIndex());
+            OutputVarLengthUint(m_src_params.TransferFunctionIndex());
         }
     }
 }
@@ -395,12 +395,12 @@ void DisplayParamsByteIO::OutputFrameRate()
        OutputBit(1);
 
     // Frame rate index
-    OutputUnGolombValue(m_src_params.FrameRateIndex());
+    OutputVarLengthUint(m_src_params.FrameRateIndex());
     
     if (!m_src_params.FrameRateIndex()) // i,e. custom value
     {
-        OutputUnGolombValue(m_src_params.FrameRate().m_num);
-        OutputUnGolombValue(m_src_params.FrameRate().m_denom);
+        OutputVarLengthUint(m_src_params.FrameRate().m_num);
+        OutputVarLengthUint(m_src_params.FrameRate().m_denom);
     }
 }
 
@@ -457,13 +457,13 @@ void DisplayParamsByteIO::OutputSignalRange()
     // Non-defaults
        OutputBit(1);
     // Output Signal Range Index
-    OutputUnGolombValue(m_src_params.SignalRangeIndex());
+    OutputVarLengthUint(m_src_params.SignalRangeIndex());
 
     if (!m_src_params.SignalRangeIndex()) // i.e. custom values
     {
-        OutputUnGolombValue(m_src_params.LumaOffset());
-        OutputUnGolombValue(m_src_params.LumaExcursion());
-        OutputUnGolombValue(m_src_params.ChromaOffset());
-        OutputUnGolombValue(m_src_params.ChromaExcursion());
+        OutputVarLengthUint(m_src_params.LumaOffset());
+        OutputVarLengthUint(m_src_params.LumaExcursion());
+        OutputVarLengthUint(m_src_params.ChromaOffset());
+        OutputVarLengthUint(m_src_params.ChromaExcursion());
     }
 }
