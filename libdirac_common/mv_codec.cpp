@@ -22,7 +22,9 @@
 *
 * Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
-*                 Tim Borer
+*                 Tim Borer,
+*                 Andrew Kennedy,
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -43,25 +45,17 @@ using namespace dirac;
 
 //public functions//
 ////////////////////
-// Constructor for encoding
-MvDataCodec::MvDataCodec(BasicOutputManager* bits_out,
+// Constructor 
+MvDataCodec::MvDataCodec(ByteIO* p_byteio,
                          size_t number_of_contexts,
                          const ChromaFormat& cf)
-  : ArithCodec <MvData> (bits_out,number_of_contexts),
+  : ArithCodec <MvData> (p_byteio,number_of_contexts),
     m_MB_count( 0 ),
     m_reset_num( 32 ),
     m_cformat(cf)
 {}        
 
-// Constructor for decoding
-MvDataCodec::MvDataCodec(BitInputManager* bits_in,
-                         size_t number_of_contexts,
-                         const ChromaFormat& cf)
-  : ArithCodec <MvData> (bits_in,number_of_contexts),
-    m_MB_count( 0 ),
-    m_reset_num( 32 ),
-    m_cformat(cf)
-{}    
+
 
 void MvDataCodec::InitContexts() 
 {
@@ -101,7 +95,7 @@ inline int MvDataCodec::ChooseMBCContext(const MvData& data) const
     return MB_CMODE_CTX; 
 }
 
-inline int MvDataCodec::ChooseREF1xFollowContext( const int bin_number) const
+inline int MvDataCodec::ChooseREF1xFollowContext(const int bin_number) const
 {
     if (bin_number == 1)
         return REF1x_FBIN1_CTX; 
@@ -125,7 +119,7 @@ inline int MvDataCodec::ChooseREF1xSignContext() const
     return REF1x_SIGN_CTX;
 }
 
-inline int MvDataCodec::ChooseREF1yFollowContext( const int bin_number) const
+inline int MvDataCodec::ChooseREF1yFollowContext(const int bin_number) const
 {
     if (bin_number == 1)
         return REF1y_FBIN1_CTX; 
@@ -144,13 +138,12 @@ inline int MvDataCodec::ChooseREF1yInfoContext() const
     return REF1y_INFO_CTX;
 }
 
-
 inline int MvDataCodec::ChooseREF1ySignContext() const
 {
     return REF1y_SIGN_CTX;
 }
 
-inline int MvDataCodec::ChooseREF2xFollowContext( const int bin_number) const
+inline int MvDataCodec::ChooseREF2xFollowContext(const int bin_number) const
 {
     if (bin_number == 1)
         return REF2x_FBIN1_CTX; 
@@ -166,9 +159,8 @@ inline int MvDataCodec::ChooseREF2xFollowContext( const int bin_number) const
 
 inline int MvDataCodec::ChooseREF2xInfoContext() const
 {
-    return REF2x_INFO_CTX;
+    return REF2x_INFO_CTX; 
 }
-
 
 inline int MvDataCodec::ChooseREF2xSignContext() const
 {
@@ -191,9 +183,8 @@ inline int MvDataCodec::ChooseREF2yFollowContext(const int bin_number) const
 
 inline int MvDataCodec::ChooseREF2yInfoContext() const
 {
-    return REF2y_INFO_CTX;
+    return REF2y_INFO_CTX; 
 }
-
 
 inline int MvDataCodec::ChooseREF2ySignContext() const
 {
@@ -210,7 +201,7 @@ inline int MvDataCodec::ChooseYDCFollowContext(const int bin_number) const
 
 inline int MvDataCodec::ChooseYDCInfoContext() const
 {
-    return YDC_INFO_CTX;
+    return YDC_INFO_CTX; 
 }
 
 inline int MvDataCodec::ChooseUDCFollowContext(const int bin_number) const
@@ -223,10 +214,10 @@ inline int MvDataCodec::ChooseUDCFollowContext(const int bin_number) const
 
 inline int MvDataCodec::ChooseUDCInfoContext() const
 {
-    return UDC_INFO_CTX;
+    return UDC_INFO_CTX; 
 }
 
-inline int MvDataCodec::ChooseVDCFollowContext( const int bin_number) const
+inline int MvDataCodec::ChooseVDCFollowContext(const int bin_number) const
 {
     if (bin_number == 1)
         return VDC_FBIN1_CTX; 
@@ -236,7 +227,7 @@ inline int MvDataCodec::ChooseVDCFollowContext( const int bin_number) const
 
 inline int MvDataCodec::ChooseVDCInfoContext() const
 {
-    return VDC_INFO_CTX;
+    return VDC_INFO_CTX; 
 }
 
 inline int MvDataCodec::ChooseYDCSignContext() const
@@ -314,10 +305,11 @@ inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode 
 
         result = num_ref1_nbrs>>1;
 
-        if ( num_refs==2) {
-            num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp] ) ) & 2;
-            num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp-1] ) ) & 2;
-            num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp][m_b_xp-1] ) ) & 2;
+        if ( num_refs==2)
+        {
+            num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp] ) ) & 2; 
+            num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp-1] ) ) & 2; 
+            num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp][m_b_xp-1] ) ) & 2; 
             num_ref2_nbrs >>= 1;
             result ^= ( (num_ref2_nbrs>>1)<<1 );
         }
@@ -557,16 +549,15 @@ void MvDataCodec::CodePredmode(const MvData& in_data)
 {
     // Xor with the prediction so we predict whether REF1 is used or REF2 is
     // used, separately
-    unsigned int residue = in_data.Mode()[m_b_yp][m_b_xp] ^
+    unsigned int residue = in_data.Mode()[m_b_yp][m_b_xp] ^ 
         BlockModePrediction( in_data.Mode(), in_data.NumRefs() ); 
     
     // Code REF1 part of the prediction residue (ie the first bit)
     EncodeSymbol( residue & 1 , PMODE_BIT0_CTX );
 
     // Code REF2 part of the prediction residue (ie the second bit)
-    if (in_data.NumRefs()==2) {
+    if (in_data.NumRefs()==2)
         EncodeSymbol( residue & 2 , PMODE_BIT1_CTX );
-    }
 
 }
 
@@ -716,54 +707,50 @@ void MvDataCodec::CodeDC(const MvData& in_data)
         EncodeSymbol( ( (valY > 0)? 1 : 0) , ChooseYDCSignContext() ); 
     }
 
-    //now do U and V if necessary
-    if (m_cformat != Yonly)
+    //continue with U and V DC values
+    const int valU =  in_data.DC(U_COMP)[m_b_yp][m_b_xp]
+                      - DCPrediction(in_data.DC( U_COMP ) , in_data.Mode()); 
+    const int abs_valU = std::abs( valU ); 
+
+    N = abs_valU+1;
+    num_follow_zeroes=0;
+
+    while ( N >= (1<<num_follow_zeroes) )
+        ++num_follow_zeroes;
+    --num_follow_zeroes; 
+
+    for ( int i=num_follow_zeroes-1, c=1; i>=0; --i, ++c )
     {
-        //continue with U and V DC values
-        const int valU =  in_data.DC(U_COMP)[m_b_yp][m_b_xp]
-                          - DCPrediction(in_data.DC( U_COMP ) , in_data.Mode()); 
-        const int abs_valU = std::abs( valU ); 
+        EncodeSymbol( 0, ChooseUDCFollowContext( c ) );
+        EncodeSymbol( N&(1<<i), ChooseUDCInfoContext() );
+    }
+    EncodeSymbol( 1, ChooseUDCFollowContext( num_follow_zeroes+1 ) );
+    
+    if (valU != 0)
+    {
+        EncodeSymbol( ( (valU > 0) ? 1 : 0) , ChooseUDCSignContext() ); 
+    }
+    const int valV = in_data.DC( V_COMP )[m_b_yp][m_b_xp] 
+                     - DCPrediction( in_data.DC( V_COMP ) , in_data.Mode() ); 
+    const int abs_valV = std::abs( valV ); 
 
-        N = abs_valU+1;
-        num_follow_zeroes=0;
+    N = abs_valV+1;
+    num_follow_zeroes=0;
 
-        while ( N >= (1<<num_follow_zeroes) )
-            ++num_follow_zeroes;
-        --num_follow_zeroes; 
+    while ( N >= (1<<num_follow_zeroes) )
+        ++num_follow_zeroes;
+    --num_follow_zeroes; 
 
-        for ( int i=num_follow_zeroes-1, c=1; i>=0; --i, ++c )
-        {
-            EncodeSymbol( 0, ChooseUDCFollowContext( c ) );
-            EncodeSymbol( N&(1<<i), ChooseUDCInfoContext() );
-        }
-        EncodeSymbol( 1, ChooseUDCFollowContext( num_follow_zeroes+1 ) );
-        
-        if (valU != 0)
-        {
-            EncodeSymbol( ( (valU > 0) ? 1 : 0) , ChooseUDCSignContext() ); 
-        }
-        const int valV = in_data.DC( V_COMP )[m_b_yp][m_b_xp] 
-                         - DCPrediction( in_data.DC( V_COMP ) , in_data.Mode() ); 
-        const int abs_valV = std::abs( valV ); 
-
-        N = abs_valV+1;
-        num_follow_zeroes=0;
-
-        while ( N >= (1<<num_follow_zeroes) )
-            ++num_follow_zeroes;
-        --num_follow_zeroes; 
-
-        for ( int i=num_follow_zeroes-1, c=1; i>=0; --i, ++c )
-        {
-            EncodeSymbol( 0, ChooseVDCFollowContext( c ) );
-            EncodeSymbol( N&(1<<i), ChooseVDCInfoContext() );
-        }
-        EncodeSymbol( 1, ChooseVDCFollowContext( num_follow_zeroes+1 ) );
-        
-        if (valV != 0)
-        {
-            EncodeSymbol( ( (valV > 0)? 1 : 0) , ChooseVDCSignContext() ); 
-        }
+    for ( int i=num_follow_zeroes-1, c=1; i>=0; --i, ++c )
+    {
+        EncodeSymbol( 0, ChooseVDCFollowContext( c ) );
+        EncodeSymbol( N&(1<<i), ChooseVDCInfoContext() );
+    }
+    EncodeSymbol( 1, ChooseVDCFollowContext( num_follow_zeroes+1 ) );
+    
+    if (valV != 0)
+    {
+        EncodeSymbol( ( (valV > 0)? 1 : 0) , ChooseVDCSignContext() ); 
     }
 }
 
@@ -842,18 +829,18 @@ void MvDataCodec::DoWorkDecode( MvData& out_data)
                         DecodeDC( out_data ); 
                     
                       //propagate throughout MB    
-                    for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
+                     for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
                     {
                         for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
                         {                    
                             out_data.Vectors(1)[m_b_yp][m_b_xp].x = out_data.Vectors(1)[ystart][xstart].x; 
-                            out_data.Vectors(1)[m_b_yp][m_b_xp].y = out_data.Vectors(1)[ystart][xstart].y;  
+                            out_data.Vectors(1)[m_b_yp][m_b_xp].y = out_data.Vectors(1)[ystart][xstart].y; 
 
-                            if (out_data.NumRefs()==2) {
-                                out_data.Vectors(2)[m_b_yp][m_b_xp].x = out_data.Vectors(2)[ystart][xstart].x;
-                                out_data.Vectors(2)[m_b_yp][m_b_xp].y = out_data.Vectors(2)[ystart][xstart].y;
+                            if (out_data.NumRefs()==2)
+                            {
+                                out_data.Vectors(2)[m_b_yp][m_b_xp].x = out_data.Vectors(2)[ystart][xstart].x; 
+                                out_data.Vectors(2)[m_b_yp][m_b_xp].y = out_data.Vectors(2)[ystart][xstart].y; 
                             }
-
                             out_data.DC( Y_COMP )[m_b_yp][m_b_xp] = out_data.DC( Y_COMP )[ystart][xstart]; 
                             out_data.DC( U_COMP )[m_b_yp][m_b_xp] = out_data.DC( U_COMP )[ystart][xstart]; 
                             out_data.DC( V_COMP )[m_b_yp][m_b_xp] = out_data.DC( V_COMP )[ystart][xstart]; 
@@ -914,13 +901,14 @@ void MvDataCodec::DecodePredmode( MvData& out_data )
     residue = (unsigned int) bit;
 
     // Decode REF2 part of the prediction residue (ie the second bit)
-    if (out_data.NumRefs()==2) {
+    if (out_data.NumRefs()==2)
+    {
         bit = DecodeSymbol( PMODE_BIT1_CTX );
         residue |= ( (unsigned int) bit ) << 1;
     }
     
-    out_data.Mode()[m_b_yp][m_b_xp] =
-        PredMode( BlockModePrediction(out_data.Mode(), out_data.NumRefs()) ^ residue ); 
+    out_data.Mode()[m_b_yp][m_b_xp] = 
+        PredMode( BlockModePrediction (out_data.Mode() , out_data.NumRefs()) ^ residue ); 
 }
 
 /*
@@ -1048,45 +1036,42 @@ void MvDataCodec::DecodeDC( MvData& out_data )
     
     out_data.DC( Y_COMP )[m_b_yp][m_b_xp] = val + DCPrediction( out_data.DC( Y_COMP ) , out_data.Mode()); 
 
-    if (m_cformat != Yonly)
+    //move onto U and V DC values
+    val = 1;
+    bit_count=1;
+
+    while ( !DecodeSymbol( ChooseUDCFollowContext( bit_count ) ) )
     {
-        //move onto U and V DC values
-        val = 1;
-        bit_count=1;
-
-        while ( !DecodeSymbol( ChooseUDCFollowContext( bit_count ) ) )
-        {
-            val <<= 1;
-            val |= DecodeSymbol( ChooseUDCInfoContext() );
-            bit_count++;
-        };
-        --val;
-        
-        if (val != 0)
-        {
-            if ( !DecodeSymbol( ChooseUDCSignContext () ) )
-                val = -val; 
-        }
-        
-        out_data.DC( U_COMP )[m_b_yp][m_b_xp] = val + DCPrediction( out_data.DC( U_COMP ) , out_data.Mode()); 
-        
-        val = 1;
-        bit_count=1;
-
-        while ( !DecodeSymbol( ChooseVDCFollowContext(bit_count ) ) )
-        {
-            val <<= 1;
-            val |= DecodeSymbol( ChooseVDCInfoContext() );
-            bit_count++;
-        };
-        --val;    
-        
-        if (val != 0)
-        {
-            if ( !DecodeSymbol( ChooseVDCSignContext() )  )
-                val = -val; 
-        }
-        
-        out_data.DC( V_COMP )[m_b_yp][m_b_xp] = val + DCPrediction( out_data.DC( V_COMP ) , out_data.Mode() ); 
+        val <<= 1;
+        val |= DecodeSymbol( ChooseUDCInfoContext() );
+        bit_count++;
+    };
+    --val;
+    
+    if (val != 0)
+    {
+        if ( !DecodeSymbol( ChooseUDCSignContext () ) )
+            val = -val; 
     }
+    
+    out_data.DC( U_COMP )[m_b_yp][m_b_xp] = val + DCPrediction( out_data.DC( U_COMP ) , out_data.Mode()); 
+    
+    val = 1;
+    bit_count=1;
+
+    while ( !DecodeSymbol( ChooseVDCFollowContext(bit_count ) ) )
+    {
+        val <<= 1;
+        val |= DecodeSymbol( ChooseVDCInfoContext() );
+        bit_count++;
+    };
+    --val;    
+    
+    if (val != 0)
+    {
+        if ( !DecodeSymbol( ChooseVDCSignContext() )  )
+            val = -val; 
+    }
+    
+    out_data.DC( V_COMP )[m_b_yp][m_b_xp] = val + DCPrediction( out_data.DC( V_COMP ) , out_data.Mode() ); 
 }

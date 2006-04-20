@@ -21,6 +21,7 @@
 * All Rights Reserved.
 *
 * Contributor(s): Anuradha Suraparaju (Original Author)
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -112,8 +113,12 @@ typedef struct
 {
     /*! parser state */
     dirac_decoder_state_t state;
+    /*! parse parameters */
+    dirac_parseparams_t parse_params;
     /*! sequence parameters */
     dirac_seqparams_t seq_params;
+    /*! source parameters */
+    dirac_sourceparams_t src_params;
     /*! frame parameters */
     dirac_frameparams_t frame_params;
     /*! void pointer to internal parser */

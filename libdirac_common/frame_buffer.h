@@ -20,7 +20,8 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s):
+* Contributor(s): Thomas Davies (Original Author),
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -58,6 +59,9 @@ namespace dirac
     */
     class FrameBuffer{
     public:
+        //! Default Constructor
+        FrameBuffer();
+        
         //! Constructor
         /*!
             Creates a FrameBuffer using the chroma format. Suitable for 
@@ -194,6 +198,15 @@ namespace dirac
             Delete frames which have been output and which are no longer 
             required for reference. Expiry times are set in each frame's 
             frame parameters.
+            \param show_fnum             frame number in display order that can be output
+            \param current_coded_fnum    frame number in display order of frame currently being coded
+        */
+        void Clean(int show_fnum, int current_coded_fnum);
+
+        //! Delete frame
+        /*! 
+            Delete frame. 
+            \param fnum             frame number in display order to be deleted from frame buffer 
         */
         void Clean(int fnum);
 

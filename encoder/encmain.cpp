@@ -48,7 +48,6 @@
 #include <cassert>
 #include <string>
 #include <libdirac_encoder/dirac_encoder.h>
-
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -65,31 +64,40 @@ static void display_help()
     cout << "\nUsage: progname -<flag1> [<flag1_val>] ... <input> <output>";
     cout << "\nIn case of multiple assignment to the same parameter, the last holds.";
     cout << "\n";
-    cout << "\nName     Type    Default Value Description";
-    cout << "\n====     ====    ============= ===========                                       ";
-    cout << "\ninput    string  [ required ]  Input file name";
-    cout << "\noutput   string  [ required ]  Output file name";
-    cout << "\nCIF      bool    true          Use CIF compression presets";
-    cout << "\nHD720    bool    false         Use HD-720 compression presets";
-    cout << "\nHD1080   bool    false         Use HD-1080 compression presets";
-    cout << "\nSD576    bool    false         Use SD-576 compression presets";
-    cout << "\nwidth    ulong   Preset        Width of frame";
-    cout << "\nheight   ulong   Preset        Length of frame";
-    cout << "\ncformat  ulong   Yonly         Chroma format 0=Yonly 1=422 2=444 3=420 4=411";
-    cout << "\nfr       ulong   Preset        Frame rate(s) (e.n or e/n format)";
-    cout << "\nstart    ulong   0UL           Frame number to start encoding from";
-    cout << "\nstop     ulong   EOF           Frame number after which encoding finishes";
-    cout << "\nL1_sep   ulong   0UL           Separation of L1 frames";
-    cout << "\nnum_L1   ulong   0UL           Number of L1 frames";
-    cout << "\nxblen    ulong   0UL           Overlapping block horizontal length";
-    cout << "\nyblen    ulong   0UL           Overlapping block vertical length";
-    cout << "\nxbsep    ulong   0UL           Overlapping block horizontal separation";
-    cout << "\nybsep    ulong   0UL           Overlapping block vertical separation";
-    cout << "\ncpd      ulong   0UL           Perceptual weighting - vertical cycles per deg.";
-    cout << "\nqf       float   0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
-    cout << "\nlossless bool    false         Lossless coding (overrides qf)";
-    cout << "\nverbose  bool    false         Verbose mode";
-    cout << "\nlocal    bool    false         Write diagnostics & locally decoded video";
+    cout << "\nName              Type             Default Value Description";
+    cout << "\n====              ====             ============= ===========                                       ";
+    cout << "\nQSIF              bool    false         Use QSIF compression presets";
+    cout << "\nQCIF              bool    false         Use QCIF compression presets";
+    cout << "\nSIF               bool    false         Use SIF compression presets";
+    cout << "\nCIF               bool    false         Use CIF compression presets";
+    cout << "\nSDPAL             bool    false         Use SD-PAL compression presets";
+    cout << "\nSDNTSC            bool    false         Use SD-NTSC compression presets";
+    cout << "\nSD480             bool    false         Use SD-480 compression presets";
+    cout << "\nSD576             bool    false         Use SD-576 compression presets";
+    cout << "\nHD720             bool    false         Use HD-720 compression presets";
+    cout << "\nHD1080            bool    false         Use HD-1080 compression presets";
+    cout << "\nwidth             ulong   Preset        Width of frame";
+    cout << "\nheight            ulong   Preset        Length of frame";
+    cout << "\ncformat           ulong   444           Chroma format 0=444 1=422 2=420";
+    cout << "\nfr                ulong   Preset        Frame rate(s) (e.n or e/n format)";
+    cout << "\nstart             ulong   0UL           Frame number to start encoding from";
+    cout << "\nstop              ulong   EOF           Frame number after which encoding finishes";
+    cout << "\nL1_sep            ulong   0UL           Separation of L1 frames";
+    cout << "\nnum_L1            ulong   0UL           Number of L1 frames";
+    cout << "\nxblen             ulong   0UL           Overlapping block horizontal length";
+    cout << "\nyblen             ulong   0UL           Overlapping block vertical length";
+    cout << "\nxbsep             ulong   0UL           Overlapping block horizontal separation";
+    cout << "\nybsep             ulong   0UL           Overlapping block vertical separation";
+    cout << "\ncpd               ulong   0UL           Perceptual weighting - vertical cycles per deg.";
+    cout << "\nqf                float   0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
+    cout << "\nlossless          bool    false         Lossless coding (overrides qf)";
+    cout << "\nwlt_depth         ulong   4             Transform Depth";
+    cout << "\nmulti_quants      bool    false         Use multiple quantisers";
+    cout << "\nno_spartition     bool    false         Do not use spatial partitioning while coding transform data";
+    cout << "\nverbose           bool    false         Verbose mode";
+    cout << "\nlocal             bool    false         Write diagnostics & locally decoded video";
+    cout << "\ninput             string  [ required ]  Input file name";
+    cout << "\noutput            string  [ required ]  Output file name";
     cout << endl;
 }
 
@@ -109,15 +117,12 @@ bool WritePicData (std::ofstream &fdata, dirac_encoder_t *encoder)
         {
             assert (fbuf.buf[0] != 0);
             fdata.write ((char *)fbuf.buf[0], sparams.width*sparams.height);
-            if (sparams.chroma !=Yonly)
-            {
-                assert (fbuf.buf[1] != 0);
-                assert (fbuf.buf[2] != 0);
-                fdata.write ((char *)fbuf.buf[1], 
-                sparams.chroma_width*sparams.chroma_height);
-                fdata.write ((char *)fbuf.buf[2], 
-                sparams.chroma_width*sparams.chroma_height);
-            }
+            assert (fbuf.buf[1] != 0);
+            assert (fbuf.buf[2] != 0);
+            fdata.write ((char *)fbuf.buf[1], 
+            sparams.chroma_width*sparams.chroma_height);
+            fdata.write ((char *)fbuf.buf[2], 
+            sparams.chroma_width*sparams.chroma_height);
         }
         catch (...)
         {
@@ -133,6 +138,7 @@ bool WriteSequenceHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
 {
     bool ret_stat = true;
     dirac_seqparams_t &sparams = encoder->enc_ctx.seq_params;
+    dirac_sourceparams_t &srcparams = encoder->enc_ctx.src_params;
     ios::iostate oldExceptions = fdata.exceptions();
     fdata.exceptions (ios::failbit | ios::badbit);
 
@@ -141,9 +147,10 @@ bool WriteSequenceHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
         fdata << sparams.chroma << std::endl;
         fdata << sparams.width << std::endl;
         fdata << sparams.height << std::endl;
-        fdata << sparams.interlace << std::endl;
-        fdata << sparams.topfieldfirst << std::endl;
-        fdata << sparams.frame_rate.numerator << std::endl;
+        fdata << srcparams.interlace << std::endl;
+        fdata << srcparams.topfieldfirst << std::endl;
+        fdata << srcparams.frame_rate.numerator << std::endl;
+        fdata << srcparams.frame_rate.denominator << std::endl;
     }
 
     catch (...)
@@ -168,7 +175,7 @@ bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
         try
         {
             fdata << std::endl << "[frame:" << instr.fnum << "]";
-            if (instr.ftype == I_frame)
+            if (instr.ftype == INTRA_FRAME)
             {
                 fdata << ">intra" << std::endl;
                 return true;
@@ -247,22 +254,19 @@ bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
             }
             
             // FIXME: always expects 3 components
-            // if (sparams.chroma != Yonly)
+            fdata << std::endl;
+            for (int j=0; j<instr.mv_ylen; j++)
             {
+                for (int i=0; i<instr.mv_xlen; i++)
+                    fdata << instr.dc_ucomp[j*instr.mv_xlen + i] << " ";
                 fdata << std::endl;
-                for (int j=0; j<instr.mv_ylen; j++)
-                {
-                    for (int i=0; i<instr.mv_xlen; i++)
-                        fdata << instr.dc_ucomp[j*instr.mv_xlen + i] << " ";
-                    fdata << std::endl;
-                }
+            }
+            fdata << std::endl;
+            for (int j=0; j<instr.mv_ylen; j++)
+            {
+                for (int i=0; i<instr.mv_xlen; i++)
+                    fdata << instr.dc_vcomp[j*instr.mv_xlen + i] << " ";
                 fdata << std::endl;
-                for (int j=0; j<instr.mv_ylen; j++)
-                {
-                    for (int i=0; i<instr.mv_xlen; i++)
-                        fdata << instr.dc_vcomp[j*instr.mv_xlen + i] << " ";
-                    fdata << std::endl;
-                }
             }
 
             for (int k = 0; k < instr.num_refs; k++)
@@ -348,7 +352,6 @@ int GetFrameBufferSize (const dirac_encoder_context_t &enc_ctx)
 
     switch (enc_ctx.seq_params.chroma)
     {
-    case format411:
     case format420:
         size = (xl*yl*3)/2;
         break;
@@ -358,7 +361,6 @@ int GetFrameBufferSize (const dirac_encoder_context_t &enc_ctx)
     case format444:
         size = (xl*yl)*3;
         break;
-    case Yonly:
     default:
         size = xl * yl;
         break;
@@ -369,9 +371,6 @@ const char *chroma2string (dirac_chroma_t chroma)
 {
     switch (chroma)
     {
-    case Yonly:
-        return "Y_ONLY";
-
     case format422:
         return "4:2:2";
 
@@ -380,9 +379,6 @@ const char *chroma2string (dirac_chroma_t chroma)
 
     case format420:
         return "4:2:0";
-
-    case format411:
-        return "4:1:1";
 
     default:
         break;
@@ -397,8 +393,8 @@ void display_codec_params(dirac_encoder_context_t &enc_ctx)
     std::cout << "\theight=" << enc_ctx.seq_params.height;
     std::cout << " width=" << enc_ctx.seq_params.width << std::endl;
     std::cout << "\tchroma=" << chroma2string(enc_ctx.seq_params.chroma) << std::endl;
-    std::cout << "\tframe rate=" << enc_ctx.seq_params.frame_rate.numerator;
-    std::cout << "/" << enc_ctx.seq_params.frame_rate.denominator << std::endl;
+    std::cout << "\tframe rate=" << enc_ctx.src_params.frame_rate.numerator;
+    std::cout << "/" << enc_ctx.src_params.frame_rate.denominator << std::endl;
     std::cout << "Encoder parameters : " << std::endl;
     std::cout << "\tquality factor=" << enc_ctx.enc_params.qf << std::endl;
     std::cout << "\tGOP parameters : num_L1="  << enc_ctx.enc_params.num_L1;
@@ -449,28 +445,58 @@ int main (int argc, char* argv[])
     }
 
    //Now do the options
-   // Checking for presets. Assume CIF by default
-    dirac_encoder_presets_t preset = CIF;
+   // Checking for presets. Assume custom by default
+    dirac_encoder_presets_t preset = VIDEO_FORMAT_CUSTOM;
     for (int i = 1; i < argc; i++)
     {
+        if ( strcmp (argv[i], "-QSIF") == 0 )
+        {
+            preset = VIDEO_FORMAT_QSIF;
+            parsed[i] = true;
+        }
+         if ( strcmp (argv[i], "-QCIF") == 0 )
+        {
+            preset = VIDEO_FORMAT_QCIF;
+            parsed[i] = true;
+        }
+         if ( strcmp (argv[i], "-SIF") == 0 )
+        {
+            preset = VIDEO_FORMAT_SIF;
+            parsed[i] = true;
+        }
         if ( strcmp (argv[i], "-CIF") == 0 )
         {
-            preset = CIF;
+            preset = VIDEO_FORMAT_CIF;
             parsed[i] = true;
         }
-        else if ( strcmp (argv[i], "-HD720") == 0 )
+        if ( strcmp (argv[i], "-SDPAL") == 0 )
         {
-            preset = HD720;
+            preset = VIDEO_FORMAT_SD_PAL;
             parsed[i] = true;
         }
-        else if ( strcmp (argv[i], "-HD1080") == 0 )
+        if ( strcmp (argv[i], "-SDNTSC") == 0 )
         {
-            preset = HD1080;
+            preset = VIDEO_FORMAT_SD_NTSC;
+            parsed[i] = true;
+        }
+        else if ( strcmp (argv[i], "-SD480") == 0 )
+        {
+            preset = VIDEO_FORMAT_SD_525_DIGITAL;
             parsed[i] = true;
         }
         else if ( strcmp (argv[i], "-SD576") == 0 )
         {
-            preset = SD576;
+            preset = VIDEO_FORMAT_SD_625_DIGITAL;
+            parsed[i] = true;
+        }
+        else if ( strcmp (argv[i], "-HD720") == 0 )
+        {
+            preset = VIDEO_FORMAT_HD_720;
+            parsed[i] = true;
+        }
+        else if ( strcmp (argv[i], "-HD1080") == 0 )
+        {
+            preset = VIDEO_FORMAT_HD_1080;
             parsed[i] = true;
         }
     }
@@ -515,20 +541,20 @@ int main (int argc, char* argv[])
             if(strncmp(argv[i], "59.94", 5)==0)
             {
                 parsed[i] = true;
-                enc_ctx.seq_params.frame_rate.numerator=60000;
-                enc_ctx.seq_params.frame_rate.denominator=1001;
+                enc_ctx.src_params.frame_rate.numerator=60000;
+                enc_ctx.src_params.frame_rate.denominator=1001;
             }
             else if(strncmp(argv[i], "23.98", 5)==0)
             {
                 parsed[i] = true;
-                enc_ctx.seq_params.frame_rate.numerator=24000; 
-                enc_ctx.seq_params.frame_rate.denominator=1001;
+                enc_ctx.src_params.frame_rate.numerator=24000; 
+                enc_ctx.src_params.frame_rate.denominator=1001;
             }
             else if(strncmp(argv[i], "29.97", 5)==0)
             {
                 parsed[i] = true;
-                enc_ctx.seq_params.frame_rate.numerator=30000;
-                enc_ctx.seq_params.frame_rate.denominator=1001;
+                enc_ctx.src_params.frame_rate.numerator=30000;
+                enc_ctx.src_params.frame_rate.denominator=1001;
             }
             //test for decimal format
             else if(strcspn(argv[i], ".")!=strlen(argv[i]))
@@ -549,9 +575,9 @@ int main (int argc, char* argv[])
                 }
                 // calculate amount to raise to whole number
                 int multiply = (int)std::pow(10.0, decimal_length);
-                enc_ctx.seq_params.frame_rate.numerator =  
+                enc_ctx.src_params.frame_rate.numerator =  
                     decimal == 0 ? whole : (multiply*whole)+decimal;
-                enc_ctx.seq_params.frame_rate.denominator = 
+                enc_ctx.src_params.frame_rate.denominator = 
                     decimal == 0 ? 1 : multiply;
                  
             }
@@ -560,11 +586,11 @@ int main (int argc, char* argv[])
                 parsed[i] = true;
                 // assume e/d format
                 char* token = strtok(argv[i], "/");
-                enc_ctx.seq_params.frame_rate.numerator =  
+                enc_ctx.src_params.frame_rate.numerator =  
                 strtoul(token,NULL,10);
                 token = strtok(NULL, "");
                 if(token)
-                    enc_ctx.seq_params.frame_rate.denominator = 
+                    enc_ctx.src_params.frame_rate.denominator = 
                     strtoul(token, NULL, 10);
              }
         }
@@ -659,6 +685,23 @@ int main (int argc, char* argv[])
             parsed[i] = true;
             i++;
             end_pos = strtoul(argv[i],NULL,10);
+            parsed[i] = true;
+        }
+        else if ( strcmp(argv[i], "-multi_quants") == 0 )
+        {
+            parsed[i] = true;
+            enc_ctx.enc_params.multi_quants = true;
+        }
+        else if ( strcmp(argv[i], "-no_spartition") == 0 )
+        {
+            parsed[i] = true;
+            enc_ctx.enc_params.spatial_partition = false;
+        }
+        else if ( strcmp(argv[i], "-wlt_depth") == 0 )
+        {
+            parsed[i] = true;
+            i++;
+            enc_ctx.enc_params.wlt_depth = strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
         i++;
@@ -780,8 +823,10 @@ int main (int argc, char* argv[])
         return EXIT_FAILURE;
     }
 
+
     if (outimt)
-        WriteSequenceHeader ( *outimt, encoder );
+       WriteSequenceHeader ( *outimt, encoder );
+
 
     int frames_written = 0;
     dirac_encoder_state_t state;
@@ -848,8 +893,8 @@ int main (int argc, char* argv[])
 
         if ( verbose )           
             std::cout << "The resulting bit-rate at "
-                      << (double)encoder->enc_ctx.seq_params.frame_rate.numerator/
-                          encoder->enc_ctx.seq_params.frame_rate.denominator
+                      << (double)encoder->enc_ctx.src_params.frame_rate.numerator/
+                          encoder->enc_ctx.src_params.frame_rate.denominator
                       << "Hz is " << encoder->enc_seqstats.bit_rate 
                       << " bits/sec." << std::endl;
 
@@ -885,8 +930,9 @@ int main (int argc, char* argv[])
 
     // delete frame buffer
     delete [] frame_buf;
-        return EXIT_SUCCESS;
+    
+	delete[] parsed;
+    return EXIT_SUCCESS;
 
-    delete[] parsed;
 
 }

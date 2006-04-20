@@ -381,9 +381,6 @@
 				RelativePath="..\..\..\libdirac_common\band_codec.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_common\bit_manager.cpp">
-			</File>
-			<File
 				RelativePath="..\..\..\libdirac_common\cmd_line.cpp">
 			</File>
 			<File
@@ -393,13 +390,13 @@
 				RelativePath="..\..\..\libdirac_common\dirac_assertions.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_common\dirac_exception.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_common\frame.cpp">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\frame_buffer.cpp">
-			</File>
-			<File
-				RelativePath="..\..\..\libdirac_common\golomb.cpp">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\mot_comp.cpp">
@@ -423,10 +420,19 @@
 				RelativePath="..\..\..\libdirac_common\upconvert_mmx.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_common\video_format_defaults.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_common\wavelet_utils.cpp">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\wavelet_utils_mmx.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAsManaged="0"/>
+				</FileConfiguration>
 			</File>
 		</Filter>
 		<Filter
@@ -443,9 +449,6 @@
 				RelativePath="..\..\..\libdirac_common\band_codec.h">
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_common\bit_manager.h">
-			</File>
-			<File
 				RelativePath="..\..\..\libdirac_common\cmd_line.h">
 			</File>
 			<File
@@ -458,6 +461,9 @@
 				RelativePath="..\..\..\libdirac_common\dirac_assertions.h">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_common\dirac_exception.h">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_common\dirac_types.h">
 			</File>
 			<File
@@ -465,9 +471,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\frame_buffer.h">
-			</File>
-			<File
-				RelativePath="..\..\..\libdirac_common\golomb.h">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\mot_comp.h">
@@ -486,6 +489,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\upconvert.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_common\video_format_defaults.h">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\wavelet_utils.h">

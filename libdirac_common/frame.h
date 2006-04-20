@@ -69,10 +69,16 @@ namespace dirac
 
         //gets and sets
         //! Gets the frame parameters
-        const FrameParams& GetFparams() const {return m_fparams;}
+        FrameParams& GetFparams() const  {return m_fparams;}
 
         //! Sets the frame sort
         void SetFrameSort( const FrameSort fs ){m_fparams.SetFSort( fs ); }
+
+        //! Sets the frame type
+        void SetFrameType( const FrameType ftype ){m_fparams.SetFrameType( ftype ); }
+
+        //! Sets the frame type
+        void SetReferenceType( const ReferenceType rtype ){m_fparams.SetReferenceType( rtype ); }
 
         //! Reconfigures the the framend to the new parameters. 
         void ReconfigFrame( const FrameParams &fp );
@@ -132,7 +138,7 @@ namespace dirac
         void Clip();
 
     private:
-        FrameParams m_fparams;
+        mutable FrameParams m_fparams;
         PicArray* m_Y_data;//the 
         PicArray* m_U_data;//component
         PicArray* m_V_data;//data

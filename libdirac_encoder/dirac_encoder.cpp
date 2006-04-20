@@ -20,7 +20,8 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Anuradha Suraparaju (Original Author)
+* Contributor(s): Anuradha Suraparaju (Original Author),
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -39,13 +40,17 @@
 #include <sstream>
 #include <fstream>
 #include <queue>
+#include <string>
 #include <libdirac_common/dirac_assertions.h>
 #include <libdirac_common/common.h>
 #include <libdirac_common/frame.h>
 #include <libdirac_common/pic_io.h>
 #include <libdirac_encoder/dirac_encoder.h>
 #include <libdirac_encoder/seq_compress.h>
+#include <libdirac_byteio/dirac_byte_stream.h>
+#include <libdirac_common/video_format_defaults.h>
 using namespace dirac;
+using namespace std;
 
 template <class T >
 void copy_2dArray (const TwoDArray<T> & in, T *out)
@@ -244,6 +249,9 @@ public:
     // Return the encoder parameters
     const EncoderParams& GetEncParams() const { return m_encparams; }
 
+    // Return the source parameters
+    const SourceParams& GetSrcParams() const { return m_srcparams; }
+
 private:
 
     // Set the sequence parameters
@@ -256,17 +264,18 @@ private:
     void GetFrameStats(dirac_encoder_t *encoder);
 
     // Get the seuqence statistics
-    void GetSequenceStats(dirac_encoder_t *encoder);
+    void GetSequenceStats(dirac_encoder_t *encoder,
+                          const DiracByteStats& dirac_seq_stats);
 
 private:
     // sequence compressor
     SequenceCompressor *m_comp;
     // sequence parameters
     SeqParams m_sparams;
+    // Source parameters
+    SourceParams m_srcparams;
     // encoder parameters
     EncoderParams m_encparams;
-    // stream to hold the compressed frame
-    std::ostringstream m_comp_stream;
     // locally encoded frame in coded order
     const Frame *m_enc_frame;
     // locally encoded frame ME data
@@ -297,6 +306,9 @@ private:
     // Flag that determines if instrumentation data is to be returned. Set
     // in Constructor
     bool m_return_instr_data;
+
+    // Output destination for compressed data in bitstream format
+    DiracByteStream m_dirac_byte_stream;
 };
 
 /*
@@ -317,11 +329,12 @@ void DiracEncoder::GetInstrumentationData (dirac_encoder_t *encoder)
     const FrameSort fsort = fparams.FSort();
 
     instr->fnum = fparams.FrameNum();
-    instr->ftype = fsort;
+    instr->ftype = fsort.IsIntra() ? INTRA_FRAME : INTER_FRAME;
+    instr->rtype = fsort.IsRef() ? REFERENCE_FRAME : NON_REFERENCE_FRAME;
     instr->num_refs = 0;
     encoder->instr_data_avail = 1;
 
-    if (fsort == I_frame)
+    if (fsort.IsIntra())
     {
         // no MV data for Intra coded data
         return;
@@ -369,14 +382,13 @@ void DiracEncoder::GetInstrumentationData (dirac_encoder_t *encoder)
     }
 
     copy_2dArray (m_enc_medata->DC( Y_COMP ), instr->dc_ycomp);
-    if (m_enc_medata->DC().Length() == 3 && 
-        encoder->enc_ctx.seq_params.chroma != Yonly)
+    if (m_enc_medata->DC().Length() == 3) 
     {
         copy_2dArray (m_enc_medata->DC( U_COMP ), instr->dc_ucomp);
         copy_2dArray (m_enc_medata->DC( V_COMP ), instr->dc_vcomp);
     }
 
-     for (int i=1; i<=instr->num_refs; ++i)
+    for (int i=1; i<=instr->num_refs; ++i)
     {
         copy_mv (m_enc_medata->Vectors(i), instr->mv[i-1]);
         copy_mv_cost (m_enc_medata->PredCosts(i), instr->pred_costs[i-1]);
@@ -385,6 +397,9 @@ void DiracEncoder::GetInstrumentationData (dirac_encoder_t *encoder)
 
 DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx, 
                            bool verbose) :
+    m_sparams(static_cast<VideoFormat>(enc_ctx->enc_params.video_format), false),
+    m_srcparams(static_cast<VideoFormat>(enc_ctx->enc_params.video_format), true),
+    m_encparams(static_cast<VideoFormat>(enc_ctx->enc_params.video_format), INTER_FRAME, true),
     m_show_fnum(-1),
     m_num_loaded_frames(0),
     m_num_coded_frames(0),
@@ -393,6 +408,7 @@ DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx,
     m_dec_bufsize(0),
     m_return_decoded_frames(enc_ctx->decode_flag > 0),
     m_return_instr_data(enc_ctx->instr_flag > 0)
+
 {
     // Setup sequence parameters
     SetSequenceParams (enc_ctx);
@@ -400,13 +416,17 @@ DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx,
     m_encparams.SetVerbose( verbose );
     SetEncoderParams (enc_ctx);
 
+     // NOTE: FIXME - make video-depth a user-parameter
+    m_sparams.SetVideoDepth(10);
     // Set up the input data stream (uncompressed data)
     m_inp_ptr.SetSequenceParams(m_sparams);
     // Set up the output data stream (locally decoded frame)
     m_out_ptr.SetSequenceParams(m_sparams);
     
     // initialise the sequence compressor
-    m_comp = new SequenceCompressor (&m_inp_ptr, &m_comp_stream, m_encparams);
+    m_comp = new SequenceCompressor (&m_inp_ptr, m_srcparams, m_encparams, m_dirac_byte_stream);
+
+   
 }
 
 void DiracEncoder::SetDecodeBuffer (unsigned char *buffer, int buffer_size)
@@ -426,10 +446,14 @@ void DiracEncoder::SetSequenceParams (const dirac_encoder_context_t *enc_ctx)
     m_sparams.SetCFormat( enc_ctx->seq_params.chroma );
     m_sparams.SetXl( enc_ctx->seq_params.width );
     m_sparams.SetYl( enc_ctx->seq_params.height );
-    m_sparams.SetInterlace( enc_ctx->seq_params.interlace );
-    m_sparams.SetTopFieldFirst( enc_ctx->seq_params.topfieldfirst );
-    m_sparams.SetFrameRate( enc_ctx->seq_params.frame_rate.numerator /
-                            enc_ctx->seq_params.frame_rate.denominator );
+    m_sparams.SetVideoDepth( enc_ctx->seq_params.video_depth );
+    m_srcparams.SetInterlace( enc_ctx->src_params.interlace );
+    m_srcparams.SetTopFieldFirst( enc_ctx->src_params.topfieldfirst );
+    if (m_srcparams.FrameRate().m_num != (unsigned int)enc_ctx->src_params.frame_rate.numerator || m_srcparams.FrameRate().m_denom != (unsigned int)enc_ctx->src_params.frame_rate.denominator)
+    {
+        m_srcparams.SetFrameRate( enc_ctx->src_params.frame_rate.numerator,
+                            enc_ctx->src_params.frame_rate.denominator );
+    }
 }
 
 void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
@@ -465,6 +489,13 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     m_encparams.SetOrigXl( enc_ctx->seq_params.width );
     m_encparams.SetOrigYl( enc_ctx->seq_params.height );
     m_encparams.SetBlockSizes( bparams , enc_ctx->seq_params.chroma );
+
+    // Set transforms parameters
+    m_encparams.SetTransformFilter(enc_ctx->enc_params.wlt_filter);
+    m_encparams.SetTransformDepth(enc_ctx->enc_params.wlt_depth);
+    m_encparams.SetSpatialPartition(enc_ctx->enc_params.spatial_partition);
+    m_encparams.SetDefaultSpatialPartition(enc_ctx->enc_params.spatial_partition & enc_ctx->enc_params.def_spatial_partition);
+    m_encparams.SetMultiQuants(enc_ctx->enc_params.spatial_partition & enc_ctx->enc_params.multi_quants);
 }
 
 
@@ -513,34 +544,46 @@ int DiracEncoder::CompressNextFrame ()
         }
     }
 
-    int size = m_comp_stream.str().size();
-    if (size > 0)
-    {
-        m_num_coded_frames++;
-        TESTM (m_enc_frame != 0, "Encoder frame available");
-    }
-    return size;
+    if(!m_dirac_byte_stream.IsUnitAvailable())
+        return 0;
+
+ 
+    m_num_coded_frames++;
+    TESTM (m_enc_frame != 0, "Encoder frame available");
+    
+    return 1;
 }
 
 void DiracEncoder::GetFrameStats(dirac_encoder_t *encoder)
 {
-    const FrameOutputManager& foutput = m_encparams.BitsOut().FrameOutput();
+    
     dirac_enc_framestats_t *fstats = &encoder->enc_fstats;
+    DiracByteStats dirac_byte_stats = m_dirac_byte_stream.GetLastUnitStats();
 
-    fstats->mv_bits = foutput.MVBytes() * 8;
-    fstats->mv_hdr_bits = foutput.MVBytes() * 8;
+    fstats->mv_bits = dirac_byte_stats.GetBitCount(STAT_MV_BYTE_COUNT);
+  //  fstats->mv_hdr_bits = foutput.MVBytes() * 8;
 
-    fstats->ycomp_bits = foutput.ComponentBytes( Y_COMP ) * 8;
-    fstats->ycomp_hdr_bits = foutput.ComponentHeadBytes( Y_COMP ) * 8;
+    fstats->ycomp_bits = dirac_byte_stats.GetBitCount(STAT_YCOMP_BYTE_COUNT);
+  //  fstats->ycomp_hdr_bits = foutput.ComponentHeadBytes( Y_COMP ) * 8;
 
-    fstats->ucomp_bits = foutput.ComponentBytes( U_COMP ) * 8;
-    fstats->ucomp_hdr_bits = foutput.ComponentHeadBytes( U_COMP ) * 8;
+    fstats->ucomp_bits = dirac_byte_stats.GetBitCount(STAT_UCOMP_BYTE_COUNT);
+  //  fstats->ucomp_hdr_bits = foutput.ComponentHeadBytes( U_COMP ) * 8;
 
-    fstats->vcomp_bits = foutput.ComponentBytes( V_COMP ) * 8;
-    fstats->vcomp_hdr_bits = foutput.ComponentHeadBytes( V_COMP ) * 8;
+    fstats->vcomp_bits = dirac_byte_stats.GetBitCount(STAT_VCOMP_BYTE_COUNT);
+   // fstats->vcomp_hdr_bits = foutput.ComponentHeadBytes( V_COMP ) * 8;
 
-    fstats->frame_bits = foutput.FrameBytes() * 8;
-    fstats->frame_hdr_bits = foutput.FrameHeadBytes() * 8;
+    fstats->frame_bits = dirac_byte_stats.GetBitCount(STAT_TOTAL_BYTE_COUNT);
+   // fstats->frame_hdr_bits = foutput.FrameHeadBytes() * 8;
+
+    DiracEncoder *compressor = (DiracEncoder *)encoder->compressor;
+    if (compressor->GetEncParams().Verbose())
+    {
+        std::cerr<<std::endl<<"Number of MV bits="<<fstats->mv_bits;
+        std::cerr<<std::endl<<"Number of bits for Y="<<fstats->ycomp_bits;
+        std::cerr<<std::endl<<"Number of bits for U="<<fstats->ucomp_bits;
+        std::cerr<<std::endl<<"Number of bits for V="<<fstats->vcomp_bits;
+        std::cerr<<std::endl<<"Total frame bits="<<fstats->frame_bits;
+    }
 }
 
 int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
@@ -548,16 +591,19 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
     int size = 0;
     dirac_enc_data_t *encdata = &encoder->enc_buf;
 
-    size = m_comp_stream.str().size();
+    string output = m_dirac_byte_stream.GetBytes();
+    size = output.size();
+    //std::cerr << std::endl << "ParseUnit size=" << size << std::endl;
     if (size > 0)
     {
         if (encdata->size < size )
         {
             return -1;
         }
-        memmove (encdata->buffer, m_comp_stream.str().c_str(),  size);
+        memmove (encdata->buffer, output.c_str(),  output.size());
         encoder->enc_fparams.fnum = m_enc_frame->GetFparams().FrameNum();
-        encoder->enc_fparams.ftype = m_enc_frame->GetFparams().FSort();
+        encoder->enc_fparams.ftype = m_enc_frame->GetFparams().FSort().IsIntra() ? INTRA_FRAME : INTER_FRAME;
+        encoder->enc_fparams.rtype = m_enc_frame->GetFparams().FSort().IsRef() ? REFERENCE_FRAME : NON_REFERENCE_FRAME;
 
         // Get frame statistics
         GetFrameStats (encoder);
@@ -565,13 +611,14 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
 
         GetInstrumentationData(encoder);
         encoder->encoded_frame_avail = 1;
-
-        m_comp_stream.str("");
     }
     else
     {
         encdata->size = 0;
     }
+    
+    m_dirac_byte_stream.Clear();
+
     return size;
 }
 
@@ -582,53 +629,64 @@ int DiracEncoder::GetDecodedData (dirac_encoder_t *encoder)
     int ret_stat = (m_decfnum != -1);
     if (m_return_decoded_frames && m_decfnum != -1)
     {
-            fp->ftype = m_decfsort;
-            fp->fnum = m_decfnum;
-            encoder->decoded_frame_avail = 1;
-            m_decfnum = -1;
+        fp->ftype = m_decfsort.IsIntra() ? INTRA_FRAME : INTER_FRAME;
+        fp->rtype = m_decfsort.IsRef() ? REFERENCE_FRAME : NON_REFERENCE_FRAME;
+        fp->fnum = m_decfnum;
+        encoder->decoded_frame_avail = 1;
+        m_decfnum = -1;
     }
     return ret_stat;
 }
 
-void DiracEncoder::GetSequenceStats(dirac_encoder_t *encoder)
+void DiracEncoder::GetSequenceStats(dirac_encoder_t *encoder,
+                                    const DiracByteStats& dirac_seq_stats)
 {
     dirac_enc_seqstats_t *sstats = &encoder->enc_seqstats;
-    dirac_seqparams_t *sparams = &encoder->enc_ctx.seq_params;
 
-    sstats->seq_bits = m_encparams.BitsOut().SequenceBytes() * 8;
-    sstats->seq_hdr_bits = m_encparams.BitsOut().SequenceHeadBytes() * 8;
-
-    sstats->mv_bits = m_encparams.BitsOut().MVBytes() * 8;
-    sstats->ycomp_bits = m_encparams.BitsOut().ComponentBytes( Y_COMP ) * 8;
-    sstats->ucomp_bits = m_encparams.BitsOut().ComponentBytes( U_COMP ) * 8;
-    sstats->vcomp_bits = m_encparams.BitsOut().ComponentBytes( V_COMP ) * 8;
+    sstats->seq_bits = dirac_seq_stats.GetBitCount(STAT_TOTAL_BYTE_COUNT);
+    sstats->mv_bits = dirac_seq_stats.GetBitCount(STAT_MV_BYTE_COUNT);
+    sstats->ycomp_bits = dirac_seq_stats.GetBitCount(STAT_YCOMP_BYTE_COUNT);
+    sstats->ucomp_bits = dirac_seq_stats.GetBitCount(STAT_UCOMP_BYTE_COUNT);
+    sstats->vcomp_bits = dirac_seq_stats.GetBitCount(STAT_VCOMP_BYTE_COUNT);
 
     sstats->bit_rate = int((sstats->seq_bits * 
-                        (double)sparams->frame_rate.numerator)/
-                        (sparams->frame_rate.denominator * m_num_coded_frames));
+                        (double)m_srcparams.FrameRate().m_num)/
+                        (m_srcparams.FrameRate().m_denom * m_num_coded_frames));
+    
+    DiracEncoder *compressor = (DiracEncoder *)encoder->compressor;
+    if (compressor->GetEncParams().Verbose())
+    {
+        std::cerr<<std::endl<<std::endl<<"Total bits for sequence="<<sstats->seq_bits;
+        std::cerr<<std::endl<<"Of these: "<<std::endl;
+        std::cerr<<std::endl<<sstats->ycomp_bits <<" were Y, ";
+        std::cerr<<std::endl<<sstats->ucomp_bits <<" were U, ";
+        std::cerr<<std::endl<<sstats->vcomp_bits<<" were V, and ";
+        std::cerr<<std::endl<<sstats->mv_bits<<" were motion vector data.";
+    }
 }
 
 int DiracEncoder::GetSequenceEnd (dirac_encoder_t *encoder)
 {
     dirac_enc_data_t *encdata = &encoder->enc_buf;
-    m_comp_stream.str("");
-    m_comp->EndSequence();
-    int size = m_comp_stream.str().size();
+    DiracByteStats dirac_seq_stats=m_comp->EndSequence();
+    string output = m_dirac_byte_stream.GetBytes();
+    int size = output.size();
     if (size > 0)
     {
         if (encdata->size < size )
         {
             return -1;
         }
-        memmove (encdata->buffer, m_comp_stream.str().c_str(),  size);
-        GetSequenceStats(encoder);
-        m_comp_stream.str("");
+        memmove (encdata->buffer, output.c_str(),  size);
+        GetSequenceStats(encoder,
+                         dirac_seq_stats);
         encdata->size = size;
     }
     else
     {
         encdata->size = 0;
     }
+    m_dirac_byte_stream.Clear();
     return size;
 }
 
@@ -640,12 +698,12 @@ static bool InitialiseEncoder (const dirac_encoder_context_t *enc_ctx, bool verb
     if (enc_ctx->seq_params.width == 0 || enc_ctx->seq_params.height == 0)
         return false;
 
-    if (enc_ctx->seq_params.chroma < Yonly || 
-            enc_ctx->seq_params.chroma > formatNK)
+    if (enc_ctx->seq_params.chroma < format444 || 
+            enc_ctx->seq_params.chroma >= formatNK)
         return false;
 
-    if (!enc_ctx->seq_params.frame_rate.numerator || 
-            !enc_ctx->seq_params.frame_rate.denominator)
+    if (!enc_ctx->src_params.frame_rate.numerator || 
+            !enc_ctx->src_params.frame_rate.denominator)
         return false;
 
     memmove (&encoder->enc_ctx, enc_ctx, sizeof(dirac_encoder_context_t));
@@ -654,14 +712,6 @@ static bool InitialiseEncoder (const dirac_encoder_context_t *enc_ctx, bool verb
 
     switch ( enc_ctx->seq_params.chroma )
     {
-    case Yonly:
-         encoder->enc_ctx.seq_params.chroma_width = 0;
-         encoder->enc_ctx.seq_params.chroma_height = 0;
-        break;
-    case format411:
-         encoder->enc_ctx.seq_params.chroma_width = enc_ctx->seq_params.width/4;
-         encoder->enc_ctx.seq_params.chroma_height = enc_ctx->seq_params.height;
-         break;
     case format420:
          encoder->enc_ctx.seq_params.chroma_width = enc_ctx->seq_params.width/2;
          encoder->enc_ctx.seq_params.chroma_height = enc_ctx->seq_params.height/2;
@@ -681,17 +731,17 @@ static bool InitialiseEncoder (const dirac_encoder_context_t *enc_ctx, bool verb
     {
         DiracEncoder *comp = new DiracEncoder (&encoder->enc_ctx, verbose);
     
-        int bufsize = (encoder->enc_ctx.seq_params.width * encoder->enc_ctx.seq_params.height)+ 2*(encoder->enc_ctx.seq_params.chroma_width*encoder->enc_ctx.seq_params.chroma_height);
-
-        encoder->dec_buf.buf[0] = new unsigned char [bufsize];
-        encoder->dec_buf.buf[1] = encoder->dec_buf.buf[0] + 
-                (encoder->enc_ctx.seq_params.width * encoder->enc_ctx.seq_params.height);
-        encoder->dec_buf.buf[2] = encoder->dec_buf.buf[1] + 
-                (encoder->enc_ctx.seq_params.chroma_width*encoder->enc_ctx.seq_params.chroma_height);
-    
         encoder->compressor = comp;
         if (encoder->enc_ctx.decode_flag)
         {
+            int bufsize = (encoder->enc_ctx.seq_params.width * encoder->enc_ctx.seq_params.height)+ 2*(encoder->enc_ctx.seq_params.chroma_width*encoder->enc_ctx.seq_params.chroma_height);
+
+            encoder->dec_buf.buf[0] = new unsigned char [bufsize];
+            encoder->dec_buf.buf[1] = encoder->dec_buf.buf[0] + 
+                (encoder->enc_ctx.seq_params.width * encoder->enc_ctx.seq_params.height);
+            encoder->dec_buf.buf[2] = encoder->dec_buf.buf[1] + 
+                (encoder->enc_ctx.seq_params.chroma_width*encoder->enc_ctx.seq_params.chroma_height);
+    
             comp->SetDecodeBuffer (encoder->dec_buf.buf[0], bufsize);
         }
     }
@@ -701,101 +751,60 @@ static bool InitialiseEncoder (const dirac_encoder_context_t *enc_ctx, bool verb
     }
     return true;
 }
-
-static void SetSequenceParameters (dirac_encoder_context_t *enc_ctx, dirac_encoder_presets_t preset)
+    
+static void SetSequenceParameters(dirac_encoder_context_t *enc_ctx,
+                                  const VideoFormat& video_format)
 {
     TEST (enc_ctx != NULL);
     dirac_seqparams_t &sparams = enc_ctx->seq_params;
+    dirac_sourceparams_t &src_params = enc_ctx->src_params;
+    
+    // create object containing sequence params
+    SeqParams default_seq_params(video_format);
+    SourceParams default_src_params(video_format);
 
-    sparams.chroma = format420;
-    switch (preset)
-    {
-    case SD576:
-        sparams.width = 720;
-        sparams.height = 576;
-        sparams.frame_rate.numerator = 25;
-        sparams.frame_rate.denominator = 1;
-        sparams.interlace = 1;
-        sparams.topfieldfirst = 1;
-        break;
-    case HD720:
-        sparams.width = 1280;
-        sparams.height = 720;
-        sparams.frame_rate.numerator = 50;
-        sparams.frame_rate.denominator = 1;
-        sparams.interlace = 0;
-        sparams.topfieldfirst = 0;
-        break;
-    case HD1080:
-        sparams.width = 1920;
-        sparams.height = 1080;
-        sparams.frame_rate.numerator = 25;
-        sparams.frame_rate.denominator = 1;
-        sparams.interlace = 1;
-        sparams.topfieldfirst = 1;
-        break;
-    case CIF:
-    default:
-        sparams.width = 352;
-        sparams.height = 288;
-        sparams.frame_rate.numerator = 13;
-        sparams.frame_rate.denominator = 1;
-        sparams.interlace = 0;
-        sparams.topfieldfirst = 0;
-        break;
-    }
+    sparams.height = default_seq_params.Yl();
+    sparams.width = default_seq_params.Xl();
+    sparams.chroma = default_seq_params.CFormat();
+    sparams.video_depth = default_seq_params.GetVideoDepth();
+    src_params.frame_rate.numerator = default_src_params.FrameRate().m_num;
+    src_params.frame_rate.denominator = default_src_params.FrameRate().m_denom;
+    src_params.interlace = default_src_params.Interlace();
+    src_params.topfieldfirst = default_src_params.TopFieldFirst();
 }
 
-static void SetEncoderParameters (dirac_encoder_context_t *enc_ctx, dirac_encoder_presets_t preset)
+static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
+                                 const VideoFormat& video_format)
 {
     TEST (enc_ctx != NULL);
-
     dirac_encparams_t &encparams = enc_ctx->enc_params;
 
-    encparams.qf = 7.0f;
-    encparams.lossless = false;
+    encparams.video_format = static_cast<int>(video_format);
+    // set encoder defaults
+    EncoderParams default_enc_params(video_format);
 
-    switch (preset)
-    {
-    case SD576:
-        encparams.L1_sep = 3;
-        encparams.num_L1 = 3;
-        encparams.cpd = 32.0f;
-        encparams.xblen = 12;
-        encparams.yblen = 12;
-        encparams.xbsep = 8;
-        encparams.ybsep = 8;
-        break;
-    case HD720:
-        encparams.L1_sep = 3;
-        encparams.num_L1 = 7;
-        encparams.cpd = 20.0f;
-        encparams.xblen = 12;
-        encparams.yblen = 12;
-        encparams.xbsep = 8;
-        encparams.ybsep = 8;
-        break;
-    case HD1080:
-        encparams.L1_sep = 3;
-        encparams.num_L1 = 3;
-        encparams.cpd = 32.0f;
-        encparams.xblen = 24;
-        encparams.yblen = 24;
-        encparams.xbsep = 16;
-        encparams.ybsep = 16;
-        break;
-    case CIF:
-    default:
-        encparams.L1_sep = 3;
-        encparams.num_L1 = 11;
-        encparams.cpd = 20.0f;
-        encparams.xblen = 12;
-        encparams.yblen = 12;
-        encparams.xbsep = 8;
-        encparams.ybsep = 8;
-        break;
-    }
+    encparams.qf = default_enc_params.Qf();
+    encparams.cpd = default_enc_params.CPD();
+    encparams.L1_sep = default_enc_params.L1Sep();
+    encparams.lossless = default_enc_params.Lossless();
+    encparams.num_L1 = default_enc_params.NumL1();
+
+    // set default block params
+    OLBParams default_block_params;
+    SetDefaultBlockParameters(default_block_params, video_format);
+    encparams.xblen = default_block_params.Xblen();
+    encparams.yblen = default_block_params.Yblen();
+    encparams.xbsep = default_block_params.Xbsep();
+    encparams.ybsep = default_block_params.Ybsep();
+
+    // set default transform parameters
+    encparams.wlt_filter = default_enc_params.TransformFilter();
+    encparams.wlt_depth = default_enc_params.TransformDepth();
+    encparams.spatial_partition = default_enc_params.SpatialPartition();
+    encparams.def_spatial_partition = default_enc_params.DefaultSpatialPartition();
+    encparams.multi_quants = default_enc_params.MultiQuants();
 }
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -804,8 +813,12 @@ extern DllExport void dirac_encoder_context_init ( dirac_encoder_context_t *enc_
 {
     TEST (enc_ctx != NULL);
     memset (enc_ctx, 0, sizeof(dirac_encoder_context_t));
-    SetSequenceParameters (enc_ctx, preset);
-    SetEncoderParameters (enc_ctx, preset);
+
+    // preset is the video format
+    int ps = static_cast<int>(preset);
+    VideoFormat video_format(static_cast<VideoFormat>(ps));
+    SetSequenceParameters (enc_ctx, video_format);
+    SetEncoderParameters (enc_ctx, video_format);
 }
 
 extern DllExport dirac_encoder_t *dirac_encoder_init (const dirac_encoder_context_t *enc_ctx, int verbose)

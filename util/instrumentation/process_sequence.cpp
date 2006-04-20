@@ -72,7 +72,7 @@ bool ProcessSequence::DoFrame()
 
         Overlay overlay(m_oparams, *frame);
 
-        if (m_data_array[index].frame_params.FSort() == I_frame)
+        if (m_data_array[index].frame_params.FSort().IsIntra())
             overlay.ProcessFrame();
 
         else
@@ -123,7 +123,7 @@ void ProcessSequence::AddFrameEntry()
         m_data_array[new_index].me_data = 0;
         m_data_array[new_index].frame_params = m_seqparams;
         m_data_array[new_index].frame_params.SetFrameNum(m_data_fnum);
-        m_data_array[new_index].frame_params.SetFSort(I_frame);
+        m_data_array[new_index].frame_params.SetFSort(FrameSort::IntraRefFrameSort());
 
         if (m_verbose)
         {
@@ -179,9 +179,9 @@ void ProcessSequence::AddFrameEntry()
         m_data_array[new_index].frame_params.SetFrameNum(m_data_fnum);
 
         if (m_data_array[new_index].frame_params.Refs().size() > 1)
-            m_data_array[new_index].frame_params.SetFSort(L2_frame);
+            m_data_array[new_index].frame_params.SetFSort(FrameSort::InterNonRefFrameSort());
         else
-            m_data_array[new_index].frame_params.SetFSort(L1_frame);
+            m_data_array[new_index].frame_params.SetFSort(FrameSort::InterRefFrameSort());
 
         // read motion vector data
         m_data_in >> *m_data_array[new_index].me_data; // overloaded operator>> defined in libdirac_common/motion.cpp      

@@ -23,6 +23,7 @@
 * Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
 *                 Anuradha Suraparaju
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -44,6 +45,8 @@
 #include <libdirac_common/frame_buffer.h>
 #include <libdirac_common/common.h>
 #include <libdirac_common/motion.h>
+#include <libdirac_byteio/frame_byteio.h>
+
 namespace dirac
 {
 
@@ -75,8 +78,13 @@ namespace dirac
             \param fbuffer picture buffer in which the frame resides
             \param orig_buffer the corresponding picture buffer of uncoded originals
             \param fnum      frame number to compress
+            \param au_fnum Current ccessUnit frame-number
+            \return Compressed frame in Dirac bytestream format
         */
-        void Compress( FrameBuffer& fbuffer , const FrameBuffer& orig_buffer , int fnum );
+        FrameByteIO* Compress(  FrameBuffer& fbuffer , 
+                                const FrameBuffer& orig_buffer , 
+                                int fnum ,
+                                int au_fnum);
 
         //! Returns true if the frame has been skipped rather than coded normally
         bool IsSkipped(){ return m_skipped; }
@@ -101,9 +109,6 @@ namespace dirac
             assigned.
         */
         FrameCompressor& operator=(const FrameCompressor& rhs);
-
-        //! Write the frame compression header
-        void WriteFrameHeader(const FrameParams& fparams);
 
         //! Analyses the ME data and returns true if a cut is detected, false otherwise
         void AnalyseMEData( const MEData& );

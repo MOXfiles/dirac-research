@@ -23,6 +23,8 @@
 * Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
 *                 Tim Borer
+*                 Andrew Kennedy,
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -53,11 +55,117 @@ extern "C" {
 */
 
 /*! Types of chroma formatting (formatNK=format not known) */
-typedef enum { Yonly, format422, format444, format420, format411, formatNK } ChromaFormat;
+typedef enum { format444, format422, format420, formatNK } ChromaFormat;
 
+/*! Types of Wavelet filters supported. filterNK -  not known) */
+typedef enum 
+{
+    APPROX97=0,  /* Approximata Daubechies */
+    FIVETHREE,   /* Five Three */
+    THIRTEENFIVE, /* Thirteen Five */
+    HAAR,        /* HAAR */
+    RESERVED1,   /* reserved 1 */
+    RESERVED2,   /* reserved 1 */
+    DAUB97,      /* Daubechies 97 */
+    filterNK
+} WltFilter;
+
+static const int NUM_WLT_FILTERS = 7;
 
 /*! Types of frame */
-typedef enum { I_frame, L1_frame, L2_frame} FrameSort;
+typedef enum {
+        INTRA_FRAME=0,
+        INTER_FRAME
+    } FrameType;
+
+/*! Types of referencing */
+typedef enum {
+        REFERENCE_FRAME=0,
+        NON_REFERENCE_FRAME
+}   ReferenceType;
+
+/*! Types for video-format */
+typedef enum {
+        VIDEO_FORMAT_CUSTOM=0,
+        VIDEO_FORMAT_QSIF,
+        VIDEO_FORMAT_QCIF,
+        VIDEO_FORMAT_SIF,
+        VIDEO_FORMAT_CIF,
+        VIDEO_FORMAT_SD_PAL,
+        VIDEO_FORMAT_SD_NTSC,
+        VIDEO_FORMAT_SD_525_DIGITAL,
+        VIDEO_FORMAT_SD_625_DIGITAL,
+        VIDEO_FORMAT_HD_720,
+        VIDEO_FORMAT_HD_1080,
+        VIDEO_FORMAT_DIGI_CINEMA_2K,
+        VIDEO_FORMAT_DIGI_CINEMA_4K,
+        VIDEO_FORMAT_UNDEFINED
+} VideoFormat;
+
+/*! Types of Colour primaries */
+typedef enum {
+    CP_ITU_709=0,
+    CP_SMPTE_C,
+    CP_EBU_3213,
+    CP_UNDEF
+}ColourPrimaries;
+
+/*! Types of Colour Matrices */
+typedef enum {
+    CM_HDTV_COMP_INTERNET=0,
+    CM_SDTV,
+    CM_UNDEF
+}ColourMatrix;
+
+/*! Types of Transfer functions */
+typedef enum {
+    TF_TV=0,
+    TF_EXT_GAMUT,
+    TF_LINEAR,
+    TF_UNDEF
+} TransferFunction;
+
+/*! Types of Frame-rate */
+typedef enum {
+    FRAMERATE_CUSTOM=0,
+    FRAMERATE_23p97_FPS,
+    FRAMERATE_24_FPS,
+    FRAMERATE_25_FPS,
+    FRAMERATE_29p97_FPS,
+    FRAMERATE_30_FPS,
+    FRAMERATE_50_FPS,
+    FRAMERATE_59p94_FPS,
+    FRAMERATE_60_FPS,
+    FRAMERATE_UNDEFINED
+} FrameRateType;
+
+/*! Types of Aspect Ratio */
+typedef enum {
+    ASPECT_RATIO_CUSTOM=0,
+    ASPECT_RATIO_1_1,
+    ASPECT_RATIO_10_11,
+    ASPECT_RATIO_12_11,
+    ASPECT_RATIO_UNDEFINED
+} AspectRatioType;
+
+
+/*! Types of signal range */
+typedef enum {
+    SIGNAL_RANGE_CUSTOM=0,
+    SIGNAL_RANGE_8BIT_FULL,
+    SIGNAL_RANGE_8BIT_VIDEO,
+    SIGNAL_RANGE_10BIT_VIDEO,
+    SIGNAL_RANGE_UNDEFINED
+} SignalRangeType;
+
+/*! Types of Transfer functions */
+typedef enum {
+    IT_PROGRESSIVE=0,
+    IT_INTERLACED_TFF,
+    IT_INTERLACED_BFF,
+    IT_UNDEF
+} InterlaceType;
+
 #ifdef __cplusplus
 }
 #endif

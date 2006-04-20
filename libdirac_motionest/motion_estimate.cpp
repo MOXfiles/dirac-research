@@ -66,7 +66,7 @@ void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
     const std::vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();
 
     const int num_refs = refs.size();
-    if ( fparams.FSort() == L1_frame )
+    if ( fparams.FSort().IsRef())
         lambda = m_encparams.L1MELambda();
     else
         lambda = m_encparams.L2MELambda();
@@ -91,8 +91,7 @@ void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
     // we have to assign DC values for chroma components for
     // blocks we're decided are intra.
 
-    if (fparams.CFormat() != Yonly)
-        SetChromaDC( my_buffer , frame_num , me_data );
+    SetChromaDC( my_buffer , frame_num , me_data );
 
 //return false;
 }

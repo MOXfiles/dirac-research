@@ -9,6 +9,7 @@ EXTRA_DIST = dirac.sln \
     ./InstrumentDirac/libdirac_instrument/libdirac_instrument.vcproj \
     ./MakeHeader/MakeHeader.vcproj \
     ./libdirac_common/libdirac_common.vcproj \
+    ./libdirac_byteio/libdirac_byteio.vcproj \
     ./Everything/Everything.vcproj \
     ./ConversionUtils/RGBtoYUV411/RGBtoYUV411.vcproj \
     ./ConversionUtils/RGBtoYUV420/RGBtoYUV420.vcproj \

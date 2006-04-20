@@ -23,6 +23,7 @@
 * Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
 *                 Anuradha Suraparaju
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -45,7 +46,6 @@
 #include <libdirac_encoder/comp_compress.h>
 #include <libdirac_encoder/quant_chooser.h>
 #include <libdirac_common/band_codec.h>
-#include <libdirac_common/golomb.h>
 
 using namespace dirac;
 
@@ -60,20 +60,17 @@ CompCompressor::CompCompressor( EncoderParams& encp,const FrameParams& fp)
   m_cformat( m_fparams.CFormat() )
 {}
 
-void CompCompressor::Compress(PicArray& pic_data)
+ComponentByteIO* CompCompressor::Compress(PicArray& pic_data)
 {
     //need to transform, select quantisers for each band, and then compress each component in turn
     m_csort=pic_data.CSort();    
-    const int depth=4;
+    const int depth=m_encparams.TransformDepth();
     unsigned int num_band_bytes( 0 );
 
     // A pointer to an object  for coding the subband data
     BandCodec* bcoder;
 
-    // A pointer to an object for outputting the subband data
-    UnitOutputManager* band_op;
-
-    const size_t CONTEXTS_REQUIRED = 20;
+    const size_t CONTEXTS_REQUIRED = 22;
 
     Subband node;
 
@@ -100,15 +97,16 @@ void CompCompressor::Compress(PicArray& pic_data)
 
     OneDArray<unsigned int> estimated_bits( Range( 1 , bands.Length() ) );
 
-    // Default coding is that we're not using multiple quantisers in coding subbands
-    const bool using_multi_quants( false );
-    
-    SelectQuantisers( pic_data , bands , estimated_bits , using_multi_quants );  
+    SelectQuantisers( pic_data , bands , estimated_bits , m_encparams.MultiQuants() );  
+
+    // create byte output
+    ComponentByteIO *p_component_byteio = new ComponentByteIO(m_csort);
 
     // Loop over all the bands (from DC to HF) quantising and coding them
     for (int b=bands.Length() ; b>=1 ; --b )
     {
-        band_op = & m_encparams.BitsOut().FrameOutput().BandOutput( m_csort , b );
+        // create subband byte io
+        SubbandByteIO subband_byteio(bands(b));
 
         if ( !bands(b).Skipped() )
         {   // If not skipped ...
@@ -116,13 +114,13 @@ void CompCompressor::Compress(PicArray& pic_data)
              // Pick the right codec according to the frame type and subband
             if (b >= bands.Length()-3)
             {
-                if ( m_fsort == I_frame && b == bands.Length() )
-                    bcoder=new IntraDCBandCodec( &( band_op->Data() ) , CONTEXTS_REQUIRED , bands );
+                if ( m_fsort.IsIntra() && b == bands.Length() )
+                    bcoder=new IntraDCBandCodec(&subband_byteio, CONTEXTS_REQUIRED , bands );
                 else
-                    bcoder=new LFBandCodec( &( band_op->Data() ) ,CONTEXTS_REQUIRED, bands , b);
+                    bcoder=new LFBandCodec(&subband_byteio ,CONTEXTS_REQUIRED, bands , b);
             }
             else
-                bcoder=new BandCodec( &( band_op->Data() ) , CONTEXTS_REQUIRED , bands , b);
+                bcoder=new BandCodec(&subband_byteio , CONTEXTS_REQUIRED , bands , b);
 
             num_band_bytes = bcoder->Compress(pic_data);
 
@@ -133,44 +131,27 @@ void CompCompressor::Compress(PicArray& pic_data)
         }
         else
         {   // ... skipped
-            if (b == bands.Length() && m_fsort == I_frame)
+            if (b == bands.Length() && m_fsort.IsIntra())
                 SetToVal( pic_data , bands(b) , wtransform.GetMeanDCVal() );
             else
                 SetToVal( pic_data , bands(b) , 0 );
         }
-        WriteBandHeader( band_op->Header() , bands(b) , num_band_bytes );
+       
+            // output sub-band data
+            p_component_byteio->AddSubband(&subband_byteio);
 
 
     }//b
 
-    if ( m_fsort!= L2_frame || m_encparams.LocalDecode() )
+    if ( m_fsort.IsIntra() || m_fsort.IsRef() || m_encparams.LocalDecode() )
     {
         // Transform back into the picture domain
         wtransform.Transform( BACKWARD , pic_data );
     }
+
+    return p_component_byteio;
 }
 
-void CompCompressor::WriteBandHeader( BasicOutputManager& hdr_out , const Subband& band , 
-                                      const int num_band_bytes )
-{
-    hdr_out.OutputBit( band.Skipped() );
-
-    if ( !band.Skipped() )
-    {
-        // If we're not skipped, we need a quantisation index for the subband
-        UnsignedGolombCode( hdr_out , band.QIndex() );
-
-        // We also need to say whether there are multiple quantisers in the subband.
-        // If so, offsets from the band QIndex will be coded in the code block
-        // headers in the arithmetic coded subband data.
-        hdr_out.OutputBit( band.UsingMultiQuants() );
-
-        // Write the length of the data chunk into the header
-        UnsignedGolombCode( hdr_out , num_band_bytes);
-
-    }
-
-}
 
 void CompCompressor::SetupCodeBlocks( SubbandList& bands )
 {
@@ -185,25 +166,34 @@ void CompCompressor::SetupCodeBlocks( SubbandList& bands )
 
     for (int band_num = 1; band_num<=bands.Length() ; ++band_num)
     {
-        if ( band_num < bands.Length()-6 )
+        if (m_encparams.SpatialPartition())
         {
-            if (m_fsort != I_frame )
+            m_encparams.SetDefaultSpatialPartition(true);
+            if ( band_num < bands.Length()-6 )
             {
-                xregions = 12;
-                yregions = 8;
+                if (m_fsort.IsInter())
+                {
+                    xregions = 12;
+                    yregions = 8;
+                }
+                else
+                {
+                    xregions = 4;
+                    yregions = 3;
+                }
             }
-            else
+            else if (band_num < bands.Length()-3)
             {
-                xregions = 4;
-                yregions = 3;
-            }
-        }
-        else if (band_num < bands.Length()-3)
-        {
-            if (m_fsort != I_frame )
-            {
-                xregions = 8;
-                yregions = 6;
+                if (m_fsort.IsInter())
+                {
+                    xregions = 8;
+                    yregions = 6;
+                }
+                else
+                {
+                    xregions = 1;
+                    yregions = 1;
+                }
             }
             else
             {
@@ -213,8 +203,8 @@ void CompCompressor::SetupCodeBlocks( SubbandList& bands )
         }
         else
         {
-            xregions = 1;
-            yregions = 1;
+               xregions = 1;
+               yregions = 1;
         }
 
         max_xregion = bands( band_num ).Xl() / min_dim;
@@ -224,7 +214,6 @@ void CompCompressor::SetupCodeBlocks( SubbandList& bands )
                                         std::min( xregions , max_xregion ) );
 
     }// band_num
-        
 }
 
 void CompCompressor::SelectQuantisers( PicArray& pic_data , 
@@ -237,7 +226,18 @@ void CompCompressor::SelectQuantisers( PicArray& pic_data ,
     {
         for ( int b=bands.Length() ; b>=1 ; --b )
         {
-            bands(b).SetUsingMultiQuants( using_multi_quants );
+            // Set multiquants flag in the subband only if 
+            // a. Global using_multi_quants flags is set in encparams
+            //           and
+            // b. Current subband has more than one block
+            if (
+                using_multi_quants &&
+                (bands(b).GetCodeBlocks().LengthX() > 1  ||
+                bands(b).GetCodeBlocks().LengthY() > 1)
+               )
+                bands(b).SetUsingMultiQuants( using_multi_quants );
+            else
+                bands(b).SetUsingMultiQuants( false );
             est_bits[b] = SelectMultiQuants( pic_data , bands , b );
         }// b
     }
@@ -269,7 +269,7 @@ int CompCompressor::SelectMultiQuants( PicArray& pic_data , SubbandList& bands ,
     QuantChooser qchooser( pic_data , m_lambda );
 
     // For the DC band in I frames, remove the average
-    if ( band_num == bands.Length() && m_fsort == I_frame)
+    if ( band_num == bands.Length() && m_fsort.IsIntra() )
         AddSubAverage( pic_data , node.Xl() , node.Yl() , SUBTRACT);
 
     // The total estimated bits for the subband 
@@ -278,7 +278,7 @@ int CompCompressor::SelectMultiQuants( PicArray& pic_data , SubbandList& bands ,
     band_bits = qchooser.GetBestQuant( node );
 
     // Put the DC band average back in if necessary   
-    if ( band_num == bands.Length() && m_fsort == I_frame)
+    if ( band_num == bands.Length() && m_fsort.IsIntra() )
         AddSubAverage( pic_data , node.Xl() , node.Yl() , ADD);
 
     if ( band_bits == 0 )

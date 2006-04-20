@@ -293,11 +293,6 @@ void WaveletTransform::SetBandWeights (const float cpd,
             chroma_xfac = 2.0;
             chroma_yfac = 1.0;
         }
-        else if( cformat == format411 )
-        {
-            chroma_xfac = 4.0;
-            chroma_yfac = 1.0;
-        }
         else if( cformat == format420 )
         {
             chroma_xfac = 2.0;
@@ -322,7 +317,7 @@ void WaveletTransform::SetBandWeights (const float cpd,
             xfreq = cpd * ( float(xp) + (float(xl)/2.0) ) / float(xlen);
             yfreq = cpd * ( float(yp) + (float(yl)/2.0) ) / float(ylen);
 
-            if ( fsort != I_frame )
+            if ( fsort.IsInter() )
             {
                 xfreq /= 8.0;
                 yfreq /= 8.0;
@@ -336,7 +331,7 @@ void WaveletTransform::SetBandWeights (const float cpd,
 
         // Give more welly to DC in a completely unscientific manner ...
         // (should really relate this to the frame rate)
-        m_band_list( m_band_list.Length() ).SetWt(m_band_list(13).Wt()/6.0);
+        m_band_list( m_band_list.Length() ).SetWt(m_band_list(m_band_list.Length() ).Wt()/6.0);
 
         // Make sure dc is always the lowest weight
         float min_weight=m_band_list(m_band_list.Length()).Wt();
@@ -976,6 +971,9 @@ void WaveletTransform::VHFilterApprox9_7::Split(const int xp ,
 
     // Lastly, have to reorder so that subbands are no longer interleaved
     DeInterleave( xp , yp , xl , yl , pic_data );
+
+    
+
 }
 
 #if !defined(HAVE_MMX)

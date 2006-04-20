@@ -24,7 +24,8 @@
 *                 Scott R Ladd,
 *                 Chris Bowley,
 *                 Anuradha Suraparaju,
-*                 Tim Borer
+*                 Tim Borer,
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -47,8 +48,6 @@
 #include <libdirac_common/mot_comp.h>
 #include <libdirac_motionest/motion_estimate.h>
 #include <libdirac_common/mv_codec.h>
-#include <libdirac_common/golomb.h>
-#include <libdirac_common/bit_manager.h>
 #include <libdirac_common/dirac_assertions.h>
 using namespace dirac;
 
@@ -71,14 +70,14 @@ FrameCompressor::~FrameCompressor()
         delete m_me_data;
 }
 
-void FrameCompressor::Compress( FrameBuffer& my_buffer ,
-                                const FrameBuffer& orig_buffer ,
-                                int fnum )
+FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
+                                        const FrameBuffer& orig_buffer ,
+                                        int fnum,
+                                        int au_fnum)
 {
-    FrameOutputManager& foutput = m_encparams.BitsOut().FrameOutput();
-
     Frame& my_frame = my_buffer.GetFrame( fnum );
-    const FrameParams& fparams = my_frame.GetFparams();
+
+    FrameParams& fparams = my_frame.GetFparams();
     const FrameSort& fsort = fparams.FSort();
     const ChromaFormat cformat = fparams.CFormat();
 
@@ -94,7 +93,7 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer ,
         m_me_data = 0;
     }
 
-    if ( fsort != I_frame )
+    if ( fsort.IsInter() )
     {
         // Set the precision to quarter pixel as standard
         m_encparams.SetMVPrecision( 2 );
@@ -105,11 +104,22 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer ,
         MotionEstimator my_motEst( m_encparams );
         my_motEst.DoME( orig_buffer , fnum , *m_me_data );
 
-        // If we have a cut, and an L1 frame, then turn into an I-frame
+        // If we have a cut....
         AnalyseMEData( *m_me_data );
         if ( m_is_a_cut )
         {
-            my_frame.SetFrameSort( I_frame );
+            my_frame.SetFrameType (INTRA_FRAME);
+            if (my_frame.GetFparams().FSort().IsRef())
+            {
+                my_frame.SetFrameSort (FrameSort::IntraNonRefFrameSort());
+                my_frame.SetReferenceType (NON_REFERENCE_FRAME);
+            }
+            else
+            {
+                my_frame.SetFrameSort (FrameSort::IntraRefFrameSort());
+                my_frame.SetReferenceType (REFERENCE_FRAME);
+            }
+            
             if ( m_encparams.Verbose() )
                 std::cerr<<std::endl<<"Cut detected and I-frame inserted!";
         }
@@ -117,7 +127,7 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer ,
     }
 
    // Set the wavelet filter
-   if ( fsort==I_frame )
+   if ( fsort.IsIntra() )
        m_encparams.SetTransformFilter( APPROX97 );
    else
        m_encparams.SetTransformFilter( FIVETHREE );
@@ -126,13 +136,17 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer ,
     // this allows us to do cut-detection and (possibly) to decide whether
     // or not to skip a frame before actually encoding anything. However we
     // can do this at any point prior to actually writing any frame data.
-    WriteFrameHeader( my_frame.GetFparams() );
-
+    //WriteFrameHeader( my_frame.GetFparams() );
+    FrameByteIO* p_frame_byteio = new FrameByteIO(fparams,
+                                                  fnum,  
+                                                  au_fnum);
+   
+    p_frame_byteio->Output();
 
     if ( !m_skipped )
     {    // If not skipped we continue with the coding ...
-
-        if ( fsort != I_frame)
+        
+        if (fsort.IsInter() )
         {
              // Code the MV data
 
@@ -148,12 +162,15 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer ,
             // If we're using block motion vectors, code them
             if ( m_use_block_mv )
             {
-                MvDataCodec my_mv_coder( &( foutput.MVOutput().Data() ) , 45 , cformat);
+                MvDataByteIO *mv_data = new MvDataByteIO(fparams, 
+                                        static_cast<CodecParams&>(m_encparams));
+                p_frame_byteio->SetMvData(mv_data);
+
+                MvDataCodec my_mv_coder( mv_data->BlockData(), 45 , cformat);
 
                 my_mv_coder.InitContexts();//may not be necessary
-                num_mv_bits = my_mv_coder.Compress( *m_me_data );            
-
-                UnsignedGolombCode( foutput.MVOutput().Header() , num_mv_bits);
+                num_mv_bits = my_mv_coder.Compress( *m_me_data );
+                mv_data->Output();
             }
 
              // Then motion compensate
@@ -163,22 +180,25 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer ,
  
         }//?fsort
 
+        //Write Transform Header
+        TransformByteIO *p_transform_byteio = new TransformByteIO(fparams, 
+                                static_cast<CodecParams&>(m_encparams));
+        p_frame_byteio->SetTransformData(p_transform_byteio);
+        p_transform_byteio->Output();
+
         //code component data
-        my_compcoder.Compress( my_buffer.GetComponent( fnum , Y_COMP) );
-        if (cformat != Yonly)
-        {
-            my_compcoder.Compress( my_buffer.GetComponent( fnum , U_COMP) );
-            my_compcoder.Compress( my_buffer.GetComponent( fnum , V_COMP) );
-        }
+        p_transform_byteio->AddComponent( my_compcoder.Compress( my_buffer.GetComponent( fnum , Y_COMP) ) );
+        p_transform_byteio->AddComponent( my_compcoder.Compress( my_buffer.GetComponent( fnum , U_COMP) ) );
+        p_transform_byteio->AddComponent( my_compcoder.Compress( my_buffer.GetComponent( fnum , V_COMP) ) );
 
         //motion compensate again if necessary
-        if ( fsort != I_frame )
+        if (fsort.IsInter() )
         {
-            if ( fsort!= L2_frame || m_encparams.LocalDecode() )
+            if ( fsort.IsRef() || m_encparams.LocalDecode() )
             {
                 MotionCompensator::CompensateFrame( m_encparams , ADD , 
                                                     my_buffer , fnum , 
-                                                    *m_me_data );
+                                                    *m_me_data );   
             }
             // Set me data available flag
             m_medata_avail = true;
@@ -188,83 +208,11 @@ void FrameCompressor::Compress( FrameBuffer& my_buffer ,
         my_buffer.GetFrame(fnum).Clip();
 
     }//?m_skipped
+
+    // return compressed frame
+    return p_frame_byteio;
 }
 
-void FrameCompressor::WriteFrameHeader( const FrameParams& fparams )
-{
-    BasicOutputManager& frame_header_op = m_encparams.BitsOut().FrameOutput().HeaderOutput();
-
-    // Write the frame start code
-    unsigned char frame_start[5] = { START_CODE_PREFIX_BYTE0, 
-                                     START_CODE_PREFIX_BYTE1, 
-                                     START_CODE_PREFIX_BYTE2, 
-                                     START_CODE_PREFIX_BYTE3, 
-                                     IFRAME_START_CODE };
-    switch(fparams.FSort())
-    {
-    case I_frame:
-        frame_start[4] = IFRAME_START_CODE;
-        break;
-
-    case L1_frame:
-        frame_start[4] = L1FRAME_START_CODE;
-        break;
-
-    case L2_frame:
-        frame_start[4] = L2FRAME_START_CODE;
-         break;
-
-    default:
-//         ASSERTM (false, "Frame type is I_frame or L1_frame or L2_frame");
-         break;
-    }
-    frame_header_op.OutputBytes((char *)frame_start, 5);
-
-    // Write the frame number
-    UnsignedGolombCode(frame_header_op , fparams.FrameNum());
-
-    //write whether the frame is m_skipped or not
-    frame_header_op.OutputBit( m_skipped );
-
-    if (!m_skipped)
-    {// If we're not m_skipped, then we write the rest of the metadata
-
-        // Write the expiry time relative to the frame number 
-        UnsignedGolombCode( frame_header_op , fparams.ExpiryTime() );
-
-        // Write the frame sort
-        UnsignedGolombCode( frame_header_op , (unsigned int) fparams.FSort() );
-
-        // Write the wavelet filter being used
-        UnsignedGolombCode( frame_header_op , (unsigned int) m_encparams.TransformFilter() );
-
-        if (fparams.FSort() != I_frame)
-        {        
-            // If not an I-frame, write how many references there are        
-            UnsignedGolombCode( frame_header_op , (unsigned int) fparams.Refs().size() );
-
-            // For each reference, write the reference number relative to the frame number
-            for ( size_t i=0 ; i<fparams.Refs().size() ; ++i )
-                GolombCode( frame_header_op , fparams.Refs()[i]-fparams.FrameNum() );
-
-            // Indicate whether or not there is global motion vector data
-            frame_header_op.OutputBit( m_use_global );
-
-            // Indicate whether or not there is block motion vector data
-            frame_header_op.OutputBit( m_use_block_mv );
-
-            // If there is global but no block motion vector data, indicate the 
-            // prediction mode to use for the whole frame
-            if ( m_use_global && !m_use_block_mv )
-            {
-                UnsignedGolombCode( frame_header_op , (unsigned int) m_global_pred_mode );
-            }
-            // Write the motion vector precision being used for the frame
-            UnsignedGolombCode( frame_header_op , (unsigned int) m_encparams.MVPrecision() );
-        }
-
-    }// ?m_skipped
-}
 
 const MEData* FrameCompressor::GetMEData() const
 {

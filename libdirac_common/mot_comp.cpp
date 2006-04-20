@@ -139,7 +139,7 @@ void MotionCompensator::CompensateFrame( const AddOrSub direction ,
 
      m_cformat = my_frame.GetFparams().CFormat();
 
-     if (fsort!=I_frame)
+     if (fsort.IsInter())
      {//we can motion compensate
 
          const std::vector<int>& refs=my_frame.GetFparams().Refs();
@@ -159,12 +159,9 @@ void MotionCompensator::CompensateFrame( const AddOrSub direction ,
              //now do all the components
              CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , Y_COMP);
 
-         if ( m_cformat != Yonly )
-             {
-                 luma_or_chroma = false;                
-                 CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , U_COMP);
-                 CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , V_COMP);
-             }
+             luma_or_chroma = false;                
+             CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , U_COMP);
+             CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , V_COMP);
          }
      }
 }
@@ -311,11 +308,11 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
             xscale_shift = 1;
             yscale_shift = 0;
         }
-        else if (m_cformat == format411)
-        {
-            xscale_shift = 2;
-            yscale_shift = 0;
-        }
+        //else if (m_cformat == format411)
+        //{
+         //   xscale_shift = 2;
+          //  yscale_shift = 0;
+        //}
 
     } 
     

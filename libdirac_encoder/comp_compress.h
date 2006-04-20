@@ -21,6 +21,7 @@
 * All Rights Reserved.
 *
 * Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -42,6 +43,7 @@
 #include <libdirac_common/arrays.h>
 #include <libdirac_common/wavelet_utils.h>
 #include <libdirac_common/common.h>
+#include <libdirac_byteio/component_byteio.h>
 
 namespace dirac
 {
@@ -67,8 +69,9 @@ namespace dirac
         /*!
             Compress a PicArray containing a frame component (Y, U, or V).
             \param  pic_data    the component data to be compressed
+            \return Frame-componentin Dirac-bytestream format
         */
-        void Compress(PicArray & pic_data);
+        ComponentByteIO* Compress(PicArray & pic_data);
 
     private:
         //! Copy constructor is private and body-less. This class should not be copied.
@@ -85,19 +88,6 @@ namespace dirac
         int SelectMultiQuants( PicArray& pic_data , 
                                SubbandList& bands , 
                                const int band_num );
-
-        //! Write the header data of the subband to the output
-        /* 
-            Write the header data of the subband to the output. This includes
-            whether the subband is skipped (if yes, there's no more data),
-            the subband quantiser index, whether multiple quantisers are used.
-            \param output_mgr the output buffer
-            \param node the subband metadata
-            \param num_band_bytes the length of the subband data in bytes
-
-        */
-        void WriteBandHeader( BasicOutputManager& output_mgr , const Subband& node ,
-                              const int num_band_bytes );
 
         void SetupCodeBlocks( SubbandList& bands );
 

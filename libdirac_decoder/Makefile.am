@@ -18,12 +18,13 @@ endif
 libdirac_decoder_a_SOURCES = $(h_sources) $(cpp_sources)
 
 libdirac_decoder_a_LIBADD = \
-               $(top_builddir)/libdirac_common/libdirac_common.a
+               $(top_builddir)/libdirac_common/libdirac_common.a \
+               $(top_builddir)/libdirac_byteio/libdirac_byteio.a 
 
 libdirac_decoder_la_SOURCES = $(h_sources) $(cpp_sources)
 libdirac_decoder_la_CXXFLAGS = $(AM_CXXFLAGS)
 
-libdirac_decoder_la_LIBADD = $(top_builddir)/libdirac_common/libdirac_common.la
+libdirac_decoder_la_LIBADD = $(top_builddir)/libdirac_common/libdirac_common.la $(top_builddir)/libdirac_byteio/libdirac_byteio.la
 
 libdirac_decoder_la_LDFLAGS= -no-undefined -version-info $(GENERIC_LIBRARY_VERSION)
 

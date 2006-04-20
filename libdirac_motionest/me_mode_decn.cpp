@@ -74,7 +74,7 @@ ModeDecider::ModeDecider( const EncoderParams& encp):
 
 ModeDecider::~ModeDecider()
 {
-    if (fsort != I_frame)
+    if (fsort.IsInter())
     {
         delete m_me_data_set[0];
         delete m_me_data_set[1];
@@ -93,8 +93,8 @@ void ModeDecider::DoModeDecn(const FrameBuffer& my_buffer, int frame_num, MEData
     // Initialise // 
     ////////////////
 
-    const FrameSort fsort = my_buffer.GetFrame(frame_num).GetFparams().FSort();
-    if (fsort != I_frame)
+    fsort = my_buffer.GetFrame(frame_num).GetFparams().FSort();
+    if (fsort.IsInter())
     {
         // Extract the references
         const vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();

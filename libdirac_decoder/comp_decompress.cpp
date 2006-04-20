@@ -20,7 +20,10 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author),
+*                 Scott R Ladd,
+*                 Anuradha Suraparaju,
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -39,7 +42,6 @@
 #include <libdirac_decoder/comp_decompress.h>
 #include <libdirac_common/wavelet_utils.h>
 #include <libdirac_common/band_codec.h>
-#include <libdirac_common/golomb.h>
 using namespace dirac;
 
 #include <vector>
@@ -56,92 +58,67 @@ CompDecompressor::CompDecompressor( DecoderParams& decp, const FrameParams& fp)
 {}
 
 
-void CompDecompressor::Decompress( PicArray& pic_data )
+void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
+                                  PicArray& pic_data )
 {
-	const FrameSort& fsort=m_fparams.FSort();
-	const int depth( 4 );
+    const FrameSort& fsort=m_fparams.FSort();
+    const int depth( m_decparams.TransformDepth() );
 
     // A pointer to the object(s) we'll be using for coding the bands
-	BandCodec* bdecoder;
-    const size_t CONTEXTS_REQUIRED( 20 );
+    BandCodec* bdecoder;
+    const size_t CONTEXTS_REQUIRED( 22 );
 
-	unsigned int num_band_bytes;
-
-	WaveletTransform wtransform( depth , m_decparams.TransformFilter() );
-	SubbandList& bands=wtransform.BandList();
+    WaveletTransform wtransform( depth , m_decparams.TransformFilter() );
+    SubbandList& bands=wtransform.BandList();
 
     // Initialise all the subbands
-	bands.Init(depth , pic_data.LengthX() , pic_data.LengthY());
+    bands.Init(depth , pic_data.LengthX() , pic_data.LengthY());
 
     // Set up the code blocks
     SetupCodeBlocks( bands , fsort );
 
-	for ( int b=bands.Length() ; b>=1 ; --b )
-	{
-		// Read the header data first
-        num_band_bytes = ReadBandHeader( m_decparams.BitsIn() , bands(b) );
-
-		if ( !bands(b).Skipped() )
-        {
-			if ( b>=bands.Length()-3)
-            {
-				if ( fsort==I_frame && b==bands.Length() )
-					bdecoder=new IntraDCBandCodec( &m_decparams.BitsIn() , CONTEXTS_REQUIRED ,bands);
-				else
-					bdecoder=new LFBandCodec( &m_decparams.BitsIn() , CONTEXTS_REQUIRED ,bands , b);
-			}
-			else
-				bdecoder=new BandCodec( &m_decparams.BitsIn() , CONTEXTS_REQUIRED , bands , b);
-
-			bdecoder->InitContexts();
-			bdecoder->Decompress(pic_data , num_band_bytes);
-			delete bdecoder;
-		}
-		else
-        {
-			if ( b==bands.Length() && fsort==I_frame )
-				SetToVal( pic_data , bands(b) , wtransform.GetMeanDCVal() );
-			else
-				SetToVal( pic_data , bands(b) , 0 );
-		}
-	}
-	wtransform.Transform(BACKWARD,pic_data);
-}
-
-int CompDecompressor::ReadBandHeader( BitInputManager& bits_in , Subband& band )
-{
-    int num_band_bytes( 0 );
-
-    // See if the subband is skipped
-    band.SetSkip( bits_in.InputBit() );
-
-    if ( !band.Skipped() )
+    for ( int b=bands.Length() ; b>=1 ; --b )
     {
-        // If we're not skipped, we need a quantisation index for the subband
-        band.SetQIndex( UnsignedGolombDecode( bits_in ) );
+        // Multiple quantiser are used only if
+        // a. The global using multi quants flag is true
+        //              and
+        // b. More than one code block is present in the subband.
+        bands(b).SetUsingMultiQuants( 
+                                  m_decparams.MultiQuants() &&
+                                  (bands(b).GetCodeBlocks().LengthX() > 1 ||
+                                  bands(b).GetCodeBlocks().LengthY() > 1)
+                                );
 
-        // We also need to say whether there are multiple quantisers in the subband.
-        // If so, offsets from the band QIndex will be decoded in the code block
-        // headers in the arithmetic coded subband data.
-        band.SetUsingMultiQuants( bits_in.InputBit() );
+        // Read the header data first
+        SubbandByteIO subband_byteio(bands(b), *p_component_byteio);
+        subband_byteio.Input();
+        //std::cerr << "Subband Num=" << b << "Arithdata size=" << subband_byteio.GetBandDataLength() << std::endl;
 
-        if ( !band.UsingMultiQuants() )
+        if ( !bands(b).Skipped() )
         {
-            // Propogate the quantiser index to all the code blocks if we 
-            // don't have multiquants
-            for ( int j=0 ; j<band.GetCodeBlocks().LengthY() ; ++j )
-                for ( int i=0 ; i<band.GetCodeBlocks().LengthX() ; ++i )
-                   band.GetCodeBlocks()[j][i].SetQIndex( band.QIndex() );
-        }
-        // In the multiquant case, quantiser indexes for
-        // code blocks will be coded as offsets in the entropy-coded stream
-    
-        num_band_bytes = UnsignedGolombDecode( bits_in );
-    }
-    bits_in.FlushInput();
+            if ( b>=bands.Length()-3)
+            {
+                if ( fsort.IsIntra() && b==bands.Length() )
+                    bdecoder=new IntraDCBandCodec(&subband_byteio, CONTEXTS_REQUIRED ,bands);
+                else
+                    bdecoder=new LFBandCodec( &subband_byteio , CONTEXTS_REQUIRED ,bands , b);
+            }
+            else
+                bdecoder=new BandCodec( &subband_byteio , CONTEXTS_REQUIRED , bands , b);
 
-    // Read the number of bits read for the band and return
-    return num_band_bytes;
+            bdecoder->InitContexts();
+            bdecoder->Decompress(pic_data , subband_byteio.GetBandDataLength());
+            delete bdecoder;
+        }
+        else
+        {
+            if ( b==bands.Length() && fsort.IsIntra() )
+                SetToVal( pic_data , bands(b) , wtransform.GetMeanDCVal() );
+            else
+                SetToVal( pic_data , bands(b) , 0 );
+        }
+    }
+    wtransform.Transform(BACKWARD,pic_data);
 }
 
 void CompDecompressor::SetupCodeBlocks( SubbandList& bands , const FrameSort fsort )
@@ -157,36 +134,53 @@ void CompDecompressor::SetupCodeBlocks( SubbandList& bands , const FrameSort fso
 
     for (int band_num = 1; band_num<=bands.Length() ; ++band_num)
     {
-        if ( band_num < bands.Length()-6 )
+        if (m_decparams.SpatialPartition())
         {
-            if ( fsort != I_frame )
+            if (m_decparams.DefaultSpatialPartition())
             {
-                xregions = 12;
-                yregions = 8;
+                if ( band_num < bands.Length()-6 )
+                {
+                    if ( fsort.IsInter() )
+                    {
+                        xregions = 12;
+                        yregions = 8;
+                    }
+                    else
+                    {
+                        xregions = 4;
+                        yregions = 3;
+                    }
+                }
+                else if (band_num < bands.Length()-3)
+                {
+                    if ( fsort.IsInter() )
+                    {
+                        xregions = 8;
+                        yregions = 6;
+                    }
+                    else
+                    {
+                        xregions = 1;
+                        yregions = 1;
+                    }
+                }
+                else
+                {
+                    xregions = 1;
+                    yregions = 1;
+                }
             }
             else
             {
-                xregions = 4;
-                yregions = 3;
-            }
-        }
-        else if (band_num < bands.Length()-3)
-        {
-            if ( fsort != I_frame )
-            {
-                xregions = 8;
-                yregions = 6;
-            }
-            else
-            {
-                xregions = 1;
-                yregions = 1;
+                // non-default spatial partitioning case
+                xregions = m_decparams.MaxXBlocks();
+                yregions = m_decparams.MaxYBlocks();
             }
         }
         else
         {
-            xregions = 1;
-            yregions = 1;
+               xregions = 1;
+               yregions = 1;
         }
 
         max_xregion = bands( band_num ).Xl() / min_dim;
@@ -203,8 +197,8 @@ void CompDecompressor::SetToVal( PicArray& pic_data ,
                                  ValueType val )
 {
 
-	for (int j=node.Yp() ; j<node.Yp()+node.Yl() ; ++j)
-		for (int i=node.Xp() ; i<node.Xp()+node.Xl() ; ++i)
-			pic_data[j][i]=val;
+    for (int j=node.Yp() ; j<node.Yp()+node.Yl() ; ++j)
+        for (int i=node.Xp() ; i<node.Xp()+node.Xl() ; ++i)
+            pic_data[j][i]=val;
 
 }

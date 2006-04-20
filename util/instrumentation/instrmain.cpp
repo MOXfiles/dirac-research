@@ -81,7 +81,7 @@ static void DisplayHelp()
     cout << "\nverbose              bool    I  false         Display information during process";
 }
 
-bool ReadSequenceParams (std::istream &in, SeqParams &seqparams)
+bool ReadSequenceParams (std::istream &in, SeqParams &seqparams, SourceParams& srcparams)
 {
     if (! in )
         return false;
@@ -99,13 +99,15 @@ bool ReadSequenceParams (std::istream &in, SeqParams &seqparams)
     seqparams.SetYl( temp_int );
 
     in >> temp_bool;
-    seqparams.SetInterlace( temp_bool );
+    srcparams.SetInterlace( temp_bool );
 
     in >> temp_bool;
-    seqparams.SetTopFieldFirst( temp_bool );
+    srcparams.SetTopFieldFirst( temp_bool );
 
-    in >> temp_int;    
-    seqparams.SetFrameRate( temp_int );
+    int num, denom;
+    in >> num;    
+    in >> denom;    
+    srcparams.SetFrameRate( num, denom );
 
     return true;
 }
@@ -296,13 +298,8 @@ int main (int argc, char* argv[])
     }
 
     SeqParams seqparams;
-    ReadSequenceParams (in, seqparams);
-    // if the input sequence is Y only, make the ouput sequence 4:2:0
-    if (seqparams.CFormat() == Yonly)
-    {
-        seqparams.SetCFormat( format420 );
-    }
-
+    SourceParams srcparams;
+    ReadSequenceParams (in, seqparams, srcparams);
 
     // Create objects for input and output picture sequences
     FileStreamInput inputpic(input.c_str(), seqparams);

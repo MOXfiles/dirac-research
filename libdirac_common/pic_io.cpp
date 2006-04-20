@@ -62,11 +62,8 @@ bool StreamPicOutput::WriteNextFrame( const Frame& myframe )
 
     ret_val=WriteComponent(myframe.Ydata() , Y_COMP );
 
-    if ( m_sparams.CFormat() != Yonly )
-    {
-        ret_val|=WriteComponent( myframe.Udata() , U_COMP );
-        ret_val|=WriteComponent( myframe.Vdata() , V_COMP );
-    }
+    ret_val|=WriteComponent( myframe.Udata() , U_COMP );
+    ret_val|=WriteComponent( myframe.Vdata() , V_COMP );
 
     return ret_val;
 }
@@ -215,11 +212,8 @@ bool StreamPicInput::ReadNextFrame(Frame& myframe)
     bool ret_val;
     ret_val=ReadComponent( myframe.Ydata() , Y_COMP);
 
-    if (m_sparams.CFormat() != Yonly)
-    {
-        ret_val|=ReadComponent(myframe.Udata() , U_COMP);
-        ret_val|=ReadComponent(myframe.Vdata() , V_COMP);
-    }
+    ret_val|=ReadComponent(myframe.Udata() , U_COMP);
+    ret_val|=ReadComponent(myframe.Vdata() , V_COMP);
 
     return ret_val;
 }
@@ -238,12 +232,7 @@ bool StreamPicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
         yl = m_sparams.Yl();
     }
     else{
-        if (m_sparams.CFormat() == format411)
-        {
-            xl = m_sparams.Xl()/4;
-            yl = m_sparams.Yl();
-        }
-        else if (m_sparams.CFormat()==format420)
+        if (m_sparams.CFormat()==format420)
         {
             xl = m_sparams.Xl()/2;
             yl = m_sparams.Yl()/2;
@@ -348,9 +337,7 @@ void FileStreamInput::Skip(const int num)
  
     const ChromaFormat cf = m_sparams.CFormat();
 
-    if ( cf == Yonly)
-        num_bytes = num_pels;
-    else if ( cf == format411 || cf == format420 )
+    if ( cf == format420 )
        num_bytes = (num_pels*3)/2;
     else if ( cf == format422 )
        num_bytes = num_pels*2;

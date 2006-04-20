@@ -49,9 +49,6 @@ const char *chroma2string (dirac_chroma_t chroma)
 {
     switch (chroma)
     {
-    case Yonly:
-        return "Y_ONLY";
-
     case format422:
         return "4:2:2";
 
@@ -61,9 +58,6 @@ const char *chroma2string (dirac_chroma_t chroma)
     case format420:
         return "4:2:0";
 
-    case format411:
-        return "4:1:1";
-
     default:
         break;
     }
@@ -71,19 +65,35 @@ const char *chroma2string (dirac_chroma_t chroma)
     return "Unknown";
 }
 
-const char *ftype2string (dirac_frame_type_t ftype)
+const char *ftype2string (dirac_frame_type_t ftype, dirac_reference_type_t rtype)
 {
     switch (ftype)
     {
-    case I_frame:
-        return "I_frame";
+    case INTRA_FRAME:
+    {
+        switch (rtype)
+        {
+            case REFERENCE_FRAME:
+                return "Intra Ref Frame";
+            case NON_REFERENCE_FRAME:
+                return "Intra Non-Ref Frame";
+            default:
+                return "Intra Unknown-Ref Frame";
+        }
+    }
+    case INTER_FRAME:
+    {
+        switch (rtype)
+        {
+            case REFERENCE_FRAME:
+                return "Inter Ref Frame";
+            case NON_REFERENCE_FRAME:
+                return "Inter Non-Ref Frame";
+            default:
+                return "Inter Unknown-Ref Frame";
+        }
+    }
     
-    case L1_frame:
-        return "L1_frame";
-    
-    case L2_frame:
-        return "L2_frame";
-
     default:
         break;
     }
@@ -100,14 +110,11 @@ static void WritePicData (dirac_decoder_t *decoder, FILE *fp)
     assert(decoder->fbuf->buf[0]);
     fwrite (decoder->fbuf->buf[0], decoder->seq_params.width*decoder->seq_params.height, 1, fp);
 
-    if (decoder->seq_params.chroma != Yonly)
-    {
-        assert(decoder->fbuf->buf[1]);
-        fwrite (decoder->fbuf->buf[1], decoder->seq_params.chroma_width*decoder->seq_params.chroma_height, 1, fp);
+    assert(decoder->fbuf->buf[1]);
+    fwrite (decoder->fbuf->buf[1], decoder->seq_params.chroma_width*decoder->seq_params.chroma_height, 1, fp);
 
-        assert(decoder->fbuf->buf[2]);
-        fwrite (decoder->fbuf->buf[2], decoder->seq_params.chroma_width*decoder->seq_params.chroma_height, 1, fp);
-    }
+    assert(decoder->fbuf->buf[2]);
+    fwrite (decoder->fbuf->buf[2], decoder->seq_params.chroma_width*decoder->seq_params.chroma_height, 1, fp);
 }
 
 
@@ -132,7 +139,7 @@ static void DecodeDirac (const char *iname, const char *oname)
     dirac_decoder_t *decoder = NULL;
     FILE *ifp;
     FILE *fpdata;
-    unsigned char buffer[4096];
+    unsigned char buffer[8192];
     int bytes;
     int num_frames = 0;
     char infile_name[FILENAME_MAX];
@@ -193,16 +200,20 @@ static void DecodeDirac (const char *iname, const char *oname)
 
             if (verbose)
             {
-                fprintf (stderr, "SEQUENCE : width=%d height=%d chroma=%s chroma_width=%d chroma_height=%d frame_rate=%f, interlace=%s topfieldfirst=%s\n", 
+                fprintf (stderr, "SEQUENCE : major_ver=%d minor_version=%d profile=%d level=%d width=%d height=%d chroma=%s chroma_width=%d chroma_height=%d frame_rate=%d/%d, interlace=%s topfieldfirst=%s\n", 
+                decoder->parse_params.major_ver,
+                decoder->parse_params.minor_ver,
+                decoder->parse_params.profile,
+                decoder->parse_params.level,
                 decoder->seq_params.width,
                 decoder->seq_params.height,
                 chroma2string(decoder->seq_params.chroma),
                 decoder->seq_params.chroma_width,
                 decoder->seq_params.chroma_height,
-                (float)decoder->seq_params.frame_rate.numerator/
-                decoder->seq_params.frame_rate.denominator,
-                decoder->seq_params.interlace ? "yes" : "no",
-                decoder->seq_params.topfieldfirst ? "yes" : "no");
+                decoder->src_params.frame_rate.numerator,
+                decoder->src_params.frame_rate.denominator,
+                decoder->src_params.interlace ? "yes" : "no",
+                decoder->src_params.topfieldfirst ? "yes" : "no");
             }
 
             FreeFrameBuffer(decoder);
@@ -210,11 +221,8 @@ static void DecodeDirac (const char *iname, const char *oname)
             buf[0] = buf[1] = buf[2] = 0;
 
             buf[0] = (unsigned char *)malloc (decoder->seq_params.width * decoder->seq_params.height);
-            if (decoder->seq_params.chroma != Yonly)
-            {
-                buf[1] = (unsigned char *)malloc (decoder->seq_params.chroma_width * decoder->seq_params.chroma_height);
-                buf[2] = (unsigned char *)malloc (decoder->seq_params.chroma_width * decoder->seq_params.chroma_height);
-            }
+            buf[1] = (unsigned char *)malloc (decoder->seq_params.chroma_width * decoder->seq_params.chroma_height);
+            buf[2] = (unsigned char *)malloc (decoder->seq_params.chroma_width * decoder->seq_params.chroma_height);
             dirac_set_buf (decoder, buf, NULL);
 
          
@@ -236,15 +244,14 @@ static void DecodeDirac (const char *iname, const char *oname)
             * Start of frame detected. If decoder is too slow and frame can be
             * skipped, inform the parser to skip decoding the frame
             */
-            num_frames++;
             if (verbose)
             {
                 fprintf (stderr, "PICTURE_START : frame_type=%s frame_num=%d\n",
-                    ftype2string(decoder->frame_params.ftype),
+                    ftype2string(decoder->frame_params.ftype, decoder->frame_params.rtype),
                     decoder->frame_params.fnum);
             }
-            /* Just for testing skip every L2_frame */
-            if (skip && decoder->frame_params.ftype == L2_frame)
+            /* Just for testing skip every Non-reference frame */
+            if (skip && decoder->frame_params.rtype == NON_REFERENCE_FRAME)
             {
                 if (verbose)
                     fprintf (stderr, "              : Skipping frame\n");
@@ -256,10 +263,11 @@ static void DecodeDirac (const char *iname, const char *oname)
             break;
 
         case STATE_PICTURE_AVAIL:
+            num_frames++;
             if (verbose)
             {
                 fprintf (stderr, "PICTURE_AVAIL : frame_type=%s frame_num=%d\n",
-                    ftype2string(decoder->frame_params.ftype),
+                    ftype2string(decoder->frame_params.ftype, decoder->frame_params.rtype), 
                     decoder->frame_params.fnum);
             }
             /* picture available for display */
@@ -277,7 +285,7 @@ static void DecodeDirac (const char *iname, const char *oname)
     } while (bytes > 0 && state != STATE_INVALID);
     stop_t=clock();
 
-    if ( verbose )
+    //if ( verbose )
         fprintf (stdout, "Time per frame: %g\n",
                 (double)(stop_t-start_t)/(double)(CLOCKS_PER_SEC*num_frames));
 

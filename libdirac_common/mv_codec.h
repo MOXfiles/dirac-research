@@ -22,7 +22,8 @@
 *
 * Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
-*                 Tim Borer
+*                 Tim Borer,
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -61,27 +62,18 @@ namespace dirac
     class MvDataCodec: public ArithCodec<MvData>
     {
     public:
-        //! Constructor for encoding
+        //! Constructor
             /*!
             Creates a MvDataCodec object to encode MV data, based on parameters
-            \param    bits_out    the output for the encoded bits
+            \param    p_byteio   Input/output for the encoded bits
             \param    number_of_contexts the number of contexts used
             \param     cf            the chroma format
          */    
-        MvDataCodec(BasicOutputManager* bits_out,
+        MvDataCodec(ByteIO* p_byteio,
                     size_t number_of_contexts,
                     const ChromaFormat & cf);
 
-        //! Constructor for decoding
-        /*!
-            Creates a MvDataCodec object to encode MV data, based on parameters
-            \param    bits_in        the input for the encoded bits
-            \param    number_of_contexts the number of contexts used
-            \param     cf            the chroma format
-         */        
-        MvDataCodec(BitInputManager* bits_in,
-                    size_t number_of_contexts,
-                    const ChromaFormat & cf); 
+       
 
         //! Initialises the contexts    
         void InitContexts();
@@ -102,13 +94,13 @@ namespace dirac
 
     private:
 
-        // functions    
+        // functions   
         //! Private, bodyless copy constructor: class should not be copied
         MvDataCodec(const MvDataCodec& cpy);
         //! Private, bodyless copy operator=: class should not be assigned
         MvDataCodec& operator=(const MvDataCodec& rhs);
 
-        // coding functions    
+        // coding functions   
         // Code the MB splitting mode
         void CodeMBSplit(const MvData& in_data);
         // Code the MB common ref mode
@@ -133,19 +125,19 @@ namespace dirac
         void DecodeMv1( MvData& out_data);
         // Decode the second motion vector
         void DecodeMv2( MvData& out_data);
-        // Decode the dc value of intra blocks    
+        // Decode the dc value of intra blocks  
         void DecodeDC( MvData& out_data);
 
         void DoWorkCode( MvData& in_data );
         void DoWorkDecode(MvData& out_data);
 
-        // Context stuff    
+        // Context stuff   
         void ResetAll();
 
         inline int ChooseMBSContext(const MvData& data, const int bin_number) const;
         inline int ChooseMBCContext(const MvData& data) const;
 
-        inline int ChooseREF1xFollowContext( const int bin_number) const;
+        inline int ChooseREF1xFollowContext(const int bin_number) const;
         inline int ChooseREF1xInfoContext() const;
         inline int ChooseREF1xSignContext() const;
 
@@ -157,7 +149,7 @@ namespace dirac
         inline int ChooseREF2xInfoContext() const;
         inline int ChooseREF2xSignContext() const;
 
-        inline int ChooseREF2yFollowContext( const int bin_number) const;
+        inline int ChooseREF2yFollowContext(const int bin_number) const;
         inline int ChooseREF2yInfoContext() const;
         inline int ChooseREF2ySignContext() const;
 
@@ -165,11 +157,11 @@ namespace dirac
         inline int ChooseYDCInfoContext() const;
         inline int ChooseYDCSignContext() const;
 
-        inline int ChooseUDCFollowContext( const int bin_number) const;
+        inline int ChooseUDCFollowContext(const int bin_number) const;
         inline int ChooseUDCInfoContext() const;
         inline int ChooseUDCSignContext() const;
 
-        inline int ChooseVDCFollowContext( const int bin_number) const;
+        inline int ChooseVDCFollowContext(const int bin_number) const;
         inline int ChooseVDCInfoContext() const;
         inline int ChooseVDCSignContext() const;
 
@@ -180,6 +172,7 @@ namespace dirac
 
         unsigned int BlockModePrediction(const TwoDArray<PredMode>& preddata,
                                          const unsigned int num_refs) const;
+
         MVector Mv1Prediction( const MvArray& mvarray,
                                const TwoDArray<PredMode>& preddata) const;
 

@@ -23,6 +23,7 @@
 * Contributor(s): Thomas Davies (Original Author), 
 *                 Scott R Ladd,
 *                 Anuradha Suraparaju,
+*                 Andrew Kennedy,
 *                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
@@ -43,96 +44,145 @@
 /////////////////////////
 
 #include <libdirac_common/dirac_assertions.h>
-#include <libdirac_common/bit_manager.h>
 #include <libdirac_decoder/frame_decompress.h>
 #include <libdirac_decoder/comp_decompress.h>
 #include <libdirac_common/mot_comp.h>
 #include <libdirac_common/mv_codec.h>
-#include <libdirac_common/golomb.h>
+#include <libdirac_byteio/frame_byteio.h>
+#include <libdirac_common/dirac_exception.h>
 using namespace dirac;
 
 #include <iostream>
+#include <memory>
 
 using std::vector;
+using std::auto_ptr;
 
 FrameDecompressor::FrameDecompressor(DecoderParams& decp, ChromaFormat cf)
 : 
 m_decparams(decp),
 m_cformat(cf)
-{}
+{
+     
+    
+     
+
+}
 
 FrameDecompressor::~FrameDecompressor()
 {
 }
 
-bool FrameDecompressor::ReadFrameHeader(const FrameBuffer& my_buffer)
+
+bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
+                                   FrameBuffer& my_buffer,
+                                   int au_fnum)
 {
-    FrameParams my_fparams (m_cformat , my_buffer.GetFParams().Xl(), my_buffer.GetFParams().Yl(), my_buffer.GetFParams().ChromaXl(), my_buffer.GetFParams().ChromaYl());
-     //Get the frame header (which includes the frame number)
-    m_fparams = my_fparams; 
-    m_read_header = ReadFrameHeader(m_fparams);
-    return m_read_header;
-}
+    // get current byte position
+    //int start_pos = parseunit_byteio.GetReadBytePosition();
+    try {
 
-bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
-{
+    // read frame data
+    FrameByteIO frame_byteio(m_fparams,
+                             parseunit_byteio,
+                             au_fnum);
+    frame_byteio.Input();
 
+    // Do frame buffer cleaning
+    std::vector<int>& retd_list = m_fparams.RetiredFrames();
+    for (size_t i = 0; i < retd_list.size(); ++i)
+        my_buffer.Clean(retd_list[i]);
 
-    if ( !(m_decparams.BitsIn().End())&& m_read_header )
-    {//if we've not finished the data, can proceed
-        TEST (my_buffer.GetFParams().Xl() == m_fparams.Xl());
-        TEST (my_buffer.GetFParams().Yl() == m_fparams.Yl());
+    FrameSort fs;
+    
+    if (m_fparams.GetFrameType() == INTRA_FRAME)
+        fs.SetIntra();
+    else
+        fs.SetInter();
+    
+    if (m_fparams.GetReferenceType() == REFERENCE_FRAME)
+        fs.SetRef();
+    else
+        fs.SetNonRef();
 
-        if ( !m_skipped )
-        {//if we're not m_skipped then we can decode the rest of the frame
+    m_fparams.SetFSort(fs);
+        
 
-            if ( m_decparams.Verbose() )
-                std::cerr<<std::endl<<"Decoding frame "<<m_fparams.FrameNum()<<" in display order";        
+    // Check if the frame can be decoded
+    if (m_fparams.FSort().IsInter())
+    {
+        const std::vector<int>& refs = m_fparams.Refs();
+        for (unsigned int i = 0; i < refs.size(); ++i)
+        {
+            const Frame &ref_frame = my_buffer.GetFrame(refs[i]);
+            if (ref_frame.GetFparams().FrameNum() != refs[i])
+                return false;
+        }
+    }
 
-            // Add a frame into the buffer ready to receive the data        
-            my_buffer.PushFrame(m_fparams);
-            Frame& my_frame = my_buffer.GetFrame(m_fparams.FrameNum());//Reference to the frame being decoded
-            FrameSort fsort = m_fparams.FSort();
-            MvData* mv_data;
-            unsigned int num_mv_bits;
+    m_skipped=false;
+    if ( !m_skipped )
+    {//if we're not m_skipped then we can decode the rest of the frame
 
-            if ( fsort != I_frame )
-            {//do all the MV stuff        
-                mv_data = new MvData( m_decparams.XNumMB() , m_decparams.YNumMB(), m_fparams.NumRefs() );
+       if ( m_decparams.Verbose() )
+             std::cerr<<std::endl<<"Decoding frame "<<m_fparams.FrameNum()<<" in display order";        
 
-                 //decode mv data
-                if (m_decparams.Verbose())
-                    std::cerr<<std::endl<<"Decoding motion data ...";        
-                MvDataCodec my_mv_decoder( &m_decparams.BitsIn(), 45 , m_cformat );
-                my_mv_decoder.InitContexts();//may not be necessary
-                num_mv_bits = UnsignedGolombDecode( m_decparams.BitsIn() );
+       FrameSort fsort = m_fparams.FSort();
+       auto_ptr<MvData> mv_data;
+       unsigned int num_mv_bits;
 
-                 //Flush to the end of the header for the MV bits            
-                m_decparams.BitsIn().FlushInput();
+       if ( fsort.IsInter() )
+       {//do all the MV stuff 
+            MvDataByteIO mvdata_byteio (frame_byteio, m_fparams, m_decparams);
+            // Read in the frame prediction parameters
+            mvdata_byteio.Input();
+            num_mv_bits = mvdata_byteio.BlockDataSize();
 
-                 //Decompress the MV bits
-                my_mv_decoder.Decompress( *mv_data , num_mv_bits );                
-            }
+            SetMVBlocks();
+            mv_data.reset(new MvData( m_decparams.XNumMB() , m_decparams.YNumMB(), m_fparams.NumRefs() ));
+            //decode mv data
+            if (m_decparams.Verbose())
+                std::cerr<<std::endl<<"Decoding motion data ...";        
+            MvDataCodec my_mv_decoder( mvdata_byteio.BlockData(), 45 , m_cformat );
+            my_mv_decoder.InitContexts();//may not be necessary
 
-               //decode components
-            CompDecompress( my_buffer,m_fparams.FrameNum() , Y_COMP );
-            if ( m_fparams.CFormat() != Yonly )
-            {
-                CompDecompress( my_buffer , m_fparams.FrameNum() , U_COMP );        
-                CompDecompress( my_buffer , m_fparams.FrameNum() , V_COMP );
-            }
+            //Decompress the MV bits
+            my_mv_decoder.Decompress( *(mv_data.get()) , num_mv_bits );                
+        }
+           
+        // Read the  transform header
+        TransformByteIO transform_byteio(frame_byteio, m_fparams, m_decparams);
+        transform_byteio.Input();
+        
+        // NOTE: FIXME - Need to handle Zero-residual case. For the time
+        // being throw an error
+        if (m_decparams.ZeroTransform())
+        {
+            DIRAC_THROW_EXCEPTION(
+                ERR_UNSUPPORTED_STREAM_DATA,
+                "Cannot handle Zero-Residual case",
+                SEVERITY_FRAME_ERROR);
+        }
+            
+        // Set frame dimensions based on the transform depth
+        PushFrame(my_buffer);
 
-            if ( fsort != I_frame )
-            {//motion compensate to add the data back in if we don't have an I frame
+        Frame& my_frame = my_buffer.GetFrame(m_fparams.FrameNum());//Reference to the frame being decoded
+
+        //decode components
+        CompDecompress( &transform_byteio, my_buffer,m_fparams.FrameNum() , Y_COMP );
+        CompDecompress( &transform_byteio, my_buffer , m_fparams.FrameNum() , U_COMP );        
+        CompDecompress( &transform_byteio, my_buffer , m_fparams.FrameNum() , V_COMP );
+
+        if ( fsort.IsInter() )
+        //motion compensate to add the data back in if we don't have an I frame
             MotionCompensator::CompensateFrame( m_decparams , ADD , 
                                                 my_buffer , m_fparams.FrameNum() ,
-                                                *mv_data );
-                delete mv_data;    
-            }
-            my_frame.Clip();
+                                                *(mv_data.get()) );
+        my_frame.Clip();
 
-            if (m_decparams.Verbose())
-                std::cerr<<std::endl;        
+        if (m_decparams.Verbose())
+            std::cerr<<std::endl;        
 
         }//?m_skipped,!End()
         else if (m_skipped){
@@ -140,92 +190,128 @@ bool FrameDecompressor::Decompress(FrameBuffer& my_buffer)
 
         }
 
-        m_read_header = false;
          //exit success
         return true;
+    }// try
+    catch (const DiracException& e) {                                     
+        // skip frame
+        throw e;
     }
+
      //exit failure
     return false;
 }
 
-void FrameDecompressor::CompDecompress(FrameBuffer& my_buffer, int fnum,CompSort cs)
+void FrameDecompressor::CompDecompress(TransformByteIO *p_transform_byteio,
+                                       FrameBuffer& my_buffer, int fnum,CompSort cs)
 {
     if ( m_decparams.Verbose() )
         std::cerr<<std::endl<<"Decoding component data ...";
+    
+    ComponentByteIO component_byteio(cs, *p_transform_byteio);
     CompDecompressor my_compdecoder( m_decparams , my_buffer.GetFrame(fnum).GetFparams() );    
     PicArray& comp_data=my_buffer.GetComponent( fnum , cs );
-    my_compdecoder.Decompress( comp_data );
+    my_compdecoder.Decompress(&component_byteio, 
+                              comp_data );
 }
 
-bool FrameDecompressor::ReadFrameHeader( FrameParams& fparams )
+void FrameDecompressor::SetMVBlocks()
 {
+    OLBParams olb_params = m_decparams.LumaBParams(2);
+    m_decparams.SetBlockSizes(olb_params, m_cformat);
 
-    if ( !m_decparams.BitsIn().End() )
+    // Calculate the number of macro blocks
+    int xnum_mb = m_decparams.OrigXl()/(4 * m_decparams.LumaBParams(2).Xbsep());
+    
+    int ynum_mb = m_decparams.OrigYl()/(4 * m_decparams.LumaBParams(2).Ybsep());
+    
+    if ( 4* xnum_mb *  m_decparams.LumaBParams(2).Xbsep() < m_decparams.OrigXl() )
+        ++xnum_mb;
+    
+    if ( 4* ynum_mb *  m_decparams.LumaBParams(2).Ybsep() < m_decparams.OrigYl() )
+        ++ynum_mb;
+
+    m_decparams.SetXNumMB(xnum_mb);
+    m_decparams.SetYNumMB(ynum_mb);
+
+    // Set the number of blocks
+    m_decparams.SetXNumBlocks(4*xnum_mb);
+    m_decparams.SetYNumBlocks(4*ynum_mb);
+    
+    // Note that we do not have an integral number of macroblocks in a picture
+    // So it is possible that part of a macro-block and some blocks can fall
+    // of the edge of the true picture. We need to take this into 
+    // consideration while doing Motion Compensation
+}
+
+void FrameDecompressor::PushFrame(FrameBuffer &my_buffer)
+{
+    //Amount of horizontal padding for Y,U and V components
+    int xpad_luma,xpad_chroma;
+
+    //Amount of vertical padding for Y,U and V components
+    int ypad_luma,ypad_chroma;
+
+    //scaling factors for chroma based on chroma format
+    int x_chroma_fac,y_chroma_fac;
+
+    //First, we need to have sufficient padding to take account of the blocksizes.
+    //It's sufficient to check for chroma
+
+    if ( m_cformat == format420 )
     {
-        char frame_start[5];
-        for (int i=0;i<5;++i)
-        {
-            frame_start[i]=m_decparams.BitsIn().InputByte();    
-        }
-         //read the frame number
-        int temp_int;
-
-        temp_int = (int)UnsignedGolombDecode( m_decparams.BitsIn() );
-        fparams.SetFrameNum(temp_int);
-
-         //read whether the frame is m_skipped or not
-        m_skipped=m_decparams.BitsIn().InputBit();
-
-        if (!m_skipped)
-        {
-
-             //read the expiry time relative to the frame number
-            fparams.SetExpiryTime( int( UnsignedGolombDecode( m_decparams.BitsIn() ) ) );
-
-             //read the frame sort
-            fparams.SetFSort( FrameSort( UnsignedGolombDecode( m_decparams.BitsIn() ) ) );
-
-            //read the wavelet filter being used
-            m_decparams.SetTransformFilter( WltFilter( UnsignedGolombDecode( m_decparams.BitsIn() ) ) );
-
-            if ( fparams.FSort() != I_frame ){
-
-                 //if not an I-frame, read how many references there are
-                fparams.Refs().clear();
-                fparams.Refs().resize( UnsignedGolombDecode( m_decparams.BitsIn() ) );
-
-                 //for each reference, read the reference numbers
-                for ( size_t I = 0 ; I < fparams.Refs().size() ; ++I )
-                {
-                    fparams.Refs()[I] = fparams.FrameNum() + GolombDecode( m_decparams.BitsIn() );
-                }//I
-
-                 //determine whether or not there is global motion vector data
-                m_use_global= m_decparams.BitsIn().InputBit();
-
-                 //determine whether or not there is block motion vector data
-                m_use_block_mv= m_decparams.BitsIn().InputBit();
-
-                 //if there is global but no block motion vector data, determine the prediction mode to use
-                 //for the whole frame
-                if ( m_use_global && !m_use_block_mv )
-                    m_global_pred_mode= PredMode(UnsignedGolombDecode( m_decparams.BitsIn() ));
-
-                // Read the motion vector precision being used for the frame
-                m_decparams.SetMVPrecision( UnsignedGolombDecode( m_decparams.BitsIn() ) );
-
-            }//?is not an I frame
-        }//?m_skipped
-
-         //flush the header
-        m_decparams.BitsIn().FlushInput();
-
-         //exit success
-        return true;
-    }//?m_decparams.BitsIn().End()
+        x_chroma_fac = 2; 
+        y_chroma_fac = 2;
+    }
+    else if ( m_cformat == format422 )
+    {
+        x_chroma_fac = 2; 
+        y_chroma_fac = 1;
+    }
     else
     {
-         //exit failure    
-        return false;
+        x_chroma_fac = 1; 
+        y_chroma_fac = 1;
     }
+
+    int xl_chroma=m_decparams.OrigXl() / x_chroma_fac;
+    int yl_chroma=m_decparams.OrigYl() / y_chroma_fac;
+
+    xpad_chroma = ypad_chroma = 0;
+    
+    // The frame dimensions must be a multiple of 2^(transform_depth)
+    int tx_mul = static_cast<int>(std::pow(2.0, m_decparams.TransformDepth()));
+
+    if ( xl_chroma%tx_mul != 0 )
+        xpad_chroma=( ( xl_chroma/tx_mul ) + 1 )*tx_mul - xl_chroma;
+    if ( yl_chroma%tx_mul != 0)
+        ypad_chroma = ( ( yl_chroma/tx_mul ) + 1 )*tx_mul - yl_chroma;    
+
+    int xpad_chroma_len = xl_chroma+xpad_chroma;
+    int ypad_chroma_len = yl_chroma+ypad_chroma;
+    
+    int xpad_len = m_decparams.OrigXl();
+    int ypad_len = m_decparams.OrigYl();
+    xpad_luma = ypad_luma = 0;
+    
+    // The frame dimensions must be a multiple of 2^(transform_depth)
+    if ( xpad_len%tx_mul != 0 )
+        xpad_luma=( ( xpad_len/tx_mul ) + 1 )*tx_mul - xpad_len;
+    if ( ypad_len%tx_mul != 0)
+        ypad_luma = ( ( ypad_len/tx_mul ) + 1 )*tx_mul - ypad_len;    
+
+    xpad_len += xpad_luma;
+    ypad_len += ypad_luma;
+
+    m_fparams.SetCFormat(m_cformat);
+
+    m_fparams.SetXl(xpad_len);
+    m_fparams.SetYl(ypad_len);
+
+    m_fparams.SetChromaXl(xpad_chroma_len);
+    m_fparams.SetChromaYl(ypad_chroma_len);
+
+    my_buffer.PushFrame(m_fparams);
+
 }
+

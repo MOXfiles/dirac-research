@@ -15,6 +15,11 @@ decout=`basename $decout`
 instrout="$samp"_"instr";
 instrout=`basename $instrout`
 
+iframe_encout="$samp"_"iframe_enc";
+iframe_encout=`basename $iframe_encout`
+iframe_decout="$samp"_"iframe_dec";
+iframe_decout=`basename $iframe_decout`
+
 width=0
 height=0
 chroma="unknown"
@@ -64,16 +69,12 @@ then
 fi
 
 case $chroma in
-"Yonly")
+"444")
 	chroma=0;;
 "422")
 	chroma=1;;
-"444")
-	chroma=2;;
-"411")
-	chroma=4;;
 "420")
-	chroma=3;;
+	chroma=2;;
 *)
 	chroma="unknown";;
 esac
@@ -99,15 +100,20 @@ fi
 
 echo "$samp $preset $chroma $width $height"
 
+#iframe tests
+AT_CHECK([at_wrap dirac_encoder -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep $samp ../../$iframe_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../$iframe_encout ../../$iframe_decout], 0, [ignore])
+AT_CHECK([cmp ../../$iframe_encout.yuv ../../$iframe_decout.yuv])
+
 AT_CHECK([at_wrap dirac_encoder -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep $samp ../../$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$encout ../../$decout], 0, [ignore])
-AT_CHECK([cmp ../../$encout.yuv ../../$decout.yuv]
+AT_CHECK([cmp ../../$encout.yuv ../../$decout.yuv])
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mc_instr -motion_colour -clip 50], 0)
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_ma_instr -motion_arrows -clip 50], 0)
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mca_instr -motion_colour_arrows -clip 50], 0)
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_spm_instr -split_mode -clip 50], 0)
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_sad_instr -sad -clip 50], 0)
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_pred_instr -pred_mode -clip 50], 0)
-)
+
 done
 AT_CLEANUP

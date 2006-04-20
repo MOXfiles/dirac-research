@@ -417,6 +417,7 @@ AC_OUTPUT(Makefile dirac.pc \
 	  util/instrumentation/Makefile \
 	  util/instrumentation/libdirac_instrument/Makefile \
           doc/Makefile \
+          libdirac_byteio/Makefile \
           libdirac_common/Makefile \
           libdirac_motionest/Makefile \
           libdirac_encoder/Makefile \

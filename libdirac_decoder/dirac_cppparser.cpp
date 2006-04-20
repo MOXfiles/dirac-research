@@ -20,7 +20,8 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Anuradha Suraparaju (Original Author)
+* Contributor(s): Anuradha Suraparaju (Original Author),
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -42,6 +43,8 @@
 #include <libdirac_decoder/dirac_cppparser.h>
 #include <libdirac_decoder/seq_decompress.h>
 #include <libdirac_common/frame.h> 
+#include <libdirac_byteio/parseunit_byteio.h>
+#include <sstream> 
 using namespace dirac;
 
 
@@ -145,85 +148,83 @@ DiracParser::DiracParser(bool verbose) :
     m_show_fnum(-1), 
     m_decomp(0), 
     m_skip(false), 
-    m_skip_type(L2_frame), 
-    m_verbose(verbose),
-    m_found_start(false), 
-    m_found_end(false), 
-    m_shift (0xffffffff)
+    m_skip_type(FrameSort::IntraNonRefFrameSort()), 
+    m_verbose(verbose)
 {
-    m_istr = new std::istream(&m_sbuf);
+ 
+
+
 }
 
 DiracParser::~DiracParser()
 {
-    delete m_istr;
     delete m_decomp;
 }
 
 void DiracParser::SetBuffer (char *start, char *end)
 {
     TEST (end > start);
-    m_sbuf.Copy(start, end - start);
-
+    m_dirac_byte_stream.AddBytes(start, end-start);
 }
 
 DecoderState DiracParser::Parse()
 {
-
     while(true)
     {
-        m_state = SeekChunk();
-        switch (m_state)
+        ParseUnitByteIO *p_parse_unit=NULL;
+        ParseUnitType pu_type=PU_UNDEFINED;
+
+        // look for end-of-sequence flag
+        if(m_next_state==STATE_SEQUENCE_END)
         {
-        case STATE_BUFFER:
-                return m_state;
+            if (!m_decomp)
+                return STATE_BUFFER;
 
-        case STATE_SEQUENCE:
-            if (m_next_state == m_state)
+            // look to see if all frames have been processed
+            if(m_decomp->Finished())
             {
-                if (m_decomp)
-                    delete m_decomp;
-
-                m_decomp = new SequenceDecompressor (m_istr, m_verbose);
-                if (m_decomp->GetSeqParams().BitstreamVersion() != BITSTREAM_VERSION)
-                {
-                    std::ostringstream errstr;
-                    errstr << "Input Bitstream version " << m_decomp->GetSeqParams().BitstreamVersion() << " supported";
-                    REPORTM(false, errstr.str().c_str());
-                    return STATE_INVALID;
-                }
-                InitStateVars();
-                return m_state;
+                // if so....delete
+                delete m_decomp;
+                m_decomp=NULL;
+                m_next_state = STATE_BUFFER;
             }
             else
-                m_state = STATE_BUFFER;
+                // otherwise....get remaining frames from buffer
+                pu_type = PU_FRAME;
             
-            break;
-    
-        case STATE_PICTURE_START:
-            if (m_next_state == m_state)
+        }
+        
+        // get next parse unit from stream
+        if(m_next_state!=STATE_SEQUENCE_END)
+        {
+            p_parse_unit=m_dirac_byte_stream.GetNextParseUnit();
+            if(p_parse_unit==NULL)
+                return STATE_BUFFER;
+            pu_type=p_parse_unit->GetType();
+        }
+
+        switch(pu_type)
+        {
+        case PU_ACCESS_UNIT:
+
+            if(!m_decomp)
             {
-                m_decomp->ReadNextFrameHeader();
-                m_next_state = STATE_PICTURE_DECODE;
-                m_sbuf.PurgeProcessedData();
-                return m_state;
+                m_decomp = new SequenceDecompressor (*p_parse_unit, m_verbose);
+                m_next_state=STATE_BUFFER;
+                return STATE_SEQUENCE;
             }
-            else
-            {
-                m_state = STATE_BUFFER;
-            }
+
+            m_decomp->NewAccessUnit(*p_parse_unit);
             break;
 
-        case STATE_PICTURE_DECODE:
-        {
-            Frame &my_frame = m_decomp->DecompressNextFrame(m_skip);
-            if (m_skip)
+        case PU_FRAME:
             {
-                // Go pass start code so that we skip frame
-                m_sbuf.Seek(5);
-            }
-            else
-            {
+               if (!m_decomp)
+                   continue;
+                
+               Frame &my_frame = m_decomp->DecompressNextFrame(p_parse_unit,
+                                                                    m_skip); 
+                
                 int framenum_decoded = my_frame.GetFparams().FrameNum();
                 if (framenum_decoded != m_show_fnum)
                 {
@@ -233,54 +234,35 @@ DecoderState DiracParser::Parse()
                         std::cerr << "Frame " << m_show_fnum << " available" << std::endl;
                     }
                     m_state = STATE_PICTURE_AVAIL;
-                }
-            }
-            InitStateVars();
-            if (m_state == STATE_PICTURE_AVAIL)
-                return m_state;
-
-            break;
-        }
-        case STATE_SEQUENCE_END:
-        {
-            //push last frame in sequence out
-            m_sbuf.Seek(5);
-            Frame &my_frame = m_decomp->DecompressNextFrame(m_skip);
-            if (!m_skip)
-            {
-                if (my_frame.GetFparams().FrameNum() != m_show_fnum)
-                {
-                    m_show_fnum = my_frame.GetFparams().FrameNum();
-                    if (m_verbose)
-                    {
-                        std::cerr << "Frame " << m_show_fnum << " available" << std::endl;
-                    }
-                    m_state = STATE_PICTURE_AVAIL;
-                    m_next_state = STATE_SEQUENCE_END;
+                    return m_state;
                 }
                 else
-                {
-                    InitStateVars();
-                }
-            }
-            else
-            {
-                InitStateVars();
-            }
-            return m_state;
-                
             break;
-        }
+            }
+        case PU_END_OF_SEQUENCE:
+               m_next_state = STATE_SEQUENCE_END;
+               break;
+            
         default:
             return STATE_INVALID;
         }
+
     }
-    return m_state;
 }
 
 const SeqParams& DiracParser::GetSeqParams() const
 {
     return m_decomp->GetSeqParams();
+}
+
+const SourceParams& DiracParser::GetSourceParams() const
+{
+    return m_decomp->GetSourceParams();
+}
+
+const ParseParams& DiracParser::GetParseParams() const
+{
+    return m_decomp->GetParseParams();
 }
 
 const FrameParams& DiracParser::GetNextFrameParams() const
@@ -293,28 +275,26 @@ const Frame& DiracParser::GetNextFrame() const
     return m_decomp->GetNextFrame();
 }
 
-const Frame& DiracParser::GetLastFrame() const
-{
-    return  m_decomp->DecompressNextFrame();
-}
 
+// NOTE - FIXME - Temporarily comment out skip
 void DiracParser::SetSkip(bool skip)
 {
+    /***
     const FrameParams& fparams = m_decomp->GetNextFrameParams();
     // FIXME: need to change this logic once bitstream is finalised. so that
     // we skip to next RAP when an L1 frame is skipped
     if (skip == false)
     {
-        if (m_skip_type == L2_frame)
+        if (m_skip_type.IsNonRef())
             m_skip = false;
 
-        else if (m_skip_type == L1_frame || m_skip_type == I_frame)
+        else if (m_skip_type.IsRef() )
         {
-            if (fparams.FSort() == L2_frame || fparams.FSort() == L1_frame)
+            if (fparams.FSort().IsNonRef() || fparams.FSort().IsInterRef())
                 m_skip = true;
             else
             {
-                m_skip_type = L2_frame;
+                m_skip_type.SetInterNonRef();
                 m_skip = false;
             }
         }
@@ -322,132 +302,24 @@ void DiracParser::SetSkip(bool skip)
     else
     {
         m_skip = true;
-        if (m_skip_type != fparams.FSort())
+        if (m_skip_type.IsRef() != fparams.FSort().IsRef() ||
+            m_skip_type.IsIntra() != fparams.FSort().IsIntra())
         {
-            switch (fparams.FSort())
+            if (!fparams.FSort().IsNonRef())
             {
-            case L2_frame:
-                break;
-
-            case L1_frame:
-                if (m_skip_type != I_frame)
-                    m_skip_type = L1_frame;
-                break;
-            case I_frame:
-                m_skip_type = I_frame;
-                break;
-
-            default:
-                ASSERTM(false, "Frame type must be I or L1 or L2");
-                break;
-            }
-        }
-    }
-}
-
-
-DecoderState DiracParser::SeekChunk()
-{
-    char byte;
-    if (!m_found_start)
-    {
-        while (m_sbuf.sgetn(&byte, 1))
-        {
-            //Find start of next chunk to be processed
-            if (m_shift == START_CODE_PREFIX)
-            {
-                switch ((unsigned char)byte)
+                if (fparams.FSort().IsInter())
                 {
-                case NOT_START_CODE:
-                    m_shift = 0xffffffff;
-                    continue;
-
-                case RAP_START_CODE:
-                    m_next_state = STATE_SEQUENCE;
-                    break;
-
-                case IFRAME_START_CODE:
-                case L1FRAME_START_CODE:
-                case L2FRAME_START_CODE:
-                    m_next_state = STATE_PICTURE_START;
-                    break;
-
-                case SEQ_END_CODE:
-                    m_next_state = STATE_SEQUENCE_END;
-                    break;
-                default:
-                    ASSERTM (false, "Should never have reached here!!!");
-                    break;
+                    m_skip_type.SetInterRef();
                 }
-                m_found_start = true;
-                m_sbuf.Seek(-5);
-                m_sbuf.PurgeProcessedData();
-                m_sbuf.Seek(5);
-                m_shift = 0xffffffff;
-                break;
-            }
-            m_shift = (m_shift << 8) | byte;
-        }
-
-        if (!m_found_start)
-        {
-            m_next_state =  STATE_BUFFER;
-        }
-    }
-
-    if (m_found_start && !m_found_end && m_next_state != STATE_SEQUENCE_END)
-    {
-        while (m_sbuf.sgetn(&byte, 1))
-        {
-            //Find start of next chunk to be processed
-            if (m_shift == START_CODE_PREFIX)
-            {
-                switch ((unsigned char)byte)
+                else
                 {
-                case NOT_START_CODE:
-                    m_shift = 0xffffffff;
-                    continue;
-
-                case RAP_START_CODE:
-                    break;
-
-                case IFRAME_START_CODE:
-                case L1FRAME_START_CODE:
-                case L2FRAME_START_CODE:
-                    break;
-
-                case SEQ_END_CODE:
-                    break;
-
-                default:
-                    ASSERTM (false, "Should never have reached here!!!");
-                    break;
+                    m_skip_type.SetIntraRef();
                 }
-                m_found_end = true;
-                break;
-
             }
-            m_shift = (m_shift << 8) | byte;
-        } 
-
-        if (!m_found_end)
-        {
-            if (m_next_state != STATE_SEQUENCE_END)
-                return STATE_BUFFER;
         }
     }
-
-    if (m_found_start && m_found_end)
-    {
-        m_sbuf.Rewind();
-        m_shift = 0xffffffff;
-    }
-    return m_next_state;
+    ***/
 }
 
-void DiracParser::InitStateVars()
-{
-    m_shift = 0xffffffff;
-    m_found_start = false;
-    m_found_end = false;
-}
+
+

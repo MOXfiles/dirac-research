@@ -118,9 +118,17 @@ running the codec can be found at http://dirac.sourceforge.net/
 
   Debug - builds unoptimised encoder and decoder dlls with debug symbols
   Release - builds optimised encoder and decoder dlls
+  Debug-mmx - builds unoptimised encoder and decoder dlls with debug symbols 
+              and mmx optimisations enabled.
+  Release-mmx - builds optimised encoder and decoder dlls  with mmx 
+              optimisations enabled.
   Static-Debug - builds unoptimised encoder and decoder static libraries
                  with debug symbols
   Static-Release - builds optimised encoder and decoder static libraries
+  Static-Debug-mmx - builds unoptimised encoder and decoder static libraries
+                     with debug symbols and mmx optmisations enabled.
+  Static-Release-mmx - builds optimised encoder and decoder static libraries 
+                       with mmx optmisations enabled.
  
   Static libraries are created in the win32/VS2003/lib/<build-type> directory.
 
@@ -202,7 +210,7 @@ Example.
   PATH variable. If not in the path, then use options -convutildir and to set
   the directories where the script can find the conversion utilities.)
 
-  The scripts then outputs files in all chroma formats (Yonly, 411, 420, 422,
+  The scripts then outputs files in all chroma formats (420, 422,
   444) supported by Dirac to the current directory.
 
 
@@ -283,18 +291,27 @@ This value is greater than 0, the higher the number, the better
 the quality. Typical high quality is 8-10, but it will vary from sequence to 
 sequence, sometimes higher and sometimes lower.
 
-b) Sequence parameters need to be set as the imput is just a raw YUV file and the
-encoder doesn't have any information about it.
+b) Sequence parameters need to be set as the imput is just a raw YUV file and 
+the encoder doesn't have any information about it.
 
 The best way to set sequence parameters is to use a preset for
 different video formats. 
 
 The available preset options  are:
 
+QSIF     : width=176; height=120; 4:2:0 format; 15 frames/sec
+QCIF     : width=176; height=144; 4:2:0 format; 12.5 frames/sec
+SIF      : width=352; height=240; 4:2:0 format; 15 frames/sec
 CIF      : width=352; height=288; 4:2:0 format; 12.5 frames/sec
+SDPAL    : width=704; height=576; 4:2:0 format; 25 frames/sec
+SDNTSC   : width=704; height=480; 4:2:0 format; 29.97 frames/sec
+SD480    : width=720; height=480; 4:2:0 format; 29.97 frames/sec
 SD576    : width=720; height=576; 4:2:0 format; 25 frames/sec
 HD720    : width=1280; height=720; 4:2:0 format; 50 frames/sec
 HD1080   : width=1920; height=1080; 4:2:0 format; 25 frames/sec
+
+The default format used is CUSTOM format which has the following preset values
+width=640; height=480; 4:2:0 format; 30 frames/sec.
 
 If your video is not one of these formats, you should pick the nearest preset
 and override the parameters that are different.
@@ -317,7 +334,7 @@ The complete list of sequence parameters is:
 width     : Width of video frame
 height    : Height of video frame
 cformat   : Chroma format. It accepts a number between 0 and 4.
-            0 - Yonly, 1 - 4:2:2, 2 - 4:4:4, 3 - 4:2:0 and 4 - 4:1:1
+            0 - 4:4:4, 1 - 4:2:2, 2 - 4:2:0 
 fr        : Frame rate. Can be a decimal number or a fraction. Examples
             of acceptable values are 25, 29.97, 12.5, 30000/1001.
 
@@ -333,14 +350,21 @@ supported for those who want to experiment, but use with care.
 
 Encoding parameters are:
 
-L1_sep    : the separation between L1 frames (frames that are predicted but 
-            also used as reference frames, like P frames in MPEG-2)
-num_L1    : the number of L1 frames before the next intra frame
-xblen     : the width of blocks used for motion compensation
-yblen     : the height of blocks used for motion compensation
-xbsep     : the horizontal separation between blocks. Always <xblen
-ybsep     : the vertical separation between blocks. Always <yblen
-cpd       : normalised viewing distance parameter, in cycles per degree.
+L1_sep        : the separation between L1 frames (frames that are predicted but 
+                also used as reference frames, like P frames in MPEG-2)
+num_L1        : the number of L1 frames before the next intra frame
+xblen         : the width of blocks used for motion compensation
+yblen         : the height of blocks used for motion compensation
+xbsep         : the horizontal separation between blocks. Always <xblen
+ybsep         : the vertical separation between blocks. Always <yblen
+cpd           : normalised viewing distance parameter, in cycles per degree.
+wlt_depth     : transform depth, i.e number of times the component is split 
+                while applying the wavelet transform
+no_spartition : Do not split a subband into coefficient blocks before 
+                entropy coding
+multi_quants  : If subbands are split into multiple coefficient blocks before
+                entropy coding, assign different quantisers to each block 
+                within the subband.
 
 Modifying L1_sep and num_L1 allows for new GOP structures to be used, and
 should be entirely safe. There are two non-GOP modes that can also be used for

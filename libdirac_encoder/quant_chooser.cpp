@@ -78,7 +78,7 @@ int QuantChooser::GetBestQuant( Subband& node )
         max_bit = int( std::floor( std::log( float( max_val ) )/std::log( 2.0 ) ) );
     else
     {
-       // Exit saying 'Skip this subband'
+       // Exit saying 'Skip this subband' if there's no data in it
         node.SetSkip( true );
         return 0;
     }
@@ -228,9 +228,9 @@ int QuantChooser::GetBestQuant( Subband& node )
                                  * block_list[j][i].Yl() );
                 bit_sum += block_bit_cost;
 
-                if ( block_bit_cost >= 1.0 )
-                    block_list[j][i].SetQIndex( m_min_idx );
-                else
+                block_list[j][i].SetQIndex( m_min_idx );
+
+                if ( block_bit_cost < 1.0 )
                     // We can skip this block after all
                     block_list[j][i].SetSkip( true );
             }// i
@@ -244,7 +244,10 @@ int QuantChooser::GetBestQuant( Subband& node )
 
 }
 
-void QuantChooser::IntegralErrorCalc( const CodeBlock& code_block , const int block_idx , const int xratio , const int yratio )
+void QuantChooser::IntegralErrorCalc( const CodeBlock& code_block , 
+                                      const int block_idx , 
+                                      const int xratio , 
+                                      const int yratio )
 {
 
     const int xoffset( xratio>>1 );
@@ -374,8 +377,6 @@ void QuantChooser::LagrangianCalc(const CodeBlock& code_block , const int block_
     // Do Lagrangian costs calculation        
     for ( int q=m_bottom_idx ; q<=m_top_idx ; q += m_index_step )
     {
-//        m_costs[block_idx][q].MSE = m_error_total[block_idx][q]/(vol*code_block.Wt()*code_block.Wt());
-//        m_costs[block_idx][q].MSE = std::sqrt( m_costs[block_idx][q].MSE );
 
         m_costs[block_idx][q].MSE = m_error_total[block_idx][q]/vol;
         m_costs[block_idx][q].MSE = std::sqrt( m_costs[block_idx][q].MSE )/( code_block.Wt()*code_block.Wt() );
@@ -440,7 +441,7 @@ void QuantChooser::SelectBestQuant()
 
     OneDArray<double> total_costs( m_costs.LengthX() );
     double vol;
-
+/*
     for ( int q=m_bottom_idx; q<=m_top_idx ; q +=m_index_step )
     {
         total_costs[q] = 0.0;
@@ -456,7 +457,32 @@ void QuantChooser::SelectBestQuant()
         if ( total_costs[q] < total_costs[m_min_idx] )
             m_min_idx = q;
     }// q
-         
+*/
+
+
+    double entropy_total, error_total;
+
+    for ( int q=m_bottom_idx; q<=m_top_idx ; q +=m_index_step )
+    {
+        entropy_total = 0.0;
+        error_total = 0.0;
+        vol = 0.0;
+        for (int block_idx=0 ; block_idx<m_costs.LengthY() ; ++block_idx)
+        {
+            entropy_total += m_costs[block_idx][q].ENTROPY * m_count1[block_idx];
+            error_total += m_costs[block_idx][q].MSE * m_count1[block_idx];
+            vol += m_count1[block_idx];
+        }
+
+        entropy_total /= vol;
+        error_total /= vol;
+
+        total_costs[q] = error_total + m_lambda*entropy_total;
+
+        if ( total_costs[q] < total_costs[m_min_idx] )
+            m_min_idx = q;
+
+     }
 }
 
 ValueType QuantChooser::BlockAbsMax( const CodeBlock& code_block )

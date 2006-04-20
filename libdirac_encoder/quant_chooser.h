@@ -56,7 +56,7 @@ namespace dirac
         //! Constructor
         QuantChooser( const PicArray& pic_data , const float lambda  );
 
-        //! Finds the best quantisers in the range for the subband 
+        //! Finds the best quantisers for the subband, returning the predicted number of bits needed
         int GetBestQuant( Subband& node );
 
         //! Sets the factor used for correcting the entropy calculation

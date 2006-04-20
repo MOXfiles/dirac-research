@@ -10,6 +10,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libdirac_decoder", "DiracDe
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DiracDecoder", "DiracDecoder\DiracDecoder.vcproj", "{7029B512-6BF1-4B6E-A456-F409FF8E2B15}"
 	ProjectSection(ProjectDependencies) = postProject
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E} = {E474E61D-AA40-40C5-8DDD-208CCC21463E}
 		{A45B7D48-9E8D-4475-BED4-CBE3E3CCAD21} = {A45B7D48-9E8D-4475-BED4-CBE3E3CCAD21}
 		{89EC2AEB-8284-4213-874B-29D549893FC9} = {89EC2AEB-8284-4213-874B-29D549893FC9}
 	EndProjectSection
@@ -24,6 +25,7 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libdirac_encoder", "DiracEn
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DiracEncoder", "DiracEncoder\DiracEncoder.vcproj", "{2C769629-D6F8-471D-91E7-E01CD8F02634}"
 	ProjectSection(ProjectDependencies) = postProject
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E} = {E474E61D-AA40-40C5-8DDD-208CCC21463E}
 		{A45B7D48-9E8D-4475-BED4-CBE3E3CCAD21} = {A45B7D48-9E8D-4475-BED4-CBE3E3CCAD21}
 		{9076B578-583A-493D-96C4-776DCEC0FFBD} = {9076B578-583A-493D-96C4-776DCEC0FFBD}
 		{C6A615BF-D4EB-4D50-9638-2C715E0695C6} = {C6A615BF-D4EB-4D50-9638-2C715E0695C6}
@@ -138,6 +140,10 @@ EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "DecodeDirac", "DecodeDirac\DecodeDirac.vcproj", "{E932FA89-6EAA-4D9C-A5D3-1C84E3CB7210}"
 	ProjectSection(ProjectDependencies) = postProject
 		{7029B512-6BF1-4B6E-A456-F409FF8E2B15} = {7029B512-6BF1-4B6E-A456-F409FF8E2B15}
+	EndProjectSection
+EndProject
+Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "libdirac_byteio", "libdirac_byteio\libdirac_byteio.vcproj", "{E474E61D-AA40-40C5-8DDD-208CCC21463E}"
+	ProjectSection(ProjectDependencies) = postProject
 	EndProjectSection
 EndProject
 Global
@@ -552,6 +558,22 @@ Global
 		{E932FA89-6EAA-4D9C-A5D3-1C84E3CB7210}.Static-Release.Build.0 = Static-Release|Win32
 		{E932FA89-6EAA-4D9C-A5D3-1C84E3CB7210}.Static-release-mmx.ActiveCfg = Static-release-mmx|Win32
 		{E932FA89-6EAA-4D9C-A5D3-1C84E3CB7210}.Static-release-mmx.Build.0 = Static-release-mmx|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Debug.ActiveCfg = Debug|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Debug.Build.0 = Debug|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Debug-mmx.ActiveCfg = Debug|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Debug-mmx.Build.0 = Debug|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Release.ActiveCfg = Release|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Release.Build.0 = Release|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Release-mmx.ActiveCfg = Release|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Release-mmx.Build.0 = Release|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Static-Debug.ActiveCfg = Debug|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Static-Debug.Build.0 = Debug|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Static-Debug-mmx.ActiveCfg = Debug|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Static-Debug-mmx.Build.0 = Debug|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Static-Release.ActiveCfg = Release|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Static-Release.Build.0 = Release|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Static-release-mmx.ActiveCfg = Release|Win32
+		{E474E61D-AA40-40C5-8DDD-208CCC21463E}.Static-release-mmx.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 	EndGlobalSection

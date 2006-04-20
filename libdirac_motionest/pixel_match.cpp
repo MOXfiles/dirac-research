@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copm_yright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author)
+* Contributor(s): Thomas Davies (Original Author),
 *                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of

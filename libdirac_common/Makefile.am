@@ -3,18 +3,18 @@
 
 INCLUDES = -I$(top_srcdir) -I$(srcdir)
 
-h_sources = arith_codec.h arrays.h band_codec.h bit_manager.h \
-            common_types.h common.h frame.h golomb.h frame_buffer.h \
+h_sources = arith_codec.h arrays.h band_codec.h \
+            common_types.h common.h frame.h frame_buffer.h \
             mot_comp.h motion.h mv_codec.h pic_io.h upconvert.h \
             wavelet_utils.h cmd_line.h dirac_assertions.h dirac_types.h \
-			mot_comp_mmx.h
+			mot_comp_mmx.h video_format_defaults.h dirac_exception.h
 
-cpp_sources = arith_codec.cpp band_codec.cpp bit_manager.cpp common.cpp \
-              frame.cpp golomb.cpp frame_buffer.cpp mot_comp.cpp motion.cpp \
+cpp_sources = arith_codec.cpp band_codec.cpp common.cpp \
+              frame.cpp frame_buffer.cpp mot_comp.cpp motion.cpp \
               mv_codec.cpp pic_io.cpp upconvert.cpp wavelet_utils.cpp \
               cmd_line.cpp dirac_assertions.cpp upconvert_mmx.cpp \
-			  wavelet_utils_mmx.cpp mot_comp_mmx.cpp
-
+			  wavelet_utils_mmx.cpp mot_comp_mmx.cpp \
+			  video_format_defaults.cpp dirac_exception.cpp
 
 if USE_MSVC
 noinst_LIBRARIES = libdirac_common.a

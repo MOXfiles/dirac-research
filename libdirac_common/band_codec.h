@@ -23,6 +23,7 @@
 * Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
 *                 Steve Bearcroft
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -43,8 +44,11 @@
 #include <libdirac_common/arith_codec.h>
 #include <libdirac_common/wavelet_utils.h>
 
+
 namespace dirac
 {
+
+   class SubbandByteIO;
 
     //Subclasses the arithmetic codec to produce a coding/decoding tool for subbands
 
@@ -53,32 +57,19 @@ namespace dirac
     /*!
         A general class for coding and decoding wavelet subband data, deriving from the abstract ArithCodec class.
      */
-    class BandCodec: public ArithCodec<PicArray >
+    class BandCodec: public ArithCodec<PicArray>
     {
     public:
 
-        //! Constructor for encoding.
+        //! Constructor 
         /*!
             Creates a BandCodec object to encode subband data
-            \param    bits_out    the output for the encoded bits
+            \param    subband_byteio   inout/output for the encoded bits
             \param    number_of_contexts the number of contexts used in the encoding process
             \param    band_list    the set of all the subbands
             \param     band_num    the number of the subband being coded 
          */
-        BandCodec(BasicOutputManager* bits_out,
-                  size_t number_of_contexts,
-                  const SubbandList& band_list,
-                  int band_num);
-
-        //! Constructor for decoding.
-        /*!
-            Creates a BandCodec object to decode subband data.
-            \param    bits_in        the input for the encoded bits
-            \param    number_of_contexts the number of contexts used in the decoding process
-            \param    band_list    the set of all the subbands
-            \param     band_num    the number of the subband being decoded 
-         */
-        BandCodec(BitInputManager* bits_in,
+        BandCodec(SubbandByteIO* subband_byteio,
                   size_t number_of_contexts,
                   const SubbandList& band_list,
                   int band_num);
@@ -92,6 +83,12 @@ namespace dirac
 
         //! Decode an individual quantised value and perform inverse-quantisation
         inline void DecodeVal(PicArray& out_data , const int xpos , const int ypos );
+
+        //! Encode the offset for a code block quantiser
+        void CodeQIndexOffset( const int offset );
+
+        //! Decode the offset for a code block quantiser
+        int DecodeQIndexOffset();
 
         //! Set a code block area to a given value
         inline void SetToVal( const CodeBlock& code_block , PicArray& pic_data , const ValueType val);
@@ -174,33 +171,19 @@ namespace dirac
     class LFBandCodec: public BandCodec
     {
     public:
-        //! Constructor for encoding
+        //! Constructor
         /*!
             Creates a LFBandCodec object to encode subband data.
-            \param    bits_out    the output for the encoded bits
+            \param    subband_byteio input/output for the encoded bits
             \param    number_of_contexts the number of contexts used in the encoding process
             \param    band_list    the set of all the subbands
             \param     band_num    the number of the subband being coded 
          */        
-        LFBandCodec(BasicOutputManager* bits_out,
+        LFBandCodec(SubbandByteIO* subband_byteio,
                     size_t number_of_contexts,
                     const SubbandList& band_list,
                     int band_num)
-              : BandCodec(bits_out,number_of_contexts,band_list,band_num){}
-
-        //! Constructor for decoding
-        /*!
-            Creates a LFBandCodec object to decode subband data.
-            \param    bits_in        the input for the encoded bits
-            \param    number_of_contexts the number contexts used in the decoding process
-            \param    band_list    the set of all the subbands
-            \param     band_num    the number of the subband being decoded 
-         */
-        LFBandCodec(BitInputManager* bits_in,
-                    size_t number_of_contexts,
-                    const SubbandList& band_list,
-                    int band_num)
-          : BandCodec(bits_in,number_of_contexts,band_list,band_num){}
+                    : BandCodec(subband_byteio,number_of_contexts,band_list,band_num){}
 
     private:
         // Overridden from the base class
@@ -231,30 +214,19 @@ namespace dirac
     class IntraDCBandCodec: public BandCodec
     {
     public:
-        //! Constructor for encoding
+        //! Constructor
         /*!
             Creates a IntraDCBandCodec object to encode subband data, based on parameters
-            \param    bits_out    the output for the encoded bits
+            \param    subband_byteio input/output for the encoded bits
             \param    number_of_contexts the number of contexts used in the encoding process
             \param    band_list    the set of all the subbands
          */
-        IntraDCBandCodec(BasicOutputManager* bits_out,
+        IntraDCBandCodec(SubbandByteIO* subband_byteio,
                          size_t number_of_contexts,
                          const SubbandList& band_list)
-          : BandCodec(bits_out,number_of_contexts,band_list,band_list.Length()){}
+          : BandCodec(subband_byteio,number_of_contexts,band_list,band_list.Length()){}
 
-        //! Constructor for decoding
-        /*!
-            Creates a LFBandCodec object to decode subband data, based on parameters
-            \param    bits_in        the input for the encoded bits
-            \param    number_of_contexts the number of contexts used in the decoding process
-            \param    band_list    the set of all the subbands
-         */    
-        IntraDCBandCodec(BitInputManager* bits_in,
-                         size_t number_of_contexts,
-                         const SubbandList& band_list)
-          : BandCodec(bits_in,number_of_contexts,band_list,band_list.Length()){}
-
+    
     private:
         void DoWorkCode(PicArray& in_data);                    //overridden from the base class
         void DoWorkDecode(PicArray& out_data); //ditto

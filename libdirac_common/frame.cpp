@@ -77,7 +77,7 @@ Frame::Frame( const Frame& cpy ):
     m_redo_upUdata(cpy.m_redo_upUdata),
     m_redo_upVdata(cpy.m_redo_upVdata)
 {
-    const ChromaFormat& cformat = m_fparams.CFormat();
+    //const ChromaFormat& cformat = m_fparams.CFormat();
 
     //delete data to be overwritten
     ClearData();
@@ -88,22 +88,17 @@ Frame::Frame( const Frame& cpy ):
         m_upY_data = new PicArray( *(cpy.m_upY_data) );
     }
 
-    if (cformat != Yonly)
+    m_U_data = new PicArray( *(cpy.m_U_data) );
+    m_V_data = new PicArray( *(cpy.m_V_data) );
+
+    if ( cpy.m_upU_data != 0 )
     {
-        m_U_data = new PicArray( *(cpy.m_U_data) );
-        m_V_data = new PicArray( *(cpy.m_V_data) );
-
-        if ( cpy.m_upU_data != 0 )
-        {
-            m_upU_data = new PicArray( *(cpy.m_upU_data) );
-        }
-        if ( cpy.m_upV_data != 0 )
-        {
-            m_upV_data = new PicArray( *(cpy.m_upV_data) );
-        }
-
+        m_upU_data = new PicArray( *(cpy.m_upU_data) );
     }
-
+    if ( cpy.m_upV_data != 0 )
+    {
+        m_upV_data = new PicArray( *(cpy.m_upV_data) );
+    }
 }
 
 
@@ -120,7 +115,7 @@ Frame& Frame::operator=(const Frame& rhs)
         m_redo_upYdata = rhs.m_redo_upYdata;
         m_redo_upUdata = rhs.m_redo_upUdata;
         m_redo_upVdata = rhs.m_redo_upVdata;
-        const ChromaFormat& cformat=m_fparams.CFormat();
+        //const ChromaFormat& cformat=m_fparams.CFormat();
 
         // Delete current data
         ClearData();
@@ -131,16 +126,13 @@ Frame& Frame::operator=(const Frame& rhs)
         if (rhs.m_upY_data != 0)
             m_upY_data = new PicArray( *(rhs.m_upY_data) );
 
-        if (cformat != Yonly)
-        {
-            m_U_data = new PicArray( *(rhs.m_U_data) );
-            if ( rhs.m_upU_data != 0 )
-                m_upU_data = new PicArray( *(rhs.m_upU_data) );
+        m_U_data = new PicArray( *(rhs.m_U_data) );
+        if ( rhs.m_upU_data != 0 )
+            m_upU_data = new PicArray( *(rhs.m_upU_data) );
 
-            m_V_data = new PicArray( *(rhs.m_V_data) );
-            if ( rhs.m_upV_data != 0 )
-                m_upV_data = new PicArray( *(rhs.m_upV_data) );
-        }
+        m_V_data = new PicArray( *(rhs.m_V_data) );
+        if ( rhs.m_upV_data != 0 )
+            m_upV_data = new PicArray( *(rhs.m_upV_data) );
     }
 
     return *this;
@@ -151,7 +143,7 @@ Frame& Frame::operator=(const Frame& rhs)
 
 void Frame::Init()
 {
-    const ChromaFormat cformat=m_fparams.CFormat();
+    //const ChromaFormat cformat=m_fparams.CFormat();
 
     //first delete data if we need to
     ClearData();
@@ -159,15 +151,11 @@ void Frame::Init()
      m_Y_data=new PicArray( m_fparams.Yl() , m_fparams.Xl());
      m_Y_data->SetCSort( Y_COMP );
 
-     if(cformat != Yonly && cformat != formatNK) 
-     {
-         m_U_data = new PicArray( m_fparams.ChromaYl() , m_fparams.ChromaXl() ); 
-         m_U_data->SetCSort( U_COMP );
+     m_U_data = new PicArray( m_fparams.ChromaYl() , m_fparams.ChromaXl() ); 
+     m_U_data->SetCSort( U_COMP );
 
-         m_V_data = new PicArray( m_fparams.ChromaYl() , m_fparams.ChromaXl() );
-         m_V_data->SetCSort( V_COMP );
-     }
-    //(other formats all assumed to be Yonly
+     m_V_data = new PicArray( m_fparams.ChromaYl() , m_fparams.ChromaXl() );
+     m_V_data->SetCSort( V_COMP );
 }
 
 PicArray& Frame::Data(CompSort cs)
@@ -389,11 +377,8 @@ void Frame::Clip()
 
     ClipComponent( *m_Y_data );
 
-    if (m_fparams.CFormat() != Yonly)
-    {
-        ClipComponent( *m_U_data );
-        ClipComponent( *m_V_data );    
-    }    
+    ClipComponent( *m_U_data );
+    ClipComponent( *m_V_data );    
 }
 
 void Frame::ClearData()

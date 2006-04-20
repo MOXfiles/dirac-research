@@ -89,6 +89,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/EncodeDirac.exe"
 				LinkIncremental="1"
+				IgnoreDefaultLibraryNames=""
 				GenerateDebugInformation="TRUE"
 				SubSystem="1"
 				OptimizeReferences="2"

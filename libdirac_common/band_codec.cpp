@@ -23,6 +23,7 @@
 * Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
 *                 Steve Bearcroft
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -38,15 +39,16 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_common/band_codec.h>
+#include <libdirac_byteio/subband_byteio.h>
 
 using namespace dirac;
 
 //! Constructor for encoding.
-BandCodec::BandCodec(BasicOutputManager* bits_out,
+BandCodec::BandCodec(SubbandByteIO* subband_byteio,
                      size_t number_of_contexts,
                      const SubbandList & band_list,
                      int band_num):
-    ArithCodec<PicArray>(bits_out,number_of_contexts),
+    ArithCodec<PicArray>(subband_byteio,number_of_contexts),
     m_bnum(band_num),
     m_node(band_list(band_num)),
     m_vol(m_node.Xl()*m_node.Yl()),
@@ -57,20 +59,7 @@ BandCodec::BandCodec(BasicOutputManager* bits_out,
         m_pnode=band_list(m_node.Parent());
 }        
 
-//! Constructor for decoding.
-BandCodec::BandCodec(BitInputManager* bits_in,
-                     size_t number_of_contexts,
-                     const SubbandList& band_list,
-                     int band_num):
-    ArithCodec<PicArray>(bits_in,number_of_contexts),
-    m_bnum(band_num),
-    m_node(band_list(band_num)),
-    m_vol(m_node.Xl()*m_node.Yl()),
-    m_reset_coeff_num( std::max( 25 , std::min(m_vol/32,800) ) ),
-    m_cut_off_point(m_node.Scale()>>1)
-{
-    if (m_node.Parent()!=0) m_pnode=band_list(m_node.Parent());
-}
+
 
 void BandCodec::InitContexts()
 {
@@ -155,12 +144,13 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
         ypbeg = 0;
     }
     
-    int qf_idx = code_block.QIndex();
+    const int qf_idx = code_block.QIndex();
 
     if ( m_node.UsingMultiQuants() )
     {
-        // TBD: shoould code coefficient offset and adjust qf_idx 
+        CodeQIndexOffset( qf_idx-m_node.QIndex() );
     }
+
     m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
     m_qfinv =  dirac_quantiser_lists.InverseQuantFactor( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
@@ -249,10 +239,30 @@ inline void BandCodec::CodeVal( PicArray& in_data ,
 
     m_coeff_count++;
     
-    if (m_coeff_count > m_reset_coeff_num)
+    //if (m_coeff_count > m_reset_coeff_num)
+    if (m_coeff_count == m_reset_coeff_num)
     {
         m_coeff_count=0;
         ResetAll();
+    }
+}
+
+void BandCodec::CodeQIndexOffset( const int offset )
+{
+
+    const int abs_val = std::abs( offset );
+
+    for ( int i=1; i<=abs_val; ++i )
+        EncodeSymbol( 0 , Q_OFFSET_MAG_CTX );
+
+    EncodeSymbol( 1 , Q_OFFSET_MAG_CTX );
+
+    if ( abs_val )
+    {
+        if ( offset>0 )
+            EncodeSymbol( 1 , Q_OFFSET_SIGN_CTX );
+        else
+            EncodeSymbol( 0 , Q_OFFSET_SIGN_CTX );
     }
 }
 
@@ -312,11 +322,11 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
         ypbeg = 0;
     }
 
-    int qf_idx = code_block.QIndex();
+    int qf_idx = m_node.QIndex();
 
     if ( m_node.UsingMultiQuants() )
     {
-        // TBD: shoould decode coefficient offset and adjust qf_idx 
+        qf_idx += DecodeQIndexOffset(); 
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
@@ -393,7 +403,8 @@ inline void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const in
 
     m_coeff_count++;
     
-    if (m_coeff_count>m_reset_coeff_num)
+    //if ( m_coeff_count > m_reset_coeff_num )
+    if ( m_coeff_count == m_reset_coeff_num )
     {
         ResetAll();
         m_coeff_count=0;
@@ -495,6 +506,23 @@ inline int BandCodec::ChooseSignContext( const PicArray& data , const int xpos ,
         return SIGN0_CTX;
 }
 
+int BandCodec::DecodeQIndexOffset()
+{
+    int offset = 0;
+
+    while ( !DecodeSymbol( Q_OFFSET_MAG_CTX ) )
+    {
+        ++offset;
+    }
+
+    if ( offset )
+    {
+        if ( !DecodeSymbol( Q_OFFSET_SIGN_CTX ) )
+            offset = -offset;
+    }
+    return offset;
+}
+
 void BandCodec::SetToVal( const CodeBlock& code_block , PicArray& pic_data , const ValueType val)
 {
     for (int j=code_block.Ystart() ; j<code_block.Yend() ; j++)
@@ -552,12 +580,13 @@ void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_dat
 
     m_parent_notzero = false; //set parent to always be zero
 
-    int qf_idx = code_block.QIndex();
+    const int qf_idx = code_block.QIndex();
 
     if ( m_node.UsingMultiQuants() )
     {
-        // TBD: shoould code coefficient offset and adjust qf_idx 
+        CodeQIndexOffset( qf_idx-m_node.QIndex() ); 
     }
+
     m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
     m_qfinv =  dirac_quantiser_lists.InverseQuantFactor( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
@@ -615,11 +644,11 @@ void LFBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_
 
     m_parent_notzero = false;//set parent to always be zero    
 
-    int qf_idx = code_block.QIndex();
+    int qf_idx = m_node.QIndex();
 
     if ( m_node.UsingMultiQuants() )
     {
-        // TBD: shoould decode coefficient offset and adjust qf_idx 
+        qf_idx += DecodeQIndexOffset(); 
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
@@ -687,8 +716,13 @@ void IntraDCBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& i
     
     ValueType prediction;
 
-    // NB: always use a single quantiser for Intra DC band
     const int qf_idx = code_block.QIndex();
+
+    if ( m_node.UsingMultiQuants() )
+    {
+        CodeQIndexOffset( qf_idx-m_node.QIndex() ); 
+    }
+
     m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
     m_qfinv =  dirac_quantiser_lists.InverseQuantFactor( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
@@ -746,8 +780,13 @@ void IntraDCBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray&
 
     m_parent_notzero = false; //set parent to always be zero
 
-    // NB: always use a single quantiser for Intra DC
-    const int qf_idx = code_block.QIndex();
+    int qf_idx = m_node.QIndex();
+
+    if ( m_node.UsingMultiQuants() )
+    {
+        qf_idx += DecodeQIndexOffset(); 
+    }
+
     m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
 

@@ -22,7 +22,9 @@
 *
 * Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
-*                 Tim Borer
+*                 Tim Borer,
+*                 Anuradha Suraparaju,
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -40,7 +42,6 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
-#include <libdirac_common/bit_manager.h>
 #include <libdirac_common/arrays.h>
 #include <libdirac_common/common_types.h>
 #include <libdirac_common/dirac_assertions.h>
@@ -61,10 +62,10 @@ namespace dirac
     //////////////////////////////////////////////////////////////
 
     //! Prediction modes for blocks
-    enum PredMode{ INTRA , REF1_ONLY , REF2_ONLY , REF1AND2 };
+    enum PredMode{ INTRA , REF1_ONLY , REF2_ONLY , REF1AND2, UNDEFINED };
 
     //! Types of picture component
-    enum CompSort{ Y_COMP , U_COMP , V_COMP , R_COMP , G_COMP , B_COMP };
+    enum CompSort{ Y_COMP , U_COMP , V_COMP };
 
     //! Addition or subtraction
     enum AddOrSub{ ADD , SUBTRACT };
@@ -72,18 +73,13 @@ namespace dirac
     //! Forward or backward
     enum Direction { FORWARD , BACKWARD };
 
-    //! Different supported filter types. When a new filter type is added
-    enum WltFilter { DAUB97 , APPROX97 , FIVETHREE , THIRTEENFIVE};
-    //! No. of different wlt filters. For testing, increment on adding a filter
-    static const int NUM_WLT_FILTERS = 4;
-
     //! Contexts used for coefficient coding
     enum CtxAliases
     {//used for residual coding
         SIGN0_CTX,          // -sign, previous symbol is 0
         SIGN_POS_CTX,       // -sign, previous symbol is +ve
         SIGN_NEG_CTX,       // -sign, previous symbol is -ve
-        
+
         // Follow bit contexts
         Z_FBIN1z_CTX,       // -bin 1, parent is zero, neighbours zero
         Z_FBIN1nz_CTX,      // -bin 1, parent is zero, neighbours non-zero
@@ -92,7 +88,7 @@ namespace dirac
         Z_FBIN4_CTX,        // -bin 4, parent is zero
         Z_FBIN5_CTX,        // -bin 5, parent is zero
         Z_FBIN6plus_CTX,    // -bins 6 plus, parent is zero
-        
+
         NZ_FBIN1z_CTX,      // -bin 1, parent is non-zero, neighbours zero
         NZ_FBIN1a_CTX,      // -bin 1, parent is non-zero, neighbours small
         NZ_FBIN1b_CTX,      // -bin 1, parent is non-zero, neighbours large
@@ -101,11 +97,13 @@ namespace dirac
         NZ_FBIN4_CTX,       // -bin 4, parent is non-zero
         NZ_FBIN5_CTX,       // -bin 5, parent is non-zero
         NZ_FBIN6plus_CTX,   // -bins 6 plus, parent is non-zero
-        
+
         // Information bit contexts
         INFO_CTX,
 
-        BLOCK_SKIP_CTX      //- blocks are skipped
+        BLOCK_SKIP_CTX,     // - blocks are skipped
+        Q_OFFSET_MAG_CTX,   // - code block quantiser offset magnitude
+        Q_OFFSET_SIGN_CTX   // - code block quantiser offset sign
     };
 
     //! Contexts used for MV data coding
@@ -190,9 +188,102 @@ namespace dirac
     };
 
 
+    /**
+    * Function to convert an integer to a valid VideoFormat
+    *@param video_format Integer corresponding to a format
+    *@return Valid video-format (returns VIDEO_FORMAT_UNDEFINED if no valid format found)
+    */
+    VideoFormat IntToVideoFormat(int video_format);
+
+    /**
+    * Function to convert an integer to a valid VideoFormat
+    *@param chroma_format Integer corresponding to a format
+    *@return Valid chroma-format (returns formatNK if no valid format found)
+    */
+    ChromaFormat IntToChromaFormat(int chroma_format);
+
+     /**
+    * Function to convert an integer to a valid FrameRate type
+    *@param frame_rate_idx Integer corresponding to a frame-rate in the spec table
+    *@return Valid FrameRateType (returns FRAMERATE_UNDEFINED if no valid frame-rate found)
+    */
+    FrameRateType IntToFrameRateType(int frame_rate_idx);
+
+    /**
+    * Function to convert an integer to a valid AspectRatio type
+    *@param aspect_ratio_idx Integer corresponding to a aspect-ratio in the spec table
+    *@return Valid AspectRatioType (returns ASPECT_RATIO_UNDEFINED if no valid aspect-ratio found)
+    */
+    AspectRatioType IntToAspectRatioType(int aspect_ratio_idx);
+
+    /**
+    * Function to convert an integer to a valid SignalRange type
+    *@param signal_range_idx Integer corresponding to a signal-range in the spec table
+    *@return Valid SignalRangeType (returns SIGNAL_RANGE_UNDEFINED if no valid signal-ratio found)
+    */
+    SignalRangeType IntToSignalRangeType(int signal_range_idx);
+
     //Classes used throughout the codec//
     /////////////////////////////////////
+    //! Frame type Class
+    class FrameSort
+    {
+    public:
+        FrameSort() { fs = 0x00; } // default intra non-ref
+    
+        void SetIntra() { fs &= 0xfe; }
+        void SetInter() { fs |= 0x01; }
+        void SetNonRef() { fs &= 0xfd; }
+        void SetRef() { fs |= 0x02; }
+    
+        bool IsInter () const { return fs & 0x01; }
+        bool IsIntra () const { return !IsInter(); }
+        bool IsRef() const { return fs & 0x02; };
+        bool IsNonRef() const { return !IsRef(); }
+        
+        void SetIntraNonRef() { SetIntra(); SetNonRef(); }
+        void SetIntraRef() { SetIntra(); SetRef(); }
+        void SetInterNonRef() { SetInter(); SetNonRef(); }
+        void SetInterRef() { SetInter(); SetRef(); }
+    
+        bool IsIntraNonRef() const { return (fs & 0x03) == 0x00; }
+        bool IsIntraRef() const { return (fs & 0x03) == 0x02; }
+        bool IsInterNonRef() const { return (fs & 0x03) == 0x01; }
+        bool IsInterRef() const { return (fs & 0x03) == 0x03; }
+    
+        void Clear() { fs=0x00; }
 
+        static FrameSort IntraRefFrameSort()
+        {
+            FrameSort fs;
+            fs.SetIntraRef();
+            return fs;
+        }
+
+        static FrameSort InterRefFrameSort()
+        {
+            FrameSort fs;
+            fs.SetInterRef();
+            return fs;
+        }
+        
+        static FrameSort IntraNonRefFrameSort()
+        {
+            FrameSort fs;
+            fs.SetIntraNonRef();
+            return fs;
+        }
+
+        static FrameSort InterNonRefFrameSort()
+        {
+            FrameSort fs;
+            fs.SetInterNonRef();
+            return fs;
+        }
+
+    private:
+        unsigned char fs;
+    };
 
     //! A class for picture component data.
     /*!
@@ -351,7 +442,9 @@ namespace dirac
         
         //! Sets the block vertical separation
         void SetYbsep( int ybsep ){ m_ybsep = ybsep; m_yoffset = (m_yblen-m_ybsep)/2;}
-        
+       
+        bool operator == (const OLBParams bparams) const;
+
         // overloaded stream operators
         friend std::ostream & operator<< (std::ostream &, OLBParams &);
         friend std::istream & operator>> (std::istream &, OLBParams &);
@@ -372,7 +465,8 @@ namespace dirac
     {
     public:        
         //! Default Constructor 
-        SeqParams();
+        SeqParams(const VideoFormat& video_format=VIDEO_FORMAT_CUSTOM,
+                  bool set_defaults=true);
         
         ////////////////////////////////////////////////////////////////////
         //NB: Assume default copy constructor, assignment = and destructor//
@@ -394,18 +488,15 @@ namespace dirac
         //! Returns the chroma height
         int ChromaHeight() const;
         
-        //! Returns true if the sequence is interlaced
-        bool Interlace() const {return m_interlace;}
-        
-        //! Returns true if the top field comes first in time
-        bool TopFieldFirst() const {return m_topfieldfirst;}
-        
-        //! Returns the number of frames to be displayed per second
-        int FrameRate() const {return m_framerate;}
-        
         //! Returns the bitstream version
         int BitstreamVersion() const {return m_bs_ver;}
         
+        //! Returns video-format
+        VideoFormat GetVideoFormat() const { return m_video_format;}
+
+        //! Returns video depth
+        int GetVideoDepth() const { return m_video_depth; }
+
         // ... Sets
         
         //! Sets the picture width
@@ -417,18 +508,13 @@ namespace dirac
         //! Sets the chroma format (Y only, 420, 422 etc)
         void SetCFormat(ChromaFormat cf) {m_cformat=cf;}
         
-        //! Sets the interlace flag: true if the sequence is interlaced, false otherwise
-        void SetInterlace(bool ilace) {m_interlace=ilace;}
-        
-        //! Sets the 'top field first' flag: true if the top field comes first in time
-        void SetTopFieldFirst(bool tff) {m_topfieldfirst=tff;}
-        
-        //! Sets the number of frames to be displayed per second
-        void SetFrameRate(int fr){m_framerate=fr;}
-        
+        //! Sets number of bits used in coding
+        void SetVideoDepth(int vd){ m_video_depth=vd;}
+
         //! Sets the bitstream version
         void SetBitstreamVersion(int bs_ver){m_bs_ver=bs_ver;}
-        
+       
+
     private:
         //! Width of video
         int m_xl;
@@ -439,17 +525,286 @@ namespace dirac
         //! Presence of chroma and/or chroma sampling structure 
         ChromaFormat m_cformat;
         
+        //! Bitsream version.
+        unsigned char  m_bs_ver;
+
+        //!Video-format
+        VideoFormat m_video_format;
+
+        //! Number of bits used to compress input signal
+        int m_video_depth;
+    };
+
+    //! Class defining a rational number
+    class Rational
+    {
+    public:
+        //! Numerator
+        unsigned int m_num;
+        //! Denominator
+        unsigned int m_denom;
+    };
+
+    //! Parameters relating to the complexity of encoder/decoder
+    class ParseParams
+    {
+    public:
+        //! Default constructor
+        ParseParams(unsigned int au_pnum = 0);
+
+        // Gets
+
+        //! Get the access unit picture number
+        unsigned int AccessUnitPictureNumber() const { return m_au_pnum; }
+
+        //! Get the major version
+        unsigned int MajorVersion() const { return m_major_ver; }
+
+        //! Get the minor version
+        unsigned int MinorVersion() const { return m_minor_ver; }
+
+        //! Get the Profile
+        unsigned int Profile() const { return m_profile; }
+
+        //! Get the Level
+        unsigned int Level() const { return m_level; }
+
+        // Sets
+        
+        //! Set the access unit picture number
+        void SetAccessUnitPictureNumber(unsigned int au_pnum) { m_au_pnum = au_pnum; }
+
+        //! Set the major version
+        void SetMajorVersion(unsigned int major_ver) { m_major_ver = major_ver; }
+
+        //! Set the minor version
+        void SetMinorVersion(unsigned int minor_ver) { m_minor_ver = minor_ver; }
+
+        //! Set the Profile
+        void SetProfile(unsigned int level) { m_level = level; }
+
+        //! Set the Level
+        void SetLevel(unsigned int profile) { m_profile = profile; }
+
+    private:
+        //! Frame number of first Intra Ref Picture after Access unit header
+        unsigned int m_au_pnum;
+        //! Major Version
+        unsigned int m_major_ver;
+        //! Minor Version
+        unsigned int m_minor_ver;
+        //! Profile
+        unsigned int m_profile;
+        //! Level
+        unsigned int m_level;
+    };
+
+    //! Parameters relating to the source material being encoded/decoded
+    class SourceParams
+    {
+    public:
+        //! default constructor
+        SourceParams (const VideoFormat &vf = VIDEO_FORMAT_CUSTOM, 
+                      bool set_defaults=true);
+        
+        ////////////////////////////////////////////////////////////////////
+        //NB: Assume default copy constructor, assignment = and destructor//
+        ////////////////////////////////////////////////////////////////////    
+
+        // Gets
+        //! Returns true if the source material is interlaced
+        bool Interlace() const { return m_interlace; }
+        
+        //! Returns true if top field comes first in time
+        bool TopFieldFirst() const { return m_topfieldfirst; }
+        
+        //! Returns true if fields are sequential i.e. not interleaved
+        bool SequentialFields() const { return m_seq_fields; }
+       
+           //! Return the number for frames per second
+        Rational FrameRate() const { return m_framerate; }
+       
+        //! Return the type from the frame rate table
+        FrameRateType FrameRateIndex() const { return m_fr_idx; }
+       
+           //! Return the pixel aspect ratio
+        Rational AspectRatio() const { return m_aspect_ratio; }
+
+         //! Return the type from the aspect ratio table
+        AspectRatioType AspectRatioIndex() const { return m_asr_idx; }
+
+        // Clean area parameters
+        //! Return the Clean area width
+        unsigned int CleanWidth() const { return m_clean_width; }
+        //! Return the Clean area height
+        unsigned int CleanHeight() const { return m_clean_height; }
+        //! Return the Clean area left offset
+        unsigned int LeftOffset() const { return m_left_offset; }
+        //! Return the Clean area top offset
+        unsigned int TopOffset() const { return m_top_offset; }
+
+        // Signal Range parameters
+
+        //! Return the type from the signal range table
+        SignalRangeType SignalRangeIndex() const { return m_sr_idx; }
+
+        //! Return the luma offset
+        unsigned int LumaOffset() const { return m_luma_offset; }
+        //! Return the luma excursion
+        unsigned int LumaExcursion() const { return m_luma_excursion; }
+        //! Return the chroma offset
+        unsigned int ChromaOffset() const { return m_chroma_offset; }
+        //! Return the chroma excursion
+        unsigned int ChromaExcursion() const { return m_chroma_excursion; }
+
+        //! Return the index into the colour specification table
+        unsigned int ColourSpecificationIndex() const { return m_cs_idx; }
+
+        //! Return the colour primaries index
+        ColourPrimaries ColourPrimariesIndex() const { return m_col_primary; }
+        //! Return the colour matrix index
+        ColourMatrix ColourMatrixIndex() const { return m_col_matrix; }
+        //! Return the transfer function index
+        TransferFunction TransferFunctionIndex() const { return m_transfer_func; }
+    
+        // Sets
+        //! Set if the source material is interlaced
+        void SetInterlace(bool interlace) { m_interlace = interlace; }
+        
+        //! Set Topfield first. True if top field comes first in time
+        void SetTopFieldFirst(bool tff) { m_topfieldfirst = tff; }
+        
+        //! Set 'sequential fields flag. true if fields are sequential i.e. not interleaved
+        void SetSequentialFields(bool seq_flds) { m_seq_fields = seq_flds; }
+       
+           //! Set the frame rate
+        void SetFrameRate(const Rational &frate ) 
+        {
+            m_fr_idx = FRAMERATE_CUSTOM; m_framerate = frate;
+        }
+           
+        //! Set the frame rate
+        void SetFrameRate(unsigned int fr_num, unsigned int fr_denom )
+        {
+            m_fr_idx = FRAMERATE_CUSTOM;
+            m_framerate.m_num = fr_num;
+            m_framerate.m_denom = fr_denom;
+        }
+       
+        //! Set the frame rate
+        void SetFrameRate(FrameRateType fr); 
+
+           //! Set the pixel aspect ratio
+        void SetAspectRatio(const Rational &asr) 
+        {
+            m_asr_idx = ASPECT_RATIO_CUSTOM;
+            m_aspect_ratio = asr;
+        }
+        
+        //! Set the pixel aspect ratio
+        void SetAspectRatio(unsigned int as_num, unsigned int as_denom )
+        { 
+            m_asr_idx = ASPECT_RATIO_CUSTOM;
+            m_aspect_ratio.m_num = as_num;
+            m_aspect_ratio.m_denom = as_denom;
+        }
+       
+        //! Set the Pixel Aspect Ratio
+        void SetAspectRatio(AspectRatioType aspect_ratio); 
+
+        // Clean area parameters
+        //! Set the Clean area width
+        void SetCleanWidth(unsigned int clean_width) { m_clean_width = clean_width; }
+        //! Set the Clean area height
+        void SetCleanHeight(unsigned int clean_height) { m_clean_height = clean_height; }
+        //! Set the Clean area left offset
+        void SetLeftOffset(unsigned int left_offset) { m_left_offset = left_offset; }
+        //! Set the Clean area top offset
+        void SetTopOffset(unsigned int top_offset) { m_top_offset = top_offset; }
+
+        // Signal Range parameters
+        //! Set the Signal Range parameters
+        void SetSignalRange(SignalRangeType sr);
+
+        //! Set the luma offset
+        void SetLumaOffset(unsigned int luma_offset) { m_sr_idx = SIGNAL_RANGE_CUSTOM; m_luma_offset = luma_offset; }
+        //! Set the luma excursion
+        void SetLumaExcursion(unsigned int luma_exc) { m_sr_idx = SIGNAL_RANGE_CUSTOM; m_luma_excursion = luma_exc; }
+        //! Set the chroma offset
+        void SetChromaOffset(unsigned int chroma_off) { m_sr_idx = SIGNAL_RANGE_CUSTOM; m_chroma_offset = chroma_off; }
+        //! Set the chroma excursion
+        void SetChromaExcursion(unsigned int chroma_exc) { m_sr_idx = SIGNAL_RANGE_CUSTOM; m_chroma_excursion = chroma_exc; }
+
+        //! Set the Colour specification
+        void SetColourSpecification(unsigned int cs_idx);
+        //! Set the colour primaries index
+        void SetColourPrimariesIndex(unsigned int cp);
+        //! Set the colour matrix index
+        void SetColourMatrixIndex(unsigned int cm);
+        //! Set the transfer function index
+        void SetTransferFunctionIndex(unsigned int tf);
+
+    private:
         //! True if interlaced
         bool m_interlace;
         
         //! If interlaced, true if the top field is first in temporal order
         bool m_topfieldfirst;
         
-        //! Frame rate, per second
-        int m_framerate;
+        //! If interlaced, true if the fields are sequential and not interleaved
+        bool m_seq_fields;
+
+        //! Index into frame rate table
+        FrameRateType m_fr_idx;
+
+        //! Frame Rate i.e number of frames per second
+        Rational m_framerate;
+
+        //! Index into pixel aspect ratio table
+        AspectRatioType m_asr_idx;
+
+        //! Pixel Aspect Ratio
+        Rational m_aspect_ratio;
+
+        // Clean area parameters
+
+        //! Clean area width
+        unsigned int m_clean_width;
         
-        //! Bitsream version.
-        unsigned char  m_bs_ver;
+        //! Clean area height
+        unsigned int m_clean_height;
+        
+        //! Clean area left offset
+        unsigned int m_left_offset;
+        
+        //! Clean area top offset
+        unsigned int m_top_offset;
+
+        // signal range parameters
+
+        //! Index into signal range table
+        SignalRangeType m_sr_idx;
+
+        //! Luma offset
+        unsigned int m_luma_offset;
+        //! Luma excursion
+        unsigned int m_luma_excursion;
+        //! Chroma offset
+        unsigned int m_chroma_offset;
+        //! Chroma excursion
+        unsigned int m_chroma_excursion;
+
+        //! Index into colour spec table
+        unsigned int m_cs_idx;
+
+        //! Colour Primaries Index
+        ColourPrimaries m_col_primary;
+
+        // Colour Matrix index
+        ColourMatrix m_col_matrix;
+
+        // Transfer function index
+        TransferFunction m_transfer_func;
     };
 
     //! Parameters for initialising frame class objects
@@ -522,16 +877,27 @@ namespace dirac
         
         //! Returns non-const C++ referece to the vector of reference frames, to allow them to be set
         std::vector<int>& Refs(){return m_refs;}
-
+        
         //! Return the number of reference frames
         const unsigned int NumRefs()const {return m_refs.size();}
         
-        
+        //! Returns type of frame (see enum)
+        FrameType GetFrameType () const { return m_frame_type; }
+
+        //! Returns reference frame type (see enum)
+        ReferenceType GetReferenceType() const { return m_reference_type;}
+
         // ... Sets
         
         //! Sets the type of frame to I, L1 or L2
         void SetFSort( const FrameSort& fs ){ m_fsort=fs; }
         
+        //! Sets the type of frame
+        void SetFrameType(const FrameType& frame_type) { m_frame_type=frame_type; }
+
+        //! Sets the reference type of frame
+        void SetReferenceType(const ReferenceType& ref_type) { m_reference_type=ref_type; }
+
         //! Sets the frame number
         void SetFrameNum( const int fn ){ m_fnum=fn; }
         
@@ -540,6 +906,27 @@ namespace dirac
         
         //! Sets a flag to indicate that the frame has been output
         void SetAsOutput(){m_output=true;}
+        
+        //! Sets the chroma format
+        void SetCFormat(ChromaFormat cf){ m_cformat = cf; }
+        
+        //! Sets the frame luma length
+        void SetXl(int xl){m_xl = xl; }
+        
+        //! Sets the frame luma height
+        void SetYl(int yl){m_yl = yl; }
+        
+        //! Sets the chroma length
+        void SetChromaXl(int xl){m_chroma_xl = xl; }
+        
+        //! Sets the chroma height
+        void SetChromaYl(int yl){m_chroma_yl = yl; }
+        
+        //! Returns a const C++ reference to the set of frame numbers to be retired
+        std::vector<int>& RetiredFrames() const {return m_retd_list;}
+        
+        //! Returns a non-const C++ reference to the set of frame numbers to be retired
+        std::vector<int>& RetiredFrames() {return m_retd_list;}
         
     private:
         
@@ -566,12 +953,23 @@ namespace dirac
         
         //! The frame number, in temporal order
         int m_fnum;        
-        
+
+        //! Frame type
+        FrameType m_frame_type;
+
+        //! Reference type
+        ReferenceType m_reference_type;
+
         //! Chroma length
         int m_chroma_xl;        
         
         //! Chroma height
         int m_chroma_yl;        
+        
+        //! The set of frame numbers in the retired frame list
+        mutable std::vector<int> m_retd_list;
+        
+
     };
 
 //    //! Operator for inputting block parameters
@@ -590,7 +988,7 @@ namespace dirac
     public:
         
         //! Default constructor 
-        CodecParams();
+        CodecParams(const VideoFormat& vd, FrameType ftype, bool set_defaults);
         
             ////////////////////////////////////////////////////////////////////
             //NB: Assume default copy constructor, assignment = and destructor//
@@ -632,10 +1030,44 @@ namespace dirac
         int OrigYl() const {return m_orig_yl;}
 
         //! Return the number of accuracy bits used for motion vectors
-        int MVPrecision() const { return m_mv_precision; }
+        unsigned int MVPrecision() const { return m_mv_precision; }
+
+        //! Return zero transform flag being used for frame (de)coding
+        bool ZeroTransform() const { return m_zero_transform; } 
 
         //! Return the wavelet filter currently being used for frame (de)coding
         WltFilter TransformFilter() const { return m_wlt_filter; } 
+
+        //! Return the transform depth being used for frame (de)coding
+        int TransformDepth() const { return m_wlt_depth; } 
+
+        //! Return multiple quantisers flag being used for frame (de)coding
+        bool MultiQuants() const { return m_multi_quants; } 
+
+        //! Return the spatial partitioning flag being used for frame (de)coding
+        bool SpatialPartition() const { return m_spatial_partition; } 
+        
+        //! Return the default spatial partitioning flag being used for frame (de)coding
+        bool DefaultSpatialPartition() const { return m_def_spatial_partition; } 
+        //! Return the maximum number of blocks in x direction 
+        unsigned int MaxXBlocks() const { return m_max_x_blocks; }
+        //! Return the maximum number of blocks in y direction 
+        unsigned int MaxYBlocks() const { return m_max_y_blocks; }
+
+        //! Return the video format currently being used for frame (de)coding
+        VideoFormat GetVideoFormat() const { return m_video_format; } 
+             
+        //! Return the global motion flag used for encoding/decoding
+        bool UsingGlobalMotion() const { return m_use_global_motion; } 
+
+        //! Return the number of frame weight precision bits
+        unsigned int FrameWeightsBits() const { return m_frame_weights_bits; } 
+
+        //! Return the Ref1 weight
+        int Ref1Weight() const { return m_ref1_weight; } 
+
+        //! Return the Ref2 weight
+        int Ref2Weight() const { return m_ref2_weight; } 
              
         // ... and Sets
         //! Set how many MBs there are horizontally
@@ -661,6 +1093,8 @@ namespace dirac
         
         //! Set the block sizes for all MB splitting levels given these prototype block sizes for level=2
         void SetBlockSizes(const OLBParams& olbparams , const ChromaFormat cformat);
+        //! Set block level luma params
+        void SetLumaBlockParams(const OLBParams& olbparams) {m_lbparams[2] = olbparams;}
 
         //! Set the original frame width
         void SetOrigXl(const int x){m_orig_xl=x;}
@@ -669,15 +1103,54 @@ namespace dirac
         void SetOrigYl(const int y){m_orig_yl=y;}
 
         //! Set the number of accuracy bits for motion vectors
-        void SetMVPrecision(const int p)
+        void SetMVPrecision(const unsigned int p)
         {
             // Assert in debug mode. Maybe we should throw an exception???
             TESTM((p >=0 && p <=3), "Motion precision value in range 0..3");
             m_mv_precision = p;
         }
 
-        //! Return the wavelet filter currently being used for frame (de)coding
+        //! Set the zero transform flag being used for frame (de)coding
+        void SetZeroTransform(bool zero_transform)  { m_zero_transform = zero_transform; } 
+
+        //! Set the wavelet filter used for frame (de)coding
         void SetTransformFilter(const WltFilter wf) { m_wlt_filter=wf; } 
+
+        //! Set the wavelet filter used for frame (de)coding
+        void SetTransformFilter(unsigned int wf_idx);
+
+        //! Set the transform depth used for frame (de)coding
+        void SetTransformDepth(int wd) { m_wlt_depth=wd;};
+
+        //! Set the multiple quantisers flag usedto frame (de)coding
+        void SetMultiQuants(bool multi_quants) { m_multi_quants=multi_quants; } 
+
+        //! Set the spatial partition flag usedto frame (de)coding
+        void SetSpatialPartition(bool spatial_partition) { m_spatial_partition=spatial_partition; } 
+
+        //! Set the spatial partition flag usedto frame (de)coding
+        void SetDefaultSpatialPartition(bool def_spatial_partition) { m_def_spatial_partition=def_spatial_partition; } 
+        
+        //! Set the maximum number of blocks in x direction 
+        void  SetMaxXBlocks(unsigned int max_x_blocks) { m_max_x_blocks = max_x_blocks; }
+        
+        //! Set the maximum number of blocks in x direction 
+        void  SetMaxYBlocks(unsigned int max_y_blocks) { m_max_y_blocks = max_y_blocks; }
+
+        //! Set the video format used for frame (de)coding
+        void SetVideoFormat(const VideoFormat vd) { m_video_format=vd; } 
+
+        //! Set the wavelet filter used for frame (de)coding
+        void SetUsingGlobalMotion(bool gm) { m_use_global_motion=gm; } 
+
+        //! Set the frame weight precision bits used for (de)coding
+        void SetFrameWeightsPrecision(unsigned int wt_prec) { m_frame_weights_bits=wt_prec; } 
+
+        //! Set the ref 1 frame weight
+        void SetRef1Weight(int wt) { m_ref1_weight=4; } 
+
+        //! Set the ref 2 frame weight
+        void SetRef2Weight(int wt) { m_ref2_weight=4; } 
 
     private:
         
@@ -712,10 +1185,46 @@ namespace dirac
         int m_orig_yl;
 
         //! The precision of motion vectors (number of accuracy bits eg 1=half-pel accuracy) 
-        int m_mv_precision;
+        unsigned int m_mv_precision;
+
+        //! The video format being used
+        VideoFormat m_video_format;
+
+        //! Global motion fields
+        bool m_use_global_motion;
+
+        //! frame predicion parameters - precision
+        unsigned int m_frame_weights_bits;
+
+        //! frame predicion parameters - reference frame 1 weight
+        int m_ref1_weight;
+        
+        //! frame predicion parameters - reference frame 1 weight
+        int m_ref2_weight;
+
+        //! Zero transform flag
+        bool m_zero_transform;
 
         //! The wavelet filter being used
         WltFilter m_wlt_filter;
+
+        //! Wavelet depth
+        int m_wlt_depth;
+
+        //! Wavelet depth
+        bool m_multi_quants;
+
+        //! Spatial partitioning flag
+        bool m_spatial_partition;
+
+        //! Default Spatial partitioning flag
+        bool m_def_spatial_partition;
+
+        //! Max number of code coeff blocks in x direction
+        unsigned int m_max_x_blocks;
+        
+        //! Max number of code coeff blocks in y direction
+        unsigned int m_max_y_blocks;
     };
 
     //! Parameters for the encoding process
@@ -727,8 +1236,10 @@ namespace dirac
         //codec params plus parameters relating solely to the operation of the encoder
         
     public:
-        //! Default constructor    
-        EncoderParams();
+        //! Default constructor   
+        EncoderParams(const VideoFormat& video_format,
+                      FrameType ftype = INTER_FRAME,
+                      bool set_defaults=true);
         
             ////////////////////////////////////////////////////////////////////
             //NB: Assume default copy constructor, assignment = and destructor//
@@ -741,7 +1252,7 @@ namespace dirac
         bool LocalDecode() const {return m_loc_decode;}
 
         //! Get whether we're doing lossless coding
-        float Lossless() const {return m_lossless;}
+        bool Lossless() const {return m_lossless;}
 
         //! Get the quality factor
         float Qf() const {return m_qf;}
@@ -784,6 +1295,10 @@ namespace dirac
         //! Return the Lagrangian ME parameter to be used for L2 frames
         float L2MELambda() const {return m_L2_me_lambda;}
 
+        //! Return the size of the GOP
+        int GOPLength() const { if (m_num_L1>0) return (m_num_L1+1)*m_L1_sep;
+                                return (m_num_L1==0) ? 10 : 0; }
+
         //! Return the output path to be used for storing diagnositic data
         char * OutputPath() const {return ( char* ) m_output_path.c_str();}
         
@@ -792,13 +1307,7 @@ namespace dirac
         
         //! Return a reference to the entropy factors - we need to be able to change the values of the entropy factors in situ
         EntropyCorrector& EntropyFactors() {return *m_ent_correct;}
-        
-        //!Return a reference to the bit output class
-        const SequenceOutputManager& BitsOut() const {return *m_bit_out;}
-        
-        //!Return a reference to the bit output class - we need to output, so non-const
-        SequenceOutputManager& BitsOut() {return *m_bit_out;}
-        
+
         // ... and Sets
 
         //! Sets a flag indicating that we're producing a locally decoded o/p
@@ -848,10 +1357,7 @@ namespace dirac
         
         //! Sets the entropy factors - TBD: set this up in a constructor and pass encoder params around entirely by reference
         void SetEntropyFactors(EntropyCorrector* entcorrect){m_ent_correct=entcorrect;}
-        
-        //! Sets the bit output - TBD: set this up in a constructor and pass encoder params around entirely by reference
-        void SetBitsOut( SequenceOutputManager* so ){ m_bit_out=so; }
-        
+       
     private:
 
         //! Flag indicating we're doing local decoding
@@ -896,11 +1402,10 @@ namespace dirac
         //! Correction factors for quantiser selection 
         EntropyCorrector* m_ent_correct;
         
-        //! Pointer to object for managing bitstream output
-        SequenceOutputManager* m_bit_out;   
-        
         //! Output file path
         std::string m_output_path;
+
+     
     };
 
     //! Parameters for the decoding process
@@ -911,27 +1416,16 @@ namespace dirac
     {
     public:
             //! Default constructor
-        DecoderParams():
-        CodecParams(),
-        m_bit_in(0){}
+        DecoderParams(const VideoFormat& video_format = VIDEO_FORMAT_CIF, FrameType ftype=INTRA_FRAME, bool set_defaults = false);
         
             ////////////////////////////////////////////////////////////////////
             //NB: Assume default copy constructor, assignment = and destructor//
             //This means pointers are copied, not the objects they point to.////       
             ////////////////////////////////////////////////////////////////////
         
-        //! Return a reference to the bit output class
-        const BitInputManager& BitsIn() const {return *m_bit_in;}
-        
-        //! Return a reference to the bit output class - we need to output, so non-const
-        BitInputManager& BitsIn() {return *m_bit_in;}
-        
-        //! Sets the bit input - TBD: set this up in a constructor and pass decoder params around entirely by reference
-        void SetBitsIn(BitInputManager* bi){m_bit_in=bi;}
-        
+       
     private:        
-        //! Pointer to the bitstream input manager
-        BitInputManager* m_bit_in;
+       
     };
 
     //! A simple bounds checking function, very useful in a number of places

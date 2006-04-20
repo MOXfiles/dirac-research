@@ -23,6 +23,7 @@
 * Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
 *                 Anuradha Suraparaju
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -48,6 +49,7 @@
 ///////////////////////////////////////////
 
 #include "libdirac_common/common.h"
+#include "libdirac_byteio/parseunit_byteio.h"
 #include <iostream>
 
 namespace dirac
@@ -67,16 +69,23 @@ namespace dirac
         /*!
             Initializes the decompressor with an input stream and level of
             output detail.
-            \param  ip          input data stream containing a sequence of compressed images
+            \param  parseunit   First access-unit of new sequence
             \param  verbosity   when true, increases the amount of information displayed during decompression
          */
-        SequenceDecompressor(std::istream * ip, bool verbosity);
+        SequenceDecompressor(ParseUnitByteIO& parseunit, bool verbosity);
 
         //! Destructor
         /*!
             Closes files and releases resources. 
         */
         ~SequenceDecompressor();
+
+        //! Marks beginning of a new AccessUnit
+        /*!
+            \param parseunit_byteio AccessUnit info in Dirac-stream format
+        */
+        void NewAccessUnit(ParseUnitByteIO& parseunit_byteio);
+
 
         //! Decompress the next frame in sequence
         /*!
@@ -90,13 +99,12 @@ namespace dirac
             with the decoded frames as they come out -- write them to screen
             or to file, as required.
 
+            \param p_parseunit_byteio Frame information in Dirac-stream format
             \param  skip skip decoding next frame
             \return      reference to the next locally decoded frame available for display
         */
-        Frame& DecompressNextFrame(bool skip = false);
-
-        //! Reads the header data associated with decompressing the frame
-        bool ReadNextFrameHeader();
+        Frame& DecompressNextFrame(ParseUnitByteIO* p_parseunit_byteio,
+                                   bool skip = false);
 
         //! Get the next frame available for display
         Frame& GetNextFrame();
@@ -109,7 +117,15 @@ namespace dirac
             decompressed.
             \return     true if last frame has been compressed; false if not
         */
-        bool Finished() { return m_all_done; }
+        bool Finished(); 
+        //! Interrogates for parse parameters.
+        /*!
+            Returns the parse parameters used for this decompression run.
+
+            \return parse parameters.
+         */
+        ParseParams & GetParseParams() { return m_parse_params; }
+
 
         //! Interrogates for decompression parameters.
         /*!
@@ -118,6 +134,15 @@ namespace dirac
             \return decompression parameters originally provide din the constructor.
          */
         SeqParams & GetSeqParams() { return m_sparams; }
+        
+        //! Interrogates for source parameters.
+        /*!
+            Returns the source parameters used for this decompression run.
+
+            \return source parameters.
+         */
+        SourceParams & GetSourceParams() { return m_srcparams; }
+
 
     private:
         //! Copy constructor is private and body-less
@@ -136,14 +161,6 @@ namespace dirac
         */
         SequenceDecompressor& operator=(const SequenceDecompressor& rhs);
 
-        //! Read a sequence header from bitstream
-        /*!
-            Reads the sequence data from the bitstream. This contains all the
-            block information. Temporal prediction information is contained in
-            the frame headers so that a simple GOP need not be used, or if so,
-            can be reset on the fly.
-         */
-        void ReadStreamHeader();    
 
         //Member variables
 
@@ -151,12 +168,14 @@ namespace dirac
         bool m_all_done;
         //! Parameters for the decompression, as provided in constructor
         DecoderParams m_decparams;
+        //! The parse parameters obtained from the stream header
+        ParseParams m_parse_params;
         //! The sequence parameters obtained from the stream header
         SeqParams m_sparams;
+        //! The source parameters obtained from the stream header
+        SourceParams m_srcparams;
         //! A picture buffer used for local storage of frames whilst pending re-ordering or being used for reference.
-        FrameBuffer* m_fbuffer;
-        //! Input file pointer, pointing at the bitstream
-        std::istream* m_infile;            
+        FrameBuffer* m_fbuffer;   
         //! Number of the frame in coded order which is to be decoded
         int m_current_code_fnum;        
         //! A delay so that we don't display what we haven't decoded
@@ -167,6 +186,10 @@ namespace dirac
         int m_show_fnum;
         //! Frame decompressor object
         FrameDecompressor *m_fdecoder;
+        //! Current AccessUnit frame-number
+        int m_current_accessunit_fnum;
+        //! Highest frame-num processed - for tracking end-of-sequence
+        int m_highest_fnum;
     };
 
 } // namespace dirac

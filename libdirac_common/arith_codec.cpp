@@ -1,5 +1,7 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
+* $Id$ $Name$
+*
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
 * The contents of this file are subject to the Mozilla Public License
@@ -50,19 +52,9 @@ namespace dirac {
         };
     }
 
-    ArithCodecBase::ArithCodecBase(BasicOutputManager * bits_out, size_t number_of_contexts):
+    ArithCodecBase::ArithCodecBase(ByteIO* p_byteio, size_t number_of_contexts):
         m_context_list( number_of_contexts ),
-        m_bit_count( 0 ),
-        m_bit_output( bits_out ),
-        m_decode_data_ptr( 0 )
-    {
-        // nothing needed here
-    }
-
-    ArithCodecBase::ArithCodecBase(BitInputManager * bits_in, size_t number_of_contexts):
-        m_context_list( number_of_contexts ),
-        m_bit_count( 0 ),
-        m_bit_input( bits_in ),
+        m_byteio(p_byteio ),
         m_decode_data_ptr( 0 )
     {
         // nothing needed here
@@ -85,10 +77,13 @@ namespace dirac {
     void ArithCodecBase::FlushEncoder()
     {
         // Flushes the output
-        m_bit_output->OutputBit(m_low_code & CODE_2ND_MSB, m_bit_count);
+        m_byteio->OutputBit(m_low_code & CODE_2ND_MSB);
         while ( m_underflow >= 0 ) {
-            m_bit_output->OutputBit(~m_low_code & CODE_2ND_MSB, m_bit_count);
+            m_byteio->OutputBit(~m_low_code & CODE_2ND_MSB);
             m_underflow -= 1; }
+
+        // byte align
+        m_byteio->ByteAlignOutput();
     }
     
     void ArithCodecBase::InitDecoder(int num_bytes)
@@ -103,10 +98,7 @@ namespace dirac {
 
     int ArithCodecBase::ByteCount() const
     {
-        int byte_count( m_bit_count/8);
-        if ( (byte_count*8)<m_bit_count )
-            byte_count++;
-        return byte_count;
+        return m_byteio->GetSize();
     }
 
     void ArithCodecBase::ReadAllData(int num_bytes)
@@ -115,8 +107,7 @@ namespace dirac {
            delete[] m_decode_data_ptr;
 
        m_decode_data_ptr = new char[num_bytes+2];
-       m_bit_input->InputBytes( m_decode_data_ptr , num_bytes );
-
+       m_byteio->InputBytes( m_decode_data_ptr , num_bytes );
        m_decode_data_ptr[num_bytes] = 0;
        m_decode_data_ptr[num_bytes+1] = 0;
 

@@ -23,6 +23,7 @@
 * Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
 *                 Anuradha Suraparaju
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -44,6 +45,8 @@
 
 #include <libdirac_common/frame_buffer.h>
 #include <libdirac_common/common.h>
+#include <libdirac_byteio/frame_byteio.h>
+#include <libdirac_byteio/transform_byteio.h>
 
 namespace dirac
 {
@@ -78,16 +81,13 @@ namespace dirac
             of a frame buffer.
             Returns true if able to decode successfully, false otherwise
 
+            \param parseunit_byteio Frame info in Dirac-stream format
             \param my_buffer   picture buffer into which the frame is placed
+            \param au_fnum Current AccessUnit frame-number
         */
-        bool Decompress(FrameBuffer& my_buffer);
-
-        //! Reads the header data
-        /*!
-            Reads the header data associated with decompressing the frame
-            \param my_buffer picture buffer from which frame dimensions are obtained
-        */
-        bool ReadFrameHeader(const FrameBuffer& my_buffer);
+        bool Decompress(ParseUnitByteIO& parseunit_byteio,
+                        FrameBuffer& my_buffer,
+                        int au_fnum);
 
         //! Returns the frame parameters of the current frame being decoded
         const FrameParams& GetFrameParams() const{ return m_fparams; }
@@ -108,10 +108,15 @@ namespace dirac
         FrameDecompressor& operator=(const FrameDecompressor& rhs);
 
         //! Decodes component data    
-        void CompDecompress(FrameBuffer& my_buffer,int fnum, CompSort cs);
+        void CompDecompress(TransformByteIO *p_transform_byteio,
+                            FrameBuffer& my_buffer,int fnum, CompSort cs);
 
-        //! Reads the header data associated with decompressing the frame
-        bool ReadFrameHeader(FrameParams& fparams);
+
+		//! Set the number of superblocks and blocks
+		void SetMVBlocks();
+
+		//! Add a frame to the frame buffer
+		void PushFrame(FrameBuffer &my_buffer);
 
         //Member variables    
 
@@ -135,9 +140,6 @@ namespace dirac
 
         //! Current Frame Parameters
         FrameParams m_fparams;
-
-        //! Read header successfully
-        bool m_read_header;
 
     };
 

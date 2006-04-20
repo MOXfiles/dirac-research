@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author),
+*                 Scott R Ladd,
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -38,6 +40,13 @@
 #include <libdirac_common/frame_buffer.h>
 #include <algorithm>
 using namespace dirac;
+
+//Simple constructor for decoder operation
+FrameBuffer::FrameBuffer() :
+    m_num_L1(0),
+    m_L1_sep(1),
+    m_gop_len(0)
+{}
 
 //Simple constructor for general operation
 FrameBuffer::FrameBuffer(ChromaFormat cf,int xlen,int ylen, int c_xlen, int c_ylen): 
@@ -358,13 +367,28 @@ void FrameBuffer::Remove(unsigned int pos)
     }
 }
 
-void FrameBuffer::Clean(int fnum)
+void FrameBuffer::Clean(int show_fnum, int current_coded_fnum)
 {// clean out all frames that have expired
-
+    std::vector<int>& retd_list = GetFrame(current_coded_fnum).GetFparams().RetiredFrames();
+    retd_list.clear();
     for (size_t i=0 ; i<m_frame_data.size() ; ++i)
     {
-        if (m_frame_in_use[i] == true && (m_frame_data[i]->GetFparams().FrameNum() + m_frame_data[i]->GetFparams().ExpiryTime() ) <= fnum)
+        if (m_frame_in_use[i] == true && (m_frame_data[i]->GetFparams().FrameNum() + m_frame_data[i]->GetFparams().ExpiryTime() ) <= show_fnum)
+        {
+            retd_list.push_back( m_frame_data[i]->GetFparams().FrameNum());
             Remove(i);
+        }
+    }//i
+}
+
+void FrameBuffer::Clean(int fnum)
+{// clean out all frames that have expired
+    for (size_t i=0 ; i<m_frame_data.size() ; ++i)
+    {
+        if (m_frame_in_use[i] == true && m_frame_data[i]->GetFparams().FrameNum() == fnum)
+        {
+            Remove(i);
+        }
     }//i
 }
 
@@ -381,14 +405,18 @@ void FrameBuffer::SetFrameParams( unsigned int fnum )
 
         if ( fnum % m_gop_len == 0)
         {
-            m_fparams.SetFSort( I_frame );
+            m_fparams.SetFSort( FrameSort::IntraRefFrameSort());
+            m_fparams.SetFrameType( INTRA_FRAME);
+            m_fparams.SetReferenceType( REFERENCE_FRAME );
 
             // I frame expires after we've coded the next I frame
             m_fparams.SetExpiryTime( m_gop_len );
         }
         else if (fnum % m_L1_sep == 0)
         {
-            m_fparams.SetFSort( L1_frame );
+            m_fparams.SetFSort( FrameSort::InterRefFrameSort());
+            m_fparams.SetFrameType( INTER_FRAME );
+            m_fparams.SetReferenceType( REFERENCE_FRAME );
 
             // Ref the previous I or L1 frame
             m_fparams.Refs().push_back( fnum - m_L1_sep );
@@ -403,7 +431,9 @@ void FrameBuffer::SetFrameParams( unsigned int fnum )
         }
         else
         {
-            m_fparams.SetFSort( L2_frame );
+            m_fparams.SetFSort( FrameSort::InterNonRefFrameSort());
+            m_fparams.SetFrameType( INTER_FRAME );
+            m_fparams.SetReferenceType( NON_REFERENCE_FRAME );
             // Refs are the next or previous I or L1 frame
             m_fparams.Refs().push_back((fnum/m_L1_sep)*m_L1_sep);
             m_fparams.Refs().push_back(((fnum/m_L1_sep)+1)*m_L1_sep);
@@ -417,12 +447,16 @@ void FrameBuffer::SetFrameParams( unsigned int fnum )
     else{        
         if (fnum==0)
         {
-            m_fparams.SetFSort( I_frame );
+            m_fparams.SetFSort( FrameSort::IntraRefFrameSort());
+            m_fparams.SetFrameType( INTRA_FRAME );
+            m_fparams.SetReferenceType( REFERENCE_FRAME );
             m_fparams.SetExpiryTime( 1<<30 );//ie never
         }
         else if (fnum % m_L1_sep==0)
         {
-            m_fparams.SetFSort( L1_frame );
+            m_fparams.SetFSort( FrameSort::InterRefFrameSort());
+            m_fparams.SetFrameType( INTER_FRAME );
+            m_fparams.SetReferenceType( REFERENCE_FRAME );
             m_fparams.Refs().push_back(0);//frame 0 is the I frame
 
             if (fnum != m_L1_sep)//we don't have the first L1 frame    
@@ -433,7 +467,9 @@ void FrameBuffer::SetFrameParams( unsigned int fnum )
         }
         else
         {
-            m_fparams.SetFSort( L2_frame );
+            m_fparams.SetFSort( FrameSort::InterNonRefFrameSort());
+            m_fparams.SetFrameType( INTER_FRAME );
+            m_fparams.SetReferenceType( NON_REFERENCE_FRAME );
             m_fparams.Refs().push_back((fnum/m_L1_sep)*m_L1_sep);
             m_fparams.Refs().push_back(((fnum/m_L1_sep)+1)*m_L1_sep);
             m_fparams.SetExpiryTime( 1 );    //L2 frames could expire directly after being coded, but putting in a delay of 1

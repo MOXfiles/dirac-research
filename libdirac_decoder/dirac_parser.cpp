@@ -21,6 +21,7 @@
 * All Rights Reserved.
 *
 * Contributor(s): Anuradha Suraparaju (Original Author)
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -39,6 +40,7 @@
 #include <libdirac_common/dirac_assertions.h>
 #include <libdirac_decoder/dirac_cppparser.h>
 #include <libdirac_decoder/dirac_parser.h>
+#include <libdirac_common/dirac_exception.h>
 #include <libdirac_common/frame.h>
 #if defined (HAVE_MMX)
 #include <mmintrin.h>
@@ -95,21 +97,24 @@ static void set_sequence_params (const  DiracParser * const parser, dirac_decode
     TEST (decoder != NULL);
 
     dirac_seqparams_t *seq_params = &decoder->seq_params;
+    dirac_sourceparams_t *src_params = &decoder->src_params;
+    dirac_parseparams_t *parse_params = &decoder->parse_params;
     const SeqParams& sparams = parser->GetSeqParams();
+    const SourceParams& srcparams = parser->GetSourceParams();
+    const ParseParams& pparams = parser->GetParseParams();
+
+    parse_params->au_pnum = pparams.AccessUnitPictureNumber();
+    parse_params->major_ver = pparams.MajorVersion();
+    parse_params->minor_ver = pparams.MinorVersion();
+    parse_params->profile = pparams.Profile();
+    parse_params->level = pparams.Level();
 
     seq_params->width = sparams.Xl();
     seq_params->height = sparams.Yl();
 
-    ///TODO: how do we sync definition of Chroma in dirac_parser.cpp 
-    // with Chroma is common.h
     seq_params->chroma = (dirac_chroma_t)sparams.CFormat();
     switch(seq_params->chroma)
     {
-    case format411:
-            seq_params->chroma_width = seq_params->width/4;
-            seq_params->chroma_height = seq_params->height;
-        break;
-
     case format420:
           seq_params->chroma_width = seq_params->width/2;
             seq_params->chroma_height = seq_params->height/2;
@@ -125,13 +130,45 @@ static void set_sequence_params (const  DiracParser * const parser, dirac_decode
         break;
 
    }
+   seq_params->video_depth = sparams.GetVideoDepth();
 
-    // NOTE: frame rate will be replaced by a struct holding numerator
-    //       and denominator values.
-    seq_params->frame_rate.numerator = sparams.FrameRate();
-    seq_params->frame_rate.denominator = 1;
-    seq_params->interlace = sparams.Interlace() ? 1 : 0;
-    seq_params->topfieldfirst = sparams.TopFieldFirst() ? 1 : 0;
+   // set the source parmeters
+    src_params->interlace = srcparams.Interlace() ? 1 : 0;
+    src_params->topfieldfirst = srcparams.TopFieldFirst() ? 1 : 0;
+    src_params->seqfields = srcparams.SequentialFields() ? 1 : 0;
+
+    src_params->frame_rate.numerator = srcparams.FrameRate().m_num;
+    src_params->frame_rate.denominator = srcparams.FrameRate().m_denom;
+
+    src_params->pix_asr.numerator = srcparams.AspectRatio().m_num;
+    src_params->pix_asr.denominator = srcparams.AspectRatio().m_denom;
+
+    // clean area
+    src_params->clean_area.width = srcparams.CleanWidth();
+    src_params->clean_area.height = srcparams.CleanHeight();
+    src_params->clean_area.left_offset = srcparams.LeftOffset();
+    src_params->clean_area.top_offset = srcparams.TopOffset();
+
+    // signal range
+    src_params->signal_range.luma_offset = srcparams.LumaOffset();
+    src_params->signal_range.luma_excursion = srcparams.LumaExcursion();
+    src_params->signal_range.chroma_offset = srcparams.ChromaOffset();
+    src_params->signal_range.chroma_excursion = srcparams.ChromaExcursion();
+
+    // Colour specfication
+    src_params->colour_spec.col_primary = srcparams.ColourPrimariesIndex();
+    src_params->colour_spec.trans_func = srcparams.TransferFunctionIndex();
+    switch(srcparams.ColourMatrixIndex())
+    {
+    case 1:
+        src_params->colour_spec.col_matrix.kr =  0.299f;
+        src_params->colour_spec.col_matrix.kb =  0.114f;
+        break;
+    default:
+        src_params->colour_spec.col_matrix.kr = 0.2126f;
+        src_params->colour_spec.col_matrix.kb = 0.0722f;
+        break;
+    }
 }
 
 static void set_component (const PicArray& pic_data,  const CompSort cs, dirac_decoder_t *decoder)
@@ -221,11 +258,8 @@ static void set_frame_data (const  DiracParser * const parser, dirac_decoder_t *
     const Frame& my_frame = parser->GetNextFrame();
 
     set_component (my_frame.Ydata(), Y_COMP, decoder);
-    if (decoder->seq_params.chroma != Yonly)
-    {
-        set_component (my_frame.Udata(), U_COMP, decoder);
-        set_component (my_frame.Vdata(), V_COMP, decoder);
-    }
+    set_component (my_frame.Udata(), U_COMP, decoder);
+    set_component (my_frame.Vdata(), V_COMP, decoder);
 
     return;
 }
@@ -238,7 +272,8 @@ static void set_frame_params (const FrameParams& my_frame_params,  dirac_decoder
     TEST (decoder->state == STATE_PICTURE_AVAIL ||
           decoder->state == STATE_PICTURE_START);
 
-    frame_params->ftype = (dirac_frame_type_t)my_frame_params.FSort();
+    frame_params->ftype = my_frame_params.FSort().IsIntra() ? INTRA_FRAME : INTER_FRAME;
+    frame_params->rtype = my_frame_params.FSort().IsRef() ? REFERENCE_FRAME : NON_REFERENCE_FRAME;
     frame_params->fnum = my_frame_params.FrameNum();
 
     return;
@@ -250,37 +285,46 @@ extern DllExport dirac_decoder_state_t dirac_parse (dirac_decoder_t *decoder)
     TEST (decoder->parser != NULL);
     DiracParser *parser = static_cast<DiracParser *>(decoder->parser);
 
-    decoder->state = parser->Parse();
-
-    switch (decoder->state)
+    try 
     {
-    case STATE_BUFFER:
-        break;
+        decoder->state = parser->Parse();
 
-    case STATE_SEQUENCE:
-        set_sequence_params(parser, decoder);
-        decoder->frame_avail = 0;
-        break;
+        switch (decoder->state)
+        {
+        case STATE_BUFFER:
+            break;
 
-    case STATE_PICTURE_START:
-        /* frame params of the frame being decoded in coding order */
-        set_frame_params (parser->GetNextFrameParams(), decoder);
-        decoder->frame_avail = 0;
-        break;
+        case STATE_SEQUENCE:
+            set_sequence_params(parser, decoder);
+            decoder->frame_avail = 0;
+            break;
 
-    case STATE_PICTURE_AVAIL:
-        decoder->frame_avail = 1;
-        /* frame params of the frame available for display */
-        set_frame_params (parser->GetNextFrame().GetFparams(), decoder);
-        set_frame_data (parser, decoder);
-        break;
+        case STATE_PICTURE_START:
+            /* frame params of the frame being decoded in coding order */
+            set_frame_params (parser->GetNextFrameParams(), decoder);
+            decoder->frame_avail = 0;
+            break;
 
-    case STATE_INVALID:
-        break;
+        case STATE_PICTURE_AVAIL:
+            decoder->frame_avail = 1;
+            /* frame params of the frame available for display */
+            set_frame_params (parser->GetNextFrame().GetFparams(), decoder);
+            set_frame_data (parser, decoder);
+            break;
+
+        case STATE_INVALID:
+            break;
 
     default:
         break;
-    }
+        }
+    }//try 
+     catch (const DiracException& e) {       
+      
+         return STATE_INVALID;
+     }            
+
+
     return decoder->state;
 }
 

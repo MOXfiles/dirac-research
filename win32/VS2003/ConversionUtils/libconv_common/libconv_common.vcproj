@@ -261,17 +261,17 @@
 			<File
 				RelativePath="..\..\..\..\util\conversion\common\setstdiomode.cpp">
 			</File>
-		</Filter>
-		<Filter
-			Name="Header Files"
-			Filter="h;hpp;hxx;hm;inl;inc;xsd"
-			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
-			<File
-				RelativePath="..\..\..\..\util\conversion\common\bitmap.h">
-			</File>
-			<File
-				RelativePath="..\..\..\..\util\conversion\common\setstdiomode.h">
-			</File>
+			<Filter
+				Name="Header Files"
+				Filter="h;hpp;hxx;hm;inl;inc;xsd"
+				UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
+				<File
+					RelativePath="..\..\..\..\util\conversion\common\bitmap.h">
+				</File>
+				<File
+					RelativePath="..\..\..\..\util\conversion\common\setstdiomode.h">
+				</File>
+			</Filter>
 		</Filter>
 		<Filter
 			Name="Resource Files"

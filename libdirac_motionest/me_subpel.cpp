@@ -69,7 +69,7 @@ void SubpelRefine::DoSubpel(const FrameBuffer& my_buffer,int frame_num, MEData& 
 
     const FrameSort fsort = my_buffer.GetFrame(frame_num).GetFparams().FSort();
 
-    if (fsort != I_frame)
+    if (fsort.IsInter())
     {
         // Get the references
         const vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();

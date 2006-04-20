@@ -23,6 +23,7 @@
 * Contributor(s): Thomas Davies (Original Author), 
 *                 Scott R Ladd,
 *                 Anuradha Suraparaju
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -51,6 +52,7 @@
 #include <libdirac_common/pic_io.h>
 #include <libdirac_encoder/quality_monitor.h>
 #include <libdirac_encoder/frame_compress.h>
+#include <libdirac_byteio/dirac_byte_stream.h>
 #include <fstream>
 
 namespace dirac
@@ -70,10 +72,14 @@ namespace dirac
             with the first frame.Sets up frame padding in the picture input if
             necesary
             \param      pin     an input stream containing a sequence of frames
-            \param        outfile    an output stream for the compressed output
+            \param      srcp    parameters for the input source
             \param      encp    parameters for the encoding process
+            \param      dirac_byte_stream Output destination for compressed data
         */
-        SequenceCompressor(StreamPicInput* pin, std::ostream* outfile, EncoderParams& encp);
+        SequenceCompressor(StreamPicInput* pin, 
+                           SourceParams& srcp,
+                           EncoderParams& encp,
+                           DiracByteStream& dirac_byte_stream);
 
         //! Destructor
         /*!
@@ -118,7 +124,7 @@ namespace dirac
         //! Return Motion estimation info related to the most recent frame encoded
         const MEData *GetMEData();
 
-        void EndSequence();
+        DiracByteStats EndSequence();
 
         //! Determine if compression is complete.
         /*!
@@ -144,14 +150,11 @@ namespace dirac
         */
         SequenceCompressor& operator=(const SequenceCompressor& rhs);
 
-        //! Writes the sequence header data to the bitstream.
-        /*!
-            This contains all the block information used for motion
-            compensation. However, temporal prediction structures are defined
-            via the frame headers, and so a simple GOP need not be used or, if
-            so, can be altered on the fly.
+        /**
+        * Writes sequence data to byte stream
+        *@param p_accessunit_byteio Output destination
         */
-        void WriteStreamHeader();    
+        SequenceCompressor& operator<<(AccessUnitByteIO *p_accessunit_byteio);
 
         //! Uses the GOP parameters to convert frame numbers in coded order to display order.
         /*!
@@ -178,6 +181,9 @@ namespace dirac
         */
         bool m_just_finished;
 
+        //! The parameters of the input source
+        SourceParams& m_srcparams;
+
         //! The parameters used for encoding.
         EncoderParams& m_encparams;
 
@@ -198,6 +204,9 @@ namespace dirac
         //! The number of the current frame to be coded, in coded order
         int m_current_code_fnum;
 
+        //! Current AccessUnit frame-number
+        int m_current_accessunit_fnum;
+
         //! The number of the frame which should be output for concurrent display or storage
         int m_show_fnum;
 
@@ -212,6 +221,10 @@ namespace dirac
 
         //! A class to hold the frame compressor object
         FrameCompressor m_fcoder;
+
+
+        //! Output destination for compressed data in bitstream format
+        DiracByteStream& m_dirac_byte_stream;
     };
 
 } // namespace dirac

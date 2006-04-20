@@ -264,7 +264,7 @@ namespace dirac
             virtual bool ReadNextFrame(Frame& myframe);
 
             //! Get the sequence parameters 
-            const SeqParams& GetSeqParams() const {return m_sparams;}
+            SeqParams& GetSeqParams() const {return m_sparams;}
 
             //! Returns true if we're at the end of the input, false otherwise
             bool End() const ;
@@ -272,7 +272,7 @@ namespace dirac
         protected:
 
             //! Sequence parameters
-            SeqParams m_sparams;
+            mutable SeqParams m_sparams;
 
             //! Input stream
             std::istream* m_ip_pic_ptr;

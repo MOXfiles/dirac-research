@@ -21,6 +21,7 @@
 * All Rights Reserved.
 *
 * Contributor(s): Anuradha Suraparaju (Original Author)
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -44,6 +45,7 @@
 #include <streambuf>
 #include <libdirac_decoder/decoder_types.h> //for DecoderState
 #include <libdirac_common/common.h> 
+#include <libdirac_byteio/dirac_byte_stream.h>  
 
 namespace dirac
 {
@@ -127,7 +129,7 @@ namespace dirac
         //! Destructor
         ~DiracParser();
         
-        //! Copy data into the internal stream buffer
+        //! Adds bytes to encoder
         /*! SetBuffer takes
             \param start   Start of input buffer
             \param end     End of input buffer
@@ -147,8 +149,14 @@ namespace dirac
         */
         DecoderState Parse();
 
+        //! Return the parse parameters of the current sequence
+        const ParseParams& GetParseParams() const;
+
         //! Return the sequence parameters of the current sequence
         const SeqParams& GetSeqParams() const;
+
+        //! Return the source parameters of the current sequence
+        const SourceParams& GetSourceParams() const;
 
         //! Return the frame parameters of the next frame to be decoded
         const FrameParams& GetNextFrameParams() const;
@@ -157,7 +165,7 @@ namespace dirac
         const Frame& GetNextFrame() const;
 
         //! Return the last frame in the sequence
-        const Frame& GetLastFrame() const;
+      //  const Frame& GetLastFrame() const;
 
         //! Set the skip flag
         /*! Set the skip flag to the value specified in skip. If skip is true,
@@ -167,12 +175,6 @@ namespace dirac
         void  SetSkip (bool skip);
 
     private:
-
-        //! Determine if enough data is available in internal buffer to process
-        DecoderState SeekChunk();
-
-        //! Initialise the parser's internal state variables
-        void InitStateVars();
 
     private:
 
@@ -188,22 +190,14 @@ namespace dirac
         int m_show_fnum;
         //! Sequence decompressor object
         SequenceDecompressor *m_decomp;
-        //! Input stream object. Initialised using the external input buffer InputStreamBuffer
-        std::istream *m_istr;
-        //! Internal Stream Buffer
-        InputStreamBuffer m_sbuf;
         //! skip next frame flag
         bool m_skip;
         //! skip frame type
         FrameSort m_skip_type;
         //! verbose flag
         bool m_verbose;
-        //! start of chunk flag
-        bool m_found_start;
-        //! end of chunk flag
-        bool m_found_end;
-        //! used to detect start and end of chunk
-        unsigned m_shift;
+        //! Byte Stream Buffer
+        DiracByteStream m_dirac_byte_stream;
     };
 
 } // namespace dirac

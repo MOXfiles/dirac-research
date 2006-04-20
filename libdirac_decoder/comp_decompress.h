@@ -21,6 +21,7 @@
 * All Rights Reserved.
 *
 * Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -43,6 +44,7 @@
 #include <libdirac_common/arrays.h>
 #include <libdirac_common/wavelet_utils.h>
 #include <libdirac_common/common.h>
+#include <libdirac_byteio/component_byteio.h>
 
 namespace dirac
 {
@@ -68,9 +70,11 @@ namespace dirac
         /*!
             Decompress a PicArray containing a frame component (Y, U, or V).
 
-            \param  pic_data    contains the component data to be decompressed
+            \param p_component_byteio Bytestream of component data
+            \param  pic_data          contains the component data to be decompressed
         */
-        void Decompress(PicArray& pic_data);
+        void Decompress(ComponentByteIO *p_component_byteio,
+                        PicArray& pic_data);
 
     private:
         //! Copy constructor is private and body-less
@@ -98,16 +102,6 @@ namespace dirac
             \param    val            the value to set
         */
         void SetToVal(PicArray& pic_data,const Subband& node,ValueType val);
-
-        //! Read the header for the subband data
-        /*!
-            Read the header for the subband data, and set the decoding metadata
-
-            \param bits_in    an object for reading the data
-            \param band    the subband
-        */
-        int ReadBandHeader( BitInputManager& bits_in ,
-                            Subband& band );
 
         //! Set up the code block structures for each subband
         /*!

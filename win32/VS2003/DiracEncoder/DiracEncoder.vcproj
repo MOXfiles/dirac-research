@@ -88,6 +88,7 @@
 				Name="VCLinkerTool"
 				OutputFile="$(OutDir)/DiracEncoder.dll"
 				LinkIncremental="1"
+				IgnoreDefaultLibraryNames="LIBCMT.lib"
 				GenerateDebugInformation="TRUE"
 				SubSystem="2"
 				OptimizeReferences="2"

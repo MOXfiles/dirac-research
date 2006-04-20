@@ -49,11 +49,8 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION (FramesTest, coreSuiteName());
 void FramesTest::setupFrame (Frame& frame, int start_val)
 {
     setupPicArray(frame.Ydata(), start_val);
-    if (frame.GetFparams().CFormat() != Yonly)
-    {
-        setupPicArray(frame.Udata(), start_val);
-        setupPicArray(frame.Vdata(), start_val);
-    }
+    setupPicArray(frame.Udata(), start_val);
+    setupPicArray(frame.Vdata(), start_val);
 }
 
 bool FramesTest::setupPicArray (PicArray &arr, int start_val)
@@ -85,11 +82,8 @@ bool FramesTest::setupPicArray (PicArray &arr, int start_val)
 void FramesTest::zeroFrame (Frame& frame)
 {
     zeroPicArray(frame.Ydata());
-    if (frame.GetFparams().CFormat() != Yonly)
-    {
-        zeroPicArray(frame.Udata());
-        zeroPicArray(frame.Vdata());
-    }
+    zeroPicArray(frame.Udata());
+    zeroPicArray(frame.Vdata());
 }
 
 bool FramesTest::zeroPicArray (PicArray &arr)
@@ -175,11 +169,8 @@ bool FramesTest::equalFrames (const Frame &lhs, const Frame &rhs)
 {
     CPPUNIT_ASSERT_EQUAL (lhs.GetFparams().CFormat(), rhs.GetFparams().CFormat() );
     CPPUNIT_ASSERT (equalPicArrays(lhs.Ydata(), rhs.Ydata()));
-    if (lhs.GetFparams().CFormat() != Yonly)
-    {
-        CPPUNIT_ASSERT (equalPicArrays(lhs.Udata(), rhs.Udata()));
-        CPPUNIT_ASSERT (equalPicArrays(lhs.Vdata(), rhs.Vdata()));
-    }
+    CPPUNIT_ASSERT (equalPicArrays(lhs.Udata(), rhs.Udata()));
+    CPPUNIT_ASSERT (equalPicArrays(lhs.Vdata(), rhs.Vdata()));
 
     return true;
 }
@@ -188,11 +179,8 @@ bool FramesTest::almostEqualFrames (const Frame &lhs, const Frame &rhs, int allo
 {
     CPPUNIT_ASSERT_EQUAL (lhs.GetFparams().CFormat(), rhs.GetFparams().CFormat() );
     CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Ydata(), rhs.Ydata(), allowedError));
-    if (lhs.GetFparams().CFormat() != Yonly)
-    {
-        CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Udata(), rhs.Udata(), allowedError));
-        CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Vdata(), rhs.Vdata(), allowedError));
-    }
+    CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Udata(), rhs.Udata(), allowedError));
+    CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Vdata(), rhs.Vdata(), allowedError));
 
     return true;
 }
@@ -215,7 +203,7 @@ void FramesTest::tearDown()
 
 void FramesTest::testConstructor()
 {
-    FrameParams f_params(Yonly, 20, 30, 0, 0);
+    FrameParams f_params(format444, 20, 30, 20, 30);
     Frame frame(f_params);
 
     CPPUNIT_ASSERT_EQUAL (20, frame.Ydata().LengthX());
@@ -239,7 +227,7 @@ void FramesTest::testDefaultFParam()
 
 void FramesTest::testCopyConstructor()
 {
-    FrameParams f_params(Yonly, 20, 30, 0, 0);
+    FrameParams f_params(format444, 20, 30, 20, 30);
     Frame frame(f_params);
     setupFrame(frame, 0);
     
@@ -249,11 +237,11 @@ void FramesTest::testCopyConstructor()
 
 void FramesTest::testAssignment()
 {
-    FrameParams f_params(Yonly, 20, 30, 0, 0);
+    FrameParams f_params(format444, 20, 30, 20, 30);
     Frame frame(f_params);
     setupFrame(frame, 0);
 
-    FrameParams f_params_copy(Yonly,10,10, 0, 0);
+    FrameParams f_params_copy(format444,10,10, 10, 10);
     Frame frame_copy(f_params_copy);
 
     frame_copy = frame;

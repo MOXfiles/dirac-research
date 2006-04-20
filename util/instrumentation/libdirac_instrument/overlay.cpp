@@ -299,12 +299,7 @@ void Overlay::DoOverlay(const MEData & me_data)
 // calculates the resolution factor between chroma and luma samples
 void Overlay::CalculateFactors(const ChromaFormat & cformat)
 {
-    if (cformat == Yonly)
-    {
-        m_draw_params.SetChromaFactorY(1);
-        m_draw_params.SetChromaFactorX(1);
-    }
-    else if (cformat == format422)
+    if (cformat == format422)
     {
         m_draw_params.SetChromaFactorY(1);
         m_draw_params.SetChromaFactorX(2);
@@ -318,11 +313,6 @@ void Overlay::CalculateFactors(const ChromaFormat & cformat)
     {
         m_draw_params.SetChromaFactorY(1);
         m_draw_params.SetChromaFactorX(1);
-    }
-    else if (cformat == format411)
-    {
-        m_draw_params.SetChromaFactorY(1);
-        m_draw_params.SetChromaFactorX(4);
     }
     else
     {

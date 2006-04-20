@@ -21,6 +21,7 @@
 * All Rights Reserved.
 *
 * Contributor(s): Anuradha Suraparaju (Original Author)
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -58,7 +59,9 @@ extern "C" {
 * Some basic enumeration types used by end user encoder and decoder ...//
 */
 typedef ChromaFormat dirac_chroma_t;
-typedef FrameSort dirac_frame_type_t;
+typedef FrameType dirac_frame_type_t;
+typedef ReferenceType dirac_reference_type_t;
+typedef WltFilter dirac_wlt_filter_t;
 
 typedef struct
 {
@@ -67,6 +70,22 @@ typedef struct
 } dirac_rational_t;
 
 typedef dirac_rational_t dirac_frame_rate_t;
+typedef dirac_rational_t dirac_asr_rate_t;
+
+/*! Structure that holds the parase parameters */
+typedef struct
+{
+    //! access unit picture number
+    unsigned int au_pnum;
+    //! Major version
+    unsigned int major_ver;
+    //! Minor version
+    unsigned int minor_ver;
+    //! Profile
+    unsigned int profile;
+    //! level
+    unsigned int level;
+} dirac_parseparams_t;
 
 /*! Structure that holds the sequence parameters */
 typedef struct
@@ -81,19 +100,71 @@ typedef struct
     int chroma_width;
     /*! number of lines of chroma per frame */
     int chroma_height;
-    /*! frame rate */
-    dirac_frame_rate_t frame_rate;
+    /*! video depth - number of bits in video */
+    int video_depth;
+} dirac_seqparams_t;
+
+typedef struct
+{
+    unsigned int width;
+    unsigned int height;
+    unsigned int left_offset;
+    unsigned int top_offset;
+} dirac_clean_area_t;
+
+typedef struct
+{
+    unsigned int luma_offset;
+    unsigned int luma_excursion;
+    unsigned int chroma_offset;
+    unsigned int chroma_excursion;
+} dirac_signal_range_t;
+
+typedef struct
+{
+    float kr;
+    float kb;
+} dirac_col_matrix_t;
+
+typedef ColourPrimaries dirac_col_primaries_t;
+typedef TransferFunction dirac_transfer_func_t;
+
+typedef struct
+{
+    dirac_col_primaries_t col_primary;
+    dirac_col_matrix_t col_matrix;
+    dirac_transfer_func_t trans_func;
+} dirac_colour_spec_t;
+
+/*! Structure that holds the source parameters */
+typedef struct
+{
     /*! interlace flag: 0 - progressive; 1 - interlaced */
     int interlace;
     /*! top field comes first : 0 - false; 1 - true */
     int topfieldfirst;
-} dirac_seqparams_t;
+    /*! sequential fields flag  : 0 - interleaved; 1 - sequential */
+    int seqfields;
+    /*! frame rate */
+    dirac_frame_rate_t frame_rate;
+    /*! pixel aspect ratio */
+    dirac_frame_rate_t pix_asr;
+    /* clean area*/
+    dirac_clean_area_t clean_area;
+    /* signal range*/
+    dirac_signal_range_t signal_range;
+    /* colour specification*/
+    dirac_colour_spec_t colour_spec;
+
+} dirac_sourceparams_t;
 
 /*! Structure that holds the frame parameters */
 typedef struct
 {
     /*! frame type */
     dirac_frame_type_t ftype;
+    /*! reference type */
+    dirac_reference_type_t rtype;
     /*! frame number in decoded order */
     int fnum;
 } dirac_frameparams_t;

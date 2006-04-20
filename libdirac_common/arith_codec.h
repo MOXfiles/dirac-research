@@ -27,6 +27,7 @@
                     Steve Bearcroft,
                     Anuradha Suraparaju,
                     Tim Borer (major refactor February 2006)
+                    Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -55,7 +56,7 @@
 /////////////////////////////////////////////////////////////////////////
 
 #include <libdirac_common/common.h>
-#include <libdirac_common/bit_manager.h>
+#include <libdirac_byteio/byteio.h>
 #include <vector>
 
 namespace dirac
@@ -118,23 +119,14 @@ namespace dirac
 
     public:
 
-        //! Constructor for encoding
+        //! Constructor
         /*!
             Creates an ArithCodec object to decode input based on a set of
             parameters.
-            \param        bits_out     output for encoded bits
+            \param     p_byteio   input/output for encoded bits
             \param    number_of_contexts    the number of contexts used
         */   
-        ArithCodecBase(BasicOutputManager * bits_out, size_t number_of_contexts);
-
-        //! Constructor for decoding
-        /*!
-            Creates an ArithCodec object to decode input based on a set of 
-            parameters.
-            \param    bits_in               source of bits to be decoded
-            \param    number_of_contexts    the number of contexts used
-         */
-        ArithCodecBase(BitInputManager * bits_in, size_t number_of_contexts);
+        ArithCodecBase(ByteIO* p_byteio, size_t number_of_contexts);
 
         //! Destructor
         /*!
@@ -215,28 +207,20 @@ namespace dirac
 
         // Codec data
         ////////////////////////////
-        
-        //! count of the total number of bits input or output
-        int m_bit_count;
-
+ 
         //! Start of the current code range
         unsigned int m_low_code;
 
         //! End of the current code range
         unsigned int m_high_code;
 
-        // For encoder only
+        //! Input/output stream of Dirac-format bytes
+        ByteIO *m_byteio;
 
-        //! Manages interface with file/stream
-        BitInputManager* m_bit_input;
+        // For encoder only
 
         //! Number of underflow bits
         int m_underflow;
-
-        // For decoder only               
-
-        //! Manages interface with file/stream. Can be header or data
-        BasicOutputManager* m_bit_output;
 
         //! A pointer to the data for reading in
         char* m_decode_data_ptr;
@@ -251,6 +235,8 @@ namespace dirac
         unsigned int m_code;
 
     };
+
+    
 
     inline bool ArithCodecBase::DecodeSymbol( int context_num )
     {
@@ -380,20 +366,12 @@ namespace dirac
         /*!
             Creates an ArithCodec object to decode input based on a set of
             parameters.
-            \param        bits_out     output for encoded bits
+            \param    p_byteio    input/output for encoded bits
             \param    number_of_contexts    the number of contexts used
         */    
-        ArithCodec(BasicOutputManager * bits_out, size_t number_of_contexts);
+        ArithCodec(ByteIO* p_byteio, size_t number_of_contexts);
 
-        //! Constructor for decoding
-        /*!
-            Creates an ArithCodec object to decode input based on a set of 
-            parameters.
-            \param    bits_in               source of bits to be decoded
-            \param    number_of_contexts    the number of contexts used
-         */
-        ArithCodec(BitInputManager * bits_in, size_t number_of_contexts);
-
+      
         //! Destructor
         /*!
             Destructor is virtual as this class is abstract.
@@ -439,13 +417,10 @@ namespace dirac
     /////////////////////////////////
 
     template<class T>
-    ArithCodec<T>::ArithCodec(BitInputManager* bits_in, size_t number_of_contexts):
-        ArithCodecBase(bits_in, number_of_contexts) {}
+    ArithCodec<T>::ArithCodec(ByteIO* p_byteio, size_t number_of_contexts):
+        ArithCodecBase(p_byteio, number_of_contexts) {}
 
-    //! Constructor for encoding
-    template<class T>
-    ArithCodec<T>::ArithCodec(BasicOutputManager* bits_out, size_t number_of_contexts):
-        ArithCodecBase(bits_out, number_of_contexts) {}
+
 
     template<class T>
     int ArithCodec<T>::Compress(T &in_data)
@@ -475,12 +450,12 @@ namespace dirac
 
     void ArithCodecBase::OutputBits()
     {
-        m_bit_output->OutputBit( m_high_code & CODE_MSB, m_bit_count);
+        m_byteio->OutputBit( m_high_code & CODE_MSB);
         for (; m_underflow > 0; m_underflow-- )
-            m_bit_output->OutputBit(~m_high_code & CODE_MSB, m_bit_count);
+            m_byteio->OutputBit(~m_high_code & CODE_MSB);
     }
     
-    inline void ArithCodecBase::ShiftBitIn() 
+    inline void ArithCodecBase::ShiftBitIn()
     {
         m_high_code <<= 1;
         m_high_code  &= CODE_MAX;
@@ -492,35 +467,40 @@ namespace dirac
         m_code       += InputBit();
     }
 
-    inline bool ArithCodecBase::InputBit()
+   inline bool ArithCodecBase::InputBit()
     {
-
         if (m_input_bits_left == 0)
         {
             m_data_ptr++;
             m_input_bits_left = 8;
         }
         m_input_bits_left--;
-
+#if 1
+        // MSB to LSB
         return bool( ( (*m_data_ptr) >> m_input_bits_left ) & 1 );
+#else
+        // LSB to MSB
+        bool val = *m_data_ptr & 0x01;
+        *m_data_ptr >>= 1;
+        return val;
+#endif
     }
-
 
     Context::Context():
         m_count0(1), m_count1(1) {}
 
-    void Context::SetCounts( unsigned int cnt0, unsigned int cnt1) 
+    void Context::SetCounts( unsigned int cnt0, unsigned int cnt1)
     {
         m_count0 = cnt0;
         m_count1 = cnt1;
     }
 
-    unsigned int Context::Weight() const 
+    unsigned int Context::Weight() const
     {
         return m_count0+m_count1;
     }
 
-    void Context::HalveCounts() 
+    void Context::HalveCounts()
     {
         m_count0 >>= 1;
         ++m_count0;
@@ -541,13 +521,13 @@ namespace dirac
     //      lookup(weight) = ((1<<16)+weight/2)/weight
     //  The probability calculation becomes:
     //      probability of = count0 * lookup(weight)
-    int unsigned Context::GetScaledProb0() const 
+    int unsigned Context::GetScaledProb0() const
     {
         return m_count0*lookup(m_count0+m_count1);
     }
 
-    void Context::Update( bool symbol ) 
-   {
+    void Context::Update( bool symbol )
+    {
         if ( !symbol )
             ++m_count0;
         else

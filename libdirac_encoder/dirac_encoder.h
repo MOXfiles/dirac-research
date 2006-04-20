@@ -21,6 +21,7 @@
 * All Rights Reserved.
 *
 * Contributor(s): Anuradha Suraparaju (Original Author)
+*                 Andrew Kennedy
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -152,13 +153,7 @@ typedef enum
 
 /*! Enumerated type that defines encoder presets that set the encoder and
     sequence paramters.  More presets may be added in future*/
-typedef enum
-{
-    CIF, 
-    SD576, 
-    HD720, 
-    HD1080
-} dirac_encoder_presets_t;
+typedef VideoFormat dirac_encoder_presets_t;
 
 /*! Structure that holds the encoder specific parameters */
 typedef struct 
@@ -183,6 +178,18 @@ typedef struct
     int xbsep;
     /*! The vertical separation between blocks. Always <yblen */
     int ybsep;
+    /*! Video format preset */
+    int video_format;
+    /*! Transform filter */
+    dirac_wlt_filter_t wlt_filter;
+    /*! Transform depth */
+    unsigned int wlt_depth;
+    /*! Spatial partitioning flag */
+    unsigned int spatial_partition;
+    /*! default Spatial partitioning flag */
+    unsigned int def_spatial_partition;
+    /*! Multiple quantisers flag */
+    unsigned int multi_quants;
 } dirac_encparams_t;
 
 /*! Structure that holds the parameters that set up the encoder context */
@@ -190,6 +197,8 @@ typedef struct
 {
     /*! Sequence parameters */
     dirac_seqparams_t seq_params;
+    /*! Source parameters */
+    dirac_sourceparams_t src_params;
     /*! Encoder parameters */
     dirac_encparams_t enc_params;
     /*! Return diagnostics info 1-return mv data, 0-no diagnostics returned */
@@ -302,24 +311,14 @@ typedef struct
 {
     /*! Number of motion vector bits */
     unsigned int mv_bits;
-    /*! Number of motion vector header bits */
-    unsigned int mv_hdr_bits;
     /*! Number of  used to encode y component */
     unsigned int ycomp_bits;
-    /*! y component header bits*/
-    unsigned int ycomp_hdr_bits;
     /*! Number of  used to encode u component */
     unsigned int ucomp_bits;
-    /*! v component header bits*/
-    unsigned int ucomp_hdr_bits;
     /*! Number of  used to encode v component */
     unsigned int vcomp_bits;
-    /*! v component header bits*/
-    unsigned int vcomp_hdr_bits;
     /*! Total number of bits used to encode frame */
     unsigned int frame_bits;
-    /*! Number of frame header bits */
-    unsigned int frame_hdr_bits;
 } dirac_enc_framestats_t;
 
 /*! Structure that holds the statistics about the encoded sequence */
@@ -329,8 +328,6 @@ typedef struct
     unsigned int mv_bits;
     /*! Total number of bits used to encode sequence */
     unsigned int seq_bits;
-    /*! Number of sequence header bits */
-    unsigned int seq_hdr_bits;
     /*! Number of  used to encode y component */
     unsigned int ycomp_bits;
     /*! Number of  used to encode u component */
@@ -364,6 +361,8 @@ typedef struct
 {
     /*! Frame type */
     dirac_frame_type_t ftype;
+    /*! Reference type */
+    dirac_reference_type_t rtype;
     /*! Frame number */
     int fnum;
     /*! Number of reference frames */

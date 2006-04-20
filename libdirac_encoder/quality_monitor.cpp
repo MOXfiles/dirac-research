@@ -63,9 +63,9 @@ void QualityMonitor::ResetAll()
 
     if ( !m_encparams.Lossless() )
     {
-        m_encparams.SetLambda( I_frame , std::pow( 10.0 , (10.0-m_encparams.Qf() )/2.5 ) );
-        m_encparams.SetLambda( L1_frame , m_encparams.ILambda()*128.0 );
-        m_encparams.SetLambda( L2_frame , m_encparams.ILambda()*512.0 );
+        m_encparams.SetLambda( FrameSort::IntraRefFrameSort() , std::pow( 10.0 , (10.0-m_encparams.Qf() )/2.5 ) );
+        m_encparams.SetLambda( FrameSort::InterRefFrameSort() , m_encparams.ILambda()*128.0 );
+        m_encparams.SetLambda( FrameSort::InterNonRefFrameSort() , m_encparams.ILambda()*512.0 );
 
 
         // Set the lambdas for motion estimation
@@ -82,9 +82,9 @@ void QualityMonitor::ResetAll()
     }
     else
     {
-        m_encparams.SetLambda( I_frame , 0.0 );
-        m_encparams.SetLambda( L1_frame , 0.0 );
-        m_encparams.SetLambda( L2_frame , 0.0 );
+        m_encparams.SetLambda( FrameSort::IntraRefFrameSort() , 0.0 );
+        m_encparams.SetLambda( FrameSort::InterRefFrameSort() , 0.0 );
+        m_encparams.SetLambda( FrameSort::InterNonRefFrameSort() , 0.0 );
 
         m_encparams.SetL1MELambda( 0.0 );
         m_encparams.SetL2MELambda( 0.0 );
@@ -93,17 +93,18 @@ void QualityMonitor::ResetAll()
 
 void QualityMonitor::WriteLog()
 {
-    std::cerr<<std::endl<<"Mean quality for I frames is "<<m_quality_average[I_frame]/m_frame_total[I_frame];
-    std::cerr<<std::endl<<"Mean quality for L1 frames is "<<m_quality_average[L1_frame]/m_frame_total[L1_frame];
-    std::cerr<<std::endl<<"Mean quality for L2 frames is "<<m_quality_average[L2_frame]/m_frame_total[L2_frame]<<std::endl;
+    std::cerr<<std::endl<<"Mean quality for Intra frames is "<<m_quality_average[0]/m_frame_total[0];
+    std::cerr<<std::endl<<"Mean quality for Inter Ref frames is "<<m_quality_average[1]/m_frame_total[1];
+    std::cerr<<std::endl<<"Mean quality for Inter Non-Ref frames is "<<m_quality_average[2]/m_frame_total[2]<<std::endl;
 }
 
 void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame )
 {
 	const FrameSort& fsort = ld_frame.GetFparams().FSort();	
+	int idx = fsort.IsIntra() ? 0 : (fsort.IsRef() ? 1 : 2);
 
-	m_quality_average[fsort] += QualityVal( ld_frame.Ydata() , orig_frame.Ydata() , 0.0 , fsort );
-    m_frame_total[fsort]++;
+	m_quality_average[idx] += QualityVal( ld_frame.Ydata() , orig_frame.Ydata() , 0.0 , fsort );
+    m_frame_total[idx]++;
 
 }
 
