@@ -703,7 +703,10 @@ int main (int argc, char* argv[])
             parsed[i] = true;
             i++;
             enc_ctx.enc_params.wlt_depth = strtoul(argv[i],NULL,10);
-            parsed[i] = true;
+            if(enc_ctx.enc_params.wlt_depth > 5)
+                cerr << "Exceeds maximum transform depth ";
+            else
+                parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-mv_prec") == 0 )
         {
