@@ -66,7 +66,7 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
 
     // A pointer to the object(s) we'll be using for coding the bands
     BandCodec* bdecoder;
-    const size_t CONTEXTS_REQUIRED( 22 );
+    const size_t CONTEXTS_REQUIRED( 23 );
 
     WaveletTransform wtransform( depth , m_decparams.TransformFilter() );
     SubbandList& bands=wtransform.BandList();

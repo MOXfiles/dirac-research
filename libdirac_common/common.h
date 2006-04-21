@@ -102,7 +102,8 @@ namespace dirac
         INFO_CTX,
 
         BLOCK_SKIP_CTX,     // - blocks are skipped
-        Q_OFFSET_MAG_CTX,   // - code block quantiser offset magnitude
+        Q_OFFSET_FOLLOW_CTX,   // - code block quantiser offset magnitude
+        Q_OFFSET_INFO_CTX,  // - code block quantiser offset info context
         Q_OFFSET_SIGN_CTX   // - code block quantiser offset sign
     };
 

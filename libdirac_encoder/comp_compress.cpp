@@ -70,7 +70,7 @@ ComponentByteIO* CompCompressor::Compress(PicArray& pic_data)
     // A pointer to an object  for coding the subband data
     BandCodec* bcoder;
 
-    const size_t CONTEXTS_REQUIRED = 22;
+    const size_t CONTEXTS_REQUIRED = 23;
 
     Subband node;
 

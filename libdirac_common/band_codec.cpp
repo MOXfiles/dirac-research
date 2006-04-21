@@ -24,6 +24,7 @@
 *                 Scott R Ladd,
 *                 Steve Bearcroft
 *                 Andrew Kennedy
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -178,29 +179,29 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
 
 }
 
+/*
+Coefficient magnitude value and differential quantiser index magnitude are
+coded using interleaved exp-Golomb coding for binarisation. In this scheme, a
+value N>=0 is coded by writing N+1 in binary form of a 1 followed by K other
+bits: 1bbbbbbb (adding 1 ensures there'll be a leading 1). These K bits ("info
+bits") are interleaved with K zeroes ("follow bits") each of which means
+"another bit coming", followed by a terminating 1:
+ 
+    0b0b0b ...0b1
+ 
+(Conventional exp-Golomb coding has the K zeroes at the beginning, followed
+by the 1 i.e 00...01bb .. b, but interleaving allows the decoder to run a
+single loop and avoid counting the number of zeroes, sparing a register.)
+
+All bits are arithmetically coded. The follow bits have separate contexts
+based on position, and have different contexts from the info bits. 
+*/
+
 inline void BandCodec::CodeVal( PicArray& in_data , 
                                 const int xpos , 
                                 const int ypos , 
                                 const ValueType val )
 {
-    /*
-    Coefficient magnitude value is coded using interleaved exp-Golomb 
-    coding for binarisation. In this scheme, a value N>=0 is coded by 
-    writing N+1 in binary form of a 1 followed by K other bits: 1bbbbbbb 
-    (adding 1 ensures there'll be a leading 1). These K bits ("info bits") 
-    are interleaved with K zeroes ("follow bits") each of which means 
-    "another bit coming", followed by a terminating 1:
-     
-        0b0b0b ...0b1
-     
-    (Conventional exp-Golomb coding has the K zeroes at the beginning, followed
-    by the 1 i.e 00...01bb .. b, but interleaving allows the decoder to run a
-    single loop and avoid counting the number of zeroes, sparing a register.)
-
-    All bits are arithmetically coded. The follow bits have separate contexts
-    based on position, and have different contexts from the info bits. 
-    */
-
     unsigned int abs_val( std::abs(val) );
     abs_val /= m_qf;
 
@@ -252,10 +253,19 @@ void BandCodec::CodeQIndexOffset( const int offset )
 
     const int abs_val = std::abs( offset );
 
-    for ( int i=1; i<=abs_val; ++i )
-        EncodeSymbol( 0 , Q_OFFSET_MAG_CTX );
+    int N = abs_val+1;
+    int num_follow_zeroes=0;
 
-    EncodeSymbol( 1 , Q_OFFSET_MAG_CTX );
+    while ( N>= (1<<num_follow_zeroes) )
+        ++num_follow_zeroes;
+    --num_follow_zeroes;
+
+    for ( int i=num_follow_zeroes-1, c=1; i>=0; --i, ++c )
+    {
+        EncodeSymbol( 0 , Q_OFFSET_FOLLOW_CTX );
+        EncodeSymbol( N&(1<<i), Q_OFFSET_INFO_CTX );
+    }
+    EncodeSymbol( 1 , Q_OFFSET_FOLLOW_CTX );
 
     if ( abs_val )
     {
@@ -358,25 +368,25 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
 }
 
 
+/*
+Coefficient magnitude value and differential quantiser index value is coded
+using interleaved exp-Golomb coding for binarisation. In this scheme, a value
+N>=0 is coded by writing N+1 in binary form of a 1 followed by K other bits:
+1bbbbbbb (adding 1 ensures there'll be a leading 1). These K bits ("info bits")
+are interleaved with K zeroes ("follow bits") each of which means "another bit
+coming", followed by a terminating 1:
+ 
+    0b0b0b ...0b1
+ 
+(Conventional exp-Golomb coding has the K zeroes at the beginning, followed
+by the 1 i.e 00...01bb .. b, but interleaving allows the decoder to run a
+single loop and avoid counting the number of zeroes, sparing a register.)
+
+All bits are arithmetically coded. The follow bits have separate contexts
+based on position, and have different contexts from the info bits. 
+*/
 inline void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const int ypos )
 {
-    /*
-    Coefficient magnitude value is coded using interleaved exp-Golomb 
-    coding for binarisation. In this scheme, a value N>=0 is coded by 
-    writing N+1 in binary form of a 1 followed by K other bits: 1bbbbbbb 
-    (adding 1 ensures there'll be a leading 1). These K bits ("info bits") 
-    are interleaved with K zeroes ("follow bits") each of which means 
-    "another bit coming", followed by a terminating 1:
-     
-        0b0b0b ...0b1
-     
-    (Conventional exp-Golomb coding has the K zeroes at the beginning, followed
-    by the 1 i.e 00...01bb .. b, but interleaving allows the decoder to run a
-    single loop and avoid counting the number of zeroes, sparing a register.)
-
-    All bits are arithmetically coded. The follow bits have separate contexts
-    based on position, and have different contexts from the info bits. 
-    */
 
     ValueType& out_pixel = out_data[ypos][xpos];
 
@@ -508,12 +518,14 @@ inline int BandCodec::ChooseSignContext( const PicArray& data , const int xpos ,
 
 int BandCodec::DecodeQIndexOffset()
 {
-    int offset = 0;
+    int offset = 1;
 
-    while ( !DecodeSymbol( Q_OFFSET_MAG_CTX ) )
+    while ( !DecodeSymbol( Q_OFFSET_FOLLOW_CTX ) )
     {
-        ++offset;
+        offset <<= 1;
+        offset |= DecodeSymbol( Q_OFFSET_INFO_CTX );
     }
+    --offset;
 
     if ( offset )
     {
@@ -784,7 +796,7 @@ void IntraDCBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray&
 
     if ( m_node.UsingMultiQuants() )
     {
-        qf_idx += DecodeQIndexOffset(); 
+        qf_idx += DecodeQIndexOffset();
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
