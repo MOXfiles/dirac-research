@@ -93,6 +93,7 @@ static void display_help()
     cout << "\nlossless          bool    false         Lossless coding (overrides qf)";
     cout << "\nwlt_depth         ulong   4             Transform Depth";
     cout << "\nmulti_quants      bool    false         Use multiple quantisers";
+    cout << "\nmv_prec           ulong   false         MV Pixel Precision (1, 1/2, 1/4, 1/8)";
     cout << "\nno_spartition     bool    false         Do not use spatial partitioning while coding transform data";
     cout << "\nverbose           bool    false         Verbose mode";
     cout << "\nlocal             bool    false         Write diagnostics & locally decoded video";
@@ -703,6 +704,31 @@ int main (int argc, char* argv[])
             i++;
             enc_ctx.enc_params.wlt_depth = strtoul(argv[i],NULL,10);
             parsed[i] = true;
+        }
+        else if ( strcmp(argv[i], "-mv_prec") == 0 )
+        {
+            parsed[i]=true;
+            ++i;
+            if(strcmp(argv[i], "1/2")==0)
+            {
+                parsed[i] = true;
+                enc_ctx.enc_params.mv_precision = MV_PRECISION_HALF_PIXEL;
+            }
+            else if(strcmp(argv[i], "1/4")==0)
+            {
+                parsed[i] = true;
+                enc_ctx.enc_params.mv_precision = MV_PRECISION_QUARTER_PIXEL;
+            }
+            else if(strcmp(argv[i], "1/8")==0)
+            {
+                parsed[i] = true;
+                enc_ctx.enc_params.mv_precision = MV_PRECISION_EIGHTH_PIXEL;
+            }
+            else if(strncmp(argv[i], "1", 3)==0)
+            {
+                parsed[i] = true;
+                enc_ctx.enc_params.mv_precision = MV_PRECISION_PIXEL;
+            }
         }
         i++;
     }//opt

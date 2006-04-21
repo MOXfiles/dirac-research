@@ -190,6 +190,8 @@ typedef struct
     unsigned int def_spatial_partition;
     /*! Multiple quantisers flag */
     unsigned int multi_quants;
+    /*! motion-vector pixel precision */
+    unsigned int mv_precision;
 } dirac_encparams_t;
 
 /*! Structure that holds the parameters that set up the encoder context */

@@ -125,11 +125,11 @@ void ModeDecider::DoModeDecn(const FrameBuffer& my_buffer, int frame_num, MEData
             m_ref2_updata = &(my_buffer.GetUpComponent( ref2 , Y_COMP));
             // Create an object for computing bi-directional prediction calculations            
 
-            if ( m_encparams.MVPrecision()==3 )
+            if ( m_encparams.MVPrecision()==MV_PRECISION_EIGHTH_PIXEL )
                 m_bicheckdiff = new BiBlockEighthPel( *m_ref1_updata ,
                                                       *m_ref2_updata ,
                                                       *m_pic_data );
-            else if ( m_encparams.MVPrecision()==2 )
+            else if ( m_encparams.MVPrecision()==MV_PRECISION_QUARTER_PIXEL )
                 m_bicheckdiff = new BiBlockQuarterPel( *m_ref1_updata ,
                                                        *m_ref2_updata ,
                                                        *m_pic_data );

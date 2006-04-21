@@ -166,6 +166,16 @@ typedef enum {
     IT_UNDEF
 } InterlaceType;
 
+/*! Types of motion-vector precision */
+typedef enum {
+    MV_PRECISION_PIXEL=0,
+    MV_PRECISION_HALF_PIXEL,
+    MV_PRECISION_QUARTER_PIXEL,
+    MV_PRECISION_EIGHTH_PIXEL,
+    MV_PRECISION_UNDEFINED
+} MVPrecisionType;
+
+
 #ifdef __cplusplus
 }
 #endif

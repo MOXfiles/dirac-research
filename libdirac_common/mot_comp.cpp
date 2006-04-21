@@ -65,24 +65,25 @@ void MotionCompensator::CompensateFrame(const CodecParams &cp,
 {
     switch (cp.MVPrecision())
     {
-    case 3:
+    case MV_PRECISION_EIGHTH_PIXEL:
     {
         MotionCompensator_EighthPixel my_comp(cp);
         my_comp.CompensateFrame( direction , buffer , fnum , mv_data);
         break;
     }
-    case 1:
+    case MV_PRECISION_HALF_PIXEL:
     {
         MotionCompensator_HalfPixel my_comp(cp);
         my_comp.CompensateFrame( direction , buffer , fnum , mv_data);
         break;
     }
-    case 0:
+    case MV_PRECISION_PIXEL:
     {
         MotionCompensator_Pixel my_comp(cp);
         my_comp.CompensateFrame( direction , buffer , fnum , mv_data);
         break;
     }
+    case MV_PRECISION_QUARTER_PIXEL:
     default:
     {
         MotionCompensator_QuarterPixel my_comp(cp);

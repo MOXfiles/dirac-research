@@ -84,6 +84,10 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
     // number of bits written
     unsigned int num_mv_bits;
     m_medata_avail = false;
+// my_frame.SetFrameSort (FrameSort::IntraNonRefFrameSort());
+//    my_frame.SetFrameType (INTRA_FRAME);
+  //  my_frame.SetReferenceType (NON_REFERENCE_FRAME);
+//    fparams.Refs().clear();
 
     CompCompressor my_compcoder(m_encparams , fparams );
 
@@ -95,9 +99,6 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
 
     if ( fsort.IsInter() )
     {
-        // Set the precision to quarter pixel as standard
-        m_encparams.SetMVPrecision( 2 );
-
         m_me_data = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB(), fparams.NumRefs());
 
         // Motion estimate first

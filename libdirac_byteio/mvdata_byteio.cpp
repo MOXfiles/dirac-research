@@ -226,7 +226,16 @@ void MvDataByteIO::InputMVPrecision()
 {
     // Input Motion vector precision
     if (InputBit())
-        m_cparams.SetMVPrecision(InputVarLengthUint());
+    {
+        MVPrecisionType mv_prec = IntToMVPrecisionType(InputVarLengthUint());
+        if(mv_prec==MV_PRECISION_UNDEFINED)
+            DIRAC_THROW_EXCEPTION(
+                    ERR_INVALID_MOTION_VECTOR_PRECISION,
+                    "Dirac does not recognise the specified MV precision",
+                    SEVERITY_FRAME_ERROR)
+
+        m_cparams.SetMVPrecision(mv_prec);
+    }
     else
         m_cparams.SetMVPrecision(m_default_cparams.MVPrecision());
 }
@@ -246,6 +255,7 @@ void MvDataByteIO::InputGlobalMotionParams()
     if (InputBit())
     {
         m_cparams.SetUsingGlobalMotion(true);
+ 
         // NOTE: FIXME - input actual global motion params in future
         DIRAC_THROW_EXCEPTION(
                     ERR_UNSUPPORTED_STREAM_DATA,

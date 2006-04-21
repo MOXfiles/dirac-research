@@ -861,4 +861,22 @@ SignalRangeType IntToSignalRangeType(int signal_range_idx)
     }
 }
 
+MVPrecisionType IntToMVPrecisionType(int mv_prec)
+{
+    switch(mv_prec)
+    {
+    case MV_PRECISION_PIXEL:
+            return MV_PRECISION_PIXEL;
+    case MV_PRECISION_HALF_PIXEL:
+        return MV_PRECISION_HALF_PIXEL;
+    case MV_PRECISION_QUARTER_PIXEL:
+        return MV_PRECISION_QUARTER_PIXEL;
+    case MV_PRECISION_EIGHTH_PIXEL:
+        return MV_PRECISION_EIGHTH_PIXEL;
+    default:
+        return MV_PRECISION_UNDEFINED;
+    }
+}
+
+
 }

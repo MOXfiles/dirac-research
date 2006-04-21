@@ -224,6 +224,13 @@ namespace dirac
     */
     SignalRangeType IntToSignalRangeType(int signal_range_idx);
 
+     /**
+    * Function to convert an integer to a valid motion-vector precision type
+    *@param signal_range_idx Integer corresponding to a valid motion-vector precision
+    *@return Valid MVPrecisionType (returns SIGNAL_RANGE_UNDEFINED if no valid precision found)
+    */
+    MVPrecisionType IntToMVPrecisionType(int mv_prec);
+
     //Classes used throughout the codec//
     /////////////////////////////////////
     //! Frame type Class

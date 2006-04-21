@@ -469,6 +469,7 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     m_encparams.SetCPD(enc_ctx->enc_params.cpd);
     m_encparams.SetUFactor(1.5f);
     m_encparams.SetVFactor(0.75f);
+    m_encparams.SetMVPrecision(enc_ctx->enc_params.mv_precision);
     bparams.SetYblen( enc_ctx->enc_params.yblen );
     bparams.SetXblen( enc_ctx->enc_params.xblen );
     bparams.SetYbsep( enc_ctx->enc_params.ybsep );
@@ -796,6 +797,9 @@ static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
     encparams.yblen = default_block_params.Yblen();
     encparams.xbsep = default_block_params.Xbsep();
     encparams.ybsep = default_block_params.Ybsep();
+
+    // set default MV parameters
+    encparams.mv_precision = default_enc_params.MVPrecision();
 
     // set default transform parameters
     encparams.wlt_filter = default_enc_params.TransformFilter();

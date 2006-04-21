@@ -61,9 +61,9 @@ void SetDefaultCodecParameters(CodecParams &cparams, FrameType ftype)
         OLBParams bparams;
         SetDefaultBlockParameters(bparams, cparams.GetVideoFormat());
         cparams.SetLumaBlockParams(bparams);
-        cparams.SetMVPrecision(2);
         cparams.SetInterlace(false);
         cparams.SetTopFieldFirst(true);
+        cparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
         // NOTE: FIXME - need to add global motion params here
         cparams.SetFrameWeightsPrecision(3);
         cparams.SetRef1Weight(4);
@@ -234,6 +234,7 @@ void SetDefaultEncoderParameters(EncoderParams& encparams)
 {
     encparams.SetQf(7.0f);
     encparams.SetLossless(false);
+    encparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
 
     switch (encparams.GetVideoFormat())
     {
