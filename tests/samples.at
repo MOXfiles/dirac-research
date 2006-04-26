@@ -25,11 +25,6 @@ height=0
 chroma="unknown"
 preset=""
 
-#luma block parameters
-xblen=12
-xbsep=8
-yblen=12
-ybsep=8
 # first tackle files name in the style nameFORMAT_CHROMA.yuv
 # e.g. waterfallCIF_411 or waterfall576p_444 etc
 case $samp in
@@ -88,13 +83,33 @@ fi
 if test $width -eq 720 || test $height -eq 576;
 then
 	preset="-SD576";
+	#luma block parameters
+	xblen=12;
+	xbsep=8;
+	yblen=12;
+	ybsep=8;
 elif test $width -eq 1280 || test $height -eq 720;
 then
 	preset="-HD720";
+	#luma block parameters
+	xblen=16;
+	xbsep=12;
+	yblen=16
+	ybsep=12;
 elif test $width -eq 1920 || test $height -eq 1080;
 then
 	preset="-HD1080";
+	#luma block parameters
+	xblen=24;
+	xbsep=16;
+	yblen=24;
+	ybsep=16;
 else
+	#luma block parameters
+	xblen=12;
+	xbsep=8;
+	yblen=12;
+	ybsep=8;
 	preset="-CIF";
 fi
 
