@@ -97,16 +97,20 @@ inline int MvDataCodec::ChooseMBCContext(const MvData& data) const
 
 inline int MvDataCodec::ChooseREF1xFollowContext(const int bin_number) const
 {
-    if (bin_number == 1)
-        return REF1x_FBIN1_CTX; 
-    else if (bin_number == 2)
-        return REF1x_FBIN2_CTX; 
-    else if (bin_number == 3)
-        return REF1x_FBIN3_CTX; 
-    else if (bin_number == 4)
-        return REF1x_FBIN4_CTX; 
-    else
-        return REF1x_FBIN5plus_CTX; 
+    switch ( bin_number )
+    {
+        case 1 :
+            return REF1x_FBIN1_CTX; 
+        case 2 :
+            return REF1x_FBIN2_CTX; 
+        case 3 :
+            return REF1x_FBIN3_CTX; 
+        case 4 :
+            return REF1x_FBIN4_CTX; 
+        default :
+            return REF1x_FBIN5plus_CTX; 
+
+    }
 }
 
 inline int MvDataCodec::ChooseREF1xInfoContext() const
@@ -121,16 +125,20 @@ inline int MvDataCodec::ChooseREF1xSignContext() const
 
 inline int MvDataCodec::ChooseREF1yFollowContext(const int bin_number) const
 {
-    if (bin_number == 1)
-        return REF1y_FBIN1_CTX; 
-    else if (bin_number == 2)
-        return REF1y_FBIN2_CTX; 
-    else if (bin_number == 3)
-        return REF1y_FBIN3_CTX; 
-    else if (bin_number == 4)
-        return REF1y_FBIN4_CTX; 
-    else
-        return REF1y_FBIN5plus_CTX; 
+    switch ( bin_number )
+    {
+        case 1 :
+            return REF1y_FBIN1_CTX; 
+        case 2 :
+            return REF1y_FBIN2_CTX; 
+        case 3 :
+            return REF1y_FBIN3_CTX; 
+        case 4 :
+            return REF1y_FBIN4_CTX; 
+        default :
+            return REF1y_FBIN5plus_CTX; 
+
+    }
 }
 
 inline int MvDataCodec::ChooseREF1yInfoContext() const
@@ -145,16 +153,20 @@ inline int MvDataCodec::ChooseREF1ySignContext() const
 
 inline int MvDataCodec::ChooseREF2xFollowContext(const int bin_number) const
 {
-    if (bin_number == 1)
-        return REF2x_FBIN1_CTX; 
-    else if (bin_number == 2)
-        return REF2x_FBIN2_CTX; 
-    else if (bin_number == 3)
-        return REF2x_FBIN3_CTX; 
-    else if (bin_number == 4)
-        return REF2x_FBIN4_CTX; 
-    else
-        return REF2x_FBIN5plus_CTX; 
+    switch ( bin_number )
+    {
+        case 1 :
+            return REF2x_FBIN1_CTX; 
+        case 2 :
+            return REF2x_FBIN2_CTX; 
+        case 3 :
+            return REF2x_FBIN3_CTX; 
+        case 4 :
+            return REF2x_FBIN4_CTX; 
+        default :
+            return REF2x_FBIN5plus_CTX; 
+
+    }
 }
 
 inline int MvDataCodec::ChooseREF2xInfoContext() const
@@ -169,16 +181,20 @@ inline int MvDataCodec::ChooseREF2xSignContext() const
 
 inline int MvDataCodec::ChooseREF2yFollowContext(const int bin_number) const
 {
-    if (bin_number == 1)
-        return REF2y_FBIN1_CTX; 
-    else if (bin_number == 2)
-        return REF2y_FBIN2_CTX; 
-    else if (bin_number == 3)
-        return REF2y_FBIN3_CTX; 
-    else if (bin_number == 4)
-        return REF2y_FBIN4_CTX; 
-    else
-        return REF2y_FBIN5plus_CTX; 
+    switch ( bin_number )
+    {
+        case 1 :
+            return REF2y_FBIN1_CTX; 
+        case 2 :
+            return REF2y_FBIN2_CTX; 
+        case 3 :
+            return REF2y_FBIN3_CTX; 
+        case 4 :
+            return REF2y_FBIN4_CTX; 
+        default :
+            return REF2y_FBIN5plus_CTX; 
+
+    }
 }
 
 inline int MvDataCodec::ChooseREF2yInfoContext() const

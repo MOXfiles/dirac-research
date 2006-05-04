@@ -86,8 +86,7 @@ namespace dirac
         Z_FBIN2_CTX,        // -bin 2, parent is zero
         Z_FBIN3_CTX,        // -bin 3, parent is zero
         Z_FBIN4_CTX,        // -bin 4, parent is zero
-        Z_FBIN5_CTX,        // -bin 5, parent is zero
-        Z_FBIN6plus_CTX,    // -bins 6 plus, parent is zero
+        Z_FBIN5plus_CTX,    // -bins 5 plus, parent is zero
 
         NZ_FBIN1z_CTX,      // -bin 1, parent is non-zero, neighbours zero
         NZ_FBIN1a_CTX,      // -bin 1, parent is non-zero, neighbours small
@@ -95,11 +94,11 @@ namespace dirac
         NZ_FBIN2_CTX,       // -bin 2, parent is non-zero
         NZ_FBIN3_CTX,       // -bin 3, parent is non-zero
         NZ_FBIN4_CTX,       // -bin 4, parent is non-zero
-        NZ_FBIN5_CTX,       // -bin 5, parent is non-zero
-        NZ_FBIN6plus_CTX,   // -bins 6 plus, parent is non-zero
+        NZ_FBIN5plus_CTX,   // -bins 5 plus, parent is non-zero
 
         // Information bit contexts
-        INFO_CTX,
+        Z_INFO_CTX,
+        NZ_INFO_CTX,
 
         BLOCK_SKIP_CTX,     // - blocks are skipped
         Q_OFFSET_FOLLOW_CTX,   // - code block quantiser offset magnitude

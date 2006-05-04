@@ -240,7 +240,6 @@ inline void BandCodec::CodeVal( PicArray& in_data ,
 
     m_coeff_count++;
     
-    //if (m_coeff_count > m_reset_coeff_num)
     if (m_coeff_count == m_reset_coeff_num)
     {
         m_coeff_count=0;
@@ -413,7 +412,6 @@ inline void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const in
 
     m_coeff_count++;
     
-    //if ( m_coeff_count > m_reset_coeff_num )
     if ( m_coeff_count == m_reset_coeff_num )
     {
         ResetAll();
@@ -441,10 +439,8 @@ inline int BandCodec::ChooseFollowContext( const int bin_number ) const
                 return Z_FBIN3_CTX;
             case 4 :
                 return Z_FBIN4_CTX;
-            case 5 :
-                return Z_FBIN5_CTX;
             default :
-                return Z_FBIN6plus_CTX;
+                return Z_FBIN5plus_CTX;
         }
     }
     else
@@ -465,10 +461,8 @@ inline int BandCodec::ChooseFollowContext( const int bin_number ) const
                 return NZ_FBIN3_CTX;
             case 4 :
                 return NZ_FBIN4_CTX;
-            case 5 :
-                return NZ_FBIN5_CTX;
             default :
-                return NZ_FBIN6plus_CTX;
+                return NZ_FBIN5plus_CTX;
         }
 
     }
@@ -477,7 +471,10 @@ inline int BandCodec::ChooseFollowContext( const int bin_number ) const
 
 inline int BandCodec::ChooseInfoContext() const 
 {
-    return INFO_CTX;
+    if (!m_parent_notzero && (m_pxp != 0 || m_pyp != 0))
+        return Z_INFO_CTX;
+    else
+        return NZ_INFO_CTX;
 }
 
 inline int BandCodec::ChooseSignContext( const PicArray& data , const int xpos , const int ypos ) const
