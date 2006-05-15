@@ -138,8 +138,8 @@ namespace dirac
         //! count of the coefficients since the last context reset
         int m_coeff_count;
     
-        //! quantisation and inverse quantisation values
-        int m_qf, m_qfinv;
+        //! quantisation value
+        int m_qf;
     
         //! reconstruction point
         ValueType m_offset;

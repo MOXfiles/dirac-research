@@ -53,8 +53,7 @@ BandCodec::BandCodec(SubbandByteIO* subband_byteio,
     m_bnum(band_num),
     m_node(band_list(band_num)),
     m_vol(m_node.Xl()*m_node.Yl()),
-    m_reset_coeff_num( std::max( 25 , std::min(m_vol/32,800) ) ),
-    m_cut_off_point(m_node.Scale()>>1)
+    m_reset_coeff_num( std::max( 25 , std::min(m_vol/32,800) ) )
 {
     if (m_node.Parent()!=0) 
         m_pnode=band_list(m_node.Parent());
@@ -152,11 +151,12 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
         CodeQIndexOffset( qf_idx-m_node.QIndex() );
     }
 
-    m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
-    m_qfinv =  dirac_quantiser_lists.InverseQuantFactor( qf_idx );
+    m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
 
+    m_cut_off_point = m_node.Scale()>>1;
     m_cut_off_point *= m_qf;
+    m_cut_off_point >>= 2;
 
     for ( int ypos=ybeg , m_pypos=ypbeg; ypos<yend ;++ypos , m_pypos=(( ypos-ybeg )>>1)+ypbeg)
     {
@@ -203,6 +203,7 @@ inline void BandCodec::CodeVal( PicArray& in_data ,
                                 const ValueType val )
 {
     unsigned int abs_val( std::abs(val) );
+    abs_val <<= 2;
     abs_val /= m_qf;
 
     const int N = abs_val+1;
@@ -225,6 +226,7 @@ inline void BandCodec::CodeVal( PicArray& in_data ,
     {
         // Must code sign bits and reconstruct
         in_data[ypos][xpos] *= m_qf;
+        in_data[ypos][xpos] >>= 2;
         in_data[ypos][xpos] += m_offset;
 
         if ( val>0 )
@@ -240,6 +242,7 @@ inline void BandCodec::CodeVal( PicArray& in_data ,
 
     m_coeff_count++;
     
+    //if (m_coeff_count > m_reset_coeff_num)
     if (m_coeff_count == m_reset_coeff_num)
     {
         m_coeff_count=0;
@@ -338,10 +341,12 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
         qf_idx += DecodeQIndexOffset(); 
     }
 
-    m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
+    m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
 
+    m_cut_off_point = m_node.Scale()>>1;
     m_cut_off_point *= m_qf;
+    m_cut_off_point >>= 2;
 
     //Work
     
@@ -403,11 +408,11 @@ inline void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const in
     if ( out_pixel )
     {
         out_pixel *= m_qf;
+        out_pixel >>= 2;
         out_pixel += m_offset;
      
         if ( !DecodeSymbol( ChooseSignContext(out_data, xpos, ypos)) )
             out_pixel = -out_pixel;
-
     }
 
     m_coeff_count++;
@@ -439,8 +444,10 @@ inline int BandCodec::ChooseFollowContext( const int bin_number ) const
                 return Z_FBIN3_CTX;
             case 4 :
                 return Z_FBIN4_CTX;
+            case 5 :
+                return Z_FBIN5_CTX;
             default :
-                return Z_FBIN5plus_CTX;
+                return Z_FBIN6plus_CTX;
         }
     }
     else
@@ -461,8 +468,10 @@ inline int BandCodec::ChooseFollowContext( const int bin_number ) const
                 return NZ_FBIN3_CTX;
             case 4 :
                 return NZ_FBIN4_CTX;
+            case 5 :
+                return NZ_FBIN5_CTX;
             default :
-                return NZ_FBIN5plus_CTX;
+                return NZ_FBIN6plus_CTX;
         }
 
     }
@@ -471,10 +480,7 @@ inline int BandCodec::ChooseFollowContext( const int bin_number ) const
 
 inline int BandCodec::ChooseInfoContext() const 
 {
-    if (!m_parent_notzero && (m_pxp != 0 || m_pyp != 0))
-        return Z_INFO_CTX;
-    else
-        return NZ_INFO_CTX;
+    return INFO_CTX;
 }
 
 inline int BandCodec::ChooseSignContext( const PicArray& data , const int xpos , const int ypos ) const
@@ -596,11 +602,12 @@ void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_dat
         CodeQIndexOffset( qf_idx-m_node.QIndex() ); 
     }
 
-    m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
-    m_qfinv =  dirac_quantiser_lists.InverseQuantFactor( qf_idx );
+    m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
 
+    m_cut_off_point = m_node.Scale()>>1;
     m_cut_off_point *= m_qf;
+    m_cut_off_point >>= 2;
 
     for ( int ypos=ybeg ; ypos<yend ; ++ypos )
     {        
@@ -660,10 +667,12 @@ void LFBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_
         qf_idx += DecodeQIndexOffset(); 
     }
 
-    m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
+    m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
 
+    m_cut_off_point = m_node.Scale()>>1;
     m_cut_off_point *= m_qf;
+    m_cut_off_point >>= 2;
 
     //Work
     
@@ -732,11 +741,12 @@ void IntraDCBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& i
         CodeQIndexOffset( qf_idx-m_node.QIndex() ); 
     }
 
-    m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
-    m_qfinv =  dirac_quantiser_lists.InverseQuantFactor( qf_idx );
+    m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
 
+    m_cut_off_point = m_node.Scale()>>1;
     m_cut_off_point *= m_qf;
+    m_cut_off_point >>= 2;
     
     for ( int ypos=ybeg ; ypos < yend; ++ypos )
     {
@@ -796,10 +806,12 @@ void IntraDCBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray&
         qf_idx += DecodeQIndexOffset();
     }
 
-    m_qf = dirac_quantiser_lists.QuantFactor( qf_idx );
+    m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
 
+    m_cut_off_point = m_node.Scale()>>1;
     m_cut_off_point *= m_qf;
+    m_cut_off_point >>= 2;
 
     //Work
     
