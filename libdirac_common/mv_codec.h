@@ -134,9 +134,6 @@ namespace dirac
         // Context stuff   
         void ResetAll();
 
-        inline int ChooseMBSContext(const MvData& data, const int bin_number) const;
-        inline int ChooseMBCContext(const MvData& data) const;
-
         inline int ChooseREF1xFollowContext(const int bin_number) const;
         inline int ChooseREF1xInfoContext() const;
         inline int ChooseREF1xSignContext() const;

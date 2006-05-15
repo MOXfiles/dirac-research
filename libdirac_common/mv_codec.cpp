@@ -81,20 +81,6 @@ inline void MvDataCodec::ResetAll()
 //prediction functions
 
 //proper context functions
-
-inline int MvDataCodec::ChooseMBSContext(const MvData& data, const int bin_number) const
-{
-    if (bin_number == 1)
-        return MB_SPLIT_BIN1_CTX; 
-    else
-        return MB_SPLIT_BIN2_CTX; 
-}
-
-inline int MvDataCodec::ChooseMBCContext(const MvData& data) const
-{
-    return MB_CMODE_CTX; 
-}
-
 inline int MvDataCodec::ChooseREF1xFollowContext(const int bin_number) const
 {
     switch ( bin_number )
@@ -531,26 +517,19 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 
 }
 
-
 void MvDataCodec::CodeMBSplit(const MvData& in_data)
 {
-    int val = in_data.MBSplit()[m_mb_yp][m_mb_xp] - MBSplitPrediction( in_data.MBSplit() ); 
-    
-    if (val < 0)
-        val += 3; //produce prediction mod 3    
-    
-    int ctx; 
-    
-    for (int bin = 1; bin <= val; ++bin)
-    {
-        ctx = ChooseMBSContext(in_data,bin); 
-        EncodeSymbol(0,ctx); 
-    }
-    
-    if (val != 2)//if we've had two zeroes, know we must have value 2
-    {
-        EncodeSymbol(1,ChooseMBSContext(in_data,val+1)); 
-    }
+    const int prediction = MBSplitPrediction( in_data.MBSplit() );
+    const bool bit0 = (in_data.MBSplit()[m_mb_yp][m_mb_xp]>0)
+                     ^( prediction>0 );
+    const bool bit1 = (in_data.MBSplit()[m_mb_yp][m_mb_xp]>1)
+                     ^( prediction>1 );
+
+    EncodeSymbol( bit0,MB_SPLIT_BIT0_CTX);
+
+    if ( in_data.MBSplit()[m_mb_yp][m_mb_xp]>0 )
+        EncodeSymbol( bit1,MB_SPLIT_BIT1_CTX);    
+
 }
 
 void MvDataCodec::CodeMBCom(const MvData& in_data)
@@ -558,7 +537,7 @@ void MvDataCodec::CodeMBCom(const MvData& in_data)
     bool val = in_data.MBCommonMode()[m_mb_yp][m_mb_xp]; 
 
     EncodeSymbol( val ^ int(MBCBModePrediction( in_data.MBCommonMode() )),
-                  ChooseMBCContext( in_data ) ); 
+                  MB_CMODE_CTX ); 
 }
 
 void MvDataCodec::CodePredmode(const MvData& in_data)
@@ -880,29 +859,22 @@ void MvDataCodec::DoWorkDecode( MvData& out_data)
 
 void MvDataCodec::DecodeMBSplit(MvData& out_data)
 {
-    int val = 0; 
-    int bin = 1; 
-    bool bit; 
+    const int prediction = MBSplitPrediction( out_data.MBSplit() );
+    out_data.MBSplit()[m_mb_yp][m_mb_xp] = int( DecodeSymbol( MB_SPLIT_BIT0_CTX)
+                                               ^( prediction>0 ) );
 
-    do
+    if ( out_data.MBSplit()[m_mb_yp][m_mb_xp]>0 )
     {
-        bit = DecodeSymbol( ChooseMBSContext( out_data , bin ) ); 
-        
-        if ( !bit )
-            val++; 
-        
-        bin++; 
+        out_data.MBSplit()[m_mb_yp][m_mb_xp] += int( DecodeSymbol( MB_SPLIT_BIT1_CTX)
+                                                   ^( prediction>1 ) );
     }
-    while (!bit && val != 2);  
-    
-    out_data.MBSplit()[m_mb_yp][m_mb_xp] = ( val + MBSplitPrediction( out_data.MBSplit() ) ) % 3;     
+
 }
 
 void MvDataCodec::DecodeMBCom( MvData& out_data )
 {    
-    out_data.MBCommonMode()[m_mb_yp][m_mb_xp] = DecodeSymbol( 
-             ChooseMBCContext( out_data ) ) ^ 
-             int( MBCBModePrediction( out_data.MBCommonMode() ) );
+    out_data.MBCommonMode()[m_mb_yp][m_mb_xp] = DecodeSymbol( MB_CMODE_CTX ) ^ 
+                                                int( MBCBModePrediction( out_data.MBCommonMode() ) );
 }
 
 void MvDataCodec::DecodePredmode( MvData& out_data )
