@@ -337,14 +337,15 @@ void QuantChooser::NonIntegralErrorCalc( const CodeBlock& code_block , const int
             for ( int q=m_bottom_idx ; q<=m_top_idx ; q+=m_index_step )
             {
                  // Since the quantiser isn't a power of 2 we have to divide each time
-                 quant_val = static_cast<CalcValueType>( abs_val );                    
-                 quant_val *= dirac_quantiser_lists.InverseQuantFactor( q );
-                 quant_val >>= 17;
+                 quant_val = static_cast<CalcValueType>( abs_val );
+                 quant_val <<= 2;
+                 quant_val /= dirac_quantiser_lists.QuantFactor4( q );
 
                  if ( quant_val )
                  {
                      m_count0[block_idx][q] += quant_val;
-                     quant_val *= dirac_quantiser_lists.QuantFactor( q );
+                     quant_val *= dirac_quantiser_lists.QuantFactor4( q );
+                     quant_val >>= 2;
 
                      if ( val>0 )
                          m_countPOS[block_idx][q]++;

@@ -739,15 +739,13 @@ FrameParams::FrameParams(const SeqParams& sparams, const FrameSort& fs):
 
 QuantiserLists::QuantiserLists()
 : 
-    m_qflist( 61 ), 
-    m_qfinvlist( 61 ) , 
+    m_qflist4( 61 ),  
     m_offset( 61 )
 {
     for (int i=0; i<=60; ++i)
     {
-        m_qflist[i] = int( std::pow(2.0, double(i)/4.0) + 0.5 );
-        m_offset[i] = int( double( m_qflist[i]*0.375) + 0.5 );
-        m_qfinvlist[i] = int( ( double( 1<<17 ) / double( m_qflist[i] ) ) + 0.5 );
+        m_qflist4[i] = int( std::pow(2.0, 2.0+double(i)/4.0) + 0.5 );
+        m_offset[i] = int( double( m_qflist4[i]*0.375*0.25) + 0.5 );
     }// i
 }
 
