@@ -86,7 +86,8 @@ namespace dirac
         Z_FBIN2_CTX,        // -bin 2, parent is zero
         Z_FBIN3_CTX,        // -bin 3, parent is zero
         Z_FBIN4_CTX,        // -bin 4, parent is zero
-        Z_FBIN5plus_CTX,    // -bins 5 plus, parent is zero
+        Z_FBIN5_CTX,        // -bin 5, parent is zero
+        Z_FBIN6plus_CTX,    // -bins 6 plus, parent is zero
 
         NZ_FBIN1z_CTX,      // -bin 1, parent is non-zero, neighbours zero
         NZ_FBIN1a_CTX,      // -bin 1, parent is non-zero, neighbours small
@@ -94,11 +95,11 @@ namespace dirac
         NZ_FBIN2_CTX,       // -bin 2, parent is non-zero
         NZ_FBIN3_CTX,       // -bin 3, parent is non-zero
         NZ_FBIN4_CTX,       // -bin 4, parent is non-zero
-        NZ_FBIN5plus_CTX,   // -bins 5 plus, parent is non-zero
+        NZ_FBIN5_CTX,       // -bin 5, parent is non-zero
+        NZ_FBIN6plus_CTX,   // -bins 6 plus, parent is non-zero
 
         // Information bit contexts
-        Z_INFO_CTX,
-        NZ_INFO_CTX,
+        INFO_CTX,
 
         BLOCK_SKIP_CTX,     // - blocks are skipped
         Q_OFFSET_FOLLOW_CTX,   // - code block quantiser offset magnitude
@@ -183,8 +184,8 @@ namespace dirac
         // Macroblock contexts
        
         MB_CMODE_CTX,       // -context for MB common block mode
-        MB_SPLIT_BIN1_CTX,  // -bin 1, MB split mode vals
-        MB_SPLIT_BIN2_CTX   // -bin 2, MB split mode vals. Bin 3 not required
+        MB_SPLIT_BIT0_CTX,  // -bin 1, MB split mode vals
+        MB_SPLIT_BIT1_CTX   // -bin 2, MB split mode vals. Bin 3 not required
     };
 
 
@@ -1450,14 +1451,15 @@ namespace dirac
         //! Default constructor
         QuantiserLists();
 
-        inline int QuantFactor( const int index ) const {return m_qflist[index]; }
-        inline int InverseQuantFactor( const int index ) const {return m_qfinvlist[index]; }
+        //! Returns 4 times the quantisation factor
+        inline int QuantFactor4( const int index ) const {return m_qflist4[index]; }
+
+        //! Returns the quantisation offset for non-zero values
         inline int QuantOffset( const int index ) const {return m_offset[index]; }
     
 
     private:
-        OneDArray<int> m_qflist;
-        OneDArray<int> m_qfinvlist;
+        OneDArray<int> m_qflist4;
         OneDArray<int> m_offset;
 
     };
