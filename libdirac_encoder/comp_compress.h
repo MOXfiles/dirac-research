@@ -83,7 +83,7 @@ namespace dirac
         void SelectQuantisers( PicArray& pic_data , 
                                SubbandList& bands ,
                                OneDArray<unsigned int>& est_counts,
-                               const bool using_multi_quants );
+                               const CodeBlockMode cb_mode );
 
         int SelectMultiQuants( PicArray& pic_data , 
                                SubbandList& bands , 

@@ -97,7 +97,7 @@ ComponentByteIO* CompCompressor::Compress(PicArray& pic_data)
 
     OneDArray<unsigned int> estimated_bits( Range( 1 , bands.Length() ) );
 
-    SelectQuantisers( pic_data , bands , estimated_bits , m_encparams.MultiQuants() );  
+    SelectQuantisers( pic_data , bands , estimated_bits , m_encparams.GetCodeBlockMode() );  
 
     // create byte output
     ComponentByteIO *p_component_byteio = new ComponentByteIO(m_csort);
@@ -131,10 +131,14 @@ ComponentByteIO* CompCompressor::Compress(PicArray& pic_data)
         }
         else
         {   // ... skipped
+#if 0
             if (b == bands.Length() && m_fsort.IsIntra())
                 SetToVal( pic_data , bands(b) , wtransform.GetMeanDCVal() );
             else
                 SetToVal( pic_data , bands(b) , 0 );
+#else
+            SetToVal( pic_data , bands(b) , 0 );
+#endif
         }
        
             // output sub-band data
@@ -152,7 +156,7 @@ ComponentByteIO* CompCompressor::Compress(PicArray& pic_data)
     return p_component_byteio;
 }
 
-
+#if 0
 void CompCompressor::SetupCodeBlocks( SubbandList& bands )
 {
     int xregions;
@@ -215,11 +219,46 @@ void CompCompressor::SetupCodeBlocks( SubbandList& bands )
 
     }// band_num
 }
+#else
+void CompCompressor::SetupCodeBlocks( SubbandList& bands )
+{
+    int xregions;
+    int yregions;
+
+    // The minimum x and y dimensions of a block
+    const int min_dim( 4 );
+  
+    // The maximum number of regions horizontally and vertically
+    int max_xregion, max_yregion;
+
+    for (int band_num = 1; band_num<=bands.Length() ; ++band_num)
+    {
+        if (m_encparams.SpatialPartition())
+        {
+            int level = m_encparams.TransformDepth() - (band_num-1)/3;
+            const CodeBlocks &cb = m_encparams.GetCodeBlocks(level);
+            xregions = cb.HorizontalCodeBlocks();
+            yregions = cb.VerticalCodeBlocks();
+        }
+        else
+        {
+               xregions = 1;
+               yregions = 1;
+        }
+
+        max_xregion = bands( band_num ).Xl() / min_dim;
+        max_yregion = bands( band_num ).Yl() / min_dim;
+
+        bands( band_num ).SetNumBlocks( std::min( yregions , max_yregion ), 
+                                        std::min( xregions , max_xregion ) );
+    }// band_num
+}
+#endif
 
 void CompCompressor::SelectQuantisers( PicArray& pic_data , 
                                        SubbandList& bands ,
                                        OneDArray<unsigned int>& est_bits,
-                                       const bool using_multi_quants )
+                                       const CodeBlockMode cb_mode )
 {
     // Select all the quantizers
     if ( !m_encparams.Lossless() )
@@ -227,15 +266,15 @@ void CompCompressor::SelectQuantisers( PicArray& pic_data ,
         for ( int b=bands.Length() ; b>=1 ; --b )
         {
             // Set multiquants flag in the subband only if 
-            // a. Global using_multi_quants flags is set in encparams
+            // a. Global m_cb_mode flag is set to QUANT_MULTIPLE in encparams
             //           and
             // b. Current subband has more than one block
             if (
-                using_multi_quants &&
+                cb_mode == QUANT_MULTIPLE &&
                 (bands(b).GetCodeBlocks().LengthX() > 1  ||
                 bands(b).GetCodeBlocks().LengthY() > 1)
                )
-                bands(b).SetUsingMultiQuants( using_multi_quants );
+                bands(b).SetUsingMultiQuants( true );
             else
                 bands(b).SetUsingMultiQuants( false );
             est_bits[b] = SelectMultiQuants( pic_data , bands , b );

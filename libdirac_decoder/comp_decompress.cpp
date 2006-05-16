@@ -80,13 +80,13 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
     for ( int b=bands.Length() ; b>=1 ; --b )
     {
         // Multiple quantiser are used only if
-        // a. The global using multi quants flag is true
+        // a. The global code_block_mode is QUANT_MULTIPLE
         //              and
         // b. More than one code block is present in the subband.
         bands(b).SetUsingMultiQuants( 
-                                  m_decparams.MultiQuants() &&
-                                  (bands(b).GetCodeBlocks().LengthX() > 1 ||
-                                  bands(b).GetCodeBlocks().LengthY() > 1)
+                           m_decparams.GetCodeBlockMode() == QUANT_MULTIPLE &&
+                           (bands(b).GetCodeBlocks().LengthX() > 1 ||
+                           bands(b).GetCodeBlocks().LengthY() > 1)
                                 );
 
         // Read the header data first
@@ -112,15 +112,20 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
         }
         else
         {
+#if 0
             if ( b==bands.Length() && fsort.IsIntra() )
                 SetToVal( pic_data , bands(b) , wtransform.GetMeanDCVal() );
             else
                 SetToVal( pic_data , bands(b) , 0 );
+#else
+            SetToVal( pic_data , bands(b) , 0 );
+#endif
         }
     }
     wtransform.Transform(BACKWARD,pic_data);
 }
 
+#if 0
 void CompDecompressor::SetupCodeBlocks( SubbandList& bands , const FrameSort fsort )
 {
     int xregions;
@@ -191,6 +196,42 @@ void CompDecompressor::SetupCodeBlocks( SubbandList& bands , const FrameSort fso
 
     }// band_num
 }
+#else
+void CompDecompressor::SetupCodeBlocks( SubbandList& bands , const FrameSort fsort )
+{
+    int xregions;
+    int yregions;
+
+    // The minimum x and y dimensions of a block
+    const int min_dim( 4 );
+  
+    // The maximum number of regions horizontally and vertically
+    int max_xregion, max_yregion;
+
+    for (int band_num = 1; band_num<=bands.Length() ; ++band_num)
+    {
+        if (m_decparams.SpatialPartition())
+        {
+            int level = m_decparams.TransformDepth() - (band_num-1)/3;
+            const CodeBlocks &cb = m_decparams.GetCodeBlocks(level);
+            xregions = cb.HorizontalCodeBlocks();
+            yregions = cb.VerticalCodeBlocks();
+        }
+        else
+        {
+               xregions = 1;
+               yregions = 1;
+        }
+
+        max_xregion = bands( band_num ).Xl() / min_dim;
+        max_yregion = bands( band_num ).Yl() / min_dim;
+
+        bands( band_num ).SetNumBlocks( std::min( yregions , max_yregion ), 
+                                        std::min( xregions , max_xregion ) );
+
+    }// band_num
+}
+#endif
 
 void CompDecompressor::SetToVal( PicArray& pic_data , 
                                  const Subband& node , 
