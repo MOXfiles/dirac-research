@@ -271,7 +271,7 @@ inline unsigned int MvDataCodec::MBSplitPrediction(const TwoDArray<int> & split_
 
 inline bool MvDataCodec::MBCBModePrediction(const TwoDArray <bool> & cbm_data) const
 {
-    bool result = true;
+    bool result = false;
 
     std::vector < unsigned int >  nbrs; 
     
@@ -288,14 +288,19 @@ inline bool MvDataCodec::MBCBModePrediction(const TwoDArray <bool> & cbm_data) c
     else if (m_mb_xp == 0 && m_mb_yp > 0)
         result = cbm_data[m_mb_yp-1][0]; 
  
-    return result; 
+    return result;
 }
 
 inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode > & preddata,
                                                      const unsigned int num_refs) const
 {
+#if 0
+    // software
     unsigned int result = (unsigned int)(REF1_ONLY);
-    
+#else
+    // spec
+    unsigned int result = (unsigned int)(INTRA);
+#endif
     unsigned int num_ref1_nbrs( 0 ); 
     unsigned int num_ref2_nbrs( 0 );
     
@@ -321,7 +326,7 @@ inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode 
     else if (m_b_xp == 0 && m_b_yp > 0)
         result = (unsigned int)( preddata[m_b_yp-1][0] ); 
 
-    return result; 
+    return result;
 }
 
 inline MVector MvDataCodec::Mv1Prediction(const MvArray& mvarray,
@@ -598,7 +603,7 @@ void MvDataCodec::CodeMv1(const MvData& in_data )
 
     if ( valx )
     {
-        EncodeSymbol( ( (valx > 0)? 1 : 0) , ChooseREF1xSignContext() ); 
+        EncodeSymbol( ( (valx > 0)? 0 : 1) , ChooseREF1xSignContext() ); 
     }
 
 
@@ -621,7 +626,7 @@ void MvDataCodec::CodeMv1(const MvData& in_data )
     
     if (valy != 0)
     {
-        EncodeSymbol( ( (valy > 0)? 1 : 0) , ChooseREF1ySignContext() );  
+        EncodeSymbol( ( (valy > 0)? 0 : 1) , ChooseREF1ySignContext() );  
     }
 }
 
@@ -649,7 +654,7 @@ void MvDataCodec::CodeMv2(const MvData& in_data)
 
     if ( valx )
     {
-        EncodeSymbol( ( (valx > 0)? 1 : 0) , ChooseREF2xSignContext() ); 
+        EncodeSymbol( ( (valx > 0)? 0 : 1) , ChooseREF2xSignContext() ); 
     }
 
 
@@ -672,7 +677,7 @@ void MvDataCodec::CodeMv2(const MvData& in_data)
     
     if (valy != 0)
     {
-        EncodeSymbol( ( (valy > 0)? 1 : 0) , ChooseREF2ySignContext() ); 
+        EncodeSymbol( ( (valy > 0)? 0 : 1) , ChooseREF2ySignContext() ); 
     }
 }
 
@@ -699,7 +704,7 @@ void MvDataCodec::CodeDC(const MvData& in_data)
     
     if (valY != 0)
     {
-        EncodeSymbol( ( (valY > 0)? 1 : 0) , ChooseYDCSignContext() ); 
+        EncodeSymbol( ( (valY > 0)? 0 : 1) , ChooseYDCSignContext() ); 
     }
 
     //continue with U and V DC values
@@ -723,7 +728,7 @@ void MvDataCodec::CodeDC(const MvData& in_data)
     
     if (valU != 0)
     {
-        EncodeSymbol( ( (valU > 0) ? 1 : 0) , ChooseUDCSignContext() ); 
+        EncodeSymbol( ( (valU > 0) ? 0 : 1) , ChooseUDCSignContext() ); 
     }
     const int valV = in_data.DC( V_COMP )[m_b_yp][m_b_xp] 
                      - DCPrediction( in_data.DC( V_COMP ) , in_data.Mode() ); 
@@ -745,7 +750,7 @@ void MvDataCodec::CodeDC(const MvData& in_data)
     
     if (valV != 0)
     {
-        EncodeSymbol( ( (valV > 0)? 1 : 0) , ChooseVDCSignContext() ); 
+        EncodeSymbol( ( (valV > 0)? 0 : 1) , ChooseVDCSignContext() ); 
     }
 }
 
@@ -934,7 +939,7 @@ void MvDataCodec::DecodeMv1( MvData& out_data )
     
     if (val != 0)
     {
-        if ( !DecodeSymbol( ChooseREF1xSignContext() ) )
+        if ( DecodeSymbol( ChooseREF1xSignContext() ) )
             val = -val; 
     }
     
@@ -952,7 +957,7 @@ void MvDataCodec::DecodeMv1( MvData& out_data )
     --val;    
     if (val != 0)
     {
-        if ( !DecodeSymbol( ChooseREF1ySignContext() )  )
+        if ( DecodeSymbol( ChooseREF1ySignContext() )  )
             val = -val; 
     }
     
@@ -976,7 +981,7 @@ void MvDataCodec::DecodeMv2( MvData& out_data )
     
     if (val != 0)
     {
-        if ( !DecodeSymbol( ChooseREF2xSignContext() ) )
+        if ( DecodeSymbol( ChooseREF2xSignContext() ) )
             val = -val; 
     }
     
@@ -995,7 +1000,7 @@ void MvDataCodec::DecodeMv2( MvData& out_data )
     
     if (val != 0)
     {
-        if ( !DecodeSymbol( ChooseREF2ySignContext() )  )
+        if ( DecodeSymbol( ChooseREF2ySignContext() )  )
             val = -val; 
     }
     
@@ -1018,7 +1023,7 @@ void MvDataCodec::DecodeDC( MvData& out_data )
 
     if (val != 0)
     {
-        if ( !DecodeSymbol( ChooseYDCSignContext() )  )
+        if ( DecodeSymbol( ChooseYDCSignContext() )  )
             val = -val; 
     }
     
@@ -1038,7 +1043,7 @@ void MvDataCodec::DecodeDC( MvData& out_data )
     
     if (val != 0)
     {
-        if ( !DecodeSymbol( ChooseUDCSignContext () ) )
+        if ( DecodeSymbol( ChooseUDCSignContext () ) )
             val = -val; 
     }
     
@@ -1057,7 +1062,7 @@ void MvDataCodec::DecodeDC( MvData& out_data )
     
     if (val != 0)
     {
-        if ( !DecodeSymbol( ChooseVDCSignContext() )  )
+        if ( DecodeSymbol( ChooseVDCSignContext() )  )
             val = -val; 
     }
     
