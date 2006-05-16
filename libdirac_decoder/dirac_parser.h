@@ -79,13 +79,6 @@
          Deallocate frame data buffers
          break;
 
-     case STATE_PICTURE_START:
-         handle start of picture data
-         The decoder sets the frame_params member in the 
-         decoder handle to the details of the next frame
-         to be processed.
-         break;
-
      case STATE_PICTURE_AVAIL:
          Handle picture data.
          The decoder sets the fbuf member in the decoder 
