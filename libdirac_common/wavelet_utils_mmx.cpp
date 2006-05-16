@@ -1048,7 +1048,6 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
     const PredictStepShift< 2 > predict;
     __m64 pred_round = _mm_set_pi16 (1<<(2-1), 1<<(2-1), 1<<(2-1), 1<<(2-1));
     const UpdateStepShift< 1 > update;
-    __m64 update_round = _mm_set_pi16 (1<<(1-1), 1<<(1-1), 1<<(1-1), 1<<(1-1));
 
     int horiz_start = 0;
     int horiz_end = 0;
@@ -1101,7 +1100,6 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
             *(__m64 *)row3 = _mm_sub_pi16 (*(__m64*)row3, tmp);
 
             tmp = _mm_add_pi16 (*(__m64 *)row1, *(__m64 *)row3);
-            tmp = _mm_add_pi16 (tmp, update_round);
             tmp = _mm_srai_pi16(tmp, 1);
             *(__m64 *)row2 = _mm_add_pi16 (*(__m64*)row2, tmp);
             row1 += 4;
@@ -1140,12 +1138,10 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
         *(__m64 *)row3 = _mm_sub_pi16 (*(__m64*)row3, tmp);
 
         tmp = _mm_add_pi16 (*(__m64 *)row3, *(__m64 *)row1);
-        tmp = _mm_add_pi16 (tmp, update_round);
         tmp = _mm_srai_pi16(tmp, 1);
         *(__m64 *)row2 = _mm_add_pi16 (*(__m64*)row2, tmp);
 
         tmp = _mm_add_pi16 (*(__m64 *)row3, *(__m64 *)row3);
-        tmp = _mm_add_pi16 (tmp, update_round);
         tmp = _mm_srai_pi16(tmp, 1);
         *(__m64 *)row4 = _mm_add_pi16 (*(__m64*)row4, tmp);
 
@@ -1266,7 +1262,6 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
     // Objects to do lifting stages 
     // (in revese order and type from synthesis)
     const PredictStepShift< 1 > predict;
-    __m64 pred_round = _mm_set_pi16 (1<<(1-1), 1<<(1-1), 1<<(1-1), 1<<(1-1));
     const UpdateStepShift< 2 > update;
     __m64 update_round = _mm_set_pi16 (1<<(2-1), 1<<(2-1), 1<<(2-1), 1<<(2-1));
 
@@ -1306,7 +1301,6 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
     {
         //predict.Filter( pic_data[yp+yl2][i] , pic_data[1][i] , pic_data[0][i] );
         __m64 m1 = _mm_add_pi16 (*(__m64 *)val1, *(__m64 *)val2);
-        m1 = _mm_add_pi16 (m1, pred_round);
         m1 = _mm_srai_pi16(m1, 1);
         *(__m64 *)in_val = _mm_sub_pi16 (*(__m64 *)in_val, m1);
 
@@ -1337,7 +1331,6 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
         {
             //predict.Filter( pic_data[yp+yl2+k][i] , pic_data[k+1][i] , pic_data[k][i] );
             __m64 m1 = _mm_add_pi16 (*(__m64 *)val1, *(__m64 *)val2);
-            m1 = _mm_add_pi16 (m1, pred_round);
             m1 = _mm_srai_pi16(m1, 1);
             *(__m64 *)in_val = _mm_sub_pi16 (*(__m64 *)in_val, m1);
             
@@ -1369,7 +1362,6 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
     {
         //predict.Filter( pic_data[yend-1][i] , pic_data[yp+yl2-1][i] , pic_data[yp+yl2-1][i] );
         __m64 m1 = _mm_add_pi16 (*(__m64 *)val2, *(__m64 *)val2);
-        m1 = _mm_add_pi16 (m1, pred_round);
         m1 = _mm_srai_pi16(m1, 1);
         *(__m64 *)in_val = _mm_sub_pi16 (*(__m64 *)in_val, m1);
        
