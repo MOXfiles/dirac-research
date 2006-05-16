@@ -49,11 +49,35 @@ void SetDefaultCodecParameters(CodecParams &cparams, FrameType ftype)
     cparams.SetZeroTransform(false);
     cparams.SetTransformDepth(4);
     cparams.SetTransformFilter(APPROX97);
-    cparams.SetMultiQuants(false);
-    cparams.SetSpatialPartition(true);
-    cparams.SetDefaultSpatialPartition(true);
-    cparams.SetMaxXBlocks(0);
-    cparams.SetMaxYBlocks(0);
+    cparams.SetCodeBlockMode(QUANT_SINGLE);
+       cparams.SetSpatialPartition(false);
+       cparams.SetDefaultSpatialPartition(true);
+    switch (cparams.GetVideoFormat())
+    {
+    case VIDEO_FORMAT_QSIF:
+    case VIDEO_FORMAT_QCIF:
+        break;
+
+    case VIDEO_FORMAT_CUSTOM:
+    case VIDEO_FORMAT_SIF:
+    case VIDEO_FORMAT_CIF:
+    case VIDEO_FORMAT_SD_PAL:
+    case VIDEO_FORMAT_SD_NTSC:
+    case VIDEO_FORMAT_SD_525_DIGITAL:
+    case VIDEO_FORMAT_SD_625_DIGITAL:
+    case VIDEO_FORMAT_HD_720:
+    case VIDEO_FORMAT_HD_1080:
+        cparams.SetSpatialPartition(true);
+        cparams.SetDefaultSpatialPartition(true);
+        break;
+    default:
+        DIRAC_THROW_EXCEPTION(
+            ERR_INVALID_VIDEO_FORMAT,
+            "Unsupported video format",
+            SEVERITY_FRAME_ERROR);
+        break;
+    }
+    cparams.SetDefaultCodeBlocks(ftype);
 
     if (ftype == INTER_FRAME)
     {
@@ -63,11 +87,11 @@ void SetDefaultCodecParameters(CodecParams &cparams, FrameType ftype)
         cparams.SetLumaBlockParams(bparams);
         cparams.SetInterlace(false);
         cparams.SetTopFieldFirst(true);
-        cparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
+        cparams.SetMVPrecision(MV_PRECISION_HALF_PIXEL);
         // NOTE: FIXME - need to add global motion params here
-        cparams.SetFrameWeightsPrecision(3);
-        cparams.SetRef1Weight(4);
-        cparams.SetRef2Weight(4);
+        cparams.SetFrameWeightsPrecision(1);
+        cparams.SetRef1Weight(1);
+        cparams.SetRef2Weight(1);
     }
 }
 
@@ -234,7 +258,7 @@ void SetDefaultEncoderParameters(EncoderParams& encparams)
 {
     encparams.SetQf(7.0f);
     encparams.SetLossless(false);
-    encparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
+    encparams.SetMVPrecision(MV_PRECISION_HALF_PIXEL);
 
     switch (encparams.GetVideoFormat())
     {
