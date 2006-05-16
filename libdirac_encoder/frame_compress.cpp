@@ -84,10 +84,6 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
     // number of bits written
     unsigned int num_mv_bits;
     m_medata_avail = false;
-// my_frame.SetFrameSort (FrameSort::IntraNonRefFrameSort());
-//    my_frame.SetFrameType (INTRA_FRAME);
-  //  my_frame.SetReferenceType (NON_REFERENCE_FRAME);
-//    fparams.Refs().clear();
 
     CompCompressor my_compcoder(m_encparams , fparams );
 
@@ -129,9 +125,15 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
 
    // Set the wavelet filter
    if ( fsort.IsIntra() )
+   {
        m_encparams.SetTransformFilter( APPROX97 );
+       m_encparams.SetDefaultCodeBlocks( INTRA_FRAME );
+   }
    else
+   {
        m_encparams.SetTransformFilter( FIVETHREE );
+       m_encparams.SetDefaultCodeBlocks( INTER_FRAME );
+   }
 
     // Write the frame header. We wait until after motion estimation, since
     // this allows us to do cut-detection and (possibly) to decide whether
