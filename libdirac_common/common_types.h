@@ -175,6 +175,13 @@ typedef enum {
     MV_PRECISION_UNDEFINED
 } MVPrecisionType;
 
+/*! Type of quantiser modes when spatial partitioning is enabled */
+typedef enum
+{
+    QUANT_SINGLE,
+    QUANT_MULTIPLE,
+    QUANT_UNDEF
+} CodeBlockMode;
 
 #ifdef __cplusplus
 }
