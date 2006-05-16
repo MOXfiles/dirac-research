@@ -154,25 +154,27 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
         TransformByteIO transform_byteio(frame_byteio, m_fparams, m_decparams);
         transform_byteio.Input();
         
-        // NOTE: FIXME - Need to handle Zero-residual case. For the time
-        // being throw an error
-        if (m_decparams.ZeroTransform())
+        if (m_fparams.FSort().IsIntra() && m_decparams.ZeroTransform())
         {
             DIRAC_THROW_EXCEPTION(
                 ERR_UNSUPPORTED_STREAM_DATA,
-                "Cannot handle Zero-Residual case",
+                "Intra frames cannot have Zero-Residual",
                 SEVERITY_FRAME_ERROR);
         }
             
-        // Set frame dimensions based on the transform depth
+        // Set frame dimensions based on the transform depth. If zero residual
+        // then use the actual picture dimensions
         PushFrame(my_buffer);
 
         Frame& my_frame = my_buffer.GetFrame(m_fparams.FrameNum());//Reference to the frame being decoded
 
-        //decode components
-        CompDecompress( &transform_byteio, my_buffer,m_fparams.FrameNum() , Y_COMP );
-        CompDecompress( &transform_byteio, my_buffer , m_fparams.FrameNum() , U_COMP );        
-        CompDecompress( &transform_byteio, my_buffer , m_fparams.FrameNum() , V_COMP );
+        if (!m_decparams.ZeroTransform())
+        {
+            //decode components
+            CompDecompress( &transform_byteio, my_buffer,m_fparams.FrameNum() , Y_COMP );
+            CompDecompress( &transform_byteio, my_buffer , m_fparams.FrameNum() , U_COMP );        
+            CompDecompress( &transform_byteio, my_buffer , m_fparams.FrameNum() , V_COMP );
+        }
 
         if ( fsort.IsInter() )
         //motion compensate to add the data back in if we don't have an I frame
@@ -246,72 +248,80 @@ void FrameDecompressor::SetMVBlocks()
 
 void FrameDecompressor::PushFrame(FrameBuffer &my_buffer)
 {
-    //Amount of horizontal padding for Y,U and V components
-    int xpad_luma,xpad_chroma;
+    int xl_luma = m_decparams.OrigXl();
+    int yl_luma = m_decparams.OrigYl();
+      //scaling factors for chroma based on chroma format
+       int x_chroma_fac,y_chroma_fac;
 
-    //Amount of vertical padding for Y,U and V components
-    int ypad_luma,ypad_chroma;
+       //First, we need to have sufficient padding to take account of the blocksizes.
+       //It's sufficient to check for chroma
 
-    //scaling factors for chroma based on chroma format
-    int x_chroma_fac,y_chroma_fac;
+       if ( m_cformat == format420 )
+       {
+           x_chroma_fac = 2; 
+           y_chroma_fac = 2;
+       }
+       else if ( m_cformat == format422 )
+       {
+           x_chroma_fac = 2; 
+           y_chroma_fac = 1;
+       }
+       else
+       {
+           x_chroma_fac = 1; 
+           y_chroma_fac = 1;
+       }
 
-    //First, we need to have sufficient padding to take account of the blocksizes.
-    //It's sufficient to check for chroma
+       int xl_chroma=xl_luma / x_chroma_fac;
+       int yl_chroma=yl_luma / y_chroma_fac;
 
-    if ( m_cformat == format420 )
+
+    if (!m_decparams.ZeroTransform())
     {
-        x_chroma_fac = 2; 
-        y_chroma_fac = 2;
-    }
-    else if ( m_cformat == format422 )
-    {
-        x_chroma_fac = 2; 
-        y_chroma_fac = 1;
+        // Use the transform depth to pad the frame
+
+        //Amount of horizontal padding for Y,U and V components
+        int xpad_luma,xpad_chroma;
+
+        //Amount of vertical padding for Y,U and V components
+        int ypad_luma,ypad_chroma;
+
+        xpad_chroma = ypad_chroma = 0;
+    
+        // The frame dimensions must be a multiple of 2^(transform_depth)
+        int tx_mul = static_cast<int>(std::pow(2.0, (int)m_decparams.TransformDepth()));
+
+        if ( xl_chroma%tx_mul != 0 )
+            xpad_chroma=( ( xl_chroma/tx_mul ) + 1 )*tx_mul - xl_chroma;
+        if ( yl_chroma%tx_mul != 0)
+            ypad_chroma = ( ( yl_chroma/tx_mul ) + 1 )*tx_mul - yl_chroma;    
+
+        xl_chroma += xpad_chroma;
+        yl_chroma += ypad_chroma;
+    
+        xpad_luma = ypad_luma = 0;
+    
+        // The frame dimensions must be a multiple of 2^(transform_depth)
+        if ( xl_luma%tx_mul != 0 )
+            xpad_luma=( ( xl_luma/tx_mul ) + 1 )*tx_mul - xl_luma;
+        if ( yl_luma%tx_mul != 0)
+            ypad_luma = ( ( yl_luma/tx_mul ) + 1 )*tx_mul - yl_luma;    
+
+        xl_luma += xpad_luma;
+        yl_luma += ypad_luma;
     }
     else
     {
-        x_chroma_fac = 1; 
-        y_chroma_fac = 1;
+        // Use the original frame dimensions.
     }
-
-    int xl_chroma=m_decparams.OrigXl() / x_chroma_fac;
-    int yl_chroma=m_decparams.OrigYl() / y_chroma_fac;
-
-    xpad_chroma = ypad_chroma = 0;
-    
-    // The frame dimensions must be a multiple of 2^(transform_depth)
-    int tx_mul = static_cast<int>(std::pow(2.0, m_decparams.TransformDepth()));
-
-    if ( xl_chroma%tx_mul != 0 )
-        xpad_chroma=( ( xl_chroma/tx_mul ) + 1 )*tx_mul - xl_chroma;
-    if ( yl_chroma%tx_mul != 0)
-        ypad_chroma = ( ( yl_chroma/tx_mul ) + 1 )*tx_mul - yl_chroma;    
-
-    int xpad_chroma_len = xl_chroma+xpad_chroma;
-    int ypad_chroma_len = yl_chroma+ypad_chroma;
-    
-    int xpad_len = m_decparams.OrigXl();
-    int ypad_len = m_decparams.OrigYl();
-    xpad_luma = ypad_luma = 0;
-    
-    // The frame dimensions must be a multiple of 2^(transform_depth)
-    if ( xpad_len%tx_mul != 0 )
-        xpad_luma=( ( xpad_len/tx_mul ) + 1 )*tx_mul - xpad_len;
-    if ( ypad_len%tx_mul != 0)
-        ypad_luma = ( ( ypad_len/tx_mul ) + 1 )*tx_mul - ypad_len;    
-
-    xpad_len += xpad_luma;
-    ypad_len += ypad_luma;
-
+        
     m_fparams.SetCFormat(m_cformat);
 
-    m_fparams.SetXl(xpad_len);
-    m_fparams.SetYl(ypad_len);
+    m_fparams.SetXl(xl_luma);
+    m_fparams.SetYl(yl_luma);
 
-    m_fparams.SetChromaXl(xpad_chroma_len);
-    m_fparams.SetChromaYl(ypad_chroma_len);
+    m_fparams.SetChromaXl(xl_chroma);
+    m_fparams.SetChromaYl(yl_chroma);
 
     my_buffer.PushFrame(m_fparams);
-
 }
-
