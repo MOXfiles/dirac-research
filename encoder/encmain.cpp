@@ -388,6 +388,23 @@ const char *chroma2string (dirac_chroma_t chroma)
     return "Unknown";
 }
 
+const char *MvPrecisionToString (MVPrecisionType mv_type)
+{
+    switch (mv_type)
+    {
+    case MV_PRECISION_PIXEL:
+        return "Pixel";
+    case MV_PRECISION_HALF_PIXEL:
+        return "Half Pixel";
+    case MV_PRECISION_QUARTER_PIXEL:
+        return "Quarter Pixel";
+    case MV_PRECISION_EIGHTH_PIXEL:
+        return "Eighth Pixel";
+    default:
+        return "Undefined";
+    }
+}
+
 void display_codec_params(dirac_encoder_context_t &enc_ctx)
 {
     std::cout << "Sequence parameters : " << std::endl;
@@ -404,6 +421,10 @@ void display_codec_params(dirac_encoder_context_t &enc_ctx)
     std::cout << " yblen=" << enc_ctx.enc_params.yblen;
     std::cout << " xbsep=" << enc_ctx.enc_params.xbsep;
     std::cout << " ybsep=" << enc_ctx.enc_params.ybsep << std::endl;
+    std::cout << " \tMV Precision=" << MvPrecisionToString(enc_ctx.enc_params.mv_precision) << std::endl;
+    std::cout << " \tWavelet depth=" << enc_ctx.enc_params.wlt_depth << std::endl;
+    std::cout << " \tSpatial Partitioning=" << (enc_ctx.enc_params.spatial_partition ? "true" : "false") << std::endl;
+    std::cout << " \tMultiple Quantisers=" << (enc_ctx.enc_params.multi_quants ? "true" : "false") << std::endl;
 }
 
 int main (int argc, char* argv[])
@@ -960,7 +981,7 @@ int main (int argc, char* argv[])
     // delete frame buffer
     delete [] frame_buf;
     
-	delete[] parsed;
+    delete[] parsed;
     return EXIT_SUCCESS;
 
 
