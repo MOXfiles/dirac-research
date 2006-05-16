@@ -515,7 +515,8 @@ namespace dirac
             */
             inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
             {
-                in_val -= (( val1 + val2 ) >>shift );
+//                in_val -= (( val1 + val2 ) >>shift );
+                in_val -= (( val1 + val2 + (1<<(shift-1)) ) >>shift );
             }
 
         };
@@ -538,7 +539,7 @@ namespace dirac
             */
             inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
             {
-                in_val += ( ( val1 + val2 ) >>shift );
+                in_val += ( ( val1 + val2 + (1<<(shift-1)) ) >>shift );
             }
 
         };  
@@ -558,7 +559,7 @@ namespace dirac
             inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2 ,
                                                   const ValueType& val3, const ValueType& val4 ) const
             {
-                in_val -= ( tap1*( val1 + val2 ) + tap2*( val3 + val4 ) )>>shift;
+                in_val -= ( tap1*( val1 + val2 ) + tap2*( val3 + val4 ) + (1<<(shift-1)))>>shift;
             }
         }; 
 
@@ -575,7 +576,7 @@ namespace dirac
             inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2 ,
                                                   const ValueType& val3, const ValueType& val4 ) const
             {
-                in_val += ( tap1*( val1 + val2 ) + tap2*( val3 + val4 ) )>>shift;
+                in_val += ( tap1*( val1 + val2 ) + tap2*( val3 + val4 ) + (1<<(shift-1)) )>>shift;
             }
         };  
 
@@ -649,6 +650,22 @@ namespace dirac
         //! Given x and y spatial frequencies in cycles per degree, returns a weighting value
         float PerceptualWeight(float xf,float yf,CompSort cs);
    };  
+
+   // Specialisations - no need to do unbiased rounding if shift = 1
+
+   //! Do the filtering
+   template<>
+   inline void WaveletTransform::PredictStepShift<1>::Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
+   {
+       in_val -= (( val1 + val2 ) >>1 );
+   }
+
+   //! Do the filtering
+   template<>
+   inline void WaveletTransform::UpdateStepShift<1>::Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
+    {
+        in_val += ( ( val1 + val2 ) >>1 );
+    }
 
 }// end namespace dirac
 
