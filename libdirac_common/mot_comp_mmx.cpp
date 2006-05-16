@@ -108,6 +108,11 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
     ValueType *wt_curr = &wt_array[diff.y][diff.x];
 
     const int block_width = end_pos.x - start_pos.x;
+    if (block_width <= 0)
+    {
+        std::cerr << "Block_width=" << block_width << std::endl;
+        return;
+    }
 
     const int pic_next( pic_data.LengthX() - block_width ); //go down a row and back to beginning of block line
     const int wt_next( wt_array.LengthX() - block_width ); //go down a row and back to beginning of block line
@@ -345,6 +350,120 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
            }//l
        }//c
        _mm_empty();
+    }
+}
+
+void MotionCompensator_HalfPixel::CompensateBlock( TwoDArray<CalcValueType> &pic_data , 
+                                          const ImageCoords& orig_pic_size , 
+                                          const PicArray &refup_data , 
+                                          const MVector &mv , 
+                                          const ImageCoords& pos , 
+                                          const TwoDArray<ValueType>& wt_array)
+{
+    //Coordinates in the image being written to.
+    const ImageCoords start_pos( std::max(pos.x,0) , std::max(pos.y,0) );
+    const ImageCoords end_pos( std::min( pos.x + wt_array.LengthX() , orig_pic_size.x) , 
+                               std::min( pos.y + wt_array.LengthY() , orig_pic_size.y ) );
+
+    //The difference between the desired start point
+    //pos and the actual start point start_pos.
+    const ImageCoords diff( start_pos.x - pos.x , start_pos.y - pos.y );
+
+    //Where to start in the upconverted image
+    const ImageCoords ref_start( ( start_pos.x<<1 ) + mv.x ,( start_pos.y<<1 ) + mv.y );
+
+    //An additional stage to make sure the block to be copied does not fall outside
+    //the reference image.
+    const int refXlen = refup_data.LengthX();
+    //const int refYlen = refup_data.LengthY();
+    const int trueRefXlen = orig_pic_size.x << 1;
+    const int trueRefYlen = orig_pic_size.y << 1;
+
+    bool do_bounds_checking = false;
+
+    //Check if there are going to be any problems copying the block from
+    //the upvconverted reference image.
+
+    if( ref_start.x < 0 ) 
+        do_bounds_checking = true;
+    else if( ref_start.x + ((end_pos.x - start_pos.x -1 )<<1 ) >= trueRefXlen )
+        do_bounds_checking = true;
+    if( ref_start.y < 0 ) 
+        do_bounds_checking = true;
+    else if( ref_start.y + ((end_pos.y - start_pos.y - 1 )<<1 ) >= trueRefYlen)
+        do_bounds_checking = true;
+
+    CalcValueType *pic_curr = &pic_data[0][start_pos.x];
+    ValueType *wt_curr = &wt_array[diff.y][diff.x];
+ 
+    const int block_width = end_pos.x - start_pos.x;
+    if (block_width <= 0)
+        return;
+
+
+    const int pic_next( pic_data.LengthX() - block_width );// go down a row and back up
+    const int wt_next( wt_array.LengthX() - block_width ); // go down a row and back up
+
+    if( !do_bounds_checking )
+    {  
+        ValueType *refup_curr = &refup_data[ref_start.y][ref_start.x];
+        const int refup_next( (refXlen - block_width)*2 );// go down 2 rows and back up
+        int stopX = (block_width>>2)<<2;
+#if 1
+        {
+            __m64 m1, m2, m3;
+
+            for( int y=end_pos.y-start_pos.y; y > 0; --y, pic_curr+=pic_next, wt_curr+=wt_next, refup_curr+=refup_next )
+            {
+                int x;
+                for( x=0; x < stopX; x+=4, pic_curr+=4, wt_curr+=4, refup_curr+=8 )
+                {
+                    m1 = _mm_unpacklo_pi16 (*(__m64 *)refup_curr, *(__m64 *)(refup_curr+4));
+                    m2 = _mm_unpackhi_pi16 (*(__m64 *)refup_curr, *(__m64 *)(refup_curr+4));
+                    m1 = _mm_unpacklo_pi16 (m1, m2);
+                    m2 = _mm_mulhi_pi16 (*(__m64 *)wt_curr, m1);
+                    m1 = _mm_mullo_pi16 (*(__m64 *)wt_curr, m1);
+                    m3 =  _mm_unpacklo_pi16 (m1, m2);
+                    m1 =  _mm_unpackhi_pi16 (m1, m2);
+                    *(__m64 *)pic_curr = _mm_add_pi32 (*(__m64 *)pic_curr, m3);
+                    *(__m64 *)(pic_curr+2) = _mm_add_pi32 (*(__m64 *)(pic_curr+2), m1);
+                }
+                // Mopup the last value
+                for ( x=stopX ; x < block_width; ++x)
+                {
+                    *pic_curr += CalcValueType( *refup_curr )* *wt_curr;
+                    ++pic_curr;
+                    ++wt_curr;
+                    refup_curr+=2;
+                }
+            }
+            _mm_empty();
+        }
+#else
+
+        for( int y=end_pos.y-start_pos.y; y > 0; --y, pic_curr+=pic_next, wt_curr+=wt_next, refup_curr+=refup_next )
+        {
+            for( int x=block_width; x > 0; --x, ++pic_curr, ++wt_curr, refup_curr+=2 )
+            {
+                *pic_curr += CalcValueType( refup_curr[0] )* *wt_curr;
+            }
+        }
+#endif
+    }
+    else
+    {
+        // We're doing bounds checking because we'll fall off the edge of the reference otherwise.
+        for( int y=end_pos.y-start_pos.y, ry=ref_start.y, by=BChk(ry,trueRefYlen); 
+             y>0; 
+             --y, pic_curr+=pic_next, wt_curr+=wt_next , ry+=2 , by=BChk(ry,trueRefYlen))
+        {
+             for( int x=block_width , rx=ref_start.x , bx=BChk(rx,trueRefXlen); 
+                  x>0 ; 
+                  --x, ++pic_curr, ++wt_curr, rx+=2 , bx=BChk(rx,trueRefXlen))
+             {
+                 *pic_curr += CalcValueType( refup_data[by][bx] )* *wt_curr;
+             }// x
+        }// y
     }
 }
 

@@ -859,6 +859,7 @@ MotionCompensator_HalfPixel::MotionCompensator_HalfPixel( const CodecParams &cp 
     MotionCompensator( cp )
 {}
 
+#if !defined (HAVE_MMX)
 void MotionCompensator_HalfPixel::CompensateBlock( TwoDArray<CalcValueType> &pic_data , 
                                           const ImageCoords& orig_pic_size , 
                                           const PicArray &refup_data , 
@@ -936,6 +937,7 @@ void MotionCompensator_HalfPixel::CompensateBlock( TwoDArray<CalcValueType> &pic
         }// y
     }
 }
+#endif
 
 // Motion Compesation class that provides quarter-pixel precision compensation
 MotionCompensator_QuarterPixel::MotionCompensator_QuarterPixel( const CodecParams &cp ) : 
