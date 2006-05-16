@@ -375,7 +375,7 @@ void CodecParams::SetTransformFilter(unsigned int wf_idx)
             "Wavelet filter idx out of range [0-6]",
             SEVERITY_FRAME_ERROR);
 
-    if (wf_idx > THIRTEENFIVE)
+    if (wf_idx > THIRTEENFIVE && wf_idx != DAUB97)
     {
         std::ostringstream errstr;
         errstr << "Wavelet Filter " << wf_idx << " currently not supported";
@@ -385,6 +385,132 @@ void CodecParams::SetTransformFilter(unsigned int wf_idx)
             SEVERITY_FRAME_ERROR);
     }
     SetTransformFilter(static_cast<WltFilter>(wf_idx));
+}
+
+void CodecParams::SetTransformDepth (unsigned int wd)
+{
+    m_wlt_depth = wd;
+    // Resize the code block size array.
+    m_cb.Resize(wd+1);
+}
+
+void CodecParams::SetCodeBlocks (unsigned int level, 
+                                   unsigned int hblocks,
+                                   unsigned int vblocks)
+{
+    if (level > m_wlt_depth)
+    {
+        std::ostringstream errstr;
+        errstr << "level " << level << " out of range [0-" << m_wlt_depth  << "]";
+        DIRAC_THROW_EXCEPTION(
+            ERR_UNSUPPORTED_STREAM_DATA,
+            errstr.str(),
+            SEVERITY_FRAME_ERROR);
+    }
+
+    m_cb[level].SetHorizontalCodeBlocks(hblocks);
+    m_cb[level].SetVerticalCodeBlocks(vblocks);
+}
+
+void CodecParams::SetDefaultCodeBlocks ( const FrameType &ftype)
+{
+    // No subband splitting if  spatial partitioning if false
+    // Since this function is common to encoder and decoder we allow the
+    // setting of code blocks without checking if DefaultSpatialPartition is
+    // true.
+    if (SpatialPartition() == false)
+        return;
+
+    switch (GetVideoFormat())
+    {
+    case VIDEO_FORMAT_QSIF:
+    case VIDEO_FORMAT_QCIF:
+        // No splitting by default for QSIF and CIF
+        break;
+
+    case VIDEO_FORMAT_CUSTOM:
+    case VIDEO_FORMAT_SIF:
+    case VIDEO_FORMAT_CIF:
+    case VIDEO_FORMAT_SD_PAL:
+    case VIDEO_FORMAT_SD_NTSC:
+    case VIDEO_FORMAT_SD_525_DIGITAL:
+    case VIDEO_FORMAT_SD_625_DIGITAL:
+    case VIDEO_FORMAT_HD_720:
+    case VIDEO_FORMAT_HD_1080:
+        if (ftype == INTRA_FRAME)
+        {
+            // Intra frame default number of coeff blocks per level
+            // only the highest two levels are split.
+            SetCodeBlocks(0, 1, 1);
+            int level = TransformDepth();
+            int i = 1;
+            for (; i<= level-2; ++i)
+            {
+                SetCodeBlocks(i, 1, 1);
+            }
+            if (i < level)
+            {
+                SetCodeBlocks(level-1, 4, 3);
+                SetCodeBlocks(level, 4, 3);
+            }
+        }
+        else
+        {
+            // Inter frame default number of coeff blocks per level
+            // only the highest three levels are split.
+            SetCodeBlocks(0, 1, 1);
+            int level = TransformDepth();
+            int i = 1;
+            for (; i<= level-3; ++i)
+            {
+                SetCodeBlocks(i, 1, 1);
+            }
+            if (i < level)
+            {
+                SetCodeBlocks(level-2, 8, 6);
+                SetCodeBlocks(level-1, 12, 8);
+                SetCodeBlocks(level, 12, 8);
+            }
+        }
+        break;
+
+    default:
+        DIRAC_THROW_EXCEPTION(
+            ERR_INVALID_VIDEO_FORMAT,
+            "Unsupported video format",
+            SEVERITY_FRAME_ERROR);
+        break;
+    }
+}
+
+const CodeBlocks &CodecParams::GetCodeBlocks (unsigned int level) const 
+{
+    if (level > m_wlt_depth)
+    {
+        std::ostringstream errstr;
+        errstr << "level " << level << " out of range [0-" << m_wlt_depth  << "]";
+        DIRAC_THROW_EXCEPTION(
+            ERR_UNSUPPORTED_STREAM_DATA,
+            errstr.str(),
+            SEVERITY_FRAME_ERROR);
+    }
+
+    return m_cb[level];
+}
+
+void CodecParams::SetCodeBlockMode (unsigned int cb_mode)
+{
+    if (cb_mode >= QUANT_UNDEF)
+    {
+        std::ostringstream errstr;
+        errstr << "Code Block mode " << cb_mode << " out of supported range [0-" << QUANT_MULTIPLE  << "]";
+        DIRAC_THROW_EXCEPTION(
+            ERR_UNSUPPORTED_STREAM_DATA,
+            errstr.str(),
+            SEVERITY_FRAME_ERROR);
+    }
+
+    m_cb_mode = static_cast<CodeBlockMode>(cb_mode);
 }
 
 //EncoderParams functions
@@ -738,14 +864,16 @@ FrameParams::FrameParams(const SeqParams& sparams, const FrameSort& fs):
 }
 
 QuantiserLists::QuantiserLists()
-: 
-    m_qflist4( 61 ),  
-    m_offset( 61 )
+:
+    // FIXME: hardcode m_max_qindex to 96. In future this will depend on level
+    m_max_qindex( 96 ),  
+    m_qflist4( m_max_qindex+1 ),
+    m_offset4( m_max_qindex+1 )
 {
-    for (int i=0; i<=60; ++i)
+    for (unsigned int i=0; i<=m_max_qindex; ++i)
     {
         m_qflist4[i] = int( std::pow(2.0, 2.0+double(i)/4.0) + 0.5 );
-        m_offset[i] = int( double( m_qflist4[i]*0.375*0.25) + 0.5 );
+        m_offset4[i] = int( double( m_qflist4[i]*0.375) + 0.5 );
     }// i
 }
 

@@ -226,7 +226,7 @@ namespace dirac
 
      /**
     * Function to convert an integer to a valid motion-vector precision type
-    *@param signal_range_idx Integer corresponding to a valid motion-vector precision
+    *@param mv_prec Integer corresponding to a valid motion-vector precision
     *@return Valid MVPrecisionType (returns SIGNAL_RANGE_UNDEFINED if no valid precision found)
     */
     MVPrecisionType IntToMVPrecisionType(int mv_prec);
@@ -980,13 +980,36 @@ namespace dirac
 
     };
 
-//    //! Operator for inputting block parameters
-//    std::istream & operator>> (std::istream & stream, OLBParams & params);
-//
-//    //! Operator for outputting block parameters
-//    std::ostream & operator<< (std::ostream & stream, OLBParams & params);
+    //! Structure to hold code block sizes when spatial partitioning is used
+    class CodeBlocks
+    {
+    public:
+        //! Default Constructor
+        CodeBlocks () : m_hblocks(0), m_vblocks(0)
+        {}
 
+        //! Constructor
+        CodeBlocks (unsigned int  hblocks, unsigned int vblocks) : 
+            m_hblocks(hblocks),
+            m_vblocks(vblocks)
+            {}
 
+        // Gets
+        //! Return the number of horizontal code blocks
+        unsigned int HorizontalCodeBlocks() const { return m_hblocks; }
+        //! Return the number of vertical code blocks
+        unsigned int VerticalCodeBlocks() const { return m_vblocks; }
+        // Sets 
+        //! Set the number of horizontal code blocks
+        void SetHorizontalCodeBlocks(unsigned int hblocks) { m_hblocks = hblocks; }
+        //! Set the number of vertical code blocks
+        void SetVerticalCodeBlocks(unsigned int vblocks) { m_vblocks = vblocks; }
+    private:
+        //! Number of Horizontal code blocks
+        unsigned int m_hblocks;
+        //! Number of Vertical code blocks
+        unsigned int m_vblocks;
+    };
     //! Parameters common to coder and decoder operation
     /*!
         Parameters used throughout both the encoder and the decoder
@@ -1038,7 +1061,7 @@ namespace dirac
         int OrigYl() const {return m_orig_yl;}
 
         //! Return the number of accuracy bits used for motion vectors
-        unsigned int MVPrecision() const { return m_mv_precision; }
+        MVPrecisionType MVPrecision() const { return m_mv_precision; }
 
         //! Return zero transform flag being used for frame (de)coding
         bool ZeroTransform() const { return m_zero_transform; } 
@@ -1047,20 +1070,18 @@ namespace dirac
         WltFilter TransformFilter() const { return m_wlt_filter; } 
 
         //! Return the transform depth being used for frame (de)coding
-        int TransformDepth() const { return m_wlt_depth; } 
+        unsigned int TransformDepth() const { return m_wlt_depth; } 
 
         //! Return multiple quantisers flag being used for frame (de)coding
-        bool MultiQuants() const { return m_multi_quants; } 
+        CodeBlockMode GetCodeBlockMode() const { return m_cb_mode; } 
 
         //! Return the spatial partitioning flag being used for frame (de)coding
         bool SpatialPartition() const { return m_spatial_partition; } 
         
         //! Return the default spatial partitioning flag being used for frame (de)coding
         bool DefaultSpatialPartition() const { return m_def_spatial_partition; } 
-        //! Return the maximum number of blocks in x direction 
-        unsigned int MaxXBlocks() const { return m_max_x_blocks; }
-        //! Return the maximum number of blocks in y direction 
-        unsigned int MaxYBlocks() const { return m_max_y_blocks; }
+        //! Return the code blocks for a particular level
+        const CodeBlocks &GetCodeBlocks(unsigned int level) const;
 
         //! Return the video format currently being used for frame (de)coding
         VideoFormat GetVideoFormat() const { return m_video_format; } 
@@ -1111,7 +1132,7 @@ namespace dirac
         void SetOrigYl(const int y){m_orig_yl=y;}
 
         //! Set the number of accuracy bits for motion vectors
-        void SetMVPrecision(const unsigned int p)
+        void SetMVPrecision(const MVPrecisionType p)
         {
             // Assert in debug mode. Maybe we should throw an exception???
             TESTM((p >=0 && p <=3), "Motion precision value in range 0..3");
@@ -1127,11 +1148,11 @@ namespace dirac
         //! Set the wavelet filter used for frame (de)coding
         void SetTransformFilter(unsigned int wf_idx);
 
-        //! Set the transform depth used for frame (de)coding
-        void SetTransformDepth(int wd) { m_wlt_depth=wd;};
+        //! Set the transform depth used for frame (de)coding and allocate for the code blocks array
+        void SetTransformDepth(unsigned int wd);
 
         //! Set the multiple quantisers flag usedto frame (de)coding
-        void SetMultiQuants(bool multi_quants) { m_multi_quants=multi_quants; } 
+        void SetCodeBlockMode(unsigned int cb_mode);
 
         //! Set the spatial partition flag usedto frame (de)coding
         void SetSpatialPartition(bool spatial_partition) { m_spatial_partition=spatial_partition; } 
@@ -1139,11 +1160,11 @@ namespace dirac
         //! Set the spatial partition flag usedto frame (de)coding
         void SetDefaultSpatialPartition(bool def_spatial_partition) { m_def_spatial_partition=def_spatial_partition; } 
         
-        //! Set the maximum number of blocks in x direction 
-        void  SetMaxXBlocks(unsigned int max_x_blocks) { m_max_x_blocks = max_x_blocks; }
+        //! Set the number of code blocks for a particular level
+        void  SetCodeBlocks(unsigned int level, unsigned int hblocks, unsigned int vblocks);
         
-        //! Set the maximum number of blocks in x direction 
-        void  SetMaxYBlocks(unsigned int max_y_blocks) { m_max_y_blocks = max_y_blocks; }
+        //! Set the default number of code blocks for all levels
+        void  SetDefaultCodeBlocks(const FrameType& ftype);
 
         //! Set the video format used for frame (de)coding
         void SetVideoFormat(const VideoFormat vd) { m_video_format=vd; } 
@@ -1193,7 +1214,7 @@ namespace dirac
         int m_orig_yl;
 
         //! The precision of motion vectors (number of accuracy bits eg 1=half-pel accuracy) 
-        unsigned int m_mv_precision;
+        MVPrecisionType m_mv_precision;
 
         //! The video format being used
         VideoFormat m_video_format;
@@ -1217,10 +1238,10 @@ namespace dirac
         WltFilter m_wlt_filter;
 
         //! Wavelet depth
-        int m_wlt_depth;
+        unsigned int m_wlt_depth;
 
-        //! Wavelet depth
-        bool m_multi_quants;
+        //! Code block mode
+        CodeBlockMode m_cb_mode;
 
         //! Spatial partitioning flag
         bool m_spatial_partition;
@@ -1228,11 +1249,8 @@ namespace dirac
         //! Default Spatial partitioning flag
         bool m_def_spatial_partition;
 
-        //! Max number of code coeff blocks in x direction
-        unsigned int m_max_x_blocks;
-        
-        //! Max number of code coeff blocks in y direction
-        unsigned int m_max_y_blocks;
+        //! Code block array. Number of entries is m_wlt_depth+1
+        OneDArray<CodeBlocks> m_cb;
     };
 
     //! Parameters for the encoding process
@@ -1455,12 +1473,16 @@ namespace dirac
         inline int QuantFactor4( const int index ) const {return m_qflist4[index]; }
 
         //! Returns the quantisation offset for non-zero values
-        inline int QuantOffset( const int index ) const {return m_offset[index]; }
+        inline int QuantOffset4( const int index ) const {return m_offset4[index]; }
+
+        //! Returns the maximum quantiser index supported
+        inline int MaxQIndex() const {return m_max_qindex; }
     
 
     private:
+        unsigned int m_max_qindex;
         OneDArray<int> m_qflist4;
-        OneDArray<int> m_offset;
+        OneDArray<int> m_offset4;
 
     };
 
