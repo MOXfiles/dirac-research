@@ -41,6 +41,7 @@
 
 #include <libdirac_common/band_codec.h>
 #include <libdirac_byteio/subband_byteio.h>
+#include <libdirac_common/dirac_exception.h>
 
 using namespace dirac;
 
@@ -106,12 +107,14 @@ void BandCodec::DoWorkCode(PicArray& in_data)
 
     // Now loop over the blocks and code
     m_coeff_count = 0;
+    bool code_skip = (block_list.LengthX() > 1 || block_list.LengthY() > 1);
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
         CodeBlock *block = block_list[j];
         for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
         {
-            EncodeSymbol(block[i].Skipped() , BLOCK_SKIP_CTX );
+            if (code_skip)
+                EncodeSymbol(block[i].Skipped() , BLOCK_SKIP_CTX );
             if ( !block[i].Skipped() )
                 CodeCoeffBlock( block[i] , in_data );
             else
@@ -152,7 +155,7 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
+    m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
 
     m_cut_off_point = m_node.Scale()>>1;
     m_cut_off_point *= m_qf;
@@ -226,16 +229,16 @@ inline void BandCodec::CodeVal( PicArray& in_data ,
     {
         // Must code sign bits and reconstruct
         in_data[ypos][xpos] *= m_qf;
-        in_data[ypos][xpos] >>= 2;
         in_data[ypos][xpos] += m_offset;
+        in_data[ypos][xpos] >>= 2;
 
         if ( val>0 )
         {
-            EncodeSymbol( 1 , ChooseSignContext( in_data , xpos , ypos ) );
+            EncodeSymbol( 0 , ChooseSignContext( in_data , xpos , ypos ) );
         }
         else
         {
-            EncodeSymbol( 0 , ChooseSignContext( in_data , xpos , ypos ) );
+            EncodeSymbol( 1 , ChooseSignContext( in_data , xpos , ypos ) );
             in_data[ypos][xpos]  = -in_data[ypos][xpos];
         }
     }
@@ -272,9 +275,9 @@ void BandCodec::CodeQIndexOffset( const int offset )
     if ( abs_val )
     {
         if ( offset>0 )
-            EncodeSymbol( 1 , Q_OFFSET_SIGN_CTX );
-        else
             EncodeSymbol( 0 , Q_OFFSET_SIGN_CTX );
+        else
+            EncodeSymbol( 1 , Q_OFFSET_SIGN_CTX );
     }
 }
 
@@ -295,12 +298,14 @@ void BandCodec::DoWorkDecode( PicArray& out_data )
 
     // Now loop over the blocks and decode
     m_coeff_count = 0;
+    bool decode_skip= (block_list.LengthX() > 1 || block_list.LengthY() > 1);
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
         CodeBlock *block = block_list[j];
         for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
         {
-            block[i].SetSkip( DecodeSymbol( BLOCK_SKIP_CTX ) );
+            if (decode_skip)
+                block[i].SetSkip( DecodeSymbol( BLOCK_SKIP_CTX ) );
             if ( !block[i].Skipped() )
                 DecodeCoeffBlock( block[i] , out_data );
             else
@@ -341,8 +346,16 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
         qf_idx += DecodeQIndexOffset(); 
     }
 
+	if (qf_idx > (int)dirac_quantiser_lists.MaxQIndex())
+    {
+        DIRAC_THROW_EXCEPTION(
+            ERR_UNSUPPORTED_STREAM_DATA,
+            "Quantiser index out of range [0..96]",
+            SEVERITY_FRAME_ERROR);
+    }
+
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
+    m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
 
     m_cut_off_point = m_node.Scale()>>1;
     m_cut_off_point *= m_qf;
@@ -408,10 +421,10 @@ inline void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const in
     if ( out_pixel )
     {
         out_pixel *= m_qf;
-        out_pixel >>= 2;
         out_pixel += m_offset;
+        out_pixel >>= 2;
      
-        if ( !DecodeSymbol( ChooseSignContext(out_data, xpos, ypos)) )
+        if ( DecodeSymbol( ChooseSignContext(out_data, xpos, ypos)) )
             out_pixel = -out_pixel;
     }
 
@@ -532,7 +545,7 @@ int BandCodec::DecodeQIndexOffset()
 
     if ( offset )
     {
-        if ( !DecodeSymbol( Q_OFFSET_SIGN_CTX ) )
+        if ( DecodeSymbol( Q_OFFSET_SIGN_CTX ) )
             offset = -offset;
     }
     return offset;
@@ -572,11 +585,13 @@ void LFBandCodec::DoWorkCode(PicArray& in_data)
 
     // Now loop over the blocks and code
     m_coeff_count = 0;
+    bool code_skip= (block_list.LengthX() > 1 || block_list.LengthY() > 1);
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
         for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
         {
-            EncodeSymbol(block_list[j][i].Skipped() , BLOCK_SKIP_CTX );
+            if (code_skip)
+                EncodeSymbol(block_list[j][i].Skipped() , BLOCK_SKIP_CTX );
             if ( !block_list[j][i].Skipped() )
                 CodeCoeffBlock( block_list[j][i] , in_data );
             else
@@ -603,7 +618,7 @@ void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_dat
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
+    m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
 
     m_cut_off_point = m_node.Scale()>>1;
     m_cut_off_point *= m_qf;
@@ -636,11 +651,13 @@ void LFBandCodec::DoWorkDecode(PicArray& out_data )
 
     // Now loop over the blocks and decode
     m_coeff_count = 0;
+    bool decode_skip= (block_list.LengthX() > 1 || block_list.LengthY() > 1);
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
         for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
         {
-            block_list[j][i].SetSkip( DecodeSymbol( BLOCK_SKIP_CTX ) );
+            if (decode_skip)
+                block_list[j][i].SetSkip( DecodeSymbol( BLOCK_SKIP_CTX ) );
             if ( !block_list[j][i].Skipped() )
                 DecodeCoeffBlock( block_list[j][i] , out_data );
             else
@@ -667,8 +684,16 @@ void LFBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_
         qf_idx += DecodeQIndexOffset(); 
     }
 
+	if (qf_idx > (int)dirac_quantiser_lists.MaxQIndex())
+    {
+        DIRAC_THROW_EXCEPTION(
+            ERR_UNSUPPORTED_STREAM_DATA,
+            "Quantiser index out of range [0..96]",
+            SEVERITY_FRAME_ERROR);
+    }
+
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
+    m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
 
     m_cut_off_point = m_node.Scale()>>1;
     m_cut_off_point *= m_qf;
@@ -742,7 +767,7 @@ void IntraDCBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& i
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
+    m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
 
     m_cut_off_point = m_node.Scale()>>1;
     m_cut_off_point *= m_qf;
@@ -807,7 +832,7 @@ void IntraDCBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray&
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    m_offset =  dirac_quantiser_lists.QuantOffset( qf_idx );
+    m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
 
     m_cut_off_point = m_node.Scale()>>1;
     m_cut_off_point *= m_qf;
