@@ -45,10 +45,10 @@ QualityMonitor::QualityMonitor(EncoderParams& encp,
                                const SeqParams& sparams)
 :
     m_encparams(encp),
-    m_cformat( sparams.CFormat() ),
-    m_true_xl( sparams.Xl() ),
-    m_true_yl( sparams.Yl() ),
-    m_quality_average(3),
+    m_sparams( sparams ),
+    m_quality_averageY(3),
+    m_quality_averageU(3),
+    m_quality_averageV(3),
     m_frame_total(3)
 {
     ResetAll();
@@ -76,7 +76,9 @@ void QualityMonitor::ResetAll()
 
         for (int i=0; i<3 ; ++i )
         {
-            m_quality_average[i] = 0.0;
+            m_quality_averageY[i] = 0.0;
+            m_quality_averageU[i] = 0.0;
+            m_quality_averageV[i] = 0.0;
             m_frame_total[i] = 0;
         }// i
     }
@@ -93,9 +95,17 @@ void QualityMonitor::ResetAll()
 
 void QualityMonitor::WriteLog()
 {
-    std::cerr<<std::endl<<"Mean quality for Intra frames is "<<m_quality_average[0]/m_frame_total[0];
-    std::cerr<<std::endl<<"Mean quality for Inter Ref frames is "<<m_quality_average[1]/m_frame_total[1];
-    std::cerr<<std::endl<<"Mean quality for Inter Non-Ref frames is "<<m_quality_average[2]/m_frame_total[2]<<std::endl;
+    std::cerr<<std::endl<<"Mean PSNR for Intra frame Y component is "<<m_quality_averageY[0]/m_frame_total[0];
+    std::cerr<<std::endl<<"Mean PSNR for Inter Ref frame Y component is "<<m_quality_averageY[1]/m_frame_total[1];
+    std::cerr<<std::endl<<"Mean PSNR for Inter Non-Ref frame Y component is "<<m_quality_averageY[2]/m_frame_total[2]<<std::endl;
+
+    std::cerr<<std::endl<<"Mean PSNR for Intra frame U component is "<<m_quality_averageU[0]/m_frame_total[0];
+    std::cerr<<std::endl<<"Mean PSNR for Inter Ref frame U component is "<<m_quality_averageU[1]/m_frame_total[1];
+    std::cerr<<std::endl<<"Mean PSNR for Inter Non-Ref frame U component is "<<m_quality_averageU[2]/m_frame_total[2]<<std::endl;
+
+    std::cerr<<std::endl<<"Mean PSNR for Intra frame V component is "<<m_quality_averageV[0]/m_frame_total[0];
+    std::cerr<<std::endl<<"Mean PSNR for Inter Ref frame V component is "<<m_quality_averageV[1]/m_frame_total[1];
+    std::cerr<<std::endl<<"Mean PSNR for Inter Non-Ref frame V component is "<<m_quality_averageV[2]/m_frame_total[2]<<std::endl;
 }
 
 void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame )
@@ -103,94 +113,32 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
 	const FrameSort& fsort = ld_frame.GetFparams().FSort();	
 	int idx = fsort.IsIntra() ? 0 : (fsort.IsRef() ? 1 : 2);
 
-	m_quality_average[idx] += QualityVal( ld_frame.Ydata() , orig_frame.Ydata() , 0.0 , fsort );
+	m_quality_averageY[idx] += QualityVal( ld_frame.Ydata() , orig_frame.Ydata(), m_sparams.Xl(), m_sparams.Yl() );
+	m_quality_averageU[idx] += QualityVal( ld_frame.Udata() , orig_frame.Udata(), m_sparams.ChromaWidth(), m_sparams.ChromaHeight() );
+	m_quality_averageV[idx] += QualityVal( ld_frame.Vdata() , orig_frame.Vdata(), m_sparams.ChromaWidth(), m_sparams.ChromaHeight() );
     m_frame_total[idx]++;
 
 }
 
 
-double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& orig_data , double cpd , const FrameSort fsort)
+double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& orig_data, 
+const int xlen, const int ylen )
 {
+    long double sum_sq_diff = 0.0;
+    double diff;
+    for ( int j=0;j<ylen; ++j )
+    {
+        for ( int i=0;i<xlen; ++i )
+        {
+            diff = orig_data[j][i] - coded_data[j][i];
+            sum_sq_diff += diff*diff;
 
-    // The number of regions to look at in assessing quality
-    const int xregions( 4 );
-    const int yregions( 3 );
+        }// i
+    }// j
 
-    TwoDArray<long double> diff_array( yregions , xregions);
-    TwoDArray<long double> diff_sq_array( yregions , xregions);
-	long double diff;
-    ValueType filt_orig, filt_coded;
+    const double max = double( (1<<m_sparams.GetVideoDepth())-1 );
 
-    OneDArray<int> xstart( diff_array.LengthX() );
-    OneDArray<int> xend( diff_array.LengthX() );
-    OneDArray<int> ystart( diff_array.LengthY() );
-    OneDArray<int> yend( diff_array.LengthX() );
+    sum_sq_diff /= xlen*ylen;
 
-    for ( int i=0 ; i<xstart.Length() ; ++i)
-    { 
-        xstart[i] =( i * (m_true_xl-2) )/xstart.Length()+1;
-        xend[i] = ( (i+1) * (m_true_xl-2) )/xstart.Length()+1;
-    }
-
-    for ( int i=0 ; i<ystart.Length() ; ++i)
-    { 
-        ystart[i] =( i * (m_true_yl-2) )/ystart.Length()+1;
-        yend[i] = ( (i+1) * (m_true_yl-2) )/ystart.Length()+1;
-    }
-
-    for ( int q=0 ; q<diff_array.LengthY() ; q++ )
-    { 
-        for ( int p=0 ; p<diff_array.LengthX() ; p++ )
-        { 
-            diff_sq_array[q][p] = 0.0;
-
-            for (int j=ystart[q]; j<yend[q]; j++)
-            {
-                for (int i=xstart[p]; i<xend[p]; i++)
-                {
-                    filt_coded = Filter( coded_data , i , j );
-                    filt_orig = Filter( orig_data , i , j );
-
-                    diff = static_cast<long double> ( filt_coded - filt_orig );
- 
-                    diff *= diff;
-                    diff *= diff;
-
-                    diff_sq_array[q][p] += diff;
-                }//i
-            }//j
-
-            diff_sq_array[q][p] /= ( xend[p]-xstart[p] ) * ( yend[q]-ystart[q] );
-
-            // now compensate for the fact that we've got two extra bits
-            diff_sq_array[q][p] /= 256.0;
-
-            diff_array[q][p] = std::sqrt( diff_sq_array[q][p] );
-
-        }// p
-    }// q
-     
-    // return the self-weighted average
-
-    long double sum_diff( 0 );
-    long double sum_sq_diff( 0 );
-    for ( int q=0 ; q<diff_array.LengthY() ; ++q )
-    { 
-        for ( int p=0 ; p<diff_array.LengthX() ; ++p )
-        { 
-            sum_diff += diff_array[q][p];
-            sum_sq_diff += diff_sq_array[q][p];
-        }// p
-    }// q
-
-	return static_cast<double> ( 10.0 * std::log10( 255.0*255.0*sum_diff / sum_sq_diff ) );	
-}
-
-ValueType QualityMonitor::Filter( const PicArray& data , const int xpos , const int ypos ) const
-{
-    return (
-            int(data[ypos-1][xpos-1]) +6*int(data[ypos-1][xpos]) + int(data[ypos-1][xpos+1]) + 
-            6*int(data[ypos][xpos-1]) + 36*int(data[ypos][xpos]) + 6*int(data[ypos][xpos+1]) + 
-            int(data[ypos+1][xpos-1]) +6*int(data[ypos+1][xpos]) + int(data[ypos+1][xpos+1]) +
-            32 )>>6;
+	return static_cast<double> ( 10.0 * std::log10( max*max / sum_sq_diff ) );
 }

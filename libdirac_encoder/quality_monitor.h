@@ -86,11 +86,9 @@ namespace dirac
 
         //! Calculate the quality of coded wrt original picture
         double QualityVal( const PicArray& coded_data , 
-                                           const PicArray& orig_data ,
-                                           double cpd , 
-                                           const FrameSort fsort );
-
-        ValueType Filter( const PicArray& data , const int xpos , const int ypos ) const;
+                           const PicArray& orig_data,
+                           const int xlen,
+                           const int ylen );
 
         //member variables//
         ////////////////////
@@ -98,17 +96,17 @@ namespace dirac
         //! A reference to the encoder parameters
         EncoderParams& m_encparams;
 
-        //! The chroma format
-        const ChromaFormat m_cformat;
+        //! A reference to the sequence parameters
+        const SeqParams& m_sparams;
 
-        //! The true picture width, minus padding
-        const int m_true_xl;
+        //! The average Y quality for the frame types
+        OneDArray<long double> m_quality_averageY;
 
-        //! The true picture height, minus padding
-        const int m_true_yl;
+        //! The average U quality for the frame types
+        OneDArray<long double> m_quality_averageU;
 
-        //! The average quality for the frame types
-        OneDArray<long double> m_quality_average;
+        //! The average V quality for the frame types
+        OneDArray<long double> m_quality_averageV;
 
         //! The number of frames of each type  
         OneDArray<int> m_frame_total;
