@@ -37,6 +37,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_byteio/transform_byteio.h>
+#include <libdirac_common/dirac_exception.h>
 
 using namespace dirac;
 
@@ -92,8 +93,9 @@ const std::string TransformByteIO::GetBytes()
 void TransformByteIO::Output()
 {
     // FIXME - outputting all default parameters at the moment
-    // Zero Transform flag
-    OutputBit(false);
+    // Zero Transform flag - applies only to inter frames
+    if (m_fparams.FSort().IsInter())
+        OutputBit(false);
     // Non-default Wavelet flag
     OutputBit(false);
     
@@ -116,14 +118,20 @@ void TransformByteIO::Output()
         OutputBit(!m_cparams.DefaultSpatialPartition());
         if (!m_cparams.DefaultSpatialPartition())
         {
-            // non-default partitoning
-            OutputVarLengthUint(m_cparams.MaxXBlocks());
-            OutputVarLengthUint(m_cparams.MaxYBlocks());
+            for (unsigned int i = 0; i <= m_cparams.TransformDepth(); ++i)
+            {
+                // non-default partitoning
+                const CodeBlocks &cb = m_cparams.GetCodeBlocks(i);
+                // Number of Horizontal code blocks for level i
+                OutputVarLengthUint(cb.HorizontalCodeBlocks());
+                // Number of Vertical code block for level i
+                OutputVarLengthUint(cb.VerticalCodeBlocks());
+            }
         }
-        // Multiple quantisers flag
-        OutputBit(m_cparams.MultiQuants());
-    // Flush output for bend alignment
+        // Code block mode index
+        OutputVarLengthUint(m_cparams.GetCodeBlockMode());
     }
+    // Flush output for bend alignment
     ByteAlignOutput();
 }
 
@@ -132,19 +140,24 @@ void TransformByteIO::Input()
     // Byte Alignment
     ByteAlignInput();
 
-    // Zero transform flag
-    m_cparams.SetZeroTransform(InputBit());
+    // Zero transform flag - applies only for inter frames
+    if (m_fparams.FSort().IsInter())
+        m_cparams.SetZeroTransform(InputBit());
+    else
+        m_cparams.SetZeroTransform(false);
+
     if (m_cparams.ZeroTransform())
         return;
 
     // Transform filter
     if (InputBit())
-        m_cparams.SetTransformFilter(static_cast<WltFilter>(InputVarLengthUint()));
+        m_cparams.SetTransformFilter(InputVarLengthUint());
     else
         m_cparams.SetTransformFilter(m_default_cparams.TransformFilter());
 
     // transform depth
-    if (InputBit())
+    bool non_default_transform_depth = InputBit();
+    if (non_default_transform_depth)
          m_cparams.SetTransformDepth(InputVarLengthUint());
     else
         m_cparams.SetTransformDepth(m_default_cparams.TransformDepth());
@@ -156,16 +169,35 @@ void TransformByteIO::Input()
     {
         // Is default spatial partitioning being used
         m_cparams.SetDefaultSpatialPartition(!InputBit());
+        // If we are using non-default transform depth, spatial partitioning
+        // must be explicitly defined i.e number of code blocks for each
+        // level MUST be specified in bitstream
+        if (m_cparams.DefaultSpatialPartition() && non_default_transform_depth)
+        {
+            DIRAC_THROW_EXCEPTION(
+                ERR_UNSUPPORTED_STREAM_DATA,
+                "Default spatial partitioning is disabled for non-default transform depths",
+                SEVERITY_FRAME_ERROR);
+        }
         if (!m_cparams.DefaultSpatialPartition())
         {
-            // if not using default spatial partitioning
-            // max horiz coeff blocks
-            m_cparams.SetMaxXBlocks(InputVarLengthUint());
-            // max vertical coeff blocks
-            m_cparams.SetMaxYBlocks(InputVarLengthUint());
+            // Input number of code blocks for each level
+            for (unsigned int i = 0; i <= m_cparams.TransformDepth(); ++i)
+            {
+                // number of horizontal code blocks for level i
+                unsigned int hblocks = InputVarLengthUint();
+                // number of vertical code blocks for level i
+                unsigned int vblocks = InputVarLengthUint();
+                m_cparams.SetCodeBlocks(i, hblocks, vblocks);
+            }
         }
-        // Multiple quantisers flag
-        m_cparams.SetMultiQuants(InputBit());
+        else
+        {
+            // Set the default number of code blocks for each level
+            m_cparams.SetDefaultCodeBlocks(m_fparams.GetFrameType());
+        }
+        // Code block mode index
+        m_cparams.SetCodeBlockMode(InputVarLengthUint());
     }
     // Byte Alignment
     ByteAlignInput();
