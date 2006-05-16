@@ -493,10 +493,12 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
 
     // Set transforms parameters
     m_encparams.SetTransformFilter(enc_ctx->enc_params.wlt_filter);
-    m_encparams.SetTransformDepth(enc_ctx->enc_params.wlt_depth);
     m_encparams.SetSpatialPartition(enc_ctx->enc_params.spatial_partition);
-    m_encparams.SetDefaultSpatialPartition(enc_ctx->enc_params.spatial_partition & enc_ctx->enc_params.def_spatial_partition);
-    m_encparams.SetMultiQuants(enc_ctx->enc_params.spatial_partition & enc_ctx->enc_params.multi_quants);
+    // Set default spatial partitoning to false if wavelet depth is not 
+    // equal to default value.
+    m_encparams.SetDefaultSpatialPartition(enc_ctx->enc_params.def_spatial_partition && m_encparams.TransformDepth() == enc_ctx->enc_params.wlt_depth );
+    m_encparams.SetTransformDepth(enc_ctx->enc_params.wlt_depth);
+    m_encparams.SetCodeBlockMode(enc_ctx->enc_params.spatial_partition && enc_ctx->enc_params.multi_quants ? QUANT_MULTIPLE : QUANT_SINGLE);
 }
 
 
@@ -806,7 +808,7 @@ static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
     encparams.wlt_depth = default_enc_params.TransformDepth();
     encparams.spatial_partition = default_enc_params.SpatialPartition();
     encparams.def_spatial_partition = default_enc_params.DefaultSpatialPartition();
-    encparams.multi_quants = default_enc_params.MultiQuants();
+    encparams.multi_quants = default_enc_params.GetCodeBlockMode() == QUANT_MULTIPLE;
 }
 
 #ifdef __cplusplus
