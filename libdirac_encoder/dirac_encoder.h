@@ -155,6 +155,10 @@ typedef enum
     sequence paramters.  More presets may be added in future*/
 typedef VideoFormat dirac_encoder_presets_t;
 
+/*! Enumerated type that defined motion vector precisions supported by the
+    encoder. More mv precisions may be added in future.*/
+typedef MVPrecisionType dirac_mvprecision_t;
+
 /*! Structure that holds the encoder specific parameters */
 typedef struct 
 {
@@ -191,7 +195,7 @@ typedef struct
     /*! Multiple quantisers flag */
     unsigned int multi_quants;
     /*! motion-vector pixel precision */
-    unsigned int mv_precision;
+    dirac_mvprecision_t mv_precision;
 } dirac_encparams_t;
 
 /*! Structure that holds the parameters that set up the encoder context */
