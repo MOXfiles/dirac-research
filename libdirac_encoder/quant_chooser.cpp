@@ -272,34 +272,37 @@ void QuantChooser::IntegralErrorCalc( const CodeBlock& code_block ,
         for ( int i=code_block.Xstart()+xoffset; i<code_block.Xend() ; i+=xratio )
         {
             val = m_pic_data[j][i];
-            quant_val = abs(val);
-            abs_val = quant_val;
+            abs_val = quant_val = abs(val);
 
-            for ( int q = m_bottom_idx ; q<=m_top_idx ; q+=4 )
+            int q = m_bottom_idx;
+            for ( ; q<=m_top_idx ; q+=4 )
             {
                 // Quantiser is 2^(q/4), so we divide by this
                 quant_val >>= (q>>2);    
+                if (!quant_val)
+                    break;
 
-                if (quant_val)
-                {
-                    m_count0[block_idx][q] += quant_val;
-                    // Multiply back up so that we can quantise again in the next loop step
-                    quant_val <<= (q>>2);                        
-                    if (val>0)
-                        m_countPOS[block_idx][q]++;
-                    else
-                        m_countNEG[block_idx][q]++;
-                }
+                m_count0[block_idx][q] += quant_val;
+                // Multiply back up so that we can quantise again in the next loop step
+                quant_val <<= (q>>2)+2;
+                quant_val += dirac_quantiser_lists.QuantOffset4( q );
+                quant_val >>= 2;
+                if (val>0)
+                    m_countPOS[block_idx][q]++;
+                else
+                    m_countNEG[block_idx][q]++;
 
                 error = abs_val-quant_val;
-
-                if ( quant_val != 0)                    
-                    error -= dirac_quantiser_lists.QuantOffset( q );
 
                 // Using the fourth power to measure the error
                 m_error_total[block_idx][q] +=  pow4( static_cast<double>( error ) );
 
             }// q
+            double derror = pow4 ( static_cast<double>( abs_val ) );
+            for (; q <= m_top_idx; q+= 4)
+            {
+                m_error_total[block_idx][q] += derror;
+            }
         }// i
     }// j
 
@@ -334,32 +337,33 @@ void QuantChooser::NonIntegralErrorCalc( const CodeBlock& code_block , const int
             val = m_pic_data[j][i];
             abs_val = abs( val );
 
-            for ( int q=m_bottom_idx ; q<=m_top_idx ; q+=m_index_step )
+            int q=m_bottom_idx;
+            for ( ; q<=m_top_idx ; q+=m_index_step )
             {
                  // Since the quantiser isn't a power of 2 we have to divide each time
                  quant_val = static_cast<CalcValueType>( abs_val );
                  quant_val <<= 2;
                  quant_val /= dirac_quantiser_lists.QuantFactor4( q );
 
-                 if ( quant_val )
-                 {
-                     m_count0[block_idx][q] += quant_val;
-                     quant_val *= dirac_quantiser_lists.QuantFactor4( q );
-                     quant_val >>= 2;
+                 if ( !quant_val )
+                     break;
 
-                     if ( val>0 )
-                         m_countPOS[block_idx][q]++;
-                     else
-                         m_countNEG[block_idx][q]++;
-                 }
+                 m_count0[block_idx][q] += quant_val;
+                 quant_val *= dirac_quantiser_lists.QuantFactor4( q );
+                 quant_val += dirac_quantiser_lists.QuantOffset4( q );
+                 quant_val >>= 2;
+
+                 if ( val>0 )
+                     m_countPOS[block_idx][q]++;
+                 else
+                     m_countNEG[block_idx][q]++;
 
                  error = abs_val-quant_val;
-
-                 if ( quant_val != 0 )                    
-                     error -= dirac_quantiser_lists.QuantOffset( q );
-
                  m_error_total[block_idx][q] += pow4( error );
              }// q
+             double derror = pow4( abs_val );
+             for ( ; q <= m_top_idx; q += m_index_step)
+                 m_error_total[block_idx][q] += derror;
         }// i
     }// j
 
