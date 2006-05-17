@@ -102,11 +102,11 @@ void MotionCompTest::testZeroMotionComp()
 {
     for (int i = 0; i < 4; ++i)
     {
-        testZeroMotionComp(i);
+        testZeroMotionComp(static_cast<MVPrecisionType>(i));
     }
 }
 
-void MotionCompTest::testZeroMotionComp(int precision)
+void MotionCompTest::testZeroMotionComp(MVPrecisionType precision)
 {
     FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, true);
@@ -162,11 +162,11 @@ void MotionCompTest::testAddandSubMotionComp()
 {
     for (int i = 0; i < 4; ++i)
     {
-        testAddandSubMotionComp(i);
+        testAddandSubMotionComp(static_cast<MVPrecisionType>(i));
     }
 }
 
-void MotionCompTest::testAddandSubMotionComp(int precision)
+void MotionCompTest::testAddandSubMotionComp(MVPrecisionType precision)
 {
     FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, true);
@@ -217,11 +217,11 @@ void MotionCompTest::testL2_frame()
 {
     for (int i = 0; i < 4; ++i)
     {
-        testL2_frame(i);
+        testL2_frame(static_cast<MVPrecisionType>(i));
     }
 }
 
-void MotionCompTest::testL2_frame(int precision)
+void MotionCompTest::testL2_frame(MVPrecisionType precision)
 {
     FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, true);
@@ -314,11 +314,11 @@ void MotionCompTest::testRef2()
 {
     for (int i = 0; i < 4; ++i)
     {
-        testRef2(i);
+        testRef2(static_cast<MVPrecisionType>(i));
     }
 }
 
-void MotionCompTest::testRef2(int precision)
+void MotionCompTest::testRef2(MVPrecisionType precision)
 {
     FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, true);
@@ -374,11 +374,11 @@ void MotionCompTest::testRef1and2()
 {
     for (int i = 0; i < 4; ++i)
     {
-        testRef1and2(i);
+        testRef1and2(static_cast<MVPrecisionType>(i));
     }
 }
 
-void MotionCompTest::testRef1and2(int precision)
+void MotionCompTest::testRef1and2(MVPrecisionType precision)
 {
     FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, true);

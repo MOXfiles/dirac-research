@@ -37,6 +37,7 @@
 #ifndef MOTION_COMP_TEST_H
 #define MOTION_COMP_TEST_H
 #include <cppunit/extensions/HelperMacros.h>
+#include <libdirac_common/common_types.h>
 
 class MotionCompTest : public CPPUNIT_NS::TestFixture
 {
@@ -67,10 +68,10 @@ private:
   MotionCompTest( const MotionCompTest &copy );
   void operator =( const MotionCompTest &copy );
 private:
-  void testZeroMotionComp(int precision);
-  void testAddandSubMotionComp(int precision);
-  void testL2_frame(int precision);
-  void testRef2(int precision);
-  void testRef1and2(int precision);
+  void testZeroMotionComp(MVPrecisionType precision);
+  void testAddandSubMotionComp(MVPrecisionType precision);
+  void testL2_frame(MVPrecisionType precision);
+  void testRef2(MVPrecisionType precision);
+  void testRef1and2(MVPrecisionType precision);
 };
 #endif
