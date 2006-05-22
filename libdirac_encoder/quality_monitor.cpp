@@ -95,17 +95,36 @@ void QualityMonitor::ResetAll()
 
 void QualityMonitor::WriteLog()
 {
-    std::cerr<<std::endl<<"Mean PSNR for Intra frame Y component is "<<m_quality_averageY[0]/m_frame_total[0];
-    std::cerr<<std::endl<<"Mean PSNR for Inter Ref frame Y component is "<<m_quality_averageY[1]/m_frame_total[1];
-    std::cerr<<std::endl<<"Mean PSNR for Inter Non-Ref frame Y component is "<<m_quality_averageY[2]/m_frame_total[2]<<std::endl;
-
-    std::cerr<<std::endl<<"Mean PSNR for Intra frame U component is "<<m_quality_averageU[0]/m_frame_total[0];
-    std::cerr<<std::endl<<"Mean PSNR for Inter Ref frame U component is "<<m_quality_averageU[1]/m_frame_total[1];
-    std::cerr<<std::endl<<"Mean PSNR for Inter Non-Ref frame U component is "<<m_quality_averageU[2]/m_frame_total[2]<<std::endl;
-
-    std::cerr<<std::endl<<"Mean PSNR for Intra frame V component is "<<m_quality_averageV[0]/m_frame_total[0];
-    std::cerr<<std::endl<<"Mean PSNR for Inter Ref frame V component is "<<m_quality_averageV[1]/m_frame_total[1];
-    std::cerr<<std::endl<<"Mean PSNR for Inter Non-Ref frame V component is "<<m_quality_averageV[2]/m_frame_total[2]<<std::endl;
+    std::cerr<<std::endl<<"Mean PSNR values by frame type and component";
+    std::cerr<<std::endl<<"--------------------------------------------";
+    std::cerr<<std::endl;
+    
+    std::cerr<<std::endl<<"                 ||       Y       ||       U       ||       V       ||";
+    std::cerr<<std::endl<<"=================||===================================================";
+    std::cerr<<std::endl<<"           Intra ||     ";
+    std::cerr.width(5);std::cerr.precision(4);
+    std::cerr<<m_quality_averageY[0]/m_frame_total[0]<<"     ||     ";
+    std::cerr.width(5);std::cerr.precision(4);
+    std::cerr<<m_quality_averageU[0]/m_frame_total[0]<<"     ||     ";
+    std::cerr.width(5);std::cerr.precision(4);
+    std::cerr<<m_quality_averageV[0]/m_frame_total[0]<<"     ||    ";
+    std::cerr<<std::endl<<"-----------------||---------------------------------------------------";
+    std::cerr<<std::endl<<"       Inter Ref ||     ";
+    std::cerr.width(5);std::cerr.precision(4);
+    std::cerr<<m_quality_averageY[1]/m_frame_total[1]<<"     ||     ";
+    std::cerr.width(5);std::cerr.precision(4);
+    std::cerr<<m_quality_averageU[1]/m_frame_total[1]<<"     ||     ";
+    std::cerr.width(5);std::cerr.precision(4);
+    std::cerr<<m_quality_averageV[1]/m_frame_total[1]<<"     ||    ";
+    std::cerr<<std::endl<<"-----------------||---------------------------------------------------";
+    std::cerr<<std::endl<<"   Inter Non Ref ||     ";
+    std::cerr.width(5);std::cerr.precision(4);
+    std::cerr<<m_quality_averageY[2]/m_frame_total[2]<<"     ||     ";
+    std::cerr.width(5);std::cerr.precision(4);
+    std::cerr<<m_quality_averageU[2]/m_frame_total[2]<<"     ||     ";
+    std::cerr.width(5);std::cerr.precision(4);
+    std::cerr<<m_quality_averageV[2]/m_frame_total[2]<<"     ||     ";
+    std::cerr<<std::endl<<"-----------------||---------------------------------------------------";
 }
 
 void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame )
