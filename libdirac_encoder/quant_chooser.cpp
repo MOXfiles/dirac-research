@@ -108,7 +108,7 @@ int QuantChooser::GetBestQuant( Subband& node )
         int block_idx;
 
         // Step 1. Do integral bits first
-        m_bottom_idx = 4;
+        m_bottom_idx = 0;
         m_top_idx = num_quants-1;
         m_index_step = 4;
 
