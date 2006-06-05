@@ -107,6 +107,7 @@ typedef enum {
     CP_ITU_709=0,
     CP_SMPTE_C,
     CP_EBU_3213,
+    CP_CIE_XYZ,
     CP_UNDEF
 }ColourPrimaries;
 
@@ -114,6 +115,7 @@ typedef enum {
 typedef enum {
     CM_HDTV_COMP_INTERNET=0,
     CM_SDTV,
+    CM_DCINEMA,
     CM_UNDEF
 }ColourMatrix;
 
@@ -122,6 +124,7 @@ typedef enum {
     TF_TV=0,
     TF_EXT_GAMUT,
     TF_LINEAR,
+    TF_DCINEMA,
     TF_UNDEF
 } TransferFunction;
 

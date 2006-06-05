@@ -50,8 +50,8 @@ void SetDefaultCodecParameters(CodecParams &cparams, FrameType ftype)
     cparams.SetTransformDepth(4);
     cparams.SetTransformFilter(APPROX97);
     cparams.SetCodeBlockMode(QUANT_SINGLE);
-       cparams.SetSpatialPartition(false);
-       cparams.SetDefaultSpatialPartition(true);
+    cparams.SetSpatialPartition(false);
+    cparams.SetDefaultSpatialPartition(true);
     switch (cparams.GetVideoFormat())
     {
     case VIDEO_FORMAT_QSIF:
@@ -83,11 +83,12 @@ void SetDefaultCodecParameters(CodecParams &cparams, FrameType ftype)
     {
         cparams.SetTransformFilter(FIVETHREE);
         OLBParams bparams;
+        cparams.SetUsingGlobalMotion(false);
         SetDefaultBlockParameters(bparams, cparams.GetVideoFormat());
         cparams.SetLumaBlockParams(bparams);
         cparams.SetInterlace(false);
         cparams.SetTopFieldFirst(true);
-        cparams.SetMVPrecision(MV_PRECISION_HALF_PIXEL);
+        cparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
         // NOTE: FIXME - need to add global motion params here
         cparams.SetFrameWeightsPrecision(1);
         cparams.SetRef1Weight(1);
@@ -112,48 +113,38 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
     {
     case VIDEO_FORMAT_CUSTOM:
         sparams.SetFrameRate(FRAMERATE_30_FPS);
-        sparams.SetCleanWidth(620);
-        sparams.SetCleanHeight(480);
+        sparams.SetColourSpecification(0);
         break;
     case VIDEO_FORMAT_QSIF:
-        sparams.SetFrameRate(15, 1);
+        sparams.SetFrameRate(15000, 1001);
         sparams.SetAspectRatio(ASPECT_RATIO_10_11);
-        sparams.SetCleanWidth(176);
-        sparams.SetCleanHeight(120);
+        sparams.SetColourSpecification(1);
         break;
     case VIDEO_FORMAT_QCIF:
         sparams.SetFrameRate(25, 2);
         sparams.SetAspectRatio(ASPECT_RATIO_12_11);
-        sparams.SetCleanWidth(176);
-        sparams.SetCleanHeight(144);
         sparams.SetColourSpecification(2);
         break;
     case VIDEO_FORMAT_SIF:
-        sparams.SetFrameRate(15, 1);
+        sparams.SetFrameRate(15000, 1001);
         sparams.SetAspectRatio(ASPECT_RATIO_10_11);
-        sparams.SetCleanWidth(352);
-        sparams.SetCleanHeight(240);
+        sparams.SetColourSpecification(1);
         break;
     case VIDEO_FORMAT_CIF:
         sparams.SetFrameRate(25, 2);
         sparams.SetAspectRatio(ASPECT_RATIO_12_11);
-        sparams.SetCleanWidth(352);
-        sparams.SetCleanHeight(288);
         sparams.SetColourSpecification(2);
         break;
     case VIDEO_FORMAT_SD_NTSC:
         sparams.SetFrameRate(FRAMERATE_29p97_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_10_11);
-        sparams.SetCleanWidth(704);
-        sparams.SetCleanHeight(480);
         sparams.SetSignalRange(SIGNAL_RANGE_8BIT_VIDEO);
         sparams.SetInterlace(true);
+        sparams.SetColourSpecification(1);
         break;
     case VIDEO_FORMAT_SD_PAL:
         sparams.SetFrameRate(FRAMERATE_25_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_12_11);
-        sparams.SetCleanWidth(704);
-        sparams.SetCleanHeight(576);
         sparams.SetSignalRange(SIGNAL_RANGE_8BIT_VIDEO);
         sparams.SetColourSpecification(2);
         sparams.SetInterlace(true);
@@ -161,37 +152,39 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
     case VIDEO_FORMAT_SD_525_DIGITAL:
         sparams.SetFrameRate(FRAMERATE_29p97_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_10_11);
+        sparams.SetLeftOffset(8);
         sparams.SetCleanWidth(704);
-        sparams.SetCleanHeight(480);
         sparams.SetSignalRange(SIGNAL_RANGE_8BIT_VIDEO);
         sparams.SetColourSpecification(1);
         sparams.SetInterlace(true);
-        sparams.SetTopOffset(8);
         break;
     case VIDEO_FORMAT_SD_625_DIGITAL:
         sparams.SetFrameRate(FRAMERATE_25_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_12_11);
-        sparams.SetCleanWidth(702);
-        sparams.SetCleanHeight(576);
+        sparams.SetLeftOffset(8);
+        sparams.SetCleanWidth(704);
         sparams.SetSignalRange(SIGNAL_RANGE_8BIT_VIDEO);
         sparams.SetColourSpecification(2);
-        sparams.SetInterlace(true);
-        sparams.SetTopOffset(9);
         break;
     case VIDEO_FORMAT_HD_720:
         sparams.SetFrameRate(FRAMERATE_50_FPS);
-        sparams.SetCleanWidth(1280);
-        sparams.SetCleanHeight(720);
         sparams.SetSignalRange(SIGNAL_RANGE_8BIT_VIDEO);
-        sparams.SetColourSpecification(3);
+        sparams.SetColourSpecification(0);
         break;
     case VIDEO_FORMAT_HD_1080:
         sparams.SetFrameRate(FRAMERATE_25_FPS);
-        sparams.SetCleanWidth(1920);
-        sparams.SetCleanHeight(1080);
         sparams.SetSignalRange(SIGNAL_RANGE_8BIT_VIDEO);
+        sparams.SetColourSpecification(0);
+        break;
+    case VIDEO_FORMAT_DIGI_CINEMA_2K:
+    case VIDEO_FORMAT_DIGI_CINEMA_4K:
+        sparams.SetFrameRate(FRAMERATE_24_FPS);
+        sparams.SetSignalRange(SIGNAL_RANGE_CUSTOM);
+        sparams.SetLumaOffset(0);
+        sparams.SetLumaExcursion(65535);
+        sparams.SetChromaOffset(32768);
+        sparams.SetChromaExcursion(65534);
         sparams.SetColourSpecification(3);
-        sparams.SetInterlace(true);
         break;
     default:
         break;
@@ -245,6 +238,18 @@ void SetDefaultSequenceParameters(SeqParams& sparams)
         sparams.SetXl(1920);
         sparams.SetYl(1080);
         break;
+    case VIDEO_FORMAT_DIGI_CINEMA_2K:
+        sparams.SetXl(2048);
+        sparams.SetYl(1556);
+        sparams.SetCFormat(format444);
+        sparams.SetVideoDepth(16);
+        break;
+    case VIDEO_FORMAT_DIGI_CINEMA_4K:
+        sparams.SetXl(4086);
+        sparams.SetYl(3112);
+        sparams.SetCFormat(format444);
+        sparams.SetVideoDepth(16);
+        break;
     case VIDEO_FORMAT_CIF:
     default:
         sparams.SetXl(352);
@@ -258,7 +263,7 @@ void SetDefaultEncoderParameters(EncoderParams& encparams)
 {
     encparams.SetQf(7.0f);
     encparams.SetLossless(false);
-    encparams.SetMVPrecision(MV_PRECISION_HALF_PIXEL);
+    encparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
 
     switch (encparams.GetVideoFormat())
     {
