@@ -135,23 +135,19 @@ void SeqParamsByteIO::InputVideoDepth()
 {
     bool depth_flag = InputBit();
 
-    if(!depth_flag)
+    if(depth_flag)
         //NOTE: FIXME - remove when we support multiple video-depths
         DIRAC_THROW_EXCEPTION(
                     ERR_INVALID_VIDEO_DEPTH,
-                    "Dirac does not support default video-depth",
+                    "Dirac does not support video-depth other than 8 at the moment",
                     SEVERITY_ACCESSUNIT_ERROR)
 
-    int video_depth = InputVarLengthUint();
-    // NOTE: FIXME - support all valid video depths
-    if(video_depth!=10)
-        DIRAC_THROW_EXCEPTION(
-                    ERR_INVALID_VIDEO_DEPTH,
-                    "Dirac does not recognise the specified video-depth",
-                    SEVERITY_ACCESSUNIT_ERROR)
-   
-    // set video depth
-    m_seq_params.SetVideoDepth(video_depth);
+    if (depth_flag)
+    {
+        int video_depth = InputVarLengthUint();
+        // set video depth
+        m_seq_params.SetVideoDepth(video_depth);
+    }
 }
 
 void SeqParamsByteIO::OutputChromaFormat()
