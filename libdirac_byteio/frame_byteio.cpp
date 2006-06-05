@@ -41,6 +41,8 @@
 using namespace dirac;
 using namespace std;
 
+const unsigned int PP_FRAME_NUM_SIZE = 4;
+
 const int CODE_ONE_REF_BIT =  0;
 const int CODE_TWO_REF_BIT = 1;
 const int CODE_REF_FRAME_BIT = 2;
@@ -121,9 +123,9 @@ bool FrameByteIO::Input()
     SetFrameType();
     SetReferenceType();
 
-    // input frame offset
-    m_frame_num = InputVarLengthInt();
-    m_frame_params.SetFrameNum(m_accessunit_fnum+m_frame_num);
+    // input frame number
+    m_frame_num = InputFixedLengthUint(PP_FRAME_NUM_SIZE);
+    m_frame_params.SetFrameNum(m_frame_num);
 
     // input reference frame numbers
     InputReferenceFrames();
@@ -138,7 +140,7 @@ bool FrameByteIO::Input()
         for (size_t i = 0; i < retd_list.size(); ++i)
         {
             int offset = InputVarLengthInt();
-            retd_list[i] = m_accessunit_fnum + offset;
+            retd_list[i] = m_frame_num + offset;
         }
     }
 
@@ -180,15 +182,15 @@ int FrameByteIO::GetSize() const
 
 void FrameByteIO::Output()
 {
-    // output frame offset
-    OutputVarLengthInt(m_frame_num - m_accessunit_fnum);
+    // output frame number
+    OutputFixedLengthUint(m_frame_num, PP_FRAME_NUM_SIZE);
 
     if(m_frame_params.GetFrameType()==INTER_FRAME)
     {
         // output reference frame numbers
         const std::vector<int>& refs = m_frame_params.Refs();
         for(size_t i=0; i < refs.size() && i < MAX_NUM_REFS; ++i)
-            OutputVarLengthInt(refs[i] - m_accessunit_fnum);
+            OutputVarLengthInt(refs[i] - m_frame_num);
     }
 
     // output retired frames
@@ -196,7 +198,7 @@ void FrameByteIO::Output()
     OutputVarLengthUint(retd_list.size());
     for (size_t i = 0; i < retd_list.size(); ++i)
     {
-        OutputVarLengthInt(retd_list[i] - m_accessunit_fnum);
+        OutputVarLengthInt(retd_list[i] - m_frame_num);
     }
 
     // byte align output
@@ -242,7 +244,7 @@ void FrameByteIO::InputReferenceFrames()
     vector<int>& refs = m_frame_params.Refs();
     refs.resize(ref_count);
     for(int i=0; i < ref_count; ++i)
-        refs[i]=m_accessunit_fnum+InputVarLengthInt();
+        refs[i]=m_frame_num+InputVarLengthInt();
 }
 
 void FrameByteIO::SetFrameType()
