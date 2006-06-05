@@ -49,24 +49,16 @@ FrameBuffer::FrameBuffer() :
 {}
 
 //Simple constructor for general operation
-FrameBuffer::FrameBuffer(ChromaFormat cf,int xlen,int ylen, int c_xlen, int c_ylen): 
-    m_fparams(cf,xlen,ylen, c_xlen, c_ylen),
+FrameBuffer::FrameBuffer(ChromaFormat cf,int xlen,int ylen, int c_xlen, int c_ylen, unsigned int vd): 
+    m_fparams(cf,xlen,ylen, c_xlen, c_ylen, vd),
     m_num_L1(0),
     m_L1_sep(1),
     m_gop_len(0)
 {}    
 
-//Constructor for coding with an initial I-frame only    
-FrameBuffer::FrameBuffer(ChromaFormat cf,int L1sep, int xlen, int ylen, int c_xlen, int c_ylen):
-    m_fparams(cf,xlen,ylen, c_xlen, c_ylen),
-    m_num_L1(0),
-    m_L1_sep(L1sep),
-    m_gop_len(0)
-{}
-
 //Constructor setting GOP parameters for use with a standard GOP
-FrameBuffer::FrameBuffer(ChromaFormat cf,int numL1,int L1sep,int xlen,int ylen, int c_xlen, int c_ylen): 
-    m_fparams(cf,xlen,ylen, c_xlen, c_ylen),
+FrameBuffer::FrameBuffer(ChromaFormat cf,int numL1,int L1sep,int xlen,int ylen, int c_xlen, int c_ylen, unsigned int vd): 
+    m_fparams(cf,xlen,ylen, c_xlen, c_ylen, vd),
     m_num_L1(numL1),
     m_L1_sep(L1sep)
 {    

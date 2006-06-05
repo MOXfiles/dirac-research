@@ -155,10 +155,10 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
 
     // Set up the frame buffers with the PADDED picture sizes
     m_fbuffer = new FrameBuffer( sparams.CFormat() , m_encparams.NumL1() , m_encparams.L1Sep() , 
-            xpad_len , ypad_len, xpad_chroma_len, ypad_chroma_len);
+            xpad_len , ypad_len, xpad_chroma_len, ypad_chroma_len, sparams.GetVideoDepth());
 
     m_origbuffer = new FrameBuffer( sparams.CFormat() , m_encparams.NumL1() , m_encparams.L1Sep() , 
-            xpad_len, ypad_len, xpad_chroma_len, ypad_chroma_len);
+            xpad_len, ypad_len, xpad_chroma_len, ypad_chroma_len, sparams.GetVideoDepth());
 }
 
 SequenceCompressor::~SequenceCompressor()

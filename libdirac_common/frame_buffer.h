@@ -73,26 +73,10 @@ namespace dirac
             \param    ylen    the luma height of frames in the buffer
             \param    c_xlen  the chroma width of frames in the buffer
             \param    c_ylen  the chroma height of frames in the buffer
+            \param    vd      the video depth of the data in the buffer
 
         */
-        FrameBuffer(ChromaFormat cf,int xlen,int ylen, int c_xlen, int c_ylen);
-
-        //! Constructor
-        /*!
-            Creates a FrameBuffer using the chroma format and the separation 
-            in frames between L1 frames. Suitable for compressing when there
-            is no GOP structure, only an initial I-frame, or when the temporal 
-            prediction structure is to be determined on the fly. 
-
-            \param    cf    the Chroma format of frames in the buffer
-            \param    L1sep    the number of Layer 2 frames between Layer 1 frames
-            \param    xlen    the luma width of frames in the buffer
-            \param    ylen    the luma height of frames in the buffer
-            \param    c_xlen  the chroma width of frames in the buffer
-            \param    c_ylen  the chroma height of frames in the buffer
-
-        */
-        FrameBuffer(ChromaFormat cf,int L1sep,int xlen, int ylen, int c_xlen, int c_ylen);
+        FrameBuffer(ChromaFormat cf,int xlen,int ylen, int c_xlen, int c_ylen, unsigned int vd);
 
         //! Constructor
         /*!
@@ -109,8 +93,9 @@ namespace dirac
             \param    ylen    the luma height of frames in the buffer
             \param    c_xlen  the chroma width of frames in the buffer
             \param    c_ylen  the chroma height of frames in the buffer
+            \param    vd      the video depth of the data in the buffer
         */    
-        FrameBuffer(ChromaFormat cf,int numL1,int L1sep,int xlen,int ylen, int c_xlen, int c_ylen);
+        FrameBuffer(ChromaFormat cf,int numL1,int L1sep,int xlen,int ylen, int c_xlen, int c_ylen, unsigned int vd);
 
         //! Copy constructor
         /*!
