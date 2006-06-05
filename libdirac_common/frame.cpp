@@ -254,6 +254,7 @@ const PicArray& Frame::UpYdata() const
         UpConverter myupconv;
         myupconv.DoUpConverter( *m_Y_data , *m_upY_data );
 
+        ClipComponent(*m_upY_data);
         m_redo_upYdata = false;
         return *m_upY_data;
 
@@ -276,6 +277,7 @@ const PicArray& Frame::UpUdata() const
 
         UpConverter myupconv;
         myupconv.DoUpConverter( *m_U_data , *m_upU_data );
+        ClipComponent(*m_upU_data);
         m_redo_upUdata = false;
 
         return *m_upU_data;
@@ -299,6 +301,7 @@ const PicArray& Frame::UpVdata() const
 
         UpConverter myupconv;
         myupconv.DoUpConverter( *m_V_data , *m_upV_data );
+        ClipComponent(*m_upV_data);
         m_redo_upVdata = false;
 
         return *m_upV_data;
@@ -316,10 +319,13 @@ const PicArray& Frame::UpData(CompSort cs) const
         return UpYdata();
 }    
 
-void Frame::ClipComponent(PicArray& pic_data)
+void Frame::ClipComponent(PicArray& pic_data) const
 {
     ValueType *pic = &(pic_data[pic_data.FirstY()][pic_data.FirstX()]);
     int count = pic_data.LengthY() * pic_data.LengthX();
+
+    ValueType min_val = 0;
+    ValueType max_val = (1 << m_fparams.GetVideoDepth())-1;
 
 #if defined (HAVE_MMX)
     {
@@ -329,8 +335,8 @@ void Frame::ClipComponent(PicArray& pic_data)
         __m64 pack_usmax = _mm_set_pi16 (0xffff, 0xffff, 0xffff, 0xffff);
            //__m64 pack_smax = _mm_set_pi16 (0x7fff, 0x7fff, 0x7fff, 0x7fff);
            __m64 pack_smin = _mm_set_pi16 (0x8000, 0x8000, 0x8000, 0x8000);
-           __m64 high_val = _mm_set_pi16 (PIXEL_VALUE_MAX, PIXEL_VALUE_MAX, PIXEL_VALUE_MAX, PIXEL_VALUE_MAX);
-           __m64 lo_val = _mm_set_pi16 (PIXEL_VALUE_MIN, PIXEL_VALUE_MIN, PIXEL_VALUE_MIN, PIXEL_VALUE_MIN);
+           __m64 high_val = _mm_set_pi16 (max_val, max_val, max_val, max_val);
+           __m64 lo_val = _mm_set_pi16 (min_val, min_val, min_val, min_val);
     
         __m64 clip_max = _mm_add_pi16 (pack_smin, high_val);
         __m64 clip_min = _mm_add_pi16 (pack_smin, lo_val);
@@ -350,9 +356,7 @@ void Frame::ClipComponent(PicArray& pic_data)
         //Mop up remaining pixels
             while( count-- )
         {
-            *pic = std::max( 
-                    ValueType( PIXEL_VALUE_MIN ), 
-                    std::min( ValueType( PIXEL_VALUE_MAX ), *pic ) 
+            *pic = std::max( min_val, std::min( max_val , *pic ) 
                     );
             pic++;
         }
@@ -365,8 +369,7 @@ void Frame::ClipComponent(PicArray& pic_data)
     // NOTE: depending on a contigous chunk of memory being allocated
     while (count--)
     {
-        *pic = std::max( (ValueType) PIXEL_VALUE_MIN,  
-        std::min( ValueType( PIXEL_VALUE_MAX ), *pic ));
+        *pic = std::max( min_val, std::min( max_val, *pic ));
         pic++;
     }
 }
@@ -379,6 +382,20 @@ void Frame::Clip()
 
     ClipComponent( *m_U_data );
     ClipComponent( *m_V_data );    
+}
+
+void Frame::ClipUpData()
+{
+    //just clips the he upconverted data
+
+    if (m_upY_data)
+        ClipComponent( *m_upY_data );
+
+    if (m_upU_data)
+        ClipComponent( *m_upU_data );
+    
+    if (m_upV_data)
+        ClipComponent( *m_upV_data );    
 }
 
 void Frame::ClearData()

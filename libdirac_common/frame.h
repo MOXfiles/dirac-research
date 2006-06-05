@@ -133,9 +133,15 @@ namespace dirac
 
         //! Clip the data to prevent overshoot
         /*!
-            Clips the data to lie between 0 and 1020 (4*255) in 10-bit form to prevent overshoot/wraparound.
+            Clips the data to lie between 0 and (1<<video_depth)-1 
          */
         void Clip();
+
+        //! Clip the upconverted data to prevent overshoot
+        /*!
+            Clips the upconverted data to lie between 0 and (1<<video_depth)-1 
+         */
+        void ClipUpData();
 
     private:
         mutable FrameParams m_fparams;
@@ -153,7 +159,7 @@ namespace dirac
         void ClearData();
 
         //! Clip an individual component
-        void ClipComponent(PicArray& pic_data);
+        void ClipComponent(PicArray& pic_data) const;
 
         //! Flag that upconversion needs to be re-done
         mutable bool m_redo_upYdata;
