@@ -92,12 +92,17 @@ const std::string TransformByteIO::GetBytes()
 
 void TransformByteIO::Output()
 {
-    // FIXME - outputting all default parameters at the moment
     // Zero Transform flag - applies only to inter frames
     if (m_fparams.FSort().IsInter())
         OutputBit(false);
     // Non-default Wavelet flag
-    OutputBit(false);
+    if (m_cparams.TransformFilter() ==  m_default_cparams.TransformFilter())
+        OutputBit(false);
+    else
+    {
+        OutputBit(true);
+        OutputVarLengthUint(m_cparams.TransformFilter());
+    }
     
     // Non-default Depth flag
     if (m_cparams.TransformDepth() == m_default_cparams.TransformDepth())
