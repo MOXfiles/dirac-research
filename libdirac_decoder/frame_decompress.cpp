@@ -58,10 +58,11 @@ using namespace dirac;
 using std::vector;
 using std::auto_ptr;
 
-FrameDecompressor::FrameDecompressor(DecoderParams& decp, ChromaFormat cf)
+FrameDecompressor::FrameDecompressor(DecoderParams& decp, ChromaFormat cf, unsigned int vd)
 : 
 m_decparams(decp),
-m_cformat(cf)
+m_cformat(cf),
+m_video_depth(vd)
 {
      
     
@@ -322,6 +323,8 @@ void FrameDecompressor::PushFrame(FrameBuffer &my_buffer)
 
     m_fparams.SetChromaXl(xl_chroma);
     m_fparams.SetChromaYl(yl_chroma);
+
+    m_fparams.SetVideoDepth(m_video_depth);
 
     my_buffer.PushFrame(m_fparams);
 }

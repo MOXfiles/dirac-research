@@ -66,8 +66,9 @@ namespace dirac
 
             \param  decp    decoder parameters
             \param  cf      the chroma format of the frame being decompressed
+            \param  vd      the video depth of the frame being decompressed
         */
-        FrameDecompressor(DecoderParams& decp, ChromaFormat cf);
+        FrameDecompressor(DecoderParams& decp, ChromaFormat cf, unsigned int vd);
 
         //! Destructor
         /*!
@@ -112,11 +113,11 @@ namespace dirac
                             FrameBuffer& my_buffer,int fnum, CompSort cs);
 
 
-		//! Set the number of superblocks and blocks
-		void SetMVBlocks();
+        //! Set the number of superblocks and blocks
+        void SetMVBlocks();
 
-		//! Add a frame to the frame buffer
-		void PushFrame(FrameBuffer &my_buffer);
+        //! Add a frame to the frame buffer
+        void PushFrame(FrameBuffer &my_buffer);
 
         //Member variables    
 
@@ -140,6 +141,9 @@ namespace dirac
 
         //! Current Frame Parameters
         FrameParams m_fparams;
+        
+        //! Video depth of the frame being decompressed
+        unsigned int m_video_depth;
 
     };
 

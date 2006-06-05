@@ -74,7 +74,7 @@ m_highest_fnum(0)
  
     m_fbuffer= new FrameBuffer( );
 
-    m_fdecoder = new FrameDecompressor (m_decparams , m_sparams.CFormat() );
+    m_fdecoder = new FrameDecompressor (m_decparams , m_sparams.CFormat(), m_sparams.GetVideoDepth() );
    
 }
 
