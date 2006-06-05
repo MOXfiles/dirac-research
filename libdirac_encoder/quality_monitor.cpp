@@ -63,7 +63,9 @@ void QualityMonitor::ResetAll()
 
     if ( !m_encparams.Lossless() )
     {
-        m_encparams.SetLambda( FrameSort::IntraRefFrameSort() , std::pow( 10.0 , (10.0-m_encparams.Qf() )/2.5 ) );
+        //m_encparams.SetLambda( FrameSort::IntraRefFrameSort() , std::pow( 10.0 , (10.0-m_encparams.Qf() )/2.5 ) );
+        // FIXME - testing for true 8-bit depth
+        m_encparams.SetLambda( FrameSort::IntraRefFrameSort() , std::pow( 10.0 , (10.0-m_encparams.Qf() )/2.5 )/16.0 );
         m_encparams.SetLambda( FrameSort::InterRefFrameSort() , m_encparams.ILambda()*128.0 );
         m_encparams.SetLambda( FrameSort::InterNonRefFrameSort() , m_encparams.ILambda()*512.0 );
 
@@ -129,12 +131,12 @@ void QualityMonitor::WriteLog()
 
 void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame )
 {
-	const FrameSort& fsort = ld_frame.GetFparams().FSort();	
-	int idx = fsort.IsIntra() ? 0 : (fsort.IsRef() ? 1 : 2);
+    const FrameSort& fsort = ld_frame.GetFparams().FSort();    
+    int idx = fsort.IsIntra() ? 0 : (fsort.IsRef() ? 1 : 2);
 
-	m_quality_averageY[idx] += QualityVal( ld_frame.Ydata() , orig_frame.Ydata(), m_sparams.Xl(), m_sparams.Yl() );
-	m_quality_averageU[idx] += QualityVal( ld_frame.Udata() , orig_frame.Udata(), m_sparams.ChromaWidth(), m_sparams.ChromaHeight() );
-	m_quality_averageV[idx] += QualityVal( ld_frame.Vdata() , orig_frame.Vdata(), m_sparams.ChromaWidth(), m_sparams.ChromaHeight() );
+    m_quality_averageY[idx] += QualityVal( ld_frame.Ydata() , orig_frame.Ydata(), m_sparams.Xl(), m_sparams.Yl() );
+    m_quality_averageU[idx] += QualityVal( ld_frame.Udata() , orig_frame.Udata(), m_sparams.ChromaWidth(), m_sparams.ChromaHeight() );
+    m_quality_averageV[idx] += QualityVal( ld_frame.Vdata() , orig_frame.Vdata(), m_sparams.ChromaWidth(), m_sparams.ChromaHeight() );
     m_frame_total[idx]++;
 
 }
@@ -159,5 +161,5 @@ const int xlen, const int ylen )
 
     sum_sq_diff /= xlen*ylen;
 
-	return static_cast<double> ( 10.0 * std::log10( max*max / sum_sq_diff ) );
+    return static_cast<double> ( 10.0 * std::log10( max*max / sum_sq_diff ) );
 }
