@@ -98,6 +98,9 @@ bool ReadSequenceParams (std::istream &in, SeqParams &seqparams, SourceParams& s
     in >> temp_int;
     seqparams.SetYl( temp_int );
 
+    in >> temp_int;
+    seqparams.SetVideoDepth( temp_int );
+    
     in >> temp_bool;
     srcparams.SetInterlace( temp_bool );
 
