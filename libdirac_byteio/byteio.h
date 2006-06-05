@@ -245,7 +245,7 @@ namespace dirac
 
        /**
        * Output unsigned int value in big endian format
-       * @param val Integer to be output
+       * @param value Integer to be output
        * @param length number of bytes in val to output
        */
        inline void OutputFixedLengthUint(const unsigned int& value, const int& length)
