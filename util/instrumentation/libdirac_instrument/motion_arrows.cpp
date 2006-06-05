@@ -61,8 +61,8 @@ void DrawMotionArrows::DrawBlock(int j, int i)
     {
         for (int x=i*m_draw_params.MvUVBlockX(); x<(i+1)*m_draw_params.MvUVBlockX(); ++x)
         {
-            m_frame.Udata()[y][x] = 512;
-            m_frame.Vdata()[y][x] = 512;
+            m_frame.Udata()[y][x] = 128;
+            m_frame.Vdata()[y][x] = 128;
         }
     }
 
@@ -192,7 +192,7 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
         {
             for (int xpx=0; xpx<16; ++xpx)
             {
-                m_frame.Ydata()[(y_pos)+ypx][(x_pos) + xpx] += m_symbols.Arrow()[ypx][15-xpx] * 1024;
+                m_frame.Ydata()[(y_pos)+ypx][(x_pos) + xpx] += m_symbols.Arrow()[ypx][15-xpx] * 256;
             }// xpx
         }// ypx
     }
@@ -202,7 +202,7 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
         {
             for (int xpx=0; xpx<16; ++xpx)
             {
-                m_frame.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[15-ypx][xpx] * 1024;
+                m_frame.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[15-ypx][xpx] * 256;
             }// xpx
         }// ypx
     }
@@ -212,7 +212,7 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
         {
             for (int xpx=0; xpx<16; ++xpx)
             {
-                m_frame.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[15-ypx][15-xpx] * 1024;
+                m_frame.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[15-ypx][15-xpx] * 256;
             }// xpx
         }// ypx
     }
@@ -222,7 +222,7 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
         {
             for (int xpx=0; xpx<16; ++xpx)
             {
-                m_frame.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[ypx][xpx] * 1024;
+                m_frame.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[ypx][xpx] * 256;
             }// xpx
         }// ypx
     }

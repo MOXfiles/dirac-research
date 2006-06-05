@@ -55,8 +55,8 @@ DrawMotionColour::~DrawMotionColour()
 // colours motion vector block appropriately
 void DrawMotionColour::DrawBlock(int j, int i)
 {
-    DrawMvBlockUV(j, i, (((m_mv[j][i].x) * (500/m_mv_clip)) / m_mv_scale) + 500,
-                        (((m_mv[j][i].y) * (500/m_mv_clip)) / m_mv_scale) + 500);
+    DrawMvBlockUV(j, i, (((m_mv[j][i].x) * (125/m_mv_clip)) / m_mv_scale) + 125,
+                        (((m_mv[j][i].y) * (125/m_mv_clip)) / m_mv_scale) + 125);
 }
 
 // draws colour wheel legend
@@ -69,11 +69,11 @@ void DrawMotionColour::DrawLegend()
         // white background
         for (int xpx=1; xpx<40; ++xpx)
         {
-            m_frame.Ydata()[ypx][xpx]=500;
+            m_frame.Ydata()[ypx][xpx]=125;
         }
 
         // crosshair vertical line
-        m_frame.Ydata()[ypx][21]=350;
+        m_frame.Ydata()[ypx][21]=88;
     }
 
     // colour in the rectangle
@@ -83,15 +83,15 @@ void DrawMotionColour::DrawLegend()
     {
         for (int xpx=40/m_draw_params.ChromaFactorX(), x=20; xpx>=0; --xpx, x-=m_draw_params.ChromaFactorX())
         {
-            m_frame.Udata()[ypx][xpx]=(x*25)+500;
-            m_frame.Vdata()[ypx][xpx]=(y*25)+500;
+            m_frame.Udata()[ypx][xpx]=(x*25)+125;
+            m_frame.Vdata()[ypx][xpx]=(y*25)+125;
         }
     }
 
     // crosshair horizontal linem_
     for (int xpx=0; xpx<40; ++xpx)
     {
-        m_frame.Ydata()[y_start+16][xpx]=350;
+        m_frame.Ydata()[y_start+16][xpx]=88;
     }
 
     // vertical black line

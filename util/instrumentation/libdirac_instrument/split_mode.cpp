@@ -57,12 +57,12 @@ void DrawSplitMode::DrawBlock(int j, int i)
     if (m_mode[int(j/4)][int(i/4)] == 0)
         power=0;
     else if (m_mode[int(j/4)][int(i/4)] == 1)
-        power=400;
+        power=100;
     else if (m_mode[int(j/4)][int(i/4)] == 2)
-        power=800;
+        power=200;
 
     GetPowerUV(power, U, V);
-    DrawMvBlockUV(j, i, U+500, V+500);
+    DrawMvBlockUV(j, i, U+125, V+125);
 
 }
 
@@ -73,22 +73,22 @@ void DrawSplitMode::DrawLegend()
     for (int ypx=m_draw_params.PicY()-49; ypx<m_draw_params.PicY(); ++ypx)
     {
         for (int xpx=7; xpx>=0; --xpx)
-            m_frame.Ydata()[ypx][xpx]=500; // grey
+            m_frame.Ydata()[ypx][xpx]=125; // grey
     }
 
     int U=0, V=0;
 
-    GetPowerUV(800, U, V); // mode 2
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(48/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(40/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    GetPowerUV(200, U, V); // mode 2
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(48/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(40/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
     
-    GetPowerUV(400, U, V); // mode 1
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(32/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(24/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    GetPowerUV(100, U, V); // mode 1
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(32/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(24/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
     
     GetPowerUV(0, U, V); // mode 0
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(16/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(8/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(16/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(8/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
 
     // black horizontal lines
     for (int xpx=15; xpx>=0; --xpx)

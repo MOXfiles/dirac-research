@@ -57,23 +57,23 @@ void DrawSad::DrawBlock(int j, int i)
 {
     // get U and V for motion vector block
     int U = 0, V = 0;
-    int value = int(m_cost[j][i].SAD / (double(m_scale) / 1000));
+    int value = int(m_cost[j][i].SAD / (double(m_scale) / 250));
     GetPowerUV(value, U, V);
-    DrawMvBlockUV(j, i, U+500, V+500);
+    DrawMvBlockUV(j, i, U+125, V+125);
 
     // if intra, draw white box round block
     if (m_mode[j][i]==dirac::INTRA)
     {
         for (int ypx=0; ypx<m_draw_params.MvYBlockY(); ++ypx)
         {
-            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())+ypx][(i*m_draw_params.MvYBlockX())] = 1000;
-            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())+ypx][(i*m_draw_params.MvYBlockX())+m_draw_params.MvYBlockX()-1] = 1000;
+            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())+ypx][(i*m_draw_params.MvYBlockX())] = 250;
+            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())+ypx][(i*m_draw_params.MvYBlockX())+m_draw_params.MvYBlockX()-1] = 250;
         }// ypx
 
         for (int xpx=0; xpx<m_draw_params.MvYBlockX(); ++xpx)
         {
-            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())][(i*m_draw_params.MvYBlockX())+xpx] = 1000;
-            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())+m_draw_params.MvYBlockY()-1][(i*m_draw_params.MvYBlockX())+xpx] = 1000;
+            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())][(i*m_draw_params.MvYBlockX())+xpx] = 250;
+            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())+m_draw_params.MvYBlockY()-1][(i*m_draw_params.MvYBlockX())+xpx] = 250;
         }// xpx
     }
 }

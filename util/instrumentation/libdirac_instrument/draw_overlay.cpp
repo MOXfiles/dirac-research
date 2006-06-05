@@ -49,49 +49,49 @@ DrawOverlay::DrawOverlay(Frame & frame, DrawFrameMotionParams & draw_params)
 DrawOverlay::~DrawOverlay()
 {}
 
-// calculates U and V from a value ranging 0 ~ 1000 (normalising is carried out in calling function)
+// calculates U and V from a value ranging 0 ~ 250 (normalising is carried out in calling function)
 void DrawOverlay::GetPowerUV(int power, int & U, int & V)
 {
     // first convert power into RGB values
-    // ranging 0 ~ 500
+    // ranging 0 ~ 125
     float R = 0, G = 0, B = 0;
 
     // check which region value is located
-    if (power < 200)
+    if (power < 50)
     {
         B = 0;
-        G = 1000;
+        G = 250;
         R = 5 * power;
     }
-    else if (power >= 200 && power < 400)
+    else if (power >= 50 && power < 100)
     {
-        R = 1000;
+        R = 250;
         B = 0;
-        G = 1000 - (5 * (power - 200));
+        G = 250 - (5 * (power - 50));
     }
-    else if (power >= 400 && power < 600)
+    else if (power >= 100 && power < 150)
     {
-        R = 1000;
+        R = 250;
         G = 0;
-        B = 5 * (power - 400);
+        B = 5 * (power - 100);
     }
-    else if (power >= 600 && power < 800)
+    else if (power >= 150 && power < 200)
     {
-        B = 1000;
+        B = 250;
         G = 0;
-        R = 1000 - (5 * (power - 600));
+        R = 250 - (5 * (power - 150));
     }
-    else if (power >= 800 && power < 1000)
+    else if (power >= 200 && power < 250)
     {
-        B = 1000;
+        B = 250;
         R = 0;
-        G = 5 * (power - 800);
+        G = 5 * (power - 200);
     }
-    else if (power >= 1000)
+    else if (power >= 250)
     {
-        B = 1000;
+        B = 250;
         R = 0;
-        G = 1000;
+        G = 250;
     }
 
     R *= 0.25;
@@ -114,14 +114,14 @@ void DrawOverlay::DrawPowerBar(int min, int max)
         m_frame.Ydata()[ypx][5]=0;
 
         for (int xpx=0; xpx<5; ++xpx)
-            m_frame.Ydata()[ypx][xpx]=512; // grey background
+            m_frame.Ydata()[ypx][xpx]=128; // grey background
     }
 
     // draw colour on line by line basis
     for (int ypx=40/m_draw_params.ChromaFactorY(); ypx<(m_draw_params.PicY()/m_draw_params.ChromaFactorY()); ++ypx)
     {
         // find equivalent power value
-        double power = (1000 * (((m_draw_params.PicY()/m_draw_params.ChromaFactorY())) - (40/m_draw_params.ChromaFactorY()) - ypx) /
+        double power = (250 * (((m_draw_params.PicY()/m_draw_params.ChromaFactorY())) - (40/m_draw_params.ChromaFactorY()) - ypx) /
                         (m_draw_params.PicY()/m_draw_params.ChromaFactorY())-(40/m_draw_params.ChromaFactorY()));
 
         // get U V values for power
@@ -130,8 +130,8 @@ void DrawOverlay::DrawPowerBar(int min, int max)
 
         for (int xpx=0; xpx<=4/m_draw_params.ChromaFactorX(); ++xpx)
         {
-            m_frame.Udata()[ypx][xpx]=U+512;
-            m_frame.Vdata()[ypx][xpx]=V+512;
+            m_frame.Udata()[ypx][xpx]=U+128;
+            m_frame.Vdata()[ypx][xpx]=V+128;
         }
     }
 
@@ -149,7 +149,7 @@ void DrawOverlay::DrawCharacter(const PicArray & ch, int y_offset, int x_offset)
     {
         for (int x=x_offset, x_ch=0; x<x_offset+8; ++x, ++x_ch)
         {
-            m_frame.Ydata()[y][x]=ch[y_ch][x_ch]*1024;
+            m_frame.Ydata()[y][x]=ch[y_ch][x_ch]*256;
         }// x
     }// y
 
@@ -158,8 +158,8 @@ void DrawOverlay::DrawCharacter(const PicArray & ch, int y_offset, int x_offset)
     {
         for (int xpx=x_offset/m_draw_params.ChromaFactorX(); xpx<(x_offset+8)/m_draw_params.ChromaFactorX(); ++xpx)
         {
-            m_frame.Udata()[ypx][xpx]=512;
-            m_frame.Vdata()[ypx][xpx]=512;
+            m_frame.Udata()[ypx][xpx]=128;
+            m_frame.Vdata()[ypx][xpx]=128;
         }// xpx
     }// ypx
 }

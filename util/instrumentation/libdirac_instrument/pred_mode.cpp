@@ -56,16 +56,16 @@ void DrawPredMode::DrawBlock(int j, int i)
 
     // get prediction mode
     if (m_mode[j][i] == dirac::INTRA)
-        power=400; // red
+        power=100; // red
     else if (m_mode[j][i] == dirac::REF1_ONLY)
-        power=1000; // blue
+        power=250; // blue
     else if (m_mode[j][i] == dirac::REF2_ONLY)
-        power=200; // yellow
+        power=50; // yellow
     else if (m_mode[j][i] == dirac::REF1AND2)
         power=0; // green
 
     GetPowerUV(power, U, V);
-    DrawMvBlockUV(j, i, U+500, V+500);
+    DrawMvBlockUV(j, i, U+125, V+125);
 }
 
 // displays colours representing prediction references
@@ -75,26 +75,26 @@ void DrawPredMode::DrawLegend()
     for (int ypx=m_draw_params.PicY()-65; ypx<m_draw_params.PicY(); ++ypx)
     {
         for (int xpx=7; xpx>=0; --xpx)
-            m_frame.Ydata()[ypx][xpx]=500;
+            m_frame.Ydata()[ypx][xpx]=125;
     }
 
     int U=0, V=0;
     
-    GetPowerUV(400, U, V); // intra
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(64/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(56/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    GetPowerUV(100, U, V); // intra
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(64/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(56/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
 
-    GetPowerUV(1000, U, V); // ref 1
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(48/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(40/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);    
+    GetPowerUV(250, U, V); // ref 1
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(48/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(40/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);    
 
-    GetPowerUV(200, U, V); // ref 2
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(32/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(24/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    GetPowerUV(50, U, V); // ref 2
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(32/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(24/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
 
     GetPowerUV(0, U, V); // ref 1 and 2
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(16/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(8/m_draw_params.ChromaFactorY())+1, 0, U+500, V+500);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(16/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(8/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
 
     // black horizontal lines
     for (int xpx=15; xpx>=0; --xpx)
@@ -124,8 +124,8 @@ void DrawPredMode::DrawLegend()
         // no chrominance
         for (int xpx=(32/m_draw_params.MvYBlockX())-1; xpx>=(16/m_draw_params.ChromaFactorX()); --xpx)
         {
-            m_frame.Udata()[ypx][xpx]=500;
-            m_frame.Vdata()[ypx][xpx]=500;
+            m_frame.Udata()[ypx][xpx]=125;
+            m_frame.Vdata()[ypx][xpx]=125;
         }
     }
 }

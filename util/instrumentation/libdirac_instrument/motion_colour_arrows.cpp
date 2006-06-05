@@ -102,7 +102,7 @@ void DrawMotionColourArrows::DrawBlock(int j, int i)
 
         double x_avg = x_sum / (m_blocks_per_arrow_y * m_blocks_per_arrow_y * m_mv_scale);
         double y_avg = y_sum / (m_blocks_per_arrow_x * m_blocks_per_arrow_x * m_mv_scale);
-        double power = (1000 / m_mv_clip) * std::sqrt((x_avg*x_avg)+(y_avg*y_avg));
+        double power = (250 / m_mv_clip) * std::sqrt((x_avg*x_avg)+(y_avg*y_avg));
 
         int U = 0, V = 0;
         GetPowerUV((int)power, U, V);
@@ -111,7 +111,7 @@ void DrawMotionColourArrows::DrawBlock(int j, int i)
         {
             for (int x=i; x<i+m_blocks_per_arrow_x; ++x)
             {
-                DrawMvBlockUV(y, x, U+512, V+512);
+                DrawMvBlockUV(y, x, U+128, V+128);
             }
         }
     }

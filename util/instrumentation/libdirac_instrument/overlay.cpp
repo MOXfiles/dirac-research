@@ -62,7 +62,7 @@ void Overlay::ProcessFrame()
         for (int j=0; j<=m_frame.Ydata().LastY(); ++j)
         {
             for (int i=0; i<=m_frame.Ydata().LastX(); ++i)
-                m_frame.Ydata()[j][i]=512;
+                m_frame.Ydata()[j][i]=128;
         }
     }
 
@@ -71,8 +71,8 @@ void Overlay::ProcessFrame()
     {
         for (int i=0; i<m_frame.Udata().LengthX(); ++i)
         {
-            m_frame.Udata()[j][i]=512;
-            m_frame.Vdata()[j][i]=512;
+            m_frame.Udata()[j][i]=128;
+            m_frame.Vdata()[j][i]=128;
         }
     }
 
@@ -104,7 +104,7 @@ void Overlay::ProcessFrame(const MEData & me_data, const OLBParams & block_param
         for (int j=0; j<=m_frame.Ydata().LastY(); ++j)
         {
             for (int i=0; i<=m_frame.Ydata().LastX(); ++i)
-                m_frame.Ydata()[j][i]=512;
+                m_frame.Ydata()[j][i]=128;
         }
     }
 
@@ -258,8 +258,8 @@ void Overlay::DoOverlay(const MEData & me_data)
         {
             for (int x=0; x<m_frame.Udata().LengthX(); ++x)
             {
-                m_frame.Udata()[y][x] = 512;
-                m_frame.Vdata()[y][x] = 512;
+                m_frame.Udata()[y][x] = 128;
+                m_frame.Vdata()[y][x] = 128;
             }
         }
         
