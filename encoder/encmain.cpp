@@ -148,6 +148,7 @@ bool WriteSequenceHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
         fdata << sparams.chroma << std::endl;
         fdata << sparams.width << std::endl;
         fdata << sparams.height << std::endl;
+        fdata << sparams.video_depth << std::endl;
         fdata << srcparams.interlace << std::endl;
         fdata << srcparams.topfieldfirst << std::endl;
         fdata << srcparams.frame_rate.numerator << std::endl;
