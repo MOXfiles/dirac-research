@@ -827,7 +827,7 @@ namespace dirac
         /*!
            Frame chroma format is set Frame sort defaults to I frame.
         */    
-        FrameParams(const ChromaFormat& cf, int xlen, int ylen, int c_xlen, int c_ylen);
+        FrameParams(const ChromaFormat& cf, int xlen, int ylen, int c_xlen, int c_ylen, unsigned int video_depth);
         
         //! Constructor
         /*!
@@ -894,6 +894,9 @@ namespace dirac
 
         //! Returns reference frame type (see enum)
         ReferenceType GetReferenceType() const { return m_reference_type;}
+        
+        //! Returns the video depth of the frame
+        unsigned int GetVideoDepth() const{return m_video_depth;}
 
         // ... Sets
         
@@ -929,6 +932,9 @@ namespace dirac
         
         //! Sets the chroma height
         void SetChromaYl(int yl){m_chroma_yl = yl; }
+        
+        //! Sets the video depth of the frame
+        void SetVideoDepth(int vd) { m_video_depth = vd; }
         
         //! Returns a const C++ reference to the set of frame numbers to be retired
         std::vector<int>& RetiredFrames() const {return m_retd_list;}
@@ -976,8 +982,10 @@ namespace dirac
         
         //! The set of frame numbers in the retired frame list
         mutable std::vector<int> m_retd_list;
-        
 
+        //! Video depth
+        unsigned int m_video_depth;
+        
     };
 
     //! Structure to hold code block sizes when spatial partitioning is used

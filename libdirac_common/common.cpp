@@ -421,6 +421,10 @@ void CodecParams::SetDefaultCodeBlocks ( const FrameType &ftype)
     if (SpatialPartition() == false)
         return;
 
+    SetCodeBlocks(0, 1, 1);
+    if (m_wlt_depth == 0)
+        return;
+
     switch (GetVideoFormat())
     {
     case VIDEO_FORMAT_QSIF:
@@ -441,35 +445,34 @@ void CodecParams::SetDefaultCodeBlocks ( const FrameType &ftype)
         {
             // Intra frame default number of coeff blocks per level
             // only the highest two levels are split.
-            SetCodeBlocks(0, 1, 1);
             int level = TransformDepth();
             int i = 1;
-            for (; i<= level-2; ++i)
+            for (; i<= level-2 || i == 1; ++i)
             {
                 SetCodeBlocks(i, 1, 1);
             }
-            if (i < level)
+            for (; i <=level; ++i)
             {
-                SetCodeBlocks(level-1, 4, 3);
-                SetCodeBlocks(level, 4, 3);
+                SetCodeBlocks(i, 4, 3);
             }
         }
         else
         {
             // Inter frame default number of coeff blocks per level
             // only the highest three levels are split.
-            SetCodeBlocks(0, 1, 1);
             int level = TransformDepth();
             int i = 1;
-            for (; i<= level-3; ++i)
+            for (; i<= level-3 || i == 1; ++i)
             {
                 SetCodeBlocks(i, 1, 1);
             }
-            if (i < level)
-            {
+            if (i  <= level-2)
                 SetCodeBlocks(level-2, 8, 6);
-                SetCodeBlocks(level-1, 12, 8);
-                SetCodeBlocks(level, 12, 8);
+            ++i;
+
+            for (; i <=level; ++i)
+            {
+                SetCodeBlocks(i, 12, 8);
             }
         }
         break;
@@ -741,9 +744,9 @@ void SourceParams::SetColourSpecification (unsigned int cs_idx)
         m_transfer_func = TF_TV;
         break;
     case 3:
-        m_col_primary = CP_ITU_709;
-        m_col_matrix = CM_HDTV_COMP_INTERNET;
-        m_transfer_func = TF_TV;
+        m_col_primary = CP_CIE_XYZ;
+        m_col_matrix = CM_DCINEMA;
+        m_transfer_func = TF_DCINEMA;
         break;
     default:
         m_cs_idx = 0;
@@ -794,14 +797,15 @@ m_output(false)
 {}    
 
 // Constructor 
-FrameParams::FrameParams(const ChromaFormat& cf, int xlen, int ylen, int c_xlen, int c_ylen):
+FrameParams::FrameParams(const ChromaFormat& cf, int xlen, int ylen, int c_xlen, int c_ylen, unsigned int video_depth):
     m_cformat(cf),
     m_xl(xlen),
     m_yl(ylen),
     m_fsort(FrameSort::IntraRefFrameSort()),
     m_output(false),
     m_chroma_xl(c_xlen),
-    m_chroma_yl(c_ylen)
+    m_chroma_yl(c_ylen),
+    m_video_depth(video_depth)
 {}
 
 // Constructor
@@ -817,7 +821,8 @@ FrameParams::FrameParams(const SeqParams& sparams):
     m_xl(sparams.Xl()),
     m_yl(sparams.Yl()),
     m_fsort(FrameSort::IntraRefFrameSort()),
-    m_output(false)
+    m_output(false),
+    m_video_depth(sparams.GetVideoDepth())
 {
     m_chroma_xl = m_chroma_yl = 0;
     if(m_cformat == format422) 
@@ -843,7 +848,8 @@ FrameParams::FrameParams(const SeqParams& sparams, const FrameSort& fs):
     m_xl(sparams.Xl()),
     m_yl(sparams.Yl()),
     m_fsort(fs),
-    m_output(false)
+    m_output(false),
+    m_video_depth(sparams.GetVideoDepth())
 {
     m_chroma_xl = m_chroma_yl = 0;
     if(m_cformat == format422) 
