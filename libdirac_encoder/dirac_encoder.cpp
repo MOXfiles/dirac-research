@@ -417,7 +417,7 @@ DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx,
     SetEncoderParams (enc_ctx);
 
      // NOTE: FIXME - make video-depth a user-parameter
-    m_sparams.SetVideoDepth(10);
+    m_sparams.SetVideoDepth(8);
     // Set up the input data stream (uncompressed data)
     m_inp_ptr.SetSequenceParams(m_sparams);
     // Set up the output data stream (locally decoded frame)
