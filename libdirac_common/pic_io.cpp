@@ -86,7 +86,6 @@ bool StreamPicOutput::WriteComponent( const PicArray& pic_data , const CompSort&
     }
 
     unsigned char* tempc=new unsigned char[xl];
-    ValueType tempv;
 
     if (m_op_pic_ptr)
     {
@@ -94,9 +93,7 @@ bool StreamPicOutput::WriteComponent( const PicArray& pic_data , const CompSort&
         {
             for (int i=0 ; i<xl ; ++i)
             {                
-                tempv = pic_data[j][i]+2;
-                tempv >>= 2;
-                tempc[i] = (unsigned char) tempv;                
+                tempc[i] = (unsigned char) pic_data[j][i];                
             }//I
 
             m_op_pic_ptr->write((char*) tempc,xl);
@@ -257,7 +254,6 @@ bool StreamPicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
         for (int i=0 ; i<xl ; ++i)
         {            
             pic_data[j][i] = (ValueType) temp[i];
-            pic_data[j][i] <<= 2;
         }//I
 
         //pad the columns on the rhs using the edge value        

@@ -462,8 +462,7 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
             }
             else
             {//we have a DC block.
-                dc = dcarray[yblock][xblock]<<2;// DC is only given 8 bits, 
-                                            // so need to shift to get 10-bit data
+                dc = dcarray[yblock][xblock];
 
                 DCBlock(pic_data, orig_pic_size, dc,pos, *wt);
             }

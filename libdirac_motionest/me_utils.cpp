@@ -300,11 +300,10 @@ float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
 
     int_dc /= ( dparams.Xl() * dparams.Yl() );
 
-    // Just give dc to 8-bit accuracy
-    non_mmx_dc = static_cast<ValueType>( (int_dc+2)>>2 );
+    non_mmx_dc = static_cast<ValueType>( int_dc );
 
     // Now compute the resulting SAD
-    ValueType dc( non_mmx_dc<<2 );
+    ValueType dc( non_mmx_dc );
     CalcValueType non_mmx_intra_cost( 0 );
 
     for (int j=dparams.Yp(); j<dparams.Yend() ; ++j)
@@ -322,7 +321,6 @@ float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
 #endif
     return static_cast<float>( intra_cost );
 #else
-
     CalcValueType int_dc( 0 );
 
     for ( int j=dparams.Yp() ; j<dparams.Yp()+dparams.Yl() ; ++j)
@@ -331,11 +329,10 @@ float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
 
     int_dc /= ( dparams.Xl() * dparams.Yl() );
 
-    // Just give dc to 8-bit accuracy
-    dc_val = static_cast<ValueType>( (int_dc+2)>>2 );
+    dc_val = static_cast<ValueType>( int_dc );
 
     // Now compute the resulting SAD
-    ValueType dc( dc_val<<2 );
+    ValueType dc( dc_val );
     CalcValueType intra_cost( 0 );
 
     for (int j=dparams.Yp(); j<dparams.Yend() ; ++j)

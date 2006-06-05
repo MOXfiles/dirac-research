@@ -148,11 +148,10 @@ namespace dirac
 
         CalcValueType int_dc =  (u_sum.i[0] + u_sum.i[1] + mop_sum)/(width*height);
 
-        // Just give dc to 8-bit accuracy
-        dc_val = static_cast<ValueType>( (int_dc+2)>>2 );
+        dc_val = static_cast<ValueType>( int_dc );
 
         // Now compute the resulting SAD
-        __m64 dc = _mm_set_pi16 ( dc_val<<2, dc_val <<2 , dc_val <<2 , dc_val <<2 );
+        __m64 dc = _mm_set_pi16 ( dc_val, dc_val , dc_val , dc_val);
         u_sum.m = _mm_xor_si64(u_sum.m, u_sum.m); // initialise sum to 0
         mop_sum = 0;
         
@@ -180,7 +179,7 @@ namespace dirac
             // Mop up
             for (int i = stopX; i < width; ++i)
             {
-                mop_sum += std::abs(*src - (dc_val<<2));
+                mop_sum += std::abs(*src - dc_val);
                 src++;
             }
             src += pic_next;
