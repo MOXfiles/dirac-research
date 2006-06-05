@@ -122,6 +122,38 @@ inline void Interleave_mmx( const int xp ,
 }
 #endif
 
+void WaveletTransform::VHFilter::ShiftRowLeft(ValueType *row, int length, int shift)
+{
+    int xstop = length/4*4;
+    ValueType *shift_row = row;
+    for (int i = 0; i < xstop; i+=4, shift_row+=4)
+        *(__m64 *)shift_row = _mm_slli_pi16 (*(__m64 *)shift_row, shift);
+
+    // mopup
+    for (int i = xstop; i < length; ++i)
+        row[i] <<= shift;
+
+    _mm_empty();
+}
+
+void WaveletTransform::VHFilter::ShiftRowRight(ValueType *row, int length, int shift)
+{
+    ValueType *shift_row = row;
+    int round_val = 1<<(shift-1);
+    __m64 mmx_round = _mm_set_pi16( round_val, round_val, round_val, round_val);
+
+    int xstop = length/4*4;
+    for (int i = 0; i < xstop; i+=4, shift_row+=4)
+    {
+        __m64 tmp = _mm_add_pi16 (*(__m64 *)shift_row, mmx_round);
+        *(__m64 *)shift_row = _mm_srai_pi16(tmp, shift);
+    }
+    // mopup
+    for (int i = xstop; i < length; ++i)
+        row[i] = ((row[i]+round_val)>>shift);
+    _mm_empty();
+}
+
 inline void Interleave_mmx( const int xp , 
                     const int yp , 
                     const int xl , 
@@ -250,7 +282,7 @@ void WaveletTransform::VHFilterApprox9_7::Synth(const int xp ,
     // Second lifting stage
     UpdateStepFourTap< 4 , 9 , -1> update;
     // rounding factor for update step
-    __m64 update_round = _mm_set_pi16 (1<<(4-1), 1<<(4-1), 1<<(4-1), 1<<(4-1));
+    __m64 update_round = _mm_set_pi32 (1<<(4-1), 1<<(4-1));
     // top edge
     in1 = pic_data[yp];
     in2 = pic_data[yp+1];
@@ -259,16 +291,31 @@ void WaveletTransform::VHFilterApprox9_7::Synth(const int xp ,
     out = pic_data[ymid];
     __m64 tap1 = _mm_set_pi16 (9, 9, 9, 9);
     __m64 tap2 = _mm_set_pi16 (-1, -1, -1, -1);
-    
+  
     for ( i = xp ; i < xstop ; i+=4 )
     {
-        __m64 val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
-        __m64 val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
-        val1 = _mm_mullo_pi16 (val1, tap1);
-        val2 = _mm_mullo_pi16 (val2, tap2);
-        val1 = _mm_add_pi16 (val1, val2);
-        val1 = _mm_add_pi16 (val1, update_round);
-        val1 = _mm_srai_pi16(val1, 4);
+        __m64 val1, val2, val3, val4, tmp1, tmp2;
+
+        val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
+        tmp1 = _mm_mullo_pi16 (val1, tap1);
+        tmp2 = _mm_mulhi_pi16 (val1, tap1);
+        val3 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val1 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
+        tmp1 = _mm_mullo_pi16 (val2, tap2);
+        tmp2 = _mm_mulhi_pi16 (val2, tap2);
+        val4 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val2 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val1 = _mm_add_pi32 (val1, val2);
+        val3 = _mm_add_pi32 (val3, val4);
+        val1 = _mm_add_pi32 (val1, update_round);
+        val3 = _mm_add_pi32 (val3, update_round);
+        val1 = _mm_srai_pi32(val1, 4);
+        val3 = _mm_srai_pi32(val3, 4);
+        val1 = _mm_packs_pi32 (val1, val3);
+        
         *(__m64*)out = _mm_add_pi16 (*(__m64*)out,val1);
         in1 +=4;
         in2 +=4;
@@ -285,15 +332,30 @@ void WaveletTransform::VHFilterApprox9_7::Synth(const int xp ,
         in3 = pic_data[yp+j-1];
         in4 = pic_data[yp+j+2];
         out = pic_data[ymid+j];
-           for ( i = xp ; i < xstop ; i+=4)
-           {
-            __m64 val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
-            __m64 val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
-            val1 = _mm_mullo_pi16 (val1, tap1);
-            val2 = _mm_mullo_pi16 (val2, tap2);
-            val1 = _mm_add_pi16 (val1, val2);
-            val1 = _mm_add_pi16 (val1, update_round);
-            val1 = _mm_srai_pi16(val1, 4);
+        for ( i = xp ; i < xstop ; i+=4)
+        {
+            __m64 val1, val2, val3, val4, tmp1, tmp2;
+
+            val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
+            tmp1 = _mm_mullo_pi16 (val1, tap1);
+            tmp2 = _mm_mulhi_pi16 (val1, tap1);
+            val3 = _mm_unpackhi_pi16 (tmp1, tmp2);
+            val1 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+            val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
+            tmp1 = _mm_mullo_pi16 (val2, tap2);
+            tmp2 = _mm_mulhi_pi16 (val2, tap2);
+            val4 = _mm_unpackhi_pi16 (tmp1, tmp2);
+            val2 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+            val1 = _mm_add_pi32 (val1, val2);
+            val3 = _mm_add_pi32 (val3, val4);
+            val1 = _mm_add_pi32 (val1, update_round);
+            val3 = _mm_add_pi32 (val3, update_round);
+            val1 = _mm_srai_pi32(val1, 4);
+            val3 = _mm_srai_pi32(val3, 4);
+            val1 = _mm_packs_pi32 (val1, val3);
+        
             *(__m64*)out = _mm_add_pi16 (*(__m64*)out,val1);
             in1 +=4;
             in2 +=4;
@@ -311,13 +373,28 @@ void WaveletTransform::VHFilterApprox9_7::Synth(const int xp ,
     out = pic_data[yend-2];
     for ( i = xp ; i < xstop ; i+=4)
     {
-        __m64 val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
-        __m64 val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
-        val1 = _mm_mullo_pi16 (val1, tap1);
-        val2 = _mm_mullo_pi16 (val2, tap2);
-        val1 = _mm_add_pi16 (val1, val2);
-        val1 = _mm_add_pi16 (val1, update_round);
-        val1 = _mm_srai_pi16(val1, 4);
+        __m64 val1, val2, val3, val4, tmp1, tmp2;
+
+        val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
+        tmp1 = _mm_mullo_pi16 (val1, tap1);
+        tmp2 = _mm_mulhi_pi16 (val1, tap1);
+        val3 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val1 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
+        tmp1 = _mm_mullo_pi16 (val2, tap2);
+        tmp2 = _mm_mulhi_pi16 (val2, tap2);
+        val4 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val2 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val1 = _mm_add_pi32 (val1, val2);
+        val3 = _mm_add_pi32 (val3, val4);
+        val1 = _mm_add_pi32 (val1, update_round);
+        val3 = _mm_add_pi32 (val3, update_round);
+        val1 = _mm_srai_pi32(val1, 4);
+        val3 = _mm_srai_pi32(val3, 4);
+        val1 = _mm_packs_pi32 (val1, val3);
+       
         *(__m64*)out = _mm_add_pi16 (*(__m64*)out,val1);
         in1 +=4;
         in2 +=4;
@@ -333,13 +410,28 @@ void WaveletTransform::VHFilterApprox9_7::Synth(const int xp ,
     out = pic_data[yend-1];
     for ( i = xp ; i < xstop ; i+=4)
     {
-        __m64 val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
-        __m64 val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
-        val1 = _mm_mullo_pi16 (val1, tap1);
-        val2 = _mm_mullo_pi16 (val2, tap2);
-        val1 = _mm_add_pi16 (val1, val2);
-        val1 = _mm_add_pi16 (val1, update_round);
-        val1 = _mm_srai_pi16(val1, 4);
+        __m64 val1, val2, val3, val4, tmp1, tmp2;
+
+        val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
+        tmp1 = _mm_mullo_pi16 (val1, tap1);
+        tmp2 = _mm_mulhi_pi16 (val1, tap1);
+        val3 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val1 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
+        tmp1 = _mm_mullo_pi16 (val2, tap2);
+        tmp2 = _mm_mulhi_pi16 (val2, tap2);
+        val4 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val2 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val1 = _mm_add_pi32 (val1, val2);
+        val3 = _mm_add_pi32 (val3, val4);
+        val1 = _mm_add_pi32 (val1, update_round);
+        val3 = _mm_add_pi32 (val3, update_round);
+        val1 = _mm_srai_pi32(val1, 4);
+        val3 = _mm_srai_pi32(val3, 4);
+        val1 = _mm_packs_pi32 (val1, val3);
+        
         *(__m64*)out = _mm_add_pi16 (*(__m64*)out,val1);
         in1 +=4;
         in2 +=4;
@@ -397,6 +489,10 @@ void WaveletTransform::VHFilterApprox9_7::Synth(const int xp ,
         }// i 
         update.Filter( line_data[xl-2] , line_data[xmid-2] , line_data[xmid-1] , line_data[xmid-3] , line_data[xmid-1] );
         update.Filter( line_data[xl-1] , line_data[xmid-1] , line_data[xmid-1] , line_data[xmid-2] , line_data[xmid-1] );
+        
+        // Shift right by one bit to counter the shift in the analysis stage
+        ShiftRowRight(line_data, xl, 1);
+
     }// j
     _mm_empty();
     Interleave_mmx( xp , yp , xl ,yl , pic_data );
@@ -414,9 +510,9 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
     const int yend( yp+yl );
 
     PredictStepFourTap< 5 , 9 , -1 > predict;
-    __m64 pred_round = _mm_set_pi16 (1<<(5-1), 1<<(5-1), 1<<(5-1), 1<<(5-1));
+    __m64 pred_round = _mm_set_pi32 (1<<(5-1), 1<<(5-1));
     UpdateStepFourTap< 4 , 9 , -1> update;
-    __m64 update_round = _mm_set_pi16 (1<<(4-1), 1<<(4-1), 1<<(4-1), 1<<(4-1));
+    __m64 update_round = _mm_set_pi32 (1<<(4-1), 1<<(4-1));
 
     // Next, do the vertical synthesis
     int ymid = yp + yl/2;
@@ -434,13 +530,28 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
     __m64 tap2 = _mm_set_pi16 (-1, -1, -1, -1);
     for ( i = xp ; i<xstop; i+=4)
     {
-        __m64 val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
-        __m64 val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
-        val1 = _mm_mullo_pi16 (val1, tap1);
-        val2 = _mm_mullo_pi16 (val2, tap2);
-        val1 = _mm_add_pi16 (val1, val2);
-        val1 = _mm_add_pi16 (val1, pred_round);
-        val1 = _mm_srai_pi16(val1, 5);
+        __m64 val1, val2, val3, val4, tmp1, tmp2;
+
+        val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
+        tmp1 = _mm_mullo_pi16 (val1, tap1);
+        tmp2 = _mm_mulhi_pi16 (val1, tap1);
+        val3 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val1 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
+        tmp1 = _mm_mullo_pi16 (val2, tap2);
+        tmp2 = _mm_mulhi_pi16 (val2, tap2);
+        val4 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val2 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val1 = _mm_add_pi32 (val1, val2);
+        val3 = _mm_add_pi32 (val3, val4);
+        val1 = _mm_add_pi32 (val1, pred_round);
+        val3 = _mm_add_pi32 (val3, pred_round);
+        val1 = _mm_srai_pi32(val1, 5);
+        val3 = _mm_srai_pi32(val3, 5);
+        val1 = _mm_packs_pi32 (val1, val3);
+
         *(__m64*)out = _mm_sub_pi16 (*(__m64*)out,val1);
         in1 +=4;
         in2 +=4;
@@ -459,13 +570,28 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
         in4 = pic_data[ymid+j+1];
         for ( i = xp ; i<xstop ; i+=4)
         {
-            __m64 val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
-            __m64 val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
-            val1 = _mm_mullo_pi16 (val1, tap1);
-            val2 = _mm_mullo_pi16 (val2, tap2);
-            val1 = _mm_add_pi16 (val1, val2);
-            val1 = _mm_add_pi16 (val1, pred_round);
-            val1 = _mm_srai_pi16(val1, 5);
+            __m64 val1, val2, val3, val4, tmp1, tmp2;
+
+            val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
+            tmp1 = _mm_mullo_pi16 (val1, tap1);
+            tmp2 = _mm_mulhi_pi16 (val1, tap1);
+            val3 = _mm_unpackhi_pi16 (tmp1, tmp2);
+            val1 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+            val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
+            tmp1 = _mm_mullo_pi16 (val2, tap2);
+            tmp2 = _mm_mulhi_pi16 (val2, tap2);
+            val4 = _mm_unpackhi_pi16 (tmp1, tmp2);
+            val2 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+            val1 = _mm_add_pi32 (val1, val2);
+            val3 = _mm_add_pi32 (val3, val4);
+            val1 = _mm_add_pi32 (val1, pred_round);
+            val3 = _mm_add_pi32 (val3, pred_round);
+            val1 = _mm_srai_pi32(val1, 5);
+            val3 = _mm_srai_pi32(val3, 5);
+            val1 = _mm_packs_pi32 (val1, val3);
+
             *(__m64*)out = _mm_sub_pi16 (*(__m64*)out,val1);
             in1 +=4;
             in2 +=4;
@@ -483,13 +609,28 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
     in4 = pic_data[ymid];
     for ( i = xp ; i<xstop ; i+=4)
     {
-        __m64 val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
-        __m64 val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
-        val1 = _mm_mullo_pi16 (val1, tap1);
-        val2 = _mm_mullo_pi16 (val2, tap2);
-        val1 = _mm_add_pi16 (val1, val2);
-        val1 = _mm_add_pi16 (val1, pred_round);
-        val1 = _mm_srai_pi16(val1, 5);
+        __m64 val1, val2, val3, val4, tmp1, tmp2;
+
+        val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
+        tmp1 = _mm_mullo_pi16 (val1, tap1);
+        tmp2 = _mm_mulhi_pi16 (val1, tap1);
+        val3 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val1 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
+        tmp1 = _mm_mullo_pi16 (val2, tap2);
+        tmp2 = _mm_mulhi_pi16 (val2, tap2);
+        val4 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val2 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val1 = _mm_add_pi32 (val1, val2);
+        val3 = _mm_add_pi32 (val3, val4);
+        val1 = _mm_add_pi32 (val1, pred_round);
+        val3 = _mm_add_pi32 (val3, pred_round);
+        val1 = _mm_srai_pi32(val1, 5);
+        val3 = _mm_srai_pi32(val3, 5);
+        val1 = _mm_packs_pi32 (val1, val3);
+
         *(__m64*)out = _mm_sub_pi16 (*(__m64*)out,val1);
         in1 +=4;
         in2 +=4;
@@ -505,13 +646,28 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
     in4 = pic_data[ymid];
     for ( i = xp ; i<xstop ; i+=4)
     {
-        __m64 val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
-        __m64 val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
-        val1 = _mm_mullo_pi16 (val1, tap1);
-        val2 = _mm_mullo_pi16 (val2, tap2);
-        val1 = _mm_add_pi16 (val1, val2);
-        val1 = _mm_add_pi16 (val1, pred_round);
-        val1 = _mm_srai_pi16(val1, 5);
+        __m64 val1, val2, val3, val4, tmp1, tmp2;
+
+        val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
+        tmp1 = _mm_mullo_pi16 (val1, tap1);
+        tmp2 = _mm_mulhi_pi16 (val1, tap1);
+        val3 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val1 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
+        tmp1 = _mm_mullo_pi16 (val2, tap2);
+        tmp2 = _mm_mulhi_pi16 (val2, tap2);
+        val4 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val2 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val1 = _mm_add_pi32 (val1, val2);
+        val3 = _mm_add_pi32 (val3, val4);
+        val1 = _mm_add_pi32 (val1, pred_round);
+        val3 = _mm_add_pi32 (val3, pred_round);
+        val1 = _mm_srai_pi32(val1, 5);
+        val3 = _mm_srai_pi32(val3, 5);
+        val1 = _mm_packs_pi32 (val1, val3);
+
         *(__m64*)out = _mm_sub_pi16 (*(__m64*)out,val1);
         in1 +=4;
         in2 +=4;
@@ -557,13 +713,28 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
     in4 = pic_data[yp+2];
     for ( i = xp ; i<xstop ; i+=4)
     {
-        __m64 val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
-        __m64 val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
-        val1 = _mm_mullo_pi16 (val1, tap1);
-        val2 = _mm_mullo_pi16 (val2, tap2);
-        val1 = _mm_add_pi16 (val1, val2);
-        val1 = _mm_add_pi16 (val1, update_round);
-        val1 = _mm_srai_pi16(val1, 4);
+        __m64 val1, val2, val3, val4, tmp1, tmp2;
+
+        val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
+        tmp1 = _mm_mullo_pi16 (val1, tap1);
+        tmp2 = _mm_mulhi_pi16 (val1, tap1);
+        val3 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val1 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
+        tmp1 = _mm_mullo_pi16 (val2, tap2);
+        tmp2 = _mm_mulhi_pi16 (val2, tap2);
+        val4 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val2 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val1 = _mm_add_pi32 (val1, val2);
+        val3 = _mm_add_pi32 (val3, val4);
+        val1 = _mm_add_pi32 (val1, update_round);
+        val3 = _mm_add_pi32 (val3, update_round);
+        val1 = _mm_srai_pi32(val1, 4);
+        val3 = _mm_srai_pi32(val3, 4);
+        val1 = _mm_packs_pi32 (val1, val3);
+
         *(__m64*)out = _mm_add_pi16 (*(__m64*)out,val1);
         in1 +=4;
         in2 +=4;
@@ -583,13 +754,28 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
         in4 = pic_data[k+2];
         for ( i = xp ; i<xstop ; i+=4)
         {
-            __m64 val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
-            __m64 val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
-            val1 = _mm_mullo_pi16 (val1, tap1);
-            val2 = _mm_mullo_pi16 (val2, tap2);
-            val1 = _mm_add_pi16 (val1, val2);
-            val1 = _mm_add_pi16 (val1, update_round);
-            val1 = _mm_srai_pi16(val1, 4);
+            __m64 val1, val2, val3, val4, tmp1, tmp2;
+
+            val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
+            tmp1 = _mm_mullo_pi16 (val1, tap1);
+            tmp2 = _mm_mulhi_pi16 (val1, tap1);
+            val3 = _mm_unpackhi_pi16 (tmp1, tmp2);
+            val1 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+            val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
+            tmp1 = _mm_mullo_pi16 (val2, tap2);
+            tmp2 = _mm_mulhi_pi16 (val2, tap2);
+            val4 = _mm_unpackhi_pi16 (tmp1, tmp2);
+            val2 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+            val1 = _mm_add_pi32 (val1, val2);
+            val3 = _mm_add_pi32 (val3, val4);
+            val1 = _mm_add_pi32 (val1, update_round);
+            val3 = _mm_add_pi32 (val3, update_round);
+            val1 = _mm_srai_pi32(val1, 4);
+            val3 = _mm_srai_pi32(val3, 4);
+            val1 = _mm_packs_pi32 (val1, val3);
+
             *(__m64*)out = _mm_add_pi16 (*(__m64*)out,val1);
             in1 +=4;
             in2 +=4;
@@ -607,13 +793,28 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
     in4 = pic_data[ymid-1];
     for ( i = xp ; i<xstop ; i+=4)
     {
-        __m64 val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
-        __m64 val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
-        val1 = _mm_mullo_pi16 (val1, tap1);
-        val2 = _mm_mullo_pi16 (val2, tap2);
-        val1 = _mm_add_pi16 (val1, val2);
-        val1 = _mm_add_pi16 (val1, update_round);
-        val1 = _mm_srai_pi16(val1, 4);
+        __m64 val1, val2, val3, val4, tmp1, tmp2;
+
+        val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
+        tmp1 = _mm_mullo_pi16 (val1, tap1);
+        tmp2 = _mm_mulhi_pi16 (val1, tap1);
+        val3 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val1 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
+        tmp1 = _mm_mullo_pi16 (val2, tap2);
+        tmp2 = _mm_mulhi_pi16 (val2, tap2);
+        val4 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val2 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val1 = _mm_add_pi32 (val1, val2);
+        val3 = _mm_add_pi32 (val3, val4);
+        val1 = _mm_add_pi32 (val1, update_round);
+        val3 = _mm_add_pi32 (val3, update_round);
+        val1 = _mm_srai_pi32(val1, 4);
+        val3 = _mm_srai_pi32(val3, 4);
+        val1 = _mm_packs_pi32 (val1, val3);
+
         *(__m64*)out = _mm_add_pi16 (*(__m64*)out,val1);
         in1 +=4;
         in2 +=4;
@@ -629,13 +830,28 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
     in4 = pic_data[ymid-1];
     for ( i = xp ; i<xstop ; i+=4)
     {
-        __m64 val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
-        __m64 val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
-        val1 = _mm_mullo_pi16 (val1, tap1);
-        val2 = _mm_mullo_pi16 (val2, tap2);
-        val1 = _mm_add_pi16 (val1, val2);
-        val1 = _mm_add_pi16 (val1, update_round);
-        val1 = _mm_srai_pi16(val1, 4);
+        __m64 val1, val2, val3, val4, tmp1, tmp2;
+
+        val1 = _mm_add_pi16(*(__m64*)in1, *(__m64*)in2);
+        tmp1 = _mm_mullo_pi16 (val1, tap1);
+        tmp2 = _mm_mulhi_pi16 (val1, tap1);
+        val3 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val1 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val2 = _mm_add_pi16(*(__m64*)in3, *(__m64*)in4);
+        tmp1 = _mm_mullo_pi16 (val2, tap2);
+        tmp2 = _mm_mulhi_pi16 (val2, tap2);
+        val4 = _mm_unpackhi_pi16 (tmp1, tmp2);
+        val2 = _mm_unpacklo_pi16 (tmp1, tmp2);
+
+        val1 = _mm_add_pi32 (val1, val2);
+        val3 = _mm_add_pi32 (val3, val4);
+        val1 = _mm_add_pi32 (val1, update_round);
+        val3 = _mm_add_pi32 (val3, update_round);
+        val1 = _mm_srai_pi32(val1, 4);
+        val3 = _mm_srai_pi32(val3, 4);
+        val1 = _mm_packs_pi32 (val1, val3);
+
         *(__m64*)out = _mm_add_pi16 (*(__m64*)out,val1);
         in1 +=4;
         in2 +=4;
@@ -702,6 +918,9 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
         }// i 
         update.Filter( line_data[xl-2] , line_data[xmid-2] , line_data[xmid-1] , line_data[xmid-3] , line_data[xmid-1] );
         update.Filter( line_data[xl-1] , line_data[xmid-1] , line_data[xmid-1] , line_data[xmid-2] , line_data[xmid-1] );
+
+        // Shift right by one bit to counter the shift in the analysis stage
+        ShiftRowRight(line_data, xl, 1);
 
     }// j
 
@@ -1031,6 +1250,8 @@ inline void WaveletTransform::VHFilter5_3::HorizSynth (int xp, int xl, int ystar
         predict.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] ); 
         update.Filter( line_data[xl-3] , line_data[xl-2] , line_data[xl-4] );
         update.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] );
+        // Shift right by one bit to counter the shift in the analysis stage
+        ShiftRowRight(line_data, xl, 1);
     }
 }
 
@@ -1048,6 +1269,7 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
     const PredictStepShift< 2 > predict;
     __m64 pred_round = _mm_set_pi16 (1<<(2-1), 1<<(2-1), 1<<(2-1), 1<<(2-1));
     const UpdateStepShift< 1 > update;
+    __m64 update_round = _mm_set_pi16 (1, 1, 1, 1);
 
     int horiz_start = 0;
     int horiz_end = 0;
@@ -1100,6 +1322,7 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
             *(__m64 *)row3 = _mm_sub_pi16 (*(__m64*)row3, tmp);
 
             tmp = _mm_add_pi16 (*(__m64 *)row1, *(__m64 *)row3);
+            tmp = _mm_add_pi16 (tmp, update_round);
             tmp = _mm_srai_pi16(tmp, 1);
             *(__m64 *)row2 = _mm_add_pi16 (*(__m64*)row2, tmp);
             row1 += 4;
@@ -1138,10 +1361,12 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
         *(__m64 *)row3 = _mm_sub_pi16 (*(__m64*)row3, tmp);
 
         tmp = _mm_add_pi16 (*(__m64 *)row3, *(__m64 *)row1);
+           tmp = _mm_add_pi16 (tmp, update_round);
         tmp = _mm_srai_pi16(tmp, 1);
         *(__m64 *)row2 = _mm_add_pi16 (*(__m64*)row2, tmp);
 
         tmp = _mm_add_pi16 (*(__m64 *)row3, *(__m64 *)row3);
+        tmp = _mm_add_pi16 (tmp, update_round);
         tmp = _mm_srai_pi16(tmp, 1);
         *(__m64 *)row4 = _mm_add_pi16 (*(__m64*)row4, tmp);
 
@@ -1262,6 +1487,7 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
     // Objects to do lifting stages 
     // (in revese order and type from synthesis)
     const PredictStepShift< 1 > predict;
+    __m64 pred_round = _mm_set_pi16 (1, 1, 1, 1);
     const UpdateStepShift< 2 > update;
     __m64 update_round = _mm_set_pi16 (1<<(2-1), 1<<(2-1), 1<<(2-1), 1<<(2-1));
 
@@ -1272,7 +1498,9 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
     for (j = yp;  j < yend; ++j)
     {
         // First lifting stage
-        line_data = &pic_data[j][xp];                 
+        line_data = &pic_data[j][xp];
+        // Shift left by one bit to give us more accuracy
+        ShiftRowLeft(line_data, xl, 1);
 
         predict.Filter( line_data[xp+xl2] , line_data[1] , line_data[0] );
         update.Filter( line_data[0] , line_data[xp+xl2] , line_data[xp+xl2] );
@@ -1301,6 +1529,7 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
     {
         //predict.Filter( pic_data[yp+yl2][i] , pic_data[1][i] , pic_data[0][i] );
         __m64 m1 = _mm_add_pi16 (*(__m64 *)val1, *(__m64 *)val2);
+        m1 = _mm_add_pi16 (m1, pred_round);
         m1 = _mm_srai_pi16(m1, 1);
         *(__m64 *)in_val = _mm_sub_pi16 (*(__m64 *)in_val, m1);
 
@@ -1331,6 +1560,7 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
         {
             //predict.Filter( pic_data[yp+yl2+k][i] , pic_data[k+1][i] , pic_data[k][i] );
             __m64 m1 = _mm_add_pi16 (*(__m64 *)val1, *(__m64 *)val2);
+            m1 = _mm_add_pi16 (m1, pred_round);
             m1 = _mm_srai_pi16(m1, 1);
             *(__m64 *)in_val = _mm_sub_pi16 (*(__m64 *)in_val, m1);
             
@@ -1362,6 +1592,7 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
     {
         //predict.Filter( pic_data[yend-1][i] , pic_data[yp+yl2-1][i] , pic_data[yp+yl2-1][i] );
         __m64 m1 = _mm_add_pi16 (*(__m64 *)val2, *(__m64 *)val2);
+        m1 = _mm_add_pi16 (m1, pred_round);
         m1 = _mm_srai_pi16(m1, 1);
         *(__m64 *)in_val = _mm_sub_pi16 (*(__m64 *)in_val, m1);
        

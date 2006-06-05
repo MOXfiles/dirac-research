@@ -385,7 +385,10 @@ void WaveletTransform::SetBandWeights (const float cpd,
         else
             temp = lfac * hfac;
 
-        m_band_list(i).SetWt( m_band_list(i).Wt() / temp );
+        m_band_list(i).SetWt( m_band_list(i).Wt() / temp);
+        int shift = (i-1)/3+1;
+        int mul_fac = (i < m_band_list.Length() ? (1<<shift) : (1<<(shift-1)));
+        m_band_list(i).SetWt( m_band_list(i).Wt() * mul_fac/ temp);
 
     }// i        
 
@@ -435,7 +438,6 @@ ValueType WaveletTransform::GetMeanDCVal() const
 
 }
 
-
 // Private functions //
 ///////////////////////
 // NOTEL MMX version is defined in wavelet_utils_mmx.cpp
@@ -473,6 +475,20 @@ void WaveletTransform::VHFilter::Interleave( const int xp ,
     }// j 
 
 }
+
+#if !defined(HAVE_MMX)
+void WaveletTransform::VHFilter::ShiftRowLeft(ValueType *row, int length, int shift)
+{
+    for (int i = 0; i < length; ++i)
+        row[i] <<= shift;
+}
+
+void WaveletTransform::VHFilter::ShiftRowRight(ValueType *row, int length, int shift)
+{
+    for (int i = 0; i < length; ++i)
+        row[i] = ((row[i]+1)>>shift);
+}
+#endif
 
 void WaveletTransform::VHFilter::DeInterleave( const int xp , 
                                                const int yp , 
@@ -540,6 +556,8 @@ void WaveletTransform::VHFilterDaub9_7::Split (const int xp ,
     {
         // First lifting stage
         line_data = pic_data[j];                 
+        // Shift left by one bit to give us more accuracy
+        ShiftRowLeft(line_data, xl, 1);
 
         predictA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
         predictB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
@@ -730,6 +748,8 @@ void WaveletTransform::VHFilterDaub9_7::Synth (const int xp ,
 
         updateB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
         updateA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
+        // Shift right by one bit to counter the shift in the analysis stage
+        ShiftRowRight(line_data, xl, 1);
 
     }
 
@@ -766,7 +786,9 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
     for (j = yp;  j < yend; ++j)
     {
         // First lifting stage
-        line_data = &pic_data[j][xp];                 
+        line_data = &pic_data[j][xp];
+        // Shift left by one bit to give us more accuracy
+        ShiftRowLeft(line_data, xl, 1);
 
         predict.Filter( line_data[1] , line_data[2] , line_data[0] );
         update.Filter( line_data[0] , line_data[1] , line_data[1] );
@@ -877,6 +899,9 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
 
         predict.Filter( line_data[0] , line_data[1] , line_data[1] );
         update.Filter( line_data[1] , line_data[2] , line_data[0] );
+        
+        // Shift right by one bit to counter the shift in the analysis stage
+        ShiftRowRight(line_data, xl, 1);
 
     }
 
@@ -908,7 +933,9 @@ void WaveletTransform::VHFilterApprox9_7::Split(const int xp ,
 
     for (j = yp;  j < yend; ++j)
     {
-        line_data = &pic_data[j][xp];                 
+        line_data = &pic_data[j][xp];
+        // Shift left by one bit to give us more accuracy
+        ShiftRowLeft(line_data, xl, 1);
 
         // First lifting stage
         predict.Filter( line_data[1] , line_data[0]  , line_data[2] , line_data[0] , line_data[4] );
@@ -1059,10 +1086,11 @@ void WaveletTransform::VHFilterApprox9_7::Synth(const int xp ,
             update.Filter( line_data[i] , line_data[i-1] , line_data[i+1] , line_data[i-3] , line_data[i+3] );
         }// i 
         update.Filter( line_data[1] , line_data[0] , line_data[2] , line_data[0] , line_data[4] );
-
+        
+        // Shift right by one bit to counter the shift in the analysis stage
+        ShiftRowRight(line_data, xl, 1);
 
     }// j
-
 
 }
 #endif
@@ -1093,6 +1121,8 @@ void WaveletTransform::VHFilter13_5::Split(const int xp ,
     for (j = yp;  j < yend; ++j)
     {
         line_data = &pic_data[j][xp];                 
+        // Shift left by one bit to give us more accuracy
+        ShiftRowLeft(line_data, xl, 1);
 
         // First lifting stage
         predict.Filter( line_data[1] , line_data[0] ,line_data[2] , line_data[0] , line_data[4] ); 
@@ -1267,6 +1297,8 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
         }// i 
 
         update.Filter( line_data[1] , line_data[0] , line_data[2] , line_data[0] , line_data[4] ); 
+        // Shift right by one bit to counter the shift in the analysis stage
+        ShiftRowRight(line_data, xl, 1);
 
     }// j
 } 
