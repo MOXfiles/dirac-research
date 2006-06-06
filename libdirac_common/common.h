@@ -887,7 +887,7 @@ namespace dirac
         std::vector<int>& Refs(){return m_refs;}
         
         //! Return the number of reference frames
-        const unsigned int NumRefs()const {return m_refs.size();}
+        unsigned int NumRefs()const {return m_refs.size();}
         
         //! Returns type of frame (see enum)
         FrameType GetFrameType () const { return m_frame_type; }
@@ -1101,10 +1101,10 @@ namespace dirac
         unsigned int FrameWeightsBits() const { return m_frame_weights_bits; } 
 
         //! Return the Ref1 weight
-        int Ref1Weight() const { return m_ref1_weight; } 
+        unsigned int Ref1Weight() const { return m_ref1_weight; } 
 
         //! Return the Ref2 weight
-        int Ref2Weight() const { return m_ref2_weight; } 
+        unsigned int Ref2Weight() const { return m_ref2_weight; } 
              
         // ... and Sets
         //! Set how many MBs there are horizontally
@@ -1184,10 +1184,10 @@ namespace dirac
         void SetFrameWeightsPrecision(unsigned int wt_prec) { m_frame_weights_bits=wt_prec; } 
 
         //! Set the ref 1 frame weight
-        void SetRef1Weight(int wt) { m_ref1_weight=4; } 
+        void SetRef1Weight(unsigned int wt) { m_ref1_weight=wt; } 
 
         //! Set the ref 2 frame weight
-        void SetRef2Weight(int wt) { m_ref2_weight=4; } 
+        void SetRef2Weight(unsigned int wt) { m_ref2_weight=wt; } 
 
     private:
         
@@ -1234,10 +1234,10 @@ namespace dirac
         unsigned int m_frame_weights_bits;
 
         //! frame predicion parameters - reference frame 1 weight
-        int m_ref1_weight;
+        unsigned int m_ref1_weight;
         
         //! frame predicion parameters - reference frame 1 weight
-        int m_ref2_weight;
+        unsigned int m_ref2_weight;
 
         //! Zero transform flag
         bool m_zero_transform;

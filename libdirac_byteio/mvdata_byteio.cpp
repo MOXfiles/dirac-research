@@ -339,11 +339,11 @@ void MvDataByteIO::OutputFrameWeights()
         // Output weight precision bits
         OutputVarLengthUint(m_cparams.FrameWeightsBits());
         // Output Ref1 weight
-        OutputVarLengthInt(m_cparams.Ref1Weight());
+        OutputVarLengthUint(m_cparams.Ref1Weight());
         if (m_fparams.Refs().size() > 1)
         {
             // Output Ref1 weight
-            OutputVarLengthInt(m_cparams.Ref2Weight());
+            OutputVarLengthUint(m_cparams.Ref2Weight());
         }
     }
     else
@@ -357,9 +357,9 @@ void MvDataByteIO::InputFrameWeights()
     if (InputBit())
     {
         m_cparams.SetFrameWeightsPrecision(InputVarLengthUint());
-        m_cparams.SetRef1Weight(InputVarLengthInt());
+        m_cparams.SetRef1Weight(InputVarLengthUint());
         if (m_fparams.Refs().size() > 1)
-            m_cparams.SetRef2Weight(InputVarLengthInt());
+            m_cparams.SetRef2Weight(InputVarLengthUint());
         
         DIRAC_THROW_EXCEPTION(
                     ERR_UNSUPPORTED_STREAM_DATA,
