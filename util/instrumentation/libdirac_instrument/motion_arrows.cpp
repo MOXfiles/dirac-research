@@ -59,8 +59,12 @@ void DrawMotionArrows::DrawBlock(int j, int i)
     // no chroma in frame
     for (int y=j*m_draw_params.MvUVBlockY(); y<(j+1)*m_draw_params.MvUVBlockY(); ++y)
     {
+        if (y >= m_frame.Udata().LengthY() || y >= m_frame.Vdata().LengthY())
+            break;
         for (int x=i*m_draw_params.MvUVBlockX(); x<(i+1)*m_draw_params.MvUVBlockX(); ++x)
         {
+            if (x >= m_frame.Udata().LengthX() || x >= m_frame.Vdata().LengthX())
+                break;
             m_frame.Udata()[y][x] = 128;
             m_frame.Vdata()[y][x] = 128;
         }

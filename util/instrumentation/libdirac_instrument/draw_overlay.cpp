@@ -284,10 +284,21 @@ void DrawOverlay::DrawMvBlockUV(int ymv, int xmv, int U, int V)
     // loop over chroma samples in block
     for (int y=0; y<m_draw_params.MvUVBlockY(); ++y)
     {
+        int y_idx = (ymv*m_draw_params.MvUVBlockY())+y;
+        if (y_idx >= m_frame.Udata().LengthY() || 
+            y_idx >= m_frame.Vdata().LengthY())
+            break;
         for (int x=0; x<m_draw_params.MvUVBlockX(); ++x)
         {
-            m_frame.Udata()[(ymv*m_draw_params.MvUVBlockY())+y][(xmv*m_draw_params.MvUVBlockX())+x]=U;
-            m_frame.Vdata()[(ymv*m_draw_params.MvUVBlockY())+y][(xmv*m_draw_params.MvUVBlockX())+x]=V;
+            int x_idx = (xmv*m_draw_params.MvUVBlockX())+x;
+            if (x_idx >= m_frame.Udata().LengthX() || 
+                x_idx >= m_frame.Vdata().LengthX())
+                break;
+              
+            //m_frame.Udata()[(ymv*m_draw_params.MvUVBlockY())+y][(xmv*m_draw_params.MvUVBlockX())+x]=U;
+            //m_frame.Vdata()[(ymv*m_draw_params.MvUVBlockY())+y][(xmv*m_draw_params.MvUVBlockX())+x]=V;
+            m_frame.Udata()[y_idx][x_idx]=U;
+            m_frame.Vdata()[y_idx][x_idx]=V;
         }// xpx
     }// ypx
 }
