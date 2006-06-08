@@ -303,8 +303,8 @@ QSIF     : width=176; height=120; 4:2:0 format; 15 frames/sec
 QCIF     : width=176; height=144; 4:2:0 format; 12.5 frames/sec
 SIF      : width=352; height=240; 4:2:0 format; 15 frames/sec
 CIF      : width=352; height=288; 4:2:0 format; 12.5 frames/sec
-SDPAL    : width=704; height=576; 4:2:0 format; 25 frames/sec
-SDNTSC   : width=704; height=480; 4:2:0 format; 29.97 frames/sec
+4CIF     : width=704; height=576; 4:2:0 format; 25 frames/sec
+4SIF     : width=704; height=480; 4:2:0 format; 29.97 frames/sec
 SD480    : width=720; height=480; 4:2:0 format; 29.97 frames/sec
 SD576    : width=720; height=576; 4:2:0 format; 25 frames/sec
 HD720    : width=1280; height=720; 4:2:0 format; 50 frames/sec

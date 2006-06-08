@@ -61,8 +61,8 @@ void SetDefaultCodecParameters(CodecParams &cparams, FrameType ftype)
     case VIDEO_FORMAT_CUSTOM:
     case VIDEO_FORMAT_SIF:
     case VIDEO_FORMAT_CIF:
-    case VIDEO_FORMAT_SD_PAL:
-    case VIDEO_FORMAT_SD_NTSC:
+    case VIDEO_FORMAT_4CIF:
+    case VIDEO_FORMAT_4SIF:
     case VIDEO_FORMAT_SD_525_DIGITAL:
     case VIDEO_FORMAT_SD_625_DIGITAL:
     case VIDEO_FORMAT_HD_720:
@@ -135,14 +135,14 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetAspectRatio(ASPECT_RATIO_12_11);
         sparams.SetColourSpecification(2);
         break;
-    case VIDEO_FORMAT_SD_NTSC:
+    case VIDEO_FORMAT_4SIF:
         sparams.SetFrameRate(FRAMERATE_29p97_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_10_11);
         sparams.SetSignalRange(SIGNAL_RANGE_8BIT_VIDEO);
         sparams.SetInterlace(true);
         sparams.SetColourSpecification(1);
         break;
-    case VIDEO_FORMAT_SD_PAL:
+    case VIDEO_FORMAT_4CIF:
         sparams.SetFrameRate(FRAMERATE_25_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_12_11);
         sparams.SetSignalRange(SIGNAL_RANGE_8BIT_VIDEO);
@@ -214,11 +214,11 @@ void SetDefaultSequenceParameters(SeqParams& sparams)
         sparams.SetXl(352);
         sparams.SetYl(240);
         break;
-    case VIDEO_FORMAT_SD_NTSC:
+    case VIDEO_FORMAT_4SIF:
         sparams.SetXl(704);
         sparams.SetYl(480);
         break;
-    case VIDEO_FORMAT_SD_PAL:
+    case VIDEO_FORMAT_4CIF:
         sparams.SetXl(704);
         sparams.SetYl(576);
         break;

@@ -435,8 +435,8 @@ void CodecParams::SetDefaultCodeBlocks ( const FrameType &ftype)
     case VIDEO_FORMAT_CUSTOM:
     case VIDEO_FORMAT_SIF:
     case VIDEO_FORMAT_CIF:
-    case VIDEO_FORMAT_SD_PAL:
-    case VIDEO_FORMAT_SD_NTSC:
+    case VIDEO_FORMAT_4CIF:
+    case VIDEO_FORMAT_4SIF:
     case VIDEO_FORMAT_SD_525_DIGITAL:
     case VIDEO_FORMAT_SD_625_DIGITAL:
     case VIDEO_FORMAT_HD_720:
@@ -899,10 +899,10 @@ VideoFormat IntToVideoFormat(int video_format)
         return VIDEO_FORMAT_SIF;
     case VIDEO_FORMAT_CIF:
         return VIDEO_FORMAT_CIF;
-    case VIDEO_FORMAT_SD_PAL:
-        return VIDEO_FORMAT_SD_PAL;
-    case VIDEO_FORMAT_SD_NTSC:
-        return VIDEO_FORMAT_SD_NTSC;
+    case VIDEO_FORMAT_4CIF:
+        return VIDEO_FORMAT_4CIF;
+    case VIDEO_FORMAT_4SIF:
+        return VIDEO_FORMAT_4SIF;
     case VIDEO_FORMAT_SD_525_DIGITAL:
         return VIDEO_FORMAT_SD_525_DIGITAL;
     case VIDEO_FORMAT_SD_625_DIGITAL:

@@ -70,8 +70,8 @@ static void display_help()
     cout << "\nQCIF              bool    false         Use QCIF compression presets";
     cout << "\nSIF               bool    false         Use SIF compression presets";
     cout << "\nCIF               bool    false         Use CIF compression presets";
-    cout << "\nSDPAL             bool    false         Use SD-PAL compression presets";
-    cout << "\nSDNTSC            bool    false         Use SD-NTSC compression presets";
+    cout << "\n4CIF              bool    false         Use 4CIF compression presets";
+    cout << "\n4SIF              bool    false         Use 4SIF compression presets";
     cout << "\nSD480             bool    false         Use SD-480 compression presets";
     cout << "\nSD576             bool    false         Use SD-576 compression presets";
     cout << "\nHD720             bool    false         Use HD-720 compression presets";
@@ -492,14 +492,14 @@ int main (int argc, char* argv[])
             preset = VIDEO_FORMAT_CIF;
             parsed[i] = true;
         }
-        if ( strcmp (argv[i], "-SDPAL") == 0 )
+        if ( strcmp (argv[i], "-4CIF") == 0 )
         {
-            preset = VIDEO_FORMAT_SD_PAL;
+            preset = VIDEO_FORMAT_4CIF;
             parsed[i] = true;
         }
-        if ( strcmp (argv[i], "-SDNTSC") == 0 )
+        if ( strcmp (argv[i], "-4SIF") == 0 )
         {
-            preset = VIDEO_FORMAT_SD_NTSC;
+            preset = VIDEO_FORMAT_4SIF;
             parsed[i] = true;
         }
         else if ( strcmp (argv[i], "-SD480") == 0 )
