@@ -159,8 +159,6 @@ namespace dirac
         //! True if the parent of a coeff is not zero
         bool m_parent_notzero;
     
-        //! used in selecting a context
-        ValueType m_cut_off_point;
     };
 
     //! A class specially for coding the LF subbands 

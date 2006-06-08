@@ -157,10 +157,6 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
 
-    m_cut_off_point = m_node.Scale()>>1;
-    m_cut_off_point *= m_qf;
-    m_cut_off_point >>= 2;
-
     for ( int ypos=ybeg , m_pypos=ypbeg; ypos<yend ;++ypos , m_pypos=(( ypos-ybeg )>>1)+ypbeg)
     {
         for ( int xpos=xbeg , m_pxpos=xpbeg ; xpos<xend ;++xpos , m_pxpos=((xpos-xbeg)>>1)+xpbeg)
@@ -357,10 +353,6 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
 
-    m_cut_off_point = m_node.Scale()>>1;
-    m_cut_off_point *= m_qf;
-    m_cut_off_point >>= 2;
-
     //Work
     
     for ( int ypos=ybeg , m_pypos=ypbeg; ypos<yend ;++ypos , m_pypos=(( ypos-ybeg )>>1)+ypbeg)
@@ -470,10 +462,8 @@ inline int BandCodec::ChooseFollowContext( const int bin_number ) const
             case 1 :
                 if(m_nhood_sum == 0)
                     return NZ_FBIN1z_CTX;
-                else if (m_nhood_sum>m_cut_off_point)
-                    return NZ_FBIN1b_CTX;
 
-                return NZ_FBIN1a_CTX;
+                return NZ_FBIN1nz_CTX;
 
             case 2 :
                 return NZ_FBIN2_CTX;
@@ -620,10 +610,6 @@ void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_dat
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
 
-    m_cut_off_point = m_node.Scale()>>1;
-    m_cut_off_point *= m_qf;
-    m_cut_off_point >>= 2;
-
     for ( int ypos=ybeg ; ypos<yend ; ++ypos )
     {        
         for ( int xpos=xbeg ; xpos<xend ; ++xpos )
@@ -695,10 +681,6 @@ void LFBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
 
-    m_cut_off_point = m_node.Scale()>>1;
-    m_cut_off_point *= m_qf;
-    m_cut_off_point >>= 2;
-
     //Work
     
     for ( int ypos=ybeg ; ypos<yend ; ++ypos )
@@ -769,10 +751,6 @@ void IntraDCBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& i
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
 
-    m_cut_off_point = m_node.Scale()>>1;
-    m_cut_off_point *= m_qf;
-    m_cut_off_point >>= 2;
-    
     for ( int ypos=ybeg ; ypos < yend; ++ypos )
     {
         for (int xpos = xbeg ; xpos < xend; ++xpos )
@@ -833,10 +811,6 @@ void IntraDCBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray&
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
-
-    m_cut_off_point = m_node.Scale()>>1;
-    m_cut_off_point *= m_qf;
-    m_cut_off_point >>= 2;
 
     //Work
     

@@ -90,8 +90,7 @@ namespace dirac
         Z_FBIN6plus_CTX,    // -bins 6 plus, parent is zero
 
         NZ_FBIN1z_CTX,      // -bin 1, parent is non-zero, neighbours zero
-        NZ_FBIN1a_CTX,      // -bin 1, parent is non-zero, neighbours small
-        NZ_FBIN1b_CTX,      // -bin 1, parent is non-zero, neighbours large
+        NZ_FBIN1nz_CTX,     // -bin 1, parent is non-zero, neighbours non-zero
         NZ_FBIN2_CTX,       // -bin 2, parent is non-zero
         NZ_FBIN3_CTX,       // -bin 3, parent is non-zero
         NZ_FBIN4_CTX,       // -bin 4, parent is non-zero
