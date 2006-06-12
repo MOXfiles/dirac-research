@@ -524,18 +524,23 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 
 void MvDataCodec::CodeMBSplit(const MvData& in_data)
 {
-    const int prediction = MBSplitPrediction( in_data.MBSplit() );
-    const bool bit0 = (in_data.MBSplit()[m_mb_yp][m_mb_xp]>0)
-                     ^( prediction>0 );
-    const bool bit1 = (in_data.MBSplit()[m_mb_yp][m_mb_xp]>1)
-                     ^( prediction>1 );
+    int val = in_data.MBSplit()[m_mb_yp][m_mb_xp] - MBSplitPrediction( in_data.MBSplit() ); 
+    
+    if (val < 0)
+        val += 3; //produce prediction mod 3    
+    
+    // Do exp-Golomb coding
+    EncodeSymbol( (val==0),MB_SPLIT_BIN1_CTX);     
 
-    EncodeSymbol( bit0,MB_SPLIT_BIT0_CTX);
-
-    if ( in_data.MBSplit()[m_mb_yp][m_mb_xp]>0 )
-        EncodeSymbol( bit1,MB_SPLIT_BIT1_CTX);    
-
+    if ( val>0)
+    {
+        // Encode info bit
+        EncodeSymbol( (val==2), MB_SPLIT_INFO_CTX);
+        // Encode terminating bit
+        EncodeSymbol( 1, MB_SPLIT_BIN2_CTX);
+    }
 }
+
 
 void MvDataCodec::CodeMBCom(const MvData& in_data)
 {
@@ -864,16 +869,16 @@ void MvDataCodec::DoWorkDecode( MvData& out_data)
 
 void MvDataCodec::DecodeMBSplit(MvData& out_data)
 {
-    const int prediction = MBSplitPrediction( out_data.MBSplit() );
-    out_data.MBSplit()[m_mb_yp][m_mb_xp] = int( DecodeSymbol( MB_SPLIT_BIT0_CTX)
-                                               ^( prediction>0 ) );
-
-    if ( out_data.MBSplit()[m_mb_yp][m_mb_xp]>0 )
-    {
-        out_data.MBSplit()[m_mb_yp][m_mb_xp] += int( DecodeSymbol( MB_SPLIT_BIT1_CTX)
-                                                   ^( prediction>1 ) );
+    int value = 0;
+    if (!DecodeSymbol(MB_SPLIT_BIN1_CTX)) {
+        if (DecodeSymbol(MB_SPLIT_INFO_CTX)) {
+            value = 2; }
+        else {
+            value = 1; }
+        DecodeSymbol(MB_SPLIT_BIN2_CTX);
     }
-
+    out_data.MBSplit()[m_mb_yp][m_mb_xp] =
+        (value + MBSplitPrediction(out_data.MBSplit())) % 3;
 }
 
 void MvDataCodec::DecodeMBCom( MvData& out_data )
