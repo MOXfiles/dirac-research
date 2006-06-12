@@ -196,7 +196,7 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
          //exit success
         return true;
     }// try
-    catch (const DiracException& e) {                                     
+    catch (const DiracException& e) {
         // skip frame
         throw e;
     }
