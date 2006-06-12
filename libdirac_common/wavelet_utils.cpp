@@ -385,7 +385,6 @@ void WaveletTransform::SetBandWeights (const float cpd,
         else
             temp = lfac * hfac;
 
-        m_band_list(i).SetWt( m_band_list(i).Wt() / temp);
         int shift = (i-1)/3+1;
         int mul_fac = (i < m_band_list.Length() ? (1<<shift) : (1<<(shift-1)));
         m_band_list(i).SetWt( m_band_list(i).Wt() * mul_fac/ temp);
