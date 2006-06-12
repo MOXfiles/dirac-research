@@ -160,10 +160,15 @@ static void set_sequence_params (const  DiracParser * const parser, dirac_decode
     src_params->colour_spec.trans_func = srcparams.TransferFunctionIndex();
     switch(srcparams.ColourMatrixIndex())
     {
-    case 1:
+    case CM_SDTV:
         src_params->colour_spec.col_matrix.kr =  0.299f;
         src_params->colour_spec.col_matrix.kb =  0.114f;
         break;
+    case CM_DCINEMA:
+        src_params->colour_spec.col_matrix.kr =  0.25f;
+        src_params->colour_spec.col_matrix.kb =  0.25f;
+        break;
+    case CM_HDTV_COMP_INTERNET:
     default:
         src_params->colour_spec.col_matrix.kr = 0.2126f;
         src_params->colour_spec.col_matrix.kb = 0.0722f;
@@ -191,7 +196,7 @@ static void set_component (const PicArray& pic_data,  const CompSort cs, dirac_d
            buf = decoder->fbuf->buf[2];
         break;
 
-       case Y_COMP:
+    case Y_COMP:
     default:
         xl = decoder->seq_params.width;
         yl = decoder->seq_params.height;
@@ -307,8 +312,7 @@ extern DllExport dirac_decoder_state_t dirac_parse (dirac_decoder_t *decoder)
         break;
         }
     }//try 
-     catch (const DiracException& e) {       
-      
+     catch (const DiracException& e) {
          return STATE_INVALID;
      }            
 

@@ -704,13 +704,13 @@ void SourceParams::SetSignalRange (SignalRangeType sr)
         m_luma_offset = 0;
         m_luma_excursion = 255;
         m_chroma_offset = 128;
-        m_chroma_excursion = 255;
+        m_chroma_excursion = 254;
         break;
     case SIGNAL_RANGE_8BIT_VIDEO:
         m_luma_offset = 16;
         m_luma_excursion = 235;
         m_chroma_offset = 128;
-        m_chroma_excursion = 224;
+        m_chroma_excursion = 244;
         break;
     case SIGNAL_RANGE_10BIT_VIDEO:
         m_luma_offset = 64;
