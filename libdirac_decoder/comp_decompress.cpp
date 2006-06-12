@@ -23,7 +23,8 @@
 * Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
 *                 Anuradha Suraparaju,
-*                 Andrew Kennedy
+*                 Andrew Kennedy,
+*                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -66,7 +67,6 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
 
     // A pointer to the object(s) we'll be using for coding the bands
     BandCodec* bdecoder;
-    const size_t CONTEXTS_REQUIRED( 22 );
 
     WaveletTransform wtransform( depth , m_decparams.TransformFilter() );
     SubbandList& bands=wtransform.BandList();
@@ -99,12 +99,12 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
             if ( b>=bands.Length()-3)
             {
                 if ( fsort.IsIntra() && b==bands.Length() )
-                    bdecoder=new IntraDCBandCodec(&subband_byteio, CONTEXTS_REQUIRED ,bands);
+                    bdecoder=new IntraDCBandCodec(&subband_byteio, TOTAL_COEFF_CTXS ,bands);
                 else
-                    bdecoder=new LFBandCodec( &subband_byteio , CONTEXTS_REQUIRED ,bands , b);
+                    bdecoder=new LFBandCodec( &subband_byteio , TOTAL_COEFF_CTXS ,bands , b);
             }
             else
-                bdecoder=new BandCodec( &subband_byteio , CONTEXTS_REQUIRED , bands , b);
+                bdecoder=new BandCodec( &subband_byteio , TOTAL_COEFF_CTXS , bands , b);
 
             bdecoder->InitContexts();
             bdecoder->Decompress(pic_data , subband_byteio.GetBandDataLength());

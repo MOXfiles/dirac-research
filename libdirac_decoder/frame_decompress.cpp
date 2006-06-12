@@ -144,7 +144,7 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
             //decode mv data
             if (m_decparams.Verbose())
                 std::cerr<<std::endl<<"Decoding motion data ...";        
-            MvDataCodec my_mv_decoder( mvdata_byteio.BlockData(), 45 , m_cformat );
+            MvDataCodec my_mv_decoder( mvdata_byteio.BlockData(), TOTAL_MV_CTXS , m_cformat );
             my_mv_decoder.InitContexts();//may not be necessary
 
             //Decompress the MV bits

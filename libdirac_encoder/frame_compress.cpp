@@ -169,7 +169,7 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
                                         static_cast<CodecParams&>(m_encparams));
                 p_frame_byteio->SetMvData(mv_data);
 
-                MvDataCodec my_mv_coder( mv_data->BlockData(), 45 , cformat);
+                MvDataCodec my_mv_coder( mv_data->BlockData(), TOTAL_MV_CTXS , cformat);
 
                 my_mv_coder.InitContexts();//may not be necessary
                 num_mv_bits = my_mv_coder.Compress( *m_me_data );

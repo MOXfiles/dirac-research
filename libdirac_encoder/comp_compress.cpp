@@ -24,6 +24,7 @@
 *                 Scott R Ladd,
 *                 Anuradha Suraparaju
 *                 Andrew Kennedy
+*                 Tim Borer
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -70,8 +71,6 @@ ComponentByteIO* CompCompressor::Compress(PicArray& pic_data)
     // A pointer to an object  for coding the subband data
     BandCodec* bcoder;
 
-    const size_t CONTEXTS_REQUIRED = 22;
-
     Subband node;
 
     //set up Lagrangian params    
@@ -115,12 +114,12 @@ ComponentByteIO* CompCompressor::Compress(PicArray& pic_data)
             if (b >= bands.Length()-3)
             {
                 if ( m_fsort.IsIntra() && b == bands.Length() )
-                    bcoder=new IntraDCBandCodec(&subband_byteio, CONTEXTS_REQUIRED , bands );
+                    bcoder=new IntraDCBandCodec(&subband_byteio, TOTAL_COEFF_CTXS , bands );
                 else
-                    bcoder=new LFBandCodec(&subband_byteio ,CONTEXTS_REQUIRED, bands , b);
+                    bcoder=new LFBandCodec(&subband_byteio ,TOTAL_COEFF_CTXS, bands , b);
             }
             else
-                bcoder=new BandCodec(&subband_byteio , CONTEXTS_REQUIRED , bands , b);
+                bcoder=new BandCodec(&subband_byteio , TOTAL_COEFF_CTXS , bands , b);
 
             num_band_bytes = bcoder->Compress(pic_data);
 

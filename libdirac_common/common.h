@@ -103,7 +103,8 @@ namespace dirac
         BLOCK_SKIP_CTX,     // - blocks are skipped
         Q_OFFSET_FOLLOW_CTX,   // - code block quantiser offset magnitude
         Q_OFFSET_INFO_CTX,  // - code block quantiser offset info context
-        Q_OFFSET_SIGN_CTX   // - code block quantiser offset sign
+        Q_OFFSET_SIGN_CTX,   // - code block quantiser offset sign
+        TOTAL_COEFF_CTXS   // The total number of coefficient contexts
     };
 
     //! Contexts used for MV data coding
@@ -183,8 +184,13 @@ namespace dirac
         // Macroblock contexts
        
         MB_CMODE_CTX,       // -context for MB common block mode
-        MB_SPLIT_BIT0_CTX,  // -bin 1, MB split mode vals
-        MB_SPLIT_BIT1_CTX   // -bin 2, MB split mode vals. Bin 3 not required
+
+        MB_SPLIT_BIN1_CTX,  // bin 1, MB split mode vals
+        MB_SPLIT_BIN2_CTX,  // bin 2, MB split mode vals. Bin 3 not required
+        
+        MB_SPLIT_INFO_CTX,  // info context for MB split mode
+        
+        TOTAL_MV_CTXS       // The total number of motion vector contexts
     };
 
 
