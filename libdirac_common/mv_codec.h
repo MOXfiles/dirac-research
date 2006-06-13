@@ -134,34 +134,6 @@ namespace dirac
         // Context stuff   
         void ResetAll();
 
-        inline int ChooseREF1xFollowContext(const int bin_number) const;
-        inline int ChooseREF1xInfoContext() const;
-        inline int ChooseREF1xSignContext() const;
-
-        inline int ChooseREF1yFollowContext(const int bin_number) const;
-        inline int ChooseREF1yInfoContext() const;
-        inline int ChooseREF1ySignContext() const;
-
-        inline int ChooseREF2xFollowContext(const int bin_number) const;
-        inline int ChooseREF2xInfoContext() const;
-        inline int ChooseREF2xSignContext() const;
-
-        inline int ChooseREF2yFollowContext(const int bin_number) const;
-        inline int ChooseREF2yInfoContext() const;
-        inline int ChooseREF2ySignContext() const;
-
-        inline int ChooseYDCFollowContext(const int bin_number) const;
-        inline int ChooseYDCInfoContext() const;
-        inline int ChooseYDCSignContext() const;
-
-        inline int ChooseUDCFollowContext(const int bin_number) const;
-        inline int ChooseUDCInfoContext() const;
-        inline int ChooseUDCSignContext() const;
-
-        inline int ChooseVDCFollowContext(const int bin_number) const;
-        inline int ChooseVDCInfoContext() const;
-        inline int ChooseVDCSignContext() const;
-
         //prediction stuff
         unsigned int MBSplitPrediction(const TwoDArray<int>& mbdata) const;
 

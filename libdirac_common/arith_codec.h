@@ -152,7 +152,11 @@ namespace dirac
         void InitEncoder();
 
         //! encodes a symbol and writes to output
-        inline void EncodeSymbol(const bool symbol, const int context_num);    
+        void EncodeSymbol(const bool symbol, const int context_num);
+
+        void EncodeUInt(const unsigned int value, const int bin1, const int max_bin);
+
+        void EncodeSInt(const int value, const int bin1, const int max_bin);
 
         //! flushes the output of the encoder.
         void FlushEncoder();
@@ -166,7 +170,11 @@ namespace dirac
         void InitDecoder(int num_bytes);                    
 
         //! Decodes a symbol given a context number
-        inline bool DecodeSymbol( int context_num );
+        bool DecodeSymbol( int context_num );
+
+        unsigned int DecodeUInt(const int bin1, const int max_bin);
+
+        int DecodeSInt(const int bin1, const int max_bin);
         
         //! List of contexts
         std::vector<Context> m_context_list;
@@ -296,7 +304,30 @@ namespace dirac
         return symbol;
     }
 
-    void ArithCodecBase::EncodeSymbol(const bool symbol, const int context_num)
+    inline unsigned int ArithCodecBase::DecodeUInt(const int bin1, const int max_bin) {
+        const int info_ctx = (max_bin+1);
+        int bin = bin1;
+        unsigned int value = 1;
+        while (!DecodeSymbol(bin)) {
+            value <<= 1;
+            if (DecodeSymbol(info_ctx)) value+=1;
+            if (bin<max_bin) bin+=1;
+        }
+        value -= 1;
+        return value;
+    }
+
+    inline int ArithCodecBase::DecodeSInt(const int bin1, const int max_bin) {
+        int value = 0;
+        const int magnitude = DecodeUInt(bin1, max_bin);
+        if (magnitude!=0) {
+            if (DecodeSymbol(max_bin+2)) value=-magnitude;
+            else value=magnitude;
+        }
+        return value;
+    }
+
+    inline void ArithCodecBase::EncodeSymbol(const bool symbol, const int context_num)
     {
         // NB: loops could be while loops predicated on the break conditions
         // However, each loop reads in a bit, so the max number of bits 
@@ -347,6 +378,38 @@ namespace dirac
         }
     }
 
+    inline void ArithCodecBase::EncodeUInt(const unsigned int the_int,
+                                           const int bin1, const int max_bin) {
+        const int value = (the_int+1);
+        const int info_ctx = (max_bin+1);
+        int bin = bin1;
+        int top_bit = 1;
+        {
+            int max_value = 1;
+            while (value>max_value) {
+                top_bit <<= 1;
+                max_value <<= 1;
+                max_value += 1;
+            }
+        }
+        bool stop = (top_bit==1);
+        EncodeSymbol(stop, bin);
+        while (!stop) {
+            top_bit >>= 1;
+            EncodeSymbol( (value&top_bit), info_ctx);
+            if ( bin < max_bin) bin+=1;
+            stop = (top_bit==1);
+            EncodeSymbol(stop, bin);
+        }
+    }
+
+    inline void ArithCodecBase::EncodeSInt(const int value,
+                                           const int bin1, const int max_bin) {
+        EncodeUInt(std::abs(value), bin1, max_bin);
+        if (value != 0) {
+            EncodeSymbol( (value < 0), max_bin+2 );
+        }
+    }
 
 
     //! Abstract binary arithmetic coding class
