@@ -1,3 +1,15 @@
+dirac_0.6.0
+===========
+- Major release complying with Dirac ByteStream Specification. The
+  specification is available on the Dirac Homepage on Sourceforge.
+- Encoder and Decoder API have changed in this release so applications
+  using the older API will have to be recompiled.
+- Released patches to MPlayer, FFmpeg to comply with this release. Earlier
+  patch to transcode can be used with release.
+- DirecShow Filter released to be able to play back Dirac v0.6.0 files in 
+  Windows Media Player.
+- Bugs fixed: 1501636, 1383890
+
 dirac_0.5.4
 ===========
 - Added support for lossless encoding. 
