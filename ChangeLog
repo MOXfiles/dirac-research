@@ -1,3 +1,833 @@
+2006-06-13 12:56  asuraparaju
+
+	* NEWS: Updated with 0.6.0 release notes.
+
+2006-06-13 12:35  asuraparaju
+
+	* extras/patches/:
+	  README_ffmpegsvn_trunk_revision_5470-dirac-0.6.x_patch,
+	  ffmpegsvn_trunk_revision_5470-dirac-0.6.x.patch: Dirac 0.6.0
+	  patch and install notes for ffmpeg svn revision 5470.
+
+2006-06-13 12:34  asuraparaju
+
+	* extras/patches/: MPlayer-1.0pre7try2_dirac-0.6.x.patch,
+	  README_MPlayer-1.0pre7try2_dirac-0.6.x_patch: Dirac 0.6.0 patch
+	  and install notes for MPlayer release MPlayer-1.0pre7try2.
+
+2006-06-13 10:07  timborer
+
+	* libdirac_common/: arith_codec.h, mv_codec.cpp, mv_codec.h: Added
+	  En/DecodeUInt and En/DecodeSInt functions to the arithmetic codec
+	  class. These functions read and write signed and unsigned
+	  integers in a unified way. They are used to replace the acres of
+	  duplicated code in mv_codec.cpp. This change also had the happy
+	  side effect of removing the need for a whole slew of chooseXXX
+	  functions used for selecting the arithmetic coding context.
+
+2006-06-12 16:24  stuart_hc
+
+	* libdirac_decoder/frame_decompress.cpp: whitespace cleanup
+	  (corrected stray CRLF line-ending to LF)
+
+2006-06-12 13:11  asuraparaju
+
+	* libdirac_common/common.h, libdirac_decoder/comp_decompress.cpp,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/frame_compress.cpp: Use enumerated values for
+	  number of motion vector contexts and coefficient contexts instead
+	  of hardcoded constants. This helps in not having to change
+	  multiple files when the number of contexts changes.
+
+2006-06-12 13:11  asuraparaju
+
+	* libdirac_common/mv_codec.cpp: [Spec Compliance] Super block Split
+	  residual is no longer coded bit-wise but is now coded using
+	  truncated unary arithmetic coding.
+
+2006-06-12 13:10  asuraparaju
+
+	* libdirac_common/common.cpp,
+	  libdirac_common/video_format_defaults.cpp,
+	  libdirac_decoder/dirac_parser.cpp: [Spec Compliance] Ensure that
+	  Video format defaults are set as per spec
+
+2006-06-12 10:06  tjdwave
+
+	* libdirac_common/wavelet_utils.cpp: Fixed bug with setting weights
+	  for bands by depth - removed duplicate correction factor.
+
+2006-06-08 17:55  asuraparaju
+
+	* libdirac_common/band_codec.cpp, libdirac_common/band_codec.h,
+	  libdirac_common/common.h, libdirac_decoder/comp_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp: [Spec compliance] Number of
+	  contexts in Bin 1 for a Non-zero parent reduced to two from
+	  three.
+
+2006-06-08 16:19  asuraparaju
+
+	* README, encoder/encmain.cpp, libdirac_common/common.cpp,
+	  libdirac_common/common_types.h,
+	  libdirac_common/video_format_defaults.cpp: Renamed SD_PAL and
+	  SD_NTSC video format names to 4CIF and 4SIF to avoid confusing
+	  them with the SD Digital video format names.
+
+2006-06-08 16:14  asuraparaju
+
+	* extras/dirac_dshow/src/: basesplitter/basesplitter.vcproj,
+	  diracsplitter/DiracSplitter.vcproj,
+	  diracsplitter/DiracSplitterFile.cpp: Fix path to header and
+	  libraries in project files. Modify code to handle chages to Dirac
+	  decoder logic.
+
+2006-06-06 17:11  asuraparaju
+
+	* win32/VS2003/: DiracDecoder/DiracDecoder.vcproj,
+	  DiracEncoder/DiracEncoder.vcproj,
+	  libdirac_byteio/libdirac_byteio.vcproj: Fix link errors.
+
+2006-06-06 17:11  asuraparaju
+
+	* util/instrumentation/libdirac_instrument/: draw_overlay.end,
+	  motion_arrows.cpp, sad.cpp: Fix for bug #1501636. Ensuring that
+	  we are not going past array boundaries.
+
+2006-06-06 17:08  asuraparaju
+
+	* unit_tests/motion_comp_test.cpp: Remove tests for frame equality
+	  after motion estimation because rounding errors can mean that the
+	  frames are not equal. However the frame equality is still tested
+	  after zero motion compensation.
+
+2006-06-06 17:08  asuraparaju
+
+	* libdirac_byteio/mvdata_byteio.cpp, libdirac_common/common.h:
+	  [Spec Compliance] Reference frame weights are now unsigned.
+
+2006-06-06 17:08  asuraparaju
+
+	* README: Updated the encoder command line argument list
+
+2006-06-05 16:00  asuraparaju
+
+	* configure.ac: Update release id to 0.6.0
+
+2006-06-05 15:57  asuraparaju
+
+	* util/instrumentation/libdirac_instrument/: draw_overlay.cpp,
+	  motion_arrows.cpp, motion_colour.cpp, motion_colour_arrows.cpp,
+	  overlay.cpp, pred_mode.cpp, sad.cpp, split_mode.cpp: [Spec
+	  compliance] Ensure that the instrumentation utility works for
+	  true 8 bit data. Note that there is no support at present for
+	  non-8bit data.
+
+2006-06-05 15:56  asuraparaju
+
+	* util/instrumentation/instrmain.cpp: Read video depth from
+	  diagnostics input file.
+
+2006-06-05 15:55  asuraparaju
+
+	* libdirac_encoder/quality_monitor.cpp: [Spec compliance] Adjust
+	  lambda values to make them bit-depth agnostic. Tested only on 8
+	  bit input data. Need to test and maybe adjust for other
+	  bit-depths.
+
+2006-06-05 15:55  asuraparaju
+
+	* libdirac_encoder/dirac_encoder.cpp: [Spec compliance] Default
+	  Video depth is 8 bits.
+
+2006-06-05 15:55  asuraparaju
+
+	* libdirac_decoder/: frame_decompress.cpp, frame_decompress.h,
+	  seq_decompress.cpp: [Spec compliance] Include Variable bit-depth
+	  support in FrameDecompressor class.
+
+2006-06-05 15:54  asuraparaju
+
+	* libdirac_common/: wavelet_utils.cpp, wavelet_utils.h,
+	  wavelet_utils_mmx.cpp: [Spec compliance] Accuracy bits are
+	  required in the wavelet analysis stage. The number of bits
+	  required depends on the transform depth.  Shift the input data up
+	  1 bit to the right to increase accuracy in the Analyis stage.
+	  Round the input data down by 1 bit in the Synthesis stage to
+	  counter the shift in the analysis stage. All rounding is unbiased
+	  irrespective of the number of bit it is rounded to. The
+	  perceptual weights are adjusted for each subband depending on the
+	  level of the subband.
+
+2006-06-05 15:54  asuraparaju
+
+	* libdirac_common/mot_comp.cpp, libdirac_common/pic_io.cpp,
+	  libdirac_decoder/dirac_parser.cpp,
+	  libdirac_motionest/me_utils.cpp,
+	  libdirac_motionest/me_utils_mmx.cpp: [Spec Compliance] The
+	  input/output is always true bit depth specified by video-depth
+	  and not converted to 10 bit data internally.	So no need to shift
+	  8 bit data by two to convert it to 10 bits.
+
+2006-06-05 15:53  asuraparaju
+
+	* libdirac_common/frame_buffer.cpp, libdirac_common/frame_buffer.h,
+	  libdirac_encoder/seq_compress.cpp, unit_tests/frames_test.cpp,
+	  unit_tests/motion_comp_test.cpp: [Spec Compliance] Set Variable
+	  bit-depth in FrameBuffer classe to set up FrameParams class with
+	  variable bit-depth.
+
+2006-06-05 15:53  asuraparaju
+
+	* libdirac_common/: frame.cpp, frame.h: [Spec Compliance] Support
+	  for multiple video depths. Included functionality to clip
+	  upconverted data.
+
+2006-06-05 15:53  asuraparaju
+
+	* libdirac_common/: common_types.h, video_format_defaults.cpp:
+	  [Spec Compliance] Ensure that default parameters are correctly
+	  set for all video formats.  Add enumerated types for D-Cinema
+	  video formats' parameters. Default motion vector precision has
+	  reverted to quarter pixel from half pixel.
+
+2006-06-05 15:52  asuraparaju
+
+	* libdirac_common/: common.cpp, common.h: [Spec Compliance] Add
+	  support for D-Cinema video formats.  Include Variable bit-depth
+	  support in Frame Params. Used for clipping.  Fix bug in
+	  calculating number of code blocks for different transform depths.
+
+2006-06-05 15:52  asuraparaju
+
+	* libdirac_common/arrays.h: [Spec Compliance] PIXEL_VALUE_MIN and
+	  PIXEL_VALUE_MAX no longer required as the min and max values are
+	  calculated based on the bit-depth of the input video. Fix
+	  indentation by replacing tabs with white space.
+
+2006-06-05 15:51  asuraparaju
+
+	* libdirac_byteio/transform_byteio.cpp: Fixed bug where the
+	  non-default wavelet filter flag was not being written to the
+	  bitstream when a non-default filter is used.
+
+2006-06-05 15:51  asuraparaju
+
+	* libdirac_byteio/seqparams_byteio.cpp: [Spec compliance] Throw an
+	  error if a video depth other than the default value of 8 is
+	  specified.
+
+2006-06-05 15:51  asuraparaju
+
+	* libdirac_byteio/frame_byteio.cpp: [Spec compliance] Actual
+	  picture number is stored in the picture header and not the offset
+	  from the Access unit picture number. Reference frame offsets and
+	  retired frame offsets are calculated from current picture number
+	  and not access unit header picture number.
+
+2006-06-05 15:50  asuraparaju
+
+	* libdirac_byteio/byteio.h: Fix warnings in doxygen documentation.
+
+2006-06-05 15:50  asuraparaju
+
+	* encoder/encmain.cpp: Write video depth to diagnostics output
+	  file.
+
+2006-05-23 14:09  tjdwave
+
+	* libdirac_encoder/quant_chooser.cpp: Changed initial index to 0
+	  from 4, so that 8 bit video will be properly coded.
+
+2006-05-22 10:56  tjdwave
+
+	* libdirac_encoder/quality_monitor.cpp: Modified PSNR log to output
+	  a table for greater clarity.
+
+2006-05-17 18:33  asuraparaju
+
+	* unit_tests/: motion_comp_test.cpp, motion_comp_test.h: Change
+	  precision type in test prototype from int to MVPrecisionType.
+
+2006-05-16 14:53  asuraparaju
+
+	* libdirac_common/wavelet_utils_mmx.cpp: Changed the wavelet
+	  transform so that unbiased rounding is not used with a shift of 1
+	  in the lifting stage to keep in line with the non-MMX optimised
+	  code.
+
+2006-05-16 12:25  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: Fix g++ warnings
+
+2006-05-16 12:24  asuraparaju
+
+	* libdirac_encoder/quant_chooser.cpp: Minor mods to speed up error
+	  calculation. Overall improvement in encoding speed is about 4-5%
+	  for long gop Changed quantisation as per draft spec so that extra
+	  2 bits accuracy apply to the quantisation offset. This helps at
+	  low quantisation factors particularly.
+
+2006-05-16 12:24  asuraparaju
+
+	* libdirac_encoder/: quality_monitor.cpp, quality_monitor.h: -
+	  Removed superfluous filtering function.  - Computes PSNR instead
+	  of weighted 4th power metric; chroma PSNRs are also	computed.
+
+2006-05-16 12:24  asuraparaju
+
+	* libdirac_encoder/frame_compress.cpp: Spec Compliance: - Setup
+	  default code blocks depending on whether frame type is intra or
+	  inter.
+
+2006-05-16 12:23  asuraparaju
+
+	* libdirac_encoder/dirac_encoder.h: Change type of mv_precision in
+	  dirac_encparams_t function to MVPrecisionType
+
+2006-05-16 12:23  asuraparaju
+
+	* libdirac_encoder/dirac_encoder.cpp: Spec Compliance: - Handle
+	  CodeBlockMode which replaces the multi-quantisers flag.  - Set
+	  default spatial partition flag to false if wavelet depth is not
+	  set	to the default value.
+
+2006-05-16 12:23  asuraparaju
+
+	* libdirac_decoder/frame_decompress.cpp: Spec Compliance - Throw
+	  error if Zero transform flag is set for Intra frames.  - Handle
+	  Zero transform condition for inter frames.
+
+2006-05-16 12:22  asuraparaju
+
+	* libdirac_decoder/dirac_parser.h: The parser no longer returns
+	  STATE_PICTURE_START state. Modify the example in the doxygen
+	  documentation to reflect this.
+
+2006-05-16 12:22  asuraparaju
+
+	* libdirac_decoder/comp_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/comp_compress.h: Spec Compliance - multiple
+	  quantisers are used when code block mode is set to
+	  QUANT_MULTIPLE - All values are set to 0 if a block is skipped
+	  irrespective of whether is   is a DC block or not.  - Modified
+	  SetupCodeBlocks functions to use the default code blocks if
+	  default partitioning is enabled or values of from the bitstream
+	  for custom   paritioning (only for decoder)
+
+2006-05-16 12:21  asuraparaju
+
+	* libdirac_common/: wavelet_utils.h, wavelet_utils_mmx.cpp:
+	  Implement unbiased rounding for the lifting stages in all wavelet
+	  filters.
+
+2006-05-16 12:21  asuraparaju
+
+	* libdirac_common/video_format_defaults.cpp: Spec compliance - Set
+	  up default Codec parameters to comply with spec.  - Default
+	  motion vector precision is now Half Pixel.
+
+2006-05-16 12:20  asuraparaju
+
+	* libdirac_common/mv_codec.cpp: Spec compliance - Common Mode
+	  prediction function returns false for top left corner of   block.
+	  - Block mode prediction function return INTRA instead of
+	  REF1_ONLY for   the top left corner of a block - The sign flag is
+	  encoded/decoded as true if the value is negative.
+
+2006-05-16 12:20  asuraparaju
+
+	* libdirac_common/: mot_comp.cpp, mot_comp_mmx.cpp: Define MMX
+	  optimised version of Half Pixel block compensation function
+	  MotionCompensator_HalfPixel::CompensateBlock
+
+2006-05-16 12:19  asuraparaju
+
+	* libdirac_common/band_codec.cpp: Spec Compliance: - Code block
+	  skip flag encoded/decoded only if there is more than one code
+	  block in a subband - The sign flag is encoded/decoded as true if
+	  the value is negative.  - Max number of quantisers increased to
+	  97 (0..96). Throw an error if   quantisation index exceeds this
+	  value while decoding.  - Changed quantisation as per draft spec
+	  so that extra 2 bits accuracy   apply to the quantisation offset.
+	  This helps at low quantisation factors   particularly.
+
+2006-05-16 12:19  asuraparaju
+
+	* encoder/encmain.cpp: Print extra-information regarding encoder
+	  params used to encoding. E.g.  motion vector precision, transform
+	  depth etc.
+
+2006-05-16 12:18  asuraparaju
+
+	* libdirac_byteio/transform_byteio.cpp: Spec compliance: - Zero
+	  transform flag applies only to Intra frames.	- Read/write code
+	  blocks from/to bitstream if Default spatial partitioning is
+	  disabled. Throw error when non-default transform depth is
+	  specified but   default spatial partitioning is set.	- Replace
+	  Multiple quantisers flag with Code block mode enumerated type.
+
+2006-05-16 12:18  asuraparaju
+
+	* libdirac_common/common_types.h: New enumerated type to handle
+	  CodeBlockMode which replaces the binary Multiple quantisers flag.
+
+2006-05-16 12:17  asuraparaju
+
+	* libdirac_common/: common.cpp, common.h: Spec Compliance: New
+	  class CodeBlocks for handling code blocks.  In CodecParams class
+	  - change type of m_mv_precision to MVPrecisionType - change type
+	  of m_wlt_depth to unsigned - replace m_multi_quants flag with
+	  CodeBlockMode enumerated type.  - New member variable and member
+	  functions to handle CodeBlocks In QuantisersLists class - Add a
+	  new member variable m_max_qindex to set the max val of quantiser
+	  index that can be handled by the decoder.
+
+2006-05-15 12:45  asuraparaju
+
+	* libdirac_decoder/comp_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp: Fix bug in specifying number
+	  of contexts. The number should be 23 and not 22 as previously
+	  specified.
+
+2006-05-15 12:43  asuraparaju
+
+	* libdirac_common/: mv_codec.cpp, mv_codec.h: [Thomas's changes]
+	  Changed coding of MB split so that it's bitwise, with bitwise
+	  prediction.  This is more efficient and is consistent with coding
+	  prediction modes.
+
+2006-05-15 12:43  asuraparaju
+
+	* libdirac_common/common.h: [Thomas's changes] Changed coding of MB
+	  split so that it's bitwise, with bitwise prediction.	This is
+	  more efficient and is consistent with coding prediction modes.
+
+	  Changed quantisation to give 2 bits of accuracy to quantisation
+	  factors.  This improves performance in high-quality applications,
+	  and reduces large steps in quality.
+
+2006-05-15 12:42  asuraparaju
+
+	* libdirac_common/common.cpp, libdirac_encoder/quant_chooser.cpp:
+	  [Thomas's changes] Changed quantisation to give 2 bits of
+	  accuracy to quantisation factors.  This improves performance in
+	  high-quality applications, and reduces large steps in quality.
+
+2006-05-15 12:42  asuraparaju
+
+	* libdirac_common/: band_codec.cpp, band_codec.h: [Thomas's
+	  changes] Changed quantisation to give 2 bits of accuracy to
+	  quantisation factors.  This improves performance in high-quality
+	  applications, and reduces large steps in quality.  Fixed bug with
+	  multiple code blocks changing m_cutoff_point repeatedly.
+
+2006-05-04 09:45  tjdwave
+
+	* libdirac_common/band_codec.cpp, libdirac_common/common.h,
+	  libdirac_common/mv_codec.cpp,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp: Rationalised arithmetic
+	  coding contexts and tidied code. Coefficient coding now covers
+	  bins 1-4 individually for "follow/continue bits". There are also
+	  separate info contexts for the case where the parent is
+	  zero/non-zero.
+
+2006-05-03 17:05  asuraparaju
+
+	* doc/: browser_compatibility.html, contact.html,
+	  documentation.html, faq.html, getting_involved.html, index.html,
+	  licenses.html, overview.html, soc2006.html, soc2006_ideas.html,
+	  specification.html, todo.html: Include links and details of Dirac
+	  participation in Google's Summer of Code 2006 program.
+
+2006-04-26 16:06  asuraparaju
+
+	* doc/faq.html: Fixed a typo.
+
+2006-04-26 15:59  asuraparaju
+
+	* tests/samples.at: Set luma block size values depending on the
+	  preset value.
+
+2006-04-21 14:59  dirac_dev
+
+	* encoder/encmain.cpp: Prevents user from specifying more than 5
+	  wavlet transforms
+
+2006-04-21 14:20  dirac_dev
+
+	* encoder/encmain.cpp, libdirac_byteio/mvdata_byteio.cpp,
+	  libdirac_common/common.cpp, libdirac_common/common.h,
+	  libdirac_common/common_types.h,
+	  libdirac_common/dirac_exception.h, libdirac_common/mot_comp.cpp,
+	  libdirac_common/video_format_defaults.cpp,
+	  libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/dirac_encoder.h,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_motionest/me_mode_decn.cpp: Added in variable
+	  motion-vector precision. Can now be controlled from the
+	  command-line. Default is quarter pixel.
+
+2006-04-21 10:23  asuraparaju
+
+	* libdirac_common/band_codec.cpp, libdirac_common/common.h,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp: Differential quantiser index
+	  is now coded using arithmetic signed multiplexed exp Golomb
+	  binarisation to conform with spec. Added contexts to list of
+	  contexts to support this in common.h.
+
+2006-04-20 16:39  asuraparaju
+
+	* libdirac_byteio/: byteio.cpp, byteio.h, displayparams_byteio.cpp,
+	  frame_byteio.cpp, mvdata_byteio.cpp, parseparams_byteio.cpp,
+	  parseunit_byteio.cpp, seqparams_byteio.cpp, subband_byteio.cpp,
+	  transform_byteio.cpp: Replaced exp-Golomb coding with interleaved
+	  exp-Golomb coding to conform with spec.  Fixed-length values
+	  (like access unit picture number, parser offset) are now written
+	  out in Big-Endian order to conform with spec. Renamed coding
+	  functions to reflect whether they are coding fixed length values
+	  or variable length values.
+
+2006-04-20 11:45  asuraparaju
+
+	* libdirac_byteio/Makefile.am: Missed this file in the previous
+	  commit. It is part of the major restructure to Dirac bytestream
+	  I/O.
+
+2006-04-20 11:41  asuraparaju
+
+	* Makefile.am, README, configure.ac, decoder/decmain.cpp,
+	  doc/documentation/code/api/dirac_api.doxygen,
+	  encoder/encmain.cpp,
+	  extras/dirac_dshow/src/diracsplitter/DiracSplitter.cpp,
+	  extras/dirac_dshow/src/diracsplitter/DiracSplitter.vcproj,
+	  extras/dirac_dshow/src/diracsplitter/DiracSplitterFile.cpp,
+	  extras/dirac_dshow/src/diracsplitter/stdafx.h,
+	  libdirac_byteio/accessunit_byteio.cpp,
+	  libdirac_byteio/accessunit_byteio.h, libdirac_byteio/byteio.cpp,
+	  libdirac_byteio/byteio.h, libdirac_byteio/component_byteio.cpp,
+	  libdirac_byteio/component_byteio.h,
+	  libdirac_byteio/dirac_byte_stats.cpp,
+	  libdirac_byteio/dirac_byte_stats.h,
+	  libdirac_byteio/dirac_byte_stream.cpp,
+	  libdirac_byteio/dirac_byte_stream.h,
+	  libdirac_byteio/displayparams_byteio.cpp,
+	  libdirac_byteio/displayparams_byteio.h,
+	  libdirac_byteio/endofsequence_byteio.cpp,
+	  libdirac_byteio/endofsequence_byteio.h,
+	  libdirac_byteio/frame_byteio.cpp, libdirac_byteio/frame_byteio.h,
+	  libdirac_byteio/mvdata_byteio.cpp,
+	  libdirac_byteio/mvdata_byteio.h,
+	  libdirac_byteio/parseparams_byteio.cpp,
+	  libdirac_byteio/parseparams_byteio.h,
+	  libdirac_byteio/parseunit_byteio.cpp,
+	  libdirac_byteio/parseunit_byteio.h,
+	  libdirac_byteio/seqparams_byteio.cpp,
+	  libdirac_byteio/seqparams_byteio.h,
+	  libdirac_byteio/subband_byteio.cpp,
+	  libdirac_byteio/subband_byteio.h,
+	  libdirac_byteio/transform_byteio.cpp,
+	  libdirac_byteio/transform_byteio.h, libdirac_common/Makefile.am,
+	  libdirac_common/arith_codec.cpp, libdirac_common/arith_codec.h,
+	  libdirac_common/band_codec.cpp, libdirac_common/band_codec.h,
+	  libdirac_common/common.cpp, libdirac_common/common.h,
+	  libdirac_common/common_types.h,
+	  libdirac_common/dirac_exception.cpp,
+	  libdirac_common/dirac_exception.h, libdirac_common/dirac_types.h,
+	  libdirac_common/frame.cpp, libdirac_common/frame.h,
+	  libdirac_common/frame_buffer.cpp, libdirac_common/frame_buffer.h,
+	  libdirac_common/mot_comp.cpp, libdirac_common/motion.h,
+	  libdirac_common/mv_codec.cpp, libdirac_common/mv_codec.h,
+	  libdirac_common/pic_io.cpp, libdirac_common/pic_io.h,
+	  libdirac_common/video_format_defaults.cpp,
+	  libdirac_common/video_format_defaults.h,
+	  libdirac_common/wavelet_utils.cpp, libdirac_decoder/Makefile.am,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_decoder/comp_decompress.h,
+	  libdirac_decoder/dirac_cppparser.cpp,
+	  libdirac_decoder/dirac_cppparser.h,
+	  libdirac_decoder/dirac_parser.cpp,
+	  libdirac_decoder/dirac_parser.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/frame_decompress.h,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_decoder/seq_decompress.h, libdirac_encoder/Makefile.am,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/comp_compress.h,
+	  libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/dirac_encoder.h,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/frame_compress.h,
+	  libdirac_encoder/quality_monitor.cpp,
+	  libdirac_encoder/quant_chooser.cpp,
+	  libdirac_encoder/quant_chooser.h,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_subpel.cpp, libdirac_motionest/me_utils.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/pixel_match.cpp, tests/samples.at,
+	  unit_tests/frames_test.cpp, unit_tests/motion_comp_test.cpp,
+	  util/instrumentation/instrmain.cpp,
+	  util/instrumentation/process_sequence.cpp,
+	  util/instrumentation/libdirac_instrument/overlay.cpp,
+	  win32/VS2003/Makefile.am, win32/VS2003/dirac.sln,
+	  win32/VS2003/ConversionUtils/libconv_common/libconv_common.vcproj,
+	  win32/VS2003/DiracDecoder/DiracDecoder.vcproj,
+	  win32/VS2003/DiracEncoder/DiracEncoder.vcproj,
+	  win32/VS2003/EncodeDirac/EncodeDirac.vcproj,
+	  win32/VS2003/libdirac_byteio/libdirac_byteio.vcproj,
+	  win32/VS2003/libdirac_common/libdirac_common.vcproj: Major
+	  restructure of Input/Output classes in Dirac internals. New
+	  directory, libdirac_byteio contains classes to input from/output
+	  to a Dirac bistream.
+
+	  Dirac external API (both encoder and decoder) has changed. So the
+	  patches for MPlayer, FFmpeg, and the Dirac Directshow filter will
+	  no longer work with the CVS source. The external API is likely to
+	  change over the next few weeks.  Updated versions of the patches
+	  and Direcshow filter will be available with the next release of
+	  Dirac.
+
+	  NOTE: the bytestream has changed to largely conform to the latest
+	  Dirac spec.  More work needs to be done to conform fully to the
+	  Dirac definition document. So expect the CVS source and resulting
+	  bitstream to change frequently over the next few weeks.
+
+2006-04-18 11:18  tjdwave
+
+	* libdirac_common/arith_codec.h, libdirac_common/band_codec.cpp,
+	  libdirac_common/band_codec.h, libdirac_common/common.h,
+	  libdirac_common/mv_codec.cpp, libdirac_common/mv_codec.h,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/frame_compress.cpp: Changing binarisation for
+	  arithmetic coding, and associated contexts.  The specification
+	  will be modified accordingly.
+
+	  Binarisation for the magnitude values of wavelet coefficients,
+	  motion vector prediction residues and DC values has been changed
+	  from unary to interleaved exp-Golomb so that the number of
+	  symbols to be decoded in order to reconstruct a coefficient is
+	  reduced. Exp-Golomb binarisation takes a number N>=0 and codes it
+	  via the binary representation of N+1, 1bbbbbb. If there are K
+	  bits following the leading 1, the representation is K zeroes
+	  followed by the binary representation:
+
+	  00...01bbbbb Interleaved exp-Golomb is the same, except that the
+	  K lsbs are interleaved with the zeroes: 0b0b	 0b1 so that a
+	  single decoding loop can be used. The zeroes here act as "follow
+	  bits" indicating that another bit is to be sent, with 1 as the
+	  terminator.
+
+	  Contexts for coding these symbols are selected for the follow
+	  bits and other bits ("information bits") separately. Compression
+	  performance is hardly affected, nor is speed performance in
+	  software, but hardware performance is greatly facilitated.
+
+2006-04-12 16:06  tjdwave
+
+	* libdirac_common/arith_codec.h: Changed while loops for decoding
+	  and encoding into fixed-size for-loops with break conditions.
+	  Although ugly, this provides safer code as loops will terminate
+	  if there's an error.
+
+2006-04-11 12:23  asuraparaju
+
+	* unit_tests/motion_comp_test.cpp: Set number of references in
+	  MvData constructor to fix compilation errors.
+
+2006-04-10 11:13  tjdwave
+
+	* libdirac_common/band_codec.cpp: Changed lookup table-based
+	  division to a straight division. This is slightly slower, but
+	  will scale to higher levels of wavelet decomposition.  Also
+	  eliminates bug with occasional wrap-around for lossless coding on
+	  some pictures. Making abs_val 64 bits would also work but could
+	  be equally slow on 32 bit architectures.
+
+2006-03-20 12:54  asuraparaju
+
+	* encoder/encmain.cpp, libdirac_encoder/dirac_encoder.cpp: Fixed
+	  bug in writing instrumentation data to output which always
+	  assumed that data for two references were available.
+
+2006-03-17 18:04  timborer
+
+	* libdirac_common/common.cpp, libdirac_common/common.h,
+	  libdirac_common/motion.cpp, libdirac_common/motion.h,
+	  libdirac_common/mv_codec.cpp, libdirac_common/mv_codec.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/pixel_match.cpp,
+	  util/instrumentation/process_sequence.cpp: Changed block mode
+	  coding so that residues for reference 2 are not generated when we
+	  are only using one reference.  THIS CHANGES THE BYTESTREAM This
+	  reduces the bit rate by a few bits, but the reason for doing it
+	  is becuase it makes the codec more logical.  Also modified
+	  BlockModePrediction so that it doesn't do a prediction for
+	  reference 2 when we are only using one reference.  Removed some
+	  unnecessary memory allocation in MvData constructor.	Removed a
+	  few warning messages and tidied up a bit.
+
+2006-03-01 18:19  asuraparaju
+
+	* libdirac_common/: arith_codec.cpp, arith_codec.h: Rationalised
+	  types used i.e. replaced all code_t, calc_t etc with unsigned
+	  int. Simplified the code by removing one addition and shift from
+	  DecodeSymbol.
+
+2006-02-28 15:53  asuraparaju
+
+	* libdirac_common/arith_codec.cpp: Fixed g++ warning when compiled
+	  in debug mode
+
+2006-02-28 15:29  asuraparaju
+
+	* libdirac_common/Makefile.am,
+	  win32/VS2003/libdirac_common/libdirac_common.vcproj: Added
+	  arith_codec.cpp to list of .cpp files
+
+2006-02-28 15:25  asuraparaju
+
+	* libdirac_common/: arith_codec.cpp, arith_codec.h: Refactored code
+	  to make implementation easier to understand. The code restructure
+	  modified the bitstream but older version of arith_codec can
+	  decode this new version and vice-versa.
+
+2006-02-21 13:32  tjdwave
+
+	* libdirac_common/arith_codec.h: Modified arithmetic coding engine
+	  for speed and spec conformance.  1. Changed context statistics so
+	  that maximum weight is 256 2. Changed look-up table so that
+	  inverse of weight is calculated to 16 instead of 31 bits.  3.
+	  Changed scaled count of zero m_prob0 so that it's 16 bits instead
+	  of 10
+
+	  Changes 1-3 mean that m_prob0 can be worked out using only 16 bit
+	  multiplies and no bitshift. This is more hardware friendly.
+
+	  4. Modified do .. while loop for encoding and decoding so that a
+	  more efficient test for MSB equality can be used, resulting in a
+	  speed-up 5. Changed the order of decoding so that bits are
+	  shifted in first and then the symbol is determined. This reduces
+	  unnecessary bit inputs and moves to a 'lazy' input mode 6.
+	  Changed the statistics update function so that m_prob0 is
+	  calculated for every update rather than every other. This speeds
+	  up the code and gives better compression performance.
+
+2006-02-15 14:27  asuraparaju
+
+	* tests/samples.at: Included  block variables so that tests can be
+	  run for different block sizes. Note that the block sizes must be
+	  changed manually before running the tests.
+
+2006-02-15 14:26  asuraparaju
+
+	* libdirac_motionest/: me_utils.cpp, me_utils_mmx.cpp,
+	  pixel_match.cpp: Padding related changes. Since there may no
+	  longer be an integer number of whole macroblocks and blocks in a
+	  paddied picture, made changes to ensure that we do not fall off
+	  the boundaries of the padded pictured during motion estimation.
+	  WARNING : This changes the bitstream
+
+2006-02-15 14:24  asuraparaju
+
+	* libdirac_common/: mot_comp.cpp, mot_comp.h, mot_comp_mmx.cpp,
+	  mot_comp_mmx.h: A linear function is used to calculate the OBMC
+	  weights instead of a raised cosine function to make it compliant
+	  with spec. Also motion compensation is performed only on true
+	  picture dimensions and not padded picture dimensions, WARNING :
+	  This changes the bitstream
+
+2006-02-15 14:23  asuraparaju
+
+	* libdirac_common/common.cpp: Modified CodecParams.SetBlockSizes
+	  function to be compliant with spec.  WARNING : This changes the
+	  bitstream
+
+2006-02-15 14:21  asuraparaju
+
+	* libdirac_common/common.h, libdirac_common/frame.cpp,
+	  libdirac_common/frame_buffer.cpp, libdirac_common/frame_buffer.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_encoder/seq_compress.cpp, unit_tests/frames_test.cpp,
+	  unit_tests/motion_comp_test.cpp: Currently a frame is padded so
+	  that it has an integer number of whole macro blocks and is also a
+	  multiple of 2^(wavelet transform depth). This has changed in the
+	  Dirac specification where a frame is padded so that its
+	  dimensions are a multiple of 2^(wavelet transform depth) only.
+	  Also the luma and the chroma components can be padded
+	  differently. E.g. the luma dimensions may be a perfect multiple
+	  of 2^(wavelet transform depth) so the luma component is not
+	  padded but the chroma component may need to be padded depending
+	  on the chroma format of the input.  To take care of this,
+	  FrameParams class has been modified to accept both padded chroma
+	  and padded luma dimensions.
+
+	  WARNING! This modifies the bitstream.
+
+2006-02-14 12:48  tjdwave
+
+	* libdirac_common/arith_codec.h: Changed count rescaling so that it
+	  occurs every time a bit is encoded/decoded.  This is to make
+	  compliant with spec, and also because doing it every other bit
+	  was giving no speed advantage.
+
+	  WARNING! This changes the bitstream.
+
+2006-02-10 09:49  tjdwave
+
+	* libdirac_common/common.cpp: Modified calculation of quantisation,
+	  inverse quantisation and offset values so as to conform to
+	  specification.  WARNING: this modifies the bitstream.
+
+2006-02-09 13:58  tjdwave
+
+	* libdirac_common/: motion.h, mv_codec.cpp: Removed the function
+	  for computing a mean of a vector of ints. Instead all means are
+	  of unsigned int values, and are calculated using unbiased
+	  arithmetic ie with an offset of N/2 for N values to ensure even
+	  rounding. This changes the mean used for predicting DC values in
+	  motion vector coding. As a result, the bitstream is also changed.
+
+2006-01-06 15:56  tjdwave
+
+	* libdirac_common/mv_codec.cpp: Changed refresh so that statistics
+	  are refreshed after m_reset_num macroblocks as intended, rather
+	  than m_reset_num+1.  WARNING! This changes the bitstream.
+
+2006-01-06 15:22  asuraparaju
+
+	* libdirac_motionest/me_utils.cpp: Fixed bug#1383890. Applied patch
+	  supplied in bug report.
+
+2005-12-07 12:50  asuraparaju
+
+	* doc/specification.html: Link to Dirac specification document
+
+2005-12-07 11:34  asuraparaju
+
+	* doc/: contact.html, documentation.html, faq.html,
+	  getting_involved.html, index.html, licenses.html, overview.html,
+	  template2.html, todo.html: Included a link to the Dirac
+	  Specification document.
+
+2005-12-07 11:33  asuraparaju
+
+	* doc/documentation/algorithm/algorithm/wlt_transform.xht: Fixed
+	  filter coefficients for 13,5 filter.
+
+2005-12-05 12:44  asuraparaju
+
+	* ChangeLog: [no log message]
+
 2005-12-05 12:38  asuraparaju
 
 	* NEWS: Updated with 0.5.4 release notes
