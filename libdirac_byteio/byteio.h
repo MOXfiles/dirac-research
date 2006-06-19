@@ -234,6 +234,7 @@ namespace dirac
                 *mp_stream << (m_current_byte);
                 ++m_num_bytes;
                 m_current_pos = 0;
+                m_current_byte = 0;
             }
         };
 

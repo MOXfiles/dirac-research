@@ -135,8 +135,9 @@ void MvDataByteIO::Output()
     
     //Output size of block data
     OutputVarLengthUint(m_block_data.GetSize());
-    // Flush output for byte alignment
-    OutputCurrentByte();
+
+    // Byte Align
+    ByteAlignOutput();
 }
 
 //-------------private---------------------------------------------------------------
