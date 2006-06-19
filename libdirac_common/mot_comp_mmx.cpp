@@ -470,19 +470,14 @@ void MotionCompensator_HalfPixel::CompensateBlock( TwoDArray<CalcValueType> &pic
 namespace dirac
 {
     void CompensateComponentAddAndShift_mmx (int start_y, int end_y, 
+                                           int weight_bits,
                                            const ImageCoords& orig_pic_size,
                                            TwoDArray<CalcValueType> &comp_data, 
                                            PicArray &pic_data_out)
     {
         if (start_y >= end_y)
             return;
-#ifdef RAISED_COSINE
-        const int round_val = 1024;
-        const int shift_bits = 11;
-#else
-        const int round_val = 64;
-        const int shift_bits = 7;
-#endif
+        const int round_val = 1<<(weight_bits-1);
         int stopX = pic_data_out.FirstX() + ((orig_pic_size.x>>2)<<2);
         int x_end_truepic_data = pic_data_out.FirstX() + orig_pic_size.x;
         int x_end_data = pic_data_out.FirstX() + pic_data_out.LengthX();
@@ -494,9 +489,9 @@ namespace dirac
             for ( int j =  pic_data_out.FirstX(); j < stopX; j+=4)
             {
                 __m64 in1 = _mm_add_pi32 (*(__m64 *)pic_row, max_val);
-                in1 = _mm_srai_pi32 (in1, shift_bits);
+                in1 = _mm_srai_pi32 (in1, weight_bits);
                 __m64 in2 = _mm_add_pi32 (*(__m64 *)(pic_row+2), max_val);
-                in2 = _mm_srai_pi32 (in2, shift_bits);
+                in2 = _mm_srai_pi32 (in2, weight_bits);
                 in1 = _mm_packs_pi32 (in1, in2);
                 __m64 *out = (__m64 *)out_row;
                 *out = _mm_add_pi16 (in1, *out);
@@ -505,7 +500,7 @@ namespace dirac
             }
             for ( int j =stopX; j < x_end_truepic_data; j++)
             {
-                *out_row += static_cast<ValueType>( (*pic_row + round_val) >> shift_bits ); 
+                *out_row += static_cast<ValueType>( (*pic_row + round_val) >> weight_bits ); 
                 ++out_row;
                 ++pic_row;
             }

@@ -276,6 +276,24 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
         // XBLEN <= 2*XBSEP, YBLEN <= 2*YBSEP
         m_lbparams[2].SetXblen( std::min(m_lbparams[2].Xbsep()*2 , m_lbparams[2].Xblen()) );
         m_lbparams[2].SetYblen( std::min(m_lbparams[2].Ybsep()*2 , m_lbparams[2].Yblen()) );
+
+        // Check if the block overlap is a power of 2
+        int overlap = m_lbparams[2].Xblen() - m_lbparams[2].Xbsep();
+        int count = 0;
+        while ((overlap>>=1))
+            ++count;
+        if ((1<<count) != (m_lbparams[2].Xblen() - m_lbparams[2].Xbsep()))
+        {
+            m_lbparams[2].SetXbsep(m_lbparams[2].Xblen()-(1<<count));
+        }
+        count = 0;
+        overlap = m_lbparams[2].Yblen() - m_lbparams[2].Ybsep();
+        while ((overlap>>=1))
+            ++count;
+        if ((1<<count) != (m_lbparams[2].Yblen() - m_lbparams[2].Ybsep()))
+        {
+            m_lbparams[2].SetYbsep(m_lbparams[2].Yblen()-(1<<count));
+        }
     
 
         // If the overlapped blocks don't work for the chroma format, we have to iterate

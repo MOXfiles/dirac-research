@@ -191,6 +191,14 @@ namespace dirac
         TwoDArray<ValueType>* m_half_macro_block_weights;
         TwoDArray<ValueType>* m_sub_block_weights;
         TwoDArray<ValueType>* m_half_sub_block_weights;
+
+        // OBMC related values
+        // Max value frame weight in x-direction
+        CalcValueType m_max_h_weight;
+        // Max value frame weight in y-direction
+        CalcValueType m_max_v_weight;
+        // Bits to round the output of OBMC to
+        CalcValueType m_shift_bits;
     };
 
     //! Pixel precision Motion compensator class. 

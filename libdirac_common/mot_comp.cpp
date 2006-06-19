@@ -110,6 +110,7 @@ MotionCompensator::MotionCompensator( const CodecParams &cp ):
     m_half_macro_block_weights = new TwoDArray<ValueType>[9];
     m_sub_block_weights = new TwoDArray<ValueType>[9];
     m_half_sub_block_weights = new TwoDArray<ValueType>[9];
+    
     //Configure weighting blocks for the first time
     ReConfig();
 }
@@ -180,6 +181,34 @@ void MotionCompensator::ReConfig()
         m_bparams = m_cparams.LumaBParams(2);
     else
         m_bparams = m_cparams.ChromaBParams(2);
+
+    // Calculate the shift required in horizontal and vertical direction for
+    // OBMC and the weighting bits for each reference frame.
+#ifdef RAISED_COSINE
+    m_max_h_weight = 32;
+    m_max_v_weight = 32;
+    m_shift_bits = 11;
+#else
+    // Calculating log2(xblen-xbsep) + 1
+    int h_shift_bits=0;
+    int overlap = m_bparams.Xblen()-m_bparams.Xbsep();
+    while (overlap)
+    {
+        ++h_shift_bits;
+        overlap>>=1;
+    }
+    // Calculating log2(yblen-ybsep) + 1
+    int v_shift_bits=0;
+    overlap = m_bparams.Yblen()-m_bparams.Ybsep();
+    while (overlap)
+    {
+        ++v_shift_bits;
+        overlap>>=1;
+    }
+    m_shift_bits = (h_shift_bits+v_shift_bits+1); //full weight
+    m_max_h_weight = 1<<h_shift_bits; //linear weights
+    m_max_v_weight = 1<<v_shift_bits; //linear weights
+#endif
 
     int blocks_per_mb_row = m_cparams.XNumBlocks()/m_cparams.XNumMB();
     int blocks_per_sb_row = blocks_per_mb_row>>1;
@@ -476,13 +505,7 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
           // Use only the first Ybsep rows since the remaining rows are
           // needed for the next row of blocks since we are using overlapped
           // blocks motion compensation
-#ifdef RAISED_COSINE
-             const int round_val = 1024;
-             const int shift_bits = 11;
-#else
-             const int round_val = 64;
-             const int shift_bits = 7;
-#endif
+          const int round_val = 1<<(m_shift_bits-1);
           if (m_add_or_sub == SUBTRACT)
           {
               int start_y = std::max(pic_data_out.FirstY() , pos.y) ;
@@ -503,7 +526,7 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
 
                  for ( int j =pic_data_out.FirstX(); j < x_end_data; ++j)
                  {
-                     out_row[j] -= static_cast<ValueType>( (pic_row[j] + round_val) >> shift_bits );
+                     out_row[j] -= static_cast<ValueType>( (pic_row[j] + round_val) >> m_shift_bits );
                  }
 
                  // Okay, we've done all the actual blocks. Now if the picture is further padded
@@ -529,7 +552,7 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
                         end_y = m_cparams.OrigYl()>>yscale_shift;
               }
 #if defined (HAVE_MMX)
-             CompensateComponentAddAndShift_mmx (start_y, end_y, orig_pic_size, 
+             CompensateComponentAddAndShift_mmx (start_y, end_y, m_shift_bits, orig_pic_size, 
                                                  pic_data, pic_data_out);
 #else
              for ( int i = start_y, pic_y = 0; i < end_y; i++, pic_y++)
@@ -539,7 +562,7 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
 
                  for ( int j =0; j < m_cparams.OrigXl()>>xscale_shift; j++)
                  {
-                     out_row[j] += static_cast<ValueType>( (pic_row[j] + round_val) >> shift_bits ); 
+                     out_row[j] += static_cast<ValueType>( (pic_row[j] + round_val) >> m_shift_bits ); 
                  }
                  // Pad the remaining pixels of the row with last truepic pixel val
                   for ( int j = m_cparams.OrigXl()>>xscale_shift; j < pic_data.LengthX(); j++)
@@ -663,18 +686,18 @@ void MotionCompensator::CreateBlock( int xblen, int yblen, int xbsep, int ybsep,
                                      bool FullY , 
                                      TwoDArray<ValueType>& WeightArray)
 {
-#ifdef RAISED_COSINE
-    const CalcValueType max_val = 32;
-#else
-    const CalcValueType max_val = 8; //linear weights
-#endif
     // Create temporary arrays
     OneDArray<CalcValueType> HWts( WeightArray.LengthX() );
     OneDArray<CalcValueType> VWts( WeightArray.LengthY() );
 
     // Calculation variables
+#ifdef RAISED_COSINE
     float rolloffX = (float(xblen+1)/float(xbsep)) - 1;
     float rolloffY = (float(yblen+1)/float(ybsep)) - 1;
+#else
+    float rolloffX = (float(xblen)/float(xbsep)) - 1;
+    float rolloffY = (float(yblen)/float(ybsep)) - 1;
+#endif
     float val;
 
     // Window in the x direction
@@ -682,12 +705,12 @@ void MotionCompensator::CreateBlock( int xblen, int yblen, int xbsep, int ybsep,
     {
         val = (float(x) - (float(xblen-1)/2.0))/float(xbsep);
 #ifdef RAISED_COSINE
-        HWts[x] = static_cast<CalcValueType>( float(max_val) * RaisedCosine(val,rolloffX)+0.5 );
+        HWts[x] = static_cast<CalcValueType>( float(m_max_h_weight) * RaisedCosine(val,rolloffX)+0.5 );
 #else
-        HWts[x] = static_cast<CalcValueType>( float(max_val) * Linear(val,rolloffX)+0.5 );
+        HWts[x] = static_cast<CalcValueType>( float(m_max_h_weight) * Linear(val,rolloffX)+0.5 );
 #endif
         HWts[x] = std::max( HWts[x] , 1 );
-        HWts[x] = std::min( HWts[x] , max_val );
+        HWts[x] = std::min( HWts[x] , m_max_h_weight );
     }// x
 
     // Window in the y direction
@@ -695,19 +718,19 @@ void MotionCompensator::CreateBlock( int xblen, int yblen, int xbsep, int ybsep,
     {
         val = (float(y) - (float(yblen-1)/2.0))/float(ybsep);
 #ifdef RAISED_COSINE
-        VWts[y] = static_cast<CalcValueType>( float(max_val) * RaisedCosine(val,rolloffY)+0.5 );
+        VWts[y] = static_cast<CalcValueType>( float(m_max_v_weight) * RaisedCosine(val,rolloffY)+0.5 );
 #else
-        VWts[y] = static_cast<CalcValueType>( float(max_val) * Linear(val,rolloffY)+0.5 );
+        VWts[y] = static_cast<CalcValueType>( float(m_max_v_weight) * Linear(val,rolloffY)+0.5 );
 #endif
         VWts[y] = std::max( VWts[y] , 1 );
-        VWts[y] = std::min( VWts[y] , max_val );
+        VWts[y] = std::min( VWts[y] , m_max_v_weight );
     }// y
 
     // Now reflect or pad, as appropriate
     if (!FullX)
     {
         for( int x = 0; x < (xblen>>1) ; ++x)
-            HWts[x] = max_val;
+            HWts[x] = m_max_h_weight;
     }
     else
     {
@@ -719,7 +742,7 @@ void MotionCompensator::CreateBlock( int xblen, int yblen, int xbsep, int ybsep,
     if (!FullY)
     {
         for( int y = 0 ; y < (yblen>>1); ++y)
-            VWts[y] = max_val;
+            VWts[y] = m_max_v_weight;
     }
     else
     {
