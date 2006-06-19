@@ -290,7 +290,7 @@ void FrameDecompressor::PushFrame(FrameBuffer &my_buffer)
         xpad_chroma = ypad_chroma = 0;
     
         // The frame dimensions must be a multiple of 2^(transform_depth)
-        int tx_mul = static_cast<int>(std::pow(2.0, (int)m_decparams.TransformDepth()));
+        int tx_mul = 1<<m_decparams.TransformDepth();
 
         if ( xl_chroma%tx_mul != 0 )
             xpad_chroma=( ( xl_chroma/tx_mul ) + 1 )*tx_mul - xl_chroma;
