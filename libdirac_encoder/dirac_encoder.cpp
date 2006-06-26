@@ -399,7 +399,7 @@ DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx,
                            bool verbose) :
     m_sparams(static_cast<VideoFormat>(enc_ctx->enc_params.video_format), false),
     m_srcparams(static_cast<VideoFormat>(enc_ctx->enc_params.video_format), true),
-    m_encparams(static_cast<VideoFormat>(enc_ctx->enc_params.video_format), INTER_FRAME, true),
+    m_encparams(static_cast<VideoFormat>(enc_ctx->enc_params.video_format), INTER_FRAME, 2, true),
     m_show_fnum(-1),
     m_num_loaded_frames(0),
     m_num_coded_frames(0),
@@ -492,7 +492,8 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     m_encparams.SetBlockSizes( bparams , enc_ctx->seq_params.chroma );
 
     // Set transforms parameters
-    m_encparams.SetTransformFilter(enc_ctx->enc_params.wlt_filter);
+    m_encparams.SetIntraTransformFilter(enc_ctx->enc_params.intra_wlt_filter);
+    m_encparams.SetInterTransformFilter(enc_ctx->enc_params.inter_wlt_filter);
     m_encparams.SetSpatialPartition(enc_ctx->enc_params.spatial_partition);
     // Set default spatial partitoning to false if wavelet depth is not 
     // equal to default value.
@@ -804,7 +805,11 @@ static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
     encparams.mv_precision = default_enc_params.MVPrecision();
 
     // set default transform parameters
-    encparams.wlt_filter = default_enc_params.TransformFilter();
+    WltFilter wf;
+    SetDefaultTransformFilter(INTRA_FRAME, wf);
+    encparams.intra_wlt_filter = wf;
+    SetDefaultTransformFilter(INTER_FRAME, wf);
+    encparams.inter_wlt_filter = wf;
     encparams.wlt_depth = default_enc_params.TransformDepth();
     encparams.spatial_partition = default_enc_params.SpatialPartition();
     encparams.def_spatial_partition = default_enc_params.DefaultSpatialPartition();

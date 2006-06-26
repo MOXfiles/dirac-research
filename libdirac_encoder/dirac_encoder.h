@@ -184,8 +184,10 @@ typedef struct
     int ybsep;
     /*! Video format preset */
     int video_format;
-    /*! Transform filter */
-    dirac_wlt_filter_t wlt_filter;
+    /*! Transform filter for intra frames*/
+    dirac_wlt_filter_t intra_wlt_filter;
+    /*! Transform filter for inter frames*/
+    dirac_wlt_filter_t inter_wlt_filter;
     /*! Transform depth */
     unsigned int wlt_depth;
     /*! Spatial partitioning flag */
