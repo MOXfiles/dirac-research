@@ -104,27 +104,36 @@ MotionCompensator::MotionCompensator( const CodecParams &cp ):
     m_cparams(cp),
     luma_or_chroma(true)
 {
-    m_block_weights = new TwoDArray<ValueType>[9];
-    m_half_block_weights = new TwoDArray<ValueType>[9];
-    m_macro_block_weights = new TwoDArray<ValueType>[9];
-    m_half_macro_block_weights = new TwoDArray<ValueType>[9];
-    m_sub_block_weights = new TwoDArray<ValueType>[9];
-    m_half_sub_block_weights = new TwoDArray<ValueType>[9];
+    // Allocate for ref1, ref2 and ref1+ref2 block weights
+    m_block_weights[0] = new TwoDArray<ValueType>[9];
+    m_block_weights[1] = new TwoDArray<ValueType>[9];
+    m_full_block_weights = new TwoDArray<ValueType>[9];
+    // Allocate for ref1, ref2 and ref1+ref2 superblock weights
+    m_macro_block_weights[0] = new TwoDArray<ValueType>[9];
+    m_macro_block_weights[1] = new TwoDArray<ValueType>[9];
+    m_full_macro_block_weights = new TwoDArray<ValueType>[9];
+    // Allocate for ref1, ref2 and ref1+ref2 sub superblock weights
+    m_sub_block_weights[0] = new TwoDArray<ValueType>[9];
+    m_sub_block_weights[1] = new TwoDArray<ValueType>[9];
+    m_full_sub_block_weights = new TwoDArray<ValueType>[9];
     
     //Configure weighting blocks for the first time
     ReConfig();
 }
 
 // Destructor
-MotionCompensator::~MotionCompensator(){
-
-//Tidy up the pointers
-    delete[] m_block_weights;
-    delete[] m_half_block_weights;
-    delete[] m_macro_block_weights;
-    delete[] m_half_macro_block_weights;
-    delete[] m_sub_block_weights;
-    delete[] m_half_sub_block_weights;
+MotionCompensator::~MotionCompensator()
+{
+    //Tidy up the pointers
+    delete[] m_block_weights[0];
+    delete[] m_block_weights[1];
+    delete[] m_full_block_weights;
+    delete[] m_macro_block_weights[0];
+    delete[] m_macro_block_weights[1];
+    delete[] m_full_macro_block_weights;
+    delete[] m_sub_block_weights[0];
+    delete[] m_sub_block_weights[1];
+    delete[] m_full_sub_block_weights;
 }
 
 //Called to perform motion compensated addition/subtraction on an entire frame.
@@ -205,7 +214,9 @@ void MotionCompensator::ReConfig()
         ++v_shift_bits;
         overlap>>=1;
     }
-    m_shift_bits = (h_shift_bits+v_shift_bits+1); //full weight
+    // Total shift = shift assuming equal frame weights + 
+    //               frame weights precision
+    m_shift_bits = (h_shift_bits+v_shift_bits+m_cparams.FrameWeightsBits()); //full weight
     m_max_h_weight = 1<<h_shift_bits; //linear weights
     m_max_v_weight = 1<<v_shift_bits; //linear weights
 #endif
@@ -223,82 +234,79 @@ void MotionCompensator::ReConfig()
 
     for(int i = 0; i < 9; i++)
     {
-        m_block_weights[i].Resize(  m_bparams.Yblen() , m_bparams.Xblen() );
-        m_half_block_weights[i].Resize(  m_bparams.Yblen() , m_bparams.Xblen() );
-        m_macro_block_weights[i].Resize(  mb_ylen , mb_xlen );
-        m_half_macro_block_weights[i].Resize(  mb_ylen , mb_xlen );
-        m_sub_block_weights[i].Resize(  sb_ylen , sb_xlen );
-        m_half_sub_block_weights[i].Resize(  sb_ylen , sb_xlen );
+        m_block_weights[0][i].Resize(  m_bparams.Yblen() , m_bparams.Xblen() );
+        m_block_weights[1][i].Resize(  m_bparams.Yblen() , m_bparams.Xblen() );
+        m_full_block_weights[i].Resize(  m_bparams.Yblen() , m_bparams.Xblen() );
+        m_macro_block_weights[0][i].Resize(  mb_ylen , mb_xlen );
+        m_macro_block_weights[1][i].Resize(  mb_ylen , mb_xlen );
+        m_full_macro_block_weights[i].Resize(  mb_ylen , mb_xlen );
+        m_sub_block_weights[0][i].Resize(  sb_ylen , sb_xlen );
+        m_sub_block_weights[1][i].Resize(  sb_ylen , sb_xlen );
+        m_full_sub_block_weights[i].Resize(  sb_ylen , sb_xlen );
     }
-    // We can create all nine weighting blocks by calculating values
-    // for four blocks and mirroring them to generate the others.
-    CreateBlock( m_bparams.Xblen(), m_bparams.Yblen() , m_bparams.Xbsep(), m_bparams.Ybsep(), false , false , m_half_block_weights[0] );
-    CreateBlock( m_bparams.Xblen(), m_bparams.Yblen() , m_bparams.Xbsep(), m_bparams.Ybsep(), false , true , m_half_block_weights[3] );
-    CreateBlock( m_bparams.Xblen(), m_bparams.Yblen() , m_bparams.Xbsep(), m_bparams.Ybsep(), true , false , m_half_block_weights[1] );
-    CreateBlock( m_bparams.Xblen(), m_bparams.Yblen() , m_bparams.Xbsep(), m_bparams.Ybsep(), true , true , m_half_block_weights[4] );
 
-    // Note order of flipping is important.    
-    FlipX( m_half_block_weights[3] , m_bparams.Xblen() , m_bparams.Yblen() , m_half_block_weights[5] );
-    FlipX( m_half_block_weights[0] , m_bparams.Xblen() , m_bparams.Yblen() , m_half_block_weights[2] );
-    FlipY( m_half_block_weights[0] , m_bparams.Xblen() , m_bparams.Yblen() , m_half_block_weights[6] );
-    FlipX( m_half_block_weights[6] , m_bparams.Xblen() , m_bparams.Yblen() , m_half_block_weights[8] );
-    FlipY( m_half_block_weights[1] , m_bparams.Xblen() , m_bparams.Yblen() , m_half_block_weights[7] );
+    // Firstly calculate the non-weighted Weighting blocks. i,e, assuming that
+    // the frame_weight for each reference frame is 1.
 
-    // We can create all nine weighting blocks by calculating values
-    // for four blocks and mirroring them to generate the others.
-    CreateBlock( mb_xlen, mb_ylen, mb_xsep, mb_ysep , false , false , m_half_macro_block_weights[0] );
-    CreateBlock( mb_xlen, mb_ylen, mb_xsep, mb_ysep , false , true , m_half_macro_block_weights[3] );
-    CreateBlock( mb_xlen, mb_ylen, mb_xsep, mb_ysep , true , false , m_half_macro_block_weights[1] );
-    CreateBlock( mb_xlen, mb_ylen, mb_xsep, mb_ysep , true , true , m_half_macro_block_weights[4] );
+    // Calculate non-weighted Block Weights
+    CalculateWeights( m_bparams.Xblen(), m_bparams.Yblen() , m_bparams.Xbsep(), m_bparams.Ybsep(), m_block_weights[0] );
 
-    // Note order of flipping is important.    
-    FlipX( m_half_macro_block_weights[3] , mb_xlen, mb_ylen , m_half_macro_block_weights[5] );
-    FlipX( m_half_macro_block_weights[0] , mb_xlen, mb_ylen , m_half_macro_block_weights[2] );
-    FlipY( m_half_macro_block_weights[0] , mb_xlen, mb_ylen , m_half_macro_block_weights[6] );
-    FlipX( m_half_macro_block_weights[6] , mb_xlen, mb_ylen , m_half_macro_block_weights[8] );
-    FlipY( m_half_macro_block_weights[1] , mb_xlen, mb_ylen , m_half_macro_block_weights[7] );
+    // Calculate non-weighted macro Block Weights
+    CalculateWeights( mb_xlen, mb_ylen, mb_xsep, mb_ysep , m_macro_block_weights[0] );
     
-    // We can create all nine weighting blocks by calculating values
-    // for four blocks and mirroring them to generate the others.
-    CreateBlock( sb_xlen, sb_ylen, sb_xsep, sb_ysep , false , false , m_half_sub_block_weights[0] );
-    CreateBlock( sb_xlen, sb_ylen, sb_xsep, sb_ysep , false , true , m_half_sub_block_weights[3] );
-    CreateBlock( sb_xlen, sb_ylen, sb_xsep, sb_ysep , true , false , m_half_sub_block_weights[1] );
-    CreateBlock( sb_xlen, sb_ylen, sb_xsep, sb_ysep , true , true , m_half_sub_block_weights[4] );
+    // Calculate non-weighted sub-macro Block Weights
+    CalculateWeights( sb_xlen, sb_ylen, sb_xsep, sb_ysep , m_sub_block_weights[0] );
 
-    // Note order of flipping is important.    
-    FlipX( m_half_sub_block_weights[3] , sb_xlen, sb_ylen , m_half_sub_block_weights[5] );
-    FlipX( m_half_sub_block_weights[0] , sb_xlen, sb_ylen , m_half_sub_block_weights[2] );
-    FlipY( m_half_sub_block_weights[0] , sb_xlen, sb_ylen , m_half_sub_block_weights[6] );
-    FlipX( m_half_sub_block_weights[6] , sb_xlen, sb_ylen , m_half_sub_block_weights[8] );
-    FlipY( m_half_sub_block_weights[1] , sb_xlen, sb_ylen , m_half_sub_block_weights[7] );
-   
+    // Now calculate actual Ref1 and Ref2 weighted Weights using the weights
+    // of the reference frames.
+
+    // Calculate weighted block weights
     for( int k = 0; k < 9; k++)
     {
-        for ( int j =m_half_block_weights[k].FirstY(); j <= m_half_block_weights[k].LastY(); j++)
+        for ( int j =m_block_weights[0][k].FirstY(); j <= m_block_weights[0][k].LastY(); j++)
         {
-            for ( int i =m_half_block_weights[k].FirstX(); i <= m_half_block_weights[k].LastX(); i++)
+            for ( int i =m_block_weights[0][k].FirstX(); i <= m_block_weights[0][k].LastX(); i++)
             {
-                m_block_weights[k][j][i] = m_half_block_weights[k][j][i] << 1;
+                // Calculate ref2 weighted weights
+                m_block_weights[1][k][j][i] = m_block_weights[0][k][j][i] * m_cparams.Ref2Weight();
+                // Calculate ref1 weighted weights
+                m_block_weights[0][k][j][i] *= m_cparams.Ref1Weight();
+                // Calculate ref1+ref2 weighted weights
+                m_full_block_weights[k][j][i] = m_block_weights[0][k][j][i]+m_block_weights[1][k][j][i];
             }// i
         }// j
     }// k
+
+    // Calculate weighted macro block weights
     for( int k = 0; k < 9; k++)
     {
-        for ( int j =m_half_macro_block_weights[k].FirstY(); j <= m_half_macro_block_weights[k].LastY(); j++)
+        for ( int j =m_macro_block_weights[0][k].FirstY(); j <= m_macro_block_weights[0][k].LastY(); j++)
         {
-            for ( int i =m_half_macro_block_weights[k].FirstX(); i <= m_half_macro_block_weights[k].LastX(); i++)
+            for ( int i =m_macro_block_weights[0][k].FirstX(); i <= m_macro_block_weights[0][k].LastX(); i++)
             {
-                m_macro_block_weights[k][j][i] = m_half_macro_block_weights[k][j][i] << 1;
+                // Calculate ref2 weighted macro block weights
+                m_macro_block_weights[1][k][j][i] = m_macro_block_weights[0][k][j][i] * m_cparams.Ref2Weight();
+                // Calculate ref1 weighted macro block weights
+                m_macro_block_weights[0][k][j][i] *= m_cparams.Ref1Weight();
+                // Calculate ref1+ref2 weighted macro block weights
+                m_full_macro_block_weights[k][j][i] = m_macro_block_weights[0][k][j][i]+m_macro_block_weights[1][k][j][i];
             }// i
         }// j
     }// k
+
+    // Calculate weighted sub-macro block weights
     for( int k = 0; k < 9; k++)
     {
-        for ( int j =m_half_sub_block_weights[k].FirstY(); j <= m_half_sub_block_weights[k].LastY(); j++)
+        for ( int j =m_sub_block_weights[0][k].FirstY(); j <= m_sub_block_weights[0][k].LastY(); j++)
         {
-            for ( int i =m_half_sub_block_weights[k].FirstX(); i <= m_half_sub_block_weights[k].LastX(); i++)
+            for ( int i =m_sub_block_weights[0][k].FirstX(); i <= m_sub_block_weights[0][k].LastX(); i++)
             {
-                m_sub_block_weights[k][j][i] = m_half_sub_block_weights[k][j][i] << 1;
+                // Calculate ref2 weighted super block weights
+                m_sub_block_weights[1][k][j][i] = m_sub_block_weights[0][k][j][i] * m_cparams.Ref2Weight();
+                // Calculate ref1 weighted sub-super block weights
+                m_sub_block_weights[0][k][j][i] *= m_cparams.Ref1Weight();
+                // Calculate ref1+ref2 weighted sub-super block weights
+                m_full_sub_block_weights[k][j][i] = m_sub_block_weights[0][k][j][i]+m_sub_block_weights[1][k][j][i];
             }// i
         }// j
     }// k
@@ -425,7 +433,7 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
 
             block_mode = mv_data.Mode()[yblock][xblock];
 
-            TwoDArray<ValueType> *wt, *hwt;
+            TwoDArray<ValueType> *wt, *wt_ref1, *wt_ref2;
             int split_mode =  mv_data.MBSplit()[yblock/blocks_per_mb_row][xblock/blocks_per_mb_row];
 
             if (split_mode == 0) //Block part of a MacroBlock
@@ -435,8 +443,9 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
                 {
                     wgt_idx = wgt_idx+1;
                 }
-                wt = &m_macro_block_weights[wgt_idx];
-                hwt = &m_half_macro_block_weights[wgt_idx];
+                wt = &m_full_macro_block_weights[wgt_idx];
+                wt_ref1 = &m_macro_block_weights[0][wgt_idx];
+                wt_ref2 = &m_macro_block_weights[1][wgt_idx];
                 xb_incr = blocks_per_mb_row;
             }
             else if (split_mode == 1) //Block part of a SubBlock
@@ -446,14 +455,16 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
                 {
                     wgt_idx = wgt_idx+1;
                 }
-                wt = &m_sub_block_weights[wgt_idx];
-                hwt = &m_half_sub_block_weights[wgt_idx];
+                wt = &m_full_sub_block_weights[wgt_idx];
+                wt_ref1 = &m_sub_block_weights[0][wgt_idx];
+                wt_ref2 = &m_sub_block_weights[1][wgt_idx];
                 xb_incr = blocks_per_sb_row;
             }
             else
             {
-                wt = &m_block_weights[wgt_idx];
-                hwt = &m_half_block_weights[wgt_idx];
+                wt = &m_full_block_weights[wgt_idx];
+                wt_ref1 = &m_block_weights[0][wgt_idx];
+                wt_ref2 = &m_block_weights[1][wgt_idx];
                 xb_incr = 1;
             }
             xincr = m_bparams.Xbsep() * xb_incr;
@@ -482,12 +493,12 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
                 mv1.x >>= xscale_shift;
                 mv1.y >>= yscale_shift;
 
-                CompensateBlock(pic_data, orig_pic_size, ref1up, mv1, pos, *hwt);
+                CompensateBlock(pic_data, orig_pic_size, ref1up, mv1, pos, *wt_ref1);
                 mv2 = (*mv_array2)[yblock][xblock];
                 mv2.x >>= xscale_shift;
                 mv2.y >>= yscale_shift;
 
-                CompensateBlock(pic_data, orig_pic_size, ref2up, mv2, pos, *hwt);
+                CompensateBlock(pic_data, orig_pic_size, ref2up, mv2, pos, *wt_ref2);
             }
             else
             {//we have a DC block.
@@ -672,9 +683,33 @@ float MotionCompensator::Linear(float t, float B)
     else 
         return( (1.0 + B - 2.0*std::abs(t))/(2.0*B));
 }
+
+void MotionCompensator::CalculateWeights( int xblen, int yblen,
+                                          int xbsep, int ybsep,
+                                           TwoDArray<ValueType>* wts_array)
+{
+    // Firstly calculate the non-weighted Weighting blocks. i,e, assuming that
+    // the frame_weight for each reference frame is 1.
+    // We can create all nine weighting blocks by calculating values
+    // for four blocks and mirroring them to generate the others.
+    CreateBlock( xblen, yblen , xbsep, ybsep, false , false , wts_array[0] );
+    CreateBlock( xblen, yblen , xbsep, ybsep, false , true , wts_array[3] );
+    CreateBlock( xblen, yblen , xbsep, ybsep, true , false , wts_array[1] );
+    CreateBlock( xblen, yblen , xbsep, ybsep, true , true , wts_array[4] );
+
+    // Note order of flipping is important.    
+    FlipX( wts_array[3] , xblen , yblen , wts_array[5] );
+    FlipX( wts_array[0] , xblen , yblen , wts_array[2] );
+    FlipY( wts_array[0] , xblen , yblen , wts_array[6] );
+    FlipX( wts_array[6] , xblen , yblen , wts_array[8] );
+    FlipY( wts_array[1] , xblen , yblen , wts_array[7] );
+
+}
 // Calculates a weighting block.
-// bparams defines the block parameters so the relevant weighting arrays can be created.
-// FullX and FullY refer to whether the weight should be adjusted for the edge of an image.
+// bparams defines the block parameters so the relevant weighting arrays can 
+// be created.
+// FullX and FullY refer to whether the weight should be adjusted for the 
+// edge of an image.
 // eg. 1D Weighting shapes in x direction
 
 //  FullX true        FullX false

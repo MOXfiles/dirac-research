@@ -46,7 +46,7 @@ MvDataByteIO::MvDataByteIO(FrameParams& fparams,
 ByteIO(),
 m_fparams(fparams),
 m_cparams(cparams),
-m_default_cparams(cparams.GetVideoFormat(), fparams.GetFrameType(), true),
+m_default_cparams(cparams.GetVideoFormat(), fparams.GetFrameType(), fparams.Refs().size(), true),
 m_block_data()
 {
 }
@@ -56,7 +56,7 @@ MvDataByteIO::MvDataByteIO(ByteIO &byte_io, FrameParams& fparams,
 ByteIO(byte_io),
 m_fparams(fparams),
 m_cparams(cparams),
-m_default_cparams(cparams.GetVideoFormat(), fparams.GetFrameType(), true),
+m_default_cparams(cparams.GetVideoFormat(), fparams.GetFrameType(), fparams.Refs().size(), true),
 m_block_data(byte_io)
 {
 }
@@ -361,11 +361,8 @@ void MvDataByteIO::InputFrameWeights()
         m_cparams.SetRef1Weight(InputVarLengthUint());
         if (m_fparams.Refs().size() > 1)
             m_cparams.SetRef2Weight(InputVarLengthUint());
-        
-        DIRAC_THROW_EXCEPTION(
-                    ERR_UNSUPPORTED_STREAM_DATA,
-                    "Cannot handle non-default picture weights",
-                    SEVERITY_FRAME_ERROR)
+        else
+            m_cparams.SetRef2Weight(0);
     }
     else
     {

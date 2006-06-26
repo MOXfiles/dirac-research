@@ -46,7 +46,7 @@ TransformByteIO::TransformByteIO(FrameParams& fparams,
 ByteIO(),
 m_fparams(fparams),
 m_cparams(cparams),
-m_default_cparams(cparams.GetVideoFormat(), fparams.GetFrameType(), true)
+m_default_cparams(cparams.GetVideoFormat(), fparams.GetFrameType(), fparams.Refs().size(), true)
 {
 }
 
@@ -56,7 +56,7 @@ TransformByteIO::TransformByteIO(ByteIO &byte_io,
 ByteIO(byte_io),
 m_fparams(fparams),
 m_cparams(cparams),
-m_default_cparams(cparams.GetVideoFormat(), fparams.GetFrameType(), true)
+m_default_cparams(cparams.GetVideoFormat(), fparams.GetFrameType(), fparams.Refs().size(), true)
 {
 }
 

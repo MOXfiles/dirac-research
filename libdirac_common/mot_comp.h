@@ -142,6 +142,9 @@ namespace dirac
         // to them. This function facilitates the calculations
         float Linear(float t, float B);
 
+        // Calculates a weighting arrays blocks.
+        void CalculateWeights(int xblen, int yblen, int xbsep, int ybsep, TwoDArray<ValueType>* wt_array);
+
         //! Calculates a weighting block.
         /*! 
             Params defines the block parameters so the relevant weighting 
@@ -169,7 +172,7 @@ namespace dirac
                               const MVector& Vec ,
                               const ImageCoords& Pos , 
                               const TwoDArray<ValueType>& Weights ) = 0;
-        
+       
     protected:
         //variables    
 
@@ -185,12 +188,18 @@ namespace dirac
 
         // Block information
         OLBParams m_bparams;
-        TwoDArray<ValueType>* m_block_weights;
-        TwoDArray<ValueType>* m_half_block_weights;
-        TwoDArray<ValueType>* m_macro_block_weights;
-        TwoDArray<ValueType>* m_half_macro_block_weights;
-        TwoDArray<ValueType>* m_sub_block_weights;
-        TwoDArray<ValueType>* m_half_sub_block_weights;
+        // Arrays of Ref1 and Ref2 block weights
+        TwoDArray<ValueType>* m_block_weights[2];
+        // Array of Ref1+Ref2 block weights
+        TwoDArray<ValueType>* m_full_block_weights;
+        // Arrays of Ref1 and Ref2 super block weights
+        TwoDArray<ValueType>* m_macro_block_weights[2];
+        // Array of Ref1+Ref2 super block weights
+        TwoDArray<ValueType>* m_full_macro_block_weights;
+        // Arrays of Ref1 and Ref2 sub super block weights
+        TwoDArray<ValueType>* m_sub_block_weights[2];
+        // Array of Ref1+Ref2 sub super block weights
+        TwoDArray<ValueType>* m_full_sub_block_weights;
 
         // OBMC related values
         // Max value frame weight in x-direction
