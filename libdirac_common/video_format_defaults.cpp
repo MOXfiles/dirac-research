@@ -43,12 +43,16 @@ using namespace dirac;
 
 namespace dirac 
 {
-void SetDefaultCodecParameters(CodecParams &cparams, FrameType ftype)
+void SetDefaultCodecParameters(CodecParams &cparams, 
+                               FrameType ftype,
+                               unsigned int num_refs)
 {
     // Transform parameters
     cparams.SetZeroTransform(false);
     cparams.SetTransformDepth(4);
-    cparams.SetTransformFilter(APPROX97);
+    WltFilter wf;
+    SetDefaultTransformFilter(ftype, wf);
+    cparams.SetTransformFilter(wf);
     cparams.SetCodeBlockMode(QUANT_SINGLE);
     cparams.SetSpatialPartition(false);
     cparams.SetDefaultSpatialPartition(true);
@@ -81,7 +85,7 @@ void SetDefaultCodecParameters(CodecParams &cparams, FrameType ftype)
 
     if (ftype == INTER_FRAME)
     {
-        cparams.SetTransformFilter(FIVETHREE);
+        ASSERTM (num_refs > 0 && num_refs < 3, "Number of reference frames should be 1 or 2 fo INTER frames" );
         OLBParams bparams;
         cparams.SetUsingGlobalMotion(false);
         SetDefaultBlockParameters(bparams, cparams.GetVideoFormat());
@@ -90,9 +94,18 @@ void SetDefaultCodecParameters(CodecParams &cparams, FrameType ftype)
         cparams.SetTopFieldFirst(true);
         cparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
         // NOTE: FIXME - need to add global motion params here
-        cparams.SetFrameWeightsPrecision(1);
-        cparams.SetRef1Weight(1);
-        cparams.SetRef2Weight(1);
+        if (num_refs == 1)
+        {
+            cparams.SetFrameWeightsPrecision(0);
+            cparams.SetRef1Weight(1);
+            cparams.SetRef2Weight(0);
+        }
+        else
+        {
+            cparams.SetFrameWeightsPrecision(1);
+            cparams.SetRef1Weight(1);
+            cparams.SetRef2Weight(1);
+        }
     }
 }
 
@@ -407,6 +420,14 @@ unsigned int BlockParametersIndex (const OLBParams& bparams)
         return 4;
     else 
         return 0;
+}
+
+void SetDefaultTransformFilter(FrameType ftype, WltFilter &wf)
+{
+    if (ftype == INTRA_FRAME)
+        wf = APPROX97;
+    else
+        wf = FIVETHREE;
 }
 
 }

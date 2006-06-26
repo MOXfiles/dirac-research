@@ -49,10 +49,11 @@ namespace dirac
 {
     /**
     * Sets default codec parameters - common to encoder and decoder
-    *@param cparams  Codec Params objects for setting defaults
-    *@param ftype    Frame type i,e, INTRA or INTER
+    *@param cparams   Codec Params objects for setting defaults
+    *@param ftype     Frame type i,e, INTRA or INTER
+    *@param num_refs  Number of reference frames
     */
-    void SetDefaultCodecParameters (CodecParams &cparams, FrameType ftype);
+    void SetDefaultCodecParameters (CodecParams &cparams, FrameType ftype, unsigned int num_refs);
     
     /**
     * Sets default encoder parameters
@@ -93,6 +94,13 @@ namespace dirac
     *@param bparams Params object for getting index
     */
     unsigned int BlockParametersIndex(const OLBParams& bparams);
+    
+    /**
+    * Sets the default Transform filter depending on frame type
+    *@param ftype  Frame type i.e. intra or inter
+    *@param wf     WltFilter object for getting the default wavelet filter
+    */
+    void SetDefaultTransformFilter(FrameType ftype, WltFilter &wf);
 } // namespace dirac
 
 #endif
