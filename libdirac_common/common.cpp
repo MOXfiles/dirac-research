@@ -219,7 +219,7 @@ std::istream & operator>> (std::istream & stream, OLBParams & params)
 
 // Codec params functions
 
-CodecParams::CodecParams(const VideoFormat &vd, FrameType ftype, bool set_defaults): 
+CodecParams::CodecParams(const VideoFormat &vd, FrameType ftype, unsigned int num_refs, bool set_defaults): 
     m_x_num_mb(0),
     m_y_num_mb(0),
     m_x_num_blocks(0),
@@ -230,7 +230,7 @@ CodecParams::CodecParams(const VideoFormat &vd, FrameType ftype, bool set_defaul
     m_video_format(vd)
 {
     if (set_defaults)
-        SetDefaultCodecParameters(*this, ftype);
+        SetDefaultCodecParameters(*this, ftype, num_refs);
 }
 
 void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat cformat)
@@ -385,7 +385,7 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
     }
 }
 
-void CodecParams::SetTransformFilter(unsigned int wf_idx)
+WltFilter CodecParams::TransformFilter (unsigned int wf_idx)
 {
     if (wf_idx >= filterNK)
         DIRAC_THROW_EXCEPTION(
@@ -402,7 +402,12 @@ void CodecParams::SetTransformFilter(unsigned int wf_idx)
             errstr.str(),
             SEVERITY_FRAME_ERROR);
     }
-    SetTransformFilter(static_cast<WltFilter>(wf_idx));
+    return static_cast<WltFilter>(wf_idx);
+}
+
+void CodecParams::SetTransformFilter(unsigned int wf_idx)
+{
+    SetTransformFilter(TransformFilter(wf_idx));
 }
 
 void CodecParams::SetTransformDepth (unsigned int wd)
@@ -539,8 +544,9 @@ void CodecParams::SetCodeBlockMode (unsigned int cb_mode)
 //Default constructor    
 EncoderParams::EncoderParams(const VideoFormat& video_format,
                              FrameType ftype,
+                             unsigned int num_refs,
                              bool set_defaults):
-    CodecParams(video_format, ftype, set_defaults),
+    CodecParams(video_format, ftype, num_refs, set_defaults),
     m_loc_decode(true),
     m_ufactor(1.0),
     m_vfactor(1.0),
@@ -577,10 +583,21 @@ void EncoderParams::SetLambda(const FrameSort& fsort, const float l)
         SetL2Lambda(l);
 }
 
+void EncoderParams::SetIntraTransformFilter(unsigned int wf_idx)
+{
+    SetIntraTransformFilter(TransformFilter(wf_idx));
+}
+
+void EncoderParams::SetInterTransformFilter(unsigned int wf_idx)
+{
+    SetInterTransformFilter(TransformFilter(wf_idx));
+}
+
 DecoderParams::DecoderParams(const VideoFormat& video_format,
                              FrameType ftype,
+                             unsigned int num_refs,
                              bool set_defaults):
-    CodecParams(video_format, ftype, set_defaults)
+    CodecParams(video_format, ftype, num_refs, set_defaults)
 {
 }
 

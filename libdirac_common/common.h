@@ -1032,7 +1032,7 @@ namespace dirac
     public:
         
         //! Default constructor 
-        CodecParams(const VideoFormat& vd, FrameType ftype, bool set_defaults);
+        CodecParams(const VideoFormat& vd, FrameType ftype, unsigned int num_refs, bool set_defaults);
         
             ////////////////////////////////////////////////////////////////////
             //NB: Assume default copy constructor, assignment = and destructor//
@@ -1194,6 +1194,9 @@ namespace dirac
         //! Set the ref 2 frame weight
         void SetRef2Weight(unsigned int wt) { m_ref2_weight=wt; } 
 
+    protected:
+        //! Return the Wavelet filter associated with the wavelet index
+        WltFilter TransformFilter (unsigned int wf_idx);
     private:
         
         //! The number of macroblocks horizontally
@@ -1278,6 +1281,7 @@ namespace dirac
         //! Default constructor   
         EncoderParams(const VideoFormat& video_format,
                       FrameType ftype = INTER_FRAME,
+                      unsigned int num_refs = 2, 
                       bool set_defaults=true);
         
             ////////////////////////////////////////////////////////////////////
@@ -1346,6 +1350,12 @@ namespace dirac
         
         //! Return a reference to the entropy factors - we need to be able to change the values of the entropy factors in situ
         EntropyCorrector& EntropyFactors() {return *m_ent_correct;}
+        
+        //! Return the Wavelet filter to be used for intra frames
+        WltFilter IntraTransformFilter() { return m_intra_wltfilter; }
+        
+        //! Return the Wavelet filter to be used for Inter frames
+        WltFilter InterTransformFilter() { return m_inter_wltfilter; }
 
         // ... and Sets
 
@@ -1396,7 +1406,17 @@ namespace dirac
         
         //! Sets the entropy factors - TBD: set this up in a constructor and pass encoder params around entirely by reference
         void SetEntropyFactors(EntropyCorrector* entcorrect){m_ent_correct=entcorrect;}
+        //! Set the Wavelet filter to be used for intra frames
+        void SetIntraTransformFilter(unsigned int wf_idx);
        
+        //! Set the Wavelet filter to be used for inter frames
+        void SetInterTransformFilter(unsigned int wf_idx);
+        
+        //! Set the Wavelet filter to be used for intra frames
+        void SetIntraTransformFilter(WltFilter wf) { m_intra_wltfilter = wf; }
+       
+        //! Set the Wavelet filter to be used for inter frames
+        void SetInterTransformFilter(WltFilter wf) { m_inter_wltfilter = wf; }
     private:
 
         //! Flag indicating we're doing local decoding
@@ -1443,7 +1463,12 @@ namespace dirac
         
         //! Output file path
         std::string m_output_path;
+        
+        //! Wavelet filter for Intra frames
+        WltFilter m_intra_wltfilter;
 
+        //! Wavelet filter for Inter frames
+        WltFilter m_inter_wltfilter;
      
     };
 
@@ -1455,7 +1480,7 @@ namespace dirac
     {
     public:
             //! Default constructor
-        DecoderParams(const VideoFormat& video_format = VIDEO_FORMAT_CIF, FrameType ftype=INTRA_FRAME, bool set_defaults = false);
+        DecoderParams(const VideoFormat& video_format = VIDEO_FORMAT_CIF, FrameType ftype=INTRA_FRAME, unsigned int num_refs = 0, bool set_defaults = false);
         
             ////////////////////////////////////////////////////////////////////
             //NB: Assume default copy constructor, assignment = and destructor//
