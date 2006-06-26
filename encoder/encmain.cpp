@@ -91,9 +91,11 @@ static void display_help()
     cout << "\ncpd               ulong   0UL           Perceptual weighting - vertical cycles per deg.";
     cout << "\nqf                float   0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
     cout << "\nlossless          bool    false         Lossless coding (overrides qf)";
+    cout << "\niwlt_filter       string   APPROX97     Intra frame Transform Filter (APPROX97 FIVETHREE THIRTEENFIVE HAAR RESERVED1 RESERVED2 DAUB97)";
+    cout << "\nrwlt_filter       string   FIVETHREE    Inter frame Transform Filter (APPROX97 FIVETHREE THIRTEENFIVE HAAR RESERVED1 RESERVED2 DAUB97)";
     cout << "\nwlt_depth         ulong   4             Transform Depth";
     cout << "\nmulti_quants      bool    false         Use multiple quantisers";
-    cout << "\nmv_prec           ulong   false         MV Pixel Precision (1, 1/2, 1/4, 1/8)";
+    cout << "\nmv_prec           string  false         MV Pixel Precision (1, 1/2, 1/4, 1/8)";
     cout << "\nno_spartition     bool    false         Do not use spatial partitioning while coding transform data";
     cout << "\nverbose           bool    false         Verbose mode";
     cout << "\nlocal             bool    false         Write diagnostics & locally decoded video";
@@ -406,6 +408,49 @@ const char *MvPrecisionToString (MVPrecisionType mv_type)
     }
 }
 
+const char *TransformFilterToString (WltFilter wf)
+{
+    switch (wf)
+    {
+    case APPROX97:
+        return "APPROX97";
+    case FIVETHREE:
+        return "FIVETHREE";
+    case THIRTEENFIVE:
+        return "THIRTEENFIVE";
+    case HAAR:
+        return "HAAR";
+    case RESERVED1:
+        return "RESERVED1";
+    case RESERVED2:
+        return "RESERVED2";
+    case DAUB97:
+        return "DAUB97";
+    default:
+        return "Undefined";
+    }
+}
+
+WltFilter StringToTransformFilter (const char *wf)
+{
+    if( strcmp( wf, "APPROX97" ) == 0)
+        return APPROX97;
+    else if( strcmp( wf, "FIVETHREE" ) == 0)
+        return FIVETHREE;
+    else if( strcmp( wf, "THIRTEENFIVE" ) == 0)
+        return THIRTEENFIVE;
+    else if( strcmp( wf, "HAAR" ) == 0)
+        return HAAR;
+    else if( strcmp( wf, "RESERVED1" ) == 0)
+        return RESERVED1;
+    else if( strcmp( wf, "RESERVED2" ) == 0)
+        return RESERVED2;
+    else if( strcmp( wf, "DAUB97" ) == 0)
+        return DAUB97;
+    else
+        return filterNK;
+}
+
 void display_codec_params(dirac_encoder_context_t &enc_ctx)
 {
     std::cout << "Sequence parameters : " << std::endl;
@@ -423,6 +468,8 @@ void display_codec_params(dirac_encoder_context_t &enc_ctx)
     std::cout << " xbsep=" << enc_ctx.enc_params.xbsep;
     std::cout << " ybsep=" << enc_ctx.enc_params.ybsep << std::endl;
     std::cout << " \tMV Precision=" << MvPrecisionToString(enc_ctx.enc_params.mv_precision) << std::endl;
+    std::cout << " \tIntra Frame Transform Filter=" << TransformFilterToString(enc_ctx.enc_params.intra_wlt_filter) << std::endl;
+    std::cout << " \tInter Frame Transform Filter=" << TransformFilterToString(enc_ctx.enc_params.inter_wlt_filter) << std::endl;
     std::cout << " \tWavelet depth=" << enc_ctx.enc_params.wlt_depth << std::endl;
     std::cout << " \tSpatial Partitioning=" << (enc_ctx.enc_params.spatial_partition ? "true" : "false") << std::endl;
     std::cout << " \tMultiple Quantisers=" << (enc_ctx.enc_params.multi_quants ? "true" : "false") << std::endl;
@@ -729,6 +776,28 @@ int main (int argc, char* argv[])
                 cerr << "Exceeds maximum transform depth ";
             else
                 parsed[i] = true;
+        }
+        else if ( strcmp(argv[i], "-iwlt_filter") == 0 )
+        {
+            parsed[i] = true;
+            i++;
+            WltFilter wf = StringToTransformFilter(argv[i]);
+            if (wf == filterNK)
+                cerr << "Unrecognised Intra Wavelet Filter " << argv[i];
+            else
+                parsed[i] = true;
+            enc_ctx.enc_params.intra_wlt_filter = wf;
+        }
+        else if ( strcmp(argv[i], "-rwlt_filter") == 0 )
+        {
+            parsed[i] = true;
+            i++;
+            WltFilter wf = StringToTransformFilter(argv[i]);
+            if (wf == filterNK)
+                cerr << "Unrecognised Intra Wavelet Filter " << argv[i];
+            else
+                parsed[i] = true;
+            enc_ctx.enc_params.inter_wlt_filter = wf;
         }
         else if ( strcmp(argv[i], "-mv_prec") == 0 )
         {
