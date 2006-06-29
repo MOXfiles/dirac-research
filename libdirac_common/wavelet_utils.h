@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author),
+*                 Scott R Ladd
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -495,6 +497,26 @@ namespace dirac
 
             //! Return a correction factor to compensate for non-unity power gain of high-pass filter
             double GetHighFactor() const { return 0.809254;}
+        };
+        
+        //! Class to do Haar wavelet filtering operations
+        class VHFilterHaar : public VHFilter
+        {
+
+        public:
+
+            //! Split a subband into 4
+            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+
+            //! Create a single band from 4 quadrant bands
+            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+
+            //! Return a correction factor to compensate for non-unity power gain of low-pass filter
+            double GetLowFactor() const { return 1.414213562;}    
+
+            //! Return a correction factor to compensate for non-unity power gain of high-pass filter
+            double GetHighFactor() const { return 0.707106781;}
+
         };
 
 

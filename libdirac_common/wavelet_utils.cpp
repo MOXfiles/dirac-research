@@ -20,7 +20,9 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), Scott R Ladd
+* Contributor(s): Thomas Davies (Original Author),
+*                 Scott R Ladd
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -227,6 +229,10 @@ WaveletTransform::WaveletTransform(int d, WltFilter f)
 
     case THIRTEENFIVE :
         m_vhfilter = new VHFilter13_5;
+        break;
+
+    case HAAR :
+        m_vhfilter = new VHFilterHaar;
         break;
 
     default :
@@ -1302,6 +1308,78 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
     }// j
 } 
 #endif
+
+void WaveletTransform::VHFilterHaar::Split(const int xp , 
+                                           const int yp , 
+                                           const int xl , 
+                                           const int yl , 
+                                           PicArray& pic_data)
+{
+    //version based on integer-like types
+    //using edge-extension rather than reflection
+    const int xend=xp+xl;
+    const int yend=yp+yl;
+
+    // first do Horizontal
+    for (int j = yp; j < yend; ++j)
+    {
+        for (int i = xp+1; i < xend; i+=2)
+        {
+            // odd sample
+            // x(2n+1) -= x(2n)
+            pic_data[j][i] -= pic_data[j][i-1];
+            // even sample
+            // x(2n) += x(2n+1)/2
+            pic_data[j][i-1] += ((pic_data[j][i]+1)>>1);
+        }
+    }
+
+    // next do vertical
+    for (int j = yp+1; j < yend; j+=2)
+    {
+        for (int i = xp; i < xend; ++i)
+        {
+            pic_data[j][i] -= pic_data[j-1][i];
+            pic_data[j-1][i] += ((pic_data[j][i]+1)>>1);
+        }
+    }
+    
+    // Lastly, have to reorder so that subbands are no longer interleaved
+    DeInterleave( xp , yp , xl , yl , pic_data );
+}
+
+void WaveletTransform::VHFilterHaar::Synth(const int xp ,
+                                           const int yp , 
+                                           const int xl ,
+                                           const int yl , 
+                                           PicArray& pic_data)
+{
+    const int xend( xp+xl );
+    const int yend( yp+yl );
+
+    // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
+    Interleave( xp , yp , xl , yl , pic_data );  
+
+    // First do the vertical
+    for (int j = yp+1; j < yend; j+=2)
+    {
+        for (int i = xp; i < xend; ++i)
+        {
+            pic_data[j-1][i] -= ((pic_data[j][i]+1)>>1);
+            pic_data[j][i] += pic_data[j-1][i];
+        }
+    }
+
+    // Next do the horizontal
+    for (int j = yp; j < yend; ++j)
+    {
+        for (int i = xp+1; i < xend; i+=2)
+        {
+            pic_data[j][i-1] -= ((pic_data[j][i]+1)>>1);
+            pic_data[j][i] += pic_data[j][i-1];
+        }
+    }
+}
 
 // Returns a perceptual noise weighting based on extending CCIR 959 values
 // assuming a two-d isotropic response. Also has a fudge factor of 20% for chroma

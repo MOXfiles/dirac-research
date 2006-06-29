@@ -393,7 +393,7 @@ WltFilter CodecParams::TransformFilter (unsigned int wf_idx)
             "Wavelet filter idx out of range [0-6]",
             SEVERITY_FRAME_ERROR);
 
-    if (wf_idx > THIRTEENFIVE && wf_idx != DAUB97)
+    if (wf_idx > HAAR && wf_idx != DAUB97)
     {
         std::ostringstream errstr;
         errstr << "Wavelet Filter " << wf_idx << " currently not supported";
