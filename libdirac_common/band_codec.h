@@ -129,11 +129,14 @@ namespace dirac
         //! the subband being coded
         const Subband m_node;
     
+        //! the quantisation index of the last codeblock
+        int m_last_qf_idx;
+
         //! size of the subband
-        int m_vol;
+        const int m_vol;
     
         //! the number of coefficients after which contexts are reset
-        int m_reset_coeff_num;
+        const int m_reset_coeff_num;
     
         //! count of the coefficients since the last context reset
         int m_coeff_count;
