@@ -658,6 +658,8 @@ int main (int argc, char* argv[])
                 char* token = strtok(argv[i], "/");
                 enc_ctx.src_params.frame_rate.numerator =  
                 strtoul(token,NULL,10);
+                enc_ctx.src_params.frame_rate.denominator = 1;
+
                 token = strtok(NULL, "");
                 if(token)
                     enc_ctx.src_params.frame_rate.denominator = 
