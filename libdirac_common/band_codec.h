@@ -146,9 +146,9 @@ namespace dirac
     
         //! reconstruction point
         ValueType m_offset;
-    
-        //! sum of a neighbourhood of previously (de)coded values
-        ValueType m_nhood_sum;
+
+        //! True if neighbours non-zero
+        bool m_nhood_nonzero;
     
         //! the parent subband
         Subband m_pnode;

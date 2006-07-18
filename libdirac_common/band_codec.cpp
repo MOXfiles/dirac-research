@@ -164,12 +164,14 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
         for ( int xpos=xbeg , m_pxpos=xpbeg ; xpos<xend ;++xpos , m_pxpos=((xpos-xbeg)>>1)+xpbeg)
         {
 
-            if ( xpos==m_node.Xp() )
-                m_nhood_sum = (ypos != m_node.Yp()) ? std::abs(in_data[ypos-1][xpos]) : 0;
+            if ( xpos == m_node.Xp() )
+                m_nhood_nonzero = (ypos!=m_node.Yp()) ? bool(in_data[ypos-1][xpos]) : false;
             else
-                m_nhood_sum = (ypos!=m_node.Yp()) ? 
-                (std::abs(in_data[ypos-1][xpos]) + std::abs(in_data[ypos][xpos-1])) 
-               : std::abs(in_data[ypos][xpos-1]);
+            {
+                m_nhood_nonzero = bool(in_data[ypos][xpos-1]);
+                if ( ypos!=m_node.Yp() )
+                    m_nhood_nonzero |= bool( in_data[ypos-1][xpos] );
+            }
 
             m_parent_notzero = static_cast<bool> ( in_data[m_pypos][m_pxpos] );
 
@@ -365,12 +367,15 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
         ValueType *c_out_data_2 = out_data[ypos];
         for ( int xpos=xbeg , m_pxpos=xpbeg ; xpos<xend ;++xpos,m_pxpos=((xpos-xbeg)>>1)+xpbeg)
         {
-            if (xpos == m_node.Xp())
-                m_nhood_sum=(ypos!=m_node.Yp()) ? std::abs(c_out_data_1[xpos]): 0;
+            if ( xpos == m_node.Xp() )
+                m_nhood_nonzero = (ypos!=m_node.Yp()) ? bool(c_out_data_1[xpos]) : false;
             else
-                m_nhood_sum=(ypos!=m_node.Yp()) ? 
-                (std::abs(c_out_data_1[xpos]) + std::abs(c_out_data_2[xpos-1])) 
-              : std::abs(c_out_data_2[xpos-1]);
+            {
+                m_nhood_nonzero = bool(c_out_data_2[xpos-1]);
+                if ( ypos!=m_node.Yp() )
+                    m_nhood_nonzero |= bool( c_out_data_1[xpos] );
+            }
+
 
             m_parent_notzero = ( p_out_data[m_pxpos] != 0 );            
             DecodeVal( out_data , xpos , ypos );
@@ -441,7 +446,7 @@ inline int BandCodec::ChooseFollowContext( const int bin_number ) const
         switch ( bin_number )
         {
             case 1 :
-                if(m_nhood_sum == 0)
+                if(m_nhood_nonzero == false)
                     return Z_FBIN1z_CTX;
 
                 return Z_FBIN1nz_CTX;
@@ -463,7 +468,7 @@ inline int BandCodec::ChooseFollowContext( const int bin_number ) const
         switch ( bin_number )
         {
             case 1 :
-                if(m_nhood_sum == 0)
+                if(m_nhood_nonzero == false)
                     return NZ_FBIN1z_CTX;
 
                 return NZ_FBIN1nz_CTX;
@@ -619,11 +624,13 @@ void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_dat
         for ( int xpos=xbeg ; xpos<xend ; ++xpos )
         {
             if ( xpos == m_node.Xp() )
-                m_nhood_sum = (ypos!=m_node.Yp()) ? std::abs(in_data[ypos-1][xpos]) : 0;
+                m_nhood_nonzero = (ypos!=m_node.Yp()) ? bool(in_data[ypos-1][xpos]) : false;
             else
-                m_nhood_sum = (ypos!=m_node.Yp()) ? 
-                (std::abs(in_data[ypos-1][xpos]) + std::abs(in_data[ypos][xpos-1])) 
-               : std::abs(in_data[ypos][xpos-1]);    
+            {
+                m_nhood_nonzero = bool(in_data[ypos][xpos-1]);
+                if ( ypos!=m_node.Yp() )
+                    m_nhood_nonzero |= bool( in_data[ypos-1][xpos] );
+            }
             
             CodeVal( in_data , xpos , ypos , in_data[ypos][xpos] );
 
@@ -693,11 +700,13 @@ void LFBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_
         for ( int xpos=xbeg ; xpos<xend; ++xpos )
         {
             if ( xpos == m_node.Xp() )
-                m_nhood_sum=(ypos!=m_node.Yp()) ? std::abs(out_data[ypos-1][xpos]) : 0;
+                m_nhood_nonzero = (ypos!=m_node.Yp()) ? bool(out_data[ypos-1][xpos]) : false;
             else
-                m_nhood_sum=(ypos!=m_node.Yp()) ? 
-                (std::abs(out_data[ypos-1][xpos]) + std::abs(out_data[ypos][xpos-1])) 
-               : std::abs(out_data[ypos][xpos-1]);
+            {
+                m_nhood_nonzero = bool(out_data[ypos][xpos-1]);
+                if ( ypos!=m_node.Yp() )
+                    m_nhood_nonzero |= bool( out_data[ypos-1][xpos] );
+            }
 
             DecodeVal( out_data , xpos , ypos );
 
@@ -761,12 +770,14 @@ void IntraDCBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& i
     {
         for (int xpos = xbeg ; xpos < xend; ++xpos )
         {
-             if (xpos == m_node.Xp())
-                 m_nhood_sum = (ypos!=m_node.Yp()) ? std::abs(m_dc_pred_res[ypos-1][xpos]) : 0;
-             else
-                 m_nhood_sum = (ypos!=m_node.Yp()) ? 
-                               (std::abs(m_dc_pred_res[ypos-1][xpos]) + std::abs(m_dc_pred_res[ypos][xpos-1])) 
-                              : std::abs(m_dc_pred_res[ypos][xpos-1]);
+            if ( xpos == m_node.Xp() )
+                m_nhood_nonzero = (ypos!=m_node.Yp()) ? bool(m_dc_pred_res[ypos-1][xpos]) : false;
+            else
+            {
+                m_nhood_nonzero = bool(m_dc_pred_res[ypos][xpos-1]);
+                if ( ypos!=m_node.Yp() )
+                    m_nhood_nonzero |= bool( m_dc_pred_res[ypos-1][xpos] );
+            }
           
             prediction = GetPrediction( in_data , xpos , ypos );            
             val = in_data[ypos][xpos] - prediction;
@@ -825,12 +836,14 @@ void IntraDCBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray&
     {
         for ( int xpos=xbeg ; xpos<xend ; ++xpos)
         {
-              if ( xpos==m_node.Xp() )
-                 m_nhood_sum=(ypos!=m_node.Yp()) ? std::abs(m_dc_pred_res[ypos - 1][xpos]) : 0;
-             else
-                 m_nhood_sum=(ypos!=m_node.Yp()) ? 
-                             (std::abs(m_dc_pred_res[ypos-1][xpos]) + std::abs(m_dc_pred_res[ypos][xpos-1]))
-                            : std::abs(m_dc_pred_res[ypos][xpos-1]);
+            if ( xpos == m_node.Xp() )
+                m_nhood_nonzero = (ypos!=m_node.Yp()) ? bool(m_dc_pred_res[ypos-1][xpos]) : false;
+            else
+            {
+                m_nhood_nonzero = bool(m_dc_pred_res[ypos][xpos-1]);
+                if ( ypos!=m_node.Yp() )
+                    m_nhood_nonzero |= bool( m_dc_pred_res[ypos-1][xpos] );
+            }
 
              DecodeVal( out_data , xpos , ypos );
              m_dc_pred_res[ypos][xpos] = out_data[ypos][xpos];
