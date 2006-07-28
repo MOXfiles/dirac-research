@@ -55,9 +55,7 @@ namespace dirac
             termed sub-macroblocks; 
            level 0 means the macroblock is split right down to blocks. 
 
-        In addition there is a common_ref mode which if true means the
-        prediction mode of all units within the MB are the same (e.g. all
-        sub-MBs are predicted only from reference 1). In deciding which modes
+        In deciding which modes
         to adopt, the ModeDecider object calculates costs for all
         permutations, doing motion estimation for the level 1 and level 0
         modes as these have not been calculated before.
@@ -65,9 +63,7 @@ namespace dirac
         over the levels, and call DoLevelDecn. DoLevelDecn does motion
         estimation if it's necessary. Then it assumes that we don't have a
         common block mode and calls DoUnitDecn which finds the best mode for
-        each unit in the MB at that level, individually. Then we consider the
-        case where we say that all the modes will be the same, and call
-        DoCommonMode to see if we'll get a lower cost. Then when we've got a
+        each unit in the MB at that level, individually. When we've got a
         best cost for that level we go up to the next one.
      */
     class ModeDecider
@@ -109,9 +105,6 @@ namespace dirac
 
         //! Decide on a mode for a given prediction unit (block, sub-MB or MB)
         float DoUnitDecn( const int xpos , const int ypos , const int level );
-
-        //! Choose a common mode for all units in a MB assuming a particular level of decomposition
-        float DoCommonMode( PredMode& predmode , const int level);
 
         //! Do motion estimation for a prediction unit at a given level
         void DoME( const int xpos , const int ypos , const int level );

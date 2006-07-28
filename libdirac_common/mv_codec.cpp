@@ -102,28 +102,6 @@ inline unsigned int MvDataCodec::MBSplitPrediction(const TwoDArray<int> & split_
     return result; 
 }
 
-inline bool MvDataCodec::MBCBModePrediction(const TwoDArray <bool> & cbm_data) const
-{
-    bool result = false;
-
-    std::vector < unsigned int >  nbrs; 
-    
-    if (m_mb_xp > 0 && m_mb_yp > 0)
-    {
-        unsigned int sum = (unsigned int)( cbm_data[m_mb_yp-1][m_mb_xp] ); 
-        sum += (unsigned int)( cbm_data[m_mb_yp-1][m_mb_xp-1] ); 
-        sum += (unsigned int)( cbm_data[m_mb_yp][m_mb_xp-1] ); 
-
-        result = (sum>1);     
-    }
-    else if (m_mb_xp > 0 && m_mb_yp == 0)
-        result = cbm_data[0][m_mb_xp-1]; 
-    else if (m_mb_xp == 0 && m_mb_yp > 0)
-        result = cbm_data[m_mb_yp-1][0]; 
- 
-    return result;
-}
-
 inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode > & preddata,
                                                      const unsigned int num_refs) const
 {
@@ -300,37 +278,14 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
 
             step = 4  >>  (split_depth); 
             max = (1 << split_depth); 
-
-            //next do common_ref
-            if(split_depth != 0)
-            {
-                CodeMBCom(in_data); 
-                pstep = step; 
-                pmax = max; 
-            }
-            else
-            {
-                pstep = 4; 
-                pmax = 1; 
-            }
-            common_ref = in_data.MBCommonMode()[m_mb_yp][m_mb_xp]; 
-
-            if (common_ref)
-                mode_step = 4;
-            else
-                mode_step = pstep;
-      
-            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; m_b_yp += mode_step)
-                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; m_b_xp += mode_step)
-                    CodePredmode(in_data); 
-            
-            step = 4 >> (split_depth);             
-            
-               //now do all the block mvs in the mb            
+                        
+            //now do all the block modes and mvs in the mb            
             for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; m_b_yp += step)
             {
                 for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; m_b_xp += step)
                 {
+                    CodePredmode(in_data); 
+
                     if (in_data.Mode()[m_b_yp][m_b_xp] == REF1_ONLY || in_data.Mode()[m_b_yp][m_b_xp] == REF1AND2 )
                         CodeMv1(in_data); 
                     
@@ -362,15 +317,6 @@ void MvDataCodec::CodeMBSplit(const MvData& in_data)
     if (val < 0) val+=3; //produce prediction mod 3
 
     EncodeUInt(val, MB_SPLIT_BIN1_CTX, MB_SPLIT_BIN2_CTX);
-}
-
-
-void MvDataCodec::CodeMBCom(const MvData& in_data)
-{
-    bool val = in_data.MBCommonMode()[m_mb_yp][m_mb_xp]; 
-
-    EncodeSymbol( val ^ int(MBCBModePrediction( in_data.MBCommonMode() )),
-                  MB_CMODE_CTX ); 
 }
 
 void MvDataCodec::CodePredmode(const MvData& in_data)
@@ -466,42 +412,6 @@ void MvDataCodec::DoWorkDecode( MvData& out_data)
             step =  4  >>  (split_depth); 
             max  = (1 << split_depth); 
 
-            //next do common_ref
-            if(split_depth  !=  0)
-            {
-                DecodeMBCom( out_data ); 
-                pstep = step; 
-                pmax = max; 
-            }
-            else
-            {
-                out_data.MBCommonMode()[m_mb_yp][m_mb_xp] = true; 
-                pstep = 4; 
-                pmax = 1; 
-            }
-            
-            common_ref = out_data.MBCommonMode()[m_mb_yp][m_mb_xp]; 
-     
-            if (common_ref)
-                mode_step = 4;
-            else
-                mode_step = pstep;
-
-            // do prediction modes
-            for (m_b_yp = m_mb_tlb_y;  m_b_yp < m_mb_tlb_y + 4;  m_b_yp += mode_step)
-            {                
-                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x + 4;  m_b_xp += mode_step)
-                {
-                    DecodePredmode(out_data); 
-                    
-                    // propagate throughout prediction unit/MB
-                    for (int y = m_b_yp;  y < m_b_yp + mode_step;  y++)
-                        for (int x = m_b_xp;  x < m_b_xp + mode_step;  x++)
-                            out_data.Mode()[y][x] = out_data.Mode()[m_b_yp][m_b_xp];
-                }
-            }                                                         
-
-
             //now do all the block mvs in the mb
             for (int j = 0; j < max; ++j)
             {                
@@ -510,6 +420,8 @@ void MvDataCodec::DoWorkDecode( MvData& out_data)
                     xstart = m_b_xp = m_mb_tlb_x + i * step; 
                     ystart = m_b_yp = m_mb_tlb_y + j * step;                                             
                     
+                    DecodePredmode(out_data); 
+
                     if (out_data.Mode()[m_b_yp][m_b_xp] == REF1_ONLY || out_data.Mode()[m_b_yp][m_b_xp] == REF1AND2 )
                         DecodeMv1( out_data ); 
                     
@@ -524,6 +436,9 @@ void MvDataCodec::DoWorkDecode( MvData& out_data)
                     {
                         for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
                         {                    
+                            out_data.Mode()[m_b_yp][m_b_xp] = out_data.Mode()[ystart][xstart]; 
+
+                            out_data.Vectors(1)[m_b_yp][m_b_xp].y = out_data.Vectors(1)[ystart][xstart].y; 
                             out_data.Vectors(1)[m_b_yp][m_b_xp].x = out_data.Vectors(1)[ystart][xstart].x; 
                             out_data.Vectors(1)[m_b_yp][m_b_xp].y = out_data.Vectors(1)[ystart][xstart].y; 
 
@@ -558,12 +473,6 @@ void MvDataCodec::DecodeMBSplit(MvData& out_data)
     out_data.MBSplit()[m_mb_yp][m_mb_xp] =
         (DecodeUInt(MB_SPLIT_BIN1_CTX, MB_SPLIT_BIN2_CTX) +
             MBSplitPrediction(out_data.MBSplit())) % 3;
-}
-
-void MvDataCodec::DecodeMBCom( MvData& out_data )
-{    
-    out_data.MBCommonMode()[m_mb_yp][m_mb_xp] = DecodeSymbol( MB_CMODE_CTX ) ^ 
-                                                int( MBCBModePrediction( out_data.MBCommonMode() ) );
 }
 
 void MvDataCodec::DecodePredmode( MvData& out_data )

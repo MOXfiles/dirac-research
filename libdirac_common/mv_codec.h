@@ -103,8 +103,6 @@ namespace dirac
         // coding functions   
         // Code the MB splitting mode
         void CodeMBSplit(const MvData& in_data);
-        // Code the MB common ref mode
-        void CodeMBCom(const MvData& in_data);
         // Code the block prediction mode
         void CodePredmode(const MvData& in_data);
         // Code the first motion vector
@@ -117,8 +115,6 @@ namespace dirac
         // decoding functions
         // Decode the MB splitting mode
         void DecodeMBSplit( MvData& out_data);
-        // Decode the MB common ref mode
-        void DecodeMBCom( MvData& out_data);
         // Decode the block prediction mode
         void DecodePredmode(MvData& out_data);
         // Decode the first motion vector
@@ -136,8 +132,6 @@ namespace dirac
 
         //prediction stuff
         unsigned int MBSplitPrediction(const TwoDArray<int>& mbdata) const;
-
-        bool MBCBModePrediction(const TwoDArray<bool>& mbdata) const;
 
         unsigned int BlockModePrediction(const TwoDArray<PredMode>& preddata,
                                          const unsigned int num_refs) const;

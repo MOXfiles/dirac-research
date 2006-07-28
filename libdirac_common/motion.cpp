@@ -59,7 +59,6 @@ MvData::MvData( const int xnumMB, const int ynumMB ,
     m_modes( ynumblocks , xnumblocks ),
     m_dc( 3 ),
     m_mb_split( ynumMB , xnumMB ),
-    m_mb_common( ynumMB , xnumMB ),
     m_gm_params( Range(1 , num_refs) ),
     m_num_refs(num_refs)
 {
@@ -73,7 +72,6 @@ MvData::MvData( const int xnumMB , const int ynumMB , const int num_refs ):
     m_modes( 4*ynumMB , 4*xnumMB ),
     m_dc( 3 ),
     m_mb_split( ynumMB , xnumMB ),
-    m_mb_common( ynumMB , xnumMB ),
     m_gm_params( Range(1 , num_refs) ),
     m_num_refs(num_refs)
 {
@@ -419,7 +417,6 @@ istream &operator>> (istream & stream, MEData & me_data)
     
     // input reference-independent information
     stream >> me_data.MBSplit();
-    stream >> me_data.MBCommonMode();
     stream >> me_data.MBCosts();
     stream >> me_data.Mode();
     stream >> me_data.IntraCosts();
@@ -456,7 +453,6 @@ ostream &operator<< (ostream & stream, MEData & me_data)
 {
     // output reference-independent information
     stream << endl << endl << me_data.MBSplit();
-    stream << endl << me_data.MBCommonMode();
     stream << endl << me_data.MBCosts();
     stream << endl << me_data.Mode();
     stream << endl << me_data.IntraCosts() << endl;

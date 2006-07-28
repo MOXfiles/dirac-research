@@ -183,8 +183,6 @@ namespace dirac
         
         // Macroblock contexts
        
-        MB_CMODE_CTX,       // -context for MB common block mode
-
         MB_SPLIT_BIN1_CTX,  // bin 1, MB split mode vals
         MB_SPLIT_BIN2_CTX,  // bin 2, MB split mode vals. Bin 3 not required
         

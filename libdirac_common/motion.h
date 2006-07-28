@@ -267,12 +267,6 @@ namespace dirac
         //! Get the MB split level
         const TwoDArray<int>& MBSplit() const{return m_mb_split;}
 
-        //! Get the MB common mode parameters
-        TwoDArray<bool>& MBCommonMode(){return m_mb_common;}
-
-        //! Get the MB common mode parameters
-        const TwoDArray<bool>& MBCommonMode() const{return m_mb_common;}
-
         //! Get the global motion model parameters
         OneDArray<float>& GlobalMotionParameters(const int ref_id) { return *( m_gm_params[ref_id] ); }
 
@@ -300,9 +294,6 @@ namespace dirac
 
         // The MB split levels
         TwoDArray<int> m_mb_split;
-
-        // The MB common mode indicators 
-        TwoDArray<bool> m_mb_common;
 
         // Global motion model parameters
         OneDArray< OneDArray<float>* > m_gm_params;

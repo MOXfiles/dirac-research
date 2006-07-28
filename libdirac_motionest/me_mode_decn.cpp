@@ -219,7 +219,6 @@ void ModeDecider::DoLevelDecn( int level )
     if (level == 2)
     {
         m_me_data_set[2]->MBSplit()[m_ymb_loc][m_xmb_loc] = 2;
-        m_me_data_set[2]->MBCommonMode()[m_ymb_loc][m_xmb_loc] = false;
         m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] = MB_cost;
     }
 
@@ -228,11 +227,6 @@ void ModeDecider::DoLevelDecn( int level )
         m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] = MB_cost;
         m_me_data_set[2]->MBSplit()[m_ymb_loc][m_xmb_loc] = level;
         
-        if (level==1)
-            m_me_data_set[2]->MBCommonMode()[m_ymb_loc][m_xmb_loc] = false;
-        else// level is 0
-            m_me_data_set[2]->MBCommonMode()[m_ymb_loc][m_xmb_loc] = true;
-
         // Parameters of the base-level blocks corresponding to each
         // prediction unit
         int xblock_start;
@@ -267,48 +261,6 @@ void ModeDecider::DoLevelDecn( int level )
 
     }
 
-    //     Case 2: prediction modes are all the same
-
-    PredMode predmode;
-
-    MB_cost = DoCommonMode( predmode , level );
-
-    if ( MB_cost <= m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] )
-    {
-        m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] = MB_cost;
-        m_me_data_set[2]->MBSplit()[m_ymb_loc][m_xmb_loc] = level;
-        m_me_data_set[2]->MBCommonMode()[m_ymb_loc][m_xmb_loc] = true;
-        // Parameters of the base-level blocks corresponding to each
-        // prediction unit
-        int xblock_start;
-        int yblock_start;
-        int xblock_end;
-        int yblock_end;
-
-        for ( int j=ystart ; j<yend ; ++j )
-        {
-            yblock_start = j<<(2-level);
-            yblock_end = (j+1)<<(2-level);
-            for ( int i=xstart ; i<xend ; ++i )
-            {
-                xblock_start = i<<(2-level);
-                xblock_end = (i+1)<<(2-level);
-                for ( int v=yblock_start ; v<yblock_end ; ++v )
-                {
-                    for ( int u=xblock_start ; u<xblock_end ; ++u )
-                    {
-                        m_me_data_set[2]->Vectors(1)[v][u] = m_me_data_set[level]->Vectors(1)[j][i];
-                        m_me_data_set[2]->Mode()[v][u] = predmode;
-                        m_me_data_set[2]->DC( Y_COMP )[v][u] = m_me_data_set[level]->DC( Y_COMP )[j][i];
-                        if ( num_refs>1 )
-                            m_me_data_set[2]->Vectors(2)[v][u] = m_me_data_set[level]->Vectors(2)[j][i];
-
-                    }// u
-                }// v
- 
-            }// i
-        }// j
-    }
 }
 
 
@@ -487,57 +439,6 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
     }
 
     return min_unit_cost;
-}
-
-float ModeDecider::DoCommonMode( PredMode& predmode , const int level)
-{
-    // For a given level, examine the costs in the constituent
-    // prediction units of the MB at that level and decide 
-    // whether there should be a common prediction mode or not.
-
-    const MEData& me_data = *( m_me_data_set[level] );
-
-    // The total cost for the MB for each possible prediction mode
-    OneDArray<float> MB_cost(4);
-    for ( int i=0 ; i<4 ; ++i)
-        MB_cost[i] = ModeCost( m_xmb_loc<<2 , m_ymb_loc<<2 , PredMode(i) )*m_mode_factor[0];
-
-    // The limits of the prediction units
-    const int xstart = m_xmb_loc <<level;
-    const int ystart = m_ymb_loc <<level;
-
-    const int xend = xstart + (1<<level);
-    const int yend = ystart + (1<<level);
-
-    for (int j=ystart ; j<yend ; ++j)
-    {
-        for (int i=xstart ; i<xend ; ++i)
-        {
-            MB_cost[INTRA] += me_data.IntraCosts()[j][i];
-            MB_cost[REF1_ONLY] += me_data.PredCosts(1)[j][i].total;
-            if ( num_refs>1 )
-            {
-                MB_cost[REF2_ONLY] += me_data.PredCosts(2)[j][i].total;
-                MB_cost[REF1AND2] += me_data.BiPredCosts()[j][i].total;
-            }
-        }// i
-    }// i
-
-
-    // Find the minimum
-    predmode = INTRA;
-    if ( MB_cost[REF1_ONLY]<MB_cost[predmode] )
-        predmode = REF1_ONLY;
-
-    if ( num_refs>1)
-    {
-        if ( MB_cost[REF2_ONLY]<MB_cost[predmode] )
-            predmode = REF2_ONLY;
-        if ( MB_cost[REF1AND2]<MB_cost[predmode] )
-            predmode = REF1AND2;
-    }
- 
-    return MB_cost[predmode];
 }
 
 ValueType ModeDecider::GetDCPred( int xblock , int yblock )

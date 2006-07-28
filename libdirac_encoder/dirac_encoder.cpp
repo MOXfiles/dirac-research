@@ -371,7 +371,6 @@ void DiracEncoder::GetInstrumentationData (dirac_encoder_t *encoder)
     }
 
     copy_2dArray (m_enc_medata->MBSplit(), instr->mb_split_mode);
-    copy_2dArray (m_enc_medata->MBCommonMode(), instr->mb_common_mode);
     copy_2dArray (m_enc_medata->MBCosts(), instr->mb_costs);
     copy_2dArray (m_enc_medata->Mode(), instr->pred_mode);
     copy_2dArray (m_enc_medata->IntraCosts(), instr->intra_costs);
