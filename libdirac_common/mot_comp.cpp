@@ -193,11 +193,7 @@ void MotionCompensator::ReConfig()
 
     // Calculate the shift required in horizontal and vertical direction for
     // OBMC and the weighting bits for each reference frame.
-#ifdef RAISED_COSINE
-    m_max_h_weight = 32;
-    m_max_v_weight = 32;
-    m_shift_bits = 11;
-#else
+
     // Calculating log2(xblen-xbsep) + 1
     int h_shift_bits=0;
     int overlap = m_bparams.Xblen()-m_bparams.Xbsep();
@@ -219,7 +215,6 @@ void MotionCompensator::ReConfig()
     m_shift_bits = (h_shift_bits+v_shift_bits+m_cparams.FrameWeightsBits()); //full weight
     m_max_h_weight = 1<<h_shift_bits; //linear weights
     m_max_v_weight = 1<<v_shift_bits; //linear weights
-#endif
 
     int blocks_per_mb_row = m_cparams.XNumBlocks()/m_cparams.XNumMB();
     int blocks_per_sb_row = blocks_per_mb_row>>1;
@@ -726,24 +721,16 @@ void MotionCompensator::CreateBlock( int xblen, int yblen, int xbsep, int ybsep,
     OneDArray<CalcValueType> VWts( WeightArray.LengthY() );
 
     // Calculation variables
-#ifdef RAISED_COSINE
-    float rolloffX = (float(xblen+1)/float(xbsep)) - 1;
-    float rolloffY = (float(yblen+1)/float(ybsep)) - 1;
-#else
     float rolloffX = (float(xblen)/float(xbsep)) - 1;
     float rolloffY = (float(yblen)/float(ybsep)) - 1;
-#endif
     float val;
 
     // Window in the x direction
     for(int x = 0; x < xblen; ++x)
     {
         val = (float(x) - (float(xblen-1)/2.0))/float(xbsep);
-#ifdef RAISED_COSINE
-        HWts[x] = static_cast<CalcValueType>( float(m_max_h_weight) * RaisedCosine(val,rolloffX)+0.5 );
-#else
+
         HWts[x] = static_cast<CalcValueType>( float(m_max_h_weight) * Linear(val,rolloffX)+0.5 );
-#endif
         HWts[x] = std::max( HWts[x] , 1 );
         HWts[x] = std::min( HWts[x] , m_max_h_weight );
     }// x

@@ -242,7 +242,7 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
 
     OLBParams tmp_olbparams = olbparams;
     // Factors for scaling chroma blocks
-    int xcfactor,ycfactor; 
+    int xcfactor,ycfactor, xcshift, ycshift; 
  
     if (cformat == format420)
     {
@@ -253,7 +253,6 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
     {
         xcfactor = 2;
         ycfactor = 1;
-
     }
     else
     {// assume 444
@@ -261,93 +260,99 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
         ycfactor = 1;
     }
 
-    // Loop until block level luma and chroma parameters satisfy all conditions
-    do
-    {
-        m_lbparams[2] = tmp_olbparams;
+
+    m_lbparams[2] = tmp_olbparams;
         
-        // Check there's now sufficient overlap,
-        // XBLEN > XBSEP, YBLEN > YBSEP
-        m_lbparams[2].SetXblen( std::max(m_lbparams[2].Xbsep()+1 , m_lbparams[2].Xblen()) );
-        m_lbparams[2].SetYblen( std::max(m_lbparams[2].Ybsep()+1 , m_lbparams[2].Yblen()) );
+    // Check separations are all divisible by 4
+    int remainder= m_lbparams[2].Xbsep()%4;
+    if ( remainder!=0 || m_lbparams[2].Xbsep()==0 )
+    {
+        m_lbparams[2].SetXbsep( m_lbparams[2].Xbsep()+(4-remainder));
+        m_lbparams[2].SetXblen( m_lbparams[2].Xbsep()+4 );
+    }
+    remainder= m_lbparams[2].Ybsep()%4;
+    if ( remainder!=0 || m_lbparams[2].Ybsep()==0 )
+    {
+        m_lbparams[2].SetYbsep( m_lbparams[2].Ybsep()+(4-remainder));
+        m_lbparams[2].SetYblen( m_lbparams[2].Ybsep()+4 );
+
+    }
+
+    // Now check lengths are divisible by 4
+    remainder= m_lbparams[2].Xblen()%4;
+    if ( remainder!=0 )
+    {
+        m_lbparams[2].SetXblen( m_lbparams[2].Xbsep()+4);
+    }
+    remainder= m_lbparams[2].Yblen()%4;
+    if ( remainder!=0 )
+    {
+        m_lbparams[2].SetYblen( m_lbparams[2].Ybsep()+4);
+    }
+        
+    // Check there's non-negative overlap,
+    // XBLEN >= XBSEP, YBLEN >= YBSEP
+    if (m_lbparams[2].Xbsep()>m_lbparams[2].Xblen())
+    {
+        m_lbparams[2].SetXblen( m_lbparams[2].Xbsep()+4);
+    }
+    if (m_lbparams[2].Ybsep()>m_lbparams[2].Yblen())
+    {
+        m_lbparams[2].SetYblen( m_lbparams[2].Ybsep()+4);
+    }
+
+    // Check the lengths aren't too big (100% is max roll-off)
+    // XBLEN <= 2*XBSEP, YBLEN <= 2*YBSEP
+    if (2*m_lbparams[2].Xbsep()<m_lbparams[2].Xblen())
+    {
+        m_lbparams[2].SetXblen( m_lbparams[2].Xbsep()+4);
+    }
+    if (2*m_lbparams[2].Ybsep()<m_lbparams[2].Yblen())
+    {
+        m_lbparams[2].SetYblen( m_lbparams[2].Ybsep()+4);
+    }
+
+    // Check if the luma block overlap is zero or implies a chroma overlap >1
+    int overlap = m_lbparams[2].Xblen() - m_lbparams[2].Xbsep();
+    if (overlap!=0 && overlap<2*xcfactor)
+    {
+        m_lbparams[2].SetXblen( m_lbparams[2].Xbsep()+4);
+    }
+    overlap = m_lbparams[2].Yblen() - m_lbparams[2].Ybsep();
+    if (overlap!=0 && overlap<2*ycfactor)
+    {
+        m_lbparams[2].SetYblen( m_lbparams[2].Ybsep()+4);
+    }    
+
+    // Now check that the overlap is a power of 2
+    int count = 0;
+    overlap = m_lbparams[2].Xblen() - m_lbparams[2].Xbsep();
+    while ((overlap>>=1))
+        ++count;
+
+    overlap = m_lbparams[2].Xblen() - m_lbparams[2].Xbsep();
+    if ((1<<count) != overlap && overlap!=0)
+    {
+        m_lbparams[2].SetXblen( m_lbparams[2].Xbsep()+4);
+    }
+    count = 0;
+    overlap = m_lbparams[2].Yblen() - m_lbparams[2].Ybsep();
+    while ((overlap>>=1))
+        ++count;
+
+    overlap = m_lbparams[2].Yblen() - m_lbparams[2].Ybsep();
+    if ((1<<count) != overlap && overlap!=0)
+    {
+        m_lbparams[2].SetYblen( m_lbparams[2].Ybsep()+4);
+    }
 
 
-        // Check the lengths aren't too big (100% is max roll-off)
-        // XBLEN <= 2*XBSEP, YBLEN <= 2*YBSEP
-        m_lbparams[2].SetXblen( std::min(m_lbparams[2].Xbsep()*2 , m_lbparams[2].Xblen()) );
-        m_lbparams[2].SetYblen( std::min(m_lbparams[2].Ybsep()*2 , m_lbparams[2].Yblen()) );
+    // Set the chroma values
+    m_cbparams[2].SetXbsep( m_lbparams[2].Xbsep()/xcfactor );
+    m_cbparams[2].SetXblen( m_lbparams[2].Xblen()/xcfactor );
+    m_cbparams[2].SetYbsep( m_lbparams[2].Ybsep()/ycfactor );
+    m_cbparams[2].SetYblen( m_lbparams[2].Yblen()/ycfactor );
 
-        // Check if the block overlap is a power of 2
-        int overlap = m_lbparams[2].Xblen() - m_lbparams[2].Xbsep();
-        int count = 0;
-        while ((overlap>>=1))
-            ++count;
-        if ((1<<count) != (m_lbparams[2].Xblen() - m_lbparams[2].Xbsep()))
-        {
-            m_lbparams[2].SetXbsep(m_lbparams[2].Xblen()-(1<<count));
-        }
-        count = 0;
-        overlap = m_lbparams[2].Yblen() - m_lbparams[2].Ybsep();
-        while ((overlap>>=1))
-            ++count;
-        if ((1<<count) != (m_lbparams[2].Yblen() - m_lbparams[2].Ybsep()))
-        {
-            m_lbparams[2].SetYbsep(m_lbparams[2].Yblen()-(1<<count));
-        }
-    
-
-        // If the overlapped blocks don't work for the chroma format, we have to iterate
-        OLBParams new_olbparams( m_lbparams[2] );
-
-        // Test if XBSEP % CHROMA_H_FACTOR == 0 && yBSEP % CHROMA_V_FACTOR == 0
-        if ( (m_lbparams[2].Xbsep()%xcfactor != 0) || (m_lbparams[2].Ybsep()%ycfactor != 0) )
-        {
-            // luma XBSEP and/or YBSEP not multiples of chroma factor
-            // Increment XBSEP and YBSEP so that they are multiples of chroma
-            // factor.
-            if (m_lbparams[2].Xbsep()%xcfactor != 0)
-            {
-                new_olbparams.SetXbsep( ( (m_lbparams[2].Xbsep()/xcfactor) + 1 )*xcfactor );
-                new_olbparams.SetXblen( std::max( new_olbparams.Xbsep()+1 , olbparams.Xblen() ) );
-            }
-
-            if (m_lbparams[2].Ybsep()%ycfactor != 0)
-            {
-                new_olbparams.SetYbsep( ( (m_lbparams[2].Ybsep()/ycfactor) + 1 )*ycfactor );
-                new_olbparams.SetYblen( std::max( new_olbparams.Ybsep()+1 , olbparams.Yblen() ) );
-            }
-              // Loop again with new luma block params 
-            tmp_olbparams = new_olbparams;
-        }
-        else
-        {
-            // Now compute the resulting chroma block params
-            // XBSEP_CHROMA=XBSEP//CHROMA_H_FACTOR
-            m_cbparams[2].SetXbsep( m_lbparams[2].Xbsep()/xcfactor );
-            // YBSEP_CHROMA=YBSEP//CHROMA_H_FACTOR
-            m_cbparams[2].SetYbsep( m_lbparams[2].Ybsep()/ycfactor );
-            m_cbparams[2].SetXblen( std::max(m_lbparams[2].Xblen()/xcfactor , m_cbparams[2].Xbsep()+1) );
-            m_cbparams[2].SetYblen( std::max(m_lbparams[2].Yblen()/ycfactor , m_cbparams[2].Ybsep()+1) );
-            bool recalc = false;
-            // Check the lengths aren't too big (100% is max roll-off)
-            // XBLEN_CHROMA <= 2*XBSEP_CHROMA, YBLEN_CHROMA <= 2*YBSEP_CHROMA
-            if (m_cbparams[2].Xblen() > 2*m_cbparams[2].Xbsep())
-            {
-                new_olbparams.SetXbsep( ( (m_lbparams[2].Xbsep()/xcfactor) + 1 )*xcfactor );
-                recalc = true;
-            }
-            if ( m_cbparams[2].Yblen() > 2*m_cbparams[2].Ybsep() )
-            {
-                 new_olbparams.SetYbsep( ( (m_lbparams[2].Ybsep()/ycfactor) + 1 ) *ycfactor );
-                recalc = true;
-            }
-            if (recalc)
-                tmp_olbparams = new_olbparams;
-            else
-                break;
-        }
-    
-   } while(true); 
 
     //Now work out the overlaps for splitting levels 1 and 0
     m_lbparams[1].SetXbsep( m_lbparams[2].Xbsep()*2 );
@@ -375,9 +380,13 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
          m_lbparams[2].Xblen()!=olbparams.Xblen() ||
          m_lbparams[2].Yblen()!=olbparams.Yblen() )
     {
-        std::cout<<std::endl<<"WARNING: block parameters are inconsistent or ";
-        std::cout<<"incompatible with chroma format.";
-        std::cout<<std::endl<<"Instead, using:";
+        std::cout<<std::endl<<"WARNING: block parameters are inconsistent with ";
+        std::cout<<"specification requirements, which are:";
+        std::cout<<std::endl<<"\t 1. Lengths and separations must be positive multiples of 4";
+        std::cout<<std::endl<<"\t 2. Length can't be more than twice separations";
+        std::cout<<std::endl<<"\t 3. Lengths must be greater than or equal to separations";
+        std::cout<<std::endl<<"\t 4. Overlap=length-separation must be a power of 2 i.e. 0 or 2^k, k>=2";
+        std::cout<<std::endl<<std::endl<<"Instead, using:";
         std::cout<<" xblen="<<m_lbparams[2].Xblen();
         std::cout<<" yblen="<<m_lbparams[2].Yblen();
         std::cout<<" xbsep="<<m_lbparams[2].Xbsep();
@@ -914,7 +923,8 @@ QuantiserLists::QuantiserLists()
     for (unsigned int i=0; i<=m_max_qindex; ++i)
     {
         m_qflist4[i] = int( std::pow(2.0, 2.0+double(i)/4.0) + 0.5 );
-        m_offset4[i] = int( double( m_qflist4[i]*0.375) + 0.5 );
+//        m_offset4[i] = int( double( m_qflist4[i]*0.375) + 0.5 );
+        m_offset4[i] = int( double( m_qflist4[i]*0.5) + 0.5 );
     }// i
 }
 
