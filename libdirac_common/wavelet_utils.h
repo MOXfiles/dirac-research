@@ -336,7 +336,7 @@ namespace dirac
     {
     public:
         //! Constructor
-        WaveletTransform(int d = 4, WltFilter f = DAUB97);
+        WaveletTransform(int d = 4, WltFilter f = DAUB9_7);
         
         //! Destructor
         virtual ~WaveletTransform();
@@ -371,8 +371,6 @@ namespace dirac
                              const ChromaFormat& cformat,
                              const CompSort csort);
 
-        //! Return the expected DC band value assuming a mid-grey picture (mean val=512)
-        ValueType GetMeanDCVal() const;
  
     private:
         // Classes used within wavelet transform
@@ -398,6 +396,9 @@ namespace dirac
 
             //! Return a correction factor to compensate for non-unity gain of high-pass filter
             virtual double GetHighFactor() const =0;
+            
+            //! Return the value of the additional bitshift
+            virtual int GetShift() const =0;
 
         protected:
             
@@ -416,7 +417,7 @@ namespace dirac
         };
 
         //! Class to do Daubechies (9,7) filtering operations
-        class VHFilterDaub9_7 : public VHFilter
+        class VHFilterDAUB9_7 : public VHFilter
         {
 
         public:
@@ -433,10 +434,14 @@ namespace dirac
             //! Return a correction factor to compensate for non-unity gain of high-pass filter
             double GetHighFactor() const { return 0.869864452;}
 
+            //! Return the value of the additional bitshift
+            int GetShift() const {return 1;}           
+            
+
         };
 
         //! Class to do (5,3) wavelet filtering operations
-        class VHFilter5_3 : public VHFilter
+        class VHFilterLEGALL5_3 : public VHFilter
         {
 
         public:
@@ -453,14 +458,18 @@ namespace dirac
             //! Return a correction factor to compensate for non-unity power gain of high-pass filter
             double GetHighFactor() const { return 0.81649658;}
 
+            //! Return the value of the additional bitshift
+            int GetShift() const {return 1;}           
+
+
 #ifdef HAVE_MMX
             inline void HorizSynth (int xp, int xl, int ystart, int yend, PicArray &pic_data);
 #endif
 
         };
 
-        //! Class to do an approximation to Daubechies (9,7) but with just two lifting steps
-        class VHFilterApprox9_7 : public VHFilter
+        //! A short filter that's actually close to Daubechies (9,7) but with just two lifting steps
+        class VHFilterDD9_3 : public VHFilter
         {
 
         public:
@@ -476,12 +485,15 @@ namespace dirac
 
             //! Return a correction factor to compensate for non-unity power gain of high-pass filter
             double GetHighFactor() const { return 0.780720058;}
+            
+            //! Return the value of the additional bitshift
+            int GetShift() const {return 1;}                     
 
         };
 
 
-        //! An extension of Approx9_7, with a better low-pass filter but more computation
-        class VHFilter13_5 : public VHFilter
+        //! An extension of DD9_3, with a better low-pass filter but more computation
+        class VHFilterDD13_5 : public VHFilter
         {
 
         public:
@@ -497,10 +509,14 @@ namespace dirac
 
             //! Return a correction factor to compensate for non-unity power gain of high-pass filter
             double GetHighFactor() const { return 0.809254;}
+            
+            //! Return the value of the additional bitshift
+            int GetShift() const {return 1;}           
+            
         };
         
         //! Class to do Haar wavelet filtering operations
-        class VHFilterHaar : public VHFilter
+        class VHFilterHAAR0 : public VHFilter
         {
 
         public:
@@ -517,7 +533,60 @@ namespace dirac
             //! Return a correction factor to compensate for non-unity power gain of high-pass filter
             double GetHighFactor() const { return 0.707106781;}
 
+            //! Return the value of the additional bitshift
+            int GetShift() const {return 0;}
+
+
         };
+
+        //! Class to do Haar wavelet filtering operations with a single shift per level
+        class VHFilterHAAR1 : public VHFilter
+        {
+
+        public:
+
+            //! Split a subband into 4
+            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+
+            //! Create a single band from 4 quadrant bands
+            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+
+            //! Return a correction factor to compensate for non-unity power gain of low-pass filter
+            double GetLowFactor() const { return 1.414213562;}    
+
+            //! Return a correction factor to compensate for non-unity power gain of high-pass filter
+            double GetHighFactor() const { return 0.707106781;}
+
+            //! Return the value of the additional bitshift
+            int GetShift() const {return 1;}
+
+
+        };
+
+
+       //! Class to do Haar wavelet filtering operations with a double shift per level
+        class VHFilterHAAR2 : public VHFilter
+        {
+
+        public:
+
+            //! Split a subband into 4
+            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+
+            //! Create a single band from 4 quadrant bands
+            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+
+            //! Return a correction factor to compensate for non-unity power gain of low-pass filter
+            double GetLowFactor() const { return 1.414213562;}    
+
+            //! Return a correction factor to compensate for non-unity power gain of high-pass filter
+            double GetHighFactor() const { return 0.707106781;}
+            
+            //! Return the value of the additional bitshift
+            int GetShift() const {return 2;}            
+
+        };
+
 
 
         // Lifting steps used in the filters
@@ -543,7 +612,6 @@ namespace dirac
             */
             inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
             {
-//                in_val -= (( val1 + val2 ) >>shift );
                 in_val -= (( val1 + val2 + (1<<(shift-1)) ) >>shift );
             }
 

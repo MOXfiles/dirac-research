@@ -219,24 +219,32 @@ WaveletTransform::WaveletTransform(int d, WltFilter f)
     switch( m_filt_sort )
     {
 
-    case APPROX97 :
-        m_vhfilter = new VHFilterApprox9_7;
+    case DD9_3 :
+        m_vhfilter = new VHFilterDD9_3;
         break;
 
-    case FIVETHREE : 
-        m_vhfilter = new VHFilter5_3;
+    case LEGALL5_3 : 
+        m_vhfilter = new VHFilterLEGALL5_3;
         break;
 
-    case THIRTEENFIVE :
-        m_vhfilter = new VHFilter13_5;
+    case DD13_5 :
+        m_vhfilter = new VHFilterDD13_5;
         break;
 
-    case HAAR :
-        m_vhfilter = new VHFilterHaar;
+    case HAAR0 :
+        m_vhfilter = new VHFilterHAAR0;
         break;
+
+    case HAAR1 :
+        m_vhfilter = new VHFilterHAAR1;
+        break;
+        
+    case HAAR2 :
+        m_vhfilter = new VHFilterHAAR2;
+        break;        
 
     default :
-        m_vhfilter = new VHFilterDaub9_7;
+        m_vhfilter = new VHFilterDAUB9_7;
     }
 }
 
@@ -391,57 +399,13 @@ void WaveletTransform::SetBandWeights (const float cpd,
         else
             temp = lfac * hfac;
 
-        int shift = (i-1)/3+1;
-        int mul_fac = (i < m_band_list.Length() ? (1<<shift) : (1<<(shift-1)));
+        int shift = ((i-1)/3+1)*m_vhfilter->GetShift();
+        int mul_fac = (i < m_band_list.Length() ? (1<<shift) : (1<<(shift-m_vhfilter->GetShift())));
         m_band_list(i).SetWt( m_band_list(i).Wt() * mul_fac/ temp);
 
     }// i        
 
 } 
-
-ValueType WaveletTransform::GetMeanDCVal() const
-{
-    /* The DC band is created by applying the low-pass filter vertically
-       and horizontally to create a low-pass subband, and repeating this
-       m_depth times. So if m_depth=4, we have 8 applications of the filter.
-       The gain applied to values in the DC band is approximated by the gain
-       of the low-pass filter, to the power 8. It's only approximate because
-       integer lifting implementations involve rounding.
-    */
-
-    switch (m_filt_sort)
-    {
-    case APPROX97 :
-        return 512;    
-    case FIVETHREE :
-        return 512;
-    case THIRTEENFIVE :
-        return 512;
-    default :
-        // Assume Daubechies (9,7)
-        // Gain of low-pass filter is approx 1.2302 so values are
-        // 1.23^(depth*2) * 512
-
-        switch( m_depth )
-        {
-        case 1 :
-            return (ValueType) 775;
-        case 2 :
-            return (ValueType) 1174;
-        case 3 :
-            return (ValueType) 1778;
-        case 4 :
-            return (ValueType) 2692;
-        case 5 :
-            return (ValueType) 4074;
-        case 6 :
-            return (ValueType) 6165;
-        default :
-            return (ValueType) 512;
-        }
-    }
-
-}
 
 // Private functions //
 ///////////////////////
@@ -530,15 +494,12 @@ void WaveletTransform::VHFilter::DeInterleave( const int xp ,
 
 }
 
-void WaveletTransform::VHFilterDaub9_7::Split (const int xp , 
+void WaveletTransform::VHFilterDAUB9_7::Split (const int xp , 
                                                const int yp , 
                                                const int xl , 
                                                const int yl , 
                                                PicArray& pic_data)
 {
-
-    //version based on integer-like types
-    //using edge-extension rather than reflection
 
     const int xend=xp+xl;
     const int yend=yp+yl;
@@ -650,7 +611,7 @@ void WaveletTransform::VHFilterDaub9_7::Split (const int xp ,
 
 }
 
-void WaveletTransform::VHFilterDaub9_7::Synth (const int xp ,
+void WaveletTransform::VHFilterDAUB9_7::Synth (const int xp ,
                                                const int yp , 
                                                const int xl , 
                                                const int yl , 
@@ -763,15 +724,12 @@ void WaveletTransform::VHFilterDaub9_7::Synth (const int xp ,
 #if !defined HAVE_MMX
 // NOTE: MMX version is defined in wavelet_utils_mmx.cpp
 // the corresponding changes are made in wavelet_utils_mmx.cpp as well
-void WaveletTransform::VHFilter5_3::Split(const int xp , 
+void WaveletTransform::VHFilterLEGALL5_3::Split(const int xp , 
                                           const int yp , 
                                           const int xl , 
                                           const int yl , 
                                           PicArray& pic_data)
 {
-
-    //version based on integer-like types
-    //using edge-extension rather than reflection
 
     const int xend=xp+xl;
     const int yend=yp+yl;
@@ -843,7 +801,7 @@ void WaveletTransform::VHFilter5_3::Split(const int xp ,
 
 // NOTE: MMX version is defined in wavelet_utils_mmx.cpp
 // the corresponding changes are made in wavelet_utils_mmx.cpp as well
-void WaveletTransform::VHFilter5_3::Synth(const int xp ,
+void WaveletTransform::VHFilterLEGALL5_3::Synth(const int xp ,
                                           const int yp , 
                                           const int xl , 
                                           const int yl , 
@@ -913,15 +871,12 @@ void WaveletTransform::VHFilter5_3::Synth(const int xp ,
 }
 #endif
 
-void WaveletTransform::VHFilterApprox9_7::Split(const int xp , 
+void WaveletTransform::VHFilterDD9_3::Split(const int xp , 
                                                 const int yp , 
                                                 const int xl , 
                                                 const int yl ,
                                                 PicArray& pic_data)
 {
-
-    //version based on integer-like types
-    //using edge-extension rather than reflection
 
     const int xend=xp+xl;
     const int yend=yp+yl;
@@ -1011,7 +966,7 @@ void WaveletTransform::VHFilterApprox9_7::Split(const int xp ,
 #if !defined(HAVE_MMX)
 // NOTE: MMX version is defined in wavelet_utils_mmx.cpp
 // the corresponding changes are made in wavelet_utils_mmx.cpp as well
-void WaveletTransform::VHFilterApprox9_7::Synth(const int xp , 
+void WaveletTransform::VHFilterDD9_3::Synth(const int xp , 
                                                 const int yp , 
                                                 const int xl , 
                                                 const int yl , 
@@ -1100,15 +1055,12 @@ void WaveletTransform::VHFilterApprox9_7::Synth(const int xp ,
 }
 #endif
 
-void WaveletTransform::VHFilter13_5::Split(const int xp , 
+void WaveletTransform::VHFilterDD13_5::Split(const int xp , 
                                            const int yp , 
                                            const int xl , 
                                            const int yl , 
                                            PicArray& pic_data)
 {
-
-    //version based on integer-like types
-    //using edge-extension rather than reflection
 
     const int xend=xp+xl;
     const int yend=yp+yl;
@@ -1205,7 +1157,7 @@ void WaveletTransform::VHFilter13_5::Split(const int xp ,
 #if !defined(HAVE_MMX)
 // NOTE: MMX version is defined in wavelet_utils_mmx.cpp
 // the corresponding changes are made in wavelet_utils_mmx.cpp as well
-void WaveletTransform::VHFilter13_5::Synth(const int xp ,
+void WaveletTransform::VHFilterDD13_5::Synth(const int xp ,
                                            const int yp , 
                                            const int xl ,
                                            const int yl , 
@@ -1309,14 +1261,13 @@ void WaveletTransform::VHFilter13_5::Synth(const int xp ,
 } 
 #endif
 
-void WaveletTransform::VHFilterHaar::Split(const int xp , 
+void WaveletTransform::VHFilterHAAR0::Split(const int xp , 
                                            const int yp , 
                                            const int xl , 
                                            const int yl , 
                                            PicArray& pic_data)
 {
-    //version based on integer-like types
-    //using edge-extension rather than reflection
+ 
     const int xend=xp+xl;
     const int yend=yp+yl;
 
@@ -1348,7 +1299,7 @@ void WaveletTransform::VHFilterHaar::Split(const int xp ,
     DeInterleave( xp , yp , xl , yl , pic_data );
 }
 
-void WaveletTransform::VHFilterHaar::Synth(const int xp ,
+void WaveletTransform::VHFilterHAAR0::Synth(const int xp ,
                                            const int yp , 
                                            const int xl ,
                                            const int yl , 
@@ -1380,6 +1331,163 @@ void WaveletTransform::VHFilterHaar::Synth(const int xp ,
         }
     }
 }
+
+void WaveletTransform::VHFilterHAAR1::Split(const int xp , 
+                                           const int yp , 
+                                           const int xl , 
+                                           const int yl , 
+                                           PicArray& pic_data)
+{
+    const int xend=xp+xl;
+    const int yend=yp+yl;
+
+    ValueType* line_data;
+
+    // first do Horizontal
+    for (int j = yp; j < yend; ++j)
+    {
+        line_data = &(pic_data[j][xp]);                 
+        ShiftRowLeft(line_data, xl, 1);
+        for (int i = xp+1; i < xend; i+=2)
+        {
+            // odd sample
+            // x(2n+1) -= x(2n)
+            pic_data[j][i] -= pic_data[j][i-1];
+            // even sample
+            // x(2n) += x(2n+1)/2
+            pic_data[j][i-1] += ((pic_data[j][i]+1)>>1);
+        }
+    }
+
+    // next do vertical
+    for (int j = yp+1; j < yend; j+=2)
+    {
+        for (int i = xp; i < xend; ++i)
+        {
+            pic_data[j][i] -= pic_data[j-1][i];
+            pic_data[j-1][i] += ((pic_data[j][i]+1)>>1);
+        }
+    }
+    
+    // Lastly, have to reorder so that subbands are no longer interleaved
+    DeInterleave( xp , yp , xl , yl , pic_data );
+}
+
+void WaveletTransform::VHFilterHAAR1::Synth(const int xp ,
+                                           const int yp , 
+                                           const int xl ,
+                                           const int yl , 
+                                           PicArray& pic_data)
+{                                           
+    const int xend( xp+xl );
+    const int yend( yp+yl );
+    
+    ValueType* line_data;
+
+    // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
+    Interleave( xp , yp , xl , yl , pic_data );  
+
+    // First do the vertical
+    for (int j = yp+1; j < yend; j+=2)
+    {
+        for (int i = xp; i < xend; ++i)
+        {
+            pic_data[j-1][i] -= ((pic_data[j][i]+1)>>1);
+            pic_data[j][i] += pic_data[j-1][i];
+        }
+    }
+
+    // Next do the horizontal
+    for (int j = yp; j < yend; ++j)
+    {
+        for (int i = xp+1; i < xend; i+=2)
+        {
+            pic_data[j][i-1] -= ((pic_data[j][i]+1)>>1);
+            pic_data[j][i] += pic_data[j][i-1];
+        }
+        line_data = &pic_data[j][xp];                 
+        ShiftRowRight(line_data, xl, 1);
+    }
+}
+
+void WaveletTransform::VHFilterHAAR2::Split(const int xp , 
+                                           const int yp , 
+                                           const int xl , 
+                                           const int yl , 
+                                           PicArray& pic_data)
+{
+    const int xend=xp+xl;
+    const int yend=yp+yl;
+
+    ValueType* line_data;
+
+    // first do Horizontal
+    for (int j = yp; j < yend; ++j)
+    {
+        line_data = &pic_data[j][xp];                 
+        ShiftRowLeft(line_data, xl, 2);
+        for (int i = xp+1; i < xend; i+=2)
+        {
+            // odd sample
+            // x(2n+1) -= x(2n)
+            pic_data[j][i] -= pic_data[j][i-1];
+            // even sample
+            // x(2n) += x(2n+1)/2
+            pic_data[j][i-1] += ((pic_data[j][i]+1)>>1);
+        }
+    }
+
+    // next do vertical
+    for (int j = yp+1; j < yend; j+=2)
+    {
+        for (int i = xp; i < xend; ++i)
+        {
+            pic_data[j][i] -= pic_data[j-1][i];
+            pic_data[j-1][i] += ((pic_data[j][i]+1)>>1);
+        }
+    }
+    
+    // Lastly, have to reorder so that subbands are no longer interleaved
+    DeInterleave( xp , yp , xl , yl , pic_data );
+}
+
+void WaveletTransform::VHFilterHAAR2::Synth(const int xp ,
+                                           const int yp , 
+                                           const int xl ,
+                                           const int yl , 
+                                           PicArray& pic_data)
+{
+    const int xend( xp+xl );
+    const int yend( yp+yl );
+    
+    ValueType* line_data;
+
+    // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
+    Interleave( xp , yp , xl , yl , pic_data );  
+
+    // First do the vertical
+    for (int j = yp+1; j < yend; j+=2)
+    {
+        for (int i = xp; i < xend; ++i)
+        {
+            pic_data[j-1][i] -= ((pic_data[j][i]+1)>>1);
+            pic_data[j][i] += pic_data[j-1][i];
+        }
+    }
+
+    // Next do the horizontal
+    for (int j = yp; j < yend; ++j)
+    {
+        for (int i = xp+1; i < xend; i+=2)
+        {
+            pic_data[j][i-1] -= ((pic_data[j][i]+1)>>1);
+            pic_data[j][i] += pic_data[j][i-1];
+        }
+        line_data = &pic_data[j][xp];                 
+        ShiftRowRight(line_data, xl, 2);
+    }
+}
+
 
 // Returns a perceptual noise weighting based on extending CCIR 959 values
 // assuming a two-d isotropic response. Also has a fudge factor of 20% for chroma

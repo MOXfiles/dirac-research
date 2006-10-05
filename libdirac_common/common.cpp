@@ -399,10 +399,10 @@ WltFilter CodecParams::TransformFilter (unsigned int wf_idx)
     if (wf_idx >= filterNK)
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
-            "Wavelet filter idx out of range [0-6]",
+            "Wavelet filter idx out of range [0-7]",
             SEVERITY_FRAME_ERROR);
 
-    if (wf_idx > HAAR && wf_idx != DAUB97)
+    if (wf_idx==FIDELITY)
     {
         std::ostringstream errstr;
         errstr << "Wavelet Filter " << wf_idx << " currently not supported";

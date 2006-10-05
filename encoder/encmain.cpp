@@ -91,8 +91,8 @@ static void display_help()
     cout << "\ncpd               ulong   0UL           Perceptual weighting - vertical cycles per deg.";
     cout << "\nqf                float   0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
     cout << "\nlossless          bool    false         Lossless coding (overrides qf)";
-    cout << "\niwlt_filter       string   APPROX97     Intra frame Transform Filter (APPROX97 FIVETHREE THIRTEENFIVE HAAR RESERVED1 RESERVED2 DAUB97)";
-    cout << "\nrwlt_filter       string   FIVETHREE    Inter frame Transform Filter (APPROX97 FIVETHREE THIRTEENFIVE HAAR RESERVED1 RESERVED2 DAUB97)";
+    cout << "\niwlt_filter       string  DD9_3         Intra frame Transform Filter (DD9_3 LEGALL5_3 DD13_5 HAAR0 HAAR1 HAAR2 FIDELITY DAUB9_7)";
+    cout << "\nrwlt_filter       string  LEGALL5_3     Inter frame Transform Filter (DD9_3 LEGALL5_3 DD13_5 HAAR0 HAAR1 HAAR2 FIDELITY DAUB9_7)";
     cout << "\nwlt_depth         ulong   4             Transform Depth";
     cout << "\nmulti_quants      bool    false         Use multiple quantisers";
     cout << "\nmv_prec           string  false         MV Pixel Precision (1, 1/2, 1/4, 1/8)";
@@ -412,20 +412,22 @@ const char *TransformFilterToString (WltFilter wf)
 {
     switch (wf)
     {
-    case APPROX97:
-        return "APPROX97";
-    case FIVETHREE:
-        return "FIVETHREE";
-    case THIRTEENFIVE:
-        return "THIRTEENFIVE";
-    case HAAR:
-        return "HAAR";
-    case RESERVED1:
-        return "RESERVED1";
-    case RESERVED2:
-        return "RESERVED2";
-    case DAUB97:
-        return "DAUB97";
+    case DD9_3:
+        return "DD9_3";
+    case LEGALL5_3:
+        return "LEGALL5_3";
+    case DD13_5:
+        return "DD13_5";
+    case HAAR0:
+        return "HAAR0";
+    case HAAR1:
+        return "HAAR1";
+    case HAAR2:
+        return "HAAR2";
+    case FIDELITY:
+        return "FIDELITY";
+    case DAUB9_7:
+        return "DAUB9_7";
     default:
         return "Undefined";
     }
@@ -433,20 +435,22 @@ const char *TransformFilterToString (WltFilter wf)
 
 WltFilter StringToTransformFilter (const char *wf)
 {
-    if( strcmp( wf, "APPROX97" ) == 0)
-        return APPROX97;
-    else if( strcmp( wf, "FIVETHREE" ) == 0)
-        return FIVETHREE;
-    else if( strcmp( wf, "THIRTEENFIVE" ) == 0)
-        return THIRTEENFIVE;
-    else if( strcmp( wf, "HAAR" ) == 0)
-        return HAAR;
-    else if( strcmp( wf, "RESERVED1" ) == 0)
-        return RESERVED1;
-    else if( strcmp( wf, "RESERVED2" ) == 0)
-        return RESERVED2;
-    else if( strcmp( wf, "DAUB97" ) == 0)
-        return DAUB97;
+    if( strcmp( wf, "DD9_3" ) == 0)
+        return DD9_3;
+    else if( strcmp( wf, "LEGALL5_3" ) == 0)
+        return LEGALL5_3;
+    else if( strcmp( wf, "DD13_5" ) == 0)
+        return DD13_5;
+    else if( strcmp( wf, "HAAR0" ) == 0)
+        return HAAR0;
+    else if( strcmp( wf, "HAAR1" ) == 0)
+        return HAAR1;
+    else if( strcmp( wf, "HAAR2" ) == 0)
+        return HAAR2;        
+    else if( strcmp( wf, "FIDELITY" ) == 0)
+        return FIDELITY;
+    else if( strcmp( wf, "DAUB9_7" ) == 0)
+        return DAUB9_7;
     else
         return filterNK;
 }

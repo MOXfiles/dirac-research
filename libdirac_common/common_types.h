@@ -60,17 +60,19 @@ typedef enum { format444, format422, format420, formatNK } ChromaFormat;
 /*! Types of Wavelet filters supported. filterNK -  not known) */
 typedef enum 
 {
-    APPROX97=0,  /* Approximata Daubechies */
-    FIVETHREE,   /* Five Three */
-    THIRTEENFIVE, /* Thirteen Five */
-    HAAR,        /* HAAR */
-    RESERVED1,   /* reserved 1 */
-    RESERVED2,   /* reserved 1 */
-    DAUB97,      /* Daubechies 97 */
+    DD9_3=0,      /* Deslauriers-Dubuc (9,3) */
+    LEGALL5_3,    /* LeGall (5,3) */
+    DD13_5,       /* Deslauriers-Dubuc (9,3) */
+    HAAR0,        /* Haar, no shift per level*/
+    HAAR1,        /* Haar, one shift per level*/
+    HAAR2,        /* Haar, two shifts per level*/
+    FIDELITY,    /* Fidelity wavelet */
+    DAUB9_7,       /* Integer approximation to Daubechies 97 */
     filterNK
 } WltFilter;
 
-static const int NUM_WLT_FILTERS = 7;
+
+static const int NUM_WLT_FILTERS = 8;
 
 /*! Types of frame */
 typedef enum {
