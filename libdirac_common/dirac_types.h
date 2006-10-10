@@ -70,7 +70,7 @@ typedef struct
 } dirac_rational_t;
 
 typedef dirac_rational_t dirac_frame_rate_t;
-typedef dirac_rational_t dirac_asr_rate_t;
+typedef dirac_rational_t dirac_asr_t;
 
 /*! Structure that holds the parase parameters */
 typedef struct
@@ -148,7 +148,7 @@ typedef struct
     /*! frame rate */
     dirac_frame_rate_t frame_rate;
     /*! pixel aspect ratio */
-    dirac_frame_rate_t pix_asr;
+    dirac_asr_t pix_asr;
     /* clean area*/
     dirac_clean_area_t clean_area;
     /* signal range*/

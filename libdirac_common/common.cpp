@@ -732,6 +732,7 @@ void SourceParams::SetAspectRatio (AspectRatioType aspect_ratio)
     case ASPECT_RATIO_12_11:
         m_aspect_ratio.m_num = 12;
         m_aspect_ratio.m_denom = 11;
+        break;
     default:
         m_asr_idx = ASPECT_RATIO_CUSTOM;
         m_aspect_ratio.m_num = m_aspect_ratio.m_denom = 0;

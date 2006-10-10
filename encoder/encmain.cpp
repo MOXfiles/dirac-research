@@ -155,6 +155,8 @@ bool WriteSequenceHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
         fdata << srcparams.topfieldfirst << std::endl;
         fdata << srcparams.frame_rate.numerator << std::endl;
         fdata << srcparams.frame_rate.denominator << std::endl;
+        fdata << srcparams.pix_asr.numerator << std::endl;
+        fdata << srcparams.pix_asr.denominator << std::endl;
     }
 
     catch (...)
@@ -939,7 +941,7 @@ int main (int argc, char* argv[])
         enc_ctx.decode_flag = 1;
         enc_ctx.instr_flag = 1;
     }
-        
+ 
     encoder = dirac_encoder_init( &enc_ctx, verbose );
 
     if (!encoder)

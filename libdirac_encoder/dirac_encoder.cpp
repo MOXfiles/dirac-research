@@ -259,6 +259,9 @@ private:
     
     // Set the encoder parameters
     void SetEncoderParams (const dirac_encoder_context_t *enc_ctx);
+    
+    // Set the source parameters
+    void SetSourceParams (const dirac_encoder_context_t *enc_ctx);
 
     // Get the frame statistics
     void GetFrameStats(dirac_encoder_t *encoder);
@@ -411,6 +414,8 @@ DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx,
 {
     // Setup sequence parameters
     SetSequenceParams (enc_ctx);
+    // Setup source parameters
+    SetSourceParams (enc_ctx);
     // Setup encoder parameters
     m_encparams.SetVerbose( verbose );
     SetEncoderParams (enc_ctx);
@@ -446,13 +451,27 @@ void DiracEncoder::SetSequenceParams (const dirac_encoder_context_t *enc_ctx)
     m_sparams.SetXl( enc_ctx->seq_params.width );
     m_sparams.SetYl( enc_ctx->seq_params.height );
     m_sparams.SetVideoDepth( enc_ctx->seq_params.video_depth );
+}
+
+void DiracEncoder::SetSourceParams (const dirac_encoder_context_t *enc_ctx)
+{
     m_srcparams.SetInterlace( enc_ctx->src_params.interlace );
     m_srcparams.SetTopFieldFirst( enc_ctx->src_params.topfieldfirst );
-    if (m_srcparams.FrameRate().m_num != (unsigned int)enc_ctx->src_params.frame_rate.numerator || m_srcparams.FrameRate().m_denom != (unsigned int)enc_ctx->src_params.frame_rate.denominator)
+    m_srcparams.SetSequentialFields(enc_ctx->src_params.seqfields );
+    if (m_srcparams.FrameRate().m_num != (unsigned int)enc_ctx->src_params.frame_rate.numerator ||
+        m_srcparams.FrameRate().m_denom != (unsigned int)enc_ctx->src_params.frame_rate.denominator)
     {
         m_srcparams.SetFrameRate( enc_ctx->src_params.frame_rate.numerator,
                             enc_ctx->src_params.frame_rate.denominator );
     }
+    if (m_srcparams.AspectRatio().m_num != (unsigned int)enc_ctx->src_params.pix_asr.numerator ||
+        m_srcparams.AspectRatio().m_denom != (unsigned int)enc_ctx->src_params.pix_asr.denominator)
+    {
+        m_srcparams.SetAspectRatio( enc_ctx->src_params.pix_asr.numerator,
+                            enc_ctx->src_params.pix_asr.denominator );
+    }
+    // TO DO: CLEAN AREA and signal range
+
 }
 
 void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
@@ -772,6 +791,8 @@ static void SetSequenceParameters(dirac_encoder_context_t *enc_ctx,
     sparams.video_depth = default_seq_params.GetVideoDepth();
     src_params.frame_rate.numerator = default_src_params.FrameRate().m_num;
     src_params.frame_rate.denominator = default_src_params.FrameRate().m_denom;
+    src_params.pix_asr.numerator = default_src_params.AspectRatio().m_num;
+    src_params.pix_asr.denominator = default_src_params.AspectRatio().m_denom;
     src_params.interlace = default_src_params.Interlace();
     src_params.topfieldfirst = default_src_params.TopFieldFirst();
 }
@@ -837,7 +858,6 @@ extern DllExport dirac_encoder_t *dirac_encoder_init (const dirac_encoder_contex
     dirac_encoder_t *encoder = new dirac_encoder_t;
 
     memset (encoder, 0, sizeof(dirac_encoder_t));
-
     /* initialse the encoder context */
     if (!InitialiseEncoder(enc_ctx, verbose>0, encoder))
     {
@@ -847,7 +867,6 @@ extern DllExport dirac_encoder_t *dirac_encoder_init (const dirac_encoder_contex
 
     encoder->encoded_frame_avail = encoder->decoded_frame_avail = 0;
     encoder->instr_data_avail = 0;
-
 
     return encoder;
 }
