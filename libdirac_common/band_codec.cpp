@@ -25,6 +25,7 @@
 *                 Steve Bearcroft
 *                 Andrew Kennedy
 *                 Anuradha Suraparaju
+*                 David Schleef
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -134,20 +135,6 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
     const int xend = code_block.Xend();
     const int yend = code_block.Yend();
  
-    int xpbeg;
-    int ypbeg;
-
-   if (m_node.Parent()!=0)
-    {
-        xpbeg = m_pnode.Xp() + ( ( code_block.Xstart()-m_node.Xp() )>>1 );
-        ypbeg = m_pnode.Yp() + ( ( code_block.Ystart()-m_node.Yp() )>>1 );
-    }
-    else
-    {
-        xpbeg = 0; 
-        ypbeg = 0;
-    }
-    
     const int qf_idx = code_block.QIndex();
 
     if ( m_node.UsingMultiQuants() )
@@ -159,10 +146,12 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
     m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
 
-    for ( int ypos=ybeg , m_pypos=ypbeg; ypos<yend ;++ypos , m_pypos=(( ypos-ybeg )>>1)+ypbeg)
+    for ( int ypos=ybeg; ypos<yend ;++ypos)
     {
-        for ( int xpos=xbeg , m_pxpos=xpbeg ; xpos<xend ;++xpos , m_pxpos=((xpos-xbeg)>>1)+xpbeg)
+	m_pypos=(( ypos-m_node.Yp() )>>1)+m_pnode.Yp();
+        for ( int xpos=xbeg; xpos<xend ;++xpos)
         {
+	    m_pxpos=(( xpos-m_node.Xp() )>>1)+m_pnode.Xp();
 
             if ( xpos == m_node.Xp() )
                 m_nhood_nonzero = (ypos!=m_node.Yp()) ? bool(in_data[ypos-1][xpos]) : false;
@@ -325,20 +314,6 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
     const int xend = code_block.Xend();
     const int yend = code_block.Yend();
  
-    int xpbeg;
-    int ypbeg;
-
-   if (m_node.Parent()!=0)
-    {
-        xpbeg = m_pnode.Xp() + ( ( code_block.Xstart()-m_node.Xp() )>>1 );
-        ypbeg = m_pnode.Yp() + ( ( code_block.Ystart()-m_node.Yp() )>>1 );
-    }
-    else
-    {
-        xpbeg = 0; 
-        ypbeg = 0;
-    }
-
     int qf_idx = m_node.QIndex();
 
     if ( m_node.UsingMultiQuants() )
@@ -360,13 +335,15 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
 
     //Work
     
-    for ( int ypos=ybeg , m_pypos=ypbeg; ypos<yend ;++ypos , m_pypos=(( ypos-ybeg )>>1)+ypbeg)
+    for ( int ypos=ybeg; ypos<yend ;++ypos)
     {
+	m_pypos=(( ypos-m_node.Yp() )>>1)+m_pnode.Yp();
         ValueType *p_out_data = out_data[m_pypos];
         ValueType *c_out_data_1 = out_data[ypos-1];
         ValueType *c_out_data_2 = out_data[ypos];
-        for ( int xpos=xbeg , m_pxpos=xpbeg ; xpos<xend ;++xpos,m_pxpos=((xpos-xbeg)>>1)+xpbeg)
+        for ( int xpos=xbeg; xpos<xend ;++xpos)
         {
+	    m_pxpos=(( xpos-m_node.Xp() )>>1)+m_pnode.Xp();
             if ( xpos == m_node.Xp() )
                 m_nhood_nonzero = (ypos!=m_node.Yp()) ? bool(c_out_data_1[xpos]) : false;
             else
