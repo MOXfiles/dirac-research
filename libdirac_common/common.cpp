@@ -924,8 +924,7 @@ QuantiserLists::QuantiserLists()
     for (unsigned int i=0; i<=m_max_qindex; ++i)
     {
         m_qflist4[i] = int( std::pow(2.0, 2.0+double(i)/4.0) + 0.5 );
-//        m_offset4[i] = int( double( m_qflist4[i]*0.375) + 0.5 );
-        m_offset4[i] = int( double( m_qflist4[i]*0.5) + 0.5 );
+        m_offset4[i] = int( double( m_qflist4[i]*0.375) + 0.5 );
     }// i
 }
 
