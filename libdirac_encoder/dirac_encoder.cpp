@@ -600,11 +600,11 @@ void DiracEncoder::GetFrameStats(dirac_encoder_t *encoder)
     DiracEncoder *compressor = (DiracEncoder *)encoder->compressor;
     if (compressor->GetEncParams().Verbose())
     {
-        std::cerr<<std::endl<<"Number of MV bits="<<fstats->mv_bits;
-        std::cerr<<std::endl<<"Number of bits for Y="<<fstats->ycomp_bits;
-        std::cerr<<std::endl<<"Number of bits for U="<<fstats->ucomp_bits;
-        std::cerr<<std::endl<<"Number of bits for V="<<fstats->vcomp_bits;
-        std::cerr<<std::endl<<"Total frame bits="<<fstats->frame_bits;
+        std::cout<<std::endl<<"Number of MV bits="<<fstats->mv_bits;
+        std::cout<<std::endl<<"Number of bits for Y="<<fstats->ycomp_bits;
+        std::cout<<std::endl<<"Number of bits for U="<<fstats->ucomp_bits;
+        std::cout<<std::endl<<"Number of bits for V="<<fstats->vcomp_bits;
+        std::cout<<std::endl<<"Total frame bits="<<fstats->frame_bits;
     }
 }
 
@@ -615,7 +615,7 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
 
     string output = m_dirac_byte_stream.GetBytes();
     size = output.size();
-    //std::cerr << std::endl << "ParseUnit size=" << size << std::endl;
+    //std::cout << std::endl << "ParseUnit size=" << size << std::endl;
     if (size > 0)
     {
         if (encdata->size < size )
@@ -678,12 +678,12 @@ void DiracEncoder::GetSequenceStats(dirac_encoder_t *encoder,
     DiracEncoder *compressor = (DiracEncoder *)encoder->compressor;
     if (compressor->GetEncParams().Verbose())
     {
-        std::cerr<<std::endl<<std::endl<<"Total bits for sequence="<<sstats->seq_bits;
-        std::cerr<<std::endl<<"Of these: "<<std::endl;
-        std::cerr<<std::endl<<sstats->ycomp_bits <<" were Y, ";
-        std::cerr<<std::endl<<sstats->ucomp_bits <<" were U, ";
-        std::cerr<<std::endl<<sstats->vcomp_bits<<" were V, and ";
-        std::cerr<<std::endl<<sstats->mv_bits<<" were motion vector data.";
+        std::cout<<std::endl<<std::endl<<"Total bits for sequence="<<sstats->seq_bits;
+        std::cout<<std::endl<<"Of these: "<<std::endl;
+        std::cout<<std::endl<<sstats->ycomp_bits <<" were Y, ";
+        std::cout<<std::endl<<sstats->ucomp_bits <<" were U, ";
+        std::cout<<std::endl<<sstats->vcomp_bits<<" were V, and ";
+        std::cout<<std::endl<<sstats->mv_bits<<" were motion vector data.";
     }
 }
 
