@@ -871,7 +871,7 @@ namespace dirac
         //! Returns the chroma height of the frame
         int ChromaYl() const{return m_chroma_yl;}
         
-        //! Returns the type of the frame (I, L1 or L2)
+        //! Returns the type of the frame
         const FrameSort& FSort() const {return m_fsort;}
         
         //! Returns the number of the frame (in time order)
@@ -903,19 +903,19 @@ namespace dirac
 
         // ... Sets
         
-        //! Sets the type of frame to I, L1 or L2
-        void SetFSort( const FrameSort& fs ){ m_fsort=fs; }
-        
         //! Sets the type of frame
-        void SetFrameType(const FrameType& frame_type) { m_frame_type=frame_type; }
-
-        //! Sets the reference type of frame
-        void SetReferenceType(const ReferenceType& ref_type) { m_reference_type=ref_type; }
-
+        void SetFSort( const FrameSort& fs );
+        
+        //! Sets the frame to be Intra/Inter
+        void SetFrameType(const FrameType ftype);
+        
+        //! Sets the frame to be a reference or not
+        void SetReferenceType(const ReferenceType rtype);
+        
         //! Sets the frame number
         void SetFrameNum( const int fn ){ m_fnum=fn; }
         
-        //! Sets how long the frame will stay in the buffer
+        //! Sets how long the frame will stay in the buffer (encoder only)
         void SetExpiryTime( const int expt ){ m_expiry_time=expt; }
         
         //! Sets a flag to indicate that the frame has been output

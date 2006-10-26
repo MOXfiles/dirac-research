@@ -210,6 +210,7 @@ Frame& SequenceCompressor::CompressNextFrame()
 
     m_show_fnum = std::max( m_current_code_fnum - m_delay , 0 );
 
+    // Flag saying we're ready to encode
     bool can_encode = false;
 
     if (m_last_frame_read >= m_current_display_fnum )
@@ -218,17 +219,10 @@ Frame& SequenceCompressor::CompressNextFrame()
     if ( can_encode )
     {   // We haven't coded everything, so compress the next frame
     
-        // If we're not at the beginning, clean the buffer
-        if ( m_current_code_fnum != 0 )
-        {
-            m_fbuffer->Clean( m_show_fnum, m_current_display_fnum );
-            m_origbuffer->Clean( m_show_fnum, m_current_display_fnum );
-        }
-
         if ( m_encparams.Verbose() )
         {
-             std::cerr<<std::endl<<std::endl<<"Compressing frame "<<m_current_code_fnum<<", ";
-            std::cerr<<m_current_display_fnum<<" in display order";
+            std::cout<<std::endl<<std::endl<<"Compressing frame "<<m_current_code_fnum<<", ";
+            std::cout<<m_current_display_fnum<<" in display order";
         }
  
     
@@ -264,7 +258,6 @@ Frame& SequenceCompressor::CompressNextFrame()
        if ( m_encparams.LocalDecode() )
            m_qmonitor.UpdateModel( m_fbuffer->GetFrame( m_current_display_fnum ) , 
                                    m_origbuffer->GetFrame( m_current_display_fnum ) );
-
     
        if ( m_encparams.Verbose() )
        {
@@ -274,10 +267,16 @@ Frame& SequenceCompressor::CompressNextFrame()
         // Increment our position
         m_current_code_fnum++;
 
+        // If we're not at the beginning, clean the buffer
+        if ( m_current_code_fnum != 0 )
+        {
+            m_fbuffer->Clean( m_show_fnum, m_current_display_fnum );
+            m_origbuffer->Clean( m_show_fnum, m_current_display_fnum );
+        }
     }
 
     // Return the latest frame that can be shown
-    return m_fbuffer->GetFrame(m_show_fnum);
+    return m_fbuffer->GetFrame(m_show_fnum );
 }
 
 const Frame *SequenceCompressor::GetFrameEncoded()
@@ -314,19 +313,19 @@ DiracByteStats SequenceCompressor::EndSequence()
 void SequenceCompressor::MakeSequenceReport()
 {
 
- //   std::cerr<<"Total bits for sequence="<<m_encparams.BitsOut().SequenceBytes() * 8;
- //   std::cerr<<" ( "<<m_encparams.BitsOut().SequenceHeadBytes() * 8<<" header )";
+ //   std::cout<<"Total bits for sequence="<<m_encparams.BitsOut().SequenceBytes() * 8;
+ //   std::cout<<" ( "<<m_encparams.BitsOut().SequenceHeadBytes() * 8<<" header )";
     
- //   std::cerr<<std::endl<<"Of these: "<<std::endl<<std::endl;
- //   std::cerr<<m_encparams.BitsOut().ComponentBytes( Y_COMP ) * 8<<" were Y, ";
- //   std::cerr<<std::endl<<m_encparams.BitsOut().ComponentBytes( U_COMP ) * 8<<" were U, ";
-  //  std::cerr<<std::endl<<m_encparams.BitsOut().ComponentBytes( V_COMP ) * 8<<" were V, and ";
-  //  std::cerr<<std::endl<<m_encparams.BitsOut().MVBytes() * 8<<" were motion vector data.";
+ //   std::cout<<std::endl<<"Of these: "<<std::endl<<std::endl;
+ //   std::cout<<m_encparams.BitsOut().ComponentBytes( Y_COMP ) * 8<<" were Y, ";
+ //   std::cout<<std::endl<<m_encparams.BitsOut().ComponentBytes( U_COMP ) * 8<<" were U, ";
+  //  std::cout<<std::endl<<m_encparams.BitsOut().ComponentBytes( V_COMP ) * 8<<" were V, and ";
+  //  std::cout<<std::endl<<m_encparams.BitsOut().MVBytes() * 8<<" were motion vector data.";
 
     if ( m_encparams.LocalDecode() )
         m_qmonitor.WriteLog();
 
-    std::cerr<<std::endl;
+    std::cout<<std::endl;
 
 }
 
@@ -338,32 +337,32 @@ void SequenceCompressor::MakeFrameReport()
   //  unsigned int unit_bits = foutput.MVBytes() * 8;            
   //  unsigned int unit_head_bits = foutput.MVHeadBytes() * 8;
 
-//    std::cerr<<std::endl<<"Number of MV bits="<<unit_bits;
- //   std::cerr<<" ( "<<unit_head_bits<<" header bits)";
+//    std::cout<<std::endl<<"Number of MV bits="<<unit_bits;
+ //   std::cout<<" ( "<<unit_head_bits<<" header bits)";
 
   //  unit_bits = foutput.ComponentBytes( Y_COMP ) * 8;
   //  unit_head_bits = foutput.ComponentHeadBytes( Y_COMP ) * 8;
 
-  //  std::cerr<<std::endl<<"Number of bits for Y="<<unit_bits;
- //   std::cerr<<" ( "<<unit_head_bits<<" header bits)";
+  //  std::cout<<std::endl<<"Number of bits for Y="<<unit_bits;
+ //   std::cout<<" ( "<<unit_head_bits<<" header bits)";
 
   //  unit_bits = foutput.ComponentBytes( U_COMP ) * 8;
   //  unit_head_bits = foutput.ComponentHeadBytes( U_COMP ) * 8;
 
- //   std::cerr<<std::endl<<"Number of bits for U="<<unit_bits;
-  //  std::cerr<<" ( "<<unit_head_bits<<" header bits)";
+ //   std::cout<<std::endl<<"Number of bits for U="<<unit_bits;
+  //  std::cout<<" ( "<<unit_head_bits<<" header bits)";
 
   //  unit_bits = foutput.ComponentBytes( V_COMP ) * 8;
    // unit_head_bits = foutput.ComponentHeadBytes( V_COMP ) * 8;
 
- //   std::cerr<<std::endl<<"Number of bits for V="<<unit_bits;
- //   std::cerr<<" ( "<<unit_head_bits<<" header bits)";
+ //   std::cout<<std::endl<<"Number of bits for V="<<unit_bits;
+ //   std::cout<<" ( "<<unit_head_bits<<" header bits)";
 
   //  unit_bits = foutput.FrameBytes() * 8;
    // unit_head_bits = foutput.FrameHeadBytes() * 8;
 
-  //  std::cerr<<std::endl<<std::endl<<"Total frame bits="<<unit_bits;
- //   std::cerr<<" ( "<<unit_head_bits<<" header bits)"<<std::endl<<std::endl;
+  //  std::cout<<std::endl<<std::endl<<"Total frame bits="<<unit_bits;
+ //   std::cout<<" ( "<<unit_head_bits<<" header bits)"<<std::endl<<std::endl;
 
 }
 

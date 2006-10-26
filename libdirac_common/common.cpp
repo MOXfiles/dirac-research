@@ -838,6 +838,8 @@ void SourceParams::SetTransferFunctionIndex (unsigned int tf)
 // Default constructor
 FrameParams::FrameParams():
 m_fsort(FrameSort::IntraRefFrameSort()),
+m_frame_type( INTRA_FRAME ),
+m_reference_type( REFERENCE_FRAME ),    
 m_output(false)
 {}    
 
@@ -847,6 +849,8 @@ FrameParams::FrameParams(const ChromaFormat& cf, int xlen, int ylen, int c_xlen,
     m_xl(xlen),
     m_yl(ylen),
     m_fsort(FrameSort::IntraRefFrameSort()),
+    m_frame_type( INTRA_FRAME ),
+    m_reference_type( REFERENCE_FRAME ),    
     m_output(false),
     m_chroma_xl(c_xlen),
     m_chroma_yl(c_ylen),
@@ -856,9 +860,10 @@ FrameParams::FrameParams(const ChromaFormat& cf, int xlen, int ylen, int c_xlen,
 // Constructor
 FrameParams::FrameParams(const ChromaFormat& cf, const FrameSort& fs):
     m_cformat(cf),
-    m_fsort(fs),
     m_output(false)
-{}    
+{
+    SetFSort( fs );    
+}    
 
 // Constructor
 FrameParams::FrameParams(const SeqParams& sparams):
@@ -866,6 +871,8 @@ FrameParams::FrameParams(const SeqParams& sparams):
     m_xl(sparams.Xl()),
     m_yl(sparams.Yl()),
     m_fsort(FrameSort::IntraRefFrameSort()),
+    m_frame_type( INTRA_FRAME ),
+    m_reference_type( REFERENCE_FRAME ),
     m_output(false),
     m_video_depth(sparams.GetVideoDepth())
 {
@@ -892,10 +899,11 @@ FrameParams::FrameParams(const SeqParams& sparams, const FrameSort& fs):
     m_cformat(sparams.CFormat()),
     m_xl(sparams.Xl()),
     m_yl(sparams.Yl()),
-    m_fsort(fs),
     m_output(false),
     m_video_depth(sparams.GetVideoDepth())
 {
+    SetFSort(fs);
+    
     m_chroma_xl = m_chroma_yl = 0;
     if(m_cformat == format422) 
     {
@@ -913,6 +921,40 @@ FrameParams::FrameParams(const SeqParams& sparams, const FrameSort& fs):
         m_chroma_yl = m_yl;
     }
 }
+
+void FrameParams::SetFSort( const FrameSort& fs )
+{
+    m_fsort=fs;
+    if ( fs.IsIntra() )
+        m_frame_type = INTRA_FRAME;
+    else
+        m_frame_type = INTER_FRAME;
+        
+    if ( fs.IsRef() )
+        m_reference_type = REFERENCE_FRAME;
+    else
+        m_reference_type = NON_REFERENCE_FRAME;
+
+}
+
+void FrameParams::SetFrameType(const FrameType ftype)
+{
+    m_frame_type = ftype;
+    if (ftype == INTRA_FRAME )
+        m_fsort.SetIntra();
+    else
+        m_fsort.SetInter();
+}
+
+void FrameParams::SetReferenceType(const ReferenceType rtype)
+{
+    m_reference_type = rtype;
+    if (rtype == REFERENCE_FRAME )
+        m_fsort.SetRef();
+    else
+        m_fsort.SetNonRef();    
+}
+
 
 QuantiserLists::QuantiserLists()
 :

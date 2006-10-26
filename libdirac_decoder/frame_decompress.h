@@ -108,6 +108,9 @@ namespace dirac
         */
         FrameDecompressor& operator=(const FrameDecompressor& rhs);
 
+        //! Removes all the reference frames in the retired list
+        void CleanReferenceFrames( FrameBuffer& my_buffer );
+
         //! Decodes component data    
         void CompDecompress(TransformByteIO *p_transform_byteio,
                             FrameBuffer& my_buffer,int fnum, CompSort cs);

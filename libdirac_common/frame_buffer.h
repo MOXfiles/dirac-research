@@ -76,7 +76,12 @@ namespace dirac
             \param    vd      the video depth of the data in the buffer
 
         */
-        FrameBuffer(ChromaFormat cf,int xlen,int ylen, int c_xlen, int c_ylen, unsigned int vd);
+        FrameBuffer(ChromaFormat cf,
+                    const int xlen,
+                    const int ylen, 
+                    const int c_xlen, 
+                    const int c_ylen, 
+                    const unsigned int vd);
 
         //! Constructor
         /*!
@@ -95,7 +100,14 @@ namespace dirac
             \param    c_ylen  the chroma height of frames in the buffer
             \param    vd      the video depth of the data in the buffer
         */    
-        FrameBuffer(ChromaFormat cf,int numL1,int L1sep,int xlen,int ylen, int c_xlen, int c_ylen, unsigned int vd);
+        FrameBuffer(ChromaFormat cf,
+                    const int numL1,
+                    const int L1sep,
+                    const int xlen,
+                    const int ylen, 
+                    const int c_xlen, 
+                    const int c_ylen, 
+                    const unsigned int vd);
 
         //! Copy constructor
         /*!
@@ -114,22 +126,28 @@ namespace dirac
         ~FrameBuffer();
 
         //! Get frame with a given frame number (NOT with a given position in the buffer)
-        Frame& GetFrame(unsigned int fnum);
+        Frame& GetFrame(const unsigned int fnum );
 
         //! Get frame with a given frame number (NOT with a given position in the buffer)
-        const Frame& GetFrame(unsigned int fnum) const;
+        const Frame& GetFrame(const unsigned int fnum) const;
+
+        //! Get frame with a given frame number, setting a flag to true if it's there
+        Frame& GetFrame(const unsigned int fnum, bool& is_present);
+
+        //! Get frame with a given frame number, setting a flag to true if it's there
+        const Frame& GetFrame(const unsigned int fnum, bool& is_present) const;
 
         //! Get component with a given component sort and frame number (NOT with a given position in the buffer)
-        PicArray& GetComponent(unsigned int frame_num, CompSort c);
+        PicArray& GetComponent(const unsigned int frame_num, CompSort c);
 
         //! Get component with a given component sort and frame number (NOT with a given position in the buffer)
-        const PicArray& GetComponent(unsigned int frame_num, CompSort c) const;    
+        const PicArray& GetComponent(const unsigned int frame_num, CompSort c) const;    
 
         //! Get upconverted component with a given component sort and frame number (NOT with a given position in the buffer)
-        PicArray& GetUpComponent(unsigned int frame_num, CompSort c);
+        PicArray& GetUpComponent(const unsigned int frame_num, CompSort c);
 
         //! Get upconverted component with a given component sort and frame number (NOT with a given position in the buffer)
-        const PicArray& GetUpComponent(unsigned int frame_num, CompSort c) const;
+        const PicArray& GetUpComponent(const unsigned int frame_num, CompSort c) const;
 
         //! Return the number of frames in the buffer
         size_t Size() const {return m_frame_data.size();}
@@ -142,7 +160,7 @@ namespace dirac
 
             \param    frame_num    the number of the frame being inserted
         */
-        void PushFrame(unsigned int frame_num);    
+        void PushFrame(const unsigned int frame_num);    
 
         //! Put a new frame into the top of the buffer
         /*! 
@@ -176,7 +194,7 @@ namespace dirac
             \param    picin    the picture input
             \param    fnum    the frame number
         */    
-        void PushFrame(StreamPicInput* picin,unsigned int fnum);
+        void PushFrame(StreamPicInput* picin,const unsigned int fnum);
 
         //! Delete expired frames
         /*! 
@@ -186,7 +204,7 @@ namespace dirac
             \param show_fnum             frame number in display order that can be output
             \param current_coded_fnum    frame number in display order of frame currently being coded
         */
-        void Clean(int show_fnum, int current_coded_fnum);
+        void Clean(const int show_fnum, const int current_coded_fnum);
 
         //! Delete frame
         /*! 
@@ -223,7 +241,7 @@ namespace dirac
 
 
         //! Set the frame parameters based on the frame number in display order and internal GOP parameters
-        void SetFrameParams(unsigned int fnum);
+        void SetFrameParams(const unsigned int fnum);
 
         //! Remove a frame with a given frame number from the buffer
         /*!
@@ -231,7 +249,7 @@ namespace dirac
             the buffer. Searches through the buffer and removes frame(s) with 
             that number.
         */
-        void Remove(unsigned int fnum);
+        void Remove(const unsigned int fnum);
 
 
     };

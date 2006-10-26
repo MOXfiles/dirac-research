@@ -87,13 +87,9 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
     FrameByteIO frame_byteio(m_fparams,
                              parseunit_byteio,
                              au_fnum);
+
     frame_byteio.Input();
-
-    // Do frame buffer cleaning
-    std::vector<int>& retd_list = m_fparams.RetiredFrames();
-    for (size_t i = 0; i < retd_list.size(); ++i)
-        my_buffer.Clean(retd_list[i]);
-
+    
     FrameSort fs;
     
     if (m_fparams.GetFrameType() == INTRA_FRAME)
@@ -108,16 +104,21 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
 
     m_fparams.SetFSort(fs);
         
-
     // Check if the frame can be decoded
     if (m_fparams.FSort().IsInter())
     {
         const std::vector<int>& refs = m_fparams.Refs();
+
+        // A flag used to indicate whether frames reside in the buffer
+        bool is_present;
+
         for (unsigned int i = 0; i < refs.size(); ++i)
         {
-            const Frame &ref_frame = my_buffer.GetFrame(refs[i]);
-            if (ref_frame.GetFparams().FrameNum() != refs[i])
+            const Frame &ref_frame = my_buffer.GetFrame(refs[i], is_present);
+            if ( ref_frame.GetFparams().FrameNum() != refs[i] || is_present==false )
+            {
                 return false;
+            }
         }
     }
 
@@ -126,7 +127,15 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
     {//if we're not m_skipped then we can decode the rest of the frame
 
        if ( m_decparams.Verbose() )
-             std::cerr<<std::endl<<"Decoding frame "<<m_fparams.FrameNum()<<" in display order";        
+       {
+             std::cout<<std::endl<<"Decoding frame "<<m_fparams.FrameNum()<<" in display order";        
+             if ( m_fparams.FSort().IsInter() )
+             {
+                 std::cout<<std::endl<<"References: "<<m_fparams.Refs()[0];
+                 if ( m_fparams.Refs().size()>1 )
+                     std::cout<<" and "<<m_fparams.Refs()[1];
+             }
+       }   
 
        FrameSort fsort = m_fparams.FSort();
        auto_ptr<MvData> mv_data;
@@ -143,7 +152,7 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
             mv_data.reset(new MvData( m_decparams.XNumMB() , m_decparams.YNumMB(), m_fparams.NumRefs() ));
             //decode mv data
             if (m_decparams.Verbose())
-                std::cerr<<std::endl<<"Decoding motion data ...";        
+                std::cout<<std::endl<<"Decoding motion data ...";        
             MvDataCodec my_mv_decoder( mvdata_byteio.BlockData(), TOTAL_MV_CTXS , m_cformat );
             my_mv_decoder.InitContexts();//may not be necessary
 
@@ -167,7 +176,8 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
         // then use the actual picture dimensions
         PushFrame(my_buffer);
 
-        Frame& my_frame = my_buffer.GetFrame(m_fparams.FrameNum());//Reference to the frame being decoded
+        //Reference to the frame being decoded
+        Frame& my_frame = my_buffer.GetFrame(m_fparams.FrameNum());
 
         if (!m_decparams.ZeroTransform())
         {
@@ -185,7 +195,7 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
         my_frame.Clip();
 
         if (m_decparams.Verbose())
-            std::cerr<<std::endl;        
+            std::cout<<std::endl;        
 
         }//?m_skipped,!End()
         else if (m_skipped){
@@ -193,7 +203,10 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
 
         }
 
-         //exit success
+        // Now clean the reference frames from the buffer
+        CleanReferenceFrames( my_buffer );
+
+        //exit success
         return true;
     }// try
     catch (const DiracException& e) {
@@ -205,11 +218,32 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
     return false;
 }
 
+void FrameDecompressor::CleanReferenceFrames( FrameBuffer& my_buffer )
+{
+    if ( m_decparams.Verbose() )
+        std::cout<<std::endl<<"Cleaning reference buffer: ";
+    // Do frame buffer cleaning
+    std::vector<int>& retd_list = m_fparams.RetiredFrames();
+    for (size_t i = 0; i < retd_list.size(); ++i)
+    {
+        bool is_present;
+        if ( my_buffer.GetFrame(retd_list[i], is_present).GetFparams().FSort().IsRef() )
+        {
+            if ( is_present )
+            {
+                my_buffer.Clean(retd_list[i]);
+                if ( m_decparams.Verbose() )
+                    std::cout<<retd_list[i]<<" ";    
+            }
+        }
+    }
+}
+
 void FrameDecompressor::CompDecompress(TransformByteIO *p_transform_byteio,
                                        FrameBuffer& my_buffer, int fnum,CompSort cs)
 {
     if ( m_decparams.Verbose() )
-        std::cerr<<std::endl<<"Decoding component data ...";
+        std::cout<<std::endl<<"Decoding component data ...";
     
     ComponentByteIO component_byteio(cs, *p_transform_byteio);
     CompDecompressor my_compdecoder( m_decparams , my_buffer.GetFrame(fnum).GetFparams() );    

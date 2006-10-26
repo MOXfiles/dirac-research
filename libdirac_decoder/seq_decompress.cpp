@@ -117,14 +117,35 @@ Frame& SequenceDecompressor::DecompressNextFrame(ParseUnitByteIO* p_parseunit_by
     //come out - write them to screen or to file, as required.
 
     TEST (m_fdecoder != NULL);
+    
+    // A flag indicating whether the frame is in the buffer
+    bool is_present;
+    
+    // Remove the last displayed frame from the buffer if it wasn't a reference
+    if ( m_show_fnum>0 )
+    {
+        if ( m_decparams.Verbose() )
+            std::cout<<std::endl<<"Cleaning display buffer: ";         
+        if ( m_fbuffer->GetFrame(m_show_fnum-1, is_present).GetFparams().FSort().IsNonRef() )
+        {
+            if ( is_present )
+            {
+                m_fbuffer->Clean(m_show_fnum-1);
+                if ( m_decparams.Verbose() )
+                    std::cout<<(m_show_fnum-1)<<" ";
+            }
+        }
+    }
 
     bool new_frame_to_display=false;
        
     if (!skip && p_parseunit_byteio)
+    {
+       std::cout<<std::endl<<"Calling frame decompression function";
        new_frame_to_display = m_fdecoder->Decompress(*p_parseunit_byteio,
                                                      *m_fbuffer,
                                                      m_current_accessunit_fnum);
-
+    }
     /***
     //if we've exited with success, there's a new frame to display, so increment
     //the counters. Otherwise, freeze on the last frame shown
@@ -136,7 +157,7 @@ Frame& SequenceDecompressor::DecompressNextFrame(ParseUnitByteIO* p_parseunit_by
     ***/
     // FIXME - temporary fix to fix frame delay for i-frames
 
-    Frame &f = m_fbuffer->GetFrame(m_show_fnum+1);
+    Frame &f = m_fbuffer->GetFrame(m_show_fnum+1 );
     m_highest_fnum = std::max(m_fdecoder->GetFrameParams().FrameNum(), m_highest_fnum);
     if (f.GetFparams().FrameNum() == m_show_fnum+1)
     {

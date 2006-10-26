@@ -49,7 +49,12 @@ FrameBuffer::FrameBuffer() :
 {}
 
 //Simple constructor for general operation
-FrameBuffer::FrameBuffer(ChromaFormat cf,int xlen,int ylen, int c_xlen, int c_ylen, unsigned int vd): 
+FrameBuffer::FrameBuffer(ChromaFormat cf,
+                         const int xlen,
+                         const int ylen, 
+                         const int c_xlen, 
+                         const int c_ylen, 
+                         const unsigned int vd): 
     m_fparams(cf,xlen,ylen, c_xlen, c_ylen, vd),
     m_num_L1(0),
     m_L1_sep(1),
@@ -57,7 +62,14 @@ FrameBuffer::FrameBuffer(ChromaFormat cf,int xlen,int ylen, int c_xlen, int c_yl
 {}    
 
 //Constructor setting GOP parameters for use with a standard GOP
-FrameBuffer::FrameBuffer(ChromaFormat cf,int numL1,int L1sep,int xlen,int ylen, int c_xlen, int c_ylen, unsigned int vd): 
+FrameBuffer::FrameBuffer(ChromaFormat cf,
+                         const int numL1,
+                         const int L1sep,
+                         const int xlen,
+                         const int ylen, 
+                         const int c_xlen, 
+                         const int c_ylen, 
+                         const unsigned int vd): 
     m_fparams(cf,xlen,ylen, c_xlen, c_ylen, vd),
     m_num_L1(numL1),
     m_L1_sep(L1sep)
@@ -136,20 +148,20 @@ FrameBuffer::~FrameBuffer()
         delete m_frame_data[i];
 }
 
-Frame& FrameBuffer::GetFrame( unsigned int fnum )
+Frame& FrameBuffer::GetFrame( const unsigned int fnum )
 {//get frame with a given frame number, NOT with a given position in the buffer.
  //If the frame number does not occur, the first frame in the buffer is returned.
 
     std::map<unsigned int,unsigned int>::iterator it = m_fnum_map.find(fnum);
 
     unsigned int pos = 0;    
-    if (it != m_fnum_map.end()) 
+    if (it != m_fnum_map.end())
         pos = it->second;    
 
     return *(m_frame_data[pos]);
 }
 
-const Frame& FrameBuffer::GetFrame( unsigned int fnum ) const
+const Frame& FrameBuffer::GetFrame( const unsigned int fnum ) const
 {    //as above, but const version
 
     std::map<unsigned int,unsigned int>::const_iterator it = m_fnum_map.find(fnum);
@@ -161,7 +173,42 @@ const Frame& FrameBuffer::GetFrame( unsigned int fnum ) const
     return *(m_frame_data[pos]);
 }
 
-PicArray& FrameBuffer::GetComponent( unsigned int fnum , CompSort c)
+Frame& FrameBuffer::GetFrame( const unsigned int fnum, bool& is_present )
+{//get frame with a given frame number, NOT with a given position in the buffer.
+ //If the frame number does not occur, the first frame in the buffer is returned.
+
+    std::map<unsigned int,unsigned int>::iterator it = m_fnum_map.find(fnum);
+
+    unsigned int pos = 0;    
+    if (it != m_fnum_map.end())
+    {
+        is_present = true;
+        pos = it->second;    
+    }
+    else
+        is_present=false;
+
+    return *(m_frame_data[pos]);
+}
+
+const Frame& FrameBuffer::GetFrame( const unsigned int fnum, bool& is_present ) const
+{    //as above, but const version
+
+    std::map<unsigned int,unsigned int>::const_iterator it = m_fnum_map.find(fnum);
+
+    unsigned int pos=0;
+    if (it != m_fnum_map.end()) 
+    {
+        is_present = true;
+        pos = it->second;
+    }
+    else
+        is_present=false;
+
+    return *(m_frame_data[pos]);
+}
+
+PicArray& FrameBuffer::GetComponent( const unsigned int fnum , CompSort c)
 {//as GetFrame, but returns corresponding component
 
     std::map<unsigned int,unsigned int>::iterator it = m_fnum_map.find(fnum);
@@ -178,7 +225,7 @@ PicArray& FrameBuffer::GetComponent( unsigned int fnum , CompSort c)
         return m_frame_data[pos]->Ydata();
 }
 
-const PicArray& FrameBuffer::GetComponent( unsigned int fnum , CompSort c ) const 
+const PicArray& FrameBuffer::GetComponent( const unsigned int fnum , CompSort c ) const 
 {//as above, but const version
  
     std::map<unsigned int,unsigned int>::const_iterator it = m_fnum_map.find(fnum);
@@ -196,7 +243,7 @@ const PicArray& FrameBuffer::GetComponent( unsigned int fnum , CompSort c ) cons
 }
 
 // as GetFrame, but returns corresponding upconverted component
-PicArray& FrameBuffer::GetUpComponent(unsigned int fnum, CompSort c){
+PicArray& FrameBuffer::GetUpComponent(const unsigned int fnum, CompSort c){
     std::map<unsigned int,unsigned int>::iterator it = m_fnum_map.find(fnum);
 
     unsigned int pos = 0;
@@ -212,7 +259,7 @@ PicArray& FrameBuffer::GetUpComponent(unsigned int fnum, CompSort c){
 
 }
 
-const PicArray& FrameBuffer::GetUpComponent(unsigned int fnum, CompSort c) const {//as above, but const version
+const PicArray& FrameBuffer::GetUpComponent(const unsigned int fnum, CompSort c) const {//as above, but const version
     std::map<unsigned int,unsigned int>::const_iterator it=m_fnum_map.find(fnum);
 
     unsigned int pos = 0;
@@ -228,7 +275,7 @@ const PicArray& FrameBuffer::GetUpComponent(unsigned int fnum, CompSort c) const
 
 }
 
-void FrameBuffer::PushFrame(unsigned int frame_num)
+void FrameBuffer::PushFrame(const unsigned int frame_num)
 {// Put a new frame onto the top of the stack using built-in frame parameters
  // with frame number frame_num
     m_fparams.SetFrameNum(frame_num);
@@ -325,17 +372,18 @@ void FrameBuffer::PushFrame(StreamPicInput* picin,const FrameParams& fp)
     //Read a frame onto the top of the stack
 
     PushFrame(fp);
-    picin->ReadNextFrame( GetFrame(fp.FrameNum()) );
+    bool is_present;
+    picin->ReadNextFrame( GetFrame(fp.FrameNum(), is_present ) );
 }
 
-void FrameBuffer::PushFrame(StreamPicInput* picin, unsigned int fnum)
+void FrameBuffer::PushFrame(StreamPicInput* picin, const unsigned int fnum)
 {
    //Read a frame onto the top of the stack    
     SetFrameParams( fnum );
     PushFrame( picin , m_fparams );
 }
 
-void FrameBuffer::Remove(unsigned int pos)
+void FrameBuffer::Remove(const unsigned int pos)
 {//remove frame fnum from the buffer, shifting everything above down
 
     std::pair<unsigned int,unsigned int>* tmp_pair;
@@ -359,21 +407,28 @@ void FrameBuffer::Remove(unsigned int pos)
     }
 }
 
-void FrameBuffer::Clean(int show_fnum, int current_coded_fnum)
+void FrameBuffer::Clean(const int show_fnum, const int current_coded_fnum)
 {// clean out all frames that have expired
-    std::vector<int>& retd_list = GetFrame(current_coded_fnum).GetFparams().RetiredFrames();
-    retd_list.clear();
-    for (size_t i=0 ; i<m_frame_data.size() ; ++i)
+    bool is_present;
+    std::vector<int>& retd_list = GetFrame(current_coded_fnum, is_present).GetFparams().RetiredFrames();
+    if (is_present )
     {
-        if (m_frame_in_use[i] == true && (m_frame_data[i]->GetFparams().FrameNum() + m_frame_data[i]->GetFparams().ExpiryTime() ) <= show_fnum)
+        retd_list.clear();
+        for (size_t i=0 ; i<m_frame_data.size() ; ++i)
         {
-            retd_list.push_back( m_frame_data[i]->GetFparams().FrameNum());
-            Remove(i);
-        }
-    }//i
+            if (m_frame_in_use[i] == true && (m_frame_data[i]->GetFparams().FrameNum() + m_frame_data[i]->GetFparams().ExpiryTime() ) <= show_fnum)
+            {
+                // Only _reference_ frames go in the retired list - the 
+                // decoder will retire non-reference frames as they are displayed
+                if (m_frame_data[i]->GetFparams().FSort().IsRef() )
+                    retd_list.push_back( m_frame_data[i]->GetFparams().FrameNum());
+                Remove(i);
+            }
+        }//i
+    }
 }
 
-void FrameBuffer::Clean(int fnum)
+void FrameBuffer::Clean(const int fnum)
 {// clean out all frames that have expired
     for (size_t i=0 ; i<m_frame_data.size() ; ++i)
     {
@@ -384,7 +439,7 @@ void FrameBuffer::Clean(int fnum)
     }//i
 }
 
-void FrameBuffer::SetFrameParams( unsigned int fnum )
+void FrameBuffer::SetFrameParams( const unsigned int fnum )
 {    
     // Set the frame parameters, given the GOP set-up and the frame number in display order
     // This function can be ignored by setting the frame parameters directly if required
@@ -398,8 +453,6 @@ void FrameBuffer::SetFrameParams( unsigned int fnum )
         if ( fnum % m_gop_len == 0)
         {
             m_fparams.SetFSort( FrameSort::IntraRefFrameSort());
-            m_fparams.SetFrameType( INTRA_FRAME);
-            m_fparams.SetReferenceType( REFERENCE_FRAME );
 
             // I frame expires after we've coded the next I frame
             m_fparams.SetExpiryTime( m_gop_len );
@@ -407,8 +460,6 @@ void FrameBuffer::SetFrameParams( unsigned int fnum )
         else if (fnum % m_L1_sep == 0)
         {
             m_fparams.SetFSort( FrameSort::InterRefFrameSort());
-            m_fparams.SetFrameType( INTER_FRAME );
-            m_fparams.SetReferenceType( REFERENCE_FRAME );
 
             // Ref the previous I or L1 frame
             m_fparams.Refs().push_back( fnum - m_L1_sep );
@@ -423,32 +474,27 @@ void FrameBuffer::SetFrameParams( unsigned int fnum )
         }
         else
         {
-            m_fparams.SetFSort( FrameSort::InterNonRefFrameSort());
-            m_fparams.SetFrameType( INTER_FRAME );
-            m_fparams.SetReferenceType( NON_REFERENCE_FRAME );
-            // Refs are the next or previous I or L1 frame
-            m_fparams.Refs().push_back((fnum/m_L1_sep)*m_L1_sep);
+            m_fparams.SetFSort( FrameSort::InterRefFrameSort());
+
+            // .. and the previous frame
+            m_fparams.Refs().push_back(fnum-1);
+            // Refs are the next I or L1 frame ...
             m_fparams.Refs().push_back(((fnum/m_L1_sep)+1)*m_L1_sep);
 
-            m_fparams.SetExpiryTime( 1 );  
-            // ( L2 frames could expire directly after being coded, but putting in a delay of 1
-            // allows for frame-skipping to be done, since the frame will still be around to
-            // be used if the next frame is skipped. )
+            m_fparams.SetExpiryTime( 1 );
         }
     }    
     else{        
         if (fnum==0)
         {
             m_fparams.SetFSort( FrameSort::IntraRefFrameSort());
-            m_fparams.SetFrameType( INTRA_FRAME );
-            m_fparams.SetReferenceType( REFERENCE_FRAME );
+
             m_fparams.SetExpiryTime( 1<<30 );//ie never
         }
         else if (fnum % m_L1_sep==0)
         {
             m_fparams.SetFSort( FrameSort::InterRefFrameSort());
-            m_fparams.SetFrameType( INTER_FRAME );
-            m_fparams.SetReferenceType( REFERENCE_FRAME );
+
             m_fparams.Refs().push_back(0);//frame 0 is the I frame
 
             if (fnum != m_L1_sep)//we don't have the first L1 frame    
@@ -460,8 +506,7 @@ void FrameBuffer::SetFrameParams( unsigned int fnum )
         else
         {
             m_fparams.SetFSort( FrameSort::InterNonRefFrameSort());
-            m_fparams.SetFrameType( INTER_FRAME );
-            m_fparams.SetReferenceType( NON_REFERENCE_FRAME );
+
             m_fparams.Refs().push_back((fnum/m_L1_sep)*m_L1_sep);
             m_fparams.Refs().push_back(((fnum/m_L1_sep)+1)*m_L1_sep);
             m_fparams.SetExpiryTime( 1 );    //L2 frames could expire directly after being coded, but putting in a delay of 1

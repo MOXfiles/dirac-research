@@ -105,20 +105,13 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
         AnalyseMEData( *m_me_data );
         if ( m_is_a_cut )
         {
-            my_frame.SetFrameType (INTRA_FRAME);
             if (my_frame.GetFparams().FSort().IsRef())
-            {
-                my_frame.SetFrameSort (FrameSort::IntraNonRefFrameSort());
-                my_frame.SetReferenceType (NON_REFERENCE_FRAME);
-            }
-            else
-            {
                 my_frame.SetFrameSort (FrameSort::IntraRefFrameSort());
-                my_frame.SetReferenceType (REFERENCE_FRAME);
-            }
+            else
+                my_frame.SetFrameSort (FrameSort::IntraNonRefFrameSort());
             
             if ( m_encparams.Verbose() )
-                std::cerr<<std::endl<<"Cut detected and I-frame inserted!";
+                std::cout<<std::endl<<"Cut detected and I-frame inserted!";
         }
 
     }
@@ -227,7 +220,7 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
         }//?fsort
 
          //finally clip the data to keep it in range
-        my_buffer.GetFrame(fnum).Clip();
+        my_buffer.GetFrame( fnum ).Clip();
 
     }//?m_skipped
 
@@ -263,7 +256,7 @@ void FrameCompressor::AnalyseMEData( const MEData& me_data )
                           static_cast<double>( modes.LengthX() * modes.LengthY() );
 
     if ( m_encparams.Verbose() )
-        std::cerr<<std::endl<<m_intra_ratio<<"% of blocks are intra   ";
+        std::cout<<std::endl<<m_intra_ratio<<"% of blocks are intra   ";
 
     // Check the size of SAD errors across reference 1    
     const TwoDArray<MvCostData>& pcosts = me_data.PredCosts( 1 );
