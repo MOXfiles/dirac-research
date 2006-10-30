@@ -92,7 +92,7 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
         // Read the header data first
         SubbandByteIO subband_byteio(bands(b), *p_component_byteio);
         subband_byteio.Input();
-        //std::cerr << "Subband Num=" << b << "Arithdata size=" << subband_byteio.GetBandDataLength() << std::endl;
+        //std::cout << "Subband Num=" << b << "Arithdata size=" << subband_byteio.GetBandDataLength() << std::endl;
 
         if ( !bands(b).Skipped() )
         {

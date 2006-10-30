@@ -417,7 +417,7 @@ namespace dirac
     MVector MvMedian(const std::vector<MVector>& vect_list);
 
     //! Return the mean of two motion vectors
-    MVector MvMean(MVector& mv1,MVector& mv2);
+    MVector MvMean(const MVector& mv1, const MVector& mv2);
 
     //! Return the squared length of a motion vector
     inline int Norm2(const MVector& mv){//L^2 norm of a motion vector
@@ -430,14 +430,10 @@ namespace dirac
     }
 
     //! Return the mean of a set of unsigned integer values
-    inline unsigned int GetMean(std::vector<unsigned int>& values){
-        int sum=0;
-        for (unsigned int I=0;I<values.size();++I)
-            sum+=values[I];
-        sum+=(values.size()>>1);
-        sum/=values.size();
-        return sum;
-    }
+    unsigned int GetUMean(std::vector<unsigned int>& values);
+    
+    //! Return the mean of a set of signed integer values
+    int GetSMean(std::vector<int>& values);
 
 } // namespace dirac
 

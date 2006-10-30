@@ -92,7 +92,7 @@ inline unsigned int MvDataCodec::MBSplitPrediction(const TwoDArray<int> & split_
         nbrs.push_back( split_data[m_mb_yp-1][m_mb_xp-1] ); 
         nbrs.push_back( split_data[m_mb_yp][m_mb_xp-1] ); 
 
-        result = GetMean(nbrs);     
+        result = GetUMean(nbrs);     
     }
     else if (m_mb_xp > 0 && m_mb_yp == 0)
         result = split_data[m_mb_yp][m_mb_xp-1]; 
@@ -242,7 +242,7 @@ inline ValueType MvDataCodec::DCPrediction(const TwoDArray < ValueType > & dcdat
             nbrs.push_back( (unsigned int) dcdata[m_b_yp][m_b_xp-1] ); 
         
         if (nbrs.size() > 0)
-            result = ValueType(GetMean(nbrs));     
+            result = ValueType(GetUMean(nbrs));     
     }
     else if (m_b_xp > 0 && m_b_yp == 0)
     {

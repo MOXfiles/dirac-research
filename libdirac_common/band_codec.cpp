@@ -836,7 +836,13 @@ ValueType IntraDCBandCodec::GetPrediction( const PicArray& data , const int xpos
     if (ypos!=0)
     {
         if (xpos!=0)
-            return (data[ypos][xpos - 1] + data[ypos - 1][xpos - 1] + data[ypos - 1][xpos]) / 3;
+        {
+            int sum = data[ypos][xpos-1] + data[ypos-1][xpos-1] + data[ypos-1][xpos];
+            if (sum>0)
+                return (sum+1)/3;
+            else
+                return -((-sum)+1)/3;
+        }
         else
             return data[ypos - 1][0];
     }

@@ -507,88 +507,161 @@ MVector MvMedian(const MVector& mv1,const MVector& mv2,const MVector& mv3) {
 }
 
 MVector MvMedian(const std::vector<MVector>& vect_list){
-    //more general median. Takes the median of each vector component    
+    //median of 0-3 vectors
+    
+    if ( vect_list.size() == 0 )
+        return 0;
+    else if ( vect_list.size() == 1 )
+        return vect_list[0];
+    else if ( vect_list.size() == 2 )
+        return MvMean( vect_list[0], vect_list[1] );
+    else if ( vect_list.size() == 3 )
+        return MvMedian(vect_list[0], vect_list[1], vect_list[2] );
+    else if ( vect_list.size() == 4 )
+    {
+         MVector tmp_mv(0);
+         MVector max_mv(vect_list[0]);
+         MVector min_mv(vect_list[0]);
+         for (int i=0; i<4; ++i )
+         {
+             tmp_mv.x += vect_list[i].x;
+             max_mv.x=std::max(max_mv.x, vect_list[i].x);
+             min_mv.x=std::min(min_mv.x, vect_list[i].x);
 
-    MVector median;
-    int num_vals=int(vect_list.size());
-    if (num_vals>0)    {
-        int pos=0;
-        std::vector<int> ordered_vals(vect_list.size());
-        //do x first
-        ordered_vals[0]=vect_list[0].x;        
-        for (int I=1;I<num_vals;++I){
-            for (int K=0;K<I;++K){
-                if (vect_list[I].x<ordered_vals[K]){
-                    pos=K;
-                    break;
-                }
-                else
-                    pos=K+1;
-            }//K
-            if (pos==I)
-                ordered_vals[I]=vect_list[I].x;
-            else{
-                for (int K=I-1;K>=pos;--K){
-                    ordered_vals[K+1]=ordered_vals[K];
-                }
-                ordered_vals[pos]=vect_list[I].x;
-            }
-        }//I
-        if (vect_list.size()%2!=0)
-            median.x=ordered_vals[(num_vals-1)/2];
-        else
-            median.x=(ordered_vals[(num_vals/2)-1]+ordered_vals[num_vals/2])/2;
+             tmp_mv.y += vect_list[i].y;
+             max_mv.y=std::max(max_mv.y, vect_list[i].y);
+             min_mv.y=std::min(min_mv.y, vect_list[i].y);            
 
-        //now do y
-        ordered_vals[0]=vect_list[0].y;        
-        for (int I=1;I<num_vals;++I){
-            for (int K=0;K<I;++K){
-                if (vect_list[I].y<ordered_vals[K]){
-                    pos=K;
-                    break;
-                }
-                else
-                    pos=K+1;
-            }//K
-            if (pos==I)
-                ordered_vals[I]=vect_list[I].y;
-            else{
-                for (int K=I-1;K>=pos;--K){
-                    ordered_vals[K+1]=ordered_vals[K];
-                }
-                ordered_vals[pos]=vect_list[I].y;
-            }
-        }//I
-        if (num_vals%2!=0)
-            median.y=ordered_vals[(num_vals-1)/2];
-        else
-            median.y=(ordered_vals[(num_vals/2)-1]+ordered_vals[num_vals/2])/2;        
+         }// i
+         
+         tmp_mv.x -= (max_mv.x+min_mv.x);
+         tmp_mv.y -= (max_mv.y+min_mv.y);
+         
+         tmp_mv.x = (tmp_mv.x+1)>>1;
+         tmp_mv.y = (tmp_mv.y+1)>>1;
 
+         return tmp_mv;    
+             
     }
-    else{
-        median.x=0;
-        median.y=0;
+    else
+    {        
+        MVector median;
+        int num_vals=int(vect_list.size());
+        if (num_vals>0)    {
+            int pos=0;
+            std::vector<int> ordered_vals(vect_list.size());
+            //do x first
+            ordered_vals[0]=vect_list[0].x;        
+            for (int I=1;I<num_vals;++I){
+                for (int K=0;K<I;++K){
+                    if (vect_list[I].x<ordered_vals[K]){
+                        pos=K;
+                        break;
+                    }
+                    else
+                        pos=K+1;
+                }//K
+                if (pos==I)
+                    ordered_vals[I]=vect_list[I].x;
+                else{
+                    for (int K=I-1;K>=pos;--K){
+                        ordered_vals[K+1]=ordered_vals[K];
+                    }
+                    ordered_vals[pos]=vect_list[I].x;
+                }
+            }//I
+            if (vect_list.size()%2!=0)
+                median.x=ordered_vals[(num_vals-1)/2];
+            else
+                median.x=(ordered_vals[(num_vals/2)-1]+ordered_vals[num_vals/2]+1)>>1;
+
+            //now do y
+            ordered_vals[0]=vect_list[0].y;        
+            for (int I=1;I<num_vals;++I){
+                for (int K=0;K<I;++K){
+                    if (vect_list[I].y<ordered_vals[K]){
+                        pos=K;
+                        break;
+                    }
+                    else
+                        pos=K+1;
+                }//K
+                if (pos==I)
+                    ordered_vals[I]=vect_list[I].y;
+                else{
+                    for (int K=I-1;K>=pos;--K){
+                        ordered_vals[K+1]=ordered_vals[K];
+                    }
+                    ordered_vals[pos]=vect_list[I].y;
+                }
+            }//I
+            if (num_vals%2!=0)
+                median.y=ordered_vals[(num_vals-1)/2];
+            else
+                median.y=(ordered_vals[(num_vals/2)-1]+ordered_vals[num_vals/2]+1)>>1;        
+
+        }
+        else{
+            median.x=0;
+            median.y=0;
+        }
+
+        return median;
     }
 
-    return median;
 }
 
-//! Return the mean of two motion vectors
-MVector MvMean(MVector& mv1,MVector& mv2) {
-    //takes median of each vector component    
+
+//! Return the unbiased mean of two motion vectors
+MVector MvMean(const MVector& mv1, const MVector& mv2)
+{
+    //takes mean of each vector component    
     MVector tmp_mv;
 
-    tmp_mv.x=mv1.x;
-    tmp_mv.x+=mv2.x;
-    tmp_mv.x/=2;
+    tmp_mv.x = mv1.x;
+    tmp_mv.x += mv2.x+1;
+    tmp_mv.x >>= 1;
 
-    tmp_mv.y=mv1.y;
-    tmp_mv.y+=mv2.y;
-    tmp_mv.y/=2;
+    tmp_mv.y = mv1.y;
+    tmp_mv.y += mv2.y+1;
+    tmp_mv.y >>= 1;
 
     return tmp_mv;
 }
 
+//! Return the mean of a set of unsigned integer values
+unsigned int GetUMean(std::vector<unsigned int>& values)
+{
+    unsigned int sum=0;
+    for (unsigned int I=0;I<values.size();++I)
+        sum+=values[I];
 
+    sum+=(values.size()>>1);
+    sum/=values.size();
+
+    return sum;
+}
+
+//! Return the mean of a set of signed integer values
+int GetSMean(std::vector<int>& values)
+{
+    int sum=0;
+    for (unsigned int I=0;I<values.size();++I)
+        sum+=values[I];
+    if ( sum>0 )
+    {
+        sum+=(values.size()>>1);
+        sum/=values.size();
+    }
+    else
+    {
+        sum = -sum;
+        sum+=(values.size()>>1);
+        sum/=values.size();
+        sum = -sum;
+    }
+
+    return sum;
+}
 
 } // namespace dirac
