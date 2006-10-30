@@ -77,6 +77,23 @@ namespace dirac {
     void ArithCodecBase::FlushEncoder()
     {
         // Flushes the output
+        for (int i=0; i<16; ++i )
+        {
+            if ( !(m_low_code & CODE_2ND_MSB) || (m_high_code & CODE_2ND_MSB) )
+                break;
+
+            // If we're here, we have high = 10xxxxx and low = 01xxxxx,
+            // so we're straddling 1/2-way point - a condition known as
+            // underflow. We flip the 2nd highest bit. Combined with the
+            // subsequent bitshift, this has the effect of doubling the
+            // [low,high] interval width about 1/2
+            m_underflow += 1;
+            m_low_code  ^= CODE_2ND_MSB;
+            m_high_code ^= CODE_2ND_MSB;
+            ShiftBitOut();
+        }
+        
+      
         m_byteio->OutputBit(m_low_code & CODE_2ND_MSB);
         while ( m_underflow >= 0 ) {
             m_byteio->OutputBit(~m_low_code & CODE_2ND_MSB);
@@ -108,8 +125,8 @@ namespace dirac {
 
        m_decode_data_ptr = new char[num_bytes+2];
        m_byteio->InputBytes( m_decode_data_ptr , num_bytes );
-       m_decode_data_ptr[num_bytes] = 0;
-       m_decode_data_ptr[num_bytes+1] = 0;
+       m_decode_data_ptr[num_bytes] = 255;
+       m_decode_data_ptr[num_bytes+1] = 255;
 
        m_data_ptr = m_decode_data_ptr;
     }
