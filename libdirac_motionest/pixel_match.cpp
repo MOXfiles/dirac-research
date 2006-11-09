@@ -260,10 +260,7 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
     m_cand_list.clear();
     MVector zero_mv( 0 , 0 );    
 
-    if (m_level<m_depth)
-        AddNewVlist( m_cand_list , zero_mv , m_xr , m_yr);
-    else
-        AddNewVlistD( m_cand_list , zero_mv , m_xr , m_yr);
+    AddNewVlist( m_cand_list , zero_mv , m_xr , m_yr);
 
     // Now loop over the blocks and find the best matches. 
     // The loop is unrolled because predictions are different at picture edges.
@@ -328,13 +325,15 @@ void PixelMatcher::DoBlock(const int xpos, const int ypos ,
 
     // Use guide from lower down if one exists
     if ( m_level<m_depth )
-        AddNewVlist( m_cand_list , guide_array[ BChk(ypos>>1, guide_array.LengthY()) ][ BChk(xpos>>1, guide_array.LengthX()) ] * 2 , m_xr , m_yr );
+    {
+        int xdown = BChk(xpos>>1, guide_array.LengthX());
+        int ydown = BChk(ypos>>1, guide_array.LengthY());
+        AddNewVlist( m_cand_list , guide_array[ydown][xdown] * 2 , m_xr , m_yr );
+
+    }
 
     // use the spatial prediction, also, as a guide
-    if (m_level<m_depth)
-        AddNewVlist( m_cand_list , m_mv_prediction , m_xr , m_yr);
-    else
-        AddNewVlistD( m_cand_list , m_mv_prediction , m_xr , m_yr);
+    AddNewVlist( m_cand_list , m_mv_prediction , m_xr , m_yr);
 
     // Find the best motion vector //
     /////////////////////////////////

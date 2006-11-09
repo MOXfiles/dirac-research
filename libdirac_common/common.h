@@ -340,8 +340,8 @@ namespace dirac
     class CostType
     {
     public:
-        //! The Mean Square Error    
-        double MSE;
+        //! The error (MSE or 4th power)
+        double Error;
         
         //! The entropy in bits per symbol.
         double ENTROPY;
@@ -877,6 +877,9 @@ namespace dirac
         //! Returns the number of the frame (in time order)
         int FrameNum() const {return m_fnum;}
         
+        //! Returns whether the frame is bi-directionally predicted by checking references
+        bool IsBFrame() const;
+        
         //! Returns the number of frames after the current frame number after which the frame can be discarded
         int ExpiryTime() const {return m_expiry_time;}
         
@@ -1326,9 +1329,6 @@ namespace dirac
 
         //! Return the Lagrangian parameter to be used for L2 frames
         float L2Lambda() const {return m_L2_lambda;}
-
-        //! Return the Lagrangian parameter to be used for frames
-        float Lambda(const FrameSort& fsort) const;
 
         //! Return the Lagrangian ME parameter to be used for L1 frames
         float L1MELambda() const {return m_L1_me_lambda;}

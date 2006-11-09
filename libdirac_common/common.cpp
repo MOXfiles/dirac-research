@@ -570,18 +570,6 @@ EncoderParams::EncoderParams(const VideoFormat& video_format,
         SetDefaultEncoderParameters(*this);
 }
 
-float EncoderParams::Lambda(const FrameSort& fsort) const
-{
-    if (fsort.IsIntra())
-        return ILambda();
-    else if (fsort.IsInterRef())
-        return L1Lambda();
-    else
-        return L2Lambda();
-}
-
-
-
 void EncoderParams::SetLambda(const FrameSort& fsort, const float l)
 {
     if (fsort.IsIntra())
@@ -920,6 +908,22 @@ FrameParams::FrameParams(const SeqParams& sparams, const FrameSort& fs):
         m_chroma_xl = m_xl;
         m_chroma_yl = m_yl;
     }
+}
+
+bool FrameParams::IsBFrame() const
+{
+    bool is_B_frame( false );
+       
+    if ( m_refs.size() == 2 )        
+    {
+        if ( m_refs[0] < m_fnum && m_refs[1] > m_fnum )
+            is_B_frame = true;
+
+        if ( m_refs[0] > m_fnum && m_refs[1] < m_fnum )
+            is_B_frame = true;
+    }  
+
+    return is_B_frame;        
 }
 
 void FrameParams::SetFSort( const FrameSort& fs )

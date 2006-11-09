@@ -383,8 +383,8 @@ void QuantChooser::LagrangianCalc(const CodeBlock& code_block , const int block_
     for ( int q=m_bottom_idx ; q<=m_top_idx ; q += m_index_step )
     {
 
-        m_costs[block_idx][q].MSE = m_error_total[block_idx][q]/vol;
-        m_costs[block_idx][q].MSE = std::sqrt( m_costs[block_idx][q].MSE )/( code_block.Wt()*code_block.Wt() );
+        m_costs[block_idx][q].Error = m_error_total[block_idx][q]/vol;
+        m_costs[block_idx][q].Error = std::sqrt( m_costs[block_idx][q].Error )/( code_block.Wt()*code_block.Wt() );
 
         // Calculate probabilities and entropy
         p0 = double( m_count0[block_idx][q] )/ double( m_count0[block_idx][q]+m_count1[block_idx] );
@@ -420,7 +420,7 @@ void QuantChooser::LagrangianCalc(const CodeBlock& code_block , const int block_
 
         // Sort out correction factors
         m_costs[block_idx][q].ENTROPY *= m_entropy_correctionfactor;
-        m_costs[block_idx][q].TOTAL = m_costs[block_idx][q].MSE+m_lambda*m_costs[block_idx][q].ENTROPY;
+        m_costs[block_idx][q].TOTAL = m_costs[block_idx][q].Error+m_lambda*m_costs[block_idx][q].ENTROPY;
 
     }// q
 }
@@ -475,7 +475,7 @@ void QuantChooser::SelectBestQuant()
         for (int block_idx=0 ; block_idx<m_costs.LengthY() ; ++block_idx)
         {
             entropy_total += m_costs[block_idx][q].ENTROPY * m_count1[block_idx];
-            error_total += m_costs[block_idx][q].MSE * m_count1[block_idx];
+            error_total += m_costs[block_idx][q].Error * m_count1[block_idx];
             vol += m_count1[block_idx];
         }
 

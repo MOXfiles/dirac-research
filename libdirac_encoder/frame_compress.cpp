@@ -202,9 +202,12 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
         p_transform_byteio->Output();
 
         //code component data
-        p_transform_byteio->AddComponent( my_compcoder.Compress( my_buffer.GetComponent( fnum , Y_COMP) ) );
-        p_transform_byteio->AddComponent( my_compcoder.Compress( my_buffer.GetComponent( fnum , U_COMP) ) );
-        p_transform_byteio->AddComponent( my_compcoder.Compress( my_buffer.GetComponent( fnum , V_COMP) ) );
+        p_transform_byteio->AddComponent( my_compcoder.Compress( 
+                                          my_buffer.GetComponent( fnum , Y_COMP), m_intra_ratio ) );
+        p_transform_byteio->AddComponent( my_compcoder.Compress( 
+                                          my_buffer.GetComponent( fnum , U_COMP), m_intra_ratio ) );
+        p_transform_byteio->AddComponent( my_compcoder.Compress( 
+                                          my_buffer.GetComponent( fnum , V_COMP), m_intra_ratio ) );
 
         //motion compensate again if necessary
         if (fsort.IsInter() )

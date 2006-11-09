@@ -98,6 +98,18 @@ namespace dirac
 
         //! A reference to the sequence parameters
         const SeqParams& m_sparams;
+        
+        //! The overall average Y quality
+        long double m_totalquality_averageY;
+
+        //! The overall average U quality
+        long double m_totalquality_averageU;
+
+        //! The overall average V quality
+        long double m_totalquality_averageV;
+
+        //! The total number of frames coded
+        int m_allframe_total;        
 
         //! The average Y quality for the frame types
         OneDArray<long double> m_quality_averageY;

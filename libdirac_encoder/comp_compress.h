@@ -71,7 +71,7 @@ namespace dirac
             \param  pic_data    the component data to be compressed
             \return Frame-componentin Dirac-bytestream format
         */
-        ComponentByteIO* Compress(PicArray & pic_data);
+        ComponentByteIO* Compress(PicArray & pic_data, const double intra_ratio);
 
     private:
         //! Copy constructor is private and body-less. This class should not be copied.
@@ -79,6 +79,11 @@ namespace dirac
 
         //! Assignment = is private and body-less. This class should not be assigned.
         CompCompressor& operator=(const CompCompressor& rhs);
+
+
+        //! Sets the value m_lambda according to frame and component type
+        void SetCompLambda( const double intra_ratio );
+
 
         void SelectQuantisers( PicArray& pic_data , 
                                SubbandList& bands ,

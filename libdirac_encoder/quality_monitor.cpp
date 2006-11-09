@@ -63,18 +63,19 @@ void QualityMonitor::ResetAll()
 
     if ( !m_encparams.Lossless() )
     {
-        //m_encparams.SetLambda( FrameSort::IntraRefFrameSort() , std::pow( 10.0 , (10.0-m_encparams.Qf() )/2.5 ) );
-        // FIXME - testing for true 8-bit depth
-        m_encparams.SetLambda( FrameSort::IntraRefFrameSort() , std::pow( 10.0 , (10.0-m_encparams.Qf() )/2.5 )/16.0 );
-        m_encparams.SetLambda( FrameSort::InterRefFrameSort() , m_encparams.ILambda()*128.0 );
-        m_encparams.SetLambda( FrameSort::InterNonRefFrameSort() , m_encparams.ILambda()*512.0 );
+        m_encparams.SetILambda( std::pow( 10.0 , (10.0-m_encparams.Qf() )/2.5 )/16.0 );
+
+        m_encparams.SetL1Lambda( m_encparams.ILambda()*32.0 );
+
+        m_encparams.SetL2Lambda( m_encparams.ILambda()*256.0 );
 
 
         // Set the lambdas for motion estimation
         const double me_ratio = 2.0;
 
+        // Use the same ME lambda for L1 and L2 frames
         m_encparams.SetL1MELambda( std::sqrt(m_encparams.L1Lambda())*me_ratio );
-        m_encparams.SetL2MELambda( std::sqrt(m_encparams.L2Lambda())*me_ratio );
+        m_encparams.SetL2MELambda( std::sqrt(m_encparams.L1Lambda())*me_ratio );
 
         for (int i=0; i<3 ; ++i )
         {
@@ -83,6 +84,10 @@ void QualityMonitor::ResetAll()
             m_quality_averageV[i] = 0.0;
             m_frame_total[i] = 0;
         }// i
+        m_totalquality_averageY = 0.0;
+        m_totalquality_averageU = 0.0;
+        m_totalquality_averageV = 0.0;
+        m_allframe_total = 0;
     }
     else
     {
@@ -97,36 +102,49 @@ void QualityMonitor::ResetAll()
 
 void QualityMonitor::WriteLog()
 {
-    std::cerr<<std::endl<<"Mean PSNR values by frame type and component";
-    std::cerr<<std::endl<<"--------------------------------------------";
-    std::cerr<<std::endl;
+    std::cout<<std::endl<<"Overall mean PSNR values";
+    std::cout<<std::endl<<"------------------------";
+    std::cout<<std::endl<<"Y: ";
+    std::cout.width(5);std::cout.precision(4);
+    std::cout<<m_totalquality_averageY/m_allframe_total<<std::endl;
+    std::cout<<std::endl<<"U: ";
+    std::cout.width(5);std::cout.precision(4);
+    std::cout<<m_totalquality_averageU/m_allframe_total<<std::endl;
+    std::cout<<std::endl<<"V: ";
+    std::cout.width(5);std::cout.precision(4);
+    std::cout<<m_totalquality_averageV/m_allframe_total<<std::endl;
+
+     
+    std::cout<<std::endl<<"Mean PSNR values by frame type and component";
+    std::cout<<std::endl<<"--------------------------------------------";
+    std::cout<<std::endl;
     
-    std::cerr<<std::endl<<"                 ||       Y       ||       U       ||       V       ||";
-    std::cerr<<std::endl<<"=================||===================================================";
-    std::cerr<<std::endl<<"           Intra ||     ";
-    std::cerr.width(5);std::cerr.precision(4);
-    std::cerr<<m_quality_averageY[0]/m_frame_total[0]<<"     ||     ";
-    std::cerr.width(5);std::cerr.precision(4);
-    std::cerr<<m_quality_averageU[0]/m_frame_total[0]<<"     ||     ";
-    std::cerr.width(5);std::cerr.precision(4);
-    std::cerr<<m_quality_averageV[0]/m_frame_total[0]<<"     ||    ";
-    std::cerr<<std::endl<<"-----------------||---------------------------------------------------";
-    std::cerr<<std::endl<<"       Inter Ref ||     ";
-    std::cerr.width(5);std::cerr.precision(4);
-    std::cerr<<m_quality_averageY[1]/m_frame_total[1]<<"     ||     ";
-    std::cerr.width(5);std::cerr.precision(4);
-    std::cerr<<m_quality_averageU[1]/m_frame_total[1]<<"     ||     ";
-    std::cerr.width(5);std::cerr.precision(4);
-    std::cerr<<m_quality_averageV[1]/m_frame_total[1]<<"     ||    ";
-    std::cerr<<std::endl<<"-----------------||---------------------------------------------------";
-    std::cerr<<std::endl<<"   Inter Non Ref ||     ";
-    std::cerr.width(5);std::cerr.precision(4);
-    std::cerr<<m_quality_averageY[2]/m_frame_total[2]<<"     ||     ";
-    std::cerr.width(5);std::cerr.precision(4);
-    std::cerr<<m_quality_averageU[2]/m_frame_total[2]<<"     ||     ";
-    std::cerr.width(5);std::cerr.precision(4);
-    std::cerr<<m_quality_averageV[2]/m_frame_total[2]<<"     ||     ";
-    std::cerr<<std::endl<<"-----------------||---------------------------------------------------";
+    std::cout<<std::endl<<"                 ||       Y       ||       U       ||       V       ||";
+    std::cout<<std::endl<<"=================||===================================================";
+    std::cout<<std::endl<<"           Intra ||     ";
+    std::cout.width(5);std::cout.precision(4);
+    std::cout<<m_quality_averageY[0]/m_frame_total[0]<<"     ||     ";
+    std::cout.width(5);std::cout.precision(4);
+    std::cout<<m_quality_averageU[0]/m_frame_total[0]<<"     ||     ";
+    std::cout.width(5);std::cout.precision(4);
+    std::cout<<m_quality_averageV[0]/m_frame_total[0]<<"     ||    ";
+    std::cout<<std::endl<<"-----------------||---------------------------------------------------";
+    std::cout<<std::endl<<"       Inter Ref ||     ";
+    std::cout.width(5);std::cout.precision(4);
+    std::cout<<m_quality_averageY[1]/m_frame_total[1]<<"     ||     ";
+    std::cout.width(5);std::cout.precision(4);
+    std::cout<<m_quality_averageU[1]/m_frame_total[1]<<"     ||     ";
+    std::cout.width(5);std::cout.precision(4);
+    std::cout<<m_quality_averageV[1]/m_frame_total[1]<<"     ||    ";
+    std::cout<<std::endl<<"-----------------||---------------------------------------------------";
+    std::cout<<std::endl<<"   Inter Non Ref ||     ";
+    std::cout.width(5);std::cout.precision(4);
+    std::cout<<m_quality_averageY[2]/m_frame_total[2]<<"     ||     ";
+    std::cout.width(5);std::cout.precision(4);
+    std::cout<<m_quality_averageU[2]/m_frame_total[2]<<"     ||     ";
+    std::cout.width(5);std::cout.precision(4);
+    std::cout<<m_quality_averageV[2]/m_frame_total[2]<<"     ||     ";
+    std::cout<<std::endl<<"-----------------||---------------------------------------------------";
 }
 
 void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame )
@@ -134,10 +152,29 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
     const FrameSort& fsort = ld_frame.GetFparams().FSort();    
     int idx = fsort.IsIntra() ? 0 : (fsort.IsRef() ? 1 : 2);
 
-    m_quality_averageY[idx] += QualityVal( ld_frame.Ydata() , orig_frame.Ydata(), m_sparams.Xl(), m_sparams.Yl() );
-    m_quality_averageU[idx] += QualityVal( ld_frame.Udata() , orig_frame.Udata(), m_sparams.ChromaWidth(), m_sparams.ChromaHeight() );
-    m_quality_averageV[idx] += QualityVal( ld_frame.Vdata() , orig_frame.Vdata(), m_sparams.ChromaWidth(), m_sparams.ChromaHeight() );
+    double fqualityY, fqualityU, fqualityV;
+    
+    fqualityY = QualityVal( ld_frame.Ydata() , orig_frame.Ydata(), 
+                            m_sparams.Xl(), m_sparams.Yl() );
+    m_quality_averageY[idx] += fqualityY;
+    m_totalquality_averageY += fqualityY;
+
+    fqualityU = QualityVal( ld_frame.Udata() , orig_frame.Udata(), 
+                          m_sparams.ChromaWidth(), m_sparams.ChromaHeight() );
+    m_quality_averageU[idx] += fqualityU;
+    m_totalquality_averageU += fqualityU;    
+
+    fqualityV = QualityVal( ld_frame.Vdata() , orig_frame.Vdata(), 
+                          m_sparams.ChromaWidth(), m_sparams.ChromaHeight() );
+    m_quality_averageV[idx] += fqualityV;
+    m_totalquality_averageV += fqualityV;    
+
     m_frame_total[idx]++;
+    m_allframe_total++;
+    
+    std::cout<<std::endl<<"Frame PSNR: Y="<<fqualityY;
+    std::cout<<", U="<<fqualityU;
+    std::cout<<", V="<<fqualityV;
 
 }
 

@@ -66,10 +66,10 @@ void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
     const std::vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();
 
     const int num_refs = refs.size();
-    if ( fparams.FSort().IsRef())
-        lambda = m_encparams.L1MELambda();
-    else
+    if ( fparams.IsBFrame())
         lambda = m_encparams.L2MELambda();
+    else
+        lambda = m_encparams.L1MELambda();
 
     // Set up the lambda to be used
     me_data.SetLambdaMap( num_refs , lambda );

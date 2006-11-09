@@ -61,7 +61,7 @@ CompCompressor::CompCompressor( EncoderParams& encp,const FrameParams& fp)
   m_cformat( m_fparams.CFormat() )
 {}
 
-ComponentByteIO* CompCompressor::Compress(PicArray& pic_data)
+ComponentByteIO* CompCompressor::Compress(PicArray& pic_data, const double intra_ratio)
 {
     //need to transform, select quantisers for each band, and then compress each component in turn
     m_csort=pic_data.CSort();    
@@ -74,13 +74,7 @@ ComponentByteIO* CompCompressor::Compress(PicArray& pic_data)
     Subband node;
 
     //set up Lagrangian params    
-
-    m_lambda= m_encparams.Lambda( m_fsort );
-
-    if (m_csort == U_COMP)
-        m_lambda*= m_encparams.UFactor();
-    if (m_csort == V_COMP) 
-        m_lambda*= m_encparams.VFactor();
+    SetCompLambda( intra_ratio );
 
     WaveletTransform wtransform( depth , m_encparams.TransformFilter() );
     wtransform.Transform( FORWARD , pic_data );
@@ -130,14 +124,7 @@ ComponentByteIO* CompCompressor::Compress(PicArray& pic_data)
         }
         else
         {   // ... skipped
-#if 0
-            if (b == bands.Length() && m_fsort.IsIntra())
-                SetToVal( pic_data , bands(b) , wtransform.GetMeanDCVal() );
-            else
-                SetToVal( pic_data , bands(b) , 0 );
-#else
             SetToVal( pic_data , bands(b) , 0 );
-#endif
         }
        
             // output sub-band data
@@ -153,6 +140,34 @@ ComponentByteIO* CompCompressor::Compress(PicArray& pic_data)
     }
 
     return p_component_byteio;
+}
+
+void CompCompressor::SetCompLambda( const double intra_ratio )
+{
+    if ( m_fsort.IsIntra() )
+    {
+        m_lambda= m_encparams.ILambda();
+    }
+    else
+    {        
+        double log_intra_lambda = std::log10( m_encparams.ILambda() );
+        double log_frame_lambda;
+        
+        if (m_fparams.IsBFrame() ) 
+            log_frame_lambda= std::log10( m_encparams.L2Lambda() );
+        else
+            log_frame_lambda= std::log10( m_encparams.L1Lambda() );
+
+
+        m_lambda= std::pow(10.0, ( (intra_ratio*log_intra_lambda+
+                           (100.0-intra_ratio)*log_frame_lambda )/100.0) );
+    }
+
+
+    if (m_csort == U_COMP)
+        m_lambda*= m_encparams.UFactor();
+    if (m_csort == V_COMP) 
+        m_lambda*= m_encparams.VFactor();
 }
 
 #if 0

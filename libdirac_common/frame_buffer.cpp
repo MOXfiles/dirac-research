@@ -472,6 +472,17 @@ void FrameBuffer::SetFrameParams( const unsigned int fnum )
             // Expires after the next L1 or I frame            
             m_fparams.SetExpiryTime( m_L1_sep );
         }
+        else if ((fnum+1) % m_L1_sep == 0)
+        {
+            m_fparams.SetFSort( FrameSort::InterNonRefFrameSort());
+
+            // .. and the previous frame
+            m_fparams.Refs().push_back(fnum-1);
+            // Refs are the next I or L1 frame ...
+            m_fparams.Refs().push_back(fnum+1);
+
+            m_fparams.SetExpiryTime( 1 );
+        }
         else
         {
             m_fparams.SetFSort( FrameSort::InterRefFrameSort());
@@ -483,6 +494,7 @@ void FrameBuffer::SetFrameParams( const unsigned int fnum )
 
             m_fparams.SetExpiryTime( 1 );
         }
+ 
     }    
     else{        
         if (fnum==0)
