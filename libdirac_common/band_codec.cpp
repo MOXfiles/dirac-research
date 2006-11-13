@@ -50,8 +50,10 @@ using namespace dirac;
 BandCodec::BandCodec(SubbandByteIO* subband_byteio,
                      size_t number_of_contexts,
                      const SubbandList & band_list,
-                     int band_num):
+                     int band_num,
+                     const bool is_intra):
     ArithCodec<PicArray>(subband_byteio,number_of_contexts),
+    m_is_intra(is_intra),
     m_bnum(band_num),
     m_node(band_list(band_num)),
     m_last_qf_idx(m_node.QIndex()),
@@ -144,7 +146,10 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
+    if (m_is_intra)
+        m_offset =  dirac_quantiser_lists.IntraQuantOffset4( qf_idx );
+    else
+        m_offset =  dirac_quantiser_lists.InterQuantOffset4( qf_idx );
 
     for ( int ypos=ybeg; ypos<yend ;++ypos)
     {
@@ -218,7 +223,7 @@ inline void BandCodec::CodeVal( PicArray& in_data ,
     {
         // Must code sign bits and reconstruct
         in_data[ypos][xpos] *= m_qf;
-        in_data[ypos][xpos] += m_offset;
+        in_data[ypos][xpos] += m_offset+2;
         in_data[ypos][xpos] >>= 2;
 
         if ( val>0 )
@@ -331,7 +336,11 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
+    
+    if (m_is_intra)
+        m_offset =  dirac_quantiser_lists.IntraQuantOffset4( qf_idx );
+    else
+        m_offset =  dirac_quantiser_lists.InterQuantOffset4( qf_idx );
 
     //Work
     
@@ -398,7 +407,7 @@ inline void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const in
     if ( out_pixel )
     {
         out_pixel *= m_qf;
-        out_pixel += m_offset;
+        out_pixel += m_offset+2;
         out_pixel >>= 2;
      
         if ( DecodeSymbol( ChooseSignContext(out_data, xpos, ypos)) )
@@ -594,7 +603,11 @@ void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_dat
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
+    
+    if (m_is_intra)
+        m_offset =  dirac_quantiser_lists.IntraQuantOffset4( qf_idx );
+    else
+        m_offset =  dirac_quantiser_lists.InterQuantOffset4( qf_idx );
 
     for ( int ypos=ybeg ; ypos<yend ; ++ypos )
     {        
@@ -668,8 +681,11 @@ void LFBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
-
+    if (m_is_intra)
+        m_offset =  dirac_quantiser_lists.IntraQuantOffset4( qf_idx );
+    else
+        m_offset =  dirac_quantiser_lists.InterQuantOffset4( qf_idx );
+        
     //Work
     
     for ( int ypos=ybeg ; ypos<yend ; ++ypos )
@@ -741,7 +757,8 @@ void IntraDCBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& i
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
+
+    m_offset =  dirac_quantiser_lists.IntraQuantOffset4( qf_idx );
 
     for ( int ypos=ybeg ; ypos < yend; ++ypos )
     {
@@ -805,7 +822,8 @@ void IntraDCBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray&
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    m_offset =  dirac_quantiser_lists.QuantOffset4( qf_idx );
+    
+    m_offset =  dirac_quantiser_lists.IntraQuantOffset4( qf_idx );
 
     //Work
     

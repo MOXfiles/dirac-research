@@ -72,7 +72,8 @@ namespace dirac
         BandCodec(SubbandByteIO* subband_byteio,
                   size_t number_of_contexts,
                   const SubbandList& band_list,
-                  int band_num);
+                  int band_num,
+                  const bool is_intra);
 
         //! Initialise the contexts according to predefined counts.
         void InitContexts();
@@ -123,6 +124,10 @@ namespace dirac
         BandCodec& operator=(const BandCodec& rhs);
 
     protected:
+              
+        //! Flag indicating whether the band comes from an intra frame
+        bool m_is_intra;
+    
         //! variables    
         int m_bnum;
 
@@ -183,8 +188,10 @@ namespace dirac
         LFBandCodec(SubbandByteIO* subband_byteio,
                     size_t number_of_contexts,
                     const SubbandList& band_list,
-                    int band_num)
-                    : BandCodec(subband_byteio,number_of_contexts,band_list,band_num){}
+                    int band_num,
+                    const bool is_intra)
+                    : BandCodec(subband_byteio,number_of_contexts,band_list,
+                                band_num,is_intra){}
 
     private:
         // Overridden from the base class
@@ -225,7 +232,8 @@ namespace dirac
         IntraDCBandCodec(SubbandByteIO* subband_byteio,
                          size_t number_of_contexts,
                          const SubbandList& band_list)
-          : BandCodec(subband_byteio,number_of_contexts,band_list,band_list.Length()){}
+          : BandCodec(subband_byteio,number_of_contexts,band_list,
+                      band_list.Length(), true){}
 
     
     private:

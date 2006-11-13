@@ -285,7 +285,7 @@ void QuantChooser::IntegralErrorCalc( const CodeBlock& code_block ,
                 m_count0[block_idx][q] += quant_val;
                 // Multiply back up so that we can quantise again in the next loop step
                 quant_val <<= (q>>2)+2;
-                quant_val += dirac_quantiser_lists.QuantOffset4( q );
+                quant_val += dirac_quantiser_lists.InterQuantOffset4( q )+2;
                 quant_val >>= 2;
                 if (val>0)
                     m_countPOS[block_idx][q]++;
@@ -350,7 +350,7 @@ void QuantChooser::NonIntegralErrorCalc( const CodeBlock& code_block , const int
 
                  m_count0[block_idx][q] += quant_val;
                  quant_val *= dirac_quantiser_lists.QuantFactor4( q );
-                 quant_val += dirac_quantiser_lists.QuantOffset4( q );
+                 quant_val += dirac_quantiser_lists.InterQuantOffset4( q )+2;
                  quant_val >>= 2;
 
                  if ( val>0 )

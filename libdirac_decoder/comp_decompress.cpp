@@ -99,12 +99,15 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
             if ( b>=bands.Length()-3)
             {
                 if ( fsort.IsIntra() && b==bands.Length() )
-                    bdecoder=new IntraDCBandCodec(&subband_byteio, TOTAL_COEFF_CTXS ,bands);
+                    bdecoder=new IntraDCBandCodec(&subband_byteio, 
+                                                   TOTAL_COEFF_CTXS ,bands);
                 else
-                    bdecoder=new LFBandCodec( &subband_byteio , TOTAL_COEFF_CTXS ,bands , b);
+                    bdecoder=new LFBandCodec(&subband_byteio , TOTAL_COEFF_CTXS,
+                                             bands , b, fsort.IsIntra());
             }
             else
-                bdecoder=new BandCodec( &subband_byteio , TOTAL_COEFF_CTXS , bands , b);
+                bdecoder=new BandCodec( &subband_byteio , TOTAL_COEFF_CTXS ,
+                                        bands , b, fsort.IsIntra());
 
             bdecoder->InitContexts();
             bdecoder->Decompress(pic_data , subband_byteio.GetBandDataLength());

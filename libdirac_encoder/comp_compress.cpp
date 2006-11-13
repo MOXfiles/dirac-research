@@ -108,12 +108,15 @@ ComponentByteIO* CompCompressor::Compress(PicArray& pic_data, const double intra
             if (b >= bands.Length()-3)
             {
                 if ( m_fsort.IsIntra() && b == bands.Length() )
-                    bcoder=new IntraDCBandCodec(&subband_byteio, TOTAL_COEFF_CTXS , bands );
+                    bcoder=new IntraDCBandCodec(&subband_byteio, 
+                                                TOTAL_COEFF_CTXS , bands );
                 else
-                    bcoder=new LFBandCodec(&subband_byteio ,TOTAL_COEFF_CTXS, bands , b);
+                    bcoder=new LFBandCodec(&subband_byteio ,TOTAL_COEFF_CTXS, 
+                                           bands , b, m_fsort.IsIntra());
             }
             else
-                bcoder=new BandCodec(&subband_byteio , TOTAL_COEFF_CTXS , bands , b);
+                bcoder=new BandCodec(&subband_byteio , TOTAL_COEFF_CTXS , 
+                                     bands , b, m_fsort.IsIntra() );
 
             num_band_bytes = bcoder->Compress(pic_data);
 

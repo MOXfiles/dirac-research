@@ -965,13 +965,43 @@ QuantiserLists::QuantiserLists()
     // FIXME: hardcode m_max_qindex to 96. In future this will depend on level
     m_max_qindex( 96 ),  
     m_qflist4( m_max_qindex+1 ),
-    m_offset4( m_max_qindex+1 )
+    m_intra_offset4( m_max_qindex+1 ),
+    m_inter_offset4( m_max_qindex+1 )
 {
-    for (unsigned int i=0; i<=m_max_qindex; ++i)
+    int base;
+    
+    m_qflist4[0] = 4;
+    m_qflist4[1] = 5;
+    m_intra_offset4[0] = 1;
+    m_inter_offset4[0] = 1;
+    m_intra_offset4[1] = 2;
+    m_inter_offset4[1] = 2;
+    
+    for (unsigned int q=2; q<=m_max_qindex; ++q)
     {
-        m_qflist4[i] = int( std::pow(2.0, 2.0+double(i)/4.0) + 0.5 );
-        m_offset4[i] = int( double( m_qflist4[i]*0.375) + 0.5 );
-    }// i
+        base = (1<<(q/4));
+
+        switch (q%4)
+        {
+            case 0: 
+                 m_qflist4[q] = 4*base;
+                 break;
+            case 1: 
+                 m_qflist4[q] = (78892*base+8292)/16585;
+                 break;
+            case 2: 
+                 m_qflist4[q] = (228486*base+20195)/40391;
+                 break;
+            case 3: 
+                 m_qflist4[q] = (440253*base+32722)/65444;
+                 break;
+            default: //Default case never used
+                 m_qflist4[q] = 4; 
+        }
+        
+        m_intra_offset4[q] = (m_qflist4[q]+1)>>1;
+        m_inter_offset4[q] = (3*m_qflist4[q]+4)>>3;
+    }// q
 }
 
 namespace dirac 

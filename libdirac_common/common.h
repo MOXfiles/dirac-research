@@ -1508,8 +1508,10 @@ namespace dirac
         //! Returns 4 times the quantisation factor
         inline int QuantFactor4( const int index ) const {return m_qflist4[index]; }
 
-        //! Returns the quantisation offset for non-zero values
-        inline int QuantOffset4( const int index ) const {return m_offset4[index]; }
+        //! Returns the intra frame quantisation offset for non-zero values
+        inline int IntraQuantOffset4( const int index ) const {return m_intra_offset4[index]; }
+        //! Returns the inter frame quantisation offset for non-zero values
+        inline int InterQuantOffset4( const int index ) const {return m_inter_offset4[index]; }
 
         //! Returns the maximum quantiser index supported
         inline int MaxQIndex() const {return m_max_qindex; }
@@ -1518,7 +1520,8 @@ namespace dirac
     private:
         unsigned int m_max_qindex;
         OneDArray<int> m_qflist4;
-        OneDArray<int> m_offset4;
+        OneDArray<int> m_intra_offset4;
+        OneDArray<int> m_inter_offset4;
 
     };
 
