@@ -1,3 +1,663 @@
+2006-11-13 09:41  tjdwave
+
+	* libdirac_common/band_codec.cpp, libdirac_common/band_codec.h,
+	  libdirac_common/common.cpp, libdirac_common/common.h,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/quant_chooser.cpp: Changed quantiser offsets to
+	  be different for Intra and Inter frames, as per the latest draft
+	  of the spec. Having an offset of 0.5*quantiser for intra frames
+	  improves performance at high rate, especially iterated coding
+	  with Dirac Pro apps.
+
+2006-11-09 12:11  tjdwave
+
+	* doc/latex_spec/: arith-encoder.tex, arith.tex,
+	  layout-fullsize.tex, low-delay.tex, mc.tex, motion-dec.tex,
+	  profilelevel.tex, spec-conventions.tex, spec-structure.tex,
+	  wlt-dec.tex: Added more text on the low-delay syntax and decoded
+	  picture buffer model.  Clarified arithmetic decoding process and
+	  conventions.
+
+2006-11-09 11:30  tjdwave
+
+	* libdirac_common/common.cpp, libdirac_common/common.h,
+	  libdirac_common/frame_buffer.cpp,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/comp_compress.h,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/quality_monitor.cpp,
+	  libdirac_encoder/quality_monitor.h,
+	  libdirac_encoder/quant_chooser.cpp,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/pixel_match.cpp: Overall improvements to
+	  encoding framework to improve quality for difficult pictures and
+	  at low bit rates. Changes to the RDO parameters are experimental
+	  and they may change again.
+
+	  - Added test for whether a frame is a B frame or not - Identified
+	  Layer 1 frames with P frames and Layer 2 with B frames, rather
+	  than with Inter Ref and Inter Non-ref respectively. This is more
+	  efficient with the new GOP structure - Modified RDO framework to
+	  provide correction where there has been ME failure i.e. lots of
+	  Intra blocks - Slightly increased ME search areas - Corrected the
+	  frame type parameter for the final B frame in a sequence -
+	  Changed confusing terminology for costs/errors in quantisation
+	  factor selection - Added overall PSNR stats for a sequence for
+	  performance comparisons
+
+2006-10-30 15:17  tjdwave
+
+	* doc/latex_spec/: arith.tex, dataenc.tex, motion-dec.tex,
+	  wlt-dec.tex: Fixed bug in specification of inverse quantisation.
+	  Changed default arithmetic decoding padding value to 1 from 0, so
+	  after reading in LENGTH bytes, a value of 1 is used from that
+	  point. This should support early termination i.e.  encode only
+	  the first few values in a subband and then the decoder will
+	  correctly decode the remainder as 0, but this is as yet untested.
+
+2006-10-30 14:57  tjdwave
+
+	* libdirac_common/arith_codec.cpp: Fixed bug so that the decoder
+	  can now append any data to the end of the arithmetically encoded
+	  block and still decode correctly. Default padding data is all 1s
+	  - this should make a null or terminated subband decode with
+	  zeroes.
+
+2006-10-30 13:42  tjdwave
+
+	* libdirac_common/band_codec.cpp, libdirac_common/motion.cpp,
+	  libdirac_common/motion.h, libdirac_common/mv_codec.cpp,
+	  libdirac_decoder/comp_decompress.cpp: Fixed definitions of
+	  mean/median so that unbiased mean values are used.  Likewise
+	  changed the prediction for DC values to take account of the fact
+	  that they may be negative. These changes change the bitstream.
+
+2006-10-30 13:38  tjdwave
+
+	* doc/latex_spec/: motion-dec.tex, spec-conventions.tex,
+	  wlt-dec.tex: Changed specification of division so that it agrees
+	  with C/C++ standards.  Traced through these changes to
+	  specification of split mode, block dc value and intra dc band
+	  prediction.
+
+2006-10-26 16:22  tjdwave
+
+	* libdirac_encoder/dirac_encoder.cpp: Moved to using cout instead
+	  of cerr for reporting.
+
+2006-10-26 16:07  tjdwave
+
+	* libdirac_common/common.cpp, libdirac_common/common.h,
+	  libdirac_common/frame_buffer.cpp, libdirac_common/frame_buffer.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/frame_decompress.h,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/seq_compress.cpp: Made  operation of retired
+	  picture list comply with specification: only reference pictures
+	  are signalled to be retired and non-reference pictures are
+	  retired by the decoder once they are displayed.
+
+	  Clarified frame type parameters so as to be sure they always
+	  agree. This will need further refactoring.
+
+	  Reference frames are now cleaned from the buffer _after_ being
+	  the current frame has been decoded, as per the spec. This allows
+	  slightly more flexible GOP structures.
+
+2006-10-25 14:01  tjdwave
+
+	* libdirac_common/common.cpp: Fixed bug with wrong quantiser offset
+	  being used: now complies with spec again.
+
+2006-10-24 09:09  tjdwave
+
+	* doc/latex_spec/: arith.tex, bs-spec.tex, dataenc.tex,
+	  dirac-overview.tex, layout-fullsize.tex, picture-dec.tex,
+	  profilelevel.tex, spec-conventions.tex, spec-structure.tex,
+	  state-macros.tex, vidsys-sigrange.tex, vidsys.tex: First stab at
+	  including the low-delay syntax used for Dirac Pro profiles,
+	  together with profile and level text. Work in progress!
+
+2006-10-19 16:01  tjdwave
+
+	* doc/latex_spec/picture-dec.tex: Changed order of reference buffer
+	  management so that a reference picture is not removed until after
+	  the current picture has been decoded,
+
+2006-10-19 14:53  tjdwave
+
+	* libdirac_common/band_codec.cpp: Put in Dave Schleef's patch for
+	  making the computation of parent coefficient coordinates correct
+	  and spec compliant.
+
+2006-10-10 15:04  tjdwave
+
+	* encoder/encmain.cpp, libdirac_common/common.cpp,
+	  libdirac_common/dirac_types.h,
+	  libdirac_encoder/dirac_encoder.cpp: Fixed bug with aspect ratio
+	  being set to 0/0. Now it should be set to the correct value from
+	  the video format defaults.
+
+2006-10-09 16:24  tjdwave
+
+	* libdirac_common/wavelet_utils_mmx.cpp: Renamed functions with
+	  consistent filter names.
+
+2006-10-05 16:22  tjdwave
+
+	* encoder/encmain.cpp, libdirac_common/common.cpp,
+	  libdirac_common/common_types.h,
+	  libdirac_common/video_format_defaults.cpp,
+	  libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h: Given wavelet filters correct
+	  names and numbers as per spec. Added support for HAAR1 and HAAR2
+	  filters. FIDELITY filter will be forthcoming.
+
+2006-09-28 18:20  davidf_
+
+	* doc/: browser_compatibility.html, licences.html, licenses.html,
+	  template.html, template2.html, todo.html: fix license spelling
+	  mistake correction typos/misses/references
+
+2006-09-28 18:13  davidf_
+
+	* doc/: contact.html, documentation.html, faq.html,
+	  getting_involved.html, index.html, overview.html, soc2006.html,
+	  soc2006_ideas.html, specification.html, styles.css, todo.html,
+	  documentation/publications/diracoverview-ibc2006.pdf: merge shas'
+	  website fixes added ibc2006 publication
+
+2006-09-28 14:59  tjdwave
+
+	* libdirac_common/: common.cpp, mot_comp.cpp: Fixed the block
+	  parameter testing so as to be compliant with the specification.
+	  Non-overlapped blocks are now allowed and supported. The raised
+	  cosine macro has now been removed and only linear weights are
+	  supported.
+
+2006-09-28 10:17  tjdwave
+
+	* doc/latex_spec/low-delay.tex: Added file to cover low delay
+	  syntax.
+
+2006-09-28 10:08  tjdwave
+
+	* doc/latex_spec/: abstract.tex, arith-contexts.tex,
+	  arith-datainput.tex, arith-decoder-ba.tex,
+	  arith-decoder-impl.tex, arith-decoder-sint.tex,
+	  arith-decoder-sua.tex, arith-decoder-tua.tex,
+	  arith-decoder-uua.tex, arith-decoder.tex, arith-encoder.tex,
+	  arith-engine.tex, arith-init.tex, arith-intro.tex,
+	  arith-update.tex, arith.tex, begin-bs.tex, begin-compmethods.tex,
+	  begin-dwt-fwd.tex, begin-dwt-parentchild.tex, begin-dwt.tex,
+	  begin-ec-dwt.tex, begin-ec-mc.tex, begin-ec.tex,
+	  begin-mc-accuracy.tex, begin-mc-blocks.tex, begin-mc-global.tex,
+	  begin-mc-intra.tex, begin-mc.tex, begin-more.tex,
+	  begin-pictypes.tex, begin-videocoding.tex, bs-intro.tex,
+	  bs-semantics.tex, bs-spec.tex, bs-syntax.tex,
+	  conv-bs-bytealign.tex, conv-bs-defaults.tex, conv-bs-reading.tex,
+	  conv-intro.tex, conv-parse-diagnums.tex, conv-parse-diagrams.tex,
+	  conv-pseudocode-syntax.tex, conv-pseudocode.tex,
+	  dataenc-bool.tex, dataenc-input.tex, dataenc-intro.tex,
+	  dataenc-nbitlit.tex, dataenc-nbytelit.tex, dataenc-vlc-segol.tex,
+	  dataenc-vlc-su.tex, dataenc-vlc-uegol.tex, dataenc-vlc-ut.tex,
+	  dataenc-vlc-uu.tex, dataenc-vlc.tex, dirac-concepts.tex,
+	  dirac-overview.tex, gendec.tex, idwt-1dsynthesis.tex,
+	  idwt-filters.tex, idwt-interleaving.tex, idwt-intro.tex,
+	  idwt-lifting.tex, idwt-padremoval.tex, idwt-synthesis.tex,
+	  idwt-vhsynthesis.tex, idwt.tex, intro-docstruct.tex,
+	  intro-purpose.tex, intro-scope.tex, layout-fullsize.tex,
+	  logicalstruct-accessunit.tex, logicalstruct-arithcoding.tex,
+	  logicalstruct-blocks.tex, logicalstruct-coordinates.tex,
+	  logicalstruct-dwt.tex, logicalstruct-frameordering.tex,
+	  logicalstruct-frames.tex, logicalstruct-globalmc.tex,
+	  logicalstruct-intro.tex, logicalstruct-localmc.tex,
+	  logicalstruct-parseunit.tex, logicalstruct-sequence.tex,
+	  logicalstruct-subbands.tex, logicalstruct-superblocks.tex,
+	  logicalstructs.tex, mc-alg.tex, mc-blockcoverage.tex,
+	  mc-chomascaling.tex, mc-impl.tex, mc-intro.tex,
+	  mc-obmc-matrix.tex, mc-precision.tex, mc-pred.tex,
+	  mc-upconvert.tex, motion-dec.tex, parsediagrams.tex,
+	  prep-idwt-codeblk-dim.tex, prep-idwt-codeblk-process.tex,
+	  prep-idwt-coef-process.tex, prep-idwt-conventions.tex,
+	  prep-idwt-ctxt-init.tex, prep-idwt-ctxt-magnitude.tex,
+	  prep-idwt-ctxt-quantindex.tex, prep-idwt-ctxt-sign.tex,
+	  prep-idwt-ctxt-skip.tex, prep-idwt-pred-dc.tex,
+	  prep-idwt-process.tex, prep-idwt.tex, prep-mc-ctxt-init.tex,
+	  prep-mc-decode-blkmotion.tex, prep-mc-decode-dc.tex,
+	  prep-mc-decode-mv.tex, prep-mc-decode-predictionmode.tex,
+	  prep-mc-decoding.tex, prep-mc-mbdata.tex,
+	  prep-mc-predapeature.tex, prep-mc-predictionmodes.tex,
+	  prep-mc-predmbcommon.tex, prep-mc-predmbglobal.tex,
+	  prep-mc-predmbsplit.tex, ref-default-videoparams.tex,
+	  ref-quantization-lut.tex, semantics-auh.tex, semantics-dwt.tex,
+	  semantics-intro.tex, semantics-mv.tex, semantics.tex,
+	  spec-conventions.tex, spec-structure.tex, state-macros.tex,
+	  wlt-dec.tex: Removing a whole load of cruft files. Bug fixes.
+
+2006-09-12 12:18  tjdwave
+
+	* doc/latex_spec/state-macros.tex: [no log message]
+
+2006-09-12 10:00  tjdwave
+
+	* doc/latex_spec/ref-default-videoparams.tex: Completed tables -
+	  added various decoding presets too.
+
+2006-09-12 09:59  tjdwave
+
+	* doc/latex_spec/sourcepresets.tex: This contains the presets for
+	  the source parameters. This needs to be merged with the video
+	  systems model section.
+
+2006-09-12 09:58  tjdwave
+
+	* doc/latex_spec/vidsys.tex: Slightly revised - to be merged with
+	  source parameters presets.
+
+2006-09-12 09:56  tjdwave
+
+	* doc/latex_spec/: idwt.tex, mc.tex, picture-dec.tex: Finished
+	  first draft of overall picture decoding process. Added stuff on
+	  global motion compensation (_probably_ works now).
+
+2006-09-12 09:54  tjdwave
+
+	* doc/latex_spec/: bs-spec.tex, motion-dec.tex, wlt-dec.tex:
+	  Created unified chapter files for parsing elements. Completed
+	  overall stream syntax chapter.
+
+2006-09-12 09:52  tjdwave
+
+	* doc/latex_spec/: arith.tex, dataenc.tex: Unified data access
+	  files into chapter files.
+
+2006-09-12 09:51  tjdwave
+
+	* doc/latex_spec/: dirac-concepts.tex, parsing.tex: Restructured
+	  part structure files.
+
+2006-09-12 09:48  tjdwave
+
+	* doc/latex_spec/spec-conventions.tex: Updated/added material on
+	  the way the pseudocode works and the mathematical notation. This
+	  section still needs work and reordering.
+
+2006-09-12 09:45  tjdwave
+
+	* doc/latex_spec/intro.tex: Revised and unified the general
+	  introduction.
+
+2006-09-12 09:44  tjdwave
+
+	* doc/latex_spec/spec-structure.tex: Revised overall document
+	  structure.
+
+2006-09-12 09:42  tjdwave
+
+	* doc/latex_spec/parsediagrams.tex: Added parse diagrams as an
+	  appendix.
+
+2006-08-24 10:32  tjdwave
+
+	* doc/latex_spec/: decoding-ops.tex, idwt.tex, state-macros.tex:
+	  Updated inverse wavelet transform section. Introduced Haar
+	  variants and added a fidelity filter.
+
+2006-08-21 13:33  tjdwave
+
+	* doc/latex_spec/: arith.tex, bs-spec.tex, dataenc.tex,
+	  decoding-ops.tex, layout-fullsize.tex, mc.tex, motion-dec.tex,
+	  parsing.tex, spec-structure.tex, state-macros.tex, wlt-dec.tex:
+	  Done motion data decoding and motion compensation. Amalgamated
+	  file contents to simplify structure.
+
+2006-08-11 15:51  tjdwave
+
+	* libdirac_common/: golomb.cpp, golomb.h:
+	  Functionality is now provided in the Byte IO library.
+	  ----------------------------------------------------------------------
+
+2006-07-28 14:33  tjdwave
+
+	* libdirac_common/common.h, libdirac_common/motion.cpp,
+	  libdirac_common/motion.h, libdirac_common/mv_codec.cpp,
+	  libdirac_common/mv_codec.h, libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_mode_decn.h: Removed the Macroblock
+	  "Common" mode. This means that each prediction unit within a
+	  macroblock will have to code a mode. Motion data coding has also
+	  been changed so that instead of coding all the prediction modes
+	  first and then all the motion data, prediction modes are included
+	  in the motion data as per the spec.
+
+	  An updated version of the latex spec in which the Common mode is
+	  omitted is in preparation and will be committed in the next
+	  couple of weeks.
+
+2006-07-19 12:29  tjdwave
+
+	* doc/latex_spec/prep-idwt-process.tex: Added initialisation of the
+	  coefficient_reset variable.
+
+2006-07-19 12:19  tjdwave
+
+	* doc/latex_spec/: arith-contexts.tex, arith-decoder-sint.tex,
+	  dataenc-vlc-segol.tex, decoding-ops.tex, intro-docstruct.tex,
+	  parsing.tex, prep-idwt-coef-process.tex, state-macros.tex,
+	  figs/block-coverage.eps, figs/obmc-profile.eps: Mods to interface
+	  with arithmetic coding changes.
+
+2006-07-19 11:48  tjdwave
+
+	* doc/latex_spec/: arith-contexts.tex, arith-datainput.tex,
+	  arith-decoder-sint.tex, arith-decoder.tex, arith-engine.tex,
+	  arith-init.tex, arith-intro.tex, arith-update.tex, arith.tex:
+	  Refactored to take account of exp-Golomb binarisation and the use
+	  of global context indices being passed to arithmetic decoding
+	  operations.
+
+2006-07-18 11:36  tjdwave
+
+	* libdirac_common/: band_codec.cpp, band_codec.h: Changed nhood sum
+	  calculation so that it only takes account of whether the
+	  neighbour is zero or not.
+
+2006-07-07 15:07  tjdwave
+
+	* encoder/encmain.cpp: Fixed bug with framerate denominator being
+	  incorrectly set if omitted.
+
+2006-07-07 12:14  tjdwave
+
+	* doc/latex_spec/: intro-docstruct.tex, mc-intro.tex,
+	  mc-upconvert.tex, mc.tex: Debugging commit.
+
+2006-07-07 12:07  tjdwave
+
+	* doc/latex_spec/: arith-contexts.tex, arith.tex, bs-spec.tex,
+	  bs-syntax.tex, decoding-ops.tex, idwt.tex,
+	  prep-idwt-coef-process.tex, prep-idwt-conventions.tex,
+	  prep-idwt-ctxt-quantindex.tex, prep-idwt-process.tex,
+	  prep-idwt.tex, spec-structure.tex, state-macros.tex, wlt-dec.tex,
+	  figs/block-coverage.eps, figs/block-offset.eps, figs/block.eps,
+	  figs/dwt.eps, figs/frame-ordering.eps, figs/obmc-profile.eps,
+	  figs/sequence.eps, figs/superblock-16pu.eps,
+	  figs/superblock-1pu.eps, figs/superblock-4pu.eps: Updated and
+	  refactored data access and coefficient decoding sections.  Spec
+	  should be up to date and accurate for coefficient decoding, but
+	  fine-tuning and checking is required. Diagrams also needed.
+
+	  Major change is in the way arithmetic decoding operations are
+	  called. Just specify sets of contexts to be used for follow bits,
+	  data bits and the sign by passing indices into the state
+	  variable, which maintains the contexts.
+
+	  This simplifies the code in the stream syntax, avoiding local
+	  copies etc.  Explanation will be required for the context
+	  indices. The arithmetic decoding section needs updating to
+	  reflect this change and use of interleaved exp- Golomb coding.
+
+2006-07-07 08:56  tjdwave
+
+	* doc/latex_spec/layout-fullsize.tex: Added temporary environment
+	  pseudo* for documenting _part_ of a function's pseudocode (no
+	  function header).  Fixed bug where \bsRET reduces indent by 1 -
+	  this broke indentation when there were a number of returns in a
+	  function.
+
+2006-07-06 12:29  tjdwave
+
+	* libdirac_common/: band_codec.cpp, band_codec.h: Changed coding of
+	  codeblock quantiser indices to be differential codeblock to
+	  codeblock, as per Tim's stream syntax, rather than differential
+	  with respect to the subband quantiser index.
+
+	  N.B. this now does not agree with version 0.9.
+
+2006-07-03 14:57  tjdwave
+
+	* doc/latex_spec/: arith-contexts.tex, arith-datainput.tex,
+	  arith-decoder-ba.tex, arith-decoder-sint.tex, arith-intro.tex:
+	  Initial update to take account of exp-Golomb binarisation.
+
+2006-07-03 14:00  tjdwave
+
+	* doc/latex_spec/arith-decoder-sint.tex: Adding to update to
+	  exp-Golomb binarisation.
+
+2006-07-03 13:15  tjdwave
+
+	* doc/latex_spec/: dataenc-bool.tex, dataenc-input.tex,
+	  dataenc-intro.tex, dataenc-nbitlit.tex, dataenc-nbytelit.tex,
+	  dataenc-vlc-segol.tex, dataenc-vlc-su.tex, dataenc-vlc-uegol.tex,
+	  dataenc-vlc-ut.tex, dataenc-vlc.tex, dataenc.tex: Brought
+	  up-to-date to do interleaved exp-Golomb coding. Included a
+	  section on bit-packing and reading conventions. To Do: Need to
+	  align with arithmetic decoding section.
+
+2006-07-03 10:08  tjdwave
+
+	* doc/latex_spec/: layout-fullsize.tex, state-macros.tex: Adding
+	  shortcuts for decoder state values/variables. This means we can
+	  change format, or introduce new paramater classes by (mostly)
+	  modding modding only state-macros.tex.
+
+2006-06-29 15:11  asuraparaju
+
+	* libdirac_common/: wavelet_utils.cpp, wavelet_utils.h, common.cpp:
+	  Defined new Wavelet Filter class VHFilterHaar to include HAAR
+	  filter support in Dirac.
+
+2006-06-27 18:26  asuraparaju
+
+	* README: Include explanation for new encoder command line
+	  variables iwlt_filter and rwlt_filter.
+
+2006-06-27 18:17  asuraparaju
+
+	*
+	  doc/documentation/code/programmers_guide/encoder_data_structs.htm:
+	  Reflect changes to dirac_encparams_t struct to which two fields
+	  have been added.  These fields specify the wavelet filters to use
+	  for intra frames and inter frames.
+
+2006-06-26 17:44  asuraparaju
+
+	* encoder/encmain.cpp: [Spec Compliance] Include command line
+	  arguments to process non-default transform filters for intra and
+	  inter frames.
+
+2006-06-26 17:43  asuraparaju
+
+	* unit_tests/motion_comp_test.cpp: Ensure that the number of
+	  reference frames is specified when creating a CodecParams object.
+
+2006-06-26 17:43  asuraparaju
+
+	* libdirac_encoder/: dirac_encoder.cpp, dirac_encoder.h,
+	  frame_compress.cpp: [Spec Compliance] Use transform filters
+	  supplied in the command line arguments to encoder utility to set
+	  the transform filter in CodecParams while encoding based on frame
+	  type.  Set up the default frame weight and precision parameters
+	  correctly based on frame type and number of references.
+
+2006-06-26 17:40  asuraparaju
+
+	* libdirac_common/: video_format_defaults.cpp,
+	  video_format_defaults.h: [Spec Compliance] Added functions to
+	  return the default transform filter based on frame type.  The
+	  default frame weight and frame precision parametes are correctly
+	  set based on the frame type and number of references.
+
+2006-06-26 17:39  asuraparaju
+
+	* libdirac_common/: common.cpp, common.h: [Spec Compliance] Handle
+	  non-default frame weights. Include member variables in
+	  EncoderParams to store the transform filters for inter frame and
+	  intra frames supplied so that they can be used while encoding.
+
+2006-06-26 17:38  asuraparaju
+
+	* libdirac_byteio/mvdata_byteio.cpp,
+	  libdirac_byteio/transform_byteio.cpp,
+	  libdirac_common/mot_comp.cpp, libdirac_common/mot_comp.h: [Spec
+	  Compliance] Handle non-default frame weights.
+
+2006-06-23 15:17  tjdwave
+
+	* doc/latex_spec/layout-fullsize.tex: Created unified style for
+	  syntax and semantics called pseudo. No longer uses typewriter
+	  font - Roman instead.
+
+2006-06-23 10:41  tjdwave
+
+	* doc/latex_spec/: arith-intro.tex, arith.tex, bs-spec.tex,
+	  dataenc-intro.tex, dataenc.tex, decoding-ops.tex,
+	  dirac-concepts.tex, dirac-overview.tex, idwt-intro.tex, idwt.tex,
+	  logicalstructs.tex, mc-intro.tex, mc.tex, motion-dec.tex,
+	  parsing.tex, picture-dec.tex, semantics.tex,
+	  spec-conventions.tex, spec-structure.tex, stream-access.tex,
+	  wlt-dec.tex: Reorganised so that file input is hierarchical, to
+	  make simultaneous working easier.
+
+2006-06-23 08:48  tjdwave
+
+	* doc/latex_spec/: bs-syntax.tex, layout-fullsize.tex: Moved
+	  streamsyntax environment definition into layout-fullsize.tex so
+	  that it's available to all input files.
+
+2006-06-22 12:42  asuraparaju
+
+	* doc/specification.html: Included links to latest Stream Syntax
+	  Document and Specification Document.
+
+2006-06-22 10:13  tjdwave
+
+	* doc/latex_spec/: intro-docstruct.tex, spec-structure.tex:
+	  Tentative revision of the specification structure. A rationale is
+	  contained in intro-docstruct.tex.
+
+2006-06-22 09:02  tjdwave
+
+	* doc/latex_spec/figs/: block-coverage.eps, block-coverage.fig,
+	  block.eps, block.fig, Makefile, block-offset.eps,
+	  block-offset.fig, dwt.eps, dwt.fig, frame-ordering.eps,
+	  frame-ordering.fig, obmc-profile.eps, obmc-profile.fig,
+	  sequence.eps, sequence.fig, stream.fig, superblock-16pu.eps,
+	  superblock-16pu.fig, superblock-1pu.eps, superblock-1pu.fig,
+	  superblock-4pu.eps, superblock-4pu.fig,
+	  wavelet-transform-process.fig: Adding in diagrams.
+
+2006-06-22 08:57  tjdwave
+
+	* doc/latex_spec/tools/: framed.sty, listings.zip, mkdep.pl:
+	  Additional latex spec commits.
+
+2006-06-22 08:54  tjdwave
+
+	* doc/latex_spec/: Makefile, abstract.tex, arith-contexts.tex,
+	  arith-datainput.tex, arith-decoder-ba.tex,
+	  arith-decoder-impl.tex, arith-decoder-sua.tex,
+	  arith-decoder-tua.tex, arith-decoder-uua.tex, arith-decoder.tex,
+	  arith-encoder.tex, arith-engine.tex, arith-init.tex, arith.tex,
+	  begin-bs.tex, begin-compmethods.tex, begin-dwt-fwd.tex,
+	  begin-dwt-parentchild.tex, begin-dwt.tex, begin-ec-dwt.tex,
+	  begin-ec-mc.tex, begin-ec.tex, begin-mc-accuracy.tex,
+	  begin-mc-blocks.tex, begin-mc-global.tex, begin-mc-intra.tex,
+	  begin-mc.tex, begin-more.tex, begin-pictypes.tex,
+	  begin-videocoding.tex, bs-intro.tex, bs-semantics.tex,
+	  bs-syntax.tex, coder-intro.tex, conv-bs-bytealign.tex,
+	  conv-bs-defaults.tex, conv-bs-reading.tex, conv-intro.tex,
+	  conv-parse-diagnums.tex, conv-parse-diagrams.tex,
+	  conv-pseudocode-syntax.tex, conv-pseudocode.tex,
+	  dataenc-bool.tex, dataenc-nbitlit.tex, dataenc-nbytelit.tex,
+	  dataenc-vlc-segol.tex, dataenc-vlc-su.tex, dataenc-vlc-uegol.tex,
+	  dataenc-vlc-ut.tex, dataenc-vlc-uu.tex, dataenc-vlc.tex,
+	  dataenc.tex, gendec.tex, idwt-1dsynthesis.tex, idwt-filters.tex,
+	  idwt-interleaving.tex, idwt-lifting.tex, idwt-padremoval.tex,
+	  idwt-synthesis.tex, idwt-vhsynthesis.tex, idwt.tex,
+	  intro-docstruct.tex, intro-purpose.tex, intro-scope.tex,
+	  layout-fullsize.tex, logicalstruct-accessunit.tex,
+	  logicalstruct-arithcoding.tex, logicalstruct-blocks.tex,
+	  logicalstruct-coordinates.tex, logicalstruct-dwt.tex,
+	  logicalstruct-frameordering.tex, logicalstruct-frames.tex,
+	  logicalstruct-globalmc.tex, logicalstruct-intro.tex,
+	  logicalstruct-localmc.tex, logicalstruct-parseunit.tex,
+	  logicalstruct-sequence.tex, logicalstruct-subbands.tex,
+	  logicalstruct-superblocks.tex, mc-alg.tex, mc-blockcoverage.tex,
+	  mc-chomascaling.tex, mc-impl.tex, mc-obmc-matrix.tex,
+	  mc-precision.tex, mc-pred.tex, mc-upconvert.tex, mc.tex,
+	  prep-idwt-codeblk-dim.tex, prep-idwt-codeblk-process.tex,
+	  prep-idwt-coef-process.tex, prep-idwt-conventions.tex,
+	  prep-idwt-ctxt-init.tex, prep-idwt-ctxt-magnitude.tex,
+	  prep-idwt-ctxt-quantindex.tex, prep-idwt-ctxt-sign.tex,
+	  prep-idwt-ctxt-skip.tex, prep-idwt-pred-dc.tex,
+	  prep-idwt-process.tex, prep-idwt.tex, prep-mc-ctxt-init.tex,
+	  prep-mc-decode-blkmotion.tex, prep-mc-decode-dc.tex,
+	  prep-mc-decode-mv.tex, prep-mc-decode-predictionmode.tex,
+	  prep-mc-decoding.tex, prep-mc-mbdata.tex,
+	  prep-mc-predapeature.tex, prep-mc-predictionmodes.tex,
+	  prep-mc-predmbcommon.tex, prep-mc-predmbglobal.tex,
+	  prep-mc-predmbsplit.tex, ref-default-videoparams.tex,
+	  ref-quantization-lut.tex, semantics-auh.tex, semantics-dwt.tex,
+	  semantics-intro.tex, semantics-mv.tex, spec-structure.tex,
+	  vidsys-aspect.tex, vidsys-colour.tex, vidsys-colourmatrix.tex,
+	  vidsys-colourprimaries.tex, vidsys-framerate.tex,
+	  vidsys-sigrange.tex, vidsys-transfer.tex, vidsys.tex: Initial
+	  commit of Latex port of draft specification.
+
+2006-06-19 18:35  asuraparaju
+
+	* libdirac_common/: common.cpp, mot_comp.cpp, mot_comp.h,
+	  mot_comp_mmx.cpp, mot_comp_mmx.h: [Spec Compliance] Ensure that
+	  block overlaps in x and y direction are integral powers of 2.
+	  Make the OBMC weights calculation truly linear.
+
+2006-06-19 18:34  asuraparaju
+
+	* libdirac_decoder/frame_decompress.cpp,
+	  libdirac_encoder/seq_compress.cpp: Replace std::pow operation
+	  with left bit-shift operator
+
+2006-06-19 12:27  asuraparaju
+
+	* libdirac_byteio/: byteio.h, mvdata_byteio.cpp: Fix for
+	  bug#1508532. Ensure that m_current_byte is re-initialised to 0 in
+	  the ouput byte alignment function ByteIO::OutputCurrentByte.
+
+2006-06-16 12:07  asuraparaju
+
+	* doc/: contact.html, documentation.html, faq.html,
+	  getting_involved.html, index.html, licenses.html, overview.html,
+	  soc2006.html, soc2006_ideas.html, specification.html,
+	  template2.html, todo.html,
+	  documentation/algorithm/algorithm/intro.htm: Ensure that links to
+	  Browse CVS on Sourceforge work correctly.
+
+2006-06-16 11:38  asuraparaju
+
+	* doc/documentation.html: Ensuring that named anchors work
+	  properly.
+
+2006-06-16 11:37  asuraparaju
+
+	* doc/documentation/code/programmers_guide/:
+	  common_data_structs.htm, decoder_api_example.htm,
+	  decoder_api_functions.htm, decoder_api_overview.htm,
+	  decoder_api_reference.htm, decoder_data_structs.htm,
+	  encoder_api_example.htm, encoder_api_functions.htm,
+	  encoder_api_overview.htm, encoder_api_reference.htm,
+	  encoder_data_structs.htm, encoding.htm, index.htm,
+	  input_formats.htm, intro.htm, overview.htm, software.htm: Updated
+	  data structs and functionality description for Dirac Codec V0.6.0
+
+2006-06-13 12:58  asuraparaju
+
+	* ChangeLog: [no log message]
+
 2006-06-13 12:56  asuraparaju
 
 	* NEWS: Updated with 0.6.0 release notes.
@@ -90,7 +750,7 @@
 
 2006-06-06 17:11  asuraparaju
 
-	* util/instrumentation/libdirac_instrument/: draw_overlay.end,
+	* util/instrumentation/libdirac_instrument/: draw_overlay.cpp,
 	  motion_arrows.cpp, sad.cpp: Fix for bug #1501636. Ensuring that
 	  we are not going past array boundaries.
 
@@ -1207,6 +1867,10 @@
 	  libdirac_encoder/quality_monitor.cpp: Added support for lossless
 	  I-frame and long-GOP coding, with CLI option.
 
+2005-08-23 11:52  asuraparaju
+
+	* ChangeLog: [no log message]
+
 2005-08-23 11:46  asuraparaju
 
 	* NEWS: Added 0.5.3 release notes
@@ -1319,6 +1983,47 @@
 	  documentation/code/api/dirac_api_head.html,
 	  documentation/code/programmers_guide/Makefile.am: Changes related
 	  to documentation tree restructure.
+
+2005-08-15 16:03  asuraparaju
+
+	* doc/api/: Makefile.am, dirac_api.doxygen, dirac_api.doxygen.in,
+	  dirac_api_foot.html, dirac_api_head.html,
+	  libdirac_encoder_api.doxygen, libdirac_encoder_api_foot.html,
+	  libdirac_encoder_api_head.html: Removing old files as part of
+	  Documentation directory restructure. API docs are now generated
+	  in doc/documentation/code/api/html
+
+2005-08-15 15:56  asuraparaju
+
+	* doc/algorithm/: Makefile.am, algorithm.htm, block_data.htm,
+	  const_qual.htm, intro.htm, mb_structs.htm, mot_est.htm,
+	  mot_est_and_comp.htm, mv_coding_arch.htm, mv_data_coding.htm,
+	  mv_entropy_code.htm, olb_mc.htm, overall_arch.htm,
+	  quantisation.htm, rdo.htm, rdo_mot_est.htm, subband_rdo.htm,
+	  temporal_prediction_structures.htm, transform_coding.htm,
+	  transform_coding_arch.htm, var_size.htm, wlt_transform.htm,
+	  figs/DC.jpg, figs/DCSAD.jpg, figs/braces.jpg, figs/d.jpg,
+	  figs/eqA.jpg, figs/eqB.jpg, figs/eqC.jpg, figs/eqD.jpg,
+	  figs/eqE.jpg, figs/eqF.jpg, figs/eqG.jpg, figs/eqH.jpg,
+	  figs/eqI.jpg, figs/eqJ.jpg, figs/fig1.jpg, figs/fig10.jpg,
+	  figs/fig12.jpg, figs/fig13.jpg, figs/fig14.jpg, figs/fig15.jpg,
+	  figs/fig16.jpg, figs/fig17.jpg, figs/fig18.jpg, figs/fig19.jpg,
+	  figs/fig2.jpg, figs/fig20.jpg, figs/fig21.jpg, figs/fig22.jpg,
+	  figs/fig23.jpg, figs/fig24.jpg, figs/fig26.jpg, figs/fig27.jpg,
+	  figs/fig3.jpg, figs/fig4.jpg, figs/fig5.jpg, figs/fig6.jpg,
+	  figs/fig7.bmp, figs/fig7.jpg, figs/fig8.jpg, figs/fig9.jpg,
+	  figs/fp.jpg, figs/m.jpg, figs/nhood.jpg, figs/nhoodresidue.jpg,
+	  figs/p.jpg, figs/p2.jpg, figs/t.jpg, figs/two.jpg, figs/var.jpg,
+	  figs/vtilda.jpg, figs/vw.jpg, mv_data_pred.htm, parent_child.htm,
+	  toc.htm, wlt_coeff_coding.htm: Removing old files as part of
+	  Documentation directory restructure. Algorithm documentation can
+	  now be found in doc/documentation/algorithm/algorithm
+
+2005-08-15 15:52  asuraparaju
+
+	* doc/programmers/: Makefile.am, programmers_guide.aux,
+	  programmers_guide.tex: Removed old files as part of document
+	  directory restructure
 
 2005-08-15 12:26  asuraparaju
 
@@ -1967,6 +2672,7 @@
 2005-05-25 14:30  asuraparaju
 
 	* ChangeLog: [no log message]
+
 2005-05-25 13:51  asuraparaju
 
 	* README.release: Add ffmpeg patch to checklist
@@ -2124,9 +2830,12 @@
 	  libdirac_common/mv_codec.cpp,
 	  libdirac_motionest/me_motion_type_decn.cpp,
 	  libdirac_motionest/me_motion_type_decn.h,
-	  libdirac_motionest/motion_estimate.cpp: Prediction units can now
-	  use either global or block motion. (Decision based on similarity
-	  of global and block motion vectors.)
+	  libdirac_motionest/motion_estimate.cpp,
+	  win32/VS2003/ConversionUtils/BMPtoRGB/Debug/BuildLog.htm,
+	  win32/VS2003/ConversionUtils/BMPtoRGB/Debug/vc70.idb,
+	  win32/VS2003/ConversionUtils/BMPtoRGB/Debug/vc70.pdb: Prediction
+	  units can now use either global or block motion. (Decision based
+	  on similarity of global and block motion vectors.)
 
 2005-05-11 10:13  tjdwave
 
@@ -2314,6 +3023,10 @@
 	* libdirac_common/arrays.h, AUTHORS: Added Mike Ferenduros' mods to
 	  arrays, so that memory allocation is always contiguous. Also
 	  added him to list of contributors.
+
+2005-02-17 14:07  asuraparaju
+
+	* ChangeLog: [no log message]
 
 2005-02-17 13:05  asuraparaju
 
@@ -2655,6 +3368,10 @@
 	  correctly being created in win32/VS2003/bin/<build-type>
 	  directory.
 
+2004-12-01 14:45  asuraparaju
+
+	* ChangeLog: [no log message]
+
 2004-12-01 14:40  asuraparaju
 
 	* NEWS: Included 0.5.0 release notes
@@ -2694,6 +3411,19 @@
 	  libdirac_motionest/downconvert.h,
 	  libdirac_motionest/me_mode_decn.h,
 	  libdirac_motionest/me_subpel.h: Fix warnings reported by doxygen
+
+2004-11-26 13:47  asuraparaju
+
+	* misc/xparam-1.22-gcc-3.4.0.patch: xparam package not used hence
+	  removed this file from repository
+
+2004-11-26 13:43  asuraparaju
+
+	* windows/dirac/: dirac.dsw, libdirac_common/libdirac_common.dsp,
+	  libdirac_decoder/libdirac_decoder.dsp,
+	  libdirac_encoder/libdirac_encoder.dsp,
+	  libdirac_motionest/libdirac_motionest.dsp: Removing older VS
+	  files that are no longer supported
 
 2004-11-26 13:36  asuraparaju
 
@@ -2775,6 +3505,10 @@
 	* doc/algorithm/: algorithm.htm, const_qual.htm, intra_pred.htm,
 	  intro.htm, quantisation.htm, subband_rdo.htm: Mods to algorithm
 	  docs; intra_pred.htm removed.
+
+2004-11-22 14:23  asuraparaju
+
+	* ChangeLog: [no log message]
 
 2004-11-22 14:15  asuraparaju
 
@@ -3181,6 +3915,10 @@
 	* decoder/decmain.cpp: Fixed memory leak caused by not freeing up
 	  frame buffer that was dynamically allocated
 
+2004-09-21 14:02  asuraparaju
+
+	* ChangeLog: Included details of checkins for 0.4.3 release
+
 2004-09-21 13:58  asuraparaju
 
 	* NEWS: Included 0.4.3 release notes
@@ -3243,6 +3981,10 @@
 	  wavelet_utils.cpp: Fixed bug with scaling motion vectors for
 	  non-444 formats. Rationalised frame buffer functions. Added
 	  comments to common.h. General tidying up of code.
+
+2004-09-10 14:13  asuraparaju
+
+	* ChangeLog: Included details of recent checkins
 
 2004-09-10 14:05  asuraparaju
 
@@ -3316,6 +4058,10 @@
 
 	* README.release: Add testing diagnostic tool to release checklist
 
+2004-08-26 12:08  asuraparaju
+
+	* ChangeLog: Updated with details of recent checkins
+
 2004-08-26 12:05  asuraparaju
 
 	* NEWS: Included 0.4.1 release notes
@@ -3323,6 +4069,10 @@
 2004-08-26 12:02  asuraparaju
 
 	* configure.ac: Updated release id to 0.4.1
+
+2004-08-25 18:09  asuraparaju
+
+	* ChangeLog: Updated this doc with details of recent checkins
 
 2004-08-25 17:58  asuraparaju
 
@@ -3417,6 +4167,10 @@
 2004-08-19 14:55  asuraparaju
 
 	* configure.ac: Update release id to 0.4.0
+
+2004-08-19 13:32  asuraparaju
+
+	* ChangeLog: Updated with details of recent checkins
 
 2004-08-19 13:23  asuraparaju
 
@@ -3571,8 +4325,12 @@
 	  bitstream version.  Fixed bug in quality monitor code where
 	  padding area was taken into account in calculating PSNR. Removed
 	  unused code for calculating weighted PSNR.  Removed commented
-	  output from quality monitor. Instrumentation update: outputs all
+	  output from quality monitor.	Instrumentation update: outputs all
 	  MEData members and copes with monochrome sequences.
+
+2004-08-11 16:30  asuraparaju
+
+	* ChangeLog: Update this log with details recent checkins
 
 2004-08-11 16:23  asuraparaju
 
@@ -3734,6 +4492,10 @@
 
 	* README.release: A checklist for producing a new release
 
+2004-08-03 10:32  asuraparaju
+
+	* ChangeLog: Updated this log with details of recent checkins
+
 2004-08-03 10:22  asuraparaju
 
 	* Makefile.am, configure.ac, dirac.pc.in, decoder/decmain.cpp,
@@ -3821,6 +4583,10 @@
 	  instrumentation/libdirac_instrument/split_mode.h: Adding
 	  instrumentation tool
 
+2004-07-16 17:05  asuraparaju
+
+	* ChangeLog: Updated thislog with details of recent checkins
+
 2004-07-16 16:29  asuraparaju
 
 	* libdirac_encoder/quality_monitor.cpp: Fixed bug with model
@@ -3835,6 +4601,10 @@
 	  requirements so that contributors contribute under Mozilla too.
 	  Added Developers Certificate of Origin, which developers are to
 	  sign before their work is included.
+
+2004-07-12 12:23  asuraparaju
+
+	* ChangeLog: Updated this log with details of most recent checkins
 
 2004-07-12 11:59  asuraparaju
 
@@ -3884,6 +4654,10 @@
 	  Currently unit test exists only for the TwoDArrays class. More
 	  tests will be added in future.
 
+2004-07-06 12:51  asuraparaju
+
+	* ChangeLog: Update this log with details of mostrecent checkins
+
 2004-07-06 12:26  asuraparaju
 
 	* Makefile.am, README, encoder/encmain.cpp,
@@ -3908,31 +4682,37 @@
 	  libdirac_motionest/me_utils.cpp,
 	  libdirac_motionest/motion_estimate.cpp, tests/colourbars.at:
 	  README: Removed discussion of Iqf, L1qf and L2qf. Added text
-	  explaining constant- quality encoding using -qf.
+	     explaining constant- quality encoding using -qf.
 
 	  Makefile.am: Changed order of make, so that utilities can use the
-	  common (and other) libraries.
+		  common (and other) libraries.
 
-	  libdirac_common: Changed EncoderParams to include a quality
-	  parameter for constant-quality encoding. Changed perceptual
+	  libdirac_common:     Changed EncoderParams to include a quality
+	    parameter for constant-quality encoding. Changed perceptual
 	  weighting to use an extension of CCIR 959 weights, with extra
 	  weight for DC band, and lower weights for chroma bands.
 
-	  Modified enumerated type CompSort to avoid name clashes by
-	  using longer names. Refactored OLBParams class to have private
-	  member variables and access functions.
+	      Modified enumerated type CompSort to avoid name clashes by
+	  using
+	      longer names. Refactored OLBParams class to have private
+	  member variables
+	      and access functions.
 
-	  libdirac_encoder: Added QualityMonitor class to do
-	  constant-quality encoding. Class looks at difference between
-	  locally decoded and original frames and adjusts Lagrangian
-	  parameters appropriately. Simplified interface for encoding
-	  results, where a single quality parameter is specified.
+	  libdirac_encoder:	Added QualityMonitor class to do
+	  constant-quality     encoding. Class looks at difference between
+	  locally decoded and	  original frames and adjusts Lagrangian
+	  parameters appropriately.	 Simplified interface for encoding
+	  results, where a single quality      parameter is specified.
 
-	  libdirac_decoder: FrameDecompressor::Decompress now returns
-	  true upon success and false upon failure.
+	  libdirac_decoder     FrameDecompressor::Decompress now returns
+	  true upon success and false	  upon failure.
 
-	  encoder/encmain.cpp: Simplified interface for encoding
-	  results, where a single quality parameter is specified.
+	  encoder/encmain.cpp:	   Simplified interface for encoding
+	  results, where a single quality     parameter is specified.
+
+2004-07-02 14:46  asuraparaju
+
+	* ChangeLog: Updated this log with details about recent checkins
 
 2004-06-30 17:53  asuraparaju
 
@@ -3990,47 +4770,47 @@
 	  util/conversion/common/bitmap.cpp,
 	  util/conversion/common/bitmap.h,
 	  util/conversion/common/setstdiomode.cpp,
-	  util/conversion/common/setstdiomode.h: 
-	  -  Included a coding style guidelines sub-section (Coding Style) in
-	     README.developers under the section 'Software Practices'. This  
-	     sub-section describes the coding guidelines for developers and is to
-	     be used as a reference by developers while writing code and while
-	     peer-reviewing code.
+	  util/conversion/common/setstdiomode.h: -  Included a coding style
+	  guidelines sub-section (Coding Style) in    README.developers
+	  under the section 'Software Practices'. This	  sub-section
+	  describes the coding guidelines for developers and is to be used
+	    as a reference by developers while writing code and while
+	  peer-reviewing    code.
 
-	  -  Removed the following CVS tags from all files
-	     Author
-	     Log
-	     Revision
+	  -  Removed the following CVS tags from all files    $Author$
+	  $Log$
+	  Revision 1.21  2006-11-13 12:28:22  tjdwave
+	  *** empty log message ***
+    $Revision$
 
 	  -  Included the following CVS tags in all source and header files
-	     Id
-	     Name
+	     $Id$    $Name$
 
 	  -  Included a new configuration option, --enable-debug, in
-	     configure.ac. This option turns on the flags '-Wall -pedantic
-	     -Werror' to trap warnings. 
+	  configure.ac. This	option turns on the flags '-Wall -pedantic
+	  -Werror' to trap warnings.
+
 	  -  Modified parameter classes in common.{h,cpp} to make member
-	     variables private and accessible through class methods. Traced
-	     through codec.
+	  variables    private and accessible through class methods. Traced
+	  through codec.
 
 	  -  Deleted context.h. The classes that were originally in this
-	     file have been integrated as nested classes into ArithCodec
-	     class in arith_codec.h
+	  file have been    integrated as nested classes into ArithCodec
+	  class in arith_codec.h
 
 	  -  Fixed bug on QCIF coding. The number of downconversions during
 	     hierarchical motion estimation is now limited based on the
-	     size of the picture
+	  size of the	 picture
 
 	  -  Changed decoder and encoder params to be references throughout
-	     frame and component (de)compression rather than being copied.
+	  frame and    component (de)compression rather than being copied.
 
 	  -  Code cleansed to follow coding standards specified in
-	     README.developers.
-	     - Changed names of member variables to use m_ convention
-	     - Used spaces to improve readability of code
-	     - Accessing class member variables through accessor/mutator
-	       function rather than directly
-	     - Non-trivial member functions moved from headers to .cpp files
+	  README.developers.	 - Changed names of member variables to use
+	  m_ convention     - Used spaces to improve readability of code
+	   - Accessing class member variables through accessor/mutator
+	  function rather	than directly	  - Non-trivial member
+	  functions moved from headers to .cpp files
 
 	     Changes mainly in the following directories:
 	     libdirac_common
@@ -4168,7 +4948,7 @@
 
 2004-05-27 13:21  stuart_hc
 
-	* README.developers: Prevent unintended expansion of Id and Log
+	* README.developers: Prevent unintended expansion of $Id$ and $Log$
 	  in description of keywords.
 
 2004-05-27 13:14  stuart_hc
@@ -4276,37 +5056,58 @@
 	  describe how perceptual weighting now incorporates scaling
 	  factors from the scaling.
 
-2004-05-24 12:03  tjdwave
+2004-05-25 16:30  tjdwave
+
+	* libdirac_common/wavelet_utils.cpp: Removed scaling from the
+	  wavelet transform. Scaling is now incorporated into perceptual
+	  weighting; the wavelet transform is now exactly invertible.
+
+2004-05-25 10:49  tjdwave
+
+	* libdirac_common/pic_io.cpp: Fixed bug where coder segfaulted on
+	  reading.
+
+2004-05-25 03:39  chaoticcoyote
+
+	* ChangeLog, libdirac_common/frame.h, libdirac_common/pic_io.cpp,
+	  libdirac_common/pic_io.h, libdirac_encoder/seq_compress.h,
+	  libdirac_motionest/me_utils.cpp: Unnecessary qualification of
+	  some class members in frame.h and pic_io.h.  ISO C++ forbids
+	  variable-size automatic arrays; fixed in pic_io.cpp Removed
+	  spurious semi-colons in me_utils.cpp Fixed out-of-order member
+	  constructors in seq_compress.h
+
+2004-05-24 17:03  tjdwave
 
 	* libdirac_decoder/: frame_decompress.cpp, frame_decompress.h,
 	  seq_decompress.cpp: Support for IO error handling. Decoder
 	  freezes on last frame if out of data.
 
-2004-05-24 11:57  tjdwave
+2004-05-24 16:57  tjdwave
 
 	* picheader/headmain.cpp, encoder/encmain.cpp, decoder/decmain.cpp:
 	  Changed CLI names and functions to house style.
 
-2004-05-24 11:55  tjdwave
+2004-05-24 16:55  tjdwave
 
 	* libdirac_common/: cmd_line.cpp, cmd_line.h: Modified class name
 	  to fit house style: ClassName, not class_name.
 
-2004-05-24 11:53  tjdwave
+2004-05-24 16:53  tjdwave
 
 	* libdirac_common/: pic_io.cpp, pic_io.h: Added error handling: IO
 	  functions now return boolean values.
 
-2004-05-24 11:52  tjdwave
+2004-05-24 16:52  tjdwave
 
 	* tests/colourbars.at: Fixed test so that header file has correct
 	  zlength=1.
 
-2004-05-24 11:51  tjdwave
+2004-05-24 16:51  tjdwave
 
 	* Makefile.am: Switched order so that docs are builts last.
 
-2004-05-24 08:38  tjdwave
+2004-05-24 13:38  tjdwave
 
 	* libdirac_common/mot_comp.cpp, libdirac_common/mot_comp.h,
 	  libdirac_motionest/me_utils.cpp, libdirac_motionest/me_utils.h:
@@ -4314,42 +5115,42 @@
 	  compensation and motion estimation routines with simple loops.
 	  Code is much clearer, although possibly slightly slower.
 
-2004-05-21 13:46  asuraparaju
+2004-05-21 18:46  asuraparaju
 
 	* Makefile.am, configure.ac, tests/Makefile.am,
 	  tests/colourbars.at, tests/colourbars_420.yuv,
 	  tests/testsuite.at: Initial support for autotest testsuite (run
 	  "make check").
 
-2004-05-21 12:27  stuart_hc
+2004-05-21 17:27  stuart_hc
 
 	* README.developers: Initial revision of software practice
 	  guidelines for CVS developers.
 
-2004-05-21 10:17  tjdwave
+2004-05-21 15:17  tjdwave
 
 	* libdirac_common/mot_comp.cpp: Fixed bug with erroneous linear
 	  interpolation for sub-pixel values.
 
-2004-05-20 08:44  tjdwave
+2004-05-20 13:44  tjdwave
 
 	* README: Minor edit of example of making a header, to reflect the
 	  new CLI.
 
-2004-05-20 08:39  tjdwave
+2004-05-20 13:39  tjdwave
 
 	* picheader/headmain.cpp: Fixed help message for CLI.
 
-2004-05-20 08:38  tjdwave
+2004-05-20 13:38  tjdwave
 
 	* decoder/decmain.cpp: Fixed minor bug with -verbose option to make
 	  it true boolean.
 
-2004-05-20 08:37  tjdwave
+2004-05-20 13:37  tjdwave
 
 	* encoder/encmain.cpp: Corrected help text for CLI.
 
-2004-05-20 06:50  stuart_hc
+2004-05-20 11:50  stuart_hc
 
 	* doc/dirac_api.doxygen, doc/dirac_api_foot.html,
 	  doc/dirac_api_head.html, doc/libdirac_encoder_api_foot.html,
@@ -4357,65 +5158,65 @@
 	  libdirac_common/band_codec.cpp: Corrected CRLF line-endings to LF
 	  for consistency.
 
-2004-05-20 06:35  stuart_hc
+2004-05-20 11:35  stuart_hc
 
 	* NEWS: Added mention of libtool removal, slight rearrangement for
 	  clarity.  Corrected CRLF line-endings to LF.
 
-2004-05-20 06:31  stuart_hc
+2004-05-20 11:31  stuart_hc
 
 	* README: Fixed incorrect interlace argument in DV transcode
 	  example.  Minor grammatical errors fixed.
 
-2004-05-19 18:08  chaoticcoyote
+2004-05-19 23:08  chaoticcoyote
 
 	* README: Updated for changes in command-line parser
 
-2004-05-19 18:00  chaoticcoyote
+2004-05-19 23:00  chaoticcoyote
 
 	* AUTHORS: Added my middle name to credits Corrected company name
 
-2004-05-19 13:39  chaoticcoyote
+2004-05-19 18:39  chaoticcoyote
 
 	* decoder/decmain.cpp, encoder/encmain.cpp,
 	  libdirac_common/cmd_line.cpp, libdirac_common/cmd_line.h,
 	  picheader/headmain.cpp: Modified command line parser to correctly
 	  handle boolean options
 
-2004-05-19 12:27  stuart_hc
+2004-05-19 17:27  stuart_hc
 
 	* README: Added example usage for MPlayer, display (ImageMagick),
 	  and transcode.  Reformatted all example commands to be indented
 	  for clarity.
 
-2004-05-19 11:51  tjdwave
+2004-05-19 16:51  tjdwave
 
 	* NEWS: More details for 0.3.0 release
 
-2004-05-19 10:29  tjdwave
+2004-05-19 15:29  tjdwave
 
 	* NEWS: Include release notes for 0.2.0 & 0.3.0
 
-2004-05-19 10:19  tjdwave
+2004-05-19 15:19  tjdwave
 
 	* TODO: Removed mention of frame buffer class, since now complete.
 
-2004-05-19 10:14  tjdwave
+2004-05-19 15:14  tjdwave
 
 	* AUTHORS: Added contributers.
 
-2004-05-19 10:04  tjdwave
+2004-05-19 15:04  tjdwave
 
 	* libdirac_common/pic_io.cpp: Changed YUV output to output lines
 	  instead of bytes, according to patch provided by Malcolm Parsons
 
-2004-05-19 05:16  tjdwave
+2004-05-19 10:16  tjdwave
 
 	* libdirac_common/: mot_comp.cpp, pic_io.cpp: Replaced zero-padding
 	  with edge-padding to eliminate colour-fringeing at low bitrates.
 	  Mod to set padded values to 0 when compensating frames.
 
-2004-05-18 03:46  tjdwave
+2004-05-18 08:46  tjdwave
 
 	* README, encoder/encmain.cpp, libdirac_common/frame_buffer.cpp,
 	  libdirac_common/frame_buffer.h, libdirac_common/pic_io.cpp,
@@ -4428,11 +5229,11 @@
 	  initial I-frame ('infinitely' many L1 frames). Revised quantiser
 	  selection to cope with rounding error noise.
 
-2004-05-14 13:27  stuart_hc
+2004-05-14 18:27  stuart_hc
 
 	* decoder/decmain.cpp: Added better error checking.
 
-2004-05-14 13:25  stuart_hc
+2004-05-14 18:25  stuart_hc
 
 	* libdirac_common/pic_io.cpp, libdirac_common/pic_io.h,
 	  picheader/headmain.cpp: Replaced binary header files with ASCII
@@ -4440,25 +5241,25 @@
 	  Rearranged PicOutput constructor to permit code reuse from
 	  picheader/headmain.cpp
 
-2004-05-14 13:20  stuart_hc
+2004-05-14 18:20  stuart_hc
 
 	* decoder/Makefile.am, encoder/Makefile.am, picheader/Makefile.am:
 	  Use LDADD to ensure files which depend on libraries are rebuilt
 	  when necessary.
 
-2004-05-14 10:21  tjdwave
+2004-05-14 15:21  tjdwave
 
 	* README: Build information now incorporated.
 
-2004-05-14 06:48  stuart_hc
+2004-05-14 11:48  stuart_hc
 
 	* bootstrap: Avoid errors when mixing versions of autotools.
 
-2004-05-14 06:47  stuart_hc
+2004-05-14 11:47  stuart_hc
 
 	* make_debug.sh: Rearranged to use "make" to be more maintainable.
 
-2004-05-12 12:04  tjdwave
+2004-05-12 17:04  tjdwave
 
 	* decoder/decmain.cpp, picheader/headmain.cpp,
 	  libdirac_encoder/seq_compress.cpp:
@@ -4468,7 +5269,7 @@
 	  padding so that arbitrary block sizes and frame dimensions can be
 	  supported.
 
-2004-05-12 12:03  tjdwave
+2004-05-12 17:03  tjdwave
 
 	* encoder/encmain.cpp:
 	  Done general code tidy, implementing copy constructors,
@@ -4477,22 +5278,22 @@
 	  padding so that arbitrary block sizes and frame  dimensions can
 	  be supported.
 
-2004-05-12 05:23  tjdwave
+2004-05-12 10:23  tjdwave
 
 	* reconf: Removed since it duplicated the job of ./bootstrap.
 
-2004-05-12 05:20  tjdwave
+2004-05-12 10:20  tjdwave
 
 	* dirac_build_howto.txt: All build instructions are now in the
 	  README file.	Information on creating a distribution removed
 	  since it is not indended for the target audience.
 
-2004-05-12 04:46  tjdwave
+2004-05-12 09:46  tjdwave
 
 	* win/xparam/README: XParam library is no longer needed to build
 	  Dirac.
 
-2004-05-12 04:35  tjdwave
+2004-05-12 09:35  tjdwave
 
 	* libdirac_common/arith_codec.h, libdirac_common/arrays.h,
 	  libdirac_common/band_codec.cpp, libdirac_common/band_codec.h,
@@ -4533,19 +5334,19 @@
 	  throughout.  Added support for frame padding so that arbitrary
 	  block sizes and frame dimensions can be supported.
 
-2004-05-12 04:21  stuart_hc
+2004-05-12 09:21  stuart_hc
 
 	* libdirac_common/: gop.cpp, gop.h, Makefile.am: FrameBuffer
 	  classes (frame_buffer.{cpp,h}) now replace Gop classes
 	  (gop.{cpp,h}).
 
-2004-05-12 04:14  tjdwave
+2004-05-12 09:14  tjdwave
 
 	* libdirac_common/: frame_buffer.cpp, frame_buffer.h: Initial
 	  commit of FrameBuffer classes to handle free-style temporal
 	  reference structures. Replaces Gop class (gop.{cpp,h}).
 
-2004-05-11 12:11  stuart_hc
+2004-05-11 17:11  stuart_hc
 
 	* Makefile.am, bootstrap, configure.ac, decoder/Makefile.am,
 	  doc/Makefile.am, encoder/Makefile.am,
@@ -4556,7 +5357,7 @@
 	  Added tests for documentation tools and added documentation to
 	  default make target 'all'.
 
-2004-05-11 10:17  tjdwave
+2004-05-11 15:17  tjdwave
 
 	* Makefile.am, README, configure.ac, dirac_build_howto.txt,
 	  decoder/Makefile.am, decoder/decmain.cpp, encoder/Makefile.am,
@@ -4566,115 +5367,115 @@
 	  win/README, win/xparam/README: Removed dependency on XParam CLI
 	  library for both encoder and decoder.
 
-2004-05-11 10:15  tjdwave
+2004-05-11 15:15  tjdwave
 
 	* doc/dirac_algor.tex: Removed inline comments and notes. Added
 	  text describing frame types (I, L1 and L2) and relation to MPEG
 	  types.
 
-2004-05-10 00:44  chaoticcoyote
+2004-05-10 05:44  chaoticcoyote
 
 	* doc/dirac_algor.tex: Newest version of "programmer's guide"
 
-2004-05-10 00:43  chaoticcoyote
+2004-05-10 05:43  chaoticcoyote
 
 	* libdirac_common/: cmd_line.cpp, cmd_line.h: Simple, portable
 	  command-line parser (eliminates Xparam dependency)
 
-2004-05-10 00:41  chaoticcoyote
+2004-05-10 05:41  chaoticcoyote
 
 	* doc/dirac_algor.tex, encoder/encmain.cpp,
 	  libdirac_common/Makefile.am: Updated dirac algorithm document
 	  Modified encoder to use simple, portable command-line parser
 
-2004-05-09 21:04  chaoticcoyote
+2004-05-10 02:04  chaoticcoyote
 
 	* encoder/decmain.cpp: Removed spurious file
 
-2004-04-25 18:27  chaoticcoyote
+2004-04-25 23:27  chaoticcoyote
 
 	* win/: README, xparam/README: Read Me files to explain the context
 	  of this directory and Makefile
 
-2004-04-25 18:16  chaoticcoyote
+2004-04-25 23:16  chaoticcoyote
 
 	* win/Makefile: Added nmake makefile for Microsoft Visual C++
 
-2004-04-22 18:14  chaoticcoyote
+2004-04-22 23:14  chaoticcoyote
 
 	* make_debug.sh: Enhanced the debug build script to support
 	  different architectures
 
-2004-04-22 17:11  chaoticcoyote
+2004-04-22 22:11  chaoticcoyote
 
 	* misc/xparam-1.22-gcc-3.4.0.patch: A patch for xparam 1.22 to work
 	  around a GCC 3.4.0 internal compiler error
 
-2004-04-22 17:08  chaoticcoyote
+2004-04-22 22:08  chaoticcoyote
 
 	* make_debug.sh, libdirac_encoder/comp_compress.cpp: Fixed warning
 	  generated by some versions of GCC for
 	  libdirac_encoder/comp_compress.cpp Added make_debug.sh script to
 	  build debuggable, profilable versions of encoder and decoder
 
-2004-04-15 23:12  chaoticcoyote
+2004-04-16 04:12  chaoticcoyote
 
 	* doc/Makefile.in: Removed spurious file
 
-2004-04-15 23:11  chaoticcoyote
+2004-04-16 04:11  chaoticcoyote
 
 	* doc/: Makefile.in, dirac_api.doxygen.in: Added additional
 	  documentation build files
 
-2004-04-15 23:10  chaoticcoyote
+2004-04-16 04:10  chaoticcoyote
 
 	* Makefile.am, doc/Makefile.am, doc/dirac_api.doxygen: Addiitonal
 	  work on generating docs for distribution
 
-2004-04-15 21:41  chaoticcoyote
+2004-04-16 02:41  chaoticcoyote
 
 	* doc/: dirac_algor.tex, dirac_algorithm2.tex: Renamed algorithm
 	  document
 
-2004-04-15 21:28  chaoticcoyote
+2004-04-16 02:28  chaoticcoyote
 
 	* Makefile.am, doc/Makefile.am: Added documentation targets to
 	  makefiles
 
-2004-04-15 09:59  chaoticcoyote
+2004-04-15 14:59  chaoticcoyote
 
 	* configure.ac: Added doc/Makefile
 
-2004-04-15 09:57  chaoticcoyote
+2004-04-15 14:57  chaoticcoyote
 
 	* doc/Makefile.am: Added makefile boilerplate to generate docusment
 	  via "docs" target
 
-2004-04-15 09:54  chaoticcoyote
+2004-04-15 14:54  chaoticcoyote
 
 	* configure.ac: Added program checks for Doxygen and LaTeX
 
-2004-04-15 08:31  chaoticcoyote
+2004-04-15 13:31  chaoticcoyote
 
 	* configure.ac: Updated to version 0.2.0
 
-2004-04-15 08:30  chaoticcoyote
+2004-04-15 13:30  chaoticcoyote
 
 	* doc/dirac_algorithm2.tex: Dirac algorithm document added
 
-2004-04-11 21:57  chaoticcoyote
+2004-04-12 02:57  chaoticcoyote
 
 	* Makefile.am, decoder/decmain.cpp, encoder/encmain.cpp,
 	  libdirac_common/pic_io.cpp: Fixed problem Intel C++ had in
 	  finding xparam headers on Linux Solved Segmentation Fault bug in
 	  pic_io.cpp
 
-2004-04-11 18:54  chaoticcoyote
+2004-04-11 23:54  chaoticcoyote
 
 	* libdirac_common/: arith_codec.h, bit_manager.h, context.h:
 	  Additional comments
 
-2004-04-11 18:50  chaoticcoyote
+2004-04-11 23:50  chaoticcoyote
 
 	* libdirac_common/arrays.h, libdirac_common/band_codec.h,
 	  libdirac_common/bit_manager.cpp, libdirac_common/common.cpp,
@@ -4700,7 +5501,7 @@
 	  typedef unsigned int uint (MS does not have this) Added a few
 	  missing std:: qualifiers that GCC didn't require
 
-2004-04-11 12:25  chaoticcoyote
+2004-04-11 17:25  chaoticcoyote
 
 	* windows/dirac/: dirac.dsw, libdirac_common/libdirac_common.dsp,
 	  libdirac_decoder/libdirac_decoder.dsp,
@@ -4708,7 +5509,7 @@
 	  libdirac_motionest/libdirac_motionest.dsp: Added initial Windows
 	  Visual Studio C++ 6.0 project files
 
-2004-04-06 14:06  chaoticcoyote
+2004-04-06 19:06  chaoticcoyote
 
 	* libdirac_common/: arith_codec.h, arrays.h, band_codec.h,
 	  bit_manager.h, common.h, context.h, frame.h, gop.h, mot_comp.h,
@@ -4716,93 +5517,93 @@
 	  Boilerplate for Doxygen comments; testing ability to commit into
 	  SF CVS
 
-2004-04-04 23:05  chaoticcoyote
+2004-04-05 04:05  chaoticcoyote
 
 	* libdirac_motionest/: downconvert.h, me_mode_decn.h, me_subpel.h,
 	  me_utils.h, motion_estimate.h: Updated Doxygen API documentation
 	  comments Test to see if Scott's CVS is now working correctly
 
-2004-03-30 10:52  chaoticcoyote
+2004-03-30 16:52  chaoticcoyote
 
 	* doc/dirac_api.doxygen, libdirac_encoder/frame_compress.h,
 	  libdirac_encoder/seq_compress.h: New Doxygen comments
 
-2004-03-28 20:52  chaoticcoyote
+2004-03-29 02:52  chaoticcoyote
 
 	* libdirac_decoder/: comp_decompress.h, frame_decompress.h,
 	  seq_decompress.h: Added Doxygen comments
 
-2004-03-21 20:33  chaoticcoyote
+2004-03-22 01:33  chaoticcoyote
 
 	* doc/dirac_doc_howto.txt: Added more description of HTML and LATEX
 	  document generation
 
-2004-03-21 20:04  chaoticcoyote
+2004-03-22 01:04  chaoticcoyote
 
 	* libdirac_encoder/: comp_compress.cpp, comp_compress.h,
 	  frame_compress.h, seq_compress.cpp, seq_compress.h: Added API
 	  documentation to encoder library Moved large constructors so they
 	  are no longer inlined
 
-2004-03-21 16:01  chaoticcoyote
+2004-03-21 21:01  chaoticcoyote
 
 	* doc/: libdirac_encoder_api_foot.html,
 	  libdirac_encoder_api_head.html: Adding custome header and footer
 	  for HTML libdirac_encoder docs
 
-2004-03-21 16:00  chaoticcoyote
+2004-03-21 21:00  chaoticcoyote
 
 	* doc/: libdirac_encoder_api.doxygen, libdirac_encoder_foot.html,
 	  libdirac_encoder_head.html: Adjusting file names
 
-2004-03-21 15:51  chaoticcoyote
+2004-03-21 20:51  chaoticcoyote
 
 	* doc/: libdirac_encoder_api.doxygen, libdirac_encoder_foot.html,
 	  libdirac_encoder_head.html: Added files to generate socumentation
 	  specific to libdirac_encoder
 
-2004-03-21 14:26  chaoticcoyote
+2004-03-21 19:26  chaoticcoyote
 
 	* doc/dirac_api.doxygen: Change graphic configuration
 
-2004-03-21 09:05  chaoticcoyote
+2004-03-21 14:05  chaoticcoyote
 
 	* dirac_build_howto.txt, doc/dirac_api.doxygen,
 	  doc/dirac_api_foot.html, doc/dirac_api_head.html,
 	  doc/dirac_doc_howto.txt: Updated documentation files
 
-2004-03-21 08:06  chaoticcoyote
+2004-03-21 13:06  chaoticcoyote
 
 	* ltmain.sh, reconf: Updated autoconf to use libtoolize Removed
 	  spurious ltmain.sh
 
-2004-03-19 02:43  chaoticcoyote
+2004-03-19 07:43  chaoticcoyote
 
 	* doc/dirac_algorithm.doc: Removed Word doc because the conversion
 	  didn't work
 
-2004-03-19 02:35  chaoticcoyote
+2004-03-19 07:35  chaoticcoyote
 
 	* doc/: dirac_algorithm.doc, dirac_api.doxygen: Created document
 	  diractory Populated doc directory with preliminary texts
 
-2004-03-13 12:34  chaoticcoyote
+2004-03-13 17:34  chaoticcoyote
 
 	* decoder/Makefile.am, encoder/Makefile.am,
 	  libdirac_decoder/Makefile.am, libdirac_encoder/Makefile.am,
 	  libdirac_motionest/Makefile.am: Disabled auto-dependency checking
 	  in newer versions of AutoMake
 
-2004-03-13 12:11  chaoticcoyote
+2004-03-13 17:11  chaoticcoyote
 
 	* ltmain.sh, reconf, libdirac_common/Makefile.am: Required files
 	  for for autoconf
 
-2004-03-12 12:09  chaoticcoyote
+2004-03-12 17:09  chaoticcoyote
 
 	* NEWS: Minor change to test commit ability
 
-2004-03-11 12:45  timborer
+2004-03-11 17:45  timborer
 
 	* AUTHORS, COPYING, ChangeLog, INSTALL, Makefile.am, NEWS, README,
 	  TODO, bootstrap, configure.ac, dirac.pc.in, decoder/Makefile.am,
@@ -4846,7 +5647,7 @@
 	  libdirac_motionest/motion_estimate.h, picheader/Makefile.am,
 	  picheader/headmain.cpp: Initial import (well nearly!)
 
-2004-03-11 12:45  timborer
+2004-03-11 17:45  timborer
 
 	* AUTHORS, COPYING, ChangeLog, INSTALL, Makefile.am, NEWS, README,
 	  TODO, bootstrap, configure.ac, dirac.pc.in, decoder/Makefile.am,
