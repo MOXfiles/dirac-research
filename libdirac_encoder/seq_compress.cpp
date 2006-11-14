@@ -175,8 +175,11 @@ SequenceCompressor::~SequenceCompressor()
 }
 
 bool SequenceCompressor::LoadNextFrame()
-{
+{     
     m_fbuffer->PushFrame( m_pic_in , m_last_frame_read+1 );
+    
+    if ( m_encparams.Denoise() )
+        Denoise(m_fbuffer->GetFrame( m_last_frame_read+1 ) );
 
     if ( m_pic_in->End() )
     {
@@ -395,3 +398,91 @@ int SequenceCompressor::CodedToDisplay( const int fnum )
         return fnum;
     }
 }
+
+void SequenceCompressor::Denoise( Frame& frame )
+{
+    DenoiseComponent( frame.Ydata() ); 
+    DenoiseComponent( frame.Udata() );
+    DenoiseComponent( frame.Vdata() );
+
+}
+
+void SequenceCompressor::DenoiseComponent( PicArray& pic_data )
+{
+    // Do centre-weighted median denoising
+
+    PicArray pic_copy( pic_data );
+
+    const int centre_weight = 5;
+    const int list_length = centre_weight+8;
+    ValueType val_list[list_length]; 
+    
+    int pos;
+    
+    for (int j=1; j<pic_data.LastY(); ++j)
+    {
+        for (int i=1; i<pic_data.LastX(); ++i)
+        {
+            // Make the value list
+            for (int k=0; k<centre_weight-1; ++k)
+                val_list[k] = pic_copy[j][i];
+
+            pos = centre_weight - 1;
+                
+            for (int s=-1; s<=1; ++s)
+            {
+                for (int r=-1; r<=1; ++r)
+                {
+                    val_list[pos]=pic_copy[j+s][i+r];
+                    pos++;
+                }// r
+            }// s
+            
+            pic_data[j][i] = Median( val_list, list_length );
+        }// i 
+    }// j
+
+}
+
+ValueType SequenceCompressor::Median( const ValueType* val_list, const int length)
+{
+
+
+    ValueType ordered_vals[length];
+
+    // Place the values in order
+    int pos=0;
+    ordered_vals[0] = val_list[0]; 
+    for (int i=1 ; i<length ; ++i )
+    {
+        for (int k=0 ; k<i ; ++k)
+        {
+            if (val_list[i]<ordered_vals[k])
+            {
+                pos=k;
+                break;
+            }
+            else
+                pos=k+1;
+        }// k
+
+        if ( pos==i)
+            ordered_vals[i] = val_list[i];
+        else
+        {
+            for (int k=i-1 ; k>=pos ; --k )
+            {
+                ordered_vals[k+1] = ordered_vals[k];
+            }// k
+            ordered_vals[pos] = val_list[i];
+        }
+    }// i
+
+    // return the middle value
+    if ( length%2!=0 )
+        return ordered_vals[(length-1)/2];
+    else
+        return (ordered_vals[(length/2)-1]+ordered_vals[length/2]+1)>>1;
+          
+}
+

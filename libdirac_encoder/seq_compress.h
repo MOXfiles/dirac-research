@@ -150,6 +150,14 @@ namespace dirac
         */
         SequenceCompressor& operator=(const SequenceCompressor& rhs);
 
+        //! Denoises an input frame
+        void Denoise( Frame& frame );
+
+        //! Denoises a component
+        void DenoiseComponent( PicArray& pic_data );
+
+        ValueType Median( const ValueType* val_list, const int length);
+
         /**
         * Writes sequence data to byte stream
         *@param p_accessunit_byteio Output destination

@@ -1321,6 +1321,9 @@ namespace dirac
         //! Return the number of cycles per degree at the nominal viewing distance for the raster
         float CPD() const {return m_cpd;}
 
+        //! Return whether input denoising is on or off
+        bool Denoise() const {return m_denoise;}
+
         //! Return the Lagrangian parameter to be used for I frames
         float ILambda() const {return m_I_lambda;}
 
@@ -1381,6 +1384,10 @@ namespace dirac
         //! Set the number of cycles per degree at the nominal viewing distance
         void SetCPD(const float cpd){m_cpd=cpd;}
 
+
+        //! Set denoising value - true or false
+        void SetDenoise(const bool denoise){m_denoise=denoise;}
+
         //! Set the Lagrangian parameter to be used for I frames
         void SetILambda(const float l){m_I_lambda=l;}
 
@@ -1440,6 +1447,9 @@ namespace dirac
         
         //! Cycles per degree assumed for viewing the video
         float m_cpd;
+        
+        //! Flag indicating input denoising
+        bool m_denoise;
         
         //! Lagrangian parameter for Intra frame coding
         float m_I_lambda;

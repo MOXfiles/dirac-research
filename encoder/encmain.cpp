@@ -24,6 +24,7 @@
  *                 Scott R Ladd,
  *                 Anuradha Suraparaju 
  *                 Andrew Kennedy
+ *                 Johannes Reinhardt
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -97,6 +98,7 @@ static void display_help()
     cout << "\nmulti_quants      bool    false         Use multiple quantisers";
     cout << "\nmv_prec           string  false         MV Pixel Precision (1, 1/2, 1/4, 1/8)";
     cout << "\nno_spartition     bool    false         Do not use spatial partitioning while coding transform data";
+    cout << "\ndenoise           bool    false         Denoise input before coding (NB: PSNR stats will relate to denoised video)";
     cout << "\nverbose           bool    false         Verbose mode";
     cout << "\nlocal             bool    false         Write diagnostics & locally decoded video";
     cout << "\ninput             string  [ required ]  Input file name";
@@ -373,85 +375,85 @@ int GetFrameBufferSize (const dirac_encoder_context_t &enc_ctx)
     }
     return size;
 }
-const char *chroma2string (dirac_chroma_t chroma)
+const string chroma2string (dirac_chroma_t chroma)
 {
     switch (chroma)
     {
     case format422:
-        return "4:2:2";
+        return string("4:2:2");
 
     case format444:
-        return "4:4:4";
+        return string("4:4:4");
 
     case format420:
-        return "4:2:0";
+        return string("4:2:0");
 
     default:
         break;
     }
 
-    return "Unknown";
+    return string("Unknown");
 }
 
-const char *MvPrecisionToString (MVPrecisionType mv_type)
+const string MvPrecisionToString (MVPrecisionType mv_type)
 {
     switch (mv_type)
     {
     case MV_PRECISION_PIXEL:
-        return "Pixel";
+        return string("Pixel");
     case MV_PRECISION_HALF_PIXEL:
-        return "Half Pixel";
+        return string("Half Pixel");
     case MV_PRECISION_QUARTER_PIXEL:
-        return "Quarter Pixel";
+        return string("Quarter Pixel");
     case MV_PRECISION_EIGHTH_PIXEL:
-        return "Eighth Pixel";
+        return string("Eighth Pixel");
     default:
-        return "Undefined";
+        return string("Undefined");
     }
 }
 
-const char *TransformFilterToString (WltFilter wf)
+const string TransformFilterToString (WltFilter wf)
 {
     switch (wf)
     {
     case DD9_3:
-        return "DD9_3";
+        return string("DD9_3");
     case LEGALL5_3:
-        return "LEGALL5_3";
+        return string("LEGALL5_3");
     case DD13_5:
-        return "DD13_5";
+        return string("DD13_5");
     case HAAR0:
-        return "HAAR0";
+        return string("HAAR0");
     case HAAR1:
-        return "HAAR1";
+        return string("HAAR1");
     case HAAR2:
-        return "HAAR2";
+        return string("HAAR2");
     case FIDELITY:
-        return "FIDELITY";
+        return string("FIDELITY");
     case DAUB9_7:
-        return "DAUB9_7";
+        return string("DAUB9_7");
     default:
-        return "Undefined";
+        return string("Undefined");
     }
 }
 
-WltFilter StringToTransformFilter (const char *wf)
+WltFilter StringToTransformFilter (string wf)
 {
-    if( strcmp( wf, "DD9_3" ) == 0)
+    if( wf=="DD9_3" )
         return DD9_3;
-    else if( strcmp( wf, "LEGALL5_3" ) == 0)
+    else if( wf=="LEGALL5_3" )
         return LEGALL5_3;
-    else if( strcmp( wf, "DD13_5" ) == 0)
+    else if( wf=="DD13_5" )
         return DD13_5;
-    else if( strcmp( wf, "HAAR0" ) == 0)
+    else if( wf=="HAAR0" )
         return HAAR0;
-    else if( strcmp( wf, "HAAR1" ) == 0)
+    else if( wf=="HAAR1" )
         return HAAR1;
-    else if( strcmp( wf, "HAAR2" ) == 0)
+    else if( wf=="HAAR2" )
         return HAAR2;        
-    else if( strcmp( wf, "FIDELITY" ) == 0)
+    else if( wf=="FIDELITY" )
         return FIDELITY;
-    else if( strcmp( wf, "DAUB9_7" ) == 0)
+    else if( wf=="DAUB9_7" )
         return DAUB9_7;
     else
         return filterNK;
@@ -479,6 +481,7 @@ void display_codec_params(dirac_encoder_context_t &enc_ctx)
     std::cout << " \tWavelet depth=" << enc_ctx.enc_params.wlt_depth << std::endl;
     std::cout << " \tSpatial Partitioning=" << (enc_ctx.enc_params.spatial_partition ? "true" : "false") << std::endl;
     std::cout << " \tMultiple Quantisers=" << (enc_ctx.enc_params.multi_quants ? "true" : "false") << std::endl;
+    std::cout << " \tDenoising input=" << (enc_ctx.enc_params.denoise ? "true" : "false") << std::endl;
 }
 
 int main (int argc, char* argv[])
@@ -775,6 +778,11 @@ int main (int argc, char* argv[])
             parsed[i] = true;
             enc_ctx.enc_params.spatial_partition = false;
         }
+        else if ( strcmp(argv[i], "-denoise") == 0 )
+        {
+            parsed[i] = true;
+            enc_ctx.enc_params.denoise = true;
+        }        
         else if ( strcmp(argv[i], "-wlt_depth") == 0 )
         {
             parsed[i] = true;
@@ -789,7 +797,7 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             i++;
-            WltFilter wf = StringToTransformFilter(argv[i]);
+            WltFilter wf = StringToTransformFilter(string(argv[i]));
             if (wf == filterNK)
                 cerr << "Unrecognised Intra Wavelet Filter " << argv[i];
             else
@@ -870,7 +878,7 @@ int main (int argc, char* argv[])
         exit(1);
     }
 
-    if (strcmp (input.c_str(), output.c_str()) == 0)
+    if ( input==output )
     {
         std::cerr << "Input and output file names must be different" << std::endl;
         exit(1);
@@ -902,12 +910,13 @@ int main (int argc, char* argv[])
      std::ofstream outfile(bit_name.c_str(),std::ios::out | std::ios::binary);    //bitstream output
 
     // open the decoded ouput file
-    std::string output_name_yuv = output + ".yuv";
-    std::string output_name_imt = output + ".imt";
     std::ofstream *outyuv = NULL, *outimt = NULL;
     
     if (nolocal == false)
     {
+        std::string output_name_yuv = output + ".yuv";
+        std::string output_name_imt = output + ".imt";
+
         outyuv = new std::ofstream(output_name_yuv.c_str(),std::ios::out | std::ios::binary);
 
       // open the diagnostics ouput file
@@ -1061,6 +1070,5 @@ int main (int argc, char* argv[])
     
     delete[] parsed;
     return EXIT_SUCCESS;
-
 
 }
