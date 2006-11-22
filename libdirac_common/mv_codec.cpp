@@ -264,9 +264,7 @@ inline ValueType MvDataCodec::DCPrediction(const TwoDArray < ValueType > & dcdat
 void MvDataCodec::DoWorkCode( MvData& in_data )
 {
     int step,max; 
-    int pstep,pmax,mode_step; 
-    int split_depth; 
-    bool common_ref; 
+    int split_depth;  
     
     for (m_mb_yp = 0, m_mb_tlb_y = 0;  m_mb_yp < in_data.MBSplit().LengthY();  ++m_mb_yp, m_mb_tlb_y += 4)
     {
@@ -397,9 +395,7 @@ void MvDataCodec::CodeDC(const MvData& in_data)
 void MvDataCodec::DoWorkDecode( MvData& out_data)
 {
     int step,max; 
-    int pstep,pmax,mode_step;     
     int split_depth; 
-    bool common_ref; 
     int xstart,ystart;     
 
     for (m_mb_yp = 0,m_mb_tlb_y = 0; m_mb_yp < out_data.MBSplit().LengthY(); ++m_mb_yp,m_mb_tlb_y += 4)

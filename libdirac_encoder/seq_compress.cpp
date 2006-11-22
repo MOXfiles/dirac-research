@@ -448,7 +448,7 @@ ValueType SequenceCompressor::Median( const ValueType* val_list, const int lengt
 {
 
 
-    ValueType ordered_vals[length];
+    OneDArray<ValueType> ordered_vals( length );
 
     // Place the values in order
     int pos=0;

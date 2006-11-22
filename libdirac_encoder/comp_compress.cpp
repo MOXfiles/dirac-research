@@ -47,6 +47,7 @@
 #include <libdirac_encoder/comp_compress.h>
 #include <libdirac_encoder/quant_chooser.h>
 #include <libdirac_common/band_codec.h>
+#include <libdirac_common/motion.h>
 
 using namespace dirac;
 
@@ -61,12 +62,16 @@ CompCompressor::CompCompressor( EncoderParams& encp,const FrameParams& fp)
   m_cformat( m_fparams.CFormat() )
 {}
 
-ComponentByteIO* CompCompressor::Compress(PicArray& pic_data, const double intra_ratio)
+ComponentByteIO* CompCompressor::Compress( PicArray& pic_data , 
+                                           const bool is_a_cut ,
+                                           const double intra_ratio ,
+                                           MEData* me_data )                                           
 {
     //need to transform, select quantisers for each band, and then compress each component in turn
     m_csort=pic_data.CSort();    
     const int depth=m_encparams.TransformDepth();
     unsigned int num_band_bytes( 0 );
+    m_me_data = me_data;
 
     // A pointer to an object  for coding the subband data
     BandCodec* bcoder;
@@ -74,7 +79,7 @@ ComponentByteIO* CompCompressor::Compress(PicArray& pic_data, const double intra
     Subband node;
 
     //set up Lagrangian params    
-    SetCompLambda( intra_ratio );
+    SetCompLambda( intra_ratio, is_a_cut );
 
     WaveletTransform wtransform( depth , m_encparams.TransformFilter() );
     wtransform.Transform( FORWARD , pic_data );
@@ -145,11 +150,17 @@ ComponentByteIO* CompCompressor::Compress(PicArray& pic_data, const double intra
     return p_component_byteio;
 }
 
-void CompCompressor::SetCompLambda( const double intra_ratio )
+void CompCompressor::SetCompLambda( const double intra_ratio, const bool is_a_cut )
 {
     if ( m_fsort.IsIntra() )
     {
         m_lambda= m_encparams.ILambda();
+        if ( is_a_cut )
+        {
+            // The intra frame is inserted so we can lower the quality
+            m_lambda *= 8;     
+             
+        }
     }
     else
     {        
@@ -173,80 +184,13 @@ void CompCompressor::SetCompLambda( const double intra_ratio )
         m_lambda*= m_encparams.VFactor();
 }
 
-#if 0
 void CompCompressor::SetupCodeBlocks( SubbandList& bands )
 {
     int xregions;
     int yregions;
 
-    // The minimum x and y dimensions of a block
-    const int min_dim( 4 );
-  
     // The maximum number of regions horizontally and vertically
-    int max_xregion, max_yregion;
 
-    for (int band_num = 1; band_num<=bands.Length() ; ++band_num)
-    {
-        if (m_encparams.SpatialPartition())
-        {
-            m_encparams.SetDefaultSpatialPartition(true);
-            if ( band_num < bands.Length()-6 )
-            {
-                if (m_fsort.IsInter())
-                {
-                    xregions = 12;
-                    yregions = 8;
-                }
-                else
-                {
-                    xregions = 4;
-                    yregions = 3;
-                }
-            }
-            else if (band_num < bands.Length()-3)
-            {
-                if (m_fsort.IsInter())
-                {
-                    xregions = 8;
-                    yregions = 6;
-                }
-                else
-                {
-                    xregions = 1;
-                    yregions = 1;
-                }
-            }
-            else
-            {
-                xregions = 1;
-                yregions = 1;
-            }
-        }
-        else
-        {
-               xregions = 1;
-               yregions = 1;
-        }
-
-        max_xregion = bands( band_num ).Xl() / min_dim;
-        max_yregion = bands( band_num ).Yl() / min_dim;
-
-        bands( band_num ).SetNumBlocks( std::min( yregions , max_yregion ), 
-                                        std::min( xregions , max_xregion ) );
-
-    }// band_num
-}
-#else
-void CompCompressor::SetupCodeBlocks( SubbandList& bands )
-{
-    int xregions;
-    int yregions;
-
-    // The minimum x and y dimensions of a block
-    const int min_dim( 4 );
-  
-    // The maximum number of regions horizontally and vertically
-    int max_xregion, max_yregion;
 
     for (int band_num = 1; band_num<=bands.Length() ; ++band_num)
     {
@@ -263,14 +207,9 @@ void CompCompressor::SetupCodeBlocks( SubbandList& bands )
                yregions = 1;
         }
 
-        max_xregion = bands( band_num ).Xl() / min_dim;
-        max_yregion = bands( band_num ).Yl() / min_dim;
-
-        bands( band_num ).SetNumBlocks( std::min( yregions , max_yregion ), 
-                                        std::min( xregions , max_xregion ) );
+        bands( band_num ).SetNumBlocks( yregions , xregions );
     }// band_num
 }
-#endif
 
 void CompCompressor::SelectQuantisers( PicArray& pic_data , 
                                        SubbandList& bands ,
@@ -332,7 +271,7 @@ int CompCompressor::SelectMultiQuants( PicArray& pic_data , SubbandList& bands ,
     int band_bits( 0 );
     qchooser.SetEntropyCorrection( m_encparams.EntropyFactors().Factor( band_num , m_fsort , m_csort ) );
     band_bits = qchooser.GetBestQuant( node );
-
+        
     // Put the DC band average back in if necessary   
     if ( band_num == bands.Length() && m_fsort.IsIntra() )
         AddSubAverage( pic_data , node.Xl() , node.Yl() , ADD);

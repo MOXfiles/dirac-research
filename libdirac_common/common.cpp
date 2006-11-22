@@ -242,7 +242,7 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
 
     OLBParams tmp_olbparams = olbparams;
     // Factors for scaling chroma blocks
-    int xcfactor,ycfactor, xcshift, ycshift; 
+    int xcfactor,ycfactor; 
  
     if (cformat == format420)
     {

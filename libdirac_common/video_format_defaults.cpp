@@ -313,26 +313,26 @@ void SetDefaultEncoderParameters(EncoderParams& encparams)
     {
     case VIDEO_FORMAT_SD_625_DIGITAL:
         encparams.SetL1Sep(3);
-        encparams.SetNumL1(3);
+        encparams.SetNumL1(7);
         encparams.SetCPD(32.0f);
         break;
 
     case VIDEO_FORMAT_HD_720:
         encparams.SetL1Sep(3);
-        encparams.SetNumL1(7);
+        encparams.SetNumL1(15);
         encparams.SetCPD(20.0f);
         break;
 
     case VIDEO_FORMAT_HD_1080:
         encparams.SetL1Sep(3);
-        encparams.SetNumL1(3);
+        encparams.SetNumL1(7);
         encparams.SetCPD(32.0f);
         break;
 
     case VIDEO_FORMAT_CIF:
     default:
         encparams.SetL1Sep(3);
-        encparams.SetNumL1(11);
+        encparams.SetNumL1(19);
         encparams.SetCPD(20.0f);
         break;
     }

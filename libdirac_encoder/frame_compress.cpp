@@ -85,7 +85,6 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
     unsigned int num_mv_bits;
     m_medata_avail = false;
 
-    CompCompressor my_compcoder(m_encparams , fparams );
 
     if (m_me_data)
     {
@@ -95,7 +94,9 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
 
     if ( fsort.IsInter() )
     {
-        m_me_data = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB(), fparams.NumRefs());
+        m_me_data = new MEData( m_encparams.XNumMB() , 
+                                m_encparams.YNumMB(), 
+                                fparams.NumRefs());
 
         // Motion estimate first
         MotionEstimator my_motEst( m_encparams );
@@ -116,36 +117,36 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
 
     }
 
-   // Set the wavelet filter
-   if ( fsort.IsIntra() )
-   {
-       m_encparams.SetTransformFilter( m_encparams.IntraTransformFilter() );
-       m_encparams.SetDefaultCodeBlocks( INTRA_FRAME );
-   }
-   else
-   {
-       m_encparams.SetTransformFilter( m_encparams.InterTransformFilter() );
-       m_encparams.SetDefaultCodeBlocks( INTER_FRAME );
-       // Set the frame weight parameters.
-       // FIXME - setting to default at the moment. Need to process command
-       // line args in future
-       if (fparams.Refs().size() == 1)
-       {
-           m_encparams.SetFrameWeightsPrecision(0);
-           m_encparams.SetRef1Weight(1);
-           m_encparams.SetRef2Weight(0);
-       }
-       else
-       {
-           m_encparams.SetFrameWeightsPrecision(1);
-           m_encparams.SetRef1Weight(1);
-           m_encparams.SetRef2Weight(1);
-           // TESTING
-           //m_encparams.SetFrameWeightsPrecision(2);
-           //m_encparams.SetRef1Weight(1);
-           //m_encparams.SetRef2Weight(3);
-       }
-   }
+    // Set the wavelet filter
+    if ( fsort.IsIntra() )
+    {
+        m_encparams.SetTransformFilter( m_encparams.IntraTransformFilter() );
+        m_encparams.SetDefaultCodeBlocks( INTRA_FRAME );
+    }
+    else
+    {
+        m_encparams.SetTransformFilter( m_encparams.InterTransformFilter() );
+        m_encparams.SetDefaultCodeBlocks( INTER_FRAME );
+        // Set the frame weight parameters.
+        // FIXME - setting to default at the moment. Need to process command
+        // line args in future
+        if (fparams.Refs().size() == 1)
+        {
+            m_encparams.SetFrameWeightsPrecision(0);
+            m_encparams.SetRef1Weight(1);
+            m_encparams.SetRef2Weight(0);
+        }
+        else
+        {
+            m_encparams.SetFrameWeightsPrecision(1);
+            m_encparams.SetRef1Weight(1);
+            m_encparams.SetRef2Weight(1);
+            // TESTING
+            //m_encparams.SetFrameWeightsPrecision(2);
+            //m_encparams.SetRef1Weight(1);
+            //m_encparams.SetRef2Weight(3);
+        }
+    }
 
     // Write the frame header. We wait until after motion estimation, since
     // this allows us to do cut-detection and (possibly) to decide whether
@@ -202,12 +203,31 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
         p_transform_byteio->Output();
 
         //code component data
-        p_transform_byteio->AddComponent( my_compcoder.Compress( 
-                                          my_buffer.GetComponent( fnum , Y_COMP), m_intra_ratio ) );
-        p_transform_byteio->AddComponent( my_compcoder.Compress( 
-                                          my_buffer.GetComponent( fnum , U_COMP), m_intra_ratio ) );
-        p_transform_byteio->AddComponent( my_compcoder.Compress( 
-                                          my_buffer.GetComponent( fnum , V_COMP), m_intra_ratio ) );
+        
+        CompCompressor my_compcoder(m_encparams , fparams );
+
+        if ( fsort.IsIntra() )
+        {
+            p_transform_byteio->AddComponent( my_compcoder.Compress( 
+                my_buffer.GetComponent( fnum , Y_COMP), m_is_a_cut ) );
+            p_transform_byteio->AddComponent( my_compcoder.Compress( 
+                my_buffer.GetComponent( fnum , U_COMP), m_is_a_cut ) );
+            p_transform_byteio->AddComponent( my_compcoder.Compress( 
+                my_buffer.GetComponent( fnum , V_COMP), m_is_a_cut ) );
+        }
+        else
+        {
+            p_transform_byteio->AddComponent( my_compcoder.Compress( 
+                my_buffer.GetComponent( fnum , Y_COMP), false , 
+                    m_intra_ratio , m_me_data ) );
+            p_transform_byteio->AddComponent( my_compcoder.Compress( 
+                my_buffer.GetComponent( fnum , U_COMP), false , 
+                    m_intra_ratio , m_me_data ) );
+            p_transform_byteio->AddComponent( my_compcoder.Compress( 
+                my_buffer.GetComponent( fnum , V_COMP), false , 
+                    m_intra_ratio , m_me_data ) );
+        }
+                                          
 
         //motion compensate again if necessary
         if (fsort.IsInter() )

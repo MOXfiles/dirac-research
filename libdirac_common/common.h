@@ -968,9 +968,6 @@ namespace dirac
         //! The number of frames, after the current frame number, after the (de)coding of which the frame can be deleted
         int m_expiry_time;
         
-        //! True if the frame has been output, false if not
-        bool m_output;
-        
         //! The frame number, in temporal order
         int m_fnum;        
 
@@ -979,6 +976,9 @@ namespace dirac
 
         //! Reference type
         ReferenceType m_reference_type;
+        
+        //! True if the frame has been output, false if not
+        bool m_output;
 
         //! Chroma length
         int m_chroma_xl;        

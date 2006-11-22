@@ -371,6 +371,9 @@ no_spartition : Do not split a subband into coefficient blocks before
 multi_quants  : If subbands are split into multiple coefficient blocks before
                 entropy coding, assign different quantisers to each block 
                 within the subband.
+denoise       : Apply a denoising filter to the input video before encoding
+                (note PSNR statistics will be computed relative to the denoised 
+                video if -local is enabled)
 lossless      : Lossless coding.
 mv_precision  : Motion vector precision. Valid values are 1 (Pixel precision),
                 1/2 (half-pixel precision), 1/4 (quarter pixel precision which
@@ -396,7 +399,8 @@ Other options. The encoder also supports some other options, which are
 verbose   : turn on verbosity (if you don't, you won't see the final bitrate!)
 start     : code from this frame number
 stop      : code up until this frame number
-local     : Generate diagnostics and locally decoded output
+local     : Generate diagnostics and locally decoded output (to avoid running a
+            decoder to see your video)
 
 Using -start and -stop allows a small section to be coded, rather than the
 whole thing.

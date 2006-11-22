@@ -47,6 +47,8 @@
 
 namespace dirac
 {
+    class MEData;
+          
     //! Compress a frame component
     /*!
         This class compresses one of the three components (Y, U, or V) of a
@@ -71,7 +73,10 @@ namespace dirac
             \param  pic_data    the component data to be compressed
             \return Frame-componentin Dirac-bytestream format
         */
-        ComponentByteIO* Compress(PicArray & pic_data, const double intra_ratio);
+        ComponentByteIO* Compress( PicArray & pic_data ,
+                                   const bool is_a_cut ,
+                                   const double intra_ratio=100.0 ,
+                                   MEData *me_data=0 );
 
     private:
         //! Copy constructor is private and body-less. This class should not be copied.
@@ -82,7 +87,7 @@ namespace dirac
 
 
         //! Sets the value m_lambda according to frame and component type
-        void SetCompLambda( const double intra_ratio );
+        void SetCompLambda( const double intra_ratio, const bool is_a_cut );
 
 
         void SelectQuantisers( PicArray& pic_data , 
@@ -100,14 +105,22 @@ namespace dirac
 
         void AddSubAverage(PicArray& pic_data,int xl,int yl,AddOrSub dirn);
 
+    private:
+
         // member variables
         EncoderParams& m_encparams;
+
         const FrameParams& m_fparams;
+
         const FrameSort& m_fsort;    
+
         const ChromaFormat& m_cformat;
+
         CompSort m_csort;
 
         float m_lambda;
+        
+        MEData* m_me_data;
     };
 
 } // namespace dirac
