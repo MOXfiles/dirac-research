@@ -128,88 +128,10 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
     wtransform.Transform(BACKWARD,pic_data);
 }
 
-#if 0
 void CompDecompressor::SetupCodeBlocks( SubbandList& bands , const FrameSort fsort )
 {
     int xregions;
     int yregions;
-
-    // The minimum x and y dimensions of a block
-    const int min_dim( 4 );
-  
-    // The maximum number of regions horizontally and vertically
-    int max_xregion, max_yregion;
-
-    for (int band_num = 1; band_num<=bands.Length() ; ++band_num)
-    {
-        if (m_decparams.SpatialPartition())
-        {
-            if (m_decparams.DefaultSpatialPartition())
-            {
-                if ( band_num < bands.Length()-6 )
-                {
-                    if ( fsort.IsInter() )
-                    {
-                        xregions = 12;
-                        yregions = 8;
-                    }
-                    else
-                    {
-                        xregions = 4;
-                        yregions = 3;
-                    }
-                }
-                else if (band_num < bands.Length()-3)
-                {
-                    if ( fsort.IsInter() )
-                    {
-                        xregions = 8;
-                        yregions = 6;
-                    }
-                    else
-                    {
-                        xregions = 1;
-                        yregions = 1;
-                    }
-                }
-                else
-                {
-                    xregions = 1;
-                    yregions = 1;
-                }
-            }
-            else
-            {
-                // non-default spatial partitioning case
-                xregions = m_decparams.MaxXBlocks();
-                yregions = m_decparams.MaxYBlocks();
-            }
-        }
-        else
-        {
-               xregions = 1;
-               yregions = 1;
-        }
-
-        max_xregion = bands( band_num ).Xl() / min_dim;
-        max_yregion = bands( band_num ).Yl() / min_dim;
-
-        bands( band_num ).SetNumBlocks( std::min( yregions , max_yregion ), 
-                                        std::min( xregions , max_xregion ) );
-
-    }// band_num
-}
-#else
-void CompDecompressor::SetupCodeBlocks( SubbandList& bands , const FrameSort fsort )
-{
-    int xregions;
-    int yregions;
-
-    // The minimum x and y dimensions of a block
-    const int min_dim( 4 );
-  
-    // The maximum number of regions horizontally and vertically
-    int max_xregion, max_yregion;
 
     for (int band_num = 1; band_num<=bands.Length() ; ++band_num)
     {
@@ -226,15 +148,10 @@ void CompDecompressor::SetupCodeBlocks( SubbandList& bands , const FrameSort fso
                yregions = 1;
         }
 
-        max_xregion = bands( band_num ).Xl() / min_dim;
-        max_yregion = bands( band_num ).Yl() / min_dim;
-
-        bands( band_num ).SetNumBlocks( std::min( yregions , max_yregion ), 
-                                        std::min( xregions , max_xregion ) );
+        bands( band_num ).SetNumBlocks( yregions ,xregions );
 
     }// band_num
 }
-#endif
 
 void CompDecompressor::SetToVal( PicArray& pic_data , 
                                  const Subband& node , 
