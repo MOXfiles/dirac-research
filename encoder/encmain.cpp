@@ -210,14 +210,6 @@ bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
             for (int j=0; j<instr.mb_ylen; j++)
             {
                 for (int i=0; i<instr.mb_xlen; i++)
-                    fdata << instr.mb_common_mode[j*instr.mb_xlen + i] << " ";
-                fdata << std::endl;
-            }
-            fdata << std::endl;
-
-            for (int j=0; j<instr.mb_ylen; j++)
-            {
-                for (int i=0; i<instr.mb_xlen; i++)
                     fdata << instr.mb_costs[j*instr.mb_xlen + i] << " ";
                 fdata << std::endl;
             }

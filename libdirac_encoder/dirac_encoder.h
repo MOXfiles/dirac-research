@@ -21,7 +21,8 @@
 * All Rights Reserved.
 *
 * Contributor(s): Anuradha Suraparaju (Original Author)
-*                 Andrew Kennedy
+*                 Andrew Kennedy,
+                  Thomas Davies
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -393,8 +394,6 @@ typedef struct
     int mv_ylen;
     /*! Macro-block split mode array - mb_ylen*mb_xlen*/
     int *mb_split_mode;
-    /*! Macro-block common mode array - mb_ylen*mb_xlen*/
-    int *mb_common_mode;
     /*! Macro-block costs array - mb_ylen*mb_xlen*/
     float *mb_costs;
     /*! Block prediction mode - mv_xlen*mv_ylen */

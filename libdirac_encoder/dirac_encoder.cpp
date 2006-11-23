@@ -22,6 +22,7 @@
 *
 * Contributor(s): Anuradha Suraparaju (Original Author),
 *                 Andrew Kennedy
+                  Thomas Davies
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -127,10 +128,6 @@ void alloc_instr_data(dirac_instr_t *instr)
     instr->mb_split_mode = new int [instr->mb_ylen*instr->mb_xlen];
     memset (instr->mb_split_mode, 0, sizeof(int)*instr->mb_ylen*instr->mb_xlen);
 
-    instr->mb_common_mode = new int [instr->mb_ylen*instr->mb_xlen];
-    memset (instr->mb_common_mode, 0, 
-                    sizeof(int)*instr->mb_ylen*instr->mb_xlen);
-
     instr->mb_costs = new float [instr->mb_ylen*instr->mb_xlen];
     memset (instr->mb_costs, 0, sizeof(float)*instr->mb_ylen*instr->mb_xlen);
 
@@ -174,9 +171,6 @@ void dealloc_instr_data(dirac_instr_t *instr)
 {
     if (instr->mb_split_mode)
         delete [] instr->mb_split_mode;
-
-    if (instr->mb_common_mode)
-        delete [] instr->mb_common_mode;
 
     if (instr->mb_costs)
         delete [] instr->mb_costs;

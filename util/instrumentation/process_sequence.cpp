@@ -118,7 +118,7 @@ void ProcessSequence::AddFrameEntry()
     // reading information for an intra frame
     if (strcmp(mv_frame_sort, "intra") == 0)
     {
-        if (m_verbose) std::cerr << std::endl << "Reading intra frame " << m_data_fnum << " data";
+        if (m_verbose) std::cout << std::endl << "Reading intra frame " << m_data_fnum << " data";
 
         m_data_array[new_index].me_data = 0;
         m_data_array[new_index].frame_params = m_seqparams;
@@ -127,8 +127,8 @@ void ProcessSequence::AddFrameEntry()
 
         if (m_verbose)
         {
-            std::cerr << std::endl << "Writing to array position ";
-            std::cerr << m_data_fnum % m_data_array.Length();
+            std::cout << std::endl << "Writing to array position ";
+            std::cout << m_data_fnum % m_data_array.Length();
         }
     }
 
@@ -137,8 +137,8 @@ void ProcessSequence::AddFrameEntry()
     {
         if (m_verbose)
         {
-            std::cerr << std::endl << "Reading motion-compensated frame ";
-            std::cerr << m_data_fnum << " data";
+            std::cout << std::endl << "Reading motion-compensated frame ";
+            std::cout << m_data_fnum << " data";
         }
         
         int mb_xnum = 0, mb_ynum = 0, mv_xnum = 0, mv_ynum = 0;
@@ -188,8 +188,8 @@ void ProcessSequence::AddFrameEntry()
         
         if (m_verbose)
         {
-            std::cerr << std::endl << "Writing to array position ";
-            std::cerr << m_data_fnum % m_data_array.Length();
+            std::cout << std::endl << "Writing to array position ";
+            std::cout << m_data_fnum % m_data_array.Length();
         }
     }
 }
@@ -233,18 +233,18 @@ void ProcessSequence::DoSequence(int start, int stop)
     // frame by frame processing
     for (m_process_fnum = start; m_process_fnum <= stop; ++m_process_fnum)
     {
-        if (m_verbose) std::cerr << std::endl << std::endl << "Frame " << m_process_fnum;
+        if (m_verbose) std::cout << std::endl << std::endl << "Frame " << m_process_fnum;
 
         // location of frame data in array
         int index = int(m_process_fnum % m_data_array.Length());
 
         if (m_verbose)
         {
-            std::cerr << "\nArray entry " << index << " is ";
+            std::cout << "\nArray entry " << index << " is ";
             if (m_data_array[index].frame_params.FrameNum() != -1)
-                std::cerr << "frame number " << m_data_array[index].frame_params.FrameNum();
+                std::cout << "frame number " << m_data_array[index].frame_params.FrameNum();
             else
-                std::cerr << "not allocated";
+                std::cout << "not allocated";
         }
 
         // if the frame motion data has not already been read, add the motion data to the vector
@@ -275,7 +275,7 @@ void ProcessSequence::DoSequence(int start, int stop)
                 if (m_data_fnum == data_next_fnum && !m_data_in.eof())
                 {
                     m_data_fnum = data_next_fnum;
-                    if (m_verbose) std::cerr << std::endl << "Updating frame data";
+                    if (m_verbose) std::cout << std::endl << "Updating frame data";
                     AddFrameEntry();
                 }
                                
