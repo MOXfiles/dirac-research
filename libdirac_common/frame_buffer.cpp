@@ -43,6 +43,7 @@ using namespace dirac;
 
 //Simple constructor for decoder operation
 FrameBuffer::FrameBuffer() :
+    m_ref_count(0),
     m_num_L1(0),
     m_L1_sep(1),
     m_gop_len(0)
@@ -54,7 +55,8 @@ FrameBuffer::FrameBuffer(ChromaFormat cf,
                          const int ylen, 
                          const int c_xlen, 
                          const int c_ylen, 
-                         const unsigned int vd): 
+                         const unsigned int vd):
+    m_ref_count(0), 
     m_fparams(cf,xlen,ylen, c_xlen, c_ylen, vd),
     m_num_L1(0),
     m_L1_sep(1),
@@ -70,6 +72,7 @@ FrameBuffer::FrameBuffer(ChromaFormat cf,
                          const int c_xlen, 
                          const int c_ylen, 
                          const unsigned int vd): 
+    m_ref_count(0),
     m_fparams(cf,xlen,ylen, c_xlen, c_ylen, vd),
     m_num_L1(numL1),
     m_L1_sep(L1sep)
@@ -111,6 +114,9 @@ FrameBuffer::FrameBuffer(const FrameBuffer& cpy)
 
     // and the internal frame parameters
     m_fparams = cpy.m_fparams;
+    
+    // and the reference count
+    m_ref_count = cpy.m_ref_count;
 }
 
 //Assignment=. Not sure why this would be used either.
@@ -137,6 +143,9 @@ FrameBuffer& FrameBuffer::operator=(const FrameBuffer& rhs){
 
         // and the internal frame parameters
         m_fparams = rhs.m_fparams;
+        
+        // and the reference count
+        m_ref_count = rhs.m_ref_count;
     }
     return *this;
 }
@@ -275,10 +284,29 @@ const PicArray& FrameBuffer::GetUpComponent(const unsigned int fnum, CompSort c)
 
 }
 
+std::vector<int> FrameBuffer::Members() const 
+{
+    std::vector<int> members( 0 );
+    for (unsigned int i=0; i<m_frame_data.size(); ++i )
+    {
+        if ( m_frame_in_use[i] == true )
+        {
+            const FrameParams& fparams = m_frame_data[i]->GetFparams();
+            members.push_back( fparams.FrameNum() );
+        }
+    }// i
+
+    return members;
+}
+                 
+
 void FrameBuffer::PushFrame(const unsigned int frame_num)
 {// Put a new frame onto the top of the stack using built-in frame parameters
  // with frame number frame_num
     m_fparams.SetFrameNum(frame_num);
+    if ( m_fparams.FSort().IsRef() )
+        m_ref_count++;
+        
     int new_frame_pos = -1;
     // First check if an unused frame is available in the buffer
     for (int i = 0; i < (int)m_frame_in_use.size(); ++i)
@@ -309,6 +337,9 @@ void FrameBuffer::PushFrame(const unsigned int frame_num)
 void FrameBuffer::PushFrame( const FrameParams& fp )
 {// Put a new frame onto the top of the stack
 
+    if ( fp.FSort().IsRef() )
+        m_ref_count++;
+
     int new_frame_pos = -1;
     // First check if an unused frame is available in the buffer
     for (int i = 0; i < (int)m_frame_in_use.size(); ++i)
@@ -337,6 +368,9 @@ void FrameBuffer::PushFrame( const FrameParams& fp )
 
 void FrameBuffer::PushFrame( const Frame& frame )
 {
+    if ( frame.GetFparams().FSort().IsRef() )
+        m_ref_count++; 
+     
     // Put a copy of a new frame onto the top of the stack
 
     int new_frame_pos = -1;
@@ -369,6 +403,9 @@ void FrameBuffer::PushFrame( const Frame& frame )
 
 void FrameBuffer::PushFrame(StreamPicInput* picin,const FrameParams& fp)
 {
+    if ( fp.FSort().IsRef() )
+        m_ref_count++; 
+     
     //Read a frame onto the top of the stack
 
     PushFrame(fp);
@@ -378,6 +415,9 @@ void FrameBuffer::PushFrame(StreamPicInput* picin,const FrameParams& fp)
 
 void FrameBuffer::PushFrame(StreamPicInput* picin, const unsigned int fnum)
 {
+    if ( m_fparams.FSort().IsRef() )
+        m_ref_count++; 
+     
    //Read a frame onto the top of the stack    
     SetFrameParams( fnum );
     PushFrame( picin , m_fparams );
@@ -385,6 +425,11 @@ void FrameBuffer::PushFrame(StreamPicInput* picin, const unsigned int fnum)
 
 void FrameBuffer::Remove(const unsigned int pos)
 {//remove frame fnum from the buffer, shifting everything above down
+
+    const FrameParams& fparams = m_frame_data[pos]->GetFparams();
+
+    if ( m_frame_in_use[pos] == true && fparams.FSort().IsRef() )
+        m_ref_count--;
 
     std::pair<unsigned int,unsigned int>* tmp_pair;
 
@@ -407,8 +452,9 @@ void FrameBuffer::Remove(const unsigned int pos)
     }
 }
 
-void FrameBuffer::Clean(const int show_fnum, const int current_coded_fnum)
-{// clean out all frames that have expired
+
+void FrameBuffer::SetRetiredList(const int show_fnum, const int current_coded_fnum)
+{
     bool is_present;
     std::vector<int>& retd_list = GetFrame(current_coded_fnum, is_present).GetFparams().RetiredFrames();
     if (is_present )
@@ -422,8 +468,22 @@ void FrameBuffer::Clean(const int show_fnum, const int current_coded_fnum)
                 // decoder will retire non-reference frames as they are displayed
                 if (m_frame_data[i]->GetFparams().FSort().IsRef() )
                     retd_list.push_back( m_frame_data[i]->GetFparams().FrameNum());
-                Remove(i);
             }
+        }//i
+    }
+}
+
+void FrameBuffer::Clean(const int show_fnum, const int current_coded_fnum)
+{// clean out all frames that have expired
+    bool is_present;
+    std::vector<int>& retd_list = GetFrame(current_coded_fnum, is_present).GetFparams().RetiredFrames();
+    if (is_present )
+    {
+        retd_list.clear();
+        for (size_t i=0 ; i<m_frame_data.size() ; ++i)
+        {
+            if (m_frame_in_use[i] == true && (m_frame_data[i]->GetFparams().FrameNum() + m_frame_data[i]->GetFparams().ExpiryTime() ) <= show_fnum)
+                Remove(i);
         }//i
     }
 }

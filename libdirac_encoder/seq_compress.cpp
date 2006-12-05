@@ -248,6 +248,8 @@ Frame& SequenceCompressor::CompressNextFrame()
         // Compress the frame//
         ///////////////////////
 
+        m_fbuffer->SetRetiredList( m_show_fnum, m_current_display_fnum );
+
         FrameByteIO *p_frame_byteio =  m_fcoder.Compress(*m_fbuffer , 
                                                          *m_origbuffer , 
                                                          m_current_display_fnum,

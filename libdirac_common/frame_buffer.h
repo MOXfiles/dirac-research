@@ -149,8 +149,8 @@ namespace dirac
         //! Get upconverted component with a given component sort and frame number (NOT with a given position in the buffer)
         const PicArray& GetUpComponent(const unsigned int frame_num, CompSort c) const;
 
-        //! Return the number of frames in the buffer
-        size_t Size() const {return m_frame_data.size();}
+        //! Returns a list of member frames
+        std::vector<int> Members() const; 
 
         //! Put a new frame into the top of the buffer
         /*! 
@@ -196,6 +196,16 @@ namespace dirac
         */    
         void PushFrame(StreamPicInput* picin,const unsigned int fnum);
 
+        //! Set retired list for reference frames that will be cleaned
+        /*! 
+            Indicate frames which have been output and which are no longer 
+            required for reference. Expiry times are set in each frame's 
+            frame parameters.
+            \param show_fnum             frame number in display order that can be output
+            \param current_coded_fnum    frame number in display order of frame currently being coded
+        */
+        void SetRetiredList(const int show_fnum, const int current_coded_fnum);
+
         //! Delete expired frames
         /*! 
             Delete frames which have been output and which are no longer 
@@ -217,6 +227,22 @@ namespace dirac
         const FrameParams& GetFParams() const{return m_fparams;}
 
     private:
+        //! Set the frame parameters based on the frame number in display order and internal GOP parameters
+        void SetFrameParams(const unsigned int fnum);
+
+        //! Remove a frame with a given frame number from the buffer
+        /*!
+            Remove a frame with a given frame number (in display order) from 
+            the buffer. Searches through the buffer and removes frame(s) with 
+            that number.
+        */
+        void Remove(const unsigned int fnum);
+
+    private:
+            
+        //! the count of the number of reference frames in the buffer
+        int m_ref_count;
+
         //! the buffer storing all the values
         std::vector<Frame*> m_frame_data;
         
@@ -240,16 +266,6 @@ namespace dirac
 
 
 
-        //! Set the frame parameters based on the frame number in display order and internal GOP parameters
-        void SetFrameParams(const unsigned int fnum);
-
-        //! Remove a frame with a given frame number from the buffer
-        /*!
-            Remove a frame with a given frame number (in display order) from 
-            the buffer. Searches through the buffer and removes frame(s) with 
-            that number.
-        */
-        void Remove(const unsigned int fnum);
 
 
     };

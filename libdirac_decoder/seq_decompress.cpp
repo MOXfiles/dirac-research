@@ -164,6 +164,7 @@ Frame& SequenceDecompressor::DecompressNextFrame(ParseUnitByteIO* p_parseunit_by
         ++m_show_fnum;
         return f;
     }
+    
     return m_fbuffer->GetFrame(m_show_fnum);
 }
 

@@ -224,6 +224,7 @@ void FrameDecompressor::CleanReferenceFrames( FrameBuffer& my_buffer )
         std::cout<<std::endl<<"Cleaning reference buffer: ";
     // Do frame buffer cleaning
     std::vector<int>& retd_list = m_fparams.RetiredFrames();
+
     for (size_t i = 0; i < retd_list.size(); ++i)
     {
         bool is_present;
