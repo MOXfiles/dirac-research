@@ -85,6 +85,7 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
     unsigned int num_mv_bits;
     m_medata_avail = false;
 
+    m_is_a_cut = false;
 
     if (m_me_data)
     {
@@ -312,7 +313,7 @@ void FrameCompressor::AnalyseMEData( const MEData& me_data )
     if ( block_count != 0)
         sad_average /= static_cast<long double>( block_count );
    
-    if ( (sad_average > 30.0) || (m_intra_ratio > 50.0) )
+    if ( (sad_average > 30.0) || (m_intra_ratio > 33.33) )
         m_is_a_cut = true;
     else
         m_is_a_cut = false;
