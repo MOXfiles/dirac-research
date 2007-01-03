@@ -454,8 +454,9 @@ void WaveletTransform::VHFilter::ShiftRowLeft(ValueType *row, int length, int sh
 
 void WaveletTransform::VHFilter::ShiftRowRight(ValueType *row, int length, int shift)
 {
+    const ValueType halfway( 1<<(shift-1) );
     for (int i = 0; i < length; ++i)
-        row[i] = ((row[i]+1)>>shift);
+        row[i] = ((row[i]+halfway)>>shift);
 }
 #endif
 
