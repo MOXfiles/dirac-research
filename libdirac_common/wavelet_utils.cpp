@@ -168,11 +168,11 @@ void SubbandList::Init(const int depth,const int xlen,const int ylen)
         AddBand( *tmp ); 
         delete tmp; 
 
-        tmp=new Subband(xl , 0 , xl , yl , level); 
+        tmp=new Subband( 0 , yl , xl , yl , level); 
         AddBand( *tmp ); 
         delete tmp; 
  
-        tmp=new Subband( 0 , yl , xl , yl , level); 
+        tmp=new Subband(xl , 0 , xl , yl , level); 
         AddBand( *tmp ); 
         delete tmp; 
         
