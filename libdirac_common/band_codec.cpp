@@ -164,7 +164,10 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_data 
             {
                 m_nhood_nonzero = bool(in_data[ypos][xpos-1]);
                 if ( ypos!=m_node.Yp() )
+                {
                     m_nhood_nonzero |= bool( in_data[ypos-1][xpos] );
+                    m_nhood_nonzero |= bool( in_data[ypos-1][xpos-1] );
+                }
             }
 
             m_parent_notzero = static_cast<bool> ( in_data[m_pypos][m_pxpos] );
@@ -621,7 +624,10 @@ void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& in_dat
             {
                 m_nhood_nonzero = bool(in_data[ypos][xpos-1]);
                 if ( ypos!=m_node.Yp() )
+                {
                     m_nhood_nonzero |= bool( in_data[ypos-1][xpos] );
+                    m_nhood_nonzero |= bool( in_data[ypos-1][xpos-1] );
+                }
             }
             
             CodeVal( in_data , xpos , ypos , in_data[ypos][xpos] );
@@ -772,7 +778,10 @@ void IntraDCBandCodec::CodeCoeffBlock( const CodeBlock& code_block , PicArray& i
             {
                 m_nhood_nonzero = bool(m_dc_pred_res[ypos][xpos-1]);
                 if ( ypos!=m_node.Yp() )
+                {
                     m_nhood_nonzero |= bool( m_dc_pred_res[ypos-1][xpos] );
+                    m_nhood_nonzero |= bool( m_dc_pred_res[ypos-1][xpos-1] );
+                }
             }
           
             prediction = GetPrediction( in_data , xpos , ypos );            
