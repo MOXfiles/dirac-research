@@ -969,8 +969,6 @@ QuantiserLists::QuantiserLists()
     m_intra_offset4( m_max_qindex+1 ),
     m_inter_offset4( m_max_qindex+1 )
 {
-    int base;
-    
     m_qflist4[0] = 4;
     m_qflist4[1] = 5;
     m_intra_offset4[0] = 1;
@@ -978,6 +976,8 @@ QuantiserLists::QuantiserLists()
     m_intra_offset4[1] = 2;
     m_inter_offset4[1] = 2;
     
+    int base, qfactor;
+
     for (unsigned int q=2; q<=m_max_qindex; ++q)
     {
         base = (1<<(q/4));
@@ -985,20 +985,22 @@ QuantiserLists::QuantiserLists()
         switch (q%4)
         {
             case 0: 
-                 m_qflist4[q] = 4*base;
+                 qfactor = 4*base;
                  break;
             case 1: 
-                 m_qflist4[q] = (78892*base+8292)/16585;
+                 qfactor = (78892*base+8292)/16585;
                  break;
             case 2: 
-                 m_qflist4[q] = (228486*base+20195)/40391;
+                 qfactor = (228486*base+20195)/40391;
                  break;
             case 3: 
-                 m_qflist4[q] = (440253*base+32722)/65444;
+                 qfactor = (440253*base+32722)/65444;
                  break;
             default: //Default case never used
-                 m_qflist4[q] = 4; 
+                 qfactor = 4; 
         }
+        
+        m_qflist4[q] = int( qfactor );
         
         m_intra_offset4[q] = (m_qflist4[q]+1)>>1;
         m_inter_offset4[q] = (3*m_qflist4[q]+4)>>3;
