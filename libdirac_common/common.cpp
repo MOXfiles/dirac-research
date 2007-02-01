@@ -976,7 +976,7 @@ QuantiserLists::QuantiserLists()
     m_intra_offset4[1] = 2;
     m_inter_offset4[1] = 2;
     
-    int base, qfactor;
+    uint64_t base, qfactor;
 
     for (unsigned int q=2; q<=m_max_qindex; ++q)
     {
