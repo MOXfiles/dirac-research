@@ -56,10 +56,11 @@ namespace dirac
     public:
 
         //! Constructor
-        UpConverter();
+        UpConverter(int min_val, int max_val)
+            : m_min_val(min_val), m_max_val(max_val) {};
 
         //! Destructor
-        ~UpConverter();
+        ~UpConverter() {};
 
         //! Upconvert the picture data
         /*!
@@ -94,6 +95,8 @@ namespace dirac
         static const int m_tap3 = -11; 
         static const int m_tap4 = 3;
 
+        const int m_min_val;
+        const int m_max_val;
     };
 
 } // namespace dirac

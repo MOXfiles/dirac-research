@@ -40,11 +40,11 @@ using namespace dirac;
 
 #include <iostream>
 
-UpConverter::UpConverter(){}
+#define MAX(a,b) (((a) > (b)) ? (a) : (b))
+#define MIN(a,b) (((a) < (b)) ? (a) : (b))
+#define CLIP(x,min,max) MAX(MIN(x,max),min)
 
-UpConverter::~UpConverter(){}
-
-#if !defined(HAVE_MMX)
+#ifndef HAVE_MMX
 //MMX version defined in upconver_mmx.cpp
 //Up-convert by a factor of two.
 void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
@@ -71,20 +71,20 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
         //be in the cache.
         for(int x = 0 , xpos = 0; x < m_width_old; x++ , xpos+=2 )
         {
-
             // Copy a Pixel from the original image in each even position
             up_data[ypos][xpos] = pic_data[y][x];
 
             //Work out the next pixel from filtered values.
             //Excuse the complicated ternary stuff but it sorts out the edge
-            sum =  (pic_data[y][x]              + pic_data[y+1][x]) * m_tap0;
+            sum  = 1 << (m_filter_shift-1);
+            sum += (pic_data[y][x]              + pic_data[y+1][x]) * m_tap0;
             sum += (pic_data[(y>=1)?(y-1):0][x] + pic_data[y+2][x]) * m_tap1;
             sum += (pic_data[(y>=2)?(y-2):0][x] + pic_data[y+3][x]) * m_tap2;
             sum += (pic_data[(y>=3)?(y-3):0][x] + pic_data[y+4][x]) * m_tap3;
             sum += (pic_data[(y>=4)?(y-4):0][x] + pic_data[y+5][x]) * m_tap4;
 
-            up_data[ypos+1][xpos] = sum >> m_filter_shift;
-
+            sum >>= m_filter_shift;
+            up_data[ypos+1][xpos] = CLIP(sum, m_min_val, m_max_val);
         }// x, xpos
 
         // The row loop.
@@ -97,17 +97,17 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
     {
         for(int x = 0 , xpos=0; x < m_width_old; x++ , xpos+=2 )
         {
-
             up_data[ypos][xpos] = pic_data[y][x];
 
-            sum =  (pic_data[y][x]   + pic_data[y+1][x]) * m_tap0;
+            sum  = 1 << (m_filter_shift-1);
+            sum += (pic_data[y][x]   + pic_data[y+1][x]) * m_tap0;
             sum += (pic_data[y-1][x] + pic_data[y+2][x]) * m_tap1;
             sum += (pic_data[y-2][x] + pic_data[y+3][x]) * m_tap2;
             sum += (pic_data[y-3][x] + pic_data[y+4][x]) * m_tap3;
             sum += (pic_data[y-4][x] + pic_data[y+5][x]) * m_tap4;
 
-            up_data[ypos+1][xpos] = sum >> m_filter_shift;
-
+            sum >>= m_filter_shift;
+            up_data[ypos+1][xpos] = CLIP(sum, m_min_val, m_max_val);
         }// x,xpos
         RowLoop( up_data , ypos );
 
@@ -119,17 +119,17 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
     {
         for(int x = 0 , xpos=0 ; x < m_width_old; x++ , xpos+=2)
         {
-
             up_data[ypos][xpos]=pic_data[y][x];
 
-            sum =  (pic_data[y][x]     + pic_data[((y+1)<m_height_old)?(y+1):(m_height_old-1)][x]) * m_tap0;
+            sum  = 1 << (m_filter_shift-1);
+            sum += (pic_data[y][x]     + pic_data[((y+1)<m_height_old)?(y+1):(m_height_old-1)][x]) * m_tap0;
             sum += (pic_data[y - 1][x] + pic_data[((y+2)<m_height_old)?(y+2):(m_height_old-1)][x]) * m_tap1;
             sum += (pic_data[y - 2][x] + pic_data[((y+3)<m_height_old)?(y+3):(m_height_old-1)][x]) * m_tap2;
             sum += (pic_data[y - 3][x] + pic_data[((y+4)<m_height_old)?(y+4):(m_height_old-1)][x]) * m_tap3;
             sum += (pic_data[y - 4][x] + pic_data[((y+5)<m_height_old)?(y+5):(m_height_old-1)][x]) * m_tap4;
 
-            up_data[ypos+1][xpos] = sum >> m_filter_shift;
-
+            sum >>= m_filter_shift;
+            up_data[ypos+1][xpos] = CLIP(sum, m_min_val, m_max_val);
         }//x,xpos
         RowLoop( up_data , ypos );
 
@@ -155,36 +155,41 @@ void UpConverter::RowLoop(PicArray&up_data, const int row_num )
 
         for(int x = 0; x < dble_size ; x+=2)
         {
-
-            sum =  (up_data[ypos][x]              + up_data[ypos][x+2]) * m_tap0;
+            sum  = 1 << (m_filter_shift-1);
+            sum += (up_data[ypos][x]              + up_data[ypos][x+2]) * m_tap0;
             sum += (up_data[ypos][(x>=2)?(x-2):0] + up_data[ypos][x+4]) * m_tap1;
             sum += (up_data[ypos][(x>=4)?(x-4):0] + up_data[ypos][x+6]) * m_tap2;
             sum += (up_data[ypos][(x>=6)?(x-6):0] + up_data[ypos][x+8]) * m_tap3;
             sum += (up_data[ypos][(x>=8)?(x-8):0] + up_data[ypos][x+10]) * m_tap4;
 
-            up_data[ypos][x+1] = sum >> m_filter_shift;
+            sum >>= m_filter_shift;
+            up_data[ypos][x+1] = CLIP(sum, m_min_val, m_max_val);
         }// x
         //Middle of row
         for(int x = dble_size; x<m_width_new-dble_size ; x+=2 )
         {
-            sum =  (up_data[ypos][x]   + up_data[ypos][x+2]) * m_tap0;
+            sum  = 1 << (m_filter_shift-1);
+            sum += (up_data[ypos][x]   + up_data[ypos][x+2]) * m_tap0;
             sum += (up_data[ypos][x-2] + up_data[ypos][x+4]) * m_tap1;
             sum += (up_data[ypos][x-4] + up_data[ypos][x+6]) * m_tap2;
             sum += (up_data[ypos][x-6] + up_data[ypos][x+8]) * m_tap3;
             sum += (up_data[ypos][x-8] + up_data[ypos][x+10])* m_tap4;
 
-            up_data[ypos][x+1] = sum >> m_filter_shift;
+            sum >>= m_filter_shift;
+            up_data[ypos][x+1] = CLIP(sum, m_min_val, m_max_val);
         }// x
         //Trailing row edge
         for(int x = m_width_new - dble_size ; x<m_width_new ; x+=2)
         {
-            sum =  (up_data[ypos][x]   + up_data[ypos][(((x+2)<m_width_new)?(x+2):(m_width_new-2))]) * m_tap0;
+            sum  = 1 << (m_filter_shift-1);
+            sum += (up_data[ypos][x]   + up_data[ypos][(((x+2)<m_width_new)?(x+2):(m_width_new-2))]) * m_tap0;
             sum += (up_data[ypos][x-2] + up_data[ypos][(((x+4)<m_width_new)?(x+4):(m_width_new-2))]) * m_tap1;
             sum += (up_data[ypos][x-4] + up_data[ypos][(((x+6)<m_width_new)?(x+6):(m_width_new-2))]) * m_tap2;
             sum += (up_data[ypos][x-6] + up_data[ypos][(((x+8)<m_width_new)?(x+8):(m_width_new-2))]) * m_tap3;
             sum += (up_data[ypos][x-8] + up_data[ypos][(((x+10)<m_width_new)?(x+10):(m_width_new-2))]) * m_tap4;
 
-            up_data[ypos][x+1] = sum >> m_filter_shift;
+            sum >>= m_filter_shift;
+            up_data[ypos][x+1] = CLIP(sum, m_min_val, m_max_val);
         }// x
     }
 }
