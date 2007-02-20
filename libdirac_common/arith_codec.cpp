@@ -68,7 +68,6 @@ namespace dirac{
     {
         // Set the m_code word stuff
         m_low_code  = 0;
-        m_high_code = 0xffff;
         m_range = 0x10000;
         m_underflow = 0;
 
@@ -78,18 +77,17 @@ namespace dirac{
     void ArithCodecBase::FlushEncoder()
     {
          // Do final renormalisation and output
-        while ((m_high_code^m_low_code)<CODE_MSB )
+        while (((m_low_code+m_range-1)^m_low_code)<CODE_MSB )
         {    
             OutputBits();
             ShiftBitOut();
             m_range <<= 1;
         }
             
-        while ( (m_low_code & CODE_2ND_MSB) && !(m_high_code & CODE_2ND_MSB) )
+        while ( (m_low_code & CODE_2ND_MSB) && !((m_low_code+m_range-1) & CODE_2ND_MSB) )
         {
            	m_underflow += 1;
             m_low_code  ^= CODE_2ND_MSB;
-            m_high_code ^= CODE_2ND_MSB;
             ShiftBitOut();
             m_range <<= 1;
         }
@@ -112,7 +110,6 @@ namespace dirac{
 
         m_code = 0;
         m_low_code = 0;
-        m_high_code = 0xffff;
 
         m_range = 0x10000;
 

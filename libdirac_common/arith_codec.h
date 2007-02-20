@@ -275,9 +275,6 @@ namespace dirac
  
         //! Start of the current code range
         unsigned int m_low_code;
-
-        //! End of the current code range
-        unsigned int m_high_code;
         
         //! Length of the current code range
         unsigned int m_range;
@@ -320,38 +317,36 @@ namespace dirac
         bool symbol = ( count > range_x_prob );
 
         // Rescale the interval
-        if( symbol )    //symbol is 1, so m_high_code unchanged
+        if( symbol )    //symbol is 1
         {
             m_low_code += range_x_prob;
             m_range -= range_x_prob;
         }
         else            //symbol is 0, so m_low_code unchanged
         {
-            m_high_code = m_low_code + range_x_prob - 1;
             m_range = range_x_prob;
         }
 
         // Update the statistical context
         ctx.Update( symbol );
 
-        while ( m_range<=CODE_MSB )
+        while ( m_range<=CODE_2ND_MSB )
         {
-              
-            if ( (m_high_code^m_low_code)<CODE_MSB )
+    	    if( ( (m_low_code+m_range-1)^m_low_code)<CODE_MSB )
             {
+                // high and low share the top bit, so shift in
                 ShiftBitIn();
-                m_range <<= 1;
             }
- 	        else if( (m_low_code & CODE_2ND_MSB) && !(m_high_code& CODE_2ND_MSB) )
+            else
        	    {
+                // We have a straddle condition i.e. low = 0x01... high = 0x10...
                 m_code      ^= CODE_2ND_MSB;
                 m_low_code  ^= CODE_2ND_MSB;
-                m_high_code ^= CODE_2ND_MSB;
                 ShiftBitIn();
-                m_range <<= 1;     	    	
        	    }
-            else 
-                break;
+
+            m_range <<= 1;
+
         }
 
         return symbol;
@@ -389,40 +384,37 @@ namespace dirac
 
         const unsigned int range_x_prob = ( m_range* ctx.GetScaledProb0())>>16;
 
-        if ( symbol )    //symbol is 1, so m_high_code unchanged
+        if ( symbol )    //symbol is 1
         {
             m_low_code += range_x_prob;
             m_range -= range_x_prob;  
         }
         else             // symbol is 0, so m_low_code unchanged
         {
-            m_high_code = m_low_code + range_x_prob - 1 ;
             m_range = range_x_prob;
         }
         
         // Update the statistical context
         ctx.Update( symbol );
 
-        while ( m_range<=CODE_MSB )
-        {
-    	     // Shift bits out until MSBs are different.
-            if ((m_high_code^m_low_code)<CODE_MSB )
+        while ( m_range <= CODE_2ND_MSB )
+        { 
+            if ( ( (m_low_code+m_range-1)^m_low_code)<CODE_MSB )
             {    
+      	        // Shift bits out until MSBs are different.
                 OutputBits();
                 ShiftBitOut();
-                m_range <<= 1;
-            }
-            
-            else if ( (m_low_code & CODE_2ND_MSB) && !(m_high_code & CODE_2ND_MSB) )
-            {
-            	m_underflow += 1;
-                m_low_code  ^= CODE_2ND_MSB;
-                m_high_code ^= CODE_2ND_MSB;
-                ShiftBitOut();
-                m_range <<= 1;
             }
             else
-                break;         
+            {
+                // We must have an underflow situation with
+                // low = 0x01... and high = 0x10...
+            	m_underflow += 1;
+                m_low_code  ^= CODE_2ND_MSB;
+                ShiftBitOut();
+            }
+
+    	    m_range <<= 1;
         }
        
     }
@@ -553,9 +545,6 @@ namespace dirac
     void ArithCodecBase::ShiftBitOut()
     {
         // Shift out top-most bit and increment high value
-        m_high_code <<= 1;
-        m_high_code  &= CODE_MAX;
-        m_high_code  += 1;
         m_low_code  <<= 1;
         m_low_code   &= CODE_MAX;
       }
@@ -569,9 +558,6 @@ namespace dirac
     
     inline void ArithCodecBase::ShiftBitIn()
     {
-        m_high_code <<= 1;
-        m_high_code  &= CODE_MAX;
-        m_high_code  += 1;
         m_low_code  <<= 1;
         m_low_code   &= CODE_MAX;
         m_code      <<= 1;
