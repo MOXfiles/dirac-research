@@ -250,10 +250,7 @@ namespace dirac
 
         //! Output bits from encoder
         inline void OutputBits();
-        
-        //! Renormalise the encoder
-        inline void RenormEncoder();
-             
+                     
         // Decode functions
         ////////////////////////////
 
@@ -266,9 +263,6 @@ namespace dirac
         //! Read in a bit of data
         inline bool InputBit();
         
-        //! Renormalise the decoder
-        inline void RenormDecoder();
-
         // NOTE: These constants imply an unsigned 16-bit operand
         static const unsigned int CODE_MAX         = 0xFFFF;
         static const unsigned int CODE_MSB         = 0x8000;
@@ -310,23 +304,6 @@ namespace dirac
 
     };
 
-    inline void ArithCodecBase::RenormDecoder()
-    {
-    	    while( (m_high_code^m_low_code)<CODE_MSB )
-            {
-                ShiftBitIn();
-                m_range <<= 1;
-            }
-       	
-            while ( (m_low_code & CODE_2ND_MSB) && !(m_high_code& CODE_2ND_MSB) )
-       	    {
-                m_code      ^= CODE_2ND_MSB;
-                m_low_code  ^= CODE_2ND_MSB;
-                m_high_code ^= CODE_2ND_MSB;
-                ShiftBitIn();
-                m_range <<= 1;     	    	
-       	    }
-    }
 
     inline bool ArithCodecBase::DecodeSymbol( int context_num )
     {
@@ -357,9 +334,25 @@ namespace dirac
         // Update the statistical context
         ctx.Update( symbol );
 
-        if ( m_range<=CODE_MSB )
-           RenormDecoder();
-
+        while ( m_range<=CODE_MSB )
+        {
+              
+            if ( (m_high_code^m_low_code)<CODE_MSB )
+            {
+                ShiftBitIn();
+                m_range <<= 1;
+            }
+ 	        else if( (m_low_code & CODE_2ND_MSB) && !(m_high_code& CODE_2ND_MSB) )
+       	    {
+                m_code      ^= CODE_2ND_MSB;
+                m_low_code  ^= CODE_2ND_MSB;
+                m_high_code ^= CODE_2ND_MSB;
+                ShiftBitIn();
+                m_range <<= 1;     	    	
+       	    }
+            else 
+                break;
+        }
 
         return symbol;
     }
@@ -387,26 +380,6 @@ namespace dirac
         return value;
     }
 
-    inline void ArithCodecBase::RenormEncoder()
-    {
-    	     // Shift bits out until MSBs are different.
-            while ((m_high_code^m_low_code)<CODE_MSB )
-            {    
-                OutputBits();
-                ShiftBitOut();
-                m_range <<= 1;
-            }
-            
-            while ( (m_low_code & CODE_2ND_MSB) && !(m_high_code & CODE_2ND_MSB) )
-            {
-            	m_underflow += 1;
-                m_low_code  ^= CODE_2ND_MSB;
-                m_high_code ^= CODE_2ND_MSB;
-                ShiftBitOut();
-                m_range <<= 1;
-            }
-    }
-
     inline void ArithCodecBase::EncodeSymbol(const bool symbol, const int context_num)
     {
 
@@ -430,8 +403,27 @@ namespace dirac
         // Update the statistical context
         ctx.Update( symbol );
 
-        if ( m_range<=CODE_MSB )
-           RenormEncoder();   	
+        while ( m_range<=CODE_MSB )
+        {
+    	     // Shift bits out until MSBs are different.
+            if ((m_high_code^m_low_code)<CODE_MSB )
+            {    
+                OutputBits();
+                ShiftBitOut();
+                m_range <<= 1;
+            }
+            
+            else if ( (m_low_code & CODE_2ND_MSB) && !(m_high_code & CODE_2ND_MSB) )
+            {
+            	m_underflow += 1;
+                m_low_code  ^= CODE_2ND_MSB;
+                m_high_code ^= CODE_2ND_MSB;
+                ShiftBitOut();
+                m_range <<= 1;
+            }
+            else
+                break;         
+        }
        
     }
 

@@ -77,7 +77,23 @@ namespace dirac{
 
     void ArithCodecBase::FlushEncoder()
     {
-    	RenormEncoder();
+         // Do final renormalisation and output
+        while ((m_high_code^m_low_code)<CODE_MSB )
+        {    
+            OutputBits();
+            ShiftBitOut();
+            m_range <<= 1;
+        }
+            
+        while ( (m_low_code & CODE_2ND_MSB) && !(m_high_code & CODE_2ND_MSB) )
+        {
+           	m_underflow += 1;
+            m_low_code  ^= CODE_2ND_MSB;
+            m_high_code ^= CODE_2ND_MSB;
+            ShiftBitOut();
+            m_range <<= 1;
+        }
+
     	
         m_byteio->OutputBit(m_low_code & CODE_2ND_MSB);
         while ( m_underflow >= 0 ) {
@@ -96,9 +112,17 @@ namespace dirac{
 
         m_code = 0;
         m_low_code = 0;
-        m_high_code = 0;
-        m_range = 1;
-        RenormDecoder();
+        m_high_code = 0xffff;
+
+        m_range = 0x10000;
+
+        m_code = 0;
+        for (int i=0; i<16; ++i)
+       {
+       	    m_code <<= 1;
+            m_code += InputBit();
+       }
+
     }
 
     int ArithCodecBase::ByteCount() const
