@@ -69,6 +69,7 @@ namespace dirac{
         // Set the m_code word stuff
         m_low_code  = 0;
         m_high_code = 0xffff;
+        m_range = 0x10000;
         m_underflow = 0;
 
         InitContexts();
@@ -96,6 +97,7 @@ namespace dirac{
         m_code = 0;
         m_low_code = 0;
         m_high_code = 0;
+        m_range = 1;
         RenormDecoder();
     }
 

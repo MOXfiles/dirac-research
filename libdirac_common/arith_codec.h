@@ -315,6 +315,7 @@ namespace dirac
     	    while( (m_high_code^m_low_code)<CODE_MSB )
             {
                 ShiftBitIn();
+                m_range <<= 1;
             }
        	
             while ( (m_low_code & CODE_2ND_MSB) && !(m_high_code& CODE_2ND_MSB) )
@@ -323,6 +324,7 @@ namespace dirac
                 m_low_code  ^= CODE_2ND_MSB;
                 m_high_code ^= CODE_2ND_MSB;
                 ShiftBitIn();
+                m_range <<= 1;     	    	
        	    }
     }
 
@@ -337,7 +339,6 @@ namespace dirac
 
         // Decode as per updated specification
         const unsigned int count = m_code - m_low_code + 1; 
-        m_range = m_high_code - m_low_code + 1;
         const unsigned int range_x_prob = ( m_range* ctx.GetScaledProb0())>>16;
         bool symbol = ( count > range_x_prob );
 
@@ -345,10 +346,12 @@ namespace dirac
         if( symbol )    //symbol is 1, so m_high_code unchanged
         {
             m_low_code += range_x_prob;
+            m_range -= range_x_prob;
         }
         else            //symbol is 0, so m_low_code unchanged
         {
             m_high_code = m_low_code + range_x_prob - 1;
+            m_range = range_x_prob;
         }
 
         // Update the statistical context
@@ -391,6 +394,7 @@ namespace dirac
             {    
                 OutputBits();
                 ShiftBitOut();
+                m_range <<= 1;
             }
             
             while ( (m_low_code & CODE_2ND_MSB) && !(m_high_code & CODE_2ND_MSB) )
@@ -399,6 +403,7 @@ namespace dirac
                 m_low_code  ^= CODE_2ND_MSB;
                 m_high_code ^= CODE_2ND_MSB;
                 ShiftBitOut();
+                m_range <<= 1;
             }
     }
 
@@ -409,16 +414,17 @@ namespace dirac
 
         Context& ctx = m_context_list[context_num];
 
-        m_range = m_high_code - m_low_code + 1;
         const unsigned int range_x_prob = ( m_range* ctx.GetScaledProb0())>>16;
 
         if ( symbol )    //symbol is 1, so m_high_code unchanged
         {
-            m_low_code += range_x_prob;  
+            m_low_code += range_x_prob;
+            m_range -= range_x_prob;  
         }
         else             // symbol is 0, so m_low_code unchanged
         {
             m_high_code = m_low_code + range_x_prob - 1 ;
+            m_range = range_x_prob;
         }
         
         // Update the statistical context
