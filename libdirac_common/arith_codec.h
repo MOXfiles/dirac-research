@@ -242,14 +242,6 @@ namespace dirac
         //! private, bodyless copy operator=: class should not be assigned
         ArithCodecBase & operator = (const ArithCodecBase & rhs);
              
-        // Encode functions
-        ////////////////////////////
-
-        //! Shift  bit out of codeword
-        inline void ShiftBitOut();
-
-        //! Output bits from encoder
-        inline void OutputBits();
                      
         // Decode functions
         ////////////////////////////
@@ -257,16 +249,8 @@ namespace dirac
         //! Read all the data in
         void ReadAllData(int num_bytes);
 
-        //! Shift new bit into codeword
-        inline void ShiftBitIn();
-
         //! Read in a bit of data
         inline bool InputBit();
-        
-        // NOTE: These constants imply an unsigned 16-bit operand
-        static const unsigned int CODE_MAX         = 0xFFFF;
-        static const unsigned int CODE_MSB         = 0x8000;
-        static const unsigned int CODE_2ND_MSB     = 0x4000;
 
         // Codec data
         ////////////////////////////
@@ -330,23 +314,28 @@ namespace dirac
         // Update the statistical context
         ctx.Update( symbol );
 
-        while ( m_range<=CODE_2ND_MSB )
+        while ( m_range<=0x4000 )
         {
-    	    if( ( (m_low_code+m_range-1)^m_low_code)<CODE_MSB )
-            {
-                // high and low share the top bit, so shift in
-                ShiftBitIn();
-            }
-            else
+       	    if( ( (m_low_code+m_range-1)^m_low_code)>=0x8000 )
        	    {
-                // We have a straddle condition i.e. low = 0x01... high = 0x10...
-                m_code      ^= CODE_2ND_MSB;
-                m_low_code  ^= CODE_2ND_MSB;
-                ShiftBitIn();
+       	    	// Straddle condition
+                // We must have an underflow situation with
+                // low = 0x01... and high = 0x10...
+                // Flip 2nd bit prior to rescaling
+                m_code      ^= 0x4000;
+                m_low_code  ^= 0x4000;
        	    }
 
+            // Double low and range, throw away top bit of low
+            m_low_code  <<= 1;
             m_range <<= 1;
+            m_low_code   &= 0xFFFF;
 
+            // Shift in another bit of code
+            m_code      <<= 1;
+            m_code       += InputBit();
+            m_code       &= 0xFFFF;
+      
         }
 
         return symbol;
@@ -397,25 +386,34 @@ namespace dirac
         // Update the statistical context
         ctx.Update( symbol );
 
-        while ( m_range <= CODE_2ND_MSB )
+        while ( m_range <= 0x4000 )
         { 
-            if ( ( (m_low_code+m_range-1)^m_low_code)<CODE_MSB )
+            if ( ( (m_low_code+m_range-1)^m_low_code)>=0x8000 )
             {    
-      	        // Shift bits out until MSBs are different.
-                OutputBits();
-                ShiftBitOut();
+       	    	// Straddle condition
+                // We must have an underflow situation with
+                // low = 0x01... and high = 0x10...
+
+                m_low_code  ^= 0x4000;
+               	m_underflow++;
+
             }
             else
             {
-                // We must have an underflow situation with
-                // low = 0x01... and high = 0x10...
-            	m_underflow += 1;
-                m_low_code  ^= CODE_2ND_MSB;
-                ShiftBitOut();
+            	// Bits agree - output them
+                m_byteio->OutputBit( m_low_code & 0x8000);
+                for (; m_underflow > 0; m_underflow-- )
+                    m_byteio->OutputBit(~m_low_code & 0x8000);
             }
 
+            // Double low value and range
+            m_low_code  <<= 1;
     	    m_range <<= 1;
-        }
+    	    
+    	    // keep low to 16 bits - throw out top bit
+            m_low_code   &= 0xFFFF;
+
+         }
        
     }
 
@@ -540,29 +538,6 @@ namespace dirac
     {
         InitDecoder(num_bytes);
         DoWorkDecode( out_data );
-    }
-
-    void ArithCodecBase::ShiftBitOut()
-    {
-        // Shift out top-most bit and increment high value
-        m_low_code  <<= 1;
-        m_low_code   &= CODE_MAX;
-      }
-
-    void ArithCodecBase::OutputBits()
-    {
-        m_byteio->OutputBit( m_low_code & CODE_MSB);
-        for (; m_underflow > 0; m_underflow-- )
-            m_byteio->OutputBit(~m_low_code & CODE_MSB);
-    }
-    
-    inline void ArithCodecBase::ShiftBitIn()
-    {
-        m_low_code  <<= 1;
-        m_low_code   &= CODE_MAX;
-        m_code      <<= 1;
-        m_code       &= CODE_MAX;
-        m_code       += InputBit();
     }
 
    inline bool ArithCodecBase::InputBit()
