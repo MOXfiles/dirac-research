@@ -37,9 +37,8 @@
 
 #include <libdirac_common/arith_codec.h>
 
-
-namespace dirac {
-
+namespace dirac{
+          
     unsigned int ContextLookupTable::table[256];
 
     ContextLookupTable::ContextLookupTable() {
@@ -55,7 +54,8 @@ namespace dirac {
     ArithCodecBase::ArithCodecBase(ByteIO* p_byteio, size_t number_of_contexts):
         m_context_list( number_of_contexts ),
         m_byteio(p_byteio ),
-        m_decode_data_ptr( 0 )
+        m_decode_data_ptr( 0 ),
+        m_scount( 0 )
     {
         // nothing needed here
     }
@@ -68,7 +68,7 @@ namespace dirac {
     {
         // Set the m_code word stuff
         m_low_code  = 0;
-        m_high_code = CODE_MAX;
+        m_high_code = 0xffff;
         m_underflow = 0;
 
         InitContexts();
@@ -76,24 +76,8 @@ namespace dirac {
 
     void ArithCodecBase::FlushEncoder()
     {
-        // Flushes the output
-        for (int i=0; i<16; ++i )
-        {
-            if ( !(m_low_code & CODE_2ND_MSB) || (m_high_code & CODE_2ND_MSB) )
-                break;
-
-            // If we're here, we have high = 10xxxxx and low = 01xxxxx,
-            // so we're straddling 1/2-way point - a condition known as
-            // underflow. We flip the 2nd highest bit. Combined with the
-            // subsequent bitshift, this has the effect of doubling the
-            // [low,high] interval width about 1/2
-            m_underflow += 1;
-            m_low_code  ^= CODE_2ND_MSB;
-            m_high_code ^= CODE_2ND_MSB;
-            ShiftBitOut();
-        }
-        
-      
+    	RenormEncoder();
+    	
         m_byteio->OutputBit(m_low_code & CODE_2ND_MSB);
         while ( m_underflow >= 0 ) {
             m_byteio->OutputBit(~m_low_code & CODE_2ND_MSB);
@@ -108,9 +92,11 @@ namespace dirac {
         InitContexts();
         ReadAllData(num_bytes);
         m_input_bits_left = 8;
+
         m_code = 0;
-        m_low_code  = 0;
+        m_low_code = 0;
         m_high_code = 0;
+        RenormDecoder();
     }
 
     int ArithCodecBase::ByteCount() const
@@ -131,4 +117,4 @@ namespace dirac {
        m_data_ptr = m_decode_data_ptr;
     }
 
-}
+}// namespace dirac
