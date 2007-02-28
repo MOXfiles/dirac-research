@@ -58,9 +58,7 @@ MvDataCodec::MvDataCodec(ByteIO* p_byteio,
 
 
 void MvDataCodec::InitContexts() 
-{
-    for (size_t i = 0;  i < m_context_list.size();  ++i)
-        m_context_list[i].SetCounts(1,1);     
+{    
 }
 
     
@@ -70,9 +68,6 @@ void MvDataCodec::InitContexts()
 
 inline void MvDataCodec::ResetAll()
 {
-    for ( size_t c = 0; c < m_context_list.size(); ++c)
-        if ( m_context_list[c].Weight() > 16 )
-            m_context_list[c].HalveCounts();
 }
 
 //coding functions//
@@ -294,15 +289,7 @@ void MvDataCodec::DoWorkCode( MvData& in_data )
                         CodeDC(in_data);                     
                 }//m_b_xp
             }//m_b_yp    
-            
-            m_MB_count++;
-    
-            if (m_MB_count == m_reset_num)
-            {
-                 m_MB_count = 0;
-                 ResetAll();
-            }
-            
+                            
         }//m_mb_xp
     }//m_mb_yp
 
@@ -450,14 +437,6 @@ void MvDataCodec::DoWorkDecode( MvData& out_data)
                     }//m_b_yp
                 }//i                    
             }//j
-
-            m_MB_count++;
-    
-            if (m_MB_count == m_reset_num)
-            {
-                 m_MB_count = 0;
-                 ResetAll();
-            }
 
         }//m_mb_xp
     }//m_mb_yp

@@ -75,9 +75,6 @@ namespace dirac
                   int band_num,
                   const bool is_intra);
 
-        //! Initialise the contexts according to predefined counts.
-        void InitContexts();
-
     protected:
         //! Code an individual quantised value and perform inverse-quantisation
         inline void CodeVal( PicArray& in_data , const int xpos , const int ypos , const ValueType val);
@@ -106,8 +103,6 @@ namespace dirac
 
         virtual void CodeCoeffBlock(const CodeBlock& code_block , PicArray& in_data);
         virtual void DecodeCoeffBlock(const CodeBlock& code_block , PicArray& out_data);
-
-        void ResetAll();
 
         //! A function for choosing the context for "follow bits"
         inline int ChooseFollowContext( const int bin_number ) const;

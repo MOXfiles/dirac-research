@@ -94,17 +94,21 @@ namespace dirac
         //Class is POD
         //Use built in copy constructor, assignment and destructor.
 
-        //! Sets the counts according to the input.
-        inline void SetCounts( unsigned int cnt0, unsigned int cnt1);
-
-        //! Returns the count of all symbols.
-        inline unsigned int Weight() const;
-
-        //! Divide the counts by 2, making sure neither ends up 0.
-        inline void HalveCounts();
-
         //! Returns estimate of probability of 0 (false) scaled to 2**16
-        inline unsigned int GetScaledProb0( ) const;
+        //  The probability of a binary input/output symbol is estimated
+        //  from past counts of 0 and 1 for symbols in the same context.
+        //  Probability is estimated as:
+        //      probability of 0 = count0/(count0+count1)
+        //  Probability is re-calculated for every symbol.
+        //  To avoid the division a lookup table is used.
+        //  This is a fixed point implementation so probability is scaled to
+        //  a range of 0 to 2**16.
+        //  The value of (count0+count1) is known as "weight".
+        //  The lookup table precalculates the values of:
+        //      lookup(weight) = ((1<<16)+weight/2)/weight
+        //  The probability calculation becomes:
+        //      probability of = count0 * lookup(weight)
+        inline unsigned int GetScaledProb0( ) const{ return m_prob0;}
 
         //! Updates context counts
         inline void Update( bool symbol );
@@ -113,47 +117,12 @@ namespace dirac
 
         int m_count0;
         int m_count1;
+        int m_prob0;
     };
     
         Context::Context():
-        m_count0(1), m_count1(1) {}
+        m_count0(2), m_count1(2), m_prob0( 0x8000 ) {}
 
-    void Context::SetCounts( unsigned int cnt0, unsigned int cnt1)
-    {
-        m_count0 = cnt0;
-        m_count1 = cnt1;
-    }
-
-    unsigned int Context::Weight() const
-    {
-        return m_count0+m_count1;
-    }
-
-    void Context::HalveCounts()
-    {
-        m_count0 >>= 1;
-        ++m_count0;
-        m_count1 >>= 1;
-        ++m_count1;
-    }
-
-    //  The probability of a binary input/output symbol is estimated
-    //  from past counts of 0 and 1 for symbols in the same context.
-    //  Probability is estimated as:
-    //      probability of 0 = count0/(count0+count1)
-    //  Probability is re-calculated for every symbol.
-    //  To avoid the division a lookup table is used.
-    //  This is a fixed point implementation so probability is scaled to
-    //  a range of 0 to 2**16.
-    //  The value of (count0+count1) is known as "weight".
-    //  The lookup table precalculates the values of:
-    //      lookup(weight) = ((1<<16)+weight/2)/weight
-    //  The probability calculation becomes:
-    //      probability of = count0 * lookup(weight)
-    int unsigned Context::GetScaledProb0() const
-    {
-        return m_count0*lookup(m_count0+m_count1);
-    }
 
     void Context::Update( bool symbol )
     {
@@ -161,8 +130,19 @@ namespace dirac
             ++m_count0;
         else
             ++m_count1;
-        if ( Weight() >= 256 )
-            HalveCounts();
+            
+        if ( (m_count0+m_count1) == 256 )
+        {
+            m_count0++;
+            m_count0 >>= 1;
+            m_count1++;
+            m_count1 >>= 1;
+        }
+
+        if ( (m_count0+m_count1)%8==0)
+            m_prob0 = m_count0*lookup( m_count0+m_count1 );
+            
+
     }
 
     unsigned int ContextLookupTable::lookup(int weight) {
@@ -190,15 +170,6 @@ namespace dirac
         virtual ~ArithCodecBase();
 
     protected:
-
-        //virtual codec functions (to be overridden)
-        ////////////////////////////////////////////
-
-        //! The method by which the contexts are initialised
-        virtual void InitContexts()=0;    
-
-        //! The method by which _all_ the counts are resized.
-        virtual void ResetAll()=0;
 
         //core encode functions
         ////////////////////////////

@@ -70,8 +70,6 @@ namespace dirac{
         m_low_code  = 0;
         m_range = 0x10000;
         m_underflow = 0;
-
-        InitContexts();
     }
 
     void ArithCodecBase::FlushEncoder()
@@ -110,7 +108,6 @@ namespace dirac{
     
     void ArithCodecBase::InitDecoder(int num_bytes)
     {
-        InitContexts();
         ReadAllData(num_bytes);
         m_input_bits_left = 8;
 

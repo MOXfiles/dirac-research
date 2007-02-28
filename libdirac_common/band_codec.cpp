@@ -62,35 +62,8 @@ BandCodec::BandCodec(SubbandByteIO* subband_byteio,
 {
     if (m_node.Parent()!=0) 
         m_pnode=band_list(m_node.Parent());
-}        
-
-
-
-void BandCodec::InitContexts()
-{
-    //initialises the contexts. 
-    //If _list does not already have values, then they're set to default values. 
-    //This way, the constructor can override default initialisation.
-    Context tmp_ctx;
-    
-    for (size_t i=0; i<m_context_list.size(); ++i)
-    {
-        if (i>=m_context_list.size())
-            m_context_list.push_back(tmp_ctx);
-        else
-        {
-            if (m_context_list[i].Weight()==0)
-                m_context_list[i].SetCounts(1,1);
-        }
-    }
 }
 
-void BandCodec::ResetAll()
-{
-    for (unsigned int c = 0; c < m_context_list.size(); ++c)
-        if (m_context_list[c].Weight()>16)
-            m_context_list[c].HalveCounts();
-}
 
 //encoding function
 void BandCodec::DoWorkCode(PicArray& in_data)
@@ -236,14 +209,7 @@ inline void BandCodec::CodeVal( PicArray& in_data ,
         }
     }
 
-    m_coeff_count++;
-    
-    //if (m_coeff_count > m_reset_coeff_num)
-    if (m_coeff_count == m_reset_coeff_num)
-    {
-        m_coeff_count=0;
-        ResetAll();
-    }
+    m_coeff_count++;    
 }
 
 void BandCodec::CodeQIndexOffset( const int offset )
@@ -418,11 +384,6 @@ inline void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const in
 
     m_coeff_count++;
     
-    if ( m_coeff_count == m_reset_coeff_num )
-    {
-        ResetAll();
-        m_coeff_count=0;
-    }
 }
 
 inline int BandCodec::ChooseFollowContext( const int bin_number ) const 
