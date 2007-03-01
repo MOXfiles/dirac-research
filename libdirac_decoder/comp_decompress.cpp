@@ -109,7 +109,6 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
                 bdecoder=new BandCodec( &subband_byteio , TOTAL_COEFF_CTXS ,
                                         bands , b, fsort.IsIntra());
 
-            bdecoder->InitContexts();
             bdecoder->Decompress(pic_data , subband_byteio.GetBandDataLength());
             delete bdecoder;
         }
