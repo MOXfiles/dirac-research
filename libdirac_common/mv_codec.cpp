@@ -50,8 +50,6 @@ MvDataCodec::MvDataCodec(ByteIO* p_byteio,
                          size_t number_of_contexts,
                          const ChromaFormat& cf)
   : ArithCodec <MvData> (p_byteio,number_of_contexts),
-    m_MB_count( 0 ),
-    m_reset_num( 32 ),
     m_cformat(cf)
 {}        
 
@@ -100,13 +98,7 @@ inline unsigned int MvDataCodec::MBSplitPrediction(const TwoDArray<int> & split_
 inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode > & preddata,
                                                      const unsigned int num_refs) const
 {
-#if 0
-    // software
-    unsigned int result = (unsigned int)(REF1_ONLY);
-#else
-    // spec
     unsigned int result = (unsigned int)(INTRA);
-#endif
     unsigned int num_ref1_nbrs( 0 ); 
     unsigned int num_ref2_nbrs( 0 );
     

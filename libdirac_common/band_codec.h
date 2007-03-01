@@ -131,16 +131,7 @@ namespace dirac
     
         //! the quantisation index of the last codeblock
         int m_last_qf_idx;
-
-        //! size of the subband
-        const int m_vol;
-    
-        //! the number of coefficients after which contexts are reset
-        const int m_reset_coeff_num;
-    
-        //! count of the coefficients since the last context reset
-        int m_coeff_count;
-    
+            
         //! quantisation value
         int m_qf;
     

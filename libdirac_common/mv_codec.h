@@ -80,9 +80,6 @@ namespace dirac
     
     private:
 
-        int m_MB_count;
-       const int m_reset_num;
-
         const ChromaFormat & m_cformat;
 
         // Position of current block

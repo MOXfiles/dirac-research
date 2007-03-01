@@ -56,9 +56,7 @@ BandCodec::BandCodec(SubbandByteIO* subband_byteio,
     m_is_intra(is_intra),
     m_bnum(band_num),
     m_node(band_list(band_num)),
-    m_last_qf_idx(m_node.QIndex()),
-    m_vol(m_node.Xl()*m_node.Yl()),
-    m_reset_coeff_num( std::max( 25 , std::min(m_vol/32,800) ) )
+    m_last_qf_idx(m_node.QIndex())
 {
     if (m_node.Parent()!=0) 
         m_pnode=band_list(m_node.Parent());
@@ -83,7 +81,6 @@ void BandCodec::DoWorkCode(PicArray& in_data)
     }
 
     // Now loop over the blocks and code
-    m_coeff_count = 0;
     bool code_skip = (block_list.LengthX() > 1 || block_list.LengthY() > 1);
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
@@ -208,8 +205,6 @@ inline void BandCodec::CodeVal( PicArray& in_data ,
             in_data[ypos][xpos]  = -in_data[ypos][xpos];
         }
     }
-
-    m_coeff_count++;    
 }
 
 void BandCodec::CodeQIndexOffset( const int offset )
@@ -256,7 +251,6 @@ void BandCodec::DoWorkDecode( PicArray& out_data )
     const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
 
     // Now loop over the blocks and decode
-    m_coeff_count = 0;
     bool decode_skip= (block_list.LengthX() > 1 || block_list.LengthY() > 1);
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
@@ -381,9 +375,6 @@ inline void BandCodec::DecodeVal( PicArray& out_data , const int xpos , const in
         if ( DecodeSymbol( ChooseSignContext(out_data, xpos, ypos)) )
             out_pixel = -out_pixel;
     }
-
-    m_coeff_count++;
-    
 }
 
 inline int BandCodec::ChooseFollowContext( const int bin_number ) const 
@@ -531,7 +522,6 @@ void LFBandCodec::DoWorkCode(PicArray& in_data)
     const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
 
     // Now loop over the blocks and code
-    m_coeff_count = 0;
     bool code_skip= (block_list.LengthX() > 1 || block_list.LengthY() > 1);
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
@@ -599,7 +589,6 @@ void LFBandCodec::DoWorkDecode(PicArray& out_data )
     const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
 
     // Now loop over the blocks and decode
-    m_coeff_count = 0;
     bool decode_skip= (block_list.LengthX() > 1 || block_list.LengthY() > 1);
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
@@ -685,7 +674,6 @@ void IntraDCBandCodec::DoWorkCode(PicArray& in_data)
     const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
 
     // Now loop over the blocks and code. Note that DC blocks can't be skipped
-    m_coeff_count = 0;
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
         for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
@@ -754,7 +742,6 @@ void IntraDCBandCodec::DoWorkDecode(PicArray& out_data)
     const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
 
     // Now loop over the blocks and decode
-    m_coeff_count = 0;
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
         for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)

@@ -121,7 +121,7 @@ namespace dirac
     };
     
         Context::Context():
-        m_count0(2), m_count1(2), m_prob0( 0x8000 ) {}
+        m_count0(1), m_count1(1), m_prob0( 0x8000 ) {}
 
 
     void Context::Update( bool symbol )
@@ -130,17 +130,18 @@ namespace dirac
             ++m_count0;
         else
             ++m_count1;
-            
-        if ( (m_count0+m_count1) == 256 )
-        {
-            m_count0++;
-            m_count0 >>= 1;
-            m_count1++;
-            m_count1 >>= 1;
-        }
 
         if ( (m_count0+m_count1)%8==0)
+        {
+            if ( (m_count0+m_count1) == 256 )
+            {
+                m_count0++;
+                m_count0 >>= 1;
+                m_count1++;
+                m_count1 >>= 1;
+            }
             m_prob0 = m_count0*lookup( m_count0+m_count1 );
+        }
             
 
     }
