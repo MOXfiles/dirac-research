@@ -57,6 +57,46 @@ typedef union
     *sum2 = _mm_add_pi32 (*sum2, tmp);
 
 
+void mmx_clip (ValueType *pic, int len, short min_val, short max_val)
+{
+    int qcount = len >> 2;
+    int count = len & 3;
+    
+    __m64 pack_usmax = _mm_set_pi16 ((short)0xffff, (short)0xffff, (short)0xffff, (short)0xffff);
+    __m64 pack_smin = _mm_set_pi16 ((short)0x8000, (short)0x8000, (short)0x8000, (short)0x8000);
+    //__m64 pack_usmax = _mm_set_pi16 (-1, -1, -1, -1);
+    //__m64 pack_smin = _mm_set_pi16 (-32768, -32768, -32768, -32768);
+    __m64 high_val = _mm_set_pi16 (max_val, max_val, max_val, max_val);
+    __m64 lo_val = _mm_set_pi16 (min_val, min_val, min_val, min_val);
+
+    __m64 clip_max = _mm_add_pi16 (pack_smin, high_val);
+    __m64 clip_min = _mm_add_pi16 (pack_smin, lo_val);
+    
+    __m64 tmp1 =  _mm_subs_pu16 ( pack_usmax, clip_max);
+    __m64 tmp2 =  _mm_adds_pu16 ( clip_min, tmp1 );
+    
+    while (qcount--)
+    {
+        ValueType *p1 = pic;
+        *(__m64 *)p1 = _mm_add_pi16 (pack_smin, *(__m64 *)p1);
+        *(__m64 *)p1 = _mm_adds_pu16 (*(__m64 *)p1,  tmp1);
+        *(__m64 *)p1 = _mm_subs_pu16 (*(__m64 *)p1,  tmp2);
+        *(__m64 *)p1 = _mm_add_pi16 (lo_val, *(__m64 *)p1);
+        pic += 4;
+    }
+    //Mop up remaining pixels
+    while( count-- )
+    {
+        *pic = std::max( min_val, std::min( max_val , *pic ) 
+                );
+        pic++;
+    }
+
+    _mm_empty();
+    return;
+}
+
+
 // Upconvert by a factor of 2
 void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
 {
@@ -115,6 +155,8 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
             *(__m64 *)&up_data[ypos+1][xpos] = sum1.m;
             *(__m64 *)&up_data[ypos+1][xpos+4] = sum2.m;
         }// x, xpos
+        // clip
+        mmx_clip (&up_data[ypos+1][0], up_data.LengthX(), m_min_val, m_max_val);
 
         // The row loop.
         RowLoop(up_data, ypos);
@@ -150,6 +192,8 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
             *(__m64 *)&up_data[ypos+1][xpos+4] = sum2.m;
 
         }// x,xpos
+        // clip
+        mmx_clip (&up_data[ypos+1][0], up_data.LengthX(), m_min_val, m_max_val);
         RowLoop(up_data, ypos);
 
     }// y, ypos 
@@ -185,6 +229,9 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
             *(__m64 *)&up_data[ypos+1][xpos+4] = sum2.m;
 
         }//x,xpos
+        // clip
+        mmx_clip (&up_data[ypos+1][0], up_data.LengthX(), m_min_val, m_max_val);
+
         RowLoop(up_data, ypos);
 
     }//y,ypos

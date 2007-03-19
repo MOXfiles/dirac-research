@@ -254,7 +254,6 @@ const PicArray& Frame::UpYdata() const
         UpConverter myupconv(0, (1 << m_fparams.GetVideoDepth())-1);
         myupconv.DoUpConverter( *m_Y_data , *m_upY_data );
 
-        ClipComponent(*m_upY_data);
         m_redo_upYdata = false;
         return *m_upY_data;
 
@@ -277,7 +276,6 @@ const PicArray& Frame::UpUdata() const
 
         UpConverter myupconv(0, (1 << m_fparams.GetVideoDepth())-1);
         myupconv.DoUpConverter( *m_U_data , *m_upU_data );
-        ClipComponent(*m_upU_data);
         m_redo_upUdata = false;
 
         return *m_upU_data;
@@ -301,7 +299,6 @@ const PicArray& Frame::UpVdata() const
 
         UpConverter myupconv(0, (1 << m_fparams.GetVideoDepth())-1);
         myupconv.DoUpConverter( *m_V_data , *m_upV_data );
-        ClipComponent(*m_upV_data);
         m_redo_upVdata = false;
 
         return *m_upV_data;
@@ -332,11 +329,12 @@ void Frame::ClipComponent(PicArray& pic_data) const
         int qcount = count >> 2;
         count = count & 3;
     
-        __m64 pack_usmax = _mm_set_pi16 (0xffff, 0xffff, 0xffff, 0xffff);
-           //__m64 pack_smax = _mm_set_pi16 (0x7fff, 0x7fff, 0x7fff, 0x7fff);
-           __m64 pack_smin = _mm_set_pi16 (0x8000, 0x8000, 0x8000, 0x8000);
-           __m64 high_val = _mm_set_pi16 (max_val, max_val, max_val, max_val);
-           __m64 lo_val = _mm_set_pi16 (min_val, min_val, min_val, min_val);
+        //__m64 pack_usmax = _mm_set_pi16 (0xffff, 0xffff, 0xffff, 0xffff);
+        //__m64 pack_smin = _mm_set_pi16 (0x8000, 0x8000, 0x8000, 0x8000);
+        __m64 pack_usmax = _mm_set_pi16 (-1, -1, -1, -1);
+        __m64 pack_smin = _mm_set_pi16 (-32768, -32768, -32768, -32768);
+        __m64 high_val = _mm_set_pi16 (max_val, max_val, max_val, max_val);
+        __m64 lo_val = _mm_set_pi16 (min_val, min_val, min_val, min_val);
     
         __m64 clip_max = _mm_add_pi16 (pack_smin, high_val);
         __m64 clip_min = _mm_add_pi16 (pack_smin, lo_val);
