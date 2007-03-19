@@ -141,7 +141,8 @@ Frame& SequenceDecompressor::DecompressNextFrame(ParseUnitByteIO* p_parseunit_by
        
     if (!skip && p_parseunit_byteio)
     {
-       std::cout<<std::endl<<"Calling frame decompression function";
+       if (m_decparams.Verbose())
+           std::cout<<std::endl<<"Calling frame decompression function";
        new_frame_to_display = m_fdecoder->Decompress(*p_parseunit_byteio,
                                                      *m_fbuffer,
                                                      m_current_accessunit_fnum);
