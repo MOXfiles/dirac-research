@@ -163,21 +163,24 @@ void SubbandList::Init(const int depth,const int xlen,const int ylen)
     {
         xl/=2; 
         yl/=2; 
-        
+        /* HH */
         tmp=new Subband( xl , yl , xl , yl , level); 
         AddBand( *tmp ); 
         delete tmp; 
 
+        /* LH */
         tmp=new Subband( 0 , yl , xl , yl , level); 
         AddBand( *tmp ); 
         delete tmp; 
  
+        /* HL */
         tmp=new Subband(xl , 0 , xl , yl , level); 
         AddBand( *tmp ); 
         delete tmp; 
         
         if (level == depth)
         {
+            /* LL */
             tmp=new Subband( 0 , 0 , xl , yl , level); 
             AddBand( *tmp ); 
             delete tmp; 
