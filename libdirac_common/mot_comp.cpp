@@ -246,10 +246,10 @@ void MotionCompensator::ReConfig()
     // Calculate non-weighted Block Weights
     CalculateWeights( m_bparams.Xblen(), m_bparams.Yblen() , m_bparams.Xbsep(), m_bparams.Ybsep(), m_block_weights[0] );
 
-    // Calculate non-weighted macro Block Weights
+    // Calculate non-weighted "macro" Block Weights
     CalculateWeights( mb_xlen, mb_ylen, mb_xsep, mb_ysep , m_macro_block_weights[0] );
     
-    // Calculate non-weighted sub-macro Block Weights
+    // Calculate non-weighted superblock Weights
     CalculateWeights( sb_xlen, sb_ylen, sb_xsep, sb_ysep , m_sub_block_weights[0] );
 
     // Now calculate actual Ref1 and Ref2 weighted Weights using the weights
