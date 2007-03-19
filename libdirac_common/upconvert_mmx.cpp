@@ -98,8 +98,8 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
         }
         for(int x = 0 , xpos = 0; x < m_width_old; x+=4 , xpos+=8 )
         {
-            sum1.m = _mm_set_pi32 (0, 0);
-            sum2.m = _mm_set_pi32 (0, 0);
+            sum1.m = _mm_set_pi32 (1 << (m_filter_shift-1), 1 << (m_filter_shift-1));
+            sum2.m = _mm_set_pi32 (1 << (m_filter_shift-1), 1 << (m_filter_shift-1));
             
             //Work out the next pixel from filtered values.
             //Excuse the complicated ternary stuff but it sorts out the edge
@@ -134,8 +134,8 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
         for(int x = 0 , xpos=0; x < m_width_old; x+=4 , xpos+=8 )
         {
 
-            sum1.m = _mm_set_pi32 (0, 0);
-            sum2.m = _mm_set_pi32 (0, 0);
+            sum1.m = _mm_set_pi32 (1 << (m_filter_shift-1), 1 << (m_filter_shift-1));
+            sum2.m = _mm_set_pi32 (1 << (m_filter_shift-1), 1 << (m_filter_shift-1));
 
             mmx_add (&pic_data[y][x], &pic_data[y+1][x], tap0, &sum1.m, &sum2.m);
             mmx_add (&pic_data[y-1][x], &pic_data[y+2][x], tap1, &sum1.m, &sum2.m);
@@ -167,8 +167,8 @@ void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
         }
         for(int x = 0 , xpos=0 ; x < m_width_old; x+=4 , xpos+=8)
         {
-            sum1.m = _mm_set_pi32 (0, 0);
-            sum2.m = _mm_set_pi32 (0, 0);
+            sum1.m = _mm_set_pi32 (1 << (m_filter_shift-1), 1 << (m_filter_shift-1));
+            sum2.m = _mm_set_pi32 (1 << (m_filter_shift-1), 1 << (m_filter_shift-1));
             
             //Work out the next pixel from filtered values.
             //Excuse the complicated ternary stuff but it sorts out the edge
