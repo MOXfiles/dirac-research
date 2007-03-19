@@ -279,6 +279,8 @@ const Frame& DiracParser::GetNextFrame() const
 // NOTE - FIXME - Temporarily comment out skip
 void DiracParser::SetSkip(bool skip)
 {
+    if (!skip)
+        return;
     /***
     const FrameParams& fparams = m_decomp->GetNextFrameParams();
     // FIXME: need to change this logic once bitstream is finalised. so that

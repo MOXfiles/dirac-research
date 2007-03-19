@@ -53,9 +53,9 @@ namespace dirac{
 
     ArithCodecBase::ArithCodecBase(ByteIO* p_byteio, size_t number_of_contexts):
         m_context_list( number_of_contexts ),
+        m_scount( 0 ), 
         m_byteio(p_byteio ),
-        m_decode_data_ptr( 0 ),
-        m_scount( 0 )
+        m_decode_data_ptr( 0 )
     {
         // nothing needed here
     }
@@ -137,8 +137,8 @@ namespace dirac{
 
        m_decode_data_ptr = new char[num_bytes+2];
        m_byteio->InputBytes( m_decode_data_ptr , num_bytes );
-       m_decode_data_ptr[num_bytes] = 255;
-       m_decode_data_ptr[num_bytes+1] = 255;
+       m_decode_data_ptr[num_bytes] = (char)0xff;
+       m_decode_data_ptr[num_bytes+1] = (char)0xff;
 
        m_data_ptr = m_decode_data_ptr;
     }

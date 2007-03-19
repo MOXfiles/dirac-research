@@ -113,16 +113,6 @@ public:
     virtual ~DiracException();
 
 
-    /**
-     * Add a filename and line number to the exception.
-     *
-     * @param fileName The file name.
-     * @param lineNumber The line number.
-     */
-    void AddFileNameAndLineNumber(
-        const std::string& fileName,
-        long lineNumber);
-
 // OPERATORS
 
 

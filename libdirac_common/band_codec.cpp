@@ -307,7 +307,7 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
     {
 	m_pypos=(( ypos-m_node.Yp() )>>1)+m_pnode.Yp();
         ValueType *p_out_data = out_data[m_pypos];
-        ValueType *c_out_data_1;
+        ValueType *c_out_data_1 = NULL;
         if (ypos!=m_node.Yp())
             c_out_data_1 = out_data[ypos-1];
         ValueType *c_out_data_2 = out_data[ypos];

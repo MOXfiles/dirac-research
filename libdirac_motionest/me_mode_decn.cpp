@@ -378,7 +378,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
      // First check REF1 costs //
     /**************************/
 
-    mode_cost = ModeCost( xblock , yblock , REF1_ONLY)*m_mode_factor[level];
+    mode_cost = ModeCost( xblock , yblock )*m_mode_factor[level];
     me_data.Mode()[ypos][xpos] = REF1_ONLY;
     me_data.PredCosts(1)[ypos][xpos].total *= m_level_factor[level];
     min_unit_cost = me_data.PredCosts(1)[ypos][xpos].total + mode_cost;
@@ -386,7 +386,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
     // Calculate the cost if we were to code the block as intra //
     /************************************************************/
 
-    mode_cost = ModeCost( xblock , yblock , INTRA) * m_mode_factor[level];
+    mode_cost = ModeCost( xblock , yblock ) * m_mode_factor[level];
     me_data.IntraCosts()[ypos][xpos] = m_intradiff->Diff( dparams , me_data.DC( Y_COMP )[ypos][xpos] );
     me_data.IntraCosts()[ypos][xpos] += loc_lambda * 
                                        GetDCVar( me_data.DC( Y_COMP )[ypos][xpos] , GetDCPred( xblock , yblock ) );
@@ -404,7 +404,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
        // Next check REF2 costs //
        /*************************/
 
-        mode_cost = ModeCost( xblock , yblock , REF2_ONLY)*m_mode_factor[level];
+        mode_cost = ModeCost( xblock , yblock )*m_mode_factor[level];
         me_data.PredCosts(2)[ypos][xpos].total *= m_level_factor[level];
         unit_cost = me_data.PredCosts(2)[ypos][xpos].total + mode_cost;
         if ( unit_cost<min_unit_cost )
@@ -415,7 +415,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
 
         // Finally, calculate the cost if we were to use bi-predictions //
         /****************************************************************/
-        mode_cost = ModeCost( xpos , ypos , REF1AND2 )*m_mode_factor[level];
+        mode_cost = ModeCost( xpos , ypos )*m_mode_factor[level];
 
         me_data.BiPredCosts()[ypos][xpos].mvcost =
                                        me_data.PredCosts(1)[ypos][xpos].mvcost+
@@ -458,8 +458,7 @@ ValueType ModeDecider::GetDCPred( int xblock , int yblock )
     return dc_pred;
 }
 
-float ModeDecider::ModeCost(const int xindex , const int yindex , 
-                 const PredMode predmode )
+float ModeDecider::ModeCost(const int xindex , const int yindex)
 {
     // Computes the variation of the given mode, predmode, from its immediate neighbours
     // First, get a prediction for the mode

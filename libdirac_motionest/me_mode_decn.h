@@ -111,7 +111,7 @@ namespace dirac
 
      
         //! Return a measure of the cost of coding a given mode
-        float ModeCost( const int xindex , const int yindex , const PredMode predmode );
+        float ModeCost( const int xindex , const int yindex );
 
         //! Get a prediction for the dc value of a block
         ValueType GetDCPred( int xblock , int yblock );

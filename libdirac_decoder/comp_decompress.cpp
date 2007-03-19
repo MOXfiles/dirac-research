@@ -75,7 +75,7 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
     bands.Init(depth , pic_data.LengthX() , pic_data.LengthY());
 
     // Set up the code blocks
-    SetupCodeBlocks( bands , fsort );
+    SetupCodeBlocks( bands );
 
     for ( int b=bands.Length() ; b>=1 ; --b )
     {
@@ -127,7 +127,7 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
     wtransform.Transform(BACKWARD,pic_data);
 }
 
-void CompDecompressor::SetupCodeBlocks( SubbandList& bands , const FrameSort fsort )
+void CompDecompressor::SetupCodeBlocks( SubbandList& bands )
 {
     int xregions;
     int yregions;

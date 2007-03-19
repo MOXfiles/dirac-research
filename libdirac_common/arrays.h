@@ -259,6 +259,7 @@ namespace dirac
             m_length = 0;
             m_first = 0;
             m_last = -1;
+            m_ptr = NULL;
         }
     }
 
@@ -497,6 +498,7 @@ namespace dirac
             m_first_y = 0;
             m_last_x = -1;
             m_last_y = -1;
+            m_array_of_rows = NULL;
         }
     }
 

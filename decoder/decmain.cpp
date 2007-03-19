@@ -140,7 +140,7 @@ static void DecodeDirac (const char *iname, const char *oname)
     FILE *ifp;
     FILE *fpdata;
     unsigned char buffer[8192];
-    int bytes;
+    int bytes = 0;
     int num_frames = 0;
     char infile_name[FILENAME_MAX];
     char outfile_hdr[FILENAME_MAX];

@@ -215,9 +215,9 @@ namespace dirac
         // go down 2 rows and back up
         const int ref_next = ref_data.LengthX()*2 - width*2;
 
-        TESTM (ref_start.x>=0 && ref_stop.x < ref_data.LengthX() &&
+        REPORTM (ref_start.x>=0 && ref_stop.x < ref_data.LengthX() &&
                 ref_start.y>=0 && ref_stop.y < ref_data.LengthY(), 
-                "Reference image coordinates withing bounds");
+                "Reference image coordinates within bounds");
 
         CalcValueType sum = 0;
         CalcValueType mop_sum(0);
@@ -555,7 +555,7 @@ namespace dirac
         // go down 2 rows and back up
         const int ref_next = ref_data.LengthX()*2 - width*2;
 
-        TESTM (ref_start.x>=0 && ref_stop.x < ref_data.LengthX() &&
+        REPORTM (ref_start.x>=0 && ref_stop.x < ref_data.LengthX() &&
                 ref_start.y>=0 && ref_stop.y < ref_data.LengthY(), 
                 "Reference image coordinates withing bounds");
 
@@ -782,7 +782,7 @@ namespace dirac
         // go down 2 rows and back up
         const int ref_next = ref_data.LengthX()*2 - width*2;
 
-        TESTM (ref_start.x>=0 && ref_stop.x < ref_data.LengthX() &&
+        REPORTM (ref_start.x>=0 && ref_stop.x < ref_data.LengthX() &&
                 ref_start.y>=0 && ref_stop.y < ref_data.LengthY(), 
                 "Reference image coordinates withing bounds");
 

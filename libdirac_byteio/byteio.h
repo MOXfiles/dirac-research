@@ -93,7 +93,8 @@ namespace dirac
         * Gathers byte-stream statistics
         *@param dirac_byte_stats Collates byte information
         */
-       virtual void CollateByteStats(DiracByteStats& dirac_byte_stats) {};
+       virtual void CollateByteStats(DiracByteStats& dirac_byte_stats) 
+       { dirac_byte_stats.Clear(); }
 
         /**
         * Get bytes in Dirac-bytestream format

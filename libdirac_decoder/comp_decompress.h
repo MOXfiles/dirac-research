@@ -107,9 +107,8 @@ namespace dirac
         /*!
              Set up the code block structures for each subband
             \param bands    the set of all the subbands
-            \param fsort    the frame sort - I, L1 or L2
         */
-        void SetupCodeBlocks( SubbandList& bands , const FrameSort fsort );
+        void SetupCodeBlocks( SubbandList& bands );
 
         //! Copy of the decompression parameters provided to the constructor
         DecoderParams& m_decparams;

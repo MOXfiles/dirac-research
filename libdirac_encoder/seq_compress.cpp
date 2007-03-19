@@ -371,12 +371,12 @@ void SequenceCompressor::MakeFrameReport()
 
 }
 
-SequenceCompressor& SequenceCompressor::operator<<(AccessUnitByteIO *p_accessunit_byteio)
-{
-    
-
-    return *this;
-}
+//SequenceCompressor& SequenceCompressor::operator<<(AccessUnitByteIO *p_accessunit_byteio)
+//{
+//    
+//
+//    return *this;
+//}
 
 int SequenceCompressor::CodedToDisplay( const int fnum )
 {

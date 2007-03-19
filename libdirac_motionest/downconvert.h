@@ -74,7 +74,7 @@ namespace dirac
         DownConverter& operator=(const DownConverter& rhs);//private, body-less: class should not be assigned
 
         //Applies the filter to a single column
-        void RowLoop(const int colpos , const PicArray& old_data , PicArray& new_data );
+        void RowLoop(const int colpos , PicArray& new_data );
 
         ValueType* m_row_buffer;
 

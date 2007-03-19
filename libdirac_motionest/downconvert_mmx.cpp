@@ -137,7 +137,7 @@ void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data)
         }// x
         //Speaking of which - the row loop.
 
-        RowLoop(colpos,old_data,new_data);
+        RowLoop(colpos,new_data);
     }// y 
 
     // This loop is like the last one but it deals with the center
@@ -183,7 +183,7 @@ void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data)
             m_row_buffer[x] = sum >> StageI_Shift;
         }// x
 
-        RowLoop( colpos , old_data , new_data );
+        RowLoop( colpos , new_data );
     }// y
 
     // Another similar loop! - this time we are dealing with
@@ -235,7 +235,7 @@ void DownConverter::DoDownConvert(const PicArray& old_data, PicArray& new_data)
 
         }// x
 
-        RowLoop( colpos , old_data , new_data );
+        RowLoop( colpos , new_data );
 
     }//  y
 

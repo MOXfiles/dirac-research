@@ -134,8 +134,6 @@ namespace dirac
 
         //! Do a given block
         void DoBlock(const int xpos, const int ypos , 
-                     TwoDArray<MvCostData>& pred_costs,
-                     MvArray& mv_array,
                      const MvArray& guide_array,
                      BlockMatcher& block_match);
 

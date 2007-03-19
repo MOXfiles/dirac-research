@@ -167,7 +167,7 @@ void DrawOverlay::DrawCharacter(const PicArray & ch, int y_offset, int x_offset)
 // draws value in luma
 void DrawOverlay::DrawValue(int number, int y_offset, int x_offset)
 {
-    int digits;
+    int digits = 0;
     // number of digits in frame number
     if (number < 10)
         digits = 1;
@@ -183,7 +183,7 @@ void DrawOverlay::DrawValue(int number, int y_offset, int x_offset)
     // loop over digits
     for (int digit=digits; digit>0; --digit)
     {
-        int value;
+        int value = 0;
 
         // get digit, largest first
         if (digit == 5)

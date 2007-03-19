@@ -162,7 +162,7 @@ namespace dirac
         * Writes sequence data to byte stream
         *@param p_accessunit_byteio Output destination
         */
-        SequenceCompressor& operator<<(AccessUnitByteIO *p_accessunit_byteio);
+        //SequenceCompressor& operator<<(AccessUnitByteIO *p_accessunit_byteio);
 
         //! Uses the GOP parameters to convert frame numbers in coded order to display order.
         /*!

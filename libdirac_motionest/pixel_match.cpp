@@ -274,7 +274,7 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
 
     // m_lambda is the Lagrangian smoothing parameter set to zero to get us started
     m_lambda = 0.0;
-    DoBlock(0, 0 , pred_costs , mv_array, guide_array , my_bmatch);
+    DoBlock(0, 0 , guide_array , my_bmatch);
 
     // The rest of the first row
     // ( use reduced lambda here )
@@ -282,7 +282,7 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
     for ( int xpos=1 ; xpos<mv_array.LengthX() ; ++xpos )
     {
         m_mv_prediction = mv_array[0][xpos-1];
-        DoBlock(xpos, 0 , pred_costs , mv_array, guide_array , my_bmatch);
+        DoBlock(xpos, 0 , guide_array , my_bmatch);
     }// xpos
 
     // All the remaining rows except the last 
@@ -292,7 +292,7 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
         // The first element of each row
         m_mv_prediction = mv_array[ypos-1][0];
         m_lambda = loc_lambda/float(m_encparams.XNumBlocks());
-        DoBlock(0, ypos , pred_costs , mv_array, guide_array , my_bmatch );
+        DoBlock(0, ypos , guide_array , my_bmatch );
 
          // The middle elementes of each row
         m_lambda = loc_lambda;
@@ -301,7 +301,7 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
             m_mv_prediction = MvMedian( mv_array[ypos][xpos-1],
                                         mv_array[ypos-1][xpos],
                                         mv_array[ypos-1][xpos+1]);
-            DoBlock(xpos, ypos , pred_costs , mv_array, guide_array , my_bmatch );
+            DoBlock(xpos, ypos , guide_array , my_bmatch );
 
         }// xpos
 
@@ -309,14 +309,12 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
         m_lambda = loc_lambda/float( m_encparams.XNumBlocks() );
         m_mv_prediction = MvMean( mv_array[ypos-1][ mv_array.LastX() ],
                                   mv_array[ypos][ mv_array.LastX()-1 ]);
-        DoBlock(mv_array.LastX() , ypos , pred_costs , mv_array, guide_array , my_bmatch );
+        DoBlock(mv_array.LastX() , ypos , guide_array , my_bmatch );
     }//ypos
 
 }
 
 void PixelMatcher::DoBlock(const int xpos, const int ypos ,
-                           TwoDArray<MvCostData>& pred_costs,
-                           MvArray& mv_array,
                            const MvArray& guide_array,
                            BlockMatcher& block_match)
 {

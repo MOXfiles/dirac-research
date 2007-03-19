@@ -71,15 +71,6 @@ DiracException::~DiracException()
 }
 
 
-void DiracException::AddFileNameAndLineNumber(
-    const std::string& fileName,
-    long lineNumber)
-{
-//    mAdditionalData << "File: " << fileName << ", Line: " << lineNumber
-       // << std::endl;
-}
-
-
 //============================== ACCESS ======================================
 
 DiracErrorCode DiracException::GetErrorCode() const

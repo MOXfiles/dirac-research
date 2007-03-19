@@ -186,7 +186,7 @@ StreamPicInput::StreamPicInput () :
 {}
 
 StreamPicInput::StreamPicInput (std::istream *ip_pic_ptr, const SeqParams &sparams) :
-    m_sparams(m_sparams),
+    m_sparams(sparams),
     m_ip_pic_ptr(ip_pic_ptr),
     m_xpad(0),
     m_ypad(0)
@@ -296,7 +296,7 @@ void MemoryStreamInput::SetMembufReference (unsigned char *buf, int buf_size)
 
 void MemoryStreamInput::Skip(const int num)
 {
-    REPORTM (false, "MemoryStreamInput::Skip - Reached unimplemented function");
+    REPORTM (num && false, "MemoryStreamInput::Skip - Reached unimplemented function");
 }
 
 FileStreamInput::FileStreamInput(const char* input_name, 

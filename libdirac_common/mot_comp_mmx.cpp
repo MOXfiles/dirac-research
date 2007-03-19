@@ -306,6 +306,8 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
         __m64 m_wts2 = _mm_set_pi16 (linear_wts[3], linear_wts[2], linear_wts[3], linear_wts[2]);
 
         ValueType act_cols1[4], act_cols2[4];
+        ValueType *pact_cols1=act_cols1;
+        ValueType *pact_cols2=act_cols2;
 
         int uX, uY, c, l;
         int stopX = (block_width>>1)<<1;
@@ -317,14 +319,13 @@ void MotionCompensator_QuarterPixel::CompensateBlock( TwoDArray<CalcValueType> &
         
        for(c = 0, uY = ref_start.y; c < end_pos.y - start_pos.y; ++c, pic_curr += pic_next, wt_curr += wt_next, uY += 2)
        {
+           __m64 m1, m2;
            for(l = 0, uX = ref_start.x; l < stopX; l+=2, pic_curr+=2, wt_curr+=2, uX += 4)
            {
                   check_active_columns(uX, trueRefXlen, act_cols1, act_cols2, refup_data[BChk(uY, trueRefYlen)], refup_data[BChk(uY+1, trueRefYlen)]);
 
-                __m64 m1 = *(__m64 *)act_cols1;
-                __m64 m2 = *(__m64 *)act_cols2;
-                m1 = _mm_madd_pi16 (m1, m_wts1);
-                m2 = _mm_madd_pi16 (m2, m_wts2);
+                m1 = _mm_madd_pi16 (*(__m64 *)pact_cols1, m_wts1);
+                m2 = _mm_madd_pi16 (*(__m64 *)pact_cols2, m_wts2);
                 m1 = _mm_add_pi32 (m1, m2);
                 m1 = _mm_add_pi32 (m1, m_two);
                 m1 = _mm_srai_pi32 (m1, 2);

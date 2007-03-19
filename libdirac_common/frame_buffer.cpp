@@ -239,7 +239,10 @@ const PicArray& FrameBuffer::GetComponent( const unsigned int fnum , CompSort c 
  
     std::map<unsigned int,unsigned int>::const_iterator it = m_fnum_map.find(fnum);
 
-    unsigned int pos;
+    // FIXME - how do we handle the condition when a frame matching fnum is
+    // not found???
+    unsigned int pos = 0;
+    
     if (it!=m_fnum_map.end()) 
         pos = it->second;
 
