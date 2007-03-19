@@ -215,6 +215,31 @@ else
 fi], [AC_MSG_RESULT(no)]
 )
 
+case "$CXX" in
+   g++*)
+		OPT_CFLAGS=""
+		TRY_CFLAGS="-g"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
+		TRY_CFLAGS="-pedantic"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
+		TRY_CFLAGS="-Wall"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
+		TRY_CFLAGS="-Werror"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
+		TRY_CFLAGS="-W"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
+		TRY_CFLAGS="-Woverloaded-virtual"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
+		#TRY_CFLAGS="-Wno-long-double"
+		#AC_TRY_CXXFLAGS([#include <math.h>],[long double lw;], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
+		TRY_CFLAGS="-Wextra"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
+        CXXFLAGS="$OPT_CFLAGS $CXXFLAGS"
+		   ;;
+    *)
+	    # do nothing at the moment
+		;;
+esac
 dnl ----------------------------------------------
 dnl enable debug flags
 dnl -----------------------------------------------
@@ -228,21 +253,9 @@ if test x"${enableval}" = x"yes" ; then
 	    g++*)
 			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
 			OPT_CFLAGS=""
-			TRY_CFLAGS="-g"
-			AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
 			TRY_CFLAGS="-O0"
 			AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-			TRY_CFLAGS="-pedantic"
-			AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-			TRY_CFLAGS="-Wall"
-			AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-			TRY_CFLAGS="-Werror"
-			AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-			TRY_CFLAGS="-Woverloaded-virtual"
-			AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-			TRY_CFLAGS="-Wno-long-double"
-			AC_TRY_CXXFLAGS([#include <math.h>],[long double lw;], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-			CXXFLAGS="$OPT_CFLAGS -DDIRAC_DEBUG"
+			CXXFLAGS="$CXXFLAGS $OPT_CFLAGS -DDIRAC_DEBUG"
 		    ;;
 	    icc)
 			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
@@ -274,6 +287,8 @@ fi],
     g++*|icc)
 		CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
 		TRY_CFLAGS="-O3"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$TRY_CFLAGS"])
+		TRY_CFLAGS="-Wuninitialized"
 		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$TRY_CFLAGS"])
 		dnl arch specific flags
 		case "$host" in
