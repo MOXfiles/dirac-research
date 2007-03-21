@@ -274,7 +274,7 @@ There are a large number of optional parameters that can be used to run the
 encoder, all of which are listed below. To encode video you need three types of 
 parameter need to be set:
 
-a) quality factor
+a) quality factor or target bit rate
 b) sequence parameters (width, height, frame rate, chroma format)
 c) encoding parameters (motion compensation block sizes, preferred viewing
    distance)
@@ -282,14 +282,30 @@ c) encoding parameters (motion compensation block sizes, preferred viewing
 In practice you don't have to set all these directly because presets can be used
 to use appropriate default values.
 
-a) The most important parameter is the quality factor. This is specified by
-using the option
+a) The most important parameters are the quality factor or target bit rate. 
+
+The quality factor is specified by using the option
 
 qf     : Overall quality factor (>0)
 
 This value is greater than 0, the higher the number, the better
 the quality. Typical high quality is 8-10, but it will vary from sequence to 
 sequence, sometimes higher and sometimes lower.
+
+The target bit rate is set using the option
+
+targetrate : Target bit rate in Kb/s
+
+This will attempt to maintain constant bit rate over the sequence. It works
+reasonably well, but actual bit rate, especially over short sequences, may be
+slightly different from the target. 
+
+Setting -targetrate overrides -qf, in that CBR will still be applied, although
+the initial quality will be set by the given qf value. This might help the CBR
+algorithm to adapt faster.
+
+Setting -lossless overrides both -qf and -targetrate, and enforces lossless 
+coding.
 
 b) Sequence parameters need to be set as the imput is just a raw YUV file and 
 the encoder doesn't have any information about it.
