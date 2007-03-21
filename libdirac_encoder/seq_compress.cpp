@@ -24,6 +24,7 @@
 *                 Scott R Ladd,
 *                 Anuradha Suraparaju,
 *                 Andrew Kennedy
+*                 Myo Tun (Brunel University, myo.tun@brunel.ac.uk)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -38,9 +39,8 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-
 #include <libdirac_encoder/seq_compress.h>
-#include <libdirac_common/dirac_assertions.h>
+
 using namespace dirac;
 
 SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
@@ -159,6 +159,10 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
 
     m_origbuffer = new FrameBuffer( sparams.CFormat() , m_encparams.NumL1() , m_encparams.L1Sep() , 
             xpad_len, ypad_len, xpad_chroma_len, ypad_chroma_len, sparams.GetVideoDepth());
+            
+    // Set up a rate controller if rate control being used
+    if (m_encparams.TargetRate() != 0)
+        m_ratecontrol = new RateController(m_encparams.TargetRate(), srcp, encp);
 }
 
 SequenceCompressor::~SequenceCompressor()
@@ -172,6 +176,9 @@ SequenceCompressor::~SequenceCompressor()
 
     delete m_fbuffer;
     delete m_origbuffer;
+    
+    if (m_encparams.TargetRate()==0)
+        delete m_ratecontrol;
 }
 
 bool SequenceCompressor::LoadNextFrame()
@@ -250,10 +257,54 @@ Frame& SequenceCompressor::CompressNextFrame()
 
         m_fbuffer->SetRetiredList( m_show_fnum, m_current_display_fnum );
 
-        FrameByteIO *p_frame_byteio =  m_fcoder.Compress(*m_fbuffer , 
-                                                         *m_origbuffer , 
-                                                         m_current_display_fnum,
-                                                         m_current_accessunit_fnum);
+		FrameByteIO *p_frame_byteio;
+
+		// Rate Control
+		if (m_encparams.TargetRate() == 0)
+		{
+			// Coding Without using Rate Control Algorithm
+			p_frame_byteio =  m_fcoder.Compress(*m_fbuffer , 
+                                                *m_origbuffer , 
+												m_current_display_fnum, 
+                                                m_current_accessunit_fnum);
+		}
+		else
+		{
+			// Coding using Rate Control Algorithm
+			Frame& my_frame = m_fbuffer->GetFrame( m_current_display_fnum );
+			FrameParams& fparams = my_frame.GetFparams();
+			const FrameSort& fsort = fparams.FSort();
+
+			if ( fsort.IsIntra() && 
+                 m_current_display_fnum != 0 && 
+                 m_encparams.NumL1() != 0)
+			{
+				//Calculate the new QF for encoding the following I frames in the sequence
+				//in normal coding
+				m_ratecontrol->CalcNextIntraQualFactor();
+
+				p_frame_byteio =  m_fcoder.Compress(*m_fbuffer, 
+                                                    *m_origbuffer,          
+													m_current_display_fnum, 
+                                                    m_current_accessunit_fnum);
+
+				m_ratecontrol->CalcNextQualFactor(fparams, p_frame_byteio->GetSize()*8);
+
+                //Set the lambda values for encoding the remaining two L2 frames			
+				m_encparams.SetQf(m_ratecontrol->QualFactor());
+			
+			}
+			else
+			{
+				p_frame_byteio =  m_fcoder.Compress(*m_fbuffer, 
+                                                    *m_origbuffer,          
+													m_current_display_fnum, 
+                                                    m_current_accessunit_fnum);
+
+				m_ratecontrol->CalcNextQualFactor(fparams, p_frame_byteio->GetSize()*8);
+			}
+		}
+		//End of Rate Control
         
         // add the frame to the byte stream
         m_dirac_byte_stream.AddFrame(p_frame_byteio);

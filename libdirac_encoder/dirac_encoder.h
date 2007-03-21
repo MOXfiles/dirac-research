@@ -22,7 +22,8 @@
 *
 * Contributor(s): Anuradha Suraparaju (Original Author)
 *                 Andrew Kennedy,
-                  Thomas Davies
+*                 Thomas Davies
+*                 Myo Tun (Brunel University, myo.tun@brunel.ac.uk)                  
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -201,6 +202,8 @@ typedef struct
     unsigned int multi_quants;
     /*! motion-vector pixel precision */
     dirac_mvprecision_t mv_precision;
+    /*! target bit rate in kbps */
+    int trate;
 } dirac_encparams_t;
 
 /*! Structure that holds the parameters that set up the encoder context */

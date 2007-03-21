@@ -25,6 +25,7 @@
 *                 Tim Borer,
 *                 Anuradha Suraparaju,
 *                 Andrew Kennedy
+*                 Myo Tun (Brunel University, myo.tun@brunel.ac.uk)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -1357,6 +1358,9 @@ namespace dirac
         
         //! Return the Wavelet filter to be used for Inter frames
         WltFilter InterTransformFilter() { return m_inter_wltfilter; }
+        
+        //! Return the Target Bit Rate in kbps   
+        int TargetRate() {return m_target_rate;}
 
         // ... and Sets
 
@@ -1367,7 +1371,7 @@ namespace dirac
         void SetLossless(const bool l){m_lossless = l;}
 
         //! Set the quality factor
-        void SetQf(const float qfac){m_qf=qfac;}
+        void SetQf(const float qfac){ m_qf=qfac; CalcLambdas(m_qf); }
 
         //! Set the nominal number of L1 frames between I frames
         void SetNumL1(const int nl){m_num_L1=nl;}
@@ -1388,24 +1392,6 @@ namespace dirac
         //! Set denoising value - true or false
         void SetDenoise(const bool denoise){m_denoise=denoise;}
 
-        //! Set the Lagrangian parameter to be used for I frames
-        void SetILambda(const float l){m_I_lambda=l;}
-
-        //! Set the Lagrangian parameter to be used for L1 frames
-        void SetL1Lambda(const float l){m_L1_lambda=l;}
-
-        //! Set the Lagrangian parameter to be used for L2 frames
-        void SetL2Lambda(const float l){m_L2_lambda=l;}
-
-        //! Set the Lagrangian parameters to be used for frames
-        void SetLambda(const FrameSort& fsort, const float l);
-
-        //! Set the Lagrangian parameter to be used for L1 motion estimation
-        void SetL1MELambda(const float l){m_L1_me_lambda=l;}
-
-        //! Set the Lagrangian parameter to be used for L2 motion estimation
-        void SetL2MELambda(const float l){m_L2_me_lambda=l;}
-
         //! Set the output path to be used for diagnostic data
         void SetOutputPath(const char * op){ m_output_path = op; }
         
@@ -1422,6 +1408,14 @@ namespace dirac
        
         //! Set the Wavelet filter to be used for inter frames
         void SetInterTransformFilter(WltFilter wf) { m_inter_wltfilter = wf; }
+        
+        //! Set the target bit rate
+        void SetTargetRate(const int rate){m_target_rate = rate;}
+    private:
+            
+        //! Calculate the Lagrangian parameters from the quality factor
+        void CalcLambdas(const float qf);
+
     private:
 
         //! Flag indicating we're doing local decoding
@@ -1477,6 +1471,9 @@ namespace dirac
 
         //! Wavelet filter for Inter frames
         WltFilter m_inter_wltfilter;
+        
+        //! Target bit rate
+        int m_target_rate;
      
     };
 

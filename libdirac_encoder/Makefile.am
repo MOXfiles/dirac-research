@@ -4,10 +4,12 @@
 INCLUDES = -I$(top_srcdir) -I$(srcdir)
 
 h_sources = comp_compress.h frame_compress.h quality_monitor.h \
-            quant_chooser.h seq_compress.h dirac_encoder.h
+            quant_chooser.h seq_compress.h dirac_encoder.h \
+            rate_control.h
 
 cpp_sources = comp_compress.cpp frame_compress.cpp quality_monitor.cpp \
-              quant_chooser.cpp seq_compress.cpp dirac_encoder.cpp
+              quant_chooser.cpp seq_compress.cpp dirac_encoder.cpp \
+              rate_control.cpp
 
 
 if USE_MSVC

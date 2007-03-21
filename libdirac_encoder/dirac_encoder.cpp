@@ -22,7 +22,8 @@
 *
 * Contributor(s): Anuradha Suraparaju (Original Author),
 *                 Andrew Kennedy
-                  Thomas Davies
+*                 Thomas Davies
+*                 Myo Tun (Brunel University)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -306,6 +307,23 @@ private:
 
     // Output destination for compressed data in bitstream format
     DiracByteStream m_dirac_byte_stream;
+    
+   	//Rate Control parameters
+	// Total Number of bits for a GOP
+	int gop_bits;
+
+	// Total Number GOPs in the input sequence
+	int gop_count;
+
+	// To count the number of frame for calculating the GOP bit rate
+	int frame_count;
+	
+	// I frame counter
+	int Iframe_count;
+
+	// Size of I frame for temporary storage 
+	int Iframe_size;
+	//End of Rate Control
 };
 
 /*
@@ -403,8 +421,11 @@ DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx,
     m_dec_buf(0),
     m_dec_bufsize(0),
     m_return_decoded_frames(enc_ctx->decode_flag > 0),
-    m_return_instr_data(enc_ctx->instr_flag > 0)
-
+    m_return_instr_data(enc_ctx->instr_flag > 0),
+   	gop_bits(0), 
+	gop_count(0),
+	frame_count(0),
+	Iframe_count(0)
 {
     // Setup sequence parameters
     SetSequenceParams (enc_ctx);
@@ -424,7 +445,6 @@ DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx,
     // initialise the sequence compressor
     m_comp = new SequenceCompressor (&m_inp_ptr, m_srcparams, m_encparams, m_dirac_byte_stream);
 
-   
 }
 
 void DiracEncoder::SetDecodeBuffer (unsigned char *buffer, int buffer_size)
@@ -475,6 +495,7 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
 
     m_encparams.SetLocalDecode(enc_ctx->decode_flag);
     m_encparams.SetQf(enc_ctx->enc_params.qf);
+   	m_encparams.SetTargetRate(enc_ctx->enc_params.trate);
     m_encparams.SetLossless(enc_ctx->enc_params.lossless);
     m_encparams.SetL1Sep(enc_ctx->enc_params.L1_sep);
     m_encparams.SetNumL1(enc_ctx->enc_params.num_L1);
@@ -633,6 +654,56 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
     {
         encdata->size = 0;
     }
+    
+   	//Rate Control - work out bit rate to date and for current GOP
+   	// and keep track of frame numbers
+	int num_L1 = encoder->enc_ctx.enc_params.num_L1;
+	int L1_sep = encoder->enc_ctx.enc_params.L1_sep;
+	int GOP_Length = (num_L1+1)*L1_sep;
+	if (num_L1 == 0) GOP_Length = 10;
+
+	gop_bits += encoder->enc_fstats.frame_bits;
+	frame_count++;
+
+	if (encoder->enc_fparams.ftype == INTRA_FRAME)
+	{
+		Iframe_count++;
+
+		if (Iframe_count == 2 && num_L1 != 0) 
+		{
+			Iframe_size = encoder->enc_fstats.frame_bits;
+			gop_bits -= Iframe_size;
+			frame_count--;
+		}
+	}
+	
+	if (frame_count == GOP_Length)
+	{
+		int denominator = encoder->enc_ctx.src_params.frame_rate.denominator;
+		int numerator = encoder->enc_ctx.src_params.frame_rate.numerator;
+		int frame_rate =  int( (double)numerator/(double)denominator );
+
+		float gop_duration = (float)frame_count/frame_rate; 
+		float bit_rate = gop_bits/gop_duration;
+		gop_count++;
+
+		std::cout <<std::endl<<"Bit Rate for GOP number "<<gop_count<<" is ";
+        std::cout<<(float)bit_rate/1000.0<<" kbps"<<std::endl;
+
+		if (num_L1 != 0)
+		{
+			Iframe_count = 1;
+			gop_bits = Iframe_size;
+			frame_count = 1;
+		}
+		else
+		{
+			Iframe_count = 0;
+			gop_bits = 0;
+			frame_count = 0;
+		}
+	}	
+	//End of Rate Control
     
     m_dirac_byte_stream.Clear();
 
@@ -808,6 +879,9 @@ static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
     encparams.L1_sep = default_enc_params.L1Sep();
     encparams.lossless = default_enc_params.Lossless();
     encparams.num_L1 = default_enc_params.NumL1();
+    
+    // Set rate to zero by default, meaning no rate control
+    encparams.trate = 0;
 
     // set default block params
     OLBParams default_block_params;

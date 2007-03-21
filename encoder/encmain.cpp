@@ -25,6 +25,7 @@
  *                 Anuradha Suraparaju 
  *                 Andrew Kennedy
  *                 Johannes Reinhardt
+ *                 Myo Tun (Brunel University)
  *
  * Alternatively, the contents of this file may be used under the terms of
  * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -91,6 +92,7 @@ static void display_help()
     cout << "\nybsep             ulong   0UL           Overlapping block vertical separation";
     cout << "\ncpd               ulong   0UL           Perceptual weighting - vertical cycles per deg.";
     cout << "\nqf                float   0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
+	cout << "\ntargetrate        ulong   0UL           Target Bit Rate in Kbps";
     cout << "\nlossless          bool    false         Lossless coding (overrides qf)";
     cout << "\niwlt_filter       string  DD9_3         Intra frame Transform Filter (DD9_3 LEGALL5_3 DD13_5 HAAR0 HAAR1 HAAR2 FIDELITY DAUB9_7)";
     cout << "\nrwlt_filter       string  LEGALL5_3     Inter frame Transform Filter (DD9_3 LEGALL5_3 DD13_5 HAAR0 HAAR1 HAAR2 FIDELITY DAUB9_7)";
@@ -673,6 +675,13 @@ int main (int argc, char* argv[])
             parsed[i] = true;
             i++;
             enc_ctx.enc_params.qf =  atof(argv[i]);
+            parsed[i] = true;
+        }
+		else if ( strcmp(argv[i], "-targetrate") == 0 )
+        {
+            parsed[i] = true;
+            i++;
+			enc_ctx.enc_params.trate = strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-lossless") == 0 )

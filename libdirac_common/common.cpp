@@ -25,6 +25,7 @@
 *                 Tim Borer,
 *                 Anuradha Suraparaju,
 *                 Andrew Kennedy
+*                 Myo Tun (Brunel University, myo.tun@brunel.ac.uk)
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -565,20 +566,37 @@ EncoderParams::EncoderParams(const VideoFormat& video_format,
     m_L2_lambda(0.0f),
     m_L1_me_lambda(0.0f),
     m_L2_me_lambda(0.0f),
-    m_ent_correct(0)
+    m_ent_correct(0),
+    m_target_rate(0)
 {
     if(set_defaults)
         SetDefaultEncoderParameters(*this);
 }
 
-void EncoderParams::SetLambda(const FrameSort& fsort, const float l)
+void EncoderParams::CalcLambdas(const float qf)
 {
-    if (fsort.IsIntra())
-        SetILambda(l);
-    else if (fsort.IsInterRef())
-        SetL1Lambda(l);
+    if (!m_lossless )
+    { 
+        m_I_lambda = std::pow( 10.0 , (10.0-qf )/2.5 )/16.0;
+        m_L1_lambda = m_I_lambda*32.0;
+        m_L2_lambda = m_I_lambda*256.0;
+
+        // Set the lambdas for motion estimation
+        const double me_ratio = 2.0;
+
+        // Use the same ME lambda for L1 and L2 frames
+        m_L1_me_lambda = std::sqrt(m_L1_lambda)*me_ratio;
+        m_L2_me_lambda = m_L1_me_lambda;
+    }
     else
-        SetL2Lambda(l);
+    {
+        m_I_lambda = 0.0;
+        m_L1_lambda = 0.0;
+        m_L2_lambda = 0.0;
+
+        m_L1_me_lambda = 0.0;
+        m_L2_me_lambda = 0.0;        
+    }
 }
 
 void EncoderParams::SetIntraTransformFilter(unsigned int wf_idx)

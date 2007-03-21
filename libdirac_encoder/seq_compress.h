@@ -47,16 +47,20 @@
 //-------------------------------------//
 /////////////////////////////////////////
 
+#include <libdirac_byteio/dirac_byte_stream.h>
 #include <libdirac_common/common.h>
 #include <libdirac_common/frame_buffer.h>
 #include <libdirac_common/pic_io.h>
+#include <libdirac_common/dirac_assertions.h>
 #include <libdirac_encoder/quality_monitor.h>
 #include <libdirac_encoder/frame_compress.h>
-#include <libdirac_byteio/dirac_byte_stream.h>
+#include <libdirac_encoder/rate_control.h>
+
 #include <fstream>
 
 namespace dirac
 {
+              
     //! Compresses a sequence of frames from a stream.
     /*!
         This class compresses a sequence of frames, frame by frame. It
@@ -226,13 +230,16 @@ namespace dirac
 
         //! A class for monitoring the quality of pictures and adjusting parameters appropriately
         QualityMonitor m_qmonitor;
+        
+        //! A class for monitoring and controlling bit rate
+        RateController* m_ratecontrol;
 
         //! A class to hold the frame compressor object
         FrameCompressor m_fcoder;
 
-
         //! Output destination for compressed data in bitstream format
         DiracByteStream& m_dirac_byte_stream;
+        
     };
 
 } // namespace dirac

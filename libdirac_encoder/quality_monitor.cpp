@@ -59,45 +59,18 @@ QualityMonitor::~QualityMonitor()
 
 void QualityMonitor::ResetAll()
 {
-    // Set the lambdas
 
-    if ( !m_encparams.Lossless() )
+    for (int i=0; i<3 ; ++i )
     {
-        m_encparams.SetILambda( std::pow( 10.0 , (10.0-m_encparams.Qf() )/2.5 )/16.0 );
-
-        m_encparams.SetL1Lambda( m_encparams.ILambda()*32.0 );
-
-        m_encparams.SetL2Lambda( m_encparams.ILambda()*256.0 );
-
-
-        // Set the lambdas for motion estimation
-        const double me_ratio = 2.0;
-
-        // Use the same ME lambda for L1 and L2 frames
-        m_encparams.SetL1MELambda( std::sqrt(m_encparams.L1Lambda())*me_ratio );
-        m_encparams.SetL2MELambda( std::sqrt(m_encparams.L1Lambda())*me_ratio );
-
-        for (int i=0; i<3 ; ++i )
-        {
-            m_quality_averageY[i] = 0.0;
-            m_quality_averageU[i] = 0.0;
-            m_quality_averageV[i] = 0.0;
-            m_frame_total[i] = 0;
-        }// i
-        m_totalquality_averageY = 0.0;
-        m_totalquality_averageU = 0.0;
-        m_totalquality_averageV = 0.0;
-        m_allframe_total = 0;
-    }
-    else
-    {
-        m_encparams.SetLambda( FrameSort::IntraRefFrameSort() , 0.0 );
-        m_encparams.SetLambda( FrameSort::InterRefFrameSort() , 0.0 );
-        m_encparams.SetLambda( FrameSort::InterNonRefFrameSort() , 0.0 );
-
-        m_encparams.SetL1MELambda( 0.0 );
-        m_encparams.SetL2MELambda( 0.0 );
-    }
+        m_quality_averageY[i] = 0.0;
+        m_quality_averageU[i] = 0.0;
+        m_quality_averageV[i] = 0.0;
+        m_frame_total[i] = 0;
+    }// i
+    m_totalquality_averageY = 0.0;
+    m_totalquality_averageU = 0.0;
+    m_totalquality_averageV = 0.0;
+    m_allframe_total = 0;
 }
 
 void QualityMonitor::WriteLog()
