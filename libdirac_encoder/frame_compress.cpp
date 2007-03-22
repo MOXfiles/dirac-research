@@ -162,7 +162,7 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
 
     if ( !m_skipped )
     {    // If not skipped we continue with the coding ...
-        
+        std::cout<<std::endl<<"Using QF: "<<m_encparams.Qf();
         if (fsort.IsInter() )
         {
              // Code the MV data
