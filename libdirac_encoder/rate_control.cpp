@@ -92,12 +92,12 @@ void RateController::Allocate (const FrameParams& fparams, int num_bits)
 	int XL2 = m_frame_complexity.L2Complexity();
 
 	//Allocation for I frame only coding
-	if ( framesort.IsIntra() ) 
+	if ( framesort.IsIntra() )
 	{
-		m_Iframe_bits = m_current_GOP_bits/
-            (m_num_Iframe+
-            int((float)(m_num_L1frame*XL1)/XI)+
-            int((float)(m_num_L2frame*XL2)/XI));
+        m_Iframe_bits = (int) (m_current_GOP_bits
+                      / (m_num_Iframe
+                        +(float)(m_num_L1frame*XL1)/XI
+                        +(float)(m_num_L2frame*XL2)/XI));
 		m_current_GOP_bits -= num_bits;
 		m_num_Iframe--;
 	}
@@ -107,24 +107,23 @@ void RateController::Allocate (const FrameParams& fparams, int num_bits)
 	{
 		if ( fparams.IsBFrame() )
 		{
-			m_L2frame_bits = m_current_GOP_bits/
-                (m_num_L2frame+
-                int((float)(m_num_Iframe*XI)/XL2)+
-                int((float)(m_num_L1frame*XL1)/XL2));
+            m_L2frame_bits = (int) (m_current_GOP_bits/
+                           / (m_num_L2frame
+                             +(float)(m_num_Iframe*XI)/XL2
+                             +(float)(m_num_L1frame*XL1)/XL2));
 			m_current_GOP_bits -= num_bits;
 			m_num_L2frame--;
 		}
 		else
 		{
-			m_L1frame_bits = m_current_GOP_bits/
-                (m_num_L1frame+
-                int((float)(m_num_Iframe*XI)/XL1)+
-                int((float)(m_num_L2frame*XL2)/XL1));
+            m_L1frame_bits = (int) (m_current_GOP_bits
+                           / (m_num_L1frame
+                             +(float)(m_num_Iframe*XI)/XL1
+                             +(float)(m_num_L2frame*XL2)/XL1));
 			m_current_GOP_bits -= num_bits;
 			m_num_L1frame--;
 		}
-		
-	}	
+    }
 }
 
 void RateController::CalcTotalBits()
