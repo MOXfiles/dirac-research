@@ -24,6 +24,7 @@
  *                 Scott R Ladd,
  *                 Anuradha Suraparaju 
  *                 Andrew Kennedy
+ *                 David Flynn
  *                 Johannes Reinhardt
  *                 Myo Tun (Brunel University)
  *
@@ -80,6 +81,7 @@ static void display_help()
     cout << "\nHD1080            bool    false         Use HD-1080 compression presets";
     cout << "\nwidth             ulong   Preset        Width of frame";
     cout << "\nheight            ulong   Preset        Length of frame";
+    cout << "\nheight            ulong   Preset        Length of frame";
     cout << "\ncformat           ulong   444           Chroma format 0=444 1=422 2=420";
     cout << "\nfr                ulong   Preset        Frame rate(s) (e.n or e/n format)";
     cout << "\nstart             ulong   0UL           Frame number to start encoding from";
@@ -104,7 +106,7 @@ static void display_help()
     cout << "\nverbose           bool    false         Verbose mode";
     cout << "\nlocal             bool    false         Write diagnostics & locally decoded video";
     cout << "\ninput             string  [ required ]  Input file name";
-    cout << "\noutput            string  [ required ]  Output file name";
+    cout << "\noutput            string  [ required ]  Output file name [May not be '-']";
     cout << endl;
 }
 
@@ -578,7 +580,7 @@ int main (int argc, char* argv[])
     dirac_encoder_context_init (&enc_ctx, preset);
 
     //now go over again and override presets with other values
-    for (int i = 1; i < argc; )
+    for(int i=1; i < argc; )
     {
         if ( strcmp(argv[i], "-width") == 0 )
         {
@@ -844,14 +846,23 @@ int main (int argc, char* argv[])
         i++;
     }//opt
 
+    /* check that we have been suplied with input and output files */
+    if(parsed[argc-2] || parsed[argc-1]) {
+        std::cerr<<std::endl<<"Insufficient arguments"<<std::endl;
+        exit(1);
+    }
+
     // last two arguments must be file names
-    if (argv[argc-2][0] == '-' || argv[argc-1][0] == '-')
+    if (argv[argc-1][0] == '-')
     {
         display_help();
         exit(1);
     }
 
-    input=argv[argc-2];
+    if (argv[argc-2][0] == '-')
+        input = "/dev/stdin";
+    else
+        input = argv[argc-2];
     output=argv[argc-1];
     parsed[argc-2] = true;
     parsed[argc-1] = true;
@@ -886,7 +897,7 @@ int main (int argc, char* argv[])
     }
 
     display_codec_params(enc_ctx);
-    bit_name = output + ".drc";
+    bit_name = output;
         
 
 
@@ -894,7 +905,7 @@ int main (int argc, char* argv[])
     //next do picture file stuff
 
     // Open uncompressed data file
-    std::string input_name_yuv = input + ".yuv";
+    std::string input_name_yuv = input;
     std::ifstream 
        ip_pic_ptr (input_name_yuv.c_str(), std::ios::in | std::ios::binary);
     if (!ip_pic_ptr)
@@ -915,7 +926,7 @@ int main (int argc, char* argv[])
     
     if (nolocal == false)
     {
-        std::string output_name_yuv = output + ".yuv";
+        std::string output_name_yuv = output + ".localdec.yuv";
         std::string output_name_imt = output + ".imt";
 
         outyuv = new std::ofstream(output_name_yuv.c_str(),std::ios::out | std::ios::binary);
@@ -934,7 +945,9 @@ int main (int argc, char* argv[])
     if ( end_pos == -1 )
         end_pos = INT_MAX;
 
-    if (!Skip( ip_pic_ptr, start_pos, frame_size ))
+    /* don't try and skup frames if they aren't any to skip, eg
+     * this won't work on nonseekable filehandles. */
+    if (start_pos && !Skip( ip_pic_ptr, start_pos, frame_size ))
     {
         return EXIT_FAILURE;
     };
@@ -991,8 +1004,7 @@ int main (int argc, char* argv[])
             encoder->enc_buf.buffer = video_buf;
             encoder->enc_buf.size = VIDEO_BUFFER_SIZE;
             state = dirac_encoder_output ( encoder );
-            switch (state)
-            {
+            switch (state) {
             case ENC_STATE_AVAIL:
                 assert (encoder->enc_buf.size > 0);
                
@@ -1071,5 +1083,6 @@ int main (int argc, char* argv[])
     
     delete[] parsed;
     return EXIT_SUCCESS;
+
 
 }

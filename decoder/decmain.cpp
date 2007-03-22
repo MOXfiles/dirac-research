@@ -148,10 +148,8 @@ static void DecodeDirac (const char *iname, const char *oname)
     dirac_decoder_state_t state = STATE_BUFFER;
 
     strncpy(infile_name, iname, sizeof(infile_name));
-    strcat(infile_name, ".drc");
 
     strncpy(outfile_data, oname, sizeof(outfile_data));
-    strcat(outfile_data, ".yuv");
 
     if ((ifp = fopen (infile_name, "rb")) ==NULL)
     {

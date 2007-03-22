@@ -263,12 +263,11 @@ The basic encoding syntax is to type
 
 dirac_encoder [options] file_in file_out
 
-This will compress file_in.yuv and produce an output file_out.drc of compressed
-data. 
+This will compress file_in and produce an output file_out of compressed data.
 
-A locally decoded output file_out.yuv and instrumentation data file_out.imt 
-(for debugging the encoder and of interest to developers only) are also 
-produced if the -local flag is enabled on the command line.
+A locally decoded output file_out.local-dec.yuv and instrumentation data
+file_out.imt  (for debugging the encoder and of interest to developers only)
+are also produced if the -local flag is enabled on the command line.
 
 There are a large number of optional parameters that can be used to run the 
 encoder, all of which are listed below. To encode video you need three types of 
@@ -336,14 +335,14 @@ Example 1 Simple coding example. Code a 720x576 sequence to high quality.
 
 Solution.
 
-  dirac_encoder -SD576 -qf 9 test test_out
+  dirac_encoder -SD576 -qf 9 test.yuv test_out.drc
 
 Example 2. Code a 720x486 sequence at 29.97 frames/sec in 422 format to 
 medium quality
 
 Solution
 
-  dirac_encoder -SD576 -width 720 -height 486 -fr 29.97 -cformat 1 -qf 7 test test_out
+  dirac_encoder -SD576 -width 720 -height 486 -fr 29.97 -cformat 1 -qf 7 test.yuv test_out.drc
 
 The complete list of sequence parameters is:
 
@@ -433,4 +432,4 @@ output to a file:
 
   dirac_decoder -verbose test_enc test_dec
 
-will decode test_enc.drc into test_dec.yuv with running commentary.
+will decode test_enc into test_dec with running commentary.

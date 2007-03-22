@@ -1,3 +1,11 @@
+2007-03-22 18:00  davidf
+	* encoder/encmain.cpp, decoder/decmain.cpp, README: Altered
+	  command line file handling.  a) now support taking input
+	  from stdin (input specified as '-' or '/dev/stdin').  b)
+	  removed strange filename extension stripping/appending for
+	  primary input and output files (locally decoded video and
+	  instrumentation are outputfilename.{local-dec.yuv,imt}.
+
 2006-11-13 09:41  tjdwave
 
 	* libdirac_common/band_codec.cpp, libdirac_common/band_codec.h,
@@ -4779,9 +4787,15 @@
 
 	  -  Removed the following CVS tags from all files    $Author$
 	  $Log$
-	  Revision 1.21  2006-11-13 12:28:22  tjdwave
+	  Revision 1.22  2007-03-22 18:27:16  davidf_
+	  Altered command line file handling.  a) now support taking input from stdin
+	  (input specified as '-' or '/dev/stdin').  b) removed strange filename
+	  extension stripping/appending for primary input and output files (locally
+	  decoded video and instrumentation are outputfilename.{local-dec.yuv,imt}.
+
+	  Revision 1.21  2006/11/13 12:28:22  tjdwave
 	  *** empty log message ***
-    $Revision$
+	    $Revision$
 
 	  -  Included the following CVS tags in all source and header files
 	     $Id$    $Name$
@@ -4948,7 +4962,10 @@
 
 2004-05-27 13:21  stuart_hc
 
-	* README.developers: Prevent unintended expansion of $Id$ and $Log$
+	* README.developers: Prevent unintended expansion of $Id$ and $Log: ChangeLog,v $
+	* README.developers: Prevent unintended expansion of $Id$ and Revision 1.21  2006/11/13 12:28:22  tjdwave
+	* README.developers: Prevent unintended expansion of $Id$ and *** empty log message ***
+	* README.developers: Prevent unintended expansion of $Id$ and
 	  in description of keywords.
 
 2004-05-27 13:14  stuart_hc
