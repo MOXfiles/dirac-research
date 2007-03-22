@@ -107,7 +107,7 @@ void RateController::Allocate (const FrameParams& fparams, int num_bits)
 	{
 		if ( fparams.IsBFrame() )
 		{
-            m_L2frame_bits = (int) (m_current_GOP_bits/
+            m_L2frame_bits = (int) (m_current_GOP_bits
                            / (m_num_L2frame
                              +(float)(m_num_Iframe*XI)/XL2
                              +(float)(m_num_L1frame*XL1)/XL2));
