@@ -1371,7 +1371,7 @@ namespace dirac
         void SetLossless(const bool l){m_lossless = l;}
 
         //! Set the quality factor
-        void SetQf(const float qfac){ m_qf=qfac; CalcLambdas(m_qf); }
+        void SetQf(const float qfac){ m_qf=std::min(qfac,12.5f); CalcLambdas(m_qf); }
 
         //! Set the nominal number of L1 frames between I frames
         void SetNumL1(const int nl){m_num_L1=nl;}
