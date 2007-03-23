@@ -4,20 +4,20 @@ AT_SETUP([samples])
 
 AT_CHECK([(test $DIRAC_INPUT_DATA_DIR -a -d $DIRAC_INPUT_DATA_DIR) || exit 77], ignore)
 
-echo "HERE"
+echo "HERE     "
 for samp in `ls $DIRAC_INPUT_DATA_DIR/*.yuv`;
 do
-samp=`echo $samp | sed 's/\.yuv//g'`;
-encout="$samp"_"enc";
+tsamp=`echo $samp | sed 's/\.yuv//g'`;
+encout="$tsamp"_"enc.drc";
 encout=`basename $encout`
-decout="$samp"_"dec";
+decout="$tsamp"_"dec.yuv";
 decout=`basename $decout`
-instrout="$samp"_"instr";
+instrout="$tsamp"_"instr";
 instrout=`basename $instrout`
 
-iframe_encout="$samp"_"iframe_enc";
+iframe_encout="$tsamp"_"iframe_enc.drc";
 iframe_encout=`basename $iframe_encout`
-iframe_decout="$samp"_"iframe_dec";
+iframe_decout="$tsamp"_"iframe_dec.yuv";
 iframe_decout=`basename $iframe_decout`
 
 width=0
@@ -27,39 +27,39 @@ preset=""
 
 # first tackle files name in the style nameFORMAT_CHROMA.yuv
 # e.g. waterfallCIF_411 or waterfall576p_444 etc
-case $samp in
+case $tsamp in
 *576p*)
 	width=720
 	height=576
-	chroma=`echo $samp | sed -e 's/.*576p_\(.*\)/\1/'`
+	chroma=`echo $tsamp | sed -e 's/.*576p_\(.*\)/\1/'`
 	;;
 *720p*)
 	width=1280;
 	height=720;
-	chroma=`echo $samp | sed -e 's/.*720p_\(.*\)/\1/'`
+	chroma=`echo $tsamp | sed -e 's/.*720p_\(.*\)/\1/'`
 	;;
 *1080i*)
 	width=1920
 	height=1080
-	chroma=`echo $samp | sed -e 's/.*1080i_\(.*\)/\1/'`
+	chroma=`echo $tsamp | sed -e 's/.*1080i_\(.*\)/\1/'`
 	;;
 *CIF*) 
 	width=352;
 	height=288;
-	chroma=`echo $samp | sed -e 's/.*CIF_\(.*\)/\1/'`
+	chroma=`echo $tsamp | sed -e 's/.*CIF_\(.*\)/\1/'`
 	;;
 *)
 	#handle files with names like name-WIDTHxHEIGHTxNUMFRAMES_CHROMA.yuv
 	#e.g. snowboard-jum-720x576x50_430.yuv
-	width=`echo $samp |  sed -e 's/.*[[^0-9]]\([[0-9]][[0-9]]*\)x\([[0-9]][[0-9]]*\)x[[0-9]][[0-9]]*_\(.*\)/\1/'`
-	height=`echo $samp |  sed -e 's/.*[[^0-9]]\([[0-9]][[0-9]]*\)x\([[0-9]][[0-9]]*\)x[[0-9]][[0-9]]*_\(.*\)/\2/'`
-	chroma=`echo $samp |  sed -e 's/.*[[^0-9]]\([[0-9]][[0-9]]*\)x\([[0-9]][[0-9]]*\)x[[0-9]][[0-9]]*_\(.*\)/\3/'`
+	width=`echo $tsamp |  sed -e 's/.*[[^0-9]]\([[0-9]][[0-9]]*\)x\([[0-9]][[0-9]]*\)x[[0-9]][[0-9]]*_\(.*\)/\1/'`
+	height=`echo $tsamp |  sed -e 's/.*[[^0-9]]\([[0-9]][[0-9]]*\)x\([[0-9]][[0-9]]*\)x[[0-9]][[0-9]]*_\(.*\)/\2/'`
+	chroma=`echo $tsamp |  sed -e 's/.*[[^0-9]]\([[0-9]][[0-9]]*\)x\([[0-9]][[0-9]]*\)x[[0-9]][[0-9]]*_\(.*\)/\3/'`
 	;;
 esac
 
-if test $width = $samp || test $height = $samp  || test $chroma = $samp;
+if test $width = $tsamp || test $height = $tsamp  || test $chroma = $tsamp;
 then
-	echo "Filename not in expected format :  $samp.yuv : Skipping this file..."
+	echo "Filename not in expected format :  $tsamp.yuv : Skipping this file..."
 	continue;
 fi
 
@@ -118,17 +118,17 @@ echo "$samp $preset $chroma $width $height"
 #iframe tests
 AT_CHECK([at_wrap dirac_encoder -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep $samp ../../$iframe_encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$iframe_encout ../../$iframe_decout], 0, [ignore])
-AT_CHECK([cmp ../../$iframe_encout.yuv ../../$iframe_decout.yuv])
+AT_CHECK([cmp ../../$iframe_encout.localdec.yuv ../../$iframe_decout])
 
 AT_CHECK([at_wrap dirac_encoder -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep $samp ../../$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$encout ../../$decout], 0, [ignore])
-AT_CHECK([cmp ../../$encout.yuv ../../$decout.yuv])
-AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mc_instr -motion_colour -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_ma_instr -motion_arrows -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mca_instr -motion_colour_arrows -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_spm_instr -split_mode -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_sad_instr -sad -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_pred_instr -pred_mode -clip 50], 0)
+AT_CHECK([cmp ../../$encout.localdec.yuv ../../$decout])
+AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mc_instr.yuv -motion_colour -clip 50], 0)
+AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_ma_instr.yuv -motion_arrows -clip 50], 0)
+AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mca_instr.yuv -motion_colour_arrows -clip 50], 0)
+AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_spm_instr.yuv -split_mode -clip 50], 0)
+AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_sad_instr.yuv -sad -clip 50], 0)
+AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_pred_instr.yuv -pred_mode -clip 50], 0)
 
 done
 AT_CLEANUP

@@ -305,7 +305,10 @@ int main (int argc, char* argv[])
     ReadSequenceParams (in, seqparams, srcparams);
 
     // Create objects for input and output picture sequences
-    FileStreamInput inputpic(input.c_str(), seqparams);
+    char yuv_file[FILENAME_MAX];
+    strcpy(yuv_file, input.c_str());
+    strcat(yuv_file, ".localdec.yuv");
+    FileStreamInput inputpic(yuv_file, seqparams);
 
     
     FileStreamOutput outputpic(output.c_str(), seqparams);

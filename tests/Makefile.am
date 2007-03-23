@@ -8,7 +8,7 @@ EXTRA_DIST = $(TESTSUITE_AT) testsuite package.m4 colourbars_420.yuv create_dira
 
 DISTCLEANFILES = atconfig $(check_SCRIPTS)
 
-CLEANFILES = *enc.imt *enc.drc *enc.hdr *enc.yuv *dec.yuv *dec.hdr *instr.yuv *instr.hdr
+CLEANFILES = *.imt *enc.drc *enc.hdr *enc.yuv *dec.yuv *dec.hdr *instr.yuv *instr.hdr
 
 MAINTAINERCLEANFILES = Makefile.in $(TESTSUITE)
 

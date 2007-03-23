@@ -149,7 +149,7 @@ bool FileStreamOutput::OpenYUV(const char* output_name)
     char output_name_yuv[FILENAME_MAX];
 
     strncpy(output_name_yuv,output_name, sizeof(output_name_yuv));
-    strcat(output_name_yuv,".yuv");
+    //strcat(output_name_yuv,".yuv");
 
     //picture output
     m_op_pic_ptr =
@@ -306,7 +306,7 @@ FileStreamInput::FileStreamInput(const char* input_name,
     char input_name_yuv[FILENAME_MAX];
 
     strncpy(input_name_yuv, input_name, sizeof(input_name_yuv));
-    strcat(input_name_yuv, ".yuv");
+    //strcat(input_name_yuv, ".yuv");
 
     //picture input
     m_ip_pic_ptr =
