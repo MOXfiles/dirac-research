@@ -50,6 +50,9 @@ using namespace dirac;
 
 using std::vector;
 
+
+#define NUM_USED_BLKS(w,sep,len) ((w+sep-(len-sep)/2-1)/sep)
+
 //--public member functions--//
 ///////////////////////////////
 
@@ -389,55 +392,76 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
     const int blocks_per_mb_row = m_cparams.XNumBlocks()/m_cparams.XNumMB();
     const int blocks_per_sb_row = blocks_per_mb_row>>1;
 
-    for(int yblock = 0; yblock < m_cparams.YNumBlocks(); ++yblock)
+    // The picture does not contain integral number of blocks. So not all 
+    // blocks need to be processed. Compute the relevant blocks to be
+    // processed using the original picturesize and not the padded pic size
+    int y_num_blocks = NUM_USED_BLKS(orig_pic_size.y,m_bparams.Ybsep(),m_bparams.Yblen()); 
+    int x_num_blocks = NUM_USED_BLKS(orig_pic_size.x,m_bparams.Xbsep(),m_bparams.Xblen()); 
+
+    for(int yblock = 0; yblock < y_num_blocks; ++yblock)
     {
         pos.x = -m_bparams.Xoffset();
         int xincr, xb_incr = 0;
         //loop over all the blocks in a row
-        for(int xblock = 0 ; xblock < m_cparams.XNumBlocks(); xblock+=xb_incr)
+        for(int xblock = 0 ; xblock < x_num_blocks; xblock+=xb_incr)
         {
+            int split_mode =  mv_data.MBSplit()[yblock/blocks_per_mb_row][xblock/blocks_per_mb_row];
+
+            int blk_len_x, blk_len_y = m_bparams.Yblen();
+            
+            switch (split_mode)
+            {
+            case 0: // processing superblock
+                blk_len_x = blocks_per_mb_row * m_bparams.Xblen();
+                break;
+            case 1: // processing sub-superblock
+                blk_len_x = blocks_per_sb_row * m_bparams.Xblen();
+                break;
+            case 2: // processing block
+            default:
+                blk_len_x = m_bparams.Xblen();
+                break;
+            }
 
             //Decide which weights to use.
-            if((xblock != 0)&&(xblock < m_cparams.XNumBlocks() - 1))
+            if (pos.x >=0 && (pos.x+blk_len_x) < orig_pic_size.x)
             {
-                if((yblock != 0)&&(yblock < m_cparams.YNumBlocks() - 1))    
-                    wgt_idx = 4;
-                else if(yblock == 0) 
+                // block is entirely within picture in x direction
+                if (pos.y < 0)
                     wgt_idx = 1;
-                else 
-                    wgt_idx= 7;
+                else if ((pos.y+blk_len_y) < orig_pic_size.y)
+                    wgt_idx = 4;
+                else
+                    wgt_idx = 7;
             }
-            else if(xblock == 0)
+            else if (pos.x < 0)
             {
-                if((yblock != 0)&&(yblock < m_cparams.YNumBlocks() - 1))    
-                    wgt_idx = 3;
-                else if(yblock == 0) 
+                // left edge of block is outside picture in x direction
+                if (pos.y < 0)
                     wgt_idx = 0;
-                else 
+                else if ((pos.y+blk_len_y) < orig_pic_size.y)
+                    wgt_idx = 3;
+                else
                     wgt_idx = 6;
             }
             else
             {
-                if((yblock != 0)&&(yblock < m_cparams.YNumBlocks() - 1))    
-                    wgt_idx = 5;
-                else if(yblock == 0) 
+                // right edge of block is outside picture in x direction
+                if (pos.y < 0)
                     wgt_idx = 2;
-                else 
+                else if ((pos.y+blk_len_y) < orig_pic_size.y)
+                    wgt_idx = 5;
+                else
                     wgt_idx = 8;
             }
+            
 
             block_mode = mv_data.Mode()[yblock][xblock];
 
             TwoDArray<ValueType> *wt, *wt_ref1, *wt_ref2;
-            int split_mode =  mv_data.MBSplit()[yblock/blocks_per_mb_row][xblock/blocks_per_mb_row];
 
             if (split_mode == 0) //Block part of a MacroBlock
             {
-                // boundary conditions for macro block edge
-                if (xblock == m_cparams.XNumBlocks() - blocks_per_mb_row)
-                {
-                    wgt_idx = wgt_idx+1;
-                }
                 wt = &m_full_macro_block_weights[wgt_idx];
                 wt_ref1 = &m_macro_block_weights[0][wgt_idx];
                 wt_ref2 = &m_macro_block_weights[1][wgt_idx];
@@ -445,11 +469,6 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
             }
             else if (split_mode == 1) //Block part of a SubBlock
             {
-                // boundary conditions for sub block edge
-                if (xblock == m_cparams.XNumBlocks() - blocks_per_sb_row)
-                {
-                    wgt_idx = wgt_idx+1;
-                }
                 wt = &m_full_sub_block_weights[wgt_idx];
                 wt_ref1 = &m_sub_block_weights[0][wgt_idx];
                 wt_ref2 = &m_sub_block_weights[1][wgt_idx];
@@ -517,7 +536,7 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
               int start_y = std::max(pic_data_out.FirstY() , pos.y) ;
                int end_y = std::min (pic_data_out.FirstY() + pos.y + m_bparams.Ybsep() , y_end_data); 
                
-               if ((pos.y +  m_bparams.Yblen()) >= (m_cparams.YNumBlocks()*m_bparams.Ybsep()))
+               if (yblock == y_num_blocks - 1)
                {
                     end_y = pic_data_out.LengthY();
                     if (end_y > y_end_data)
@@ -550,8 +569,7 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
           {
               int start_y = std::max(pic_data_out.FirstY() , pos.y) ;
               int end_y = std::min (pic_data_out.FirstY() + pos.y + m_bparams.Ybsep() , pic_data_out.FirstY() + pic_data_out.LengthY()); 
-              //if (pos.y +  m_bparams.Yblen() >= pic_data_out.LengthY())
-              if (yblock == (m_cparams.YNumBlocks() - 1))
+              if (yblock == (y_num_blocks - 1))
               {
                    end_y += (m_bparams.Yblen()-m_bparams.Ybsep());
                    if (end_y > m_cparams.OrigYl()>>yscale_shift)
