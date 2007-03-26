@@ -124,6 +124,7 @@ int QuantChooser::GetBestQuant( Subband& node )
         }// j
         SelectBestQuant();
 
+
         // Step 2. Do 1/2-bit accuracy next
         m_bottom_idx = std::max( m_min_idx - 2 , 0 );
         m_top_idx = std::min( m_min_idx + 2 , num_quants-1 );
@@ -158,6 +159,17 @@ int QuantChooser::GetBestQuant( Subband& node )
         }// j
         SelectBestQuant();
 
+        // Don't allow a DC band to be skipped
+        if (node.Xp()==0 && node.Yp()==0)
+        {  
+            // have at least 2 bits of accuracy for the largest element
+            //m_min_idx = std::max( 0 , std::min(m_min_idx, num_quants-8) );
+            // Actually, for the moment, just vaguely remove the offset
+            // introduced by the DWT and don't quantize the DC at all.
+            // TODO: fix this.
+            //m_min_idx = (m_pic_data.LengthX()/node.Xl());
+            m_min_idx = 0;
+        }
 
         for (int j=0 ; j<block_list.LengthY() ; ++j )
         {
@@ -228,6 +240,18 @@ int QuantChooser::GetBestQuant( Subband& node )
                                  * block_list[j][i].Yl() );
                 bit_sum += block_bit_cost;
 
+               // Don't allow a DC band to be skipped
+               if (node.Xp()==0 && node.Yp()==0)
+               {  
+                   // have at least 2 bits of accuracy for the largest element
+                   //m_min_idx = std::max( 0 , std::min(m_min_idx, num_quants-8) );
+                   // Actually, for the moment, just vaguely remove the offset
+                   // introduced by the DWT and don't quantize the DC at all.
+                   // TODO: fix this.
+                   // m_min_idx = (m_pic_data.LengthX()/node.Xl());
+                   m_min_idx = 0;
+               }  
+
                 block_list[j][i].SetQIndex( m_min_idx );
 
                 if ( block_bit_cost < 1.0 )
@@ -250,9 +274,6 @@ void QuantChooser::IntegralErrorCalc( const CodeBlock& code_block ,
                                       const int yratio )
 {
 
-    const int xoffset( xratio>>1 );
-    const int yoffset( yratio>>1 );
-
     ValueType val, quant_val , abs_val;
 
     CalcValueType error;
@@ -267,9 +288,9 @@ void QuantChooser::IntegralErrorCalc( const CodeBlock& code_block ,
     }
 
     // Work out the error totals and counts for each quantiser
-    for ( int j=code_block.Ystart()+yoffset; j<code_block.Yend() ; j+=yratio )
+    for ( int j=code_block.Ystart(); j<code_block.Yend() ; j+=yratio )
     {
-        for ( int i=code_block.Xstart()+xoffset; i<code_block.Xend() ; i+=xratio )
+        for ( int i=code_block.Xstart(); i<code_block.Xend() ; i+=xratio )
         {
             val = m_pic_data[j][i];
             abs_val = quant_val = abs(val);
@@ -311,9 +332,6 @@ void QuantChooser::IntegralErrorCalc( const CodeBlock& code_block ,
 void QuantChooser::NonIntegralErrorCalc( const CodeBlock& code_block , const int block_idx , const int xratio , const int yratio )
 {
 
-    const int xoffset( xratio>>1 );
-    const int yoffset( yratio>>1 );
-
     ValueType val, abs_val;
 
     CalcValueType quant_val;
@@ -329,9 +347,9 @@ void QuantChooser::NonIntegralErrorCalc( const CodeBlock& code_block , const int
     }
 
     // Work out the error totals and counts for each quantiser
-    for ( int j=code_block.Ystart()+yoffset; j<code_block.Yend() ; j+=yratio )
+    for ( int j=code_block.Ystart(); j<code_block.Yend() ; j+=yratio )
     {
-        for ( int i=code_block.Xstart()+xoffset; i<code_block.Xend() ; i+=xratio )
+        for ( int i=code_block.Xstart(); i<code_block.Xend() ; i+=xratio )
         {
 
             val = m_pic_data[j][i];
