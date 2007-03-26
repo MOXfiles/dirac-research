@@ -310,20 +310,14 @@ private:
     
    	//Rate Control parameters
 	// Total Number of bits for a GOP
-	int gop_bits;
+	int m_gop_bits;
 
 	// Total Number GOPs in the input sequence
-	int gop_count;
+	int m_gop_count;
 
 	// To count the number of frame for calculating the GOP bit rate
-	int frame_count;
-	
-	// I frame counter
-	int Iframe_count;
+	int m_frame_count;
 
-	// Size of I frame for temporary storage 
-	int Iframe_size;
-	//End of Rate Control
 };
 
 /*
@@ -422,10 +416,9 @@ DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx,
     m_dec_bufsize(0),
     m_return_decoded_frames(enc_ctx->decode_flag > 0),
     m_return_instr_data(enc_ctx->instr_flag > 0),
-   	gop_bits(0), 
-	gop_count(0),
-	frame_count(0),
-	Iframe_count(0)
+   	m_gop_bits(0), 
+	m_gop_count(0),
+	m_frame_count(0)
 {
     // Setup sequence parameters
     SetSequenceParams (enc_ctx);
@@ -660,48 +653,33 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
 	int num_L1 = encoder->enc_ctx.enc_params.num_L1;
 	int L1_sep = encoder->enc_ctx.enc_params.L1_sep;
 	int GOP_Length = (num_L1+1)*L1_sep;
-	if (num_L1 == 0) GOP_Length = 10;
+	int offset;
+	if (num_L1 == 0)
+    { 
+        GOP_Length = 10;
+        offset = 0;
+    }
+    else
+        offset = std::max(L1_sep-1,0);
 
-	gop_bits += encoder->enc_fstats.frame_bits;
-	frame_count++;
-
-	if (encoder->enc_fparams.ftype == INTRA_FRAME)
-	{
-		Iframe_count++;
-
-		if (Iframe_count == 2 && num_L1 != 0) 
-		{
-			Iframe_size = encoder->enc_fstats.frame_bits;
-			gop_bits -= Iframe_size;
-			frame_count--;
-		}
-	}
+	m_gop_bits += encoder->enc_fstats.frame_bits;
+	m_frame_count++;
 	
-	if (frame_count == GOP_Length)
+	if (m_frame_count == GOP_Length-offset)
 	{
 		int denominator = encoder->enc_ctx.src_params.frame_rate.denominator;
 		int numerator = encoder->enc_ctx.src_params.frame_rate.numerator;
-		int frame_rate =  int( (double)numerator/(double)denominator );
+		double frame_rate =  (double)numerator/(double)denominator;
 
-		float gop_duration = (float)frame_count/frame_rate; 
-		float bit_rate = gop_bits/gop_duration;
-		gop_count++;
+		double gop_duration = double(m_frame_count)/frame_rate; 
+		double bit_rate = double(m_gop_bits)/gop_duration;
 
-		std::cout <<std::endl<<"Bit Rate for GOP number "<<gop_count<<" is ";
-        std::cout<<(float)bit_rate/1000.0<<" kbps"<<std::endl;
+		std::cout<<std::endl<<std::endl<<"Bit Rate for GOP number ";
+        std::cout<<m_gop_count<<" is "<<bit_rate/1000.0<<" kbps"<<std::endl;
 
-		if (num_L1 != 0)
-		{
-			Iframe_count = 1;
-			gop_bits = Iframe_size;
-			frame_count = 1;
-		}
-		else
-		{
-			Iframe_count = 0;
-			gop_bits = 0;
-			frame_count = 0;
-		}
+		m_gop_count++;
+        m_gop_bits = 0;
+        m_frame_count = -offset;
 	}	
 	//End of Rate Control
     
