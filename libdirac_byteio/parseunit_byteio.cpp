@@ -47,8 +47,8 @@ using namespace std;
 const string PU_PREFIX = "BBCD";
 
 // Parse-unit byte sizes
-const int PU_NEXT_PARSE_OFFSET_SIZE = 3;
-const int PU_PREVIOUS_PARSE_OFFSET_SIZE = 3;
+const int PU_NEXT_PARSE_OFFSET_SIZE = 4;
+const int PU_PREVIOUS_PARSE_OFFSET_SIZE = 4;
 const int PU_PREFIX_SIZE = 4;
 const int PU_PARSE_CODE_SIZE = 1;
 const int PU_PARSEUNIT_SIZE = PU_NEXT_PARSE_OFFSET_SIZE + PU_PREVIOUS_PARSE_OFFSET_SIZE+
