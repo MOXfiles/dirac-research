@@ -288,10 +288,6 @@ Frame& SequenceCompressor::CompressNextFrame()
 													m_current_display_fnum, 
                                                     m_current_accessunit_fnum);
 
-				m_ratecontrol->CalcNextQualFactor(fparams, p_frame_byteio->GetSize()*8);
-
-                //Set the lambda values for encoding the remaining two L2 frames			
-				m_encparams.SetQf(m_ratecontrol->QualFactor());
 			
 			}
 			else
@@ -300,9 +296,11 @@ Frame& SequenceCompressor::CompressNextFrame()
                                                     *m_origbuffer,          
 													m_current_display_fnum, 
                                                     m_current_accessunit_fnum);
-
-				m_ratecontrol->CalcNextQualFactor(fparams, p_frame_byteio->GetSize()*8);
 			}
+
+            // Update the quality factor
+            m_ratecontrol->CalcNextQualFactor(fparams, p_frame_byteio->GetSize()*8);
+
 		}
 		//End of Rate Control
         

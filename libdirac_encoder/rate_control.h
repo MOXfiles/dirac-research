@@ -95,23 +95,12 @@ namespace dirac
 		//! Default constructor   
         RateController(int trate, SourceParams& srcp, EncoderParams& encp);
 
-		//! Allocate the bits to each type of frame in a GOP    
-        void Allocate(const FrameParams& fparams, int num_bits);
 
 		//! Calculate the Quality factor of the next frame to encode
 		void CalcNextQualFactor(const FrameParams& fparams, int num_bits);
 
 		//! Calculate the Quality factor of the next I frame to encode
 		void CalcNextIntraQualFactor();
-
-		//! Calculate the total number of bits in a GOP
-		void CalcTotalBits();
-
-		//! Set the value of Current IQF
-		void SetIntraQualFactor(double value){m_I_qf = value;}
-
-		//! Reset the number of I, L1 and L2 frames
-		void ResetNumFrame();
 
 		//! Return I frame qf
 		double IntraQualFactor() {return m_I_qf;}
@@ -121,6 +110,34 @@ namespace dirac
 
 		
 	private:
+        
+        double TargetSubgroupRate();
+
+        double ProjectedSubgroupRate();
+        
+		//! Allocate the bits to each type of frame in a GOP    
+        void Allocate();
+
+		//! Calculate the total number of bits in a GOP
+		void CalcTotalBits(const SourceParams& sourceparams);
+
+		//! Set the value of Current IQF
+		void SetIntraQualFactor(double value){m_I_qf = value;}
+
+		//! Set the number of I, L1 and L2 frames in the GOP
+		void SetFrameDistribution();
+
+        //! Review the quality factor to make sure it's being set sensibly
+        float ReviewQualityFactor( const float qfac, const int num_bits );
+        
+        //! Clip the quality factor to something sensible
+        float ClipQualityFactor( const float qfac );
+        
+        //! Update the internal decoder buffer model
+        void UpdateBuffer( const int num_bits );
+
+        
+    private:
 
 		//! Current Quality Factor
 		double m_qf; 
@@ -129,13 +146,10 @@ namespace dirac
 		double m_I_qf; 
 
 		//! Target bit rate in kbps
-		int m_target_rate;
+		const int m_target_rate;
 
 		//! Number of bits for I frame
 		int m_Iframe_bits;
-
-		//! Number of Encoded bits for I frame
-		int m_enc_Iframe_bits;
 
 		//! Number of bits for L1 frame
 		int m_L1frame_bits;
@@ -154,23 +168,21 @@ namespace dirac
 
 		//! Total Number of bits in a GOP
 		int m_total_GOP_bits;
+		
+		//! Mean number of bits in a picture
+		int m_picture_bits;
+		
+		//! Size of the decoded bit buffer
+		const int m_buffer_size;
+
+		//! Number of bits in the buffer
+		int m_buffer_bits;
 
 		//! The Number of bits currently left for allocating the remaining frames in a GOP
 		int m_current_GOP_bits;
 
-		//! Total Number of bits for a sub_GOP, e.g. IPBB or PBB
-		//! Corresponds to actual encoded bits
-		int m_enc_num_bits;
-
-		//! Total Number of bits for a sub_GOP, e.g. IPBB or PBB
-		//! Corresponds to allocated bits based upon target bit rate
-		int m_t_num_bits;
-
 		//! The duration of a GOP 
 		double m_GOP_duration;
-
-		//! A reference to the source parameters
-        SourceParams& m_srcparams;
 
 		//! A reference to the encoder parameters
         EncoderParams& m_encparams;
@@ -178,17 +190,15 @@ namespace dirac
 		//! A class to hold the frame complexity object
         FrameComplexity m_frame_complexity;
 
-		//! frame counter
+		//! A frame counter, giving the position within a subgroup
 		int m_fcount;
 
-		//! Temp. Complexity of I frame
-		int m_TXI; 
-
-		//! Temp. Complexity of L1 frame
-		int m_TXL1; 
-
-		//! Temp. Complexity of L2 frame
-		int m_TXL2; 
+		
+		// Indicated whether a sequence is being coded intra only or not
+		bool m_intra_only;
+		
+		// Sum of complexity of L2 frames
+		int m_L2_complexity_sum;
 
     };
 
