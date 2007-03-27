@@ -981,8 +981,10 @@ void FrameParams::SetReferenceType(const ReferenceType rtype)
 
 QuantiserLists::QuantiserLists()
 :
-    // FIXME: hardcode m_max_qindex to 96. In future this will depend on level
-    m_max_qindex( 96 ),  
+    // FIXME: hardcode m_max_qindex to 119. In future this will depend on level
+	// As per spec max qf_idx is 127. But for values of qf_idx > 120 we
+	// will need more than 32 bits. Hence qf_idx is limited to 119.
+    m_max_qindex( 119 ),  
     m_qflist4( m_max_qindex+1 ),
     m_intra_offset4( m_max_qindex+1 ),
     m_inter_offset4( m_max_qindex+1 )
@@ -993,8 +995,12 @@ QuantiserLists::QuantiserLists()
     m_inter_offset4[0] = 1;
     m_intra_offset4[1] = 2;
     m_inter_offset4[1] = 2;
-    
+   
+#ifdef _MSC_VER
+    unsigned __int64 base, qfactor;
+#else
     uint64_t base, qfactor;
+#endif //_MSC_VER
 
     for (unsigned int q=2; q<=m_max_qindex; ++q)
     {
@@ -1006,16 +1012,16 @@ QuantiserLists::QuantiserLists()
                  qfactor = 4*base;
                  break;
             case 1: 
-                 qfactor = (78892*base+8292)/16585;
+                 qfactor = (503829*base+52958)/105917;
                  break;
             case 2: 
-                 qfactor = (228486*base+20195)/40391;
+                 qfactor = (665857*base+58854)/117708;
                  break;
             case 3: 
                  qfactor = (440253*base+32722)/65444;
                  break;
             default: //Default case never used
-                 qfactor = 4; 
+                 qfactor = 0; 
         }
         
         m_qflist4[q] = int( qfactor );

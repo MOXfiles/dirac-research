@@ -40,6 +40,10 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
+// System includes
+#include <sstream>
+
+// Dirac includes
 #include <libdirac_common/band_codec.h>
 #include <libdirac_byteio/subband_byteio.h>
 #include <libdirac_common/dirac_exception.h>
@@ -288,9 +292,12 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_da
 
 	if (qf_idx > (int)dirac_quantiser_lists.MaxQIndex())
     {
+		std::ostringstream errstr;
+		errstr << "Quantiser index out of range [0.."  
+		       << (int)dirac_quantiser_lists.MaxQIndex() << "]";
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
-            "Quantiser index out of range [0..96]",
+            errstr.str(),
             SEVERITY_FRAME_ERROR);
     }
 
@@ -625,9 +632,12 @@ void LFBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , PicArray& out_
 
 	if (qf_idx > (int)dirac_quantiser_lists.MaxQIndex())
     {
+		std::ostringstream errstr;
+		errstr << "Quantiser index out of range [0.."  
+		       << (int)dirac_quantiser_lists.MaxQIndex() << "]";
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
-            "Quantiser index out of range [0..96]",
+            errstr.str(),
             SEVERITY_FRAME_ERROR);
     }
 

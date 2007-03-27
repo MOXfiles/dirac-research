@@ -43,6 +43,10 @@
 #ifndef _COMMON_H_
 #define _COMMON_H_
 
+#ifdef  _MSC_VER
+#define  _CRT_SECURE_NO_DEPRECATE
+#endif // _MSC_VER
+
 #include <libdirac_common/arrays.h>
 #include <libdirac_common/common_types.h>
 #include <libdirac_common/dirac_assertions.h>
