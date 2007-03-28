@@ -266,7 +266,7 @@ void RateController::UpdateBuffer( const int num_bits )
 {
     m_buffer_bits -= num_bits;
     m_buffer_bits += m_picture_bits;
-        
+/*        
     if (m_encparams.Verbose())
     {
         std::cout<<std::endl<<"Buffer occupancy = "<<((double)m_buffer_bits*100.0)
@@ -290,7 +290,7 @@ void RateController::UpdateBuffer( const int num_bits )
         }
         m_buffer_bits = m_buffer_size;
     }
-    
+*/    
        
 }
 
@@ -302,10 +302,11 @@ void RateController::Allocate ()
 	
     int GOP_target;
     
-    int buffer_target = (3*m_buffer_size)/4;
-    int adjustment = (m_buffer_bits-buffer_target)/4;
-    adjustment = std::min( adjustment, m_total_GOP_bits/3);
-        adjustment = std::max( adjustment, -(m_total_GOP_bits/3));
+//    int buffer_target = (3*m_buffer_size)/4;
+//    int adjustment = (m_buffer_bits-buffer_target)/4;
+//    adjustment = std::min( adjustment, m_total_GOP_bits/3);
+//        adjustment = std::max( adjustment, -(m_total_GOP_bits/3));
+    int adjustment=0;
     
     GOP_target = m_total_GOP_bits + adjustment;
 	
