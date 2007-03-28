@@ -1,4 +1,4 @@
 # $Id$
 #
 
-SUBDIRS = VS2003
+SUBDIRS = VS2003 VisualStudio
