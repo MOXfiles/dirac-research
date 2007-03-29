@@ -75,6 +75,11 @@ namespace dirac
         */
         ParseUnitType GetType() const { return PU_END_OF_SEQUENCE;}
 
+        /**
+        * Gathers byte stats on the end of sequence data
+        *@param dirac_byte_stats Stat container
+        */
+        void CollateByteStats(DiracByteStats& dirac_byte_stats);
   protected:
         
         /**

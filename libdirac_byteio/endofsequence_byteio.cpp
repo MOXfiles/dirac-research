@@ -57,6 +57,11 @@ EndOfSequenceByteIO::~EndOfSequenceByteIO()
 
 }
 
+void EndOfSequenceByteIO::CollateByteStats(DiracByteStats& dirac_byte_stats)
+{
+    dirac_byte_stats.SetByteCount(STAT_TOTAL_BYTE_COUNT, GetSize());
+}
+
 
 
 //-------------private-------------------------------------------------------

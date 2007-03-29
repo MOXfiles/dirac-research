@@ -239,6 +239,8 @@ DiracByteStats DiracByteStream::EndSequence()
 
      // push onto to pending list
     m_parse_unit_list.push(std::make_pair(PU_END_OF_SEQUENCE, p_endofsequence_byteio) );
+    
+    p_endofsequence_byteio->CollateByteStats(m_sequence_stats);
 
     // clear stats
     DiracByteStats seq_stats(m_sequence_stats);
