@@ -61,28 +61,8 @@
 
 namespace dirac
 {
-    //! Lookup Table Class (for Arithmetic Coding Contexts)
-    /*!
-        This is a class that implements a lookup table for use by the context
-        class used for arithmetic coding.
-    */
-    class ContextLookupTable {
-        public:
 
-            //! Constructor for Arithmetic Coding context lookup table
-            /*!
-                Initialises the lookup table if not already done,
-                else does nothing.
-            */
-            ContextLookupTable();
-
-            //! Returns value of the lookup table
-            inline static unsigned int lookup(int weight);
-        private:
-            static unsigned int table[256];
-    };
-
-    class Context: private ContextLookupTable {
+    class Context {
     public:
 
         //! Default Constructor.
@@ -95,61 +75,48 @@ namespace dirac
         //Use built in copy constructor, assignment and destructor.
 
         //! Returns estimate of probability of 0 (false) scaled to 2**16
-        //  The probability of a binary input/output symbol is estimated
-        //  from past counts of 0 and 1 for symbols in the same context.
-        //  Probability is estimated as:
-        //      probability of 0 = count0/(count0+count1)
-        //  Probability is re-calculated for every symbol.
-        //  To avoid the division a lookup table is used.
-        //  This is a fixed point implementation so probability is scaled to
-        //  a range of 0 to 2**16.
-        //  The value of (count0+count1) is known as "weight".
-        //  The lookup table precalculates the values of:
-        //      lookup(weight) = ((1<<16)+weight/2)/weight
-        //  The probability calculation becomes:
-        //      probability of = count0 * lookup(weight)
+
         inline unsigned int GetScaledProb0( ) const{ return m_prob0;}
 
         //! Updates context counts
-        inline void Update( bool symbol );
+        inline void Update( bool symbol ) {
+          if (symbol) m_prob0 -= lut[m_prob0>>8];
+          else m_prob0 += lut[255-(m_prob0>>8)];
+        }
 
     private:
 
-        int m_count0;
-        int m_count1;
         int m_prob0;
+        static const unsigned int lut[256]; //Probability update table
     };
     
-        Context::Context():
-        m_count0(1), m_count1(1), m_prob0( 0x8000 ) {}
+    Context::Context(): m_prob0( 0x8000 ) {}
 
-
+/*
     void Context::Update( bool symbol )
     {
-        if ( !symbol )
-            ++m_count0;
-        else
-            ++m_count1;
+//        if ( !symbol )
+//            ++m_count0;
+//        else
+//            ++m_count1;
+//
+//        if ( (m_count0+m_count1)%8==0)
+//        {
+//            if ( (m_count0+m_count1) == 256 )
+//            {
+//                m_count0++;
+//                m_count0 >>= 1;
+//                m_count1++;
+//                m_count1 >>= 1;
+//            }
+//            m_prob0 = m_count0*lookup( m_count0+m_count1 );
+//        }
 
-        if ( (m_count0+m_count1)%8==0)
-        {
-            if ( (m_count0+m_count1) == 256 )
-            {
-                m_count0++;
-                m_count0 >>= 1;
-                m_count1++;
-                m_count1 >>= 1;
-            }
-            m_prob0 = m_count0*lookup( m_count0+m_count1 );
-        }
-            
+        if (symbol) m_prob0 -= lut[m_prob0>>8];
+        else m_prob0 += lut[255-(m_prob0>>8)];
 
     }
-
-    unsigned int ContextLookupTable::lookup(int weight) {
-        return table[weight];
-    }
-    
+*/
 
     class ArithCodecBase {
 
