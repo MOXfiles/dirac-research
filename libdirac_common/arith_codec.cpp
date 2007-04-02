@@ -77,9 +77,9 @@ namespace dirac{
           
     ArithCodecBase::ArithCodecBase(ByteIO* p_byteio, size_t number_of_contexts):
         m_context_list( number_of_contexts ),
+        m_scount( 0 ),
         m_byteio(p_byteio ),
-        m_decode_data_ptr( 0 ),
-        m_scount( 0 )
+        m_decode_data_ptr( 0 )
     {
         // nothing needed here
     }
