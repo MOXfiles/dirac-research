@@ -1158,6 +1158,13 @@ namespace dirac
             m_mv_precision = p;
         }
 
+        void SetMVPrecision(const MVPrecisionType p) const
+        {
+            // Assert in debug mode. Maybe we should throw an exception???
+            TESTM((p >=0 && p <=3), "Motion precision value in range 0..3");
+            m_mv_precision = p;
+        }
+
         //! Set the zero transform flag being used for frame (de)coding
         void SetZeroTransform(bool zero_transform)  { m_zero_transform = zero_transform; } 
 
@@ -1236,7 +1243,7 @@ namespace dirac
         int m_orig_yl;
 
         //! The precision of motion vectors (number of accuracy bits eg 1=half-pel accuracy) 
-        MVPrecisionType m_mv_precision;
+        mutable MVPrecisionType m_mv_precision;
 
         //! The video format being used
         VideoFormat m_video_format;

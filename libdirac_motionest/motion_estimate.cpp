@@ -74,11 +74,38 @@ void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
     // Set up the lambda to be used
     me_data.SetLambdaMap( num_refs , lambda );
 
+    MVPrecisionType orig_prec = m_encparams.MVPrecision();
+
     // Step 2. 
     // Pixel accurate vectors are then refined to sub-pixel accuracy
 
-    SubpelRefine pelrefine( m_encparams );
-    pelrefine.DoSubpel( my_buffer , frame_num , me_data );
+    if (orig_prec != MV_PRECISION_PIXEL)
+    {
+        SubpelRefine pelrefine( m_encparams );
+        pelrefine.DoSubpel( my_buffer , frame_num , me_data );
+    }
+    else
+    {
+        // FIXME: HACK HACK
+        // Mutiplying the motion vectors by 2 and setting MV precision to
+        // HALF_PIXEL to implement pixel accurate motion estimate
+        MvArray &mv_arr1 = me_data.Vectors(1);
+        for (int j = 0; j < mv_arr1.LengthY(); ++j)
+        {
+            for (int i = 0; i < mv_arr1.LengthX(); ++i)
+                mv_arr1[j][i] = mv_arr1[j][i] << 1;
+        }
+        if (num_refs > 1)
+        {
+            MvArray &mv_arr2 = me_data.Vectors(2);
+            for (int j = 0; j < mv_arr2.LengthY(); ++j)
+            {
+                for (int i = 0; i < mv_arr2.LengthX(); ++i)
+                    mv_arr2[j][i] = mv_arr2[j][i] << 1;
+            }
+        }
+        m_encparams.SetMVPrecision(MV_PRECISION_HALF_PIXEL);
+    }
 
     // Step3.
     // We now have to decide how each macroblock should be split 
@@ -86,6 +113,30 @@ void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 
     ModeDecider my_mode_dec( m_encparams );
     my_mode_dec.DoModeDecn( my_buffer , frame_num , me_data );
+    
+    if (orig_prec ==  MV_PRECISION_PIXEL)
+    {
+        // FIXME: HACK HACK
+        // Divide the motion vectors by 2 to convert back to pixel
+        // accurate motion vectors and reset MV precision to
+        // PIXEL accuracy 
+        MvArray &mv_arr1 = me_data.Vectors(1);
+        for (int j = 0; j < mv_arr1.LengthY(); ++j)
+        {
+            for (int i = 0; i < mv_arr1.LengthX(); ++i)
+                mv_arr1[j][i] = mv_arr1[j][i] >> 1;
+        }
+        if (num_refs > 1)
+        {
+            MvArray &mv_arr2 = me_data.Vectors(2);
+            for (int j = 0; j < mv_arr2.LengthY(); ++j)
+            {
+                for (int i = 0; i < mv_arr2.LengthX(); ++i)
+                    mv_arr2[j][i] = mv_arr2[j][i]>>1;
+            }
+        }
+        m_encparams.SetMVPrecision(MV_PRECISION_PIXEL);
+    }
 
     // Finally, although not strictly part of motion estimation,
     // we have to assign DC values for chroma components for
