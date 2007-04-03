@@ -113,14 +113,17 @@ else
 	preset="-CIF";
 fi
 
-echo "$samp $preset $chroma $width $height"
+#set Motion vector precision here. Possible values are 1, 1/2, 1/4 and 
+# 1/8. Default value is 1/4
+mv_prec=1/4
+echo "$samp $preset $chroma $width $height $mv_prec"
 
 #iframe tests
 AT_CHECK([at_wrap dirac_encoder -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep $samp ../../$iframe_encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$iframe_encout ../../$iframe_decout], 0, [ignore])
 AT_CHECK([cmp ../../$iframe_encout.localdec.yuv ../../$iframe_decout])
 
-AT_CHECK([at_wrap dirac_encoder -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep $samp ../../$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $samp ../../$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$encout ../../$decout], 0, [ignore])
 AT_CHECK([cmp ../../$encout.localdec.yuv ../../$decout])
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mc_instr.yuv -motion_colour -clip 50], 0)
