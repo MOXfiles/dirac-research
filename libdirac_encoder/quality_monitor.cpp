@@ -145,9 +145,12 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
     m_frame_total[idx]++;
     m_allframe_total++;
     
-    std::cout<<std::endl<<"Frame PSNR: Y="<<fqualityY;
-    std::cout<<", U="<<fqualityU;
-    std::cout<<", V="<<fqualityV;
+    if (m_encparams.Verbose() )
+    {
+        std::cout<<std::endl<<"Frame PSNR: Y="<<fqualityY;
+        std::cout<<", U="<<fqualityU;
+        std::cout<<", V="<<fqualityV;
+    }
 
 }
 

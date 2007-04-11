@@ -46,25 +46,46 @@ using namespace dirac;
 //public functions//
 ////////////////////
 // Constructor 
-MvDataCodec::MvDataCodec(ByteIO* p_byteio,
-                         size_t number_of_contexts,
-                         const ChromaFormat& cf)
-  : ArithCodec <MvData> (p_byteio,number_of_contexts),
-    m_cformat(cf)
+SplitModeCodec::SplitModeCodec(ByteIO* p_byteio,
+                         size_t number_of_contexts)
+  : ArithCodec <MvData> (p_byteio,number_of_contexts)
 {}        
 
 
 
-void MvDataCodec::InitContexts() 
+void SplitModeCodec::InitContexts() 
 {    
 }
 
-    
+// Main code function
+void SplitModeCodec::DoWorkCode( MvData& in_data )
+{
+    for (m_mb_yp = 0;  m_mb_yp < in_data.MBSplit().LengthY();  ++m_mb_yp)
+    {
+        for (m_mb_xp = 0; m_mb_xp < in_data.MBSplit().LengthX(); ++m_mb_xp)
+        {
+            CodeVal(in_data);
+        }//m_mb_xp
+    }//m_mb_yp
+} 
+
+// Main decode function
+void SplitModeCodec::DoWorkDecode( MvData& out_data)
+{
+
+    for (m_mb_yp = 0; m_mb_yp < out_data.MBSplit().LengthY(); ++m_mb_yp)
+    {
+        for (m_mb_xp = 0; m_mb_xp < out_data.MBSplit().LengthX(); ++m_mb_xp)
+        {
+            DecodeVal( out_data );
+        }//m_mb_xp
+    }//m_mb_yp
+}  
 
 //protected functions//
 ///////////////////////
 
-inline void MvDataCodec::ResetAll()
+void SplitModeCodec::ResetAll()
 {
 }
 
@@ -73,7 +94,7 @@ inline void MvDataCodec::ResetAll()
 
 //prediction functions
 
-inline unsigned int MvDataCodec::MBSplitPrediction(const TwoDArray<int> & split_data ) const
+unsigned int SplitModeCodec::Prediction(const TwoDArray<int> & split_data ) const
 {    
     int result = 0;
     
@@ -95,7 +116,148 @@ inline unsigned int MvDataCodec::MBSplitPrediction(const TwoDArray<int> & split_
     return result; 
 }
 
-inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode > & preddata,
+
+void SplitModeCodec::CodeVal(const MvData& in_data)
+{
+    int val = in_data.MBSplit()[m_mb_yp][m_mb_xp] - Prediction( in_data.MBSplit() ); 
+    
+    if (val < 0) val+=3; //produce prediction mod 3
+
+    EncodeUInt(val, MB_SPLIT_BIN1_CTX, MB_SPLIT_BIN2_CTX);
+}
+
+//decoding functions//
+//////////////////////
+
+
+
+void SplitModeCodec::DecodeVal(MvData& out_data)
+{
+    out_data.MBSplit()[m_mb_yp][m_mb_xp] =
+                             (DecodeUInt(MB_SPLIT_BIN1_CTX, MB_SPLIT_BIN2_CTX) +
+                             Prediction(out_data.MBSplit())) % 3;
+}
+
+/******************************************************************************/
+
+//public functions//
+////////////////////
+// Constructor 
+PredModeCodec::PredModeCodec(ByteIO* p_byteio,
+                         size_t number_of_contexts)
+  : ArithCodec <MvData> (p_byteio,number_of_contexts)
+{}        
+
+
+
+void PredModeCodec::InitContexts() 
+{    
+}
+
+// Main code function
+void PredModeCodec::DoWorkCode( MvData& in_data )
+{
+///*
+    int step,max; 
+    int split_depth;
+    int ystart, xstart;  
+
+    for (m_mb_yp = 0, m_mb_tlb_y = 0;  m_mb_yp < in_data.MBSplit().LengthY();  ++m_mb_yp, m_mb_tlb_y += 4)
+    {
+        for (m_mb_xp = 0,m_mb_tlb_x = 0; m_mb_xp < in_data.MBSplit().LengthX(); ++m_mb_xp,m_mb_tlb_x += 4)
+        {
+            split_depth = in_data.MBSplit()[m_mb_yp][m_mb_xp]; 
+
+            step = 4  >>  (split_depth); 
+            max = (1 << split_depth); 
+                        
+
+            for (int j = 0; j < max; ++j)
+            {                
+                for (int i = 0; i < max; ++i)
+                {
+                    xstart = m_b_xp = m_mb_tlb_x + i * step; 
+                    ystart = m_b_yp = m_mb_tlb_y + j * step;                                             
+                    
+                    // propagate throughout MB    
+                    for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
+                    {
+                        for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
+                        {                    
+                            in_data.Mode()[m_b_yp][m_b_xp] = in_data.Mode()[ystart][xstart]; 
+                        }//m_b_xp
+                    }//m_b_yp
+                }//i                    
+            }//j
+
+            //now do all the block modes
+            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; ++m_b_yp)
+            {
+                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; ++m_b_xp)
+                {
+                    CodeVal(in_data);
+                }//m_b_xp
+            }//m_b_yp    
+            
+        }//m_mb_xp
+    }//m_mb_yp
+//*/
+} 
+
+// Main decode function
+void PredModeCodec::DoWorkDecode( MvData& out_data)
+{
+    int step,max; 
+    int split_depth; 
+    int xstart,ystart;     
+
+    // Then the prediction mode
+    for (m_mb_yp = 0,m_mb_tlb_y = 0; m_mb_yp < out_data.MBSplit().LengthY(); ++m_mb_yp,m_mb_tlb_y += 4)
+    {
+        for (m_mb_xp = 0,m_mb_tlb_x = 0; m_mb_xp < out_data.MBSplit().LengthX(); ++m_mb_xp,m_mb_tlb_x += 4)
+        {
+            split_depth = out_data.MBSplit()[m_mb_yp][m_mb_xp]; 
+            step =  4  >>  (split_depth); 
+            max  = (1 << split_depth); 
+
+            //now do all the block mvs in the mb
+            for (int j = 0; j < max; ++j)
+            {                
+                for (int i = 0; i < max; ++i)
+                {
+                    xstart = m_b_xp = m_mb_tlb_x + i * step; 
+                    ystart = m_b_yp = m_mb_tlb_y + j * step;                                             
+                    
+                    DecodeVal(out_data); 
+
+                    // propagate throughout MB    
+                    for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
+                    {
+                        for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
+                        {                    
+                            out_data.Mode()[m_b_yp][m_b_xp] = out_data.Mode()[ystart][xstart]; 
+                        }//m_b_xp
+                    }//m_b_yp
+                }//i                    
+            }//j
+
+        }//m_mb_xp
+    }//m_mb_yp
+}  
+
+//protected functions//
+///////////////////////
+
+void PredModeCodec::ResetAll()
+{
+}
+
+//coding functions//
+////////////////////
+
+//prediction functions
+
+unsigned int PredModeCodec::Prediction(const TwoDArray < PredMode > & preddata,
                                                      const unsigned int num_refs) const
 {
     unsigned int result = (unsigned int)(INTRA);
@@ -127,88 +289,371 @@ inline unsigned int MvDataCodec::BlockModePrediction(const TwoDArray < PredMode 
     return result;
 }
 
-inline MVector MvDataCodec::Mv1Prediction(const MvArray& mvarray,
-                                          const TwoDArray < PredMode > & preddata) const
+void PredModeCodec::CodeVal(const MvData& in_data)
 {
-    std::vector <MVector>  nbrs; 
+    // Xor with the prediction so we predict whether REF1 is used or REF2 is
+    // used, separately
+    unsigned int residue = in_data.Mode()[m_b_yp][m_b_xp] ^ 
+                                Prediction( in_data.Mode(), in_data.NumRefs() ); 
+
+    // Code REF1 part of the prediction residue (ie the first bit)
+    EncodeSymbol( residue & 1 , PMODE_BIT0_CTX );
+
+    // Code REF2 part of the prediction residue (ie the second bit)
+    if (in_data.NumRefs()==2)
+    {
+        EncodeSymbol( residue & 2 , PMODE_BIT1_CTX );
+    }
+
+}
+
+//decoding functions//
+//////////////////////
+
+void PredModeCodec::DecodeVal( MvData& out_data )
+{
+    // Xor with the prediction so we predict whether REF1 is used or REF2 is
+    // used, separately
+    unsigned int residue;
+    
+    // Decode REF1 part of the prediction residue (ie the first bit)
+    bool bit;
+    bit = DecodeSymbol( PMODE_BIT0_CTX );
+    residue = (unsigned int) bit;
+
+    // Decode REF2 part of the prediction residue (ie the second bit)
+    if (out_data.NumRefs()==2)
+    {
+        bit = DecodeSymbol( PMODE_BIT1_CTX );
+        residue |= ( (unsigned int) bit ) << 1;
+    }
+
+    out_data.Mode()[m_b_yp][m_b_xp] = 
+        PredMode( Prediction (out_data.Mode() , out_data.NumRefs()) ^ residue ); 
+}
+
+/******************************************************************************/
+
+
+//public functions//
+////////////////////
+// Constructor 
+VectorElementCodec::VectorElementCodec(ByteIO* p_byteio, 
+                                       int ref_id,
+                                       MvElement horvert, 
+                                       size_t number_of_contexts)
+  : ArithCodec <MvData> (p_byteio,number_of_contexts),
+  m_ref(ref_id),
+  m_hv(horvert)
+{}        
+
+
+
+void VectorElementCodec::InitContexts() 
+{    
+}
+
+// Main code function
+void VectorElementCodec::DoWorkCode( MvData& in_data )
+{
+    int step,max; 
+    int split_depth;
+    int ystart, xstart;
+    
+    for (m_mb_yp = 0, m_mb_tlb_y = 0;  m_mb_yp < in_data.MBSplit().LengthY();  ++m_mb_yp, m_mb_tlb_y += 4)
+    {
+        for (m_mb_xp = 0,m_mb_tlb_x = 0; m_mb_xp < in_data.MBSplit().LengthX(); ++m_mb_xp,m_mb_tlb_x += 4)
+        {
+            split_depth = in_data.MBSplit()[m_mb_yp][m_mb_xp]; 
+
+            step = 4  >>  (split_depth); 
+            max = (1 << split_depth);
+
+
+            for (int j = 0; j < max; ++j)
+            {                
+                for (int i = 0; i < max; ++i)
+                {
+                    xstart = m_b_xp = m_mb_tlb_x + i * step; 
+                    ystart = m_b_yp = m_mb_tlb_y + j * step;                                             
+                    
+                    // propagate throughout MB    
+                    for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
+                    {
+                        for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
+                        {                    
+                            in_data.Vectors(m_ref)[m_b_yp][m_b_xp][m_hv] = 
+                                   in_data.Vectors(m_ref)[ystart][xstart][m_hv]; 
+                        }//m_b_xp
+                    }//m_b_yp
+                }//i                    
+            }//j
+
+            //now do all the block modes and mvs in the mb            
+            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; m_b_yp++)
+            {
+                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; m_b_xp++)
+                {
+                    if ( in_data.Mode()[m_b_yp][m_b_xp] & m_ref )
+                    {
+                        CodeVal(in_data);
+                    } 
+                }//m_b_xp
+            }//m_b_yp    
+                            
+        }//m_mb_xp
+    }//m_mb_yp
+
+} 
+
+// Main decode function
+void VectorElementCodec::DoWorkDecode( MvData& out_data)
+{
+    int step,max; 
+    int split_depth; 
+    int xstart,ystart;     
+
+    for (m_mb_yp = 0,m_mb_tlb_y = 0; m_mb_yp < out_data.MBSplit().LengthY(); ++m_mb_yp,m_mb_tlb_y += 4)
+    {
+        for (m_mb_xp = 0,m_mb_tlb_x = 0; m_mb_xp < out_data.MBSplit().LengthX(); ++m_mb_xp,m_mb_tlb_x += 4)
+        {
+            split_depth = out_data.MBSplit()[m_mb_yp][m_mb_xp]; 
+            step =  4  >>  (split_depth); 
+            max  = (1 << split_depth); 
+
+            //now do all the block mvs in the mb
+            for (int j = 0; j < max; ++j)
+            {                
+                for (int i = 0; i < max; ++i)
+                {
+                    xstart = m_b_xp = m_mb_tlb_x + i * step; 
+                    ystart = m_b_yp = m_mb_tlb_y + j * step;                                             
+                    
+                    if (out_data.Mode()[m_b_yp][m_b_xp] & m_ref)
+                    {
+                        DecodeVal( out_data ); 
+                    }
+                                        
+                      // propagate throughout MB    
+                     for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
+                    {
+                        for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
+                        {                    
+                            out_data.Vectors(m_ref)[m_b_yp][m_b_xp][m_hv] = 
+                                  out_data.Vectors(m_ref)[ystart][xstart][m_hv]; 
+
+                        }//m_b_xp
+                    }//m_b_yp
+                }//i                    
+            }//j
+
+        }//m_mb_xp
+    }//m_mb_yp
+}  
+
+//protected functions//
+///////////////////////
+
+void VectorElementCodec::ResetAll()
+{
+}
+
+//coding functions//
+////////////////////
+
+//prediction functions
+
+int VectorElementCodec::Prediction(const MvArray& mvarray,
+                                  const TwoDArray < PredMode > & preddata) const
+{
+    std::vector <int>  nbrs; 
     PredMode pmode;     
-    MVector result; 
+    int result( 0 ); 
     
     if (m_b_xp > 0 && m_b_yp > 0)
     {
         pmode = preddata[m_b_yp-1][m_b_xp]; 
-        if (pmode == REF1_ONLY || pmode == REF1AND2) 
-            nbrs.push_back(mvarray[m_b_yp-1][m_b_xp]); 
+        if (pmode & m_ref) 
+            nbrs.push_back(mvarray[m_b_yp-1][m_b_xp][m_hv]); 
         
         pmode = preddata[m_b_yp-1][m_b_xp-1]; 
-        if (pmode == REF1_ONLY || pmode == REF1AND2)
-            nbrs.push_back(mvarray[m_b_yp-1][m_b_xp-1]); 
+        if (pmode & m_ref)
+            nbrs.push_back(mvarray[m_b_yp-1][m_b_xp-1][m_hv]); 
         
         pmode = preddata[m_b_yp][m_b_xp-1]; 
-        if (pmode == REF1_ONLY || pmode == REF1AND2)        
-            nbrs.push_back(mvarray[m_b_yp][m_b_xp-1]); 
+        if (pmode & m_ref)
+            nbrs.push_back(mvarray[m_b_yp][m_b_xp-1][m_hv]);
         
         if (nbrs.size() > 0)
-            result = MvMedian(nbrs); 
+            result = Median(nbrs); 
     }
     else if (m_b_xp > 0 && m_b_yp == 0)
     {
         pmode = preddata[0][m_b_xp-1]; 
-        if (pmode == REF1_ONLY || pmode == REF1AND2)
-            result = mvarray[0][m_b_xp-1]; 
+        if (pmode & m_ref)
+            result = mvarray[0][m_b_xp-1][m_hv]; 
     }
     else if (m_b_xp == 0 && m_b_yp > 0)
     {
         pmode = preddata[m_b_yp-1][0]; 
-        if (pmode == REF1_ONLY || pmode == REF1AND2)
-            result = mvarray[m_b_yp-1][0]; 
+        if (pmode & m_ref)
+            result = mvarray[m_b_yp-1][0][m_hv];
     }
-
     return result; 
 }
 
-inline MVector MvDataCodec::Mv2Prediction(const MvArray & mvarray,
-                                          const TwoDArray < PredMode >  & preddata) const
+void VectorElementCodec::CodeVal(const MvData& in_data )
 {
-    std::vector <MVector>  nbrs; 
-    PredMode pmode; 
-    MVector result; 
-    
-    if (m_b_xp > 0 && m_b_yp > 0)
-    {
-        pmode = preddata[m_b_yp-1][m_b_xp]; 
-        if (pmode == REF2_ONLY || pmode == REF1AND2)
-            nbrs.push_back(mvarray[m_b_yp-1][m_b_xp]); 
-        
-        pmode = preddata[m_b_yp-1][m_b_xp-1]; 
-        if (pmode == REF2_ONLY || pmode == REF1AND2)
-            nbrs.push_back(mvarray[m_b_yp-1][m_b_xp-1]); 
-        
-        pmode = preddata[m_b_yp][m_b_xp-1]; 
-        if (pmode == REF2_ONLY || pmode == REF1AND2)
-            nbrs.push_back(mvarray[m_b_yp][m_b_xp-1]); 
-        
-        if (nbrs.size() > 0)
-            result = MvMedian(nbrs); 
-    }
-    else if (m_b_xp > 0 && m_b_yp == 0)
-    {
-        pmode = preddata[0][m_b_xp-1]; 
-        if(pmode == REF2_ONLY || pmode == REF1AND2)
-            result = mvarray[0][m_b_xp-1]; 
-    }
-    else if (m_b_xp == 0 && m_b_yp > 0)
-    {
-        pmode = preddata[m_b_yp-1][0]; 
-        if(pmode == REF2_ONLY || pmode == REF1AND2)
-            result = mvarray[m_b_yp-1][0]; 
-    }
+    const MvArray& mv_array = in_data.Vectors(m_ref);
+    const int pred = Prediction( mv_array , in_data.Mode() ); 
+    const int val = mv_array[m_b_yp][m_b_xp][m_hv] - pred;
 
-    return result; 
+    EncodeSInt(val, MV_FBIN1_CTX, MV_FBIN5plus_CTX);
 }
 
-inline ValueType MvDataCodec::DCPrediction(const TwoDArray < ValueType > & dcdata,
-                                           const TwoDArray < PredMode > & preddata) const
+//decoding functions//
+//////////////////////
+
+
+void VectorElementCodec::DecodeVal( MvData& out_data )
+{
+    MvArray& mv_array = out_data.Vectors(m_ref);    
+    int pred = Prediction( mv_array , out_data.Mode() );
+    mv_array[m_b_yp][m_b_xp][m_hv] = pred + 
+                                     DecodeSInt(MV_FBIN1_CTX, MV_FBIN5plus_CTX);
+
+}
+
+/******************************************************************************/
+//public functions//
+////////////////////
+// Constructor 
+DCCodec::DCCodec(ByteIO* p_byteio,
+                         const CompSort csort,
+                         size_t number_of_contexts):
+ArithCodec <MvData> (p_byteio,number_of_contexts),
+m_csort( csort )
+{}        
+
+
+
+void DCCodec::InitContexts() 
+{    
+}
+
+// Main code function
+void DCCodec::DoWorkCode( MvData& in_data )
+{
+
+    int step,max; 
+    int split_depth;
+    int ystart, xstart;  
+    
+    for (m_mb_yp = 0, m_mb_tlb_y = 0;  m_mb_yp < in_data.MBSplit().LengthY();  ++m_mb_yp, m_mb_tlb_y += 4)
+    {
+        for (m_mb_xp = 0,m_mb_tlb_x = 0; m_mb_xp < in_data.MBSplit().LengthX(); ++m_mb_xp,m_mb_tlb_x += 4)
+        {
+            split_depth = in_data.MBSplit()[m_mb_yp][m_mb_xp]; 
+
+            step = 4  >>  (split_depth); 
+            max = (1 << split_depth);
+            
+            for (int j = 0; j < max; ++j)
+            {                
+                for (int i = 0; i < max; ++i)
+                {
+                    xstart = m_b_xp = m_mb_tlb_x + i * step; 
+                    ystart = m_b_yp = m_mb_tlb_y + j * step;                                             
+                    
+                    // propagate throughout MB    
+                    for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
+                    {
+                        for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
+                        {                    
+                            in_data.DC(m_csort)[m_b_yp][m_b_xp] = 
+                                            in_data.DC(m_csort)[ystart][xstart]; 
+                        }//m_b_xp
+                    }//m_b_yp
+                }//i                    
+            }//j 
+                        
+            
+            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; m_b_yp++)
+            {
+                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; m_b_xp++)
+                {
+                    if(in_data.Mode()[m_b_yp][m_b_xp] == INTRA)
+                    {
+                        CodeVal(in_data);
+                    }
+                }//m_b_xp
+            }//m_b_yp    
+                            
+        }//m_mb_xp
+    }//m_mb_yp
+} 
+
+// Main decode function
+void DCCodec::DoWorkDecode( MvData& out_data)
+{
+    int step,max; 
+    int split_depth; 
+    int xstart,ystart;     
+
+    for (m_mb_yp = 0,m_mb_tlb_y = 0; m_mb_yp < out_data.MBSplit().LengthY(); ++m_mb_yp,m_mb_tlb_y += 4)
+    {
+        for (m_mb_xp = 0,m_mb_tlb_x = 0; m_mb_xp < out_data.MBSplit().LengthX(); ++m_mb_xp,m_mb_tlb_x += 4)
+        {
+             //start with split mode
+            split_depth = out_data.MBSplit()[m_mb_yp][m_mb_xp]; 
+            step =  4  >>  (split_depth); 
+            max  = (1 << split_depth); 
+
+            //now do all the block mvs in the mb
+            for (int j = 0; j < max; ++j)
+            {                
+                for (int i = 0; i < max; ++i)
+                {
+                    xstart = m_b_xp = m_mb_tlb_x + i * step; 
+                    ystart = m_b_yp = m_mb_tlb_y + j * step;                                             
+                    
+                    if(out_data.Mode()[m_b_yp][m_b_xp] == INTRA)
+                    {
+                        DecodeVal( out_data ); 
+                    }
+                    
+                      // propagate throughout MB    
+                     for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
+                    {
+                        for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
+                        {                    
+                            out_data.DC( Y_COMP )[m_b_yp][m_b_xp] = out_data.DC( Y_COMP )[ystart][xstart]; 
+                            out_data.DC( U_COMP )[m_b_yp][m_b_xp] = out_data.DC( U_COMP )[ystart][xstart]; 
+                            out_data.DC( V_COMP )[m_b_yp][m_b_xp] = out_data.DC( V_COMP )[ystart][xstart]; 
+                        }//m_b_xp
+                    }//m_b_yp
+                }//i                    
+            }//j
+
+        }//m_mb_xp
+    }//m_mb_yp
+
+}  
+
+//protected functions//
+///////////////////////
+
+void DCCodec::ResetAll()
+{
+}
+
+//coding functions//
+////////////////////
+
+//prediction functions
+
+ValueType DCCodec::Prediction(const TwoDArray < ValueType > & dcdata,
+                                    const TwoDArray < PredMode > & preddata) const
 {
     std::vector < unsigned int >  nbrs; 
     PredMode pmode;
@@ -247,269 +692,18 @@ inline ValueType MvDataCodec::DCPrediction(const TwoDArray < ValueType > & dcdat
     return result;
 }
 
-
-void MvDataCodec::DoWorkCode( MvData& in_data )
-{
-    int step,max; 
-    int split_depth;  
-    
-    for (m_mb_yp = 0, m_mb_tlb_y = 0;  m_mb_yp < in_data.MBSplit().LengthY();  ++m_mb_yp, m_mb_tlb_y += 4)
-    {
-        for (m_mb_xp = 0,m_mb_tlb_x = 0; m_mb_xp < in_data.MBSplit().LengthX(); ++m_mb_xp,m_mb_tlb_x += 4)
-        {
-             //start with split mode
-            CodeMBSplit(in_data); 
-            split_depth = in_data.MBSplit()[m_mb_yp][m_mb_xp]; 
-
-            step = 4  >>  (split_depth); 
-            max = (1 << split_depth); 
-                        
-            //now do all the block modes and mvs in the mb            
-            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; m_b_yp += step)
-            {
-                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; m_b_xp += step)
-                {
-                    CodePredmode(in_data); 
-
-                    if (in_data.Mode()[m_b_yp][m_b_xp] == REF1_ONLY || in_data.Mode()[m_b_yp][m_b_xp] == REF1AND2 )
-                        CodeMv1(in_data); 
-                    
-                    if (in_data.Mode()[m_b_yp][m_b_xp] == REF2_ONLY || in_data.Mode()[m_b_yp][m_b_xp] == REF1AND2 )
-                        CodeMv2(in_data); 
-                    
-                    if(in_data.Mode()[m_b_yp][m_b_xp] == INTRA)
-                        CodeDC(in_data);                     
-                }//m_b_xp
-            }//m_b_yp    
-                            
-        }//m_mb_xp
-    }//m_mb_yp
-
-}
-
-void MvDataCodec::CodeMBSplit(const MvData& in_data)
-{
-    int val = in_data.MBSplit()[m_mb_yp][m_mb_xp] - MBSplitPrediction( in_data.MBSplit() ); 
-    
-    if (val < 0) val+=3; //produce prediction mod 3
-
-    EncodeUInt(val, MB_SPLIT_BIN1_CTX, MB_SPLIT_BIN2_CTX);
-}
-
-void MvDataCodec::CodePredmode(const MvData& in_data)
-{
-    // Xor with the prediction so we predict whether REF1 is used or REF2 is
-    // used, separately
-    unsigned int residue = in_data.Mode()[m_b_yp][m_b_xp] ^ 
-        BlockModePrediction( in_data.Mode(), in_data.NumRefs() ); 
-    
-    // Code REF1 part of the prediction residue (ie the first bit)
-    EncodeSymbol( residue & 1 , PMODE_BIT0_CTX );
-
-    // Code REF2 part of the prediction residue (ie the second bit)
-    if (in_data.NumRefs()==2)
-        EncodeSymbol( residue & 2 , PMODE_BIT1_CTX );
-
-}
-
-/*
-Motion vector magnitude and DC values are coded using interleaved exp-Golomb 
-coding for binarisation. In this scheme, a value N>=0 is coded by 
-writing N+1 in binary form of a 1 followed by K other bits: 1bbbbbbb 
-(adding 1 ensures there'll be a leading 1). These K bits ("info bits") 
-are interleaved with K zeroes ("follow bits") each of which means 
-"another bit coming", followed by a terminating 1:
- 
-    0b0b0b ...0b1
- 
-(Conventional exp-Golomb coding has the K zeroes at the beginning, followed
-by the 1 i.e 00...01bb .. b, but interleaving allows the decoder to run a
-single loop and avoid counting the number of zeroes, sparing a register.)
-
-All bits are arithmetically coded. The follow bits have separate contexts
-based on position, and have different contexts from the info bits. 
-*/
-
-void MvDataCodec::CodeMv1(const MvData& in_data )
-{
-    const MvArray& mv_array = in_data.Vectors(1);
-    const MVector pred = Mv1Prediction( mv_array , in_data.Mode() ); 
-    const int valx = mv_array[m_b_yp][m_b_xp].x - pred.x;
-    EncodeSInt(valx, REF1x_FBIN1_CTX, REF1x_FBIN5plus_CTX);
-
-    const int valy = mv_array[m_b_yp][m_b_xp].y - pred.y;
-    EncodeSInt(valy, REF1y_FBIN1_CTX, REF1y_FBIN5plus_CTX);
-}
-
-void MvDataCodec::CodeMv2(const MvData& in_data )
-{
-    const MvArray& mv_array = in_data.Vectors(2);
-    const MVector pred = Mv2Prediction( mv_array , in_data.Mode() ); 
-    const int valx = mv_array[m_b_yp][m_b_xp].x - pred.x;
-    EncodeSInt(valx, REF2x_FBIN1_CTX, REF2x_FBIN5plus_CTX);
-
-    const int valy = mv_array[m_b_yp][m_b_xp].y - pred.y;
-    EncodeSInt(valy, REF2y_FBIN1_CTX, REF2y_FBIN5plus_CTX);
-}
-void MvDataCodec::CodeDC(const MvData& in_data)
+void DCCodec::CodeVal(const MvData& in_data)
 {    
-    //begin with Y DC value
-    const int valY = in_data.DC( Y_COMP )[m_b_yp][m_b_xp] -
-                         DCPrediction( in_data.DC(Y_COMP) , in_data.Mode() );
-    EncodeSInt(valY, YDC_FBIN1_CTX, YDC_FBIN2plus_CTX);
-
-    //continue with U and V DC values
-    const int valU =  in_data.DC(U_COMP)[m_b_yp][m_b_xp]
-                      - DCPrediction(in_data.DC( U_COMP ) , in_data.Mode());
-    EncodeSInt(valU, UDC_FBIN1_CTX, UDC_FBIN2plus_CTX);
-
-    const int valV = in_data.DC( V_COMP )[m_b_yp][m_b_xp] 
-                     - DCPrediction( in_data.DC( V_COMP ) , in_data.Mode() );
-    EncodeSInt(valV, VDC_FBIN1_CTX, VDC_FBIN2plus_CTX);
+    const int val = in_data.DC( m_csort )[m_b_yp][m_b_xp] -
+                             Prediction( in_data.DC(m_csort) , in_data.Mode() );
+    EncodeSInt(val, DC_FBIN1_CTX, DC_FBIN2plus_CTX);
 }
 
 //decoding functions//
 //////////////////////
 
-void MvDataCodec::DoWorkDecode( MvData& out_data)
+void DCCodec::DecodeVal( MvData& out_data )
 {
-    int step,max; 
-    int split_depth; 
-    int xstart,ystart;     
-
-    for (m_mb_yp = 0,m_mb_tlb_y = 0; m_mb_yp < out_data.MBSplit().LengthY(); ++m_mb_yp,m_mb_tlb_y += 4)
-    {
-        for (m_mb_xp = 0,m_mb_tlb_x = 0; m_mb_xp < out_data.MBSplit().LengthX(); ++m_mb_xp,m_mb_tlb_x += 4)
-        {
-             //start with split mode
-            DecodeMBSplit( out_data ); 
-            split_depth = out_data.MBSplit()[m_mb_yp][m_mb_xp]; 
-            step =  4  >>  (split_depth); 
-            max  = (1 << split_depth); 
-
-            //now do all the block mvs in the mb
-            for (int j = 0; j < max; ++j)
-            {                
-                for (int i = 0; i < max; ++i)
-                {
-                    xstart = m_b_xp = m_mb_tlb_x + i * step; 
-                    ystart = m_b_yp = m_mb_tlb_y + j * step;                                             
-                    
-                    DecodePredmode(out_data); 
-
-                    if (out_data.Mode()[m_b_yp][m_b_xp] == REF1_ONLY || out_data.Mode()[m_b_yp][m_b_xp] == REF1AND2 )
-                        DecodeMv1( out_data ); 
-                    
-                    if (out_data.Mode()[m_b_yp][m_b_xp] == REF2_ONLY || out_data.Mode()[m_b_yp][m_b_xp] == REF1AND2 )
-                        DecodeMv2( out_data ); 
-                    
-                    if(out_data.Mode()[m_b_yp][m_b_xp] == INTRA)
-                        DecodeDC( out_data ); 
-                    
-                      //propagate throughout MB    
-                     for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
-                    {
-                        for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
-                        {                    
-                            out_data.Mode()[m_b_yp][m_b_xp] = out_data.Mode()[ystart][xstart]; 
-
-                            out_data.Vectors(1)[m_b_yp][m_b_xp].y = out_data.Vectors(1)[ystart][xstart].y; 
-                            out_data.Vectors(1)[m_b_yp][m_b_xp].x = out_data.Vectors(1)[ystart][xstart].x; 
-                            out_data.Vectors(1)[m_b_yp][m_b_xp].y = out_data.Vectors(1)[ystart][xstart].y; 
-
-                            if (out_data.NumRefs()==2)
-                            {
-                                out_data.Vectors(2)[m_b_yp][m_b_xp].x = out_data.Vectors(2)[ystart][xstart].x; 
-                                out_data.Vectors(2)[m_b_yp][m_b_xp].y = out_data.Vectors(2)[ystart][xstart].y; 
-                            }
-                            out_data.DC( Y_COMP )[m_b_yp][m_b_xp] = out_data.DC( Y_COMP )[ystart][xstart]; 
-                            out_data.DC( U_COMP )[m_b_yp][m_b_xp] = out_data.DC( U_COMP )[ystart][xstart]; 
-                            out_data.DC( V_COMP )[m_b_yp][m_b_xp] = out_data.DC( V_COMP )[ystart][xstart]; 
-                        }//m_b_xp
-                    }//m_b_yp
-                }//i                    
-            }//j
-
-        }//m_mb_xp
-    }//m_mb_yp
-
-}
-
-void MvDataCodec::DecodeMBSplit(MvData& out_data)
-{
-    out_data.MBSplit()[m_mb_yp][m_mb_xp] =
-        (DecodeUInt(MB_SPLIT_BIN1_CTX, MB_SPLIT_BIN2_CTX) +
-            MBSplitPrediction(out_data.MBSplit())) % 3;
-}
-
-void MvDataCodec::DecodePredmode( MvData& out_data )
-{
-    // Xor with the prediction so we predict whether REF1 is used or REF2 is
-    // used, separately
-    unsigned int residue;
-    
-    // Decode REF1 part of the prediction residue (ie the first bit)
-    bool bit;
-    bit = DecodeSymbol( PMODE_BIT0_CTX );
-    residue = (unsigned int) bit;
-
-    // Decode REF2 part of the prediction residue (ie the second bit)
-    if (out_data.NumRefs()==2)
-    {
-        bit = DecodeSymbol( PMODE_BIT1_CTX );
-        residue |= ( (unsigned int) bit ) << 1;
-    }
-    
-    out_data.Mode()[m_b_yp][m_b_xp] = 
-        PredMode( BlockModePrediction (out_data.Mode() , out_data.NumRefs()) ^ residue ); 
-}
-
-/*
-Motion vector magnitude values are coded using interleaved exp-Golomb 
-coding for binarisation. In this scheme, a value N>=0 is coded by 
-writing N+1 in binary form of a 1 followed by K other bits: 1bbbbbbb 
-(adding 1 ensures there'll be a leading 1). These K bits ("info bits") 
-are interleaved with K zeroes ("follow bits") each of which means 
-"another bit coming", followed by a terminating 1:
- 
-    0b0b0b ...0b1
- 
-(Conventional exp-Golomb coding has the K zeroes at the beginning, followed
-by the 1 i.e 00...01bb .. b, but interleaving allows the decoder to run a
-single loop and avoid counting the number of zeroes, sparing a register.)
-
-All bits are arithmetically coded. The follow bits have separate contexts
-based on position, and have different contexts from the info bits. 
-*/
-
-void MvDataCodec::DecodeMv1( MvData& out_data )
-{
-    MVector pred = Mv1Prediction( out_data.Vectors(1) , out_data.Mode() );
-    out_data.Vectors(1)[m_b_yp][m_b_xp].x =
-        DecodeSInt(REF1x_FBIN1_CTX, REF1x_FBIN5plus_CTX) + pred.x;
-    out_data.Vectors(1)[m_b_yp][m_b_xp].y =
-        DecodeSInt(REF1y_FBIN1_CTX, REF1y_FBIN5plus_CTX) + pred.y; 
-}
-
-void MvDataCodec::DecodeMv2( MvData& out_data )
-{
-    MVector pred = Mv2Prediction( out_data.Vectors(2) , out_data.Mode() );
-    out_data.Vectors(2)[m_b_yp][m_b_xp].x =
-        DecodeSInt(REF2x_FBIN1_CTX, REF2x_FBIN5plus_CTX) + pred.x;
-    out_data.Vectors(2)[m_b_yp][m_b_xp].y =
-        DecodeSInt(REF2y_FBIN1_CTX, REF2y_FBIN5plus_CTX) + pred.y; 
-}
-
-void MvDataCodec::DecodeDC( MvData& out_data )
-{
-    //begin with Y DC value
-    out_data.DC( Y_COMP )[m_b_yp][m_b_xp] = DecodeSInt(YDC_FBIN1_CTX, YDC_FBIN2plus_CTX) +
-        DCPrediction(out_data.DC( Y_COMP ), out_data.Mode());
-
-    //move onto U and V DC values
-    out_data.DC( U_COMP )[m_b_yp][m_b_xp] = DecodeSInt(UDC_FBIN1_CTX, UDC_FBIN2plus_CTX) +
-        DCPrediction( out_data.DC( U_COMP ) , out_data.Mode()); 
-
-    out_data.DC( V_COMP )[m_b_yp][m_b_xp] = DecodeSInt(VDC_FBIN1_CTX, VDC_FBIN2plus_CTX) +
-        DCPrediction( out_data.DC( V_COMP ) , out_data.Mode() ); 
+    out_data.DC( m_csort )[m_b_yp][m_b_xp] = DecodeSInt(DC_FBIN1_CTX, DC_FBIN2plus_CTX) +
+                            Prediction(out_data.DC( m_csort ), out_data.Mode());
 }

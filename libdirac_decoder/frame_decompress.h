@@ -50,6 +50,8 @@
 
 namespace dirac
 {
+    class MvData;
+    
     //! Compress a single image frame
     /*!
         This class decompresses a single frame at a time, using parameters
@@ -115,6 +117,9 @@ namespace dirac
         void CompDecompress(TransformByteIO *p_transform_byteio,
                             FrameBuffer& my_buffer,int fnum, CompSort cs);
 
+        //! Decodes the motion data
+        void DecompressMVData( std::auto_ptr<MvData>& mv_data, FrameByteIO& frame_byteio );
+         
 
         //! Set the number of superblocks and blocks
         void SetMVBlocks();

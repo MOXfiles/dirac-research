@@ -118,67 +118,25 @@ namespace dirac
         // DC value contexts //
         ///////////////////////
 
-        // Luma        
-        YDC_FBIN1_CTX,       // -bin 1 of follow bits
-        YDC_FBIN2plus_CTX,   // -remaining follow bins
-        YDC_INFO_CTX,        // -info bit context
-        YDC_SIGN_CTX,        // -sign context
-
-        UDC_FBIN1_CTX,       
-        UDC_FBIN2plus_CTX,   
-        UDC_INFO_CTX,
-        UDC_SIGN_CTX,      
-
-        VDC_FBIN1_CTX,       
-        VDC_FBIN2plus_CTX,   
-        VDC_INFO_CTX,
-        VDC_SIGN_CTX,      
-        
+        DC_FBIN1_CTX,       
+        DC_FBIN2plus_CTX,   
+        DC_INFO_CTX,
+        DC_SIGN_CTX,
 
         // Motion vector contexts //
         ////////////////////////////
 
-        REF1x_FBIN1_CTX,     // -bin 1 of follow bits
-        REF1x_FBIN2_CTX,     // -bin 2 of follow bits
-        REF1x_FBIN3_CTX,     // -bin 3 of follows bits
-        REF1x_FBIN4_CTX,     // -bin 4 of follow bits
-        REF1x_FBIN5plus_CTX, // -bins 5 plus of follow bits
+    
+        MV_FBIN1_CTX,     
+        MV_FBIN2_CTX,     
+        MV_FBIN3_CTX,     
+        MV_FBIN4_CTX,     
+        MV_FBIN5plus_CTX, 
 
-        REF1x_INFO_CTX,      // context for information bits 
+        MV_INFO_CTX,
 
-        REF1x_SIGN_CTX,      // -sign
-        
+        MV_SIGN_CTX, 
 
-        REF1y_FBIN1_CTX,     
-        REF1y_FBIN2_CTX,     
-        REF1y_FBIN3_CTX,     
-        REF1y_FBIN4_CTX,     
-        REF1y_FBIN5plus_CTX, 
-
-        REF1y_INFO_CTX,
-
-        REF1y_SIGN_CTX,            
-
-        REF2x_FBIN1_CTX,     
-        REF2x_FBIN2_CTX,     
-        REF2x_FBIN3_CTX,     
-        REF2x_FBIN4_CTX,     
-        REF2x_FBIN5plus_CTX, 
-
-        REF2x_INFO_CTX,
-
-        REF2x_SIGN_CTX,    
-        
-        REF2y_FBIN1_CTX,     
-        REF2y_FBIN2_CTX,     
-        REF2y_FBIN3_CTX,     
-        REF2y_FBIN4_CTX,     
-        REF2y_FBIN5plus_CTX, 
-
-        REF2y_INFO_CTX,
-
-        REF2y_SIGN_CTX,    
-        
 
         // Prediction mode contexts
 

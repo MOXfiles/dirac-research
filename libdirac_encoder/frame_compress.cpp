@@ -79,10 +79,7 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
 
     FrameParams& fparams = my_frame.GetFparams();
     const FrameSort& fsort = fparams.FSort();
-    const ChromaFormat cformat = fparams.CFormat();
-
-    // number of bits written
-    unsigned int num_mv_bits;
+    
     m_medata_avail = false;
 
     m_is_a_cut = false;
@@ -162,7 +159,9 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
 
     if ( !m_skipped )
     {    // If not skipped we continue with the coding ...
-        std::cout<<std::endl<<"Using QF: "<<m_encparams.Qf();
+        if (m_encparams.Verbose() )
+            std::cout<<std::endl<<"Using QF: "<<m_encparams.Qf();
+
         if (fsort.IsInter() )
         {
              // Code the MV data
@@ -182,12 +181,8 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
                 MvDataByteIO *mv_data = new MvDataByteIO(fparams, 
                                         static_cast<CodecParams&>(m_encparams));
                 p_frame_byteio->SetMvData(mv_data);
-
-                MvDataCodec my_mv_coder( mv_data->BlockData(), TOTAL_MV_CTXS , cformat);
-
-                my_mv_coder.InitContexts();//may not be necessary
-                num_mv_bits = my_mv_coder.Compress( *m_me_data );
-                mv_data->Output();
+                
+                CompressMVData( mv_data );
             }
 
              // Then motion compensate
@@ -252,13 +247,56 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
     return p_frame_byteio;
 }
 
-
 const MEData* FrameCompressor::GetMEData() const
 {
     TESTM (m_me_data != NULL, "m_medata allocated");
     TESTM (m_medata_avail == true, "ME Data available");
 
     return m_me_data;
+}
+
+void FrameCompressor::CompressMVData(MvDataByteIO* mv_data)
+{
+    PredModeCodec pmode_coder( mv_data->PredModeData()->DataBlock(), TOTAL_MV_CTXS);
+    pmode_coder.Compress( *m_me_data );
+    mv_data->PredModeData()->Output();
+
+    VectorElementCodec vcoder1h( mv_data->MV1HorizData()->DataBlock(), 1, 
+                                 HORIZONTAL, TOTAL_MV_CTXS);
+    vcoder1h.Compress( *m_me_data );
+    mv_data->MV1HorizData()->Output();
+    
+    VectorElementCodec vcoder1v( mv_data->MV1VertData()->DataBlock(), 1, 
+                                 VERTICAL, TOTAL_MV_CTXS);
+    vcoder1v.Compress( *m_me_data );
+    mv_data->MV1VertData()->Output();
+
+    if ( m_me_data->NumRefs()>1 )
+    {
+        VectorElementCodec vcoder2h( mv_data->MV2HorizData()->DataBlock(), 2, 
+                                     HORIZONTAL, TOTAL_MV_CTXS);
+        vcoder2h.Compress( *m_me_data );
+        mv_data->MV2HorizData()->Output();
+        
+        VectorElementCodec vcoder2v( mv_data->MV2VertData()->DataBlock(), 2, 
+                                     VERTICAL, TOTAL_MV_CTXS);
+        vcoder2v.Compress( *m_me_data );
+        mv_data->MV2VertData()->Output();
+    }
+
+    DCCodec ydc_coder( mv_data->YDCData()->DataBlock(), Y_COMP, TOTAL_MV_CTXS);
+    ydc_coder.Compress( *m_me_data );
+    mv_data->YDCData()->Output();
+
+    DCCodec udc_coder( mv_data->UDCData()->DataBlock(), U_COMP, TOTAL_MV_CTXS);
+    udc_coder.Compress( *m_me_data );
+    mv_data->UDCData()->Output();
+    
+    DCCodec vdc_coder( mv_data->VDCData()->DataBlock(), V_COMP, TOTAL_MV_CTXS);
+    vdc_coder.Compress( *m_me_data );
+    mv_data->VDCData()->Output();
+
+    mv_data->Output();    
 }
 
 void FrameCompressor::AnalyseMEData( const MEData& me_data )

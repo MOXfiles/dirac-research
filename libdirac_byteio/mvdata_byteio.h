@@ -44,10 +44,11 @@
 
 
 // DIRAC INCLUDES
-#include <libdirac_common/common.h>             // EncParams
+#include <libdirac_common/common.h>              // EncParams
 
 //LOCAL INCLUDES
-#include <libdirac_byteio/byteio.h>             // Parent class
+#include <libdirac_byteio/byteio.h>              // Parent class
+#include <libdirac_byteio/mvdataelement_byteio.h>// Member byteio class
 
 
 namespace dirac
@@ -105,14 +106,49 @@ namespace dirac
         virtual const std::string GetBytes();
 
         /**
-        * Return pointer to the block data ByteIO stream
+        * Return pointer to the superblock splitting modes ByteIO stream
         */
-        ByteIO*  BlockData() { return &m_block_data; };
+        MvDataElementByteIO*  SplitModeData() { return &m_splitmode_data; };
+        
+        /**
+        * Return pointer to the superblock splitting modes ByteIO stream
+        */
+        MvDataElementByteIO*  PredModeData() { return &m_predmode_data; };
 
         /**
-        * Return the input block data size
+        * Return pointer to the block MVs reference 1 ByteIO stream
         */
-        unsigned int BlockDataSize() { return m_block_size; }
+        MvDataElementByteIO*  MV1HorizData() { return &m_mv1hblock_data; };
+        
+        /**
+        * Return pointer to the block MVs reference 1 ByteIO stream
+        */
+        MvDataElementByteIO*  MV1VertData() { return &m_mv1vblock_data; };
+
+        /**
+        * Return pointer to the block MV reference 2 ByteIO stream
+        */
+        MvDataElementByteIO*  MV2HorizData() { return &m_mv2hblock_data; };
+                
+        /**
+        * Return pointer to the block MV reference 2 ByteIO stream
+        */
+        MvDataElementByteIO*  MV2VertData() { return &m_mv2vblock_data; };
+        
+        /**
+        * Return pointer to the block Y DC values ByteIO stream
+        */
+        MvDataElementByteIO*  YDCData() { return &m_ydcblock_data; }; 
+        
+        /**
+        * Return pointer to the block U DC values ByteIO stream
+        */
+        MvDataElementByteIO*  UDCData() { return &m_udcblock_data; }; 
+        
+        /**
+        * Return pointer to the block V DC values ByteIO stream
+        */
+        MvDataElementByteIO*  VDCData() { return &m_vdcblock_data; }; 
 
         /**
         * Return the size 
@@ -189,14 +225,49 @@ namespace dirac
         const CodecParams m_default_cparams;
 
         /**
-        * block data
+        * block data containing split modes
         */
-        ByteIO m_block_data;
-
+        MvDataElementByteIO m_splitmode_data;
+        
         /**
-        * In block data size
+        * block data containing prediction modes
         */
-        unsigned int m_block_size;
+        MvDataElementByteIO m_predmode_data;
+        
+        /**
+        * block data containing horizontal MV components for reference 1
+        */
+        MvDataElementByteIO m_mv1hblock_data;
+        
+        /**
+        * block data containing vertical MV components for reference 1
+        */
+        MvDataElementByteIO m_mv1vblock_data;
+        
+        /**
+        * block data containing horizontal MV components for reference 2
+        */
+        MvDataElementByteIO m_mv2hblock_data;
+        
+        /**
+        * block data containing vertical MV components for reference 2
+        */
+        MvDataElementByteIO m_mv2vblock_data;
+                
+        /**
+        * block data containing Y DC data
+        */
+        MvDataElementByteIO m_ydcblock_data;
+        
+        /**
+        * block data containing U DC data
+        */
+        MvDataElementByteIO m_udcblock_data;
+        
+        /**
+        * block data containing V DC data
+        */
+        MvDataElementByteIO m_vdcblock_data;
     };
 
 } // namespace dirac

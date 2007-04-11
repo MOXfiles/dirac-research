@@ -112,6 +112,9 @@ namespace dirac
 
         //! Analyses the ME data and returns true if a cut is detected, false otherwise
         void AnalyseMEData( const MEData& );
+        
+        //! Compresses the motion vector data
+        void CompressMVData(MvDataByteIO* mv_data);
 
     private:
 

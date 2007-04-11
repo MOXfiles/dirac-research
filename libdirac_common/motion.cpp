@@ -485,6 +485,20 @@ ostream &operator<< (ostream & stream, MEData & me_data)
     return stream;
 }
 
+int Median( const int val1, const int val2, const int val3)
+{
+    int tmp;
+
+    tmp=val1;
+    tmp+=val2;
+    tmp+=val3;
+
+    tmp -= std::max( std::max( val1 , val2 ) , val3 );
+    tmp -= std::min( std::min( val1 , val2 ) , val3 );
+    
+    return tmp;
+}
+
 MVector MvMedian(const MVector& mv1,const MVector& mv2,const MVector& mv3) {
     //takes median of each vector component    
     MVector tmp_mv;
@@ -506,8 +520,45 @@ MVector MvMedian(const MVector& mv1,const MVector& mv2,const MVector& mv3) {
     return tmp_mv;
 }
 
+int Median(const std::vector<int>& val_list)
+{   
+    // take the median of up to 4 elements
+
+    switch (val_list.size() )
+    {
+        case 1 :
+
+            return val_list[0];
+        case 2 : // return the mean
+            return ( ( val_list[0] + val_list[1] + 1 )>>1 );
+        case 3 :
+            return Median(val_list[0], val_list[1], val_list[2] );
+        case 4 :
+            {
+            int med_val(0);
+            int max_val(val_list[0]);
+            int min_val(val_list[0]);
+
+            for (int i=0; i<4; ++i )
+            {
+                med_val += val_list[i];
+                max_val = std::max( max_val , val_list[i] );
+                min_val = std::min( min_val , val_list[i] );
+
+            }// i
+         
+            med_val -= ( max_val + min_val );
+         
+            return ( (med_val + 1)>>1 );
+            }
+        default :
+            return 0;
+    }
+
+}
+
 MVector MvMedian(const std::vector<MVector>& vect_list){
-    //median of 0-3 vectors
+    //median of 0-4 vectors
     
     if ( vect_list.size() == 0 )
         return 0;

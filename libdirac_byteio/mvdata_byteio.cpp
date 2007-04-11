@@ -47,9 +47,16 @@ ByteIO(),
 m_fparams(fparams),
 m_cparams(cparams),
 m_default_cparams(cparams.GetVideoFormat(), fparams.GetFrameType(), fparams.Refs().size(), true),
-m_block_data()
-{
-}
+m_splitmode_data(),
+m_predmode_data(),
+m_mv1hblock_data(),
+m_mv1vblock_data(),
+m_mv2hblock_data(),
+m_mv2vblock_data(),
+m_ydcblock_data(),
+m_udcblock_data(),
+m_vdcblock_data()
+{}
 
 MvDataByteIO::MvDataByteIO(ByteIO &byte_io, FrameParams& fparams,
                                  CodecParams& cparams):
@@ -57,13 +64,19 @@ ByteIO(byte_io),
 m_fparams(fparams),
 m_cparams(cparams),
 m_default_cparams(cparams.GetVideoFormat(), fparams.GetFrameType(), fparams.Refs().size(), true),
-m_block_data(byte_io)
-{
-}
+m_splitmode_data(byte_io),
+m_predmode_data(byte_io),
+m_mv1hblock_data(byte_io),
+m_mv1vblock_data(byte_io),
+m_mv2hblock_data(byte_io),
+m_mv2vblock_data(byte_io),
+m_ydcblock_data(byte_io),
+m_udcblock_data(byte_io),
+m_vdcblock_data(byte_io)
+{}
 
 MvDataByteIO::~MvDataByteIO()
-{
-}
+{}
 
 void MvDataByteIO::CollateByteStats(DiracByteStats& dirac_byte_stats)
 {
@@ -74,15 +87,51 @@ void MvDataByteIO::CollateByteStats(DiracByteStats& dirac_byte_stats)
 
 int MvDataByteIO::GetSize() const
 {
-    //std::cerr << "MV data header size=" << ByteIO::GetSize();
-    //std::cerr << "arithdata size=" << m_block_data.GetSize() << std::endl;
-    return ByteIO::GetSize() + m_block_data.GetSize();
+    if (m_fparams.NumRefs()==2)
+        return ByteIO::GetSize() + 
+               m_splitmode_data.GetSize()+
+               m_predmode_data.GetSize()+
+               m_mv1hblock_data.GetSize()+
+               m_mv1vblock_data.GetSize()+
+               m_mv2hblock_data.GetSize()+
+               m_mv2vblock_data.GetSize()+
+               m_ydcblock_data.GetSize()+
+               m_udcblock_data.GetSize()+
+               m_vdcblock_data.GetSize();
+    else
+        return ByteIO::GetSize() + 
+               m_splitmode_data.GetSize()+
+               m_predmode_data.GetSize()+
+               m_mv1hblock_data.GetSize()+
+               m_mv1vblock_data.GetSize()+
+               m_ydcblock_data.GetSize()+
+               m_udcblock_data.GetSize()+
+               m_vdcblock_data.GetSize();
 }
 
 const std::string MvDataByteIO::GetBytes()
 {
     //Output header and block data
-    return ByteIO::GetBytes() + m_block_data.GetBytes();
+    if (m_fparams.NumRefs()==2 )
+        return ByteIO::GetBytes() + 
+               m_splitmode_data.GetBytes()+
+               m_predmode_data.GetBytes()+
+               m_mv1hblock_data.GetBytes()+
+               m_mv1vblock_data.GetBytes()+
+               m_mv2hblock_data.GetBytes()+
+               m_mv2vblock_data.GetBytes()+
+               m_ydcblock_data.GetBytes()+
+               m_udcblock_data.GetBytes()+
+               m_vdcblock_data.GetBytes();
+    else
+        return ByteIO::GetBytes() + 
+               m_splitmode_data.GetBytes()+
+               m_predmode_data.GetBytes()+
+               m_mv1hblock_data.GetBytes()+
+               m_mv1vblock_data.GetBytes()+
+               m_ydcblock_data.GetBytes()+
+               m_udcblock_data.GetBytes()+
+               m_vdcblock_data.GetBytes();
 }
 
 void MvDataByteIO::Input()
@@ -107,10 +156,6 @@ void MvDataByteIO::Input()
 
     // Byte Alignment
     ByteAlignInput();
-    // Input block data size
-    m_block_size = InputVarLengthUint();
-    // Byte Alignment
-    ByteAlignInput();
 }
 
 void MvDataByteIO::Output()
@@ -121,7 +166,7 @@ void MvDataByteIO::Output()
     // Output Motion Vector Precision
     OutputMVPrecision();
 
-    // output chroma 
+    // output global motion 
     OutputGlobalMotionParams();
 
     // output video depth
@@ -129,12 +174,6 @@ void MvDataByteIO::Output()
 
     // output frame weights
     OutputFrameWeights();
-
-    // Byte Align
-    ByteAlignOutput();
-    
-    //Output size of block data
-    OutputVarLengthUint(m_block_data.GetSize());
 
     // Byte Align
     ByteAlignOutput();

@@ -139,26 +139,12 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
 
        FrameSort fsort = m_fparams.FSort();
        auto_ptr<MvData> mv_data;
-       unsigned int num_mv_bits;
+//       unsigned int num_mv_bits;
 
        if ( fsort.IsInter() )
-       {//do all the MV stuff 
-            MvDataByteIO mvdata_byteio (frame_byteio, m_fparams, m_decparams);
-            // Read in the frame prediction parameters
-            mvdata_byteio.Input();
-            num_mv_bits = mvdata_byteio.BlockDataSize();
-
-            SetMVBlocks();
-            mv_data.reset(new MvData( m_decparams.XNumMB() , m_decparams.YNumMB(), m_fparams.NumRefs() ));
-            //decode mv data
-            if (m_decparams.Verbose())
-                std::cout<<std::endl<<"Decoding motion data ...";        
-            MvDataCodec my_mv_decoder( mvdata_byteio.BlockData(), TOTAL_MV_CTXS , m_cformat );
-            my_mv_decoder.InitContexts();//may not be necessary
-
-            //Decompress the MV bits
-            my_mv_decoder.Decompress( *(mv_data.get()) , num_mv_bits );                
-        }
+       {    //do all the MV stuff 
+            DecompressMVData( mv_data, frame_byteio );                
+       }
            
         // Read the  transform header
         TransformByteIO transform_byteio(frame_byteio, m_fparams, m_decparams);
@@ -362,4 +348,93 @@ void FrameDecompressor::PushFrame(FrameBuffer &my_buffer)
     m_fparams.SetVideoDepth(m_video_depth);
 
     my_buffer.PushFrame(m_fparams);
+}
+
+void FrameDecompressor::DecompressMVData( std::auto_ptr<MvData>& mv_data, 
+                                          FrameByteIO& frame_byteio )
+{
+    MvDataByteIO mvdata_byteio (frame_byteio, m_fparams, m_decparams);
+
+    // Read in the frame prediction parameters
+    mvdata_byteio.Input();
+
+    SetMVBlocks();
+    mv_data.reset(new MvData( m_decparams.XNumMB() , 
+                              m_decparams.YNumMB(), m_fparams.NumRefs() ));
+
+    // decode mv data
+    if (m_decparams.Verbose())
+        std::cout<<std::endl<<"Decoding motion data ...";        
+
+    int num_bits;
+
+    // Read in the split mode data header
+    mvdata_byteio.SplitModeData()->Input();
+    // Read the mode data
+    num_bits = mvdata_byteio.SplitModeData()->DataBlockSize();
+    SplitModeCodec smode_decoder( mvdata_byteio.SplitModeData()->DataBlock(), TOTAL_MV_CTXS);
+    smode_decoder.Decompress( *(mv_data.get()) , num_bits);
+    
+    // Read in the prediction mode data header
+    mvdata_byteio.PredModeData()->Input();
+    // Read the mode data
+    num_bits = mvdata_byteio.PredModeData()->DataBlockSize();
+    PredModeCodec pmode_decoder( mvdata_byteio.PredModeData()->DataBlock(), TOTAL_MV_CTXS);
+    pmode_decoder.Decompress( *(mv_data.get()) , num_bits);
+    
+    // Read in the MV1 horizontal data header
+    mvdata_byteio.MV1HorizData()->Input();
+    // Read the MV1 horizontal data
+    num_bits = mvdata_byteio.MV1HorizData()->DataBlockSize();
+    VectorElementCodec vdecoder1h( mvdata_byteio.MV1HorizData()->DataBlock(), 1, 
+                                   HORIZONTAL, TOTAL_MV_CTXS);
+    vdecoder1h.Decompress( *(mv_data.get()) , num_bits);
+    
+    // Read in the MV1 vertical data header
+    mvdata_byteio.MV1VertData()->Input();
+    // Read the MV1 data
+    num_bits = mvdata_byteio.MV1VertData()->DataBlockSize();
+    VectorElementCodec vdecoder1v( mvdata_byteio.MV1VertData()->DataBlock(), 1, 
+                                   VERTICAL, TOTAL_MV_CTXS);
+    vdecoder1v.Decompress( *(mv_data.get()) , num_bits);
+    
+    if ( (mv_data.get())->NumRefs()>1 )
+    { 
+        // Read in the MV2 horizontal data header
+        mvdata_byteio.MV2HorizData()->Input();
+        // Read the MV2 horizontal data
+        num_bits = mvdata_byteio.MV2HorizData()->DataBlockSize();
+        VectorElementCodec vdecoder2h( mvdata_byteio.MV2HorizData()->DataBlock(), 2, 
+                                       HORIZONTAL, TOTAL_MV_CTXS);
+        vdecoder2h.Decompress( *(mv_data.get()) , num_bits);
+        
+        // Read in the MV2 vertical data header
+        mvdata_byteio.MV2VertData()->Input();
+        // Read the MV2 vertical data
+        num_bits = mvdata_byteio.MV2VertData()->DataBlockSize();
+        VectorElementCodec vdecoder2v( mvdata_byteio.MV2VertData()->DataBlock(), 2, 
+                                       VERTICAL, TOTAL_MV_CTXS);
+        vdecoder2v.Decompress( *(mv_data.get()) , num_bits);
+    }
+
+    // Read in the Y DC data header
+    mvdata_byteio.YDCData()->Input();
+    // Read the Y DC data
+    num_bits = mvdata_byteio.YDCData()->DataBlockSize();
+    DCCodec ydc_decoder( mvdata_byteio.YDCData()->DataBlock(), Y_COMP, TOTAL_MV_CTXS);
+    ydc_decoder.Decompress( *(mv_data.get()) , num_bits);
+
+    // Read in the U DC data header
+    mvdata_byteio.UDCData()->Input();
+    // Read the U DC data
+    num_bits = mvdata_byteio.UDCData()->DataBlockSize();
+    DCCodec udc_decoder( mvdata_byteio.YDCData()->DataBlock(), U_COMP, TOTAL_MV_CTXS);
+    udc_decoder.Decompress( *(mv_data.get()) , num_bits);
+    
+    // Read in the Y DC data header
+    mvdata_byteio.YDCData()->Input();
+    // Read the Y DC data
+    num_bits = mvdata_byteio.YDCData()->DataBlockSize();
+    DCCodec vdc_decoder( mvdata_byteio.VDCData()->DataBlock(), V_COMP, TOTAL_MV_CTXS);
+    vdc_decoder.Decompress( *(mv_data.get()) , num_bits);
 }

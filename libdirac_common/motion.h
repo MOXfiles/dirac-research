@@ -50,6 +50,9 @@ namespace dirac
 
     //classes
 
+    //! Horizontal or vertical
+    enum MvElement { HORIZONTAL , VERTICAL };
+
     //! Motion vector class - just a pair
     template <class T>
     class MotionVector
@@ -80,6 +83,12 @@ namespace dirac
 
         //! Bitshift of each component
         inline MotionVector<T> operator>>(const int argument) const;
+        
+        //! Array-style element access
+        T& operator[](const int pos){return ( ( pos==0) ? x : y );}
+
+        //! Array-style element access.
+        const T& operator[](const int pos) const {return ( ( pos==0) ? x : y );}
 
 
         //! x and y components 
@@ -409,11 +418,18 @@ namespace dirac
     };
 
     //motion estimation and coding stuff
+    
+    //! Return the median of 3 integers
+    int Median( const int val1, const int val2, const int val3);
 
     //! Return the median of three motion vectors 
     MVector MvMedian(const MVector& mv1,const MVector& mv2,const MVector& mv3);
 
-    //! Return the median of a set of motion vectors 
+
+    //! Return the median of a set of integers 
+    int Median(const std::vector<int>& val_list);
+
+    //! Return the median of a set of (up to 4) motion vectors 
     MVector MvMedian(const std::vector<MVector>& vect_list);
 
     //! Return the mean of two motion vectors

@@ -103,7 +103,7 @@ static void display_help()
     cout << "\nmv_prec           string  false         MV Pixel Precision (1, 1/2, 1/4, 1/8)";
     cout << "\nno_spartition     bool    false         Do not use spatial partitioning while coding transform data";
     cout << "\ndenoise           bool    false         Denoise input before coding (NB: PSNR stats will relate to denoised video)";
-    cout << "\nverbose           bool    false         Verbose mode";
+    cout << "\nverbose           bool    false         verbose mode";
     cout << "\nlocal             bool    false         Write diagnostics & locally decoded video";
     cout << "\ninput             string  [ required ]  Input file name";
     cout << "\noutput            string  [ required ]  Output file name [May not be '-']";
@@ -896,7 +896,9 @@ int main (int argc, char* argv[])
         exit(1);
     }
 
-    display_codec_params(enc_ctx);
+    if ( verbose )
+        display_codec_params(enc_ctx);
+
     bit_name = output;
         
 

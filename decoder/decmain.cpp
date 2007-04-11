@@ -283,7 +283,7 @@ static void DecodeDirac (const char *iname, const char *oname)
     } while (bytes > 0 && state != STATE_INVALID);
     stop_t=clock();
 
-    //if ( verbose )
+    if ( verbose )
         fprintf (stdout, "Time per frame: %g\n",
                 (double)(stop_t-start_t)/(double)(CLOCKS_PER_SEC*num_frames));
 
