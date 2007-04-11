@@ -235,9 +235,9 @@ namespace dirac
         Context& ctx  = m_context_list[context_num];
 
         // Decode as per updated specification
-        const unsigned int count = m_code - m_low_code + 1; 
+        const unsigned int count = m_code - m_low_code ; 
         const unsigned int range_x_prob = ( m_range* ctx.GetScaledProb0())>>16;
-        bool symbol = ( count > range_x_prob );
+        const bool symbol = ( count >= range_x_prob );
 
         // Rescale the interval
         if( symbol )    //symbol is 1
