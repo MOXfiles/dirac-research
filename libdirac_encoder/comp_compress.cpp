@@ -222,6 +222,8 @@ void CompCompressor::SelectQuantisers( PicArray& pic_data ,
         // Set the DC band quantiser to be 1
         bands( bands.Length() ).SetQIndex( 0 );
         bands( bands.Length() ).SetSkip( false );
+        bands( bands.Length() ).SetUsingMultiQuants( false );
+        est_bits[ bands.Length()] = 0;
         TwoDArray<CodeBlock>& blocks = bands( bands.Length() ).GetCodeBlocks();
         for (int j=0; j<blocks.LengthY(); ++j)
             for (int i=0 ; i<blocks.LengthX(); ++i )
