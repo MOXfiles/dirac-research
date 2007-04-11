@@ -177,7 +177,7 @@ SequenceCompressor::~SequenceCompressor()
     delete m_fbuffer;
     delete m_origbuffer;
     
-    if (m_encparams.TargetRate()==0)
+    if (m_encparams.TargetRate()!=0)
         delete m_ratecontrol;
 }
 

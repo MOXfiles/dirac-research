@@ -305,8 +305,8 @@ void SetDefaultSequenceParameters(SeqParams& sparams)
     
 void SetDefaultEncoderParameters(EncoderParams& encparams)
 {
-    encparams.SetQf(7.0f);
     encparams.SetLossless(false);
+    encparams.SetQf(7.0f);
     encparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
 
     switch (encparams.GetVideoFormat())
