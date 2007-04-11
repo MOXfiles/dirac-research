@@ -219,7 +219,16 @@ void CompCompressor::SelectQuantisers( PicArray& pic_data ,
     // Select all the quantizers
     if ( !m_encparams.Lossless() )
     {
-        for ( int b=bands.Length() ; b>=1 ; --b )
+        // Set the DC band quantiser to be 1
+        bands( bands.Length() ).SetQIndex( 0 );
+        bands( bands.Length() ).SetSkip( false );
+        TwoDArray<CodeBlock>& blocks = bands( bands.Length() ).GetCodeBlocks();
+        for (int j=0; j<blocks.LengthY(); ++j)
+            for (int i=0 ; i<blocks.LengthX(); ++i )
+                blocks[j][i].SetQIndex( 0 );
+
+        // Now do the rest of the bands.
+        for ( int b=bands.Length()-1 ; b>=1 ; --b )
         {
             // Set multiquants flag in the subband only if 
             // a. Global m_cb_mode flag is set to QUANT_MULTIPLE in encparams
@@ -280,7 +289,7 @@ int CompCompressor::SelectMultiQuants( PicArray& pic_data , SubbandList& bands ,
         node.SetSkip( true );
     else
         node.SetSkip( false );
-
+        
     return band_bits;
 }
 
@@ -305,7 +314,7 @@ void CompCompressor::AddSubAverage( PicArray& pic_data ,
                                     int yl , 
                                     AddOrSub dirn)
 {
-
+    
     ValueType last_val=0;
     ValueType last_val2;
  

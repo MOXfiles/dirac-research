@@ -159,18 +159,6 @@ int QuantChooser::GetBestQuant( Subband& node )
         }// j
         SelectBestQuant();
 
-        // Don't allow a DC band to be skipped
-        if (node.Xp()==0 && node.Yp()==0)
-        {  
-            // have at least 2 bits of accuracy for the largest element
-            //m_min_idx = std::max( 0 , std::min(m_min_idx, num_quants-8) );
-            // Actually, for the moment, just vaguely remove the offset
-            // introduced by the DWT and don't quantize the DC at all.
-            // TODO: fix this.
-            //m_min_idx = (m_pic_data.LengthX()/node.Xl());
-            m_min_idx = 0;
-        }
-
         for (int j=0 ; j<block_list.LengthY() ; ++j )
         {
             for (int i=0 ; i<block_list.LengthX() ; ++i )
@@ -239,18 +227,6 @@ int QuantChooser::GetBestQuant( Subband& node )
                                  * block_list[j][i].Xl() 
                                  * block_list[j][i].Yl() );
                 bit_sum += block_bit_cost;
-
-               // Don't allow a DC band to be skipped
-               if (node.Xp()==0 && node.Yp()==0)
-               {  
-                   // have at least 2 bits of accuracy for the largest element
-                   //m_min_idx = std::max( 0 , std::min(m_min_idx, num_quants-8) );
-                   // Actually, for the moment, just vaguely remove the offset
-                   // introduced by the DWT and don't quantize the DC at all.
-                   // TODO: fix this.
-                   // m_min_idx = (m_pic_data.LengthX()/node.Xl());
-                   m_min_idx = 0;
-               }  
 
                 block_list[j][i].SetQIndex( m_min_idx );
 
