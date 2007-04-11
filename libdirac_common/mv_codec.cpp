@@ -157,10 +157,8 @@ void PredModeCodec::InitContexts()
 // Main code function
 void PredModeCodec::DoWorkCode( MvData& in_data )
 {
-///*
     int step,max; 
-    int split_depth;
-    int ystart, xstart;  
+    int split_depth;  
 
     for (m_mb_yp = 0, m_mb_tlb_y = 0;  m_mb_yp < in_data.MBSplit().LengthY();  ++m_mb_yp, m_mb_tlb_y += 4)
     {
@@ -171,37 +169,17 @@ void PredModeCodec::DoWorkCode( MvData& in_data )
             step = 4  >>  (split_depth); 
             max = (1 << split_depth); 
                         
-
-            for (int j = 0; j < max; ++j)
-            {                
-                for (int i = 0; i < max; ++i)
-                {
-                    xstart = m_b_xp = m_mb_tlb_x + i * step; 
-                    ystart = m_b_yp = m_mb_tlb_y + j * step;                                             
-                    
-                    // propagate throughout MB    
-                    for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
-                    {
-                        for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
-                        {                    
-                            in_data.Mode()[m_b_yp][m_b_xp] = in_data.Mode()[ystart][xstart]; 
-                        }//m_b_xp
-                    }//m_b_yp
-                }//i                    
-            }//j
-
-            //now do all the block modes
-            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; ++m_b_yp)
+            //now do all the block modes and mvs in the mb            
+            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; m_b_yp += step)
             {
-                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; ++m_b_xp)
+                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; m_b_xp += step)
                 {
                     CodeVal(in_data);
                 }//m_b_xp
             }//m_b_yp    
             
         }//m_mb_xp
-    }//m_mb_yp
-//*/
+    }//m_mb_yp    
 } 
 
 // Main decode function
@@ -357,8 +335,7 @@ void VectorElementCodec::InitContexts()
 void VectorElementCodec::DoWorkCode( MvData& in_data )
 {
     int step,max; 
-    int split_depth;
-    int ystart, xstart;
+    int split_depth;  
     
     for (m_mb_yp = 0, m_mb_tlb_y = 0;  m_mb_yp < in_data.MBSplit().LengthY();  ++m_mb_yp, m_mb_tlb_y += 4)
     {
@@ -368,31 +345,11 @@ void VectorElementCodec::DoWorkCode( MvData& in_data )
 
             step = 4  >>  (split_depth); 
             max = (1 << split_depth);
-
-
-            for (int j = 0; j < max; ++j)
-            {                
-                for (int i = 0; i < max; ++i)
-                {
-                    xstart = m_b_xp = m_mb_tlb_x + i * step; 
-                    ystart = m_b_yp = m_mb_tlb_y + j * step;                                             
-                    
-                    // propagate throughout MB    
-                    for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
-                    {
-                        for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
-                        {                    
-                            in_data.Vectors(m_ref)[m_b_yp][m_b_xp][m_hv] = 
-                                   in_data.Vectors(m_ref)[ystart][xstart][m_hv]; 
-                        }//m_b_xp
-                    }//m_b_yp
-                }//i                    
-            }//j
-
+                        
             //now do all the block modes and mvs in the mb            
-            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; m_b_yp++)
+            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; m_b_yp += step)
             {
-                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; m_b_xp++)
+                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; m_b_xp += step)
                 {
                     if ( in_data.Mode()[m_b_yp][m_b_xp] & m_ref )
                     {
@@ -403,7 +360,6 @@ void VectorElementCodec::DoWorkCode( MvData& in_data )
                             
         }//m_mb_xp
     }//m_mb_yp
-
 } 
 
 // Main decode function
@@ -544,10 +500,8 @@ void DCCodec::InitContexts()
 // Main code function
 void DCCodec::DoWorkCode( MvData& in_data )
 {
-
     int step,max; 
-    int split_depth;
-    int ystart, xstart;  
+    int split_depth;  
     
     for (m_mb_yp = 0, m_mb_tlb_y = 0;  m_mb_yp < in_data.MBSplit().LengthY();  ++m_mb_yp, m_mb_tlb_y += 4)
     {
@@ -556,31 +510,12 @@ void DCCodec::DoWorkCode( MvData& in_data )
             split_depth = in_data.MBSplit()[m_mb_yp][m_mb_xp]; 
 
             step = 4  >>  (split_depth); 
-            max = (1 << split_depth);
-            
-            for (int j = 0; j < max; ++j)
-            {                
-                for (int i = 0; i < max; ++i)
-                {
-                    xstart = m_b_xp = m_mb_tlb_x + i * step; 
-                    ystart = m_b_yp = m_mb_tlb_y + j * step;                                             
-                    
-                    // propagate throughout MB    
-                    for (m_b_yp = ystart; m_b_yp < ystart+step; m_b_yp++)
-                    {
-                        for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
-                        {                    
-                            in_data.DC(m_csort)[m_b_yp][m_b_xp] = 
-                                            in_data.DC(m_csort)[ystart][xstart]; 
-                        }//m_b_xp
-                    }//m_b_yp
-                }//i                    
-            }//j 
+            max = (1 << split_depth); 
                         
-            
-            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; m_b_yp++)
+            //now do all the block modes and mvs in the mb            
+            for (m_b_yp = m_mb_tlb_y; m_b_yp < m_mb_tlb_y+4; m_b_yp += step)
             {
-                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; m_b_xp++)
+                for (m_b_xp = m_mb_tlb_x; m_b_xp < m_mb_tlb_x+4; m_b_xp += step)
                 {
                     if(in_data.Mode()[m_b_yp][m_b_xp] == INTRA)
                     {
@@ -627,9 +562,7 @@ void DCCodec::DoWorkDecode( MvData& out_data)
                     {
                         for (m_b_xp = xstart; m_b_xp < xstart+step; m_b_xp++)
                         {                    
-                            out_data.DC( Y_COMP )[m_b_yp][m_b_xp] = out_data.DC( Y_COMP )[ystart][xstart]; 
-                            out_data.DC( U_COMP )[m_b_yp][m_b_xp] = out_data.DC( U_COMP )[ystart][xstart]; 
-                            out_data.DC( V_COMP )[m_b_yp][m_b_xp] = out_data.DC( V_COMP )[ystart][xstart]; 
+                            out_data.DC( m_csort )[m_b_yp][m_b_xp] = out_data.DC( m_csort )[ystart][xstart]; 
                         }//m_b_xp
                     }//m_b_yp
                 }//i                    

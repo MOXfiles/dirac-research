@@ -257,6 +257,10 @@ const MEData* FrameCompressor::GetMEData() const
 
 void FrameCompressor::CompressMVData(MvDataByteIO* mv_data)
 {
+    SplitModeCodec smode_coder( mv_data->SplitModeData()->DataBlock(), TOTAL_MV_CTXS);
+    smode_coder.Compress( *m_me_data );
+    mv_data->SplitModeData()->Output();
+    
     PredModeCodec pmode_coder( mv_data->PredModeData()->DataBlock(), TOTAL_MV_CTXS);
     pmode_coder.Compress( *m_me_data );
     mv_data->PredModeData()->Output();
