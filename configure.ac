@@ -215,25 +215,26 @@ else
 fi], [AC_MSG_RESULT(no)]
 )
 
+AC_LANG_PUSH(C++)
+OPT_CFLAGS=""
 case "$CXX" in
    g++*)
-		OPT_CFLAGS=""
-		TRY_CFLAGS="-g"
-		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-		TRY_CFLAGS="-pedantic"
-		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-		TRY_CFLAGS="-Wall"
-		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-		TRY_CFLAGS="-Werror"
-		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-		TRY_CFLAGS="-W"
-		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-		TRY_CFLAGS="-Woverloaded-virtual"
-		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
+		TRY_CFLAGS="$OPT_CFLAGS -g"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$TRY_CFLAGS"])
+		TRY_CFLAGS="$OPT_CFLAGS -pedantic"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$TRY_CFLAGS"])
+		TRY_CFLAGS="$OPT_CFLAGS -Wall"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$TRY_CFLAGS"])
+		TRY_CFLAGS="$OPT_CFLAGS -Werror"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$TRY_CFLAGS"])
+		TRY_CFLAGS="$OPT_CFLAGS -W"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$TRY_CFLAGS"])
+		TRY_CFLAGS="$OPT_CFLAGS -Woverloaded-virtual"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$TRY_CFLAGS"])
 		#TRY_CFLAGS="-Wno-long-double"
 		#AC_TRY_CXXFLAGS([#include <math.h>],[long double lw;], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-		TRY_CFLAGS="-Wextra"
-		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
+		TRY_CFLAGS="$OPT_CFLAGS -Wextra"
+		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$TRY_CFLAGS"])
         CXXFLAGS="$OPT_CFLAGS $CXXFLAGS"
 		   ;;
     *)
@@ -243,7 +244,6 @@ esac
 dnl ----------------------------------------------
 dnl enable debug flags
 dnl -----------------------------------------------
-AC_LANG_PUSH(C++)
 AC_MSG_CHECKING([whether extra debug flags are to be used when compiling])
 AC_ARG_ENABLE(debug, AC_HELP_STRING([--enable-debug], [enable extra debug flags (no)]),
 [
@@ -254,8 +254,8 @@ if test x"${enableval}" = x"yes" ; then
 			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
 			OPT_CFLAGS=""
 			TRY_CFLAGS="-O0"
-			AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$OPT_CFLAGS $TRY_CFLAGS"])
-			CXXFLAGS="$CXXFLAGS $OPT_CFLAGS -DDIRAC_DEBUG"
+			AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$TRY_CFLAGS"])
+			CXXFLAGS="$OPT_CFLAGS $CXXFLAGS -DDIRAC_DEBUG"
 		    ;;
 	    icc)
 			CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
@@ -285,10 +285,9 @@ fi],
 	OPT_CFLAGS=""
 	case "$CXX" in
     g++*|icc)
-		CXXFLAGS=`echo $CXXFLAGS | sed 's/-O[[0-9]]*//g'`
 		TRY_CFLAGS="-O3"
 		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$TRY_CFLAGS"])
-		TRY_CFLAGS="-Wuninitialized"
+		TRY_CFLAGS="$OPT_CFLAGS -Wuninitialized"
 		AC_TRY_CXXFLAGS([],[], [$TRY_CFLAGS $CXXFLAGS],[OPT_CFLAGS="$TRY_CFLAGS"])
 		dnl arch specific flags
 		case "$host" in
