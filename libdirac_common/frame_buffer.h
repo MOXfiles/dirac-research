@@ -137,6 +137,9 @@ namespace dirac
         //! Get frame with a given frame number, setting a flag to true if it's there
         const Frame& GetFrame(const unsigned int fnum, bool& is_present) const;
 
+        //! Return true if frame with the particular frame number is available else return false
+        bool IsFrameAvail(const unsigned int fnum) const;
+
         //! Get component with a given component sort and frame number (NOT with a given position in the buffer)
         PicArray& GetComponent(const unsigned int frame_num, CompSort c);
 

@@ -217,6 +217,17 @@ const Frame& FrameBuffer::GetFrame( const unsigned int fnum, bool& is_present ) 
     return *(m_frame_data[pos]);
 }
 
+bool FrameBuffer::IsFrameAvail( const unsigned int fnum ) const
+{
+
+    std::map<unsigned int,unsigned int>::const_iterator it = m_fnum_map.find(fnum);
+
+    if (it != m_fnum_map.end())
+        return true;
+    else
+        return false;
+}
+
 PicArray& FrameBuffer::GetComponent( const unsigned int fnum , CompSort c)
 {//as GetFrame, but returns corresponding component
 

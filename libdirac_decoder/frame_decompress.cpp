@@ -109,13 +109,9 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
     {
         const std::vector<int>& refs = m_fparams.Refs();
 
-        // A flag used to indicate whether frames reside in the buffer
-        bool is_present;
-
         for (unsigned int i = 0; i < refs.size(); ++i)
         {
-            const Frame &ref_frame = my_buffer.GetFrame(refs[i], is_present);
-            if ( ref_frame.GetFparams().FrameNum() != refs[i] || is_present==false )
+            if ( !my_buffer.IsFrameAvail(refs[i]) )
             {
                 return false;
             }
@@ -213,15 +209,11 @@ void FrameDecompressor::CleanReferenceFrames( FrameBuffer& my_buffer )
 
     for (size_t i = 0; i < retd_list.size(); ++i)
     {
-        bool is_present;
-        if ( my_buffer.GetFrame(retd_list[i], is_present).GetFparams().FSort().IsRef() )
+        if ( my_buffer.IsFrameAvail(retd_list[i]) && my_buffer.GetFrame(retd_list[i]).GetFparams().FSort().IsRef() )
         {
-            if ( is_present )
-            {
-                my_buffer.Clean(retd_list[i]);
-                if ( m_decparams.Verbose() )
-                    std::cout<<retd_list[i]<<" ";    
-            }
+            my_buffer.Clean(retd_list[i]);
+            if ( m_decparams.Verbose() )
+                std::cout<<retd_list[i]<<" ";    
         }
     }
 }

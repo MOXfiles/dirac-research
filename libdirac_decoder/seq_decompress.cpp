@@ -118,22 +118,17 @@ Frame& SequenceDecompressor::DecompressNextFrame(ParseUnitByteIO* p_parseunit_by
 
     TEST (m_fdecoder != NULL);
     
-    // A flag indicating whether the frame is in the buffer
-    bool is_present;
-    
     // Remove the last displayed frame from the buffer if it wasn't a reference
     if ( m_show_fnum>0 )
     {
         if ( m_decparams.Verbose() )
             std::cout<<std::endl<<"Cleaning display buffer: ";         
-        if ( m_fbuffer->GetFrame(m_show_fnum-1, is_present).GetFparams().FSort().IsNonRef() )
+        if ( m_fbuffer->IsFrameAvail(m_show_fnum-1) && 
+            m_fbuffer->GetFrame(m_show_fnum-1).GetFparams().FSort().IsNonRef() )
         {
-            if ( is_present )
-            {
-                m_fbuffer->Clean(m_show_fnum-1);
-                if ( m_decparams.Verbose() )
-                    std::cout<<(m_show_fnum-1)<<" ";
-            }
+            m_fbuffer->Clean(m_show_fnum-1);
+            if ( m_decparams.Verbose() )
+                std::cout<<(m_show_fnum-1)<<" ";
         }
     }
 
