@@ -390,23 +390,40 @@ void WaveletTransform::SetBandWeights (const float cpd,
     double lfac = m_vhfilter->GetLowFactor();  
     double hfac = m_vhfilter->GetHighFactor(); 
 
-    for ( int i=1 ; i<=m_band_list.Length() ; ++i )
+    // Do the non-DC subbands
+    int idx;
+    int shift;
+    for (int level=m_depth; level>=1; level--)
     {
+        shift = (m_depth-level+1)*m_vhfilter->GetShift();
+        for ( int orient=1;orient<=3; ++orient )
+        {
+        idx = 3*(m_depth-level)+orient;
 
-        m_band_list(i).SetWt( m_band_list(i).Wt() / std::pow(lfac,m_depth-1) );
+            // index into the subband list
+            idx = 3*(m_depth-level)+orient;
+            
+            // Divide through by the weight for the LF subband that was decomposed
+            // to create this level
+            m_band_list(idx).SetWt( m_band_list(idx).Wt() / 
+                                            std::pow(lfac,2*(m_depth-level) ) );
+                                            
+            if ( m_band_list(idx).Xp() != 0 && m_band_list(idx).Yp() != 0)
+                // HH subband
+                temp = hfac * hfac;
+            else
+                // LH or HL subband
+                temp = lfac * hfac;
 
-        if ( m_band_list(i).Xp() == 0 && m_band_list(i).Yp() == 0)
-            temp = lfac * lfac;
-        else if ( m_band_list(i).Xp() != 0 && m_band_list(i).Yp() != 0)
-            temp = hfac * hfac;
-        else
-            temp = lfac * hfac;
-
-        int shift = ((i-1)/3+1)*m_vhfilter->GetShift();
-        int mul_fac = (i < m_band_list.Length() ? (1<<shift) : (1<<(shift-m_vhfilter->GetShift())));
-        m_band_list(i).SetWt( m_band_list(i).Wt() * mul_fac/ temp);
-
-    }// i        
+            m_band_list(idx).SetWt( m_band_list(idx).Wt() *(1<<shift)/ temp);
+            
+        }// orient
+    }//level
+    
+    // Do the DC subband
+    idx = m_band_list.Length();
+    m_band_list(idx).SetWt( m_band_list(idx).Wt() / 
+                           std::pow(lfac,2*m_depth ) );
 
 } 
 
