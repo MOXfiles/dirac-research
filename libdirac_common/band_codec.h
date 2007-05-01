@@ -64,10 +64,11 @@ namespace dirac
         //! Constructor 
         /*!
             Creates a BandCodec object to encode subband data
-            \param    subband_byteio   inout/output for the encoded bits
+            \param    subband_byteio   input/output for the encoded bits
             \param    number_of_contexts the number of contexts used in the encoding process
             \param    band_list    the set of all the subbands
-            \param     band_num    the number of the subband being coded 
+            \param    band_num    the number of the subband being coded 
+            \param    is_intra    Flag indicating whether the band comes from an intra frame
          */
         BandCodec(SubbandByteIO* subband_byteio,
                   size_t number_of_contexts,
@@ -169,7 +170,8 @@ namespace dirac
             \param    subband_byteio input/output for the encoded bits
             \param    number_of_contexts the number of contexts used in the encoding process
             \param    band_list    the set of all the subbands
-            \param     band_num    the number of the subband being coded 
+            \param    band_num    the number of the subband being coded 
+            \param    is_intra    Flag indicating whether the band comes from an intra frame
          */        
         LFBandCodec(SubbandByteIO* subband_byteio,
                     size_t number_of_contexts,
