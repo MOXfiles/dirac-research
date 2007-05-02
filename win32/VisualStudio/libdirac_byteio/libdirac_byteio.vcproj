@@ -258,6 +258,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_byteio\mvdataelement_byteio.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_byteio\parseparams_byteio.cpp"
 				>
 				<FileConfiguration
@@ -341,6 +345,10 @@
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_byteio\mvdata_byteio.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_byteio\mvdataelement_byteio.h"
 				>
 			</File>
 			<File
