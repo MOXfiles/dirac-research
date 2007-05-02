@@ -216,6 +216,24 @@ void CompCompressor::SelectQuantisers( PicArray& pic_data ,
                                        OneDArray<unsigned int>& est_bits,
                                        const CodeBlockMode cb_mode )
 {
+
+   // Set up the multiquantiser mode	
+    for ( int b=bands.Length() ; b>=1 ; --b )
+    {
+        // Set multiquants flag in the subband only if 
+        // a. Global m_cb_mode flag is set to QUANT_MULTIPLE in encparams
+        //           and
+        // b. Current subband has more than one block
+        if (
+            cb_mode == QUANT_MULTIPLE &&
+            (bands(b).GetCodeBlocks().LengthX() > 1  ||
+            bands(b).GetCodeBlocks().LengthY() > 1)
+           )
+            bands(b).SetUsingMultiQuants( true );
+        else
+            bands(b).SetUsingMultiQuants( false );
+    }// b
+	
     // Select all the quantizers
     if ( !m_encparams.Lossless() )
     {
@@ -231,27 +249,13 @@ void CompCompressor::SelectQuantisers( PicArray& pic_data ,
 
         // Now do the rest of the bands.
         for ( int b=bands.Length()-1 ; b>=1 ; --b )
-        {
-            // Set multiquants flag in the subband only if 
-            // a. Global m_cb_mode flag is set to QUANT_MULTIPLE in encparams
-            //           and
-            // b. Current subband has more than one block
-            if (
-                cb_mode == QUANT_MULTIPLE &&
-                (bands(b).GetCodeBlocks().LengthX() > 1  ||
-                bands(b).GetCodeBlocks().LengthY() > 1)
-               )
-                bands(b).SetUsingMultiQuants( true );
-            else
-                bands(b).SetUsingMultiQuants( false );
-            est_bits[b] = SelectMultiQuants( pic_data , bands , b );
+        {            est_bits[b] = SelectMultiQuants( pic_data , bands , b );
         }// b
     }
     else
     {
         for ( int b=bands.Length() ; b>=1 ; --b )
         {
-            bands(b).SetUsingMultiQuants( false );
             bands(b).SetQIndex( 0 );
             TwoDArray<CodeBlock>& blocks = bands(b).GetCodeBlocks();
             for (int j=0; j<blocks.LengthY() ;++j)
