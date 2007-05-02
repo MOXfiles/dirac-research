@@ -240,9 +240,20 @@ DecoderState DiracParser::Parse()
             break;
             }
         case PU_END_OF_SEQUENCE:
-               m_next_state = STATE_SEQUENCE_END;
-               break;
-            
+            m_next_state = STATE_SEQUENCE_END;
+            break;
+        
+        case PU_AUXILIARY_DATA:
+        case PU_PADDING_DATA:
+            if (m_verbose)
+                std::cerr << "Ignoring Auxiliary/Padding data" << std::endl;
+            // Ignore auxiliary and padding data and continue parsing
+            break;
+        case PU_LOW_DELAY_FRAME:
+            if (m_verbose)
+                std::cerr << "Low delay frame decoding not yet supported" << std::endl;
+            return STATE_INVALID;
+
         default:
             return STATE_INVALID;
         }

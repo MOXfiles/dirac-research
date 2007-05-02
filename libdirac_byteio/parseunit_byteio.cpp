@@ -55,9 +55,12 @@ const int PU_PARSEUNIT_SIZE = PU_NEXT_PARSE_OFFSET_SIZE + PU_PREVIOUS_PARSE_OFFS
                               PU_PREFIX_SIZE + PU_PARSE_CODE_SIZE;
 
 // Frame types in Parse Code
-#define PARSE_CODE_IS_ACCESS_UNIT(byte)         ((byte&0x18)==0x00)
+#define PARSE_CODE_IS_ACCESS_UNIT(byte)         (byte==0x00)
 #define PARSE_CODE_IS_FRAME(byte)               ((byte&0x18)==0x08)
-#define PARSE_CODE_IS_END_OF_SEQUENCE(byte)     ((byte&0x18)==0x10)
+#define PARSE_CODE_IS_END_OF_SEQUENCE(byte)     (byte==0x10)
+#define PARSE_CODE_IS_PADDING_DATA(byte)        (byte==0x60)
+#define PARSE_CODE_IS_AUXILIARY_DATA(byte)      (byte==0x20)
+#define PARSE_CODE_IS_LOW_DELAY(byte)           ((byte&0x80)==0x80)
 
 ParseUnitByteIO::ParseUnitByteIO(int accessunit_fnum):
 ByteIO(),
@@ -218,12 +221,21 @@ ParseUnitType ParseUnitByteIO::GetType() const
 {
     if(PARSE_CODE_IS_ACCESS_UNIT(m_parse_code))
         return PU_ACCESS_UNIT;
+    
+    if(PARSE_CODE_IS_LOW_DELAY(m_parse_code))
+        return PU_LOW_DELAY_FRAME;
 
     if(PARSE_CODE_IS_FRAME(m_parse_code))
         return PU_FRAME;
 
     if(PARSE_CODE_IS_END_OF_SEQUENCE(m_parse_code))
         return PU_END_OF_SEQUENCE;
+
+    if(PARSE_CODE_IS_AUXILIARY_DATA(m_parse_code))
+        return PU_AUXILIARY_DATA;
+    
+    if(PARSE_CODE_IS_PADDING_DATA(m_parse_code))
+        return PU_PADDING_DATA;
 
     return PU_UNDEFINED;
 }

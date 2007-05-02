@@ -57,6 +57,9 @@ namespace dirac
         PU_ACCESS_UNIT=0,
         PU_FRAME,
         PU_END_OF_SEQUENCE,
+        PU_AUXILIARY_DATA,
+        PU_PADDING_DATA,
+        PU_LOW_DELAY_FRAME,
         PU_UNDEFINED
     } ParseUnitType;
     
