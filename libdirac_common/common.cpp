@@ -42,6 +42,9 @@
 
 #include <algorithm>
 #include <sstream>
+#ifndef _MSC_VER
+#include <inttypes.h>
+#endif
 #include <libdirac_common/common.h>
 #include <libdirac_common/video_format_defaults.h>
 #include <libdirac_common/dirac_exception.h>
