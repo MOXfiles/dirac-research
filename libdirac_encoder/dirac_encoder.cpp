@@ -308,15 +308,15 @@ private:
     // Output destination for compressed data in bitstream format
     DiracByteStream m_dirac_byte_stream;
     
-   	//Rate Control parameters
-	// Total Number of bits for a GOP
-	int m_gop_bits;
+       //Rate Control parameters
+    // Total Number of bits for a GOP
+    int m_gop_bits;
 
-	// Total Number GOPs in the input sequence
-	int m_gop_count;
+    // Total Number GOPs in the input sequence
+    int m_gop_count;
 
-	// To count the number of frame for calculating the GOP bit rate
-	int m_frame_count;
+    // To count the number of frame for calculating the GOP bit rate
+    int m_frame_count;
 
 };
 
@@ -416,9 +416,9 @@ DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx,
     m_dec_bufsize(0),
     m_return_decoded_frames(enc_ctx->decode_flag > 0),
     m_return_instr_data(enc_ctx->instr_flag > 0),
-   	m_gop_bits(0), 
-	m_gop_count(0),
-	m_frame_count(0)
+       m_gop_bits(0), 
+    m_gop_count(0),
+    m_frame_count(0)
 {
     // Setup sequence parameters
     SetSequenceParams (enc_ctx);
@@ -488,7 +488,7 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
 
     m_encparams.SetLocalDecode(enc_ctx->decode_flag);
     m_encparams.SetQf(enc_ctx->enc_params.qf);
-   	m_encparams.SetTargetRate(enc_ctx->enc_params.trate);
+       m_encparams.SetTargetRate(enc_ctx->enc_params.trate);
     m_encparams.SetLossless(enc_ctx->enc_params.lossless);
     m_encparams.SetL1Sep(enc_ctx->enc_params.L1_sep);
     m_encparams.SetNumL1(enc_ctx->enc_params.num_L1);
@@ -648,13 +648,13 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
         encdata->size = 0;
     }
     
-   	//Rate Control - work out bit rate to date and for current GOP
-   	// and keep track of frame numbers
-	int num_L1 = encoder->enc_ctx.enc_params.num_L1;
-	int L1_sep = encoder->enc_ctx.enc_params.L1_sep;
-	int GOP_Length = (num_L1+1)*L1_sep;
-	int offset;
-	if (num_L1 == 0)
+       //Rate Control - work out bit rate to date and for current GOP
+       // and keep track of frame numbers
+    int num_L1 = encoder->enc_ctx.enc_params.num_L1;
+    int L1_sep = encoder->enc_ctx.enc_params.L1_sep;
+    int GOP_Length = (num_L1+1)*L1_sep;
+    int offset;
+    if (num_L1 == 0)
     { 
         GOP_Length = 10;
         offset = 0;
@@ -662,26 +662,30 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
     else
         offset = std::max(L1_sep-1,0);
 
-	m_gop_bits += encoder->enc_fstats.frame_bits;
-	m_frame_count++;
-	
-	if (m_frame_count == GOP_Length-offset)
-	{
-		int denominator = encoder->enc_ctx.src_params.frame_rate.denominator;
-		int numerator = encoder->enc_ctx.src_params.frame_rate.numerator;
-		double frame_rate =  (double)numerator/(double)denominator;
+    m_gop_bits += encoder->enc_fstats.frame_bits;
+    m_frame_count++;
+    
+    if (m_frame_count == GOP_Length-offset)
+    {
+        int denominator = encoder->enc_ctx.src_params.frame_rate.denominator;
+        int numerator = encoder->enc_ctx.src_params.frame_rate.numerator;
+        double frame_rate =  (double)numerator/(double)denominator;
 
-		double gop_duration = double(m_frame_count)/frame_rate; 
-		double bit_rate = double(m_gop_bits)/gop_duration;
+        double gop_duration = double(m_frame_count)/frame_rate; 
+        double bit_rate = double(m_gop_bits)/gop_duration;
+    
+        DiracEncoder *compressor = (DiracEncoder *)encoder->compressor;
+        if (compressor->GetEncParams().Verbose())
+        {
+            std::cout<<std::endl<<std::endl<<"Bit Rate for GOP number ";
+            std::cout<<m_gop_count<<" is "<<bit_rate/1000.0<<" kbps"<<std::endl;
+        }
 
-		std::cout<<std::endl<<std::endl<<"Bit Rate for GOP number ";
-        std::cout<<m_gop_count<<" is "<<bit_rate/1000.0<<" kbps"<<std::endl;
-
-		m_gop_count++;
+        m_gop_count++;
         m_gop_bits = 0;
         m_frame_count = -offset;
-	}	
-	//End of Rate Control
+    }    
+    //End of Rate Control
     
     m_dirac_byte_stream.Clear();
 
