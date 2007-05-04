@@ -68,8 +68,9 @@ running the codec can be found at http://dirac.sourceforge.net/
   
   MSYS and Microsoft Visual C++
   -----------------------------
-     Download and install the no-cost Microsoft C++ compiler from
-     http://msdn.microsoft.com/visualc/vctoolkit2003/
+     Download and install the no-cost Microsoft Visual C++ 2005 Express
+     Edition  from
+     http://msdn.microsoft.com/vstudio/express/visualc/
 
      Download and install MSYS (the MinGW Minimal SYStem), MSYS-1.0.10.exe, 
      from http://www.mingw.org/download.shtml. An MSYS icon will be available
@@ -82,12 +83,14 @@ running the codec can be found at http://dirac.sourceforge.net/
 
      Include the following three lines in the .profile file.
 
-         export PATH=/c/Program\ Files/Microsoft\ Visual\ C++\ Toolkit\ 2003/bin:$PATH
-         export INCLUDE=/c/Program\ Files/Microsoft\ Visual\ C++\ Toolkit\ 2003/include
-         export LIB=/c/Program\ Files/Microsoft\ Visual\ C++\ Toolkit\ 2003/lib
+     PATH=/c/Program\ Files/Microsoft\ Visual\ Studio\ 8/Common7/IDE:/c/Program\ Files/Microsoft\ Visual\ Studio\ 8/VC/BIN:/c/Program\ Files/Microsoft\ Visual\ Studio\ 8/Common7/Tools:/c/Program\ Files/Microsoft\ Visual\ Studio\ 8/SDK/v2.0/bin:/c/WINDOWS/Microsoft.NET/Framework/v2.0.50727:/c/Program\ Files/Microsoft\ Visual\ Studio\ 8/VC/VCPackages:$PATH
 
-         (Replace /c/Program\ Files/Microsoft\ Visual\ C++\ Toolkit\ 2003/ with
-         the location where VC++ 2003 is installed if necessary)
+     INCLUDE=/c/Program\ Files/Microsoft\ Visual\ Studio\ 8/VC/include
+
+     LIB=/c/Program\ Files/Microsoft\ Visual\ Studio\ 8/VC/LIB:/c/Program\ Files/Microsoft\ Visual\ Studio\ 8/SDK/v2.0/lib:$LIB
+
+    (Replace /c/Program\ Files/Microsoft\ Visual\ Studio\ 8/ with
+    the location where VC++ 2005 is installed if necessary)
 
 
      Exit from the MSYS shell and click on the MSYS icon on the desktop to open 
@@ -96,21 +99,66 @@ running the codec can be found at http://dirac.sourceforge.net/
      Change directory to the directory where Dirac was unpacked. By default 
      only the dynamic libraries are built.
 
-     ./configure CXX=cl --enable-debug
+     ./configure CXX=cl LD=cl --enable-debug
          (to enable extra debug compile options)
      OR
-     ./configure CXX=cl --disable-shared
+     ./configure CXX=cl LD=cl --disable-shared
          (to build static libraries)
      OR
-     ./configure CXX=cl
+     ./configure CXX=cl LD=cl
      make
      make install
 
      The INSTALL file documents arguments to ./configure such as
      --prefix=/usr/local (specify the installation location prefix).
 
+  Microsoft Visual C++ .NET 2005
+  ------------------------------
+  Download and install the no-cost Microsoft Visual C++ 2005 Express
+  Edition  from
+  http://msdn.microsoft.com/vstudio/express/visualc/
+  
+  The MS VC++ 2005 solution and project files are in win32/VisualStudio 
+  directory.  Double-click on the solution file, dirac.sln, in the 
+  win32/VisualStudio directory.  The target 'Everything' builds the codec 
+  libraries and utilities. Four build-types are supported
+
+  Debug - builds unoptimised encoder and decoder dlls with debug symbols
+  Release - builds optimised encoder and decoder dlls
+  Debug-mmx - builds unoptimised encoder and decoder dlls with debug symbols 
+              and mmx optimisations enabled.
+  Release-mmx - builds optimised encoder and decoder dlls  with mmx 
+              optimisations enabled.
+  Static-Debug - builds unoptimised encoder and decoder static libraries
+                 with debug symbols
+  Static-Release - builds optimised encoder and decoder static libraries
+  Static-Debug-mmx - builds unoptimised encoder and decoder static libraries
+                     with debug symbols and mmx optmisations enabled.
+  Static-Release-mmx - builds optimised encoder and decoder static libraries 
+                       with mmx optmisations enabled.
+ 
+  Static libraries are created in the win32/VS2003/lib/<build-type> directory.
+
+  Encoder and Decoder dlls and import libraries, encoder and decoder apps are 
+  created in the win32/VisualStudio/bin/<build-type> directory. The "C" public 
+  API is exported using the _declspec(dllexport) mechanism.
+
+  Conversion utilites are created in the 
+  win32/VS2003/utils/conversion/<build-type> directory. Only static versions are  built.  
+  Instrumentation utility is created in the 
+  win32/VisualStudio/utils/instrumentation/<build-type> directory. Only static
+  versions are built.
+
+
   Microsoft Visual C++ .NET 2003
   ------------------------------
+
+  NOTE: Since Visual C++ 2005 Express edition is freely available to
+  download, and the project and solution files for VC++ 2003 and VC++
+  2005 are different, VC++ 2003 project and solution files will not
+  be maintained in future releases. So it is suggested that the users
+  upgrade their VC++ environment to VC++ 2005.
+
   The MS VC++ .NET 2003 solution and project files are in win32/VS2003 
   directory.  Double-click on the solution file, dirac.sln, in the 
   win32/VS2003 directory.  The target 'Everything' builds the codec 
@@ -389,7 +437,7 @@ multi_quants  : If subbands are split into multiple coefficient blocks before
 denoise       : Apply a denoising filter to the input video before encoding
                 (note PSNR statistics will be computed relative to the denoised 
                 video if -local is enabled)
-lossless      : Lossless coding.
+lossless      : Lossless coding.(overrides -qf and -targetrate)
 mv_precision  : Motion vector precision. Valid values are 1 (Pixel precision),
                 1/2 (half-pixel precision), 1/4 (quarter pixel precision which
                 is the default), 1/8 ( Eighth pixel precision).
