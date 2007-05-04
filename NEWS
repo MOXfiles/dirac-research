@@ -1,3 +1,26 @@
+dirac_0.7.0
+===========
+Major release complying with Dirac ByteStream Specification 1.0.0_pre4. The
+specification is available on the Dirac Homepage on Sourceforge.
+
+- Added support for Constant Bit Rate Coding.
+- Improved quality of encoded pictures at low bit-rates and for difficult
+  sequences.
+- Improved motion vector data partitioning to allow for parallel encoding
+  and decoding of this data especially in hardware.
+- Added support for integral motion vector precision.
+- Improved Arithmetic coding. Arithmetic coding is lots faster now.
+- Minor bug-fixes to ensure compliance with spec.
+- Solution and Project files for Visual C++ 2005 Express edition.
+- Encoder and Decoder API header files have changed so applications
+  using the old API will have to be recompiled.
+- Released patches to MPlayer, FFmpeg to comply with this release. Earlier
+  patch to transcode can be used with release.
+- DirecShow Filter released to be able to play back Dirac v0.7.0 files in 
+  Windows Media Player.
+Bugs: 1362673, 1508532, 1588191
+Patches: 1537623
+
 dirac_0.6.0
 ===========
 - Major release complying with Dirac ByteStream Specification. The
