@@ -18,8 +18,14 @@ specification is available on the Dirac Homepage on Sourceforge.
   patch to transcode can be used with release.
 - DirecShow Filter released to be able to play back Dirac v0.7.0 files in 
   Windows Media Player.
-Bugs: 1362673, 1508532, 1588191
-Patches: 1537623
+- The Dirac programming guide has been updated to reflect changes to the
+  Encoder API headers.
+- The Algorithm API is OUT OF DATE. Please refer to the Specification 
+  document (link http://dirac.sourceforge.net/specification.html) for
+  latest algorithmic changes related to the decoder side. The Algorithm 
+  document will be updated shortly.
+- Bugs fixed: 1362673, 1508532, 1588191
+- Patches applied: 1537623
 
 dirac_0.6.0
 ===========
