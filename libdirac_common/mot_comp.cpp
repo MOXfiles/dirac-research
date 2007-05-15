@@ -168,6 +168,22 @@ void MotionCompensator::CompensateFrame( const AddOrSub direction ,
 
              const Frame& ref1frame = my_buffer.GetFrame(ref1_idx);
              const Frame& ref2frame = refs.size() > 0 ? my_buffer.GetFrame(ref2_idx) : ref1frame;
+             
+             // Now check that references are marked correctly
+             if ( !ref1frame.GetFparams().FSort().IsRef() )
+             {
+                 std::cout<<std::endl<<"WARNING! Reference frame (number "<<ref1_idx;
+                 std::cout<<") being used is not marked as a reference. Incorrect output is likely.";
+             }
+             
+             if ( refs.size()>1 )
+             {
+                 if ( !ref2frame.GetFparams().FSort().IsRef() )
+                 {
+                     std::cout<<std::endl<<"WARNING! Reference frame (number ";
+                     std::cout<<ref2_idx<<") being used is not marked as a reference. Incorrect output is likely.";
+                 }
+             } 
 
              luma_or_chroma = true;                
              //now do all the components
