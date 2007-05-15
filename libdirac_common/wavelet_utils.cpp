@@ -296,7 +296,7 @@ void WaveletTransform::SetBandWeights (const float cpd,
 
     int xlen, ylen, xl, yl, xp, yp;
     float xfreq, yfreq;
-    float temp;
+    float temp(0.0);
 
     // Compensate for chroma subsampling
 
@@ -390,41 +390,44 @@ void WaveletTransform::SetBandWeights (const float cpd,
     double lfac = m_vhfilter->GetLowFactor();  
     double hfac = m_vhfilter->GetHighFactor(); 
 
-    // Do the non-DC subbands
     int idx;
     int shift;
-    for (int level=m_depth; level>=1; level--)
+ 
+    // Do the DC subband
+    idx = m_band_list.Length();
+    double cf = (1<<(m_depth*m_vhfilter->GetShift())) / std::pow(lfac,2*m_depth ) ;
+    m_band_list(idx).SetWt( m_band_list(idx).Wt()*cf);
+    
+    // Do the non-DC subbands
+    for (int level=1; level<=m_depth; level++)
     {
         shift = (m_depth-level+1)*m_vhfilter->GetShift();
-        for ( int orient=1;orient<=3; ++orient )
+        for ( int orient=3;orient>=1; --orient )
         {
-        idx = 3*(m_depth-level)+orient;
+            idx = 3*(m_depth-level)+orient;
 
             // index into the subband list
             idx = 3*(m_depth-level)+orient;
             
             // Divide through by the weight for the LF subband that was decomposed
             // to create this level
-            m_band_list(idx).SetWt( m_band_list(idx).Wt() / 
-                                            std::pow(lfac,2*(m_depth-level) ) );
-                                            
+            cf = 1.0/ std::pow(lfac,2*(m_depth-level) );
+                                                        
             if ( m_band_list(idx).Xp() != 0 && m_band_list(idx).Yp() != 0)
                 // HH subband
-                temp = hfac * hfac;
+                cf /= (hfac * hfac);
             else
                 // LH or HL subband
-                temp = lfac * hfac;
+                cf /= (lfac * hfac);
+  
+            cf *= double(1<<shift);
 
-            m_band_list(idx).SetWt( m_band_list(idx).Wt() *(1<<shift)/ temp);
+            m_band_list(idx).SetWt( m_band_list(idx).Wt()*cf );
             
         }// orient
     }//level
     
-    // Do the DC subband
-    idx = m_band_list.Length();
-    m_band_list(idx).SetWt( m_band_list(idx).Wt() / 
-                           std::pow(lfac,2*m_depth ) );
-
+ 
 } 
 
 // Private functions //
