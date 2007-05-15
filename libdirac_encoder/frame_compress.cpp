@@ -61,7 +61,8 @@ FrameCompressor::FrameCompressor( EncoderParams& encp ) :
     m_use_global(false),
     m_use_block_mv(true),
     m_global_pred_mode(REF1_ONLY),
-    m_medata_avail(false)
+    m_medata_avail(false),
+    m_is_a_cut(false)
 {}
 
 FrameCompressor::~FrameCompressor()
@@ -70,50 +71,47 @@ FrameCompressor::~FrameCompressor()
         delete m_me_data;
 }
 
-FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
-                                        const FrameBuffer& orig_buffer ,
-                                        int fnum,
-                                        int au_fnum)
+bool FrameCompressor::MotionEstimate(const  FrameBuffer& my_fbuffer ,
+                                                            int fnum )
 {
-    Frame& my_frame = my_buffer.GetFrame( fnum );
-
-    FrameParams& fparams = my_frame.GetFparams();
-    const FrameSort& fsort = fparams.FSort();
-    
-    m_medata_avail = false;
-
-    m_is_a_cut = false;
+    m_is_a_cut = false;	
 
     if (m_me_data)
     {
         delete m_me_data;
         m_me_data = 0;
     }
+    
+    m_me_data = new MEData( m_encparams.XNumMB() , 
+                            m_encparams.YNumMB(), 
+                            my_fbuffer.GetFrame( fnum).GetFparams().NumRefs() );
 
-    if ( fsort.IsInter() )
+    MotionEstimator my_motEst( m_encparams );
+    my_motEst.DoME( my_fbuffer , fnum , *m_me_data );
+
+    // If we have a cut....
+    AnalyseMEData( *m_me_data );
+        
+    // Set me data available flag
+    if ( m_is_a_cut==false )
+        m_medata_avail = true;
+    else
     {
-        m_me_data = new MEData( m_encparams.XNumMB() , 
-                                m_encparams.YNumMB(), 
-                                fparams.NumRefs());
-
-        // Motion estimate first
-        MotionEstimator my_motEst( m_encparams );
-        my_motEst.DoME( orig_buffer , fnum , *m_me_data );
-
-        // If we have a cut....
-        AnalyseMEData( *m_me_data );
-        if ( m_is_a_cut )
-        {
-            if (my_frame.GetFparams().FSort().IsRef())
-                my_frame.SetFrameSort (FrameSort::IntraRefFrameSort());
-            else
-                my_frame.SetFrameSort (FrameSort::IntraNonRefFrameSort());
-            
-            if ( m_encparams.Verbose() )
-                std::cout<<std::endl<<"Cut detected and I-frame inserted!";
-        }
-
+    	m_medata_avail = false;
+        delete m_me_data;
+        m_me_data = 0;	
     }
+    
+    return m_is_a_cut;
+}
+
+FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
+                                                                   int fnum,  int au_fnum)
+{
+    Frame& my_frame = my_buffer.GetFrame( fnum );
+
+    FrameParams& fparams = my_frame.GetFparams();
+    const FrameSort& fsort = fparams.FSort();
 
     // Set the wavelet filter
     if ( fsort.IsIntra() )
@@ -234,8 +232,6 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
                                                     my_buffer , fnum , 
                                                     *m_me_data );   
             }
-            // Set me data available flag
-            m_medata_avail = true;
         }//?fsort
 
          //finally clip the data to keep it in range

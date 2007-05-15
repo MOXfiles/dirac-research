@@ -101,6 +101,9 @@ namespace dirac
 
 		//! Calculate the Quality factor of the next I frame to encode
 		void CalcNextIntraQualFactor();
+		
+		//! Use the long-term average intra quality factor
+        void SetCutFrameQualFactor();
 
 		//! Return I frame qf
 		double IntraQualFactor() {return m_I_qf;}
@@ -145,6 +148,9 @@ namespace dirac
 		//! I frame Quality Factor
 		double m_I_qf; 
 
+		//! Long-term average of I frame Quality Factor
+		double m_I_qf_long_term; 
+
 		//! Target bit rate in kbps
 		const int m_target_rate;
 
@@ -177,6 +183,12 @@ namespace dirac
 
 		//! Number of bits in the buffer
 		int m_buffer_bits;
+		
+		//! The old buffer occupancy
+		int m_old_buffer_bits;
+		
+		//! The rate of change of buffer occupancy
+		double m_buffer_rate_of_change;
 
 		//! The Number of bits currently left for allocating the remaining frames in a GOP
 		int m_current_GOP_bits;

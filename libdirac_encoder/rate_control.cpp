@@ -91,9 +91,12 @@ FrameComplexity::FrameComplexity():
 RateController::RateController(int trate, SourceParams& srcp, EncoderParams& encp):
 	m_qf (7.0),
 	m_I_qf (7.0),
+	m_I_qf_long_term(7.0),
 	m_target_rate(trate),
 	m_buffer_size(4000*trate),// for the moment, set buffer size to 4*bitrate
 	m_buffer_bits((m_buffer_size*3)/4),// initial occupancy of 75%
+	m_old_buffer_bits(m_buffer_bits),
+	m_buffer_rate_of_change(0),
 	m_encparams(encp),
 	m_fcount(encp.L1Sep() ),
 	m_intra_only(false),
@@ -118,6 +121,8 @@ void RateController::SetFrameDistribution()
         m_num_Iframe = 0;
 
 	m_num_L2frame = m_encparams.GOPLength() - m_num_Iframe - m_num_L1frame;
+	
+	
 }
 
 void RateController::CalcTotalBits(const SourceParams& sourceparams)
@@ -234,7 +239,7 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
             double prate = ProjectedSubgroupRate();
                 
             // Determine K value
-            double K = std::pow(prate, 2)*std::pow(10.0, ((double)2/5*(10-m_qf)))/16;
+            double K = std::pow(prate, 2)*std::pow(10.0, ((double)2/5*(10-m_qf)))/16;           
  
             // Determine a new QF
             m_qf = 10 - (double)5/2*log10(16*K/std::pow(trate, 2));	
@@ -264,9 +269,14 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
 
 void RateController::UpdateBuffer( const int num_bits )
 {
+    m_old_buffer_bits = m_buffer_bits;
+
     m_buffer_bits -= num_bits;
     m_buffer_bits += m_picture_bits;
-/*        
+                                                     
+   m_buffer_rate_of_change *= 0.9;
+   m_buffer_rate_of_change += 0.1*( (double)( m_buffer_bits - m_old_buffer_bits ) );
+///*        
     if (m_encparams.Verbose())
     {
         std::cout<<std::endl<<"Buffer occupancy = "<<((double)m_buffer_bits*100.0)
@@ -279,18 +289,18 @@ void RateController::UpdateBuffer( const int num_bits )
         {
         std::cout<<std::endl<<"WARNING: decoder buffer is out of bits - bit rate is too high";
         }
-        m_buffer_bits = 0;
+//        m_buffer_bits = 0;
     }
 
     if (m_buffer_bits>m_buffer_size)
     {
         if (m_encparams.Verbose())
         {
-        std::cout<<std::endl<<"WARNING: decoder buffer has overflowed  - bit rate is too low";
+        std::cout<<std::endl<<"WARNING: decoder buffer has overflowed  - bit rate is too low.";
         }
-        m_buffer_bits = m_buffer_size;
+//        m_buffer_bits = m_buffer_size;
     }
-*/    
+//*/    
        
 }
 
@@ -300,15 +310,62 @@ void RateController::Allocate ()
 	const int XL1 = m_frame_complexity.L1Complexity();
 	const int XL2 = m_frame_complexity.L2Complexity();
 	
-    int GOP_target;
+	// Basic target for the GOP
+    int GOP_target = m_total_GOP_bits;
     
-//    int buffer_target = (3*m_buffer_size)/4;
-//    int adjustment = (m_buffer_bits-buffer_target)/4;
-//    adjustment = std::min( adjustment, m_total_GOP_bits/3);
-//        adjustment = std::max( adjustment, -(m_total_GOP_bits/3));
-    int adjustment=0;
+//    // Target buffer occupancy
+    int buffer_target = (3*m_buffer_size)/4;
     
-    GOP_target = m_total_GOP_bits + adjustment;
+    // An adjustment to the GOP target based on how the buffer occupancy
+    // is changing
+    int adjustment = 0;
+    
+    // An estimate of the number of frames before the buffer overflows
+    // or underflows 
+    int frames_till_disaster(0);
+    
+    if ( m_buffer_rate_of_change>0)
+    {
+    	// Buffer occupancy is increasing on average
+    	
+    	if ( m_buffer_bits<m_buffer_size )//we haven't overflowed yet
+    	{
+    		frames_till_disaster = int( (double)(m_buffer_size - m_buffer_bits) / m_buffer_rate_of_change );
+    	
+    	    if ( m_buffer_bits>buffer_target || frames_till_disaster<3 )
+    	    {
+    	        // Need to increase bit rate to reduce buffer occupancy
+    	        adjustment = (m_buffer_size-m_buffer_bits)/(frames_till_disaster+1);
+    	    }
+    	    else 
+    	        std::cout<<std::endl<<"Not adjusting 1";
+    	}
+    	else // we have overflowed
+    	    adjustment = m_encparams.GOPLength()*(m_buffer_bits-m_buffer_size)/6;
+    }
+    else
+    {
+    	// Buffer occupancy is decreasing on average
+
+    	if ( m_buffer_bits>=0 )//we haven't underflowed yet
+    	{
+    	    frames_till_disaster = int( (double)( -m_buffer_bits ) / m_buffer_rate_of_change );
+
+    	    if ( m_buffer_bits<buffer_target || frames_till_disaster<3 )
+    	    {
+                // Need to decrease bit rate to increase buffer occupancy
+                adjustment = -m_buffer_bits/(frames_till_disaster+1);
+    	    }
+    	    else
+    	        std::cout<<std::endl<<"Not adjusting 2";
+    	}
+    	else// we have underflowed
+            adjustment = m_encparams.GOPLength()*(-m_buffer_bits)/6;
+    }
+ std::cout<<std::endl<<"Buffer rate of change is  "<<m_buffer_rate_of_change;
+ std::cout<<std::endl<<"Frames till disaster is "<<frames_till_disaster;
+ std::cout<<std::endl<<"Adjustment is "<<adjustment;
+    GOP_target += m_encparams.GOPLength() * adjustment;
 	
     const int min_bits = m_total_GOP_bits/(100*m_encparams.GOPLength());
 
@@ -357,7 +414,7 @@ float RateController::ReviewQualityFactor( const float qfac, const int num_bits 
 float RateController::ClipQualityFactor( const float qfac )
 {
     // Keep the quality factor in a sensible range
-    return std::min( std::max( qfac, 2.0f), 15.0f);
+    return std::min( std::max( qfac, 2.0f), 12.5f);
 }
 
 void RateController::CalcNextIntraQualFactor()
@@ -365,4 +422,14 @@ void RateController::CalcNextIntraQualFactor()
     m_I_qf = (m_I_qf + m_qf)/2.0;
 	m_I_qf = ClipQualityFactor( m_I_qf );
 	m_encparams.SetQf(m_I_qf);
+	
+	const double ff = 0.95;
+	m_I_qf_long_term *= ff;
+	m_I_qf_long_term += ( 1.0 - ff )*m_I_qf;
+}
+
+void RateController::SetCutFrameQualFactor()
+{
+	m_qf = std::min( m_qf , m_I_qf_long_term );
+    m_encparams.SetQf( m_qf );	
 }
