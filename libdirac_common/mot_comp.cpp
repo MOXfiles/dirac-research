@@ -347,6 +347,8 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
     // Factors to compensate for subsampling of chroma
     int xscale_shift = 0;
     int yscale_shift = 0;
+    int xscale_offset = 0;
+    int yscale_offset = 0;
 
     if ( cs != Y_COMP )
     {
@@ -354,16 +356,22 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
         {
             xscale_shift = 1;
             yscale_shift = 1;
+            xscale_offset = 1;
+            yscale_offset = 1;
         }
         else if (m_cformat == format422)
         {
             xscale_shift = 1;
             yscale_shift = 0;
+            xscale_offset = 1;
+            yscale_offset = 0;
         }
         //else if (m_cformat == format411)
         //{
          //   xscale_shift = 2;
           //  yscale_shift = 0;
+          //  xscale_offset = 2;
+          //  yscale_offset = 0;
         //}
 
     } 
@@ -504,29 +512,29 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
             if(block_mode == REF1_ONLY)
             {
                 mv1 = (*mv_array1)[yblock][xblock];
-                mv1.x >>= xscale_shift;
-                mv1.y >>= yscale_shift;
+                mv1.x = (mv1.x + xscale_offset) >> xscale_shift;
+                mv1.y = (mv1.y + yscale_offset) >> yscale_shift;
 
                 CompensateBlock(pic_data, orig_pic_size, ref1up, mv1, pos, *wt);
             }
             else if (block_mode == REF2_ONLY)
             {                
                 mv2 = (*mv_array2)[yblock][xblock];
-                mv2.x >>= xscale_shift;
-                mv2.y >>= yscale_shift;
+                mv2.x = (mv2.x + xscale_offset) >> xscale_shift;
+                mv2.y = (mv2.y + yscale_offset) >> yscale_shift;
 
                 CompensateBlock(pic_data, orig_pic_size, ref2up, mv2, pos, *wt);
             }
             else if(block_mode == REF1AND2)
             {
                 mv1 = (*mv_array1)[yblock][xblock];
-                mv1.x >>= xscale_shift;
-                mv1.y >>= yscale_shift;
+                mv1.x = (mv1.x + xscale_offset) >> xscale_shift;
+                mv1.y = (mv1.y + yscale_offset) >> yscale_shift;
 
                 CompensateBlock(pic_data, orig_pic_size, ref1up, mv1, pos, *wt_ref1);
                 mv2 = (*mv_array2)[yblock][xblock];
-                mv2.x >>= xscale_shift;
-                mv2.y >>= yscale_shift;
+                mv2.x = (mv2.x + xscale_offset) >> xscale_shift;
+                mv2.y = (mv2.y + yscale_offset) >> yscale_shift;
 
                 CompensateBlock(pic_data, orig_pic_size, ref2up, mv2, pos, *wt_ref2);
             }
