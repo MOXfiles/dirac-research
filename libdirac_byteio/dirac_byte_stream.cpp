@@ -95,9 +95,10 @@ ParseUnitByteIO* DiracByteStream::GetNextParseUnit()
             return NULL;
     }
 
-   bool unit_found=false;
-   ParseUnitByteIO* p_curr_unit=NULL;
-   try {
+    bool unit_found=false;
+    ParseUnitByteIO* p_curr_unit=NULL;
+    try
+    {
 
         while(!unit_found)
         {
@@ -137,25 +138,28 @@ ParseUnitByteIO* DiracByteStream::GetNextParseUnit()
             unit_found=true;
         } // while
       
-   }// try
-   catch (DiracException& dirac_exception)
-   {
-        delete p_curr_unit;
+    }// try
+    catch (DiracException& dirac_exception)
+    {
+        if (mp_next_parse_unit != NULL && p_curr_unit != mp_next_parse_unit)
+            delete mp_next_parse_unit;
+
         mp_next_parse_unit = NULL;
+        delete p_curr_unit;
         SeekGet(pos, ios_base::beg);
         return NULL;
-   }
+    }
 
-      // Remove all redundant bytes that are not part of a parse unit
-      int remove_size = std::max (0, GetReadBytePosition()-p_curr_unit->GetSize());
-      if (remove_size)
-      {
-            //std::cerr << "Size="<<GetSize() << " Un-useful bytes=" << remove_size << std::endl;
-            RemoveRedundantBytes(remove_size);
-      }
+    // Remove all redundant bytes that are not part of a parse unit
+    int remove_size = std::max (0, GetReadBytePosition()-p_curr_unit->GetSize());
+    if (remove_size)
+    {
+       //std::cerr << "Size="<<GetSize() << " Un-useful bytes=" << remove_size << std::endl;
+        RemoveRedundantBytes(remove_size);
+    }
 
-    mp_prev_parse_unit=p_curr_unit;
-    return p_curr_unit;
+     mp_prev_parse_unit=p_curr_unit;
+     return p_curr_unit;
 }
 
 DiracByteStats DiracByteStream::GetSequenceStats() const
