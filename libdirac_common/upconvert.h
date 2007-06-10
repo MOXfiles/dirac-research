@@ -56,8 +56,7 @@ namespace dirac
     public:
 
         //! Constructor
-        UpConverter(int min_val, int max_val)
-            : m_min_val(min_val), m_max_val(max_val) {};
+        UpConverter(int min_val, int max_val, int orig_xlen, int orig_ylen);
 
         //! Destructor
         ~UpConverter() {};
@@ -65,7 +64,9 @@ namespace dirac
         //! Upconvert the picture data
         /*!
             Upconvert the picture data, where the parameters are
-            \param    pic_data    is the original data
+            \param    orig_xlen  unpadded length of original data
+            \param    orig_ylen  unpadded height of original data
+            \param    pic_data   is the original data
             \param    up_data    is the upconverted data
          */
         void DoUpConverter(const PicArray& pic_data, PicArray& up_data);
@@ -97,6 +98,9 @@ namespace dirac
 
         const int m_min_val;
         const int m_max_val;
+
+        const int m_orig_xl;
+        const int m_orig_yl;
     };
 
 } // namespace dirac

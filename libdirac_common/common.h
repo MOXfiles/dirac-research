@@ -793,7 +793,10 @@ namespace dirac
         /*!
            Frame chroma format is set Frame sort defaults to I frame.
         */    
-        FrameParams(const ChromaFormat& cf, int xlen, int ylen, int c_xlen, int c_ylen, unsigned int video_depth);
+        FrameParams(const ChromaFormat& cf, int orig_xlen, int orig_ylen, 
+                    int dwt_xlen, int dwt_ylen,
+                    int c_dwt_xlen, int c_dwt_ylen,
+                    unsigned int video_depth);
         
         //! Constructor
         /*!
@@ -822,17 +825,29 @@ namespace dirac
         //! Returns the chroma format of the frame
         const ChromaFormat& CFormat() const{return m_cformat;}
         
-        //! Returns the luma width of the frame
-        int Xl() const{return m_xl;}
+        //! Returns the luma width of the padded frame
+        int DwtXl() const{return m_dwt_xl;}
         
-        //! Returns the luma height of the frame
-        int Yl() const{return m_yl;}
+        //! Returns the luma height of the padded frame
+        int DwtYl() const{return m_dwt_yl;}
         
-        //! Returns the chroma width of the frame
-        int ChromaXl() const{return m_chroma_xl;}
+        //! Returns the chroma width of the padded frame
+        int DwtChromaXl() const{return m_dwt_chroma_xl;}
         
-        //! Returns the chroma height of the frame
-        int ChromaYl() const{return m_chroma_yl;}
+        //! Returns the chroma height of the padded frame
+        int DwtChromaYl() const{return m_dwt_chroma_yl;}
+        
+        //! Returns the original picture width
+        int OrigXl() const {return m_orig_xl;}
+        
+        //! Returns the original picture height
+        int OrigYl() const {return m_orig_yl;}
+        
+        //! Returns the original chroma width of the frame
+        int OrigChromaXl() const{return m_orig_cxl;}
+        
+        //! Returns the original chroma height of the frame
+        int OrigChromaYl() const{return m_orig_cyl;}
         
         //! Returns the type of the frame
         const FrameSort& FSort() const {return m_fsort;}
@@ -890,17 +905,23 @@ namespace dirac
         //! Sets the chroma format
         void SetCFormat(ChromaFormat cf){ m_cformat = cf; }
         
-        //! Sets the frame luma length
-        void SetXl(int xl){m_xl = xl; }
+        //! Sets the padded frame luma length
+        void SetDwtXl(int xl){m_dwt_xl = xl; }
         
-        //! Sets the frame luma height
-        void SetYl(int yl){m_yl = yl; }
+        //! Sets the padded frame luma height
+        void SetDwtYl(int yl){m_dwt_yl = yl; }
+        
+        //! Sets the original picture width
+        void SetOrigXl(int orig_xlen);
+        
+        //! Sets the original picture height
+        void SetOrigYl(int orig_ylen);
         
         //! Sets the chroma length
-        void SetChromaXl(int xl){m_chroma_xl = xl; }
+        void SetDwtChromaXl(int xl){m_dwt_chroma_xl = xl; }
         
         //! Sets the chroma height
-        void SetChromaYl(int yl){m_chroma_yl = yl; }
+        void SetDwtChromaYl(int yl){m_dwt_chroma_yl = yl; }
         
         //! Sets the video depth of the frame
         void SetVideoDepth(int vd) { m_video_depth = vd; }
@@ -916,11 +937,11 @@ namespace dirac
         //! The chroma format
         ChromaFormat m_cformat;
         
-        //! Frame luma width
-        int m_xl;
+        //! Padded Frame luma width for Discrete Wavelet Transform
+        int m_dwt_xl;
         
-        //! Frame luma height
-        int m_yl;
+        //! Padded Frame luma height for Discrete Wavelet Transform
+        int m_dwt_yl;
         
         //! The frame sort
         FrameSort m_fsort;
@@ -943,17 +964,30 @@ namespace dirac
         //! True if the frame has been output, false if not
         bool m_output;
 
-        //! Chroma length
-        int m_chroma_xl;        
+        //! DWT Chroma length
+        int m_dwt_chroma_xl;        
         
-        //! Chroma height
-        int m_chroma_yl;        
+        //! DWT Chroma height
+        int m_dwt_chroma_yl;        
         
         //! The set of frame numbers in the retired frame list
         mutable std::vector<int> m_retd_list;
 
         //! Video depth
         unsigned int m_video_depth;
+        
+        //! Orignal Frame luma width
+        int m_orig_xl;
+        
+        //! Orignal Frame luma height
+        int m_orig_yl;
+        
+        //! Orignal Frame chroma width
+        int m_orig_cxl;
+        
+        //! Orignal Frame chroma height
+        int m_orig_cyl;
+        
         
     };
 

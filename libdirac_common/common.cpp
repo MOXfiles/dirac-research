@@ -854,18 +854,41 @@ m_output(false)
 {}    
 
 // Constructor 
-FrameParams::FrameParams(const ChromaFormat& cf, int xlen, int ylen, int c_xlen, int c_ylen, unsigned int video_depth):
+FrameParams::FrameParams(const ChromaFormat& cf, 
+                         int orig_xlen, int orig_ylen,
+                         int dwt_xlen, int dwt_ylen, 
+                         int c_dwt_xlen, int c_dwt_ylen,
+                         unsigned int video_depth):
     m_cformat(cf),
-    m_xl(xlen),
-    m_yl(ylen),
+    m_dwt_xl(dwt_xlen),
+    m_dwt_yl(dwt_ylen),
     m_fsort(FrameSort::IntraRefFrameSort()),
     m_frame_type( INTRA_FRAME ),
     m_reference_type( REFERENCE_FRAME ),    
     m_output(false),
-    m_chroma_xl(c_xlen),
-    m_chroma_yl(c_ylen),
-    m_video_depth(video_depth)
-{}
+    m_dwt_chroma_xl(c_dwt_xlen),
+    m_dwt_chroma_yl(c_dwt_ylen),
+    m_video_depth(video_depth),
+    m_orig_xl(orig_xlen),
+    m_orig_yl(orig_ylen)
+{
+    m_orig_cxl = m_orig_cyl = 0;
+    if (cf == format420)
+    {
+        m_orig_cxl = orig_xlen>>1;
+        m_orig_cyl = orig_ylen>>1;
+    }
+    else if (cf == format422)
+    {
+        m_orig_cxl = orig_xlen>>1;
+        m_orig_cyl = orig_ylen;
+    }
+    else if (cf == format444)
+    {
+        m_orig_cxl = orig_xlen;
+        m_orig_cyl = orig_ylen;
+    }
+}
 
 // Constructor
 FrameParams::FrameParams(const ChromaFormat& cf, const FrameSort& fs):
@@ -878,57 +901,89 @@ FrameParams::FrameParams(const ChromaFormat& cf, const FrameSort& fs):
 // Constructor
 FrameParams::FrameParams(const SeqParams& sparams):
     m_cformat(sparams.CFormat()),
-    m_xl(sparams.Xl()),
-    m_yl(sparams.Yl()),
+    m_dwt_xl(sparams.Xl()),
+    m_dwt_yl(sparams.Yl()),
     m_fsort(FrameSort::IntraRefFrameSort()),
     m_frame_type( INTRA_FRAME ),
     m_reference_type( REFERENCE_FRAME ),
     m_output(false),
-    m_video_depth(sparams.GetVideoDepth())
+    m_video_depth(sparams.GetVideoDepth()),
+    m_orig_xl(sparams.Xl()),
+    m_orig_yl(sparams.Yl())
 {
-    m_chroma_xl = m_chroma_yl = 0;
+    m_orig_cxl = m_orig_cyl = m_dwt_chroma_xl = m_dwt_chroma_yl = 0;
     if(m_cformat == format422) 
     {
-        m_chroma_xl = m_xl/2;
-        m_chroma_yl = m_yl;
+        m_orig_cxl = m_dwt_chroma_xl = m_orig_xl/2;
+        m_orig_cyl = m_dwt_chroma_yl = m_orig_yl;
     }
     else if (m_cformat == format420)
     {
-        m_chroma_xl = m_xl/2;
-        m_chroma_yl = m_yl/2;
+        m_orig_cxl = m_dwt_chroma_xl = m_orig_xl/2;
+        m_orig_cyl = m_dwt_chroma_yl = m_orig_yl/2;
     }
     else if (m_cformat==format444)
     {
-        m_chroma_xl = m_xl;
-        m_chroma_yl = m_yl;
+        m_orig_cxl = m_dwt_chroma_xl = m_orig_xl;
+        m_orig_cyl = m_dwt_chroma_yl = m_orig_yl;
     }
 }
 
 // Constructor
 FrameParams::FrameParams(const SeqParams& sparams, const FrameSort& fs):
     m_cformat(sparams.CFormat()),
-    m_xl(sparams.Xl()),
-    m_yl(sparams.Yl()),
+    m_dwt_xl(sparams.Xl()),
+    m_dwt_yl(sparams.Yl()),
     m_output(false),
-    m_video_depth(sparams.GetVideoDepth())
+    m_video_depth(sparams.GetVideoDepth()),
+    m_orig_xl(sparams.Xl()),
+    m_orig_yl(sparams.Yl())
 {
     SetFSort(fs);
     
-    m_chroma_xl = m_chroma_yl = 0;
+    m_orig_cxl = m_orig_cyl = m_dwt_chroma_xl = m_dwt_chroma_yl = 0;
     if(m_cformat == format422) 
     {
-        m_chroma_xl = m_xl/2;
-        m_chroma_yl = m_yl;
+        m_orig_cxl = m_dwt_chroma_xl = m_orig_xl/2;
+        m_orig_cyl = m_dwt_chroma_yl = m_orig_yl;
     }
     else if (m_cformat == format420)
     {
-        m_chroma_xl = m_xl/2;
-        m_chroma_yl = m_yl/2;
+        m_orig_cxl = m_dwt_chroma_xl = m_orig_xl/2;
+        m_orig_cyl = m_dwt_chroma_yl = m_orig_yl/2;
     }
     else if (m_cformat==format444)
     {
-        m_chroma_xl = m_xl;
-        m_chroma_yl = m_yl;
+        m_orig_cxl = m_dwt_chroma_xl = m_orig_xl;
+        m_orig_cyl = m_dwt_chroma_yl = m_orig_yl;
+    }
+}
+
+void FrameParams::SetOrigXl(int orig_xlen)
+{
+    m_orig_xl = orig_xlen;
+    m_orig_cxl = 0;
+    if (m_cformat == format420 || m_cformat == format422)
+    {
+        m_orig_cxl = m_orig_xl>>1;
+    }
+    else if (m_cformat == format444)
+    {
+        m_orig_cxl = m_orig_xl;
+    }
+}
+
+void FrameParams::SetOrigYl(int orig_ylen)
+{
+    m_orig_yl = orig_ylen;
+    m_orig_cyl = 0;
+    if (m_cformat == format420)
+    {
+        m_orig_cyl = m_orig_yl>>1;
+    }
+    else if (m_cformat == format422 || m_cformat == format444)
+    {
+        m_orig_cyl = m_orig_yl;
     }
 }
 
@@ -985,8 +1040,8 @@ void FrameParams::SetReferenceType(const ReferenceType rtype)
 QuantiserLists::QuantiserLists()
 :
     // FIXME: hardcode m_max_qindex to 119. In future this will depend on level
-	// As per spec max qf_idx is 127. But for values of qf_idx > 120 we
-	// will need more than 32 bits. Hence qf_idx is limited to 119.
+    // As per spec max qf_idx is 127. But for values of qf_idx > 120 we
+    // will need more than 32 bits. Hence qf_idx is limited to 119.
     m_max_qindex( 119 ),  
     m_qflist4( m_max_qindex+1 ),
     m_intra_offset4( m_max_qindex+1 ),

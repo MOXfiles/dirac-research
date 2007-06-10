@@ -204,7 +204,7 @@ void FramesTest::tearDown()
 
 void FramesTest::testConstructor()
 {
-    FrameParams f_params(format444, 20, 30, 20, 30, 8);
+    FrameParams f_params(format444, 20, 30, 20, 30, 20, 30, 8);
     Frame frame(f_params);
 
     CPPUNIT_ASSERT_EQUAL (20, frame.Ydata().LengthX());
@@ -228,7 +228,7 @@ void FramesTest::testDefaultFParam()
 
 void FramesTest::testCopyConstructor()
 {
-    FrameParams f_params(format444, 20, 30, 20, 30, 8);
+    FrameParams f_params(format444, 20, 30, 20, 30, 20, 30, 8);
     Frame frame(f_params);
     setupFrame(frame, 0);
     
@@ -238,11 +238,11 @@ void FramesTest::testCopyConstructor()
 
 void FramesTest::testAssignment()
 {
-    FrameParams f_params(format444, 20, 30, 20, 30, 8);
+    FrameParams f_params(format444, 20, 30, 20, 30, 20, 30, 8);
     Frame frame(f_params);
     setupFrame(frame, 0);
 
-    FrameParams f_params_copy(format444,10,10, 10, 10, 8);
+    FrameParams f_params_copy(format444, 10, 10, 10, 10, 10, 10, 8);
     Frame frame_copy(f_params_copy);
 
     frame_copy = frame;

@@ -100,11 +100,10 @@ void mmx_clip (ValueType *pic, int len, short min_val, short max_val)
 // Upconvert by a factor of 2
 void UpConverter::DoUpConverter(const PicArray& pic_data, PicArray& up_data)
 {
-
-    m_width_old = pic_data.LengthX();
-    m_height_old = pic_data.LengthY();
-    m_width_new = up_data.LengthX();
-    m_height_new = up_data.LengthY();    
+    m_width_old = std::min (pic_data.LengthX(), m_orig_xl);
+    m_height_old = std::min (pic_data.LengthY(), m_orig_yl);
+    m_width_new = std::min(2*m_width_old, up_data.LengthX());
+    m_height_new = std::min(2*m_height_old, up_data.LengthY());
 
     //Variables that will be used by the filter calculations
     u_sum sum1;

@@ -51,13 +51,15 @@ FrameBuffer::FrameBuffer() :
 
 //Simple constructor for general operation
 FrameBuffer::FrameBuffer(ChromaFormat cf,
-                         const int xlen,
-                         const int ylen, 
-                         const int c_xlen, 
-                         const int c_ylen, 
+                         const int orig_xlen,
+                         const int orig_ylen, 
+                         const int dwt_xlen,
+                         const int dwt_ylen, 
+                         const int dwt_cxlen, 
+                         const int dwt_cylen, 
                          const unsigned int vd):
     m_ref_count(0), 
-    m_fparams(cf,xlen,ylen, c_xlen, c_ylen, vd),
+    m_fparams(cf, orig_xlen, orig_ylen, dwt_xlen, dwt_ylen, dwt_cxlen, dwt_cylen, vd),
     m_num_L1(0),
     m_L1_sep(1),
     m_gop_len(0)
@@ -67,13 +69,15 @@ FrameBuffer::FrameBuffer(ChromaFormat cf,
 FrameBuffer::FrameBuffer(ChromaFormat cf,
                          const int numL1,
                          const int L1sep,
-                         const int xlen,
-                         const int ylen, 
-                         const int c_xlen, 
-                         const int c_ylen, 
+                         const int orig_xlen,
+                         const int orig_ylen, 
+                         const int dwt_xlen,
+                         const int dwt_ylen, 
+                         const int dwt_cxlen, 
+                         const int dwt_cylen, 
                          const unsigned int vd): 
     m_ref_count(0),
-    m_fparams(cf,xlen,ylen, c_xlen, c_ylen, vd),
+    m_fparams(cf,orig_xlen, orig_ylen, dwt_xlen, dwt_ylen, dwt_cxlen, dwt_cylen, vd),
     m_num_L1(numL1),
     m_L1_sep(L1sep)
 {    

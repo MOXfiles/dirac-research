@@ -331,11 +331,14 @@ void FrameDecompressor::PushFrame(FrameBuffer &my_buffer)
         
     m_fparams.SetCFormat(m_cformat);
 
-    m_fparams.SetXl(xl_luma);
-    m_fparams.SetYl(yl_luma);
+    m_fparams.SetDwtXl(xl_luma);
+    m_fparams.SetDwtYl(yl_luma);
 
-    m_fparams.SetChromaXl(xl_chroma);
-    m_fparams.SetChromaYl(yl_chroma);
+    m_fparams.SetOrigXl(m_decparams.OrigXl());
+    m_fparams.SetOrigYl(m_decparams.OrigYl());
+    
+    m_fparams.SetDwtChromaXl(xl_chroma);
+    m_fparams.SetDwtChromaYl(yl_chroma);
 
     m_fparams.SetVideoDepth(m_video_depth);
 

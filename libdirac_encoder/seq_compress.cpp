@@ -154,11 +154,19 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     m_pic_in->SetPadding(xpad_luma,ypad_luma);
 
     // Set up the frame buffers with the PADDED picture sizes
-    m_fbuffer = new FrameBuffer( sparams.CFormat() , m_encparams.NumL1() , m_encparams.L1Sep() , 
-            xpad_len , ypad_len, xpad_chroma_len, ypad_chroma_len, sparams.GetVideoDepth());
+    m_fbuffer = new FrameBuffer( sparams.CFormat() , 
+                                 m_encparams.NumL1() , m_encparams.L1Sep() ,
+                                 m_encparams.OrigXl(), m_encparams.OrigYl(),
+                                 xpad_len , ypad_len, 
+                                 xpad_chroma_len, ypad_chroma_len, 
+                                 sparams.GetVideoDepth());
 
-    m_origbuffer = new FrameBuffer( sparams.CFormat() , m_encparams.NumL1() , m_encparams.L1Sep() , 
-            xpad_len, ypad_len, xpad_chroma_len, ypad_chroma_len, sparams.GetVideoDepth());
+    m_origbuffer = new FrameBuffer( sparams.CFormat() ,
+                                    m_encparams.NumL1() , m_encparams.L1Sep() , 
+                                    m_encparams.OrigXl(), m_encparams.OrigYl(),
+                                    xpad_len, ypad_len, 
+                                    xpad_chroma_len, ypad_chroma_len,
+                                    sparams.GetVideoDepth());
             
     // Set up a rate controller if rate control being used
     if (m_encparams.TargetRate() != 0)
@@ -256,17 +264,17 @@ Frame& SequenceCompressor::CompressNextFrame()
 
         m_fbuffer->SetRetiredList( m_show_fnum, m_current_display_fnum );
 
-		FrameByteIO *p_frame_byteio;
+        FrameByteIO *p_frame_byteio;
 
         Frame& my_frame = m_fbuffer->GetFrame( m_current_display_fnum );
-		FrameParams& fparams = my_frame.GetFparams();
-		const FrameSort& fsort = fparams.FSort();
+        FrameParams& fparams = my_frame.GetFparams();
+        const FrameSort& fsort = fparams.FSort();
 
-		// Do motion estimation using the original (not reconstructed) data
-		bool is_a_cut( false );
-		if ( my_frame.GetFparams().FSort().IsInter() )
-		{
-		   is_a_cut = m_fcoder.MotionEstimate(  *m_origbuffer,        
+        // Do motion estimation using the original (not reconstructed) data
+        bool is_a_cut( false );
+        if ( my_frame.GetFparams().FSort().IsInter() )
+        {
+           is_a_cut = m_fcoder.MotionEstimate(  *m_origbuffer,        
                                                                              m_current_display_fnum );
             if ( is_a_cut )
             {             
@@ -279,44 +287,44 @@ Frame& SequenceCompressor::CompressNextFrame()
                 if ( m_encparams.Verbose() )
                     std::cout<<std::endl<<"Cut detected and I-frame inserted!";                        
             }
-		}	
+        }    
 
         // Now code the residual data
-		if (m_encparams.TargetRate() == 0)
-		{
-			// Coding Without using Rate Control Algorithm
-			p_frame_byteio =  m_fcoder.Compress(*m_fbuffer ,  
-												m_current_display_fnum, 
+        if (m_encparams.TargetRate() == 0)
+        {
+            // Coding Without using Rate Control Algorithm
+            p_frame_byteio =  m_fcoder.Compress(*m_fbuffer ,  
+                                                m_current_display_fnum, 
                                                 m_current_accessunit_fnum);
-		}
-		else
-		{
-			// Coding using Rate Control Algorithm
+        }
+        else
+        {
+            // Coding using Rate Control Algorithm
 
-			if ( fsort.IsIntra() && 
+            if ( fsort.IsIntra() && 
                  m_current_display_fnum != 0 && 
                  m_encparams.NumL1() != 0)
-			{
-				// Calculate the new QF for encoding the following I frames in the sequence
-				// in normal coding
-				
+            {
+                // Calculate the new QF for encoding the following I frames in the sequence
+                // in normal coding
+                
                 if ( is_a_cut )
                 {
                     // Recompute the QF based on long-term history since recent history is bunk
                     m_ratecontrol->SetCutFrameQualFactor();
                 }
                 else
-                    m_ratecontrol->CalcNextIntraQualFactor();	
-			}
+                    m_ratecontrol->CalcNextIntraQualFactor();    
+            }
       
-			p_frame_byteio =  m_fcoder.Compress(*m_fbuffer,        
-													m_current_display_fnum, 
+            p_frame_byteio =  m_fcoder.Compress(*m_fbuffer,        
+                                                    m_current_display_fnum, 
                                                     m_current_accessunit_fnum);
 
             // Update the quality factor
             m_ratecontrol->CalcNextQualFactor(fparams, p_frame_byteio->GetSize()*8);
 
-		}
+        }
         // add the frame to the byte stream
         m_dirac_byte_stream.AddFrame(p_frame_byteio);
 

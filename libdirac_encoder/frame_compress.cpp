@@ -74,7 +74,7 @@ FrameCompressor::~FrameCompressor()
 bool FrameCompressor::MotionEstimate(const  FrameBuffer& my_fbuffer ,
                                                             int fnum )
 {
-    m_is_a_cut = false;	
+    m_is_a_cut = false;
 
     if (m_me_data)
     {
@@ -97,16 +97,16 @@ bool FrameCompressor::MotionEstimate(const  FrameBuffer& my_fbuffer ,
         m_medata_avail = true;
     else
     {
-    	m_medata_avail = false;
+        m_medata_avail = false;
         delete m_me_data;
-        m_me_data = 0;	
+        m_me_data = 0;
     }
     
     return m_is_a_cut;
 }
 
 FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
-                                                                   int fnum,  int au_fnum)
+                                        int fnum,  int au_fnum)
 {
     Frame& my_frame = my_buffer.GetFrame( fnum );
 

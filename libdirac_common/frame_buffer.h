@@ -68,19 +68,23 @@ namespace dirac
             compressing when there are no L2 frames, or when the temporal 
             prediction structure is to be determined on the fly. 
 
-            \param    cf    the Chroma format of frames in the buffer
-            \param    xlen    the luma width of frames in the buffer
-            \param    ylen    the luma height of frames in the buffer
-            \param    c_xlen  the chroma width of frames in the buffer
-            \param    c_ylen  the chroma height of frames in the buffer
-            \param    vd      the video depth of the data in the buffer
+            \param   cf    the Chroma format of frames in the buffer
+            \param   orig_xlen  the original luma width of frames in the buffer
+            \param   orig_ylen  the original luma height of frames in the buffer
+            \param   dwt_xlen   the padded luma width of frames in the buffer
+            \param   dwt_ylen   the padded luma height of frames in the buffer
+            \param   dwt_cxlen  the padded chroma width of frames in the buffer
+            \param   dwt_cylen  the padded chroma height of frames in the buffer
+            \param   vd      the video depth of the data in the buffer
 
         */
         FrameBuffer(ChromaFormat cf,
-                    const int xlen,
-                    const int ylen, 
-                    const int c_xlen, 
-                    const int c_ylen, 
+                    const int orig_xlen,
+                    const int orig_ylen, 
+                    const int dwt_xlen,
+                    const int dwt_ylen, 
+                    const int dwt_cxlen, 
+                    const int dwt_cylen, 
                     const unsigned int vd);
 
         //! Constructor
@@ -91,22 +95,26 @@ namespace dirac
             or when the temporal prediction structure is to be determined on 
             the fly. 
 
-            \param    cf    the Chroma format of frames in the buffer
-            \param    numL1    the number of Layer 1 frames before the next I frame. 0 means that there is only one I frame.
-            \param    L1sep    the number of Layer 2 frames between Layer 1 frames
-            \param    xlen    the luma width of frames in the buffer
-            \param    ylen    the luma height of frames in the buffer
-            \param    c_xlen  the chroma width of frames in the buffer
-            \param    c_ylen  the chroma height of frames in the buffer
-            \param    vd      the video depth of the data in the buffer
+            \param  cf    the Chroma format of frames in the buffer
+            \param  numL1    the number of Layer 1 frames before the next I frame. 0 means that there is only one I frame.
+            \param  L1sep    the number of Layer 2 frames between Layer 1 frames
+            \param  orig_xlen  the original luma width of frames in the buffer
+            \param  orig_ylen  the original luma height of frames in the buffer
+            \param  dwt_xlen   the padded luma width of frames in the buffer
+            \param  dwt_ylen   the padded luma height of frames in the buffer
+            \param  dwt_cxlen  the padded chroma width of frames in the buffer
+            \param  dwt_cylen  the padded chroma height of frames in the buffer
+            \param  vd      the video depth of the data in the buffer
         */    
         FrameBuffer(ChromaFormat cf,
                     const int numL1,
                     const int L1sep,
-                    const int xlen,
-                    const int ylen, 
-                    const int c_xlen, 
-                    const int c_ylen, 
+                    const int orig_xlen,
+                    const int orig_ylen, 
+                    const int dwt_xlen,
+                    const int dwt_ylen, 
+                    const int dwt_cxlen, 
+                    const int dwt_cylen, 
                     const unsigned int vd);
 
         //! Copy constructor
