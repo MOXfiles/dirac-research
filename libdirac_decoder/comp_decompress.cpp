@@ -84,6 +84,7 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
         //              and
         // b. More than one code block is present in the subband.
         bands(b).SetUsingMultiQuants( 
+                           m_decparams.SpatialPartition() &&
                            m_decparams.GetCodeBlockMode() == QUANT_MULTIPLE &&
                            (bands(b).GetCodeBlocks().LengthX() > 1 ||
                            bands(b).GetCodeBlocks().LengthY() > 1)
