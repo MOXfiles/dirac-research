@@ -135,7 +135,6 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
 
        FrameSort fsort = m_fparams.FSort();
        auto_ptr<MvData> mv_data;
-//       unsigned int num_mv_bits;
 
        if ( fsort.IsInter() )
        {    //do all the MV stuff 

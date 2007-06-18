@@ -425,7 +425,7 @@ unsigned int BlockParametersIndex (const OLBParams& bparams)
 void SetDefaultTransformFilter(FrameType ftype, WltFilter &wf)
 {
     if (ftype == INTRA_FRAME)
-        wf = DD9_3;
+        wf = DD9_5;
     else
         wf = LEGALL5_3;
 }

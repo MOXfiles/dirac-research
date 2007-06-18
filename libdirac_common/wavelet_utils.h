@@ -453,7 +453,7 @@ namespace dirac
             void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
 
             //! Return a correction factor to compensate for non-unity power gain of low-pass filter
-            double GetLowFactor() const { return 1.179535649;}    
+            double GetLowFactor() const { return 1.179535649;}
 
             //! Return a correction factor to compensate for non-unity power gain of high-pass filter
             double GetHighFactor() const { return 0.81649658;}
@@ -469,7 +469,7 @@ namespace dirac
         };
 
         //! A short filter that's actually close to Daubechies (9,7) but with just two lifting steps
-        class VHFilterDD9_3 : public VHFilter
+        class VHFilterDD9_5 : public VHFilter
         {
 
         public:
@@ -481,7 +481,7 @@ namespace dirac
             void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
 
             //! Return a correction factor to compensate for non-unity power gain of low-pass filter
-            double GetLowFactor() const { return 1.218660804;}
+            double GetLowFactor() const { return 1.218660804;}     
 
             //! Return a correction factor to compensate for non-unity power gain of high-pass filter
             double GetHighFactor() const { return 0.780720058;}
@@ -492,7 +492,7 @@ namespace dirac
         };
 
 
-        //! An extension of DD9_3, with a better low-pass filter but more computation
+        //! An extension of DD9_5, with a better low-pass filter but more computation
         class VHFilterDD13_5 : public VHFilter
         {
 
@@ -505,10 +505,10 @@ namespace dirac
             void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
 
             //! Return a correction factor to compensate for non-unity power gain of low-pass filter
-            double GetLowFactor() const { return 1.28087;}
+            double GetLowFactor() const { return 1.235705971;}
 
             //! Return a correction factor to compensate for non-unity power gain of high-pass filter
-            double GetHighFactor() const { return 0.809254;}
+            double GetHighFactor() const { return 0.780719354;}
             
             //! Return the value of the additional bitshift
             int GetShift() const {return 1;}           

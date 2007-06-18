@@ -96,8 +96,8 @@ static void display_help()
     cout << "\nqf                float   0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
 	cout << "\ntargetrate        ulong   0UL           Target Bit Rate in Kbps";
     cout << "\nlossless          bool    false         Lossless coding (overrides qf)";
-    cout << "\niwlt_filter       string  DD9_3         Intra frame Transform Filter (DD9_3 LEGALL5_3 DD13_5 HAAR0 HAAR1 HAAR2 FIDELITY DAUB9_7)";
-    cout << "\nrwlt_filter       string  LEGALL5_3     Inter frame Transform Filter (DD9_3 LEGALL5_3 DD13_5 HAAR0 HAAR1 HAAR2 FIDELITY DAUB9_7)";
+    cout << "\niwlt_filter       string  DD9_5         Intra frame Transform Filter (DD9_5 LEGALL5_3 DD13_5 HAAR0 HAAR1 HAAR2 FIDELITY DAUB9_7)";
+    cout << "\nrwlt_filter       string  LEGALL5_3     Inter frame Transform Filter (DD9_5 LEGALL5_3 DD13_5 HAAR0 HAAR1 HAAR2 FIDELITY DAUB9_7)";
     cout << "\nwlt_depth         ulong   4             Transform Depth";
     cout << "\nmulti_quants      bool    false         Use multiple quantisers";
     cout << "\nmv_prec           string  false         MV Pixel Precision (1, 1/2, 1/4, 1/8)";
@@ -412,8 +412,8 @@ const string TransformFilterToString (WltFilter wf)
 {
     switch (wf)
     {
-    case DD9_3:
-        return string("DD9_3");
+    case DD9_5:
+        return string("DD9_5");
     case LEGALL5_3:
         return string("LEGALL5_3");
     case DD13_5:
@@ -435,8 +435,8 @@ const string TransformFilterToString (WltFilter wf)
 
 WltFilter StringToTransformFilter (string wf)
 {
-    if( wf=="DD9_3" )
-        return DD9_3;
+    if( wf=="DD9_5" )
+        return DD9_5;
     else if( wf=="LEGALL5_3" )
         return LEGALL5_3;
     else if( wf=="DD13_5" )

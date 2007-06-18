@@ -60,9 +60,9 @@ typedef enum { format444, format422, format420, formatNK } ChromaFormat;
 /*! Types of Wavelet filters supported. filterNK -  not known) */
 typedef enum 
 {
-    DD9_3=0,      /* Deslauriers-Dubuc (9,3) */
+    DD9_5=0,      /* Deslauriers-Dubuc (9,5) */
     LEGALL5_3,    /* LeGall (5,3) */
-    DD13_5,       /* Deslauriers-Dubuc (9,3) */
+    DD13_5,       /* Deslauriers-Dubuc (13,5) */
     HAAR0,        /* Haar, no shift per level*/
     HAAR1,        /* Haar, one shift per level*/
     HAAR2,        /* Haar, two shifts per level*/
