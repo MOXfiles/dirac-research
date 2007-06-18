@@ -206,7 +206,7 @@ inline void Interleave_mmx( const int xp ,
     _mm_empty();
 }
 
-void WaveletTransform::VHFilterDD9_3::Synth(const int xp , 
+void WaveletTransform::VHFilterDD9_5::Synth(const int xp , 
                                                 const int yp , 
                                                 const int xl , 
                                                 const int yl , 
