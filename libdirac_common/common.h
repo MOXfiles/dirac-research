@@ -1301,6 +1301,15 @@ namespace dirac
 
         //! Get whether we're doing lossless coding
         bool Lossless() const {return m_lossless;}
+        
+        //! Get whether we're doing full-search motion estimation
+        bool FullSearch() const {return m_full_search; }
+
+        //! Get the horizontal search range for full-search motion estimation
+        int XRangeME() const {return m_x_range_me;}
+
+        //! Get the vertical search range for full-search motion estimation
+        int YRangeME() const {return m_y_range_me;}
 
         //! Get the quality factor
         float Qf() const {return m_qf;}
@@ -1372,6 +1381,15 @@ namespace dirac
 
         //! Set whether we're doing lossless coding
         void SetLossless(const bool l){m_lossless = l;}
+        
+        //! Set whether we're doing full-search motion estimation
+        void SetFullSearch(const bool fs){m_full_search = fs;}
+
+        //! Set the horizontal search range for full-search motion estimation
+        void SetXRangeME(const int xr){m_x_range_me = xr;}
+
+        //! Set the vertical search range for full-search motion estimation
+        void SetYRangeME(const int yr){m_y_range_me = yr;}
 
         //! Set the quality factor
         void SetQf(const float qfac){ m_qf=qfac; CalcLambdas(m_qf); }
@@ -1426,6 +1444,15 @@ namespace dirac
       
         //! A flag indicating we're doing lossless coding
         bool m_lossless;
+        
+        //! A flag indicating whether we're doing full-search block matching
+        bool m_full_search;
+        
+        //! The horizontal range for full-search block matching
+        int m_x_range_me;
+        
+        //! The vertical range for full-search block matching
+        int m_y_range_me;
 
         //! Quality factor
         float m_qf; 

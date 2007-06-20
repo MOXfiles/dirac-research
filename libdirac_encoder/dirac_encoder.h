@@ -164,10 +164,16 @@ typedef MVPrecisionType dirac_mvprecision_t;
 /*! Structure that holds the encoder specific parameters */
 typedef struct 
 {
-    /*! Quality factor */
+    /*! Lossless coding */
     int lossless;
     /*! Quality factor */
     float qf;
+    /*! Full-search motion estimation */
+    int full_search;
+    /*! x-range for full search ME */
+    int x_range_me;
+    /*! y-range for full search ME */
+    int y_range_me;
     /*! The separation between L1 frames */
     int L1_sep;
     /*! The number of L1 frames before the next intra frame. Together

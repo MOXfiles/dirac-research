@@ -298,8 +298,8 @@ void BlockMatcher::FindBestMatchPel(const int xpos , const int ypos ,
 
     for ( int lnum=0 ; lnum<list_costs.Length() ; ++lnum)
     {
-        // Only do lists whose 1st element isn't too far off best
-        if ( list_costs[lnum] < 1.5*min_cost ) 
+//        // Only do lists whose 1st element isn't too far off best
+//        if ( list_costs[lnum] < 1.5*min_cost ) 
             list_nums.push_back( lnum );
     }// lnum
 

@@ -79,6 +79,7 @@ static void display_help()
     cout << "\nSD576             bool    false         Use SD-576 compression presets";
     cout << "\nHD720             bool    false         Use HD-720 compression presets";
     cout << "\nHD1080            bool    false         Use HD-1080 compression presets";
+    cout << "\nfull_search     ulong ulong  0UL 0UL         Use full search motion estimation";
     cout << "\nwidth             ulong   Preset        Width of frame";
     cout << "\nheight            ulong   Preset        Length of frame";
     cout << "\nheight            ulong   Preset        Length of frame";
@@ -679,6 +680,20 @@ int main (int argc, char* argv[])
             enc_ctx.enc_params.qf =  atof(argv[i]);
             parsed[i] = true;
         }
+        else if ( strcmp(argv[i], "-full_search") == 0 )
+        {
+            parsed[i] = true;
+            enc_ctx.enc_params.full_search =  1;
+            i++;
+
+            enc_ctx.enc_params.x_range_me = strtoul(argv[i],NULL,10);
+            parsed[i] = true;
+            
+            i++;
+            enc_ctx.enc_params.y_range_me = strtoul(argv[i],NULL,10);
+            parsed[i] = true;
+            
+        }    
 		else if ( strcmp(argv[i], "-targetrate") == 0 )
         {
             parsed[i] = true;

@@ -97,6 +97,12 @@ namespace dirac
 
         // the search-range sizes for the hierarchical match
         int m_xr, m_yr;
+        
+        // the search-range sizes for when hierarchical match fails
+        int m_big_xr, m_big_yr;
+        
+        // the temporal distances to the reference frames
+        int m_tdiff[2];
 
         // the frame sort - I, L1 or L2
         FrameSort m_fsort;
@@ -110,7 +116,16 @@ namespace dirac
         // Prediction used for each block. This is derived from neighbouring blocks
         // and is used to control the variation in the motion vector field.
         MVector m_mv_prediction;
-
+        
+        // The value used in computing block cost means with a simple recursive filter
+        double m_rho;
+        
+        // The mean of the block cost
+        double m_cost_mean;
+        
+        // The mean of the square of the block cost
+        double m_cost_mean_sq;
+        
     private:
 
         // Functions

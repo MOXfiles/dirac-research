@@ -487,8 +487,11 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     OLBParams bparams(12, 12, 8, 8);
 
     m_encparams.SetLocalDecode(enc_ctx->decode_flag);
+    m_encparams.SetFullSearch(enc_ctx->enc_params.full_search);
+    m_encparams.SetXRangeME(enc_ctx->enc_params.x_range_me);
+    m_encparams.SetYRangeME(enc_ctx->enc_params.y_range_me);
     m_encparams.SetQf(enc_ctx->enc_params.qf);
-       m_encparams.SetTargetRate(enc_ctx->enc_params.trate);
+    m_encparams.SetTargetRate(enc_ctx->enc_params.trate);
     m_encparams.SetLossless(enc_ctx->enc_params.lossless);
     m_encparams.SetL1Sep(enc_ctx->enc_params.L1_sep);
     m_encparams.SetNumL1(enc_ctx->enc_params.num_L1);
@@ -875,6 +878,11 @@ static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
 
     // set default MV parameters
     encparams.mv_precision = default_enc_params.MVPrecision();
+
+    // by default, use hierarchical, not full search
+    encparams.full_search = 0;
+    encparams.x_range_me = 32;
+    encparams.y_range_me = 32;
 
     // set default transform parameters
     WltFilter wf;
