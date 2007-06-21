@@ -115,7 +115,6 @@ void RateController::SetFrameDistribution()
         m_intra_only = true;
     }
 
-std::cout<<std::endl<<"GOP length is "<<m_encparams.GOPLength();
 	m_num_L2frame = m_encparams.GOPLength() - m_num_Iframe - m_num_L1frame;
 }
 
@@ -293,7 +292,7 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
             */
             double lg_diff = std::log( abs_delta/2.0 );
             if ( lg_diff< 0.0 )
-                r = 0.5*std::exp(-lg_diff*lg_diff/2.0);    
+                r = 0.5*std::exp(-lg_diff*lg_diff/2.0);
             else
                 r = 1.0-0.5*std::exp(-lg_diff*lg_diff/2.0);
             
