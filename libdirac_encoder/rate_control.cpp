@@ -107,17 +107,15 @@ RateController::RateController(int trate, SourceParams& srcp, EncoderParams& enc
 void RateController::SetFrameDistribution()
 {
 	m_num_L1frame = m_encparams.NumL1();
+    m_num_Iframe = 1;
 
-	if (m_num_L1frame > 0) 
-        m_num_Iframe = 1;
-	else if (m_num_L1frame == 0)
-    { 
-        m_num_Iframe = 10;
+    if (m_num_L1frame == 0)
+    {
+        m_num_Iframe = m_encparams.GOPLength();    
         m_intra_only = true;
     }
-	else 
-        m_num_Iframe = 0;
 
+std::cout<<std::endl<<"GOP length is "<<m_encparams.GOPLength();
 	m_num_L2frame = m_encparams.GOPLength() - m_num_Iframe - m_num_L1frame;
 }
 
@@ -256,8 +254,58 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
     else 
     {
         // We're doing intra-only coding
-        // TBD
+
+
+        // Target rate
+        double trate = double(m_total_GOP_bits)/(1000.0*m_num_Iframe);
         
+        // Projected rate with current QF
+        double prate = double(num_bits)/1000.0;
+
+        
+        // Determine K value
+        double K = std::pow(prate, 2)*std::pow(10.0, ((double)2/5*(10-m_qf)))/16;            
+ 
+        // Determine a new QF
+        double new_qf = 10 - (double)5/2*log10(16*K/std::pow(trate, 2));	
+
+        // Adjust the QF to meet the target
+        
+        double abs_delta = std::abs( new_qf - m_qf );
+        if ( abs_delta>0.01)
+        {
+            // Rate of convergence to new QF
+            double r;
+            
+            /* Use an S-shaped curve to compute r
+               Where the qf difference is less than 1/2, r decreases to zero
+               exponentially, so for small differences in QF we jump straight
+               to the target value. For large differences in QF, r converges
+               exponentially to 0.75, so we converge to the target value at
+               a fixed rate.
+               
+               Overall behaviour is to converge steadily for 2 or 3 frames until
+               close and then lock to the correct value. This avoids very rapid
+               changes in quality.
+               
+               Actual parameters may be adjusted later. Some applications may
+               require instant lock.
+            */
+            double lg_diff = std::log( abs_delta/2.0 );
+            if ( lg_diff< 0.0 )
+                r = 0.5*std::exp(-lg_diff*lg_diff/2.0);    
+            else
+                r = 1.0-0.5*std::exp(-lg_diff*lg_diff/2.0);
+            
+            r *= 0.75;
+
+            m_qf = r*m_qf + (1.0-r)*new_qf;
+            m_qf = ReviewQualityFactor( m_qf , num_bits );                		
+
+            m_encparams.SetQf(m_qf);
+        }
+
+
     }
     
 }
