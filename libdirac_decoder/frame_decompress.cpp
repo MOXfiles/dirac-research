@@ -76,8 +76,7 @@ FrameDecompressor::~FrameDecompressor()
 
 
 bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
-                                   FrameBuffer& my_buffer,
-                                   int au_fnum)
+                                   FrameBuffer& my_buffer)
 {
     // get current byte position
     //int start_pos = parseunit_byteio.GetReadBytePosition();
@@ -85,8 +84,7 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
 
     // read frame data
     FrameByteIO frame_byteio(m_fparams,
-                             parseunit_byteio,
-                             au_fnum);
+                             parseunit_byteio);
 
     frame_byteio.Input();
     

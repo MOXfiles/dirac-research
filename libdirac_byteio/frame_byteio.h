@@ -65,22 +65,18 @@ namespace dirac
         * Constructor
         *@param frame_params Frame parameters
         *@param frame_num Frame number
-        *@param au_fnum AccessUnit frame number
         */
         FrameByteIO(FrameParams& frame_params,
-                    int frame_num,
-                    int au_fnum);
+                    int frame_num);
 
 
         /**
         * Constructor
         *@param frame_params Destination of data
         *@param parseunit_byteio Source of data
-        *@param au_fnum AccessUnit frame number
         */
         FrameByteIO(FrameParams& frame_params,
-                    const ParseUnitByteIO& parseunit_byteio,
-                    int au_fnum);
+                    const ParseUnitByteIO& parseunit_byteio);
 
        /**
        * Destructor

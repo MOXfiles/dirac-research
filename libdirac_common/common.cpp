@@ -625,8 +625,7 @@ DecoderParams::DecoderParams(const VideoFormat& video_format,
 
 // ParseParams functions
 // constructor
-ParseParams::ParseParams(unsigned int au_pnum /*=0*/):
-    m_au_pnum(au_pnum),
+ParseParams::ParseParams():
     m_major_ver(0),
     m_minor_ver(1),
     m_profile(0),

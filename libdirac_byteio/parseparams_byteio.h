@@ -61,20 +61,16 @@ namespace dirac
 
         /**
         * Constructor
-        *@param accessunit_fnum AccessUnit frame number
         *@param stream_data Destination of data
         */
-        ParseParamsByteIO(const int& accessunit_fnum,
-                          const ByteIO& stream_data);
+        ParseParamsByteIO(const ByteIO& stream_data);
 
         /**
         * Constructor
-        *@param accessunit_fnum AccessUnit frame number
         *@param stream_data Source of data
         *@param parse_params Destination of parse params
         */
-        ParseParamsByteIO(const int& accessunit_fnum,
-                          const ByteIO& stream_data,
+        ParseParamsByteIO(const ByteIO& stream_data,
                           ParseParams &parse_params);
 
         /**
@@ -101,12 +97,6 @@ namespace dirac
     
 
     private:
-
-        /**
-        * Current access-unit frame number
-        */
-        int     m_accessunit_fnum;
-
         /**
         * Reference to parse parameters
         */

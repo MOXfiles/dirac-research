@@ -61,12 +61,10 @@ namespace dirac
 
         /**
         * Constructor (encoding)
-        *@param accessunit_fnum Current AccessUnit frame-number
         *@param seq_params Sequence parameters for current AccessUnit
         *@param src_params Source parameters for current AccessUnit
         */
-        AccessUnitByteIO(int& accessunit_fnum,
-                         SeqParams& seq_params,
+        AccessUnitByteIO(SeqParams& seq_params,
                          SourceParams& src_params);
 
         /**
@@ -96,11 +94,6 @@ namespace dirac
         */
         void Output();
      
-        /**
-        * Get access-unit number
-        */
-        int GetIdNumber() const;
-
         /* 
         * Gets size of access-unit (in bytes)
         */

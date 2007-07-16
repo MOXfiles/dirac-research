@@ -86,11 +86,9 @@ namespace dirac
 
             \param parseunit_byteio Frame info in Dirac-stream format
             \param my_buffer   picture buffer into which the frame is placed
-            \param au_fnum Current AccessUnit frame-number
         */
         bool Decompress(ParseUnitByteIO& parseunit_byteio,
-                        FrameBuffer& my_buffer,
-                        int au_fnum);
+                        FrameBuffer& my_buffer);
 
         //! Returns the frame parameters of the current frame being decoded
         const FrameParams& GetFrameParams() const{ return m_fparams; }

@@ -68,9 +68,8 @@ const unsigned int MAX_NUM_REFS = 2;
 
 
 FrameByteIO::FrameByteIO(FrameParams& frame_params,
-                         int frame_num,
-                         int au_fnum):
-ParseUnitByteIO(au_fnum),
+                         int frame_num) :
+ParseUnitByteIO(),
 m_frame_params(frame_params),
 m_frame_num(frame_num),
 m_mv_data(0),
@@ -80,9 +79,8 @@ m_transform_data(0)
 }
 
 FrameByteIO::FrameByteIO(FrameParams& frame_params,
-                         const ParseUnitByteIO& parseunit_byteio,
-                         int au_fnum):
-ParseUnitByteIO(au_fnum, parseunit_byteio),
+                         const ParseUnitByteIO& parseunit_byteio ):
+ParseUnitByteIO(parseunit_byteio),
 m_frame_params(frame_params),
 m_frame_num(0),
 m_mv_data(0),

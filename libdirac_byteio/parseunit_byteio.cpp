@@ -62,9 +62,8 @@ const int PU_PARSEUNIT_SIZE = PU_NEXT_PARSE_OFFSET_SIZE + PU_PREVIOUS_PARSE_OFFS
 #define PARSE_CODE_IS_AUXILIARY_DATA(byte)      (byte==0x20)
 #define PARSE_CODE_IS_LOW_DELAY(byte)           ((byte&0x80)==0x80)
 
-ParseUnitByteIO::ParseUnitByteIO(int accessunit_fnum):
+ParseUnitByteIO::ParseUnitByteIO():
 ByteIO(),
-m_accessunit_fnum(accessunit_fnum),
 m_previous_parse_offset(0),
 m_next_parse_offset(0)
 {
@@ -73,17 +72,14 @@ m_next_parse_offset(0)
 
 ParseUnitByteIO::ParseUnitByteIO(const ByteIO& byte_io):
 ByteIO(byte_io),
-m_accessunit_fnum(0),
 m_previous_parse_offset(0),
 m_next_parse_offset(0)
 {
     
 }
 
-ParseUnitByteIO::ParseUnitByteIO(int accessunit_fnum,
-                                 const ParseUnitByteIO& parseunit_byteio):
+ParseUnitByteIO::ParseUnitByteIO(const ParseUnitByteIO& parseunit_byteio):
 ByteIO(parseunit_byteio),
-m_accessunit_fnum(accessunit_fnum),
 m_previous_parse_offset(parseunit_byteio.m_previous_parse_offset),
 m_next_parse_offset(parseunit_byteio.m_next_parse_offset),
 m_parse_code(parseunit_byteio.m_parse_code)

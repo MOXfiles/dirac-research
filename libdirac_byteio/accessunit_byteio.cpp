@@ -40,12 +40,10 @@
 
 using namespace dirac;
 
-AccessUnitByteIO::AccessUnitByteIO(int& accessunit_fnum,
-                                   SeqParams& seq_params,
+AccessUnitByteIO::AccessUnitByteIO( SeqParams& seq_params,
                                    SourceParams& src_params):                  
-ParseUnitByteIO(accessunit_fnum),
-m_parseparams_byteio(accessunit_fnum,
-                     *this),
+ParseUnitByteIO(),
+m_parseparams_byteio(*this),
 
 // create default sequence parameters for comparisions
 m_default_seq_params(seq_params.GetVideoFormat()),
@@ -67,7 +65,7 @@ AccessUnitByteIO::AccessUnitByteIO(const ParseUnitByteIO& parseunit_byteio,
                                    SourceParams& src_params,
                                    ParseParams& parse_params):
 ParseUnitByteIO(parseunit_byteio),
-m_parseparams_byteio(0, parseunit_byteio, parse_params),
+m_parseparams_byteio( parseunit_byteio, parse_params),
 
 // crate default sequence parameters for comparisions
 m_default_seq_params(),
@@ -104,11 +102,6 @@ void AccessUnitByteIO::Output()
     OutputSequenceParams();
     OutputDisplayParams();
   
-}
-
-int AccessUnitByteIO::GetIdNumber() const
-{
-    return m_parseparams_byteio.GetIdNumber();
 }
 
 int AccessUnitByteIO::GetSize() const

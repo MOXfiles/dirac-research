@@ -44,20 +44,16 @@ const unsigned int PP_AU_FRAME_NUM_SIZE = 4;
 
 using namespace dirac;
 
-ParseParamsByteIO::ParseParamsByteIO(const int& accessunit_fnum,
-                                     const ByteIO& stream_data):
-ByteIO(stream_data),
-m_accessunit_fnum(accessunit_fnum)
+ParseParamsByteIO::ParseParamsByteIO( const ByteIO& stream_data):
+ByteIO(stream_data)
 {
     
 
 }
 
-ParseParamsByteIO::ParseParamsByteIO(const int& accessunit_fnum,
-                                     const ByteIO& stream_data,
+ParseParamsByteIO::ParseParamsByteIO( const ByteIO& stream_data,
                                      ParseParams &parse_params):
 ByteIO(stream_data),
-m_accessunit_fnum(accessunit_fnum),
 m_parse_params(parse_params)
 {
     
@@ -72,10 +68,7 @@ ParseParamsByteIO::~ParseParamsByteIO()
 
 void ParseParamsByteIO::Input()
 {
-    // input AU Frame number
-    m_accessunit_fnum = InputFixedLengthUint(PP_AU_FRAME_NUM_SIZE);
-    
-    ParseParams def_parse_params(m_accessunit_fnum);
+    ParseParams def_parse_params;
    
     //input version
     m_parse_params.SetMajorVersion(InputVarLengthUint());
@@ -124,9 +117,6 @@ void ParseParamsByteIO::Input()
 
 void ParseParamsByteIO::Output()
 {
-    // output AU Frame number
-    OutputFixedLengthUint(m_accessunit_fnum, PP_AU_FRAME_NUM_SIZE);
- 
     //:TODO implement
     // output version
     OutputVarLengthUint(0);
@@ -137,9 +127,4 @@ void ParseParamsByteIO::Output()
 
     // output level
     OutputVarLengthUint(0);
-}
-
-int ParseParamsByteIO::GetIdNumber() const
-{
-    return m_accessunit_fnum;
 }

@@ -75,8 +75,6 @@ typedef dirac_rational_t dirac_asr_t;
 /*! Structure that holds the parase parameters */
 typedef struct
 {
-    //! access unit picture number
-    unsigned int au_pnum;
     //! Major version
     unsigned int major_ver;
     //! Minor version

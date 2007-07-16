@@ -96,14 +96,6 @@ void SequenceDecompressor::NewAccessUnit(ParseUnitByteIO& parseunit_byteio)
                                        m_sparams, m_srcparams, m_parse_params);
     accessunit_byteio.Input();
 
-    // get access-unit number
-    m_current_accessunit_fnum = accessunit_byteio.GetIdNumber();
-    m_current_code_fnum = m_current_accessunit_fnum;
-
-    // Initialise m_show_fnum only for the the first access unit in the
-    // sequence.
-    if (m_show_fnum < 0)
-        m_show_fnum = m_current_accessunit_fnum-1;
 }
 
 Frame& SequenceDecompressor::DecompressNextFrame(ParseUnitByteIO* p_parseunit_byteio,
@@ -139,8 +131,7 @@ Frame& SequenceDecompressor::DecompressNextFrame(ParseUnitByteIO* p_parseunit_by
        if (m_decparams.Verbose())
            std::cout<<std::endl<<"Calling frame decompression function";
        new_frame_to_display = m_fdecoder->Decompress(*p_parseunit_byteio,
-                                                     *m_fbuffer,
-                                                     m_current_accessunit_fnum);
+                                                     *m_fbuffer);
     }
     /***
     //if we've exited with success, there's a new frame to display, so increment
@@ -154,6 +145,8 @@ Frame& SequenceDecompressor::DecompressNextFrame(ParseUnitByteIO* p_parseunit_by
     // FIXME - temporary fix to fix frame delay for i-frames
 
     Frame &f = m_fbuffer->GetFrame(m_show_fnum+1 );
+    m_show_fnum = m_show_fnum >= 0 ? m_show_fnum : m_fdecoder->GetFrameParams().FrameNum()-1;
+
     m_highest_fnum = std::max(m_fdecoder->GetFrameParams().FrameNum(), m_highest_fnum);
     if (f.GetFparams().FrameNum() == m_show_fnum+1)
     {

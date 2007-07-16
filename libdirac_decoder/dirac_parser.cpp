@@ -103,7 +103,6 @@ static void set_sequence_params (const  DiracParser * const parser, dirac_decode
     const SourceParams& srcparams = parser->GetSourceParams();
     const ParseParams& pparams = parser->GetParseParams();
 
-    parse_params->au_pnum = pparams.AccessUnitPictureNumber();
     parse_params->major_ver = pparams.MajorVersion();
     parse_params->minor_ver = pparams.MinorVersion();
     parse_params->profile = pparams.Profile();

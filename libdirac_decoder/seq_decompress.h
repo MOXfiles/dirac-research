@@ -186,8 +186,6 @@ namespace dirac
         int m_show_fnum;
         //! Frame decompressor object
         FrameDecompressor *m_fdecoder;
-        //! Current AccessUnit frame-number
-        int m_current_accessunit_fnum;
         //! Highest frame-num processed - for tracking end-of-sequence
         int m_highest_fnum;
     };

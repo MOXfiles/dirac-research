@@ -524,12 +524,9 @@ namespace dirac
     {
     public:
         //! Default constructor
-        ParseParams(unsigned int au_pnum = 0);
+        ParseParams();
 
         // Gets
-
-        //! Get the access unit picture number
-        unsigned int AccessUnitPictureNumber() const { return m_au_pnum; }
 
         //! Get the major version
         unsigned int MajorVersion() const { return m_major_ver; }

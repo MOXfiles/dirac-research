@@ -75,26 +75,22 @@ namespace dirac
 
         //! Performs motion estimation for a frame and writes the data locally
         /*! Performs motion estimation for a frame and writes the data locally
-           \param fbuffer picture buffer in which the frame resides
-            \param orig_buffer the corresponding picture buffer of uncoded originals
-            \param fnum      frame number to compress
-            \param au_fnum Current ccessUnit frame-number
-            \return Compressed frame in Dirac bytestream format
+            \param my_buffer picture buffer of uncoded originals
+            \param fnum    frame number to compress
+            \return true if a cut is detected.
         */                        
-        bool MotionEstimate( const FrameBuffer& m_fbuffer, 
+        bool MotionEstimate( const FrameBuffer& my_fbuffer, 
                                         int fnum); 
 
         //! Compress a specific frame within a group of pictures (GOP)
         /*!
             Compresses a specified frame within a group of pictures. 
-            \param fbuffer picture buffer in which the frame resides
-            \param orig_buffer the corresponding picture buffer of uncoded originals
-            \param fnum      frame number to compress
-            \param au_fnum Current ccessUnit frame-number
+            \param my_buffer  picture buffer in which the reference frames resides
+            \param fnum       frame number to compress
             \return Compressed frame in Dirac bytestream format
         */
-        FrameByteIO* Compress(  FrameBuffer& fbuffer , 
-                                int fnum ,  int au_fnum);
+        FrameByteIO* Compress(  FrameBuffer& my_fbuffer , 
+                                int fnum );
 
         //! Returns true if the frame has been skipped rather than coded normally
         bool IsSkipped(){ return m_skipped; }

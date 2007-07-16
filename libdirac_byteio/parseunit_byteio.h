@@ -73,9 +73,8 @@ namespace dirac
 
         /**
         * Constructor
-        *@param accessunit_fnum AccessUnit number that parse-unit belongs to
         */
-        ParseUnitByteIO(int accessunit_fnum);
+        ParseUnitByteIO();
 
          /**
         * Constructor
@@ -85,11 +84,9 @@ namespace dirac
 
         /**
         * Constructor
-        *@param accessunit_fnum AccessUnit number that parse-unit belongs to
         *@param parseunit_byteio Parse-unit parameters
         */
-        ParseUnitByteIO(int accessunit_fnum,
-                        const ParseUnitByteIO& parseunit_byteio);
+        ParseUnitByteIO(const ParseUnitByteIO& parseunit_byteio);
 
         /**
         * Destructor
@@ -170,11 +167,6 @@ namespace dirac
         *@return <B>false</B> if not enough data
         */
         bool SyncToUnitStart();   // decoding
-
-        /**
-        * AccessUnit number that parse-unit belongs to
-        */
-        int m_accessunit_fnum;
 
         /**
         * Get parse code

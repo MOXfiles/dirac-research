@@ -216,9 +216,6 @@ namespace dirac
         //! The number of the current frame to be coded, in coded order
         int m_current_code_fnum;
 
-        //! Current AccessUnit frame-number
-        int m_current_accessunit_fnum;
-
         //! The number of the frame which should be output for concurrent display or storage
         int m_show_fnum;
 

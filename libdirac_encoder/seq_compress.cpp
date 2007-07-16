@@ -249,10 +249,11 @@ Frame& SequenceCompressor::CompressNextFrame()
             // The access unit frame number must be equal to the frame
             // number in display order of the I_Frame that follows it and
             // not the coded order.
-            m_current_accessunit_fnum = m_current_display_fnum;
-
-            AccessUnitByteIO *p_accessunit_byteio = new AccessUnitByteIO(m_current_accessunit_fnum,
-                                                                         m_pic_in->GetSeqParams(), m_srcparams);
+            AccessUnitByteIO *p_accessunit_byteio = new AccessUnitByteIO
+                                            (
+                                                m_pic_in->GetSeqParams(), 
+                                                m_srcparams
+                                            );
             p_accessunit_byteio->Output();
 
             // add the unit to the byte stream
@@ -294,8 +295,7 @@ Frame& SequenceCompressor::CompressNextFrame()
         {
             // Coding Without using Rate Control Algorithm
             p_frame_byteio =  m_fcoder.Compress(*m_fbuffer ,  
-                                                m_current_display_fnum, 
-                                                m_current_accessunit_fnum);
+                                                m_current_display_fnum);
         }
         else
         {
@@ -318,8 +318,7 @@ Frame& SequenceCompressor::CompressNextFrame()
             }
       
             p_frame_byteio =  m_fcoder.Compress(*m_fbuffer,        
-                                                    m_current_display_fnum, 
-                                                    m_current_accessunit_fnum);
+                                                    m_current_display_fnum);
 
             // Update the quality factor
             m_ratecontrol->CalcNextQualFactor(fparams, p_frame_byteio->GetSize()*8);

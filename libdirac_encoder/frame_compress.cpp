@@ -106,7 +106,7 @@ bool FrameCompressor::MotionEstimate(const  FrameBuffer& my_fbuffer ,
 }
 
 FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
-                                        int fnum,  int au_fnum)
+                                        int fnum)
 {
     Frame& my_frame = my_buffer.GetFrame( fnum );
 
@@ -150,8 +150,7 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
     // can do this at any point prior to actually writing any frame data.
     //WriteFrameHeader( my_frame.GetFparams() );
     FrameByteIO* p_frame_byteio = new FrameByteIO(fparams,
-                                                  fnum,  
-                                                  au_fnum);
+                                                  fnum);
    
     p_frame_byteio->Output();
 
