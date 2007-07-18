@@ -189,25 +189,23 @@ void SubbandList::Init(const int depth,const int xlen,const int ylen)
     //now set the parent-child relationships
     int len = bands.size(); 
     (*this)(len).SetParent(0);         
-    (*this)(len).AddChild(len-3); 
-    (*this)(len-3).SetParent(len); 
-    (*this)(len).AddChild(len-2); 
-    (*this)(len-2).SetParent(len); 
-    (*this)(len).AddChild(len-1); 
-    (*this)(len-1).SetParent(len); 
+    (*this)(len-3).SetParent(0); 
+    (*this)(len-2).SetParent(0); 
+    (*this)(len-1).SetParent(0); 
 
-    for (int level = 1; level < depth; ++level)
+    for (int level = 2; level <= depth; ++level)
     {
          //do parent-child relationship for other bands
-        (*this)(3*level + 1).AddChild( 3*(level-1) + 1); 
-        (*this)(3*(level-1) + 1).SetParent(3*level + 1); 
+        (*this)( len-3*(level-1) ).AddChild( len-3*(level) ); 
+        (*this)( len-3*(level) ).SetParent( len-3*(level-1) ); 
 
-        (*this)(3*level + 2).AddChild(3*(level-1) + 2); 
-        (*this)(3*(level-1) + 2).SetParent(3*level + 2); 
+        (*this)( len-3*(level-1)+1 ).AddChild( len-3*(level)+1 ); 
+        (*this)(len-3*(level)+1).SetParent(len-3*(level-1)+1); 
 
-        (*this)(3*level + 3).AddChild(3*(level-1) + 3); 
-        (*this)(3*(level-1) + 3).SetParent(3*level + 3); 
+        (*this)( len-3*(level-1)+2 ).AddChild( len-3*(level)+2 );
+        (*this)(len-3*(level)+2).SetParent(len-3*(level-1)+2); 
     }// level
+
 }
 
 //wavelet transform methods

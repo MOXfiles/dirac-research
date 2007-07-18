@@ -388,7 +388,7 @@ inline int BandCodec::ChooseFollowContext( const int bin_number ) const
 {
     //condition on neighbouring values and parent values
 
-    if (!m_parent_notzero && (m_pxp != 0 || m_pyp != 0))
+    if (!m_parent_notzero)
     {
         switch ( bin_number )
         {
