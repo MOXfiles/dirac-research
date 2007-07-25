@@ -542,9 +542,6 @@ namespace dirac
 
         // Sets
         
-        //! Set the access unit picture number
-        void SetAccessUnitPictureNumber(unsigned int au_pnum) { m_au_pnum = au_pnum; }
-
         //! Set the major version
         void SetMajorVersion(unsigned int major_ver) { m_major_ver = major_ver; }
 
@@ -558,8 +555,6 @@ namespace dirac
         void SetLevel(unsigned int profile) { m_profile = profile; }
 
     private:
-        //! Frame number of first Intra Ref Picture after Access unit header
-        unsigned int m_au_pnum;
         //! Major Version
         unsigned int m_major_ver;
         //! Minor Version
