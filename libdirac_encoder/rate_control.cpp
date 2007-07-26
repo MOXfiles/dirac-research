@@ -89,9 +89,9 @@ FrameComplexity::FrameComplexity():
 
 //Default constructor    
 RateController::RateController(int trate, SourceParams& srcp, EncoderParams& encp):
-	m_qf (7.0),
-	m_I_qf (7.0),
-	m_I_qf_long_term(7.0),
+	m_qf (encp.Qf()),
+	m_I_qf (encp.Qf()),
+	m_I_qf_long_term(encp.Qf()),
 	m_target_rate(trate),
 	m_buffer_size(4000*trate),// for the moment, set buffer size to 4*bitrate
 	m_buffer_bits((m_buffer_size*3)/4),// initial occupancy of 75%
