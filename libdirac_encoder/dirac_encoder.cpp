@@ -54,15 +54,15 @@
 using namespace dirac;
 using namespace std;
 
-template <class T >
-void copy_2dArray (const TwoDArray<T> & in, T *out)
+template <class T, class S >
+void copy_2dArray (const TwoDArray<T> & in, S *out)
 {
     for (int j=0 ; j<in.LengthY() ; ++j)
     {
         for (int i=0 ; i<in.LengthX() ; ++i)
         {
             // out[j*in.LengthX() + i] =  in[j][i];
-            *out++ =  in[j][i];
+            *out++ =  S( in[j][i] );
         }// i
     }// j
 }
