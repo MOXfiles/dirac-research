@@ -57,7 +57,7 @@
 
 using namespace std;
 
-const int VIDEO_BUFFER_SIZE = 1024*1024;
+const int VIDEO_BUFFER_SIZE = 32*1024*1024;
 unsigned char video_buf[VIDEO_BUFFER_SIZE];
 
 static void display_help()
@@ -806,10 +806,14 @@ int main (int argc, char* argv[])
             parsed[i] = true;
             i++;
             enc_ctx.enc_params.wlt_depth = strtoul(argv[i],NULL,10);
+#if defined(HAVE_MMX) 
             if(enc_ctx.enc_params.wlt_depth > 5)
                 cerr << "Exceeds maximum transform depth ";
-            else
+           else
                 parsed[i] = true;
+#else                
+           parsed[i] = true;
+#endif
         }
         else if ( strcmp(argv[i], "-iwlt_filter") == 0 )
         {
