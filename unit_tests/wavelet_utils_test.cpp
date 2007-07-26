@@ -92,13 +92,16 @@ void WaveletTransformTest::testTransformInvertibility()
 
     PicArray copy_data( pic_data );
 
+    // Array for storing the coefficients
+    CoeffArray coeff_data( pic_data.LengthY(), pic_data.LengthX() );
+
     for (int i=0 ; i< NUM_WLT_FILTERS; ++i)
     {
         WaveletTransform wtransform( depth , (WltFilter) i );
 
         // Go forward and back - we should be back where we started
-        wtransform.Transform( FORWARD , pic_data );
-        wtransform.Transform( BACKWARD , pic_data );
+        wtransform.Transform( FORWARD , pic_data, coeff_data );
+        wtransform.Transform( BACKWARD , pic_data, coeff_data );
 
         bool test_val = equalArrays<ValueType>( pic_data , copy_data );
 
