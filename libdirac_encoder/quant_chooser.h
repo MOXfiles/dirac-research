@@ -54,7 +54,7 @@ namespace dirac
     public:
 
         //! Constructor
-        QuantChooser( const PicArray& pic_data , const float lambda  );
+        QuantChooser( const CoeffArray& pic_data , const float lambda  );
 
         //! Finds the best quantisers for the subband, returning the predicted number of bits needed
         int GetBestQuant( Subband& node );
@@ -91,7 +91,7 @@ namespace dirac
         void SelectBestQuant( const int block_idx );
 
         //! Find the absolute max value in the block under consideration
-        ValueType BlockAbsMax( const CodeBlock& code_block );
+        CoeffType BlockAbsMax( const CodeBlock& code_block );
 
     private:
         //! The smallest quantisation index being tested
@@ -105,7 +105,7 @@ namespace dirac
         int m_min_idx;
 
         //! A local reference to the data under consideration
-        const PicArray& m_pic_data;
+        const CoeffArray& m_coeff_data;
 
         //!  The lambda value to be used in the Lagrangian calculation
         const float m_lambda;

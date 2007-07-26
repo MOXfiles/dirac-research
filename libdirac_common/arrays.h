@@ -51,10 +51,6 @@
 
 namespace dirac
 {
-    typedef short ValueType;
-
-    typedef int CalcValueType;
-
     //! Range type. 
     /*!
         Range type encapsulating a closed range of values [first,last]. 

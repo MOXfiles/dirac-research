@@ -63,8 +63,22 @@ namespace dirac
     */
 
 
-    //Some basic enumeration types used throughout the codec ...//
+    //Some basic types used throughout the codec ...//
     //////////////////////////////////////////////////////////////
+
+	//! Type of picture data (including motion compensated residuals)
+    typedef short ValueType;
+
+#if !defined(HAVE_MMX)    
+    //! Type of wavelet coefficient data (should be larger than ValueType)
+    typedef int CoeffType;
+#else
+    //! Type of wavelet coefficient data (should be larger than ValueType)
+    typedef short CoeffType;
+#endif
+
+    //! Type for performing calculations on ValueType and CoeffType. Should be >ValueType, >=CoeffType
+    typedef int CalcValueType;
 
     //! Prediction modes for blocks
     enum PredMode{ INTRA , REF1_ONLY , REF2_ONLY , REF1AND2, UNDEFINED };
@@ -261,10 +275,7 @@ namespace dirac
 
     //! A class for picture component data.
     /*!
-        A class for encapsulating picture data, derived from TwoDArray. NB: 
-        in the future there will be separate classes for input/output picture 
-        data, difference picture data, and wavelet coefficient data. Currently 
-        PicArray is used for all of these. TJD 13 April 2004.
+        A class for encapsulating picture data, derived from TwoDArray. 
      */
     class PicArray: public TwoDArray<ValueType>
     {
@@ -296,6 +307,33 @@ namespace dirac
     private:
         
         CompSort m_csort;
+    };
+    
+    //! A class for picture component data.
+    /*!
+        A class for encapsulating coefficient data, derived from TwoDArray..
+     */
+    class CoeffArray: public TwoDArray<CoeffType>
+    {
+    public:
+        //! Default constructor
+        /*!
+            Default constructor creates an empty array.
+        */
+        CoeffArray(): TwoDArray<CoeffType>(){}
+        
+        //! Constructor.
+        /*!
+            Contructor creates a two-D array, with specified size and colour 
+            format.
+        */
+        CoeffArray(int height, int width): TwoDArray<CoeffType>(height, width){}
+        
+        //copy constructor and assignment= derived by inheritance
+        
+        //! Destructor
+        ~CoeffArray(){}
+        
     };
 
 
@@ -543,7 +581,7 @@ namespace dirac
         // Sets
         
         //! Set the major version
-        void SetMajorVersion(unsigned int major_ver) { m_major_ver = major_ver; }
+        void SetMajorVersion(unsigned int major_ver) {m_major_ver = major_ver; }
 
         //! Set the minor version
         void SetMinorVersion(unsigned int minor_ver) { m_minor_ver = minor_ver; }

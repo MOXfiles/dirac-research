@@ -67,12 +67,15 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
 
     // A pointer to the object(s) we'll be using for coding the bands
     BandCodec* bdecoder;
+    
+    // The array holding the coefficients
+    CoeffArray coeff_data( pic_data.LengthY(), pic_data.LengthX() );
 
     WaveletTransform wtransform( depth , m_decparams.TransformFilter() );
     SubbandList& bands=wtransform.BandList();
 
     // Initialise all the subbands
-    bands.Init(depth , pic_data.LengthX() , pic_data.LengthY());
+    bands.Init(depth , coeff_data.LengthX() , coeff_data.LengthY());
 
     // Set up the code blocks
     SetupCodeBlocks( bands );
@@ -110,22 +113,23 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
                 bdecoder=new BandCodec( &subband_byteio , TOTAL_COEFF_CTXS ,
                                         bands , b, fsort.IsIntra());
 
-            bdecoder->Decompress(pic_data , subband_byteio.GetBandDataLength());
+            bdecoder->Decompress(coeff_data , subband_byteio.GetBandDataLength());
             delete bdecoder;
         }
         else
         {
 #if 0
             if ( b==bands.Length() && fsort.IsIntra() )
-                SetToVal( pic_data , bands(b) , wtransform.GetMeanDCVal() );
+                SetToVal( coeff_data , bands(b) , wtransform.GetMeanDCVal() );
             else
-                SetToVal( pic_data , bands(b) , 0 );
+                SetToVal( coeff_data , bands(b) , 0 );
 #else
-            SetToVal( pic_data , bands(b) , 0 );
+            SetToVal( coeff_data , bands(b) , 0 );
 #endif
         }
     }
-    wtransform.Transform(BACKWARD,pic_data);
+    
+    wtransform.Transform(BACKWARD,pic_data, coeff_data);
 }
 
 void CompDecompressor::SetupCodeBlocks( SubbandList& bands )
@@ -153,13 +157,13 @@ void CompDecompressor::SetupCodeBlocks( SubbandList& bands )
     }// band_num
 }
 
-void CompDecompressor::SetToVal( PicArray& pic_data , 
+void CompDecompressor::SetToVal( CoeffArray& coeff_data , 
                                  const Subband& node , 
-                                 ValueType val )
+                                 CoeffType val )
 {
 
     for (int j=node.Yp() ; j<node.Yp()+node.Yl() ; ++j)
         for (int i=node.Xp() ; i<node.Xp()+node.Xl() ; ++i)
-            pic_data[j][i]=val;
+            coeff_data[j][i]=val;
 
 }

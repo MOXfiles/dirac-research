@@ -347,7 +347,7 @@ namespace dirac
             \param    d    the direction of the transform
             \param    pic_data    the data to be transformed
         */
-        void Transform(const Direction d, PicArray& pic_data);
+        void Transform(const Direction d, PicArray& pic_data, CoeffArray& coeff_data);
     
         //! Returns the set of subbands
         SubbandList& BandList(){return m_band_list;}
@@ -386,10 +386,10 @@ namespace dirac
             virtual ~VHFilter(){}
 
             //! Split a subband into 4
-            virtual void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data)=0; 
+            virtual void Split(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data)=0; 
 
             //! Create a single band from 4 quadrant bands
-            virtual void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data)=0;
+            virtual void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data)=0;
 
             //! Return a correction factor to compensate for non-unity gain of low-pass filter
             virtual double GetLowFactor() const=0;
@@ -403,17 +403,17 @@ namespace dirac
         protected:
             
             //! Interleave data from separate subbands into even and odd positions for in-place calculation - called by Synth
-            inline void Interleave( const int xp, const int yp, const int xl, const int yl, PicArray&pic_data );
+            inline void Interleave( const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data );
     
 
             //! De-interleave data even and odd positions into separate subbands - called by Split
-            inline void DeInterleave( const int xp, const int yp, const int xl, const int yl, PicArray&pic_data );
+            inline void DeInterleave( const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data );
         
             //! Shift all vals in Row by 'shift' bits to the left to increase accuracy by 'shift' bits. Used in Analysis stage of filter
-            void ShiftRowLeft(ValueType *row, int length, int shift);
+            void ShiftRowLeft(CoeffType *row, int length, int shift);
         
         //! Shift all vals in Row by 'shift' bits to the right to counter the shift in the Analysis stage. This function is used in the Synthesis stage
-            void ShiftRowRight(ValueType *row, int length, int shift);
+            void ShiftRowRight(CoeffType *row, int length, int shift);
         };
 
         //! Class to do Daubechies (9,7) filtering operations
@@ -423,10 +423,10 @@ namespace dirac
         public:
 
             //! Split a subband into 4
-            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+            void Split(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data); 
 
             //! Create a single band from 4 quadrant bands
-            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+            void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
             //! Return a correction factor to compensate for non-unity gain of low-pass filter
             double GetLowFactor() const { return 1.149604398;}
@@ -447,10 +447,10 @@ namespace dirac
         public:
 
             //! Split a subband into 4
-            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+            void Split(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data); 
 
             //! Create a single band from 4 quadrant bands
-            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+            void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
             //! Return a correction factor to compensate for non-unity power gain of low-pass filter
             double GetLowFactor() const { return 1.179535649;}
@@ -463,7 +463,7 @@ namespace dirac
 
 
 #ifdef HAVE_MMX
-            inline void HorizSynth (int xp, int xl, int ystart, int yend, PicArray &pic_data);
+            inline void HorizSynth (int xp, int xl, int ystart, int yend, CoeffArray &coeff_data);
 #endif
 
         };
@@ -475,10 +475,10 @@ namespace dirac
         public:
 
             //! Split a subband into 4
-            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+            void Split(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data); 
 
             //! Create a single band from 4 quadrant bands
-            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+            void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
             //! Return a correction factor to compensate for non-unity power gain of low-pass filter
             double GetLowFactor() const { return 1.218660804;}     
@@ -499,10 +499,10 @@ namespace dirac
         public:
 
             //! Split a subband into 4
-            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+            void Split(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data); 
 
             //! Create a single band from 4 quadrant bands
-            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+            void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
             //! Return a correction factor to compensate for non-unity power gain of low-pass filter
             double GetLowFactor() const { return 1.235705971;}
@@ -522,10 +522,10 @@ namespace dirac
         public:
 
             //! Split a subband into 4
-            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+            void Split(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data); 
 
             //! Create a single band from 4 quadrant bands
-            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+            void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
             //! Return a correction factor to compensate for non-unity power gain of low-pass filter
             double GetLowFactor() const { return 1.414213562;}    
@@ -546,10 +546,10 @@ namespace dirac
         public:
 
             //! Split a subband into 4
-            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+            void Split(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data); 
 
             //! Create a single band from 4 quadrant bands
-            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+            void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
             //! Return a correction factor to compensate for non-unity power gain of low-pass filter
             double GetLowFactor() const { return 1.414213562;}    
@@ -571,10 +571,10 @@ namespace dirac
         public:
 
             //! Split a subband into 4
-            void Split(const int xp, const int yp, const int xl, const int yl, PicArray&pic_data); 
+            void Split(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data); 
 
             //! Create a single band from 4 quadrant bands
-            void Synth(const int xp, const int yp, const int xl, const int yl, PicArray& pic_data);
+            void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
             //! Return a correction factor to compensate for non-unity power gain of low-pass filter
             double GetLowFactor() const { return 1.414213562;}    
@@ -610,7 +610,7 @@ namespace dirac
                 \param   val1   the first value being used for prediction
                 \param   val2   the second value being used for prediction
             */
-            inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
+            inline void Filter(CoeffType& in_val, const CoeffType& val1, const CoeffType& val2) const
             {
                 in_val -= (( val1 + val2 + (1<<(shift-1)) ) >>shift );
             }
@@ -633,7 +633,7 @@ namespace dirac
                 \param   val1   the first value being used for updating
                 \param   val2   the second value being used for updating
             */
-            inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
+            inline void Filter(CoeffType& in_val, const CoeffType& val1, const CoeffType& val2) const
             {
                 in_val += ( ( val1 + val2 + (1<<(shift-1)) ) >>shift );
             }
@@ -652,8 +652,8 @@ namespace dirac
             // Assume default copy constructor, assignment= and destructor //
 
             //! Do the filtering
-            inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2 ,
-                                                  const ValueType& val3, const ValueType& val4 ) const
+            inline void Filter(CoeffType& in_val, const CoeffType& val1, const CoeffType& val2 ,
+                                                  const CoeffType& val3, const CoeffType& val4 ) const
             {
                 in_val -= ( tap1*( val1 + val2 ) + tap2*( val3 + val4 ) + (1<<(shift-1)))>>shift;
             }
@@ -669,8 +669,8 @@ namespace dirac
             UpdateStepFourTap(){}
 
             //! Do the filtering
-            inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2 ,
-                                                  const ValueType& val3, const ValueType& val4 ) const
+            inline void Filter(CoeffType& in_val, const CoeffType& val1, const CoeffType& val2 ,
+                                                  const CoeffType& val3, const CoeffType& val4 ) const
             {
                 in_val += ( tap1*( val1 + val2 ) + tap2*( val3 + val4 ) + (1<<(shift-1)) )>>shift;
             }
@@ -693,9 +693,9 @@ namespace dirac
                 \param   val1   the first value being used for prediction
                 \param   val2   the second value being used for prediction
             */
-            inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
+            inline void Filter(CoeffType& in_val, const CoeffType& val1, const CoeffType& val2) const
             {
-                in_val -= static_cast< ValueType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
+                in_val -= static_cast< CoeffType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
             }
         }; 
 
@@ -714,9 +714,9 @@ namespace dirac
                 \param   val1   the first value being used for updating
                 \param   val2   the second value being used for updating
             */
-            inline void Filter(ValueType& in_val, const ValueType& val1, const ValueType& val2) const
+            inline void Filter(CoeffType& in_val, const CoeffType& val1, const CoeffType& val2) const
             {
-                in_val += static_cast< ValueType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
+                in_val += static_cast< CoeffType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
             }
         };  
 

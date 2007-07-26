@@ -93,20 +93,20 @@ namespace dirac
         void SetCompLambda( const double intra_ratio, const bool is_a_cut );
 
 
-        void SelectQuantisers( PicArray& pic_data , 
+        void SelectQuantisers( CoeffArray& coeff_data , 
                                SubbandList& bands ,
                                OneDArray<unsigned int>& est_counts,
                                const CodeBlockMode cb_mode );
 
-        int SelectMultiQuants( PicArray& pic_data , 
+        int SelectMultiQuants( CoeffArray& coeff_data , 
                                SubbandList& bands , 
                                const int band_num );
 
         void SetupCodeBlocks( SubbandList& bands );
 
-        void SetToVal(PicArray& pic_data,const Subband& node,ValueType val);
+        void SetToVal(CoeffArray& coeff_data,const Subband& node,ValueType val);
 
-        void AddSubAverage(PicArray& pic_data,int xl,int yl,AddOrSub dirn);
+        void AddSubAverage(CoeffArray& coeff_data,int xl,int yl,AddOrSub dirn);
 
     private:
 

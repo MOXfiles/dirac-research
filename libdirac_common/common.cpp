@@ -721,7 +721,7 @@ void SourceParams::SetFrameRate (FrameRateType fr)
     case FRAMERATE_60_FPS:
         m_framerate.m_num = 60;
         m_framerate.m_denom = 1;
-	break;
+        break;
     default:
         m_fr_idx = FRAMERATE_CUSTOM;
         m_framerate.m_num = m_framerate.m_denom = 0;

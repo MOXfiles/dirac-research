@@ -101,7 +101,7 @@ namespace dirac
             \param  node        subband node
             \param    val            the value to set
         */
-        void SetToVal(PicArray& pic_data,const Subband& node,ValueType val);
+        void SetToVal(CoeffArray& pic_data,const Subband& node,CoeffType val);
 
         //! Set up the code block structures for each subband
         /*!
