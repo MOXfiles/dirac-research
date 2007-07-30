@@ -93,7 +93,7 @@ void MvData::InitMvData()
 
      // Create the arrays of dc values
      for ( int i=0 ; i<3 ; ++i )
-         m_dc[i] = new TwoDArray<ValueType>( Mode().LengthY() , Mode().LengthX() );
+         m_dc[i] = new TwoDArray<ValueType>( Mode().LengthY() , Mode().LengthX() , 0);
 }
 
 MvData::~MvData()
@@ -120,7 +120,7 @@ MEData::MEData(const int xnumMB , const int ynumMB ,
                 const int xnumblocks , const int ynumblocks , const int num_refs ):
      MvData( xnumMB , ynumMB , xnumblocks , ynumblocks , num_refs ),
      m_pred_costs( Range( 1 , num_refs ) ),
-     m_intra_costs( ynumblocks , xnumblocks ),
+     m_intra_costs( ynumblocks , xnumblocks, 0 ),
      m_bipred_costs( ynumblocks , xnumblocks ),
      m_MB_costs( ynumMB , xnumMB ),
      m_lambda_map( ynumblocks , xnumblocks ),
@@ -132,7 +132,7 @@ MEData::MEData(const int xnumMB , const int ynumMB ,
 MEData::MEData( const int xnumMB , const int ynumMB ,  const int num_refs ):
      MvData( xnumMB , ynumMB , num_refs ),
      m_pred_costs( Range( 1 , num_refs ) ),
-     m_intra_costs( 4*ynumMB , 4*xnumMB ),
+     m_intra_costs( 4*ynumMB , 4*xnumMB, 0 ),
      m_bipred_costs( 4*ynumMB , 4*xnumMB ),
      m_MB_costs( ynumMB , xnumMB ),
      m_lambda_map( 4*ynumMB , 4*xnumMB ),
