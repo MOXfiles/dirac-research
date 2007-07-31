@@ -312,9 +312,7 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
 
 
 void RateController::UpdateBuffer( const long int num_bits )
-{
-	std::cout<<std::endl<<"Initial buffer bits = "<<m_buffer_bits;
-	
+{	
     m_buffer_bits -= num_bits;
     m_buffer_bits += m_picture_bits;
 ///*        
