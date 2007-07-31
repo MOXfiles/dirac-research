@@ -102,6 +102,7 @@ RateController::RateController(int trate, SourceParams& srcp, EncoderParams& enc
 {
 	SetFrameDistribution();
 	CalcTotalBits(srcp);
+
 }
 
 void RateController::SetFrameDistribution()
@@ -121,11 +122,11 @@ void RateController::SetFrameDistribution()
 void RateController::CalcTotalBits(const SourceParams& sourceparams)
 {
 	const Rational& frame_rate = sourceparams.FrameRate();
-	double f_rate = frame_rate.m_num/frame_rate.m_denom;
+	double f_rate = double(frame_rate.m_num)/double(frame_rate.m_denom);
 	int GOP_length = m_encparams.GOPLength();
 
 	m_GOP_duration = GOP_length/f_rate;
-	m_total_GOP_bits = int(m_GOP_duration*1000.0)*m_target_rate; //Unit in bits
+	m_total_GOP_bits = (long int)(m_GOP_duration*1000.0)*m_target_rate; //Unit in bits
 	m_current_GOP_bits = m_total_GOP_bits;
 	m_picture_bits = m_total_GOP_bits/GOP_length;
 	
@@ -149,7 +150,7 @@ void RateController::CalcTotalBits(const SourceParams& sourceparams)
 double RateController::TargetSubgroupRate()
 {
     // To do - take into account buffer occupancy
-    int bits = (m_encparams.L1Sep()-1)*m_L2frame_bits+
+    long int bits = (m_encparams.L1Sep()-1)*m_L2frame_bits+
                m_L1frame_bits;
     return (double)(bits)/(1000.0*m_GOP_duration);   
     
@@ -310,8 +311,10 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
 }
 
 
-void RateController::UpdateBuffer( const int num_bits )
+void RateController::UpdateBuffer( const long int num_bits )
 {
+	std::cout<<std::endl<<"Initial buffer bits = "<<m_buffer_bits;
+	
     m_buffer_bits -= num_bits;
     m_buffer_bits += m_picture_bits;
 ///*        
@@ -348,31 +351,31 @@ void RateController::Allocate ()
 	const int XL1 = m_frame_complexity.L1Complexity();
 	const int XL2 = m_frame_complexity.L2Complexity();
 	
-    int GOP_target = m_total_GOP_bits;
+    long int GOP_target = m_total_GOP_bits;
 	
-    const int min_bits = m_total_GOP_bits/(100*m_encparams.GOPLength());
+    const long int min_bits = m_total_GOP_bits/(100*m_encparams.GOPLength());
 
     // Allocate intra bits
-    m_Iframe_bits = (int) (GOP_target
+    m_Iframe_bits = (long int) (GOP_target
                   / (m_num_Iframe
-                    +(float)(m_num_L1frame*XL1)/XI
-                    +(float)(m_num_L2frame*XL2)/XI));
+                    +(double)(m_num_L1frame*XL1)/XI
+                    +(double)(m_num_L2frame*XL2)/XI));
 
     m_Iframe_bits = std::max( min_bits, m_Iframe_bits );
 
     // Allocate L1 bits
-    m_L1frame_bits = (int) (GOP_target
+    m_L1frame_bits = (long int) (GOP_target
                    / (m_num_L1frame
-                     +(float)(m_num_Iframe*XI)/XL1
-                     +(float)(m_num_L2frame*XL2)/XL1));
+                     +(double)(m_num_Iframe*XI)/XL1
+                     +(double)(m_num_L2frame*XL2)/XL1));
     
     m_L1frame_bits = std::max( min_bits, m_L1frame_bits );
 
     // Allocate L2 bits
-    m_L2frame_bits = (int) (GOP_target
+    m_L2frame_bits = (long int) (GOP_target
                    / (m_num_L2frame
-                     +(float)(m_num_Iframe*XI)/XL2
-                     +(float)(m_num_L1frame*XL1)/XL2));
+                     +(double)(m_num_Iframe*XI)/XL2
+                     +(double)(m_num_L1frame*XL1)/XL2));
 
     m_L2frame_bits = std::max( min_bits, m_L2frame_bits );
 
@@ -380,7 +383,7 @@ void RateController::Allocate ()
 
 
 
-float RateController::ReviewQualityFactor( const float qfac, const int num_bits )
+float RateController::ReviewQualityFactor( const float qfac, const long int num_bits )
 {
     if (num_bits>m_total_GOP_bits/2)
     {

@@ -131,13 +131,13 @@ namespace dirac
 		void SetFrameDistribution();
 
         //! Review the quality factor to make sure it's being set sensibly
-        float ReviewQualityFactor( const float qfac, const int num_bits );
+        float ReviewQualityFactor( const float qfac, const long int num_bits );
         
         //! Clip the quality factor to something sensible
         float ClipQualityFactor( const float qfac );
         
         //! Update the internal decoder buffer model
-        void UpdateBuffer( const int num_bits );
+        void UpdateBuffer( const long int num_bits );
 
         
     private:
@@ -155,13 +155,13 @@ namespace dirac
 		const int m_target_rate;
 
 		//! Number of bits for I frame
-		int m_Iframe_bits;
+		long int m_Iframe_bits;
 
 		//! Number of bits for L1 frame
-		int m_L1frame_bits;
+		long int m_L1frame_bits;
 
 		//! Number of bits for L2 frame
-		int m_L2frame_bits;
+		long int m_L2frame_bits;
 
 		//! Number of I frames
 		int m_num_Iframe;
@@ -173,25 +173,25 @@ namespace dirac
 		int m_num_L2frame;
 
 		//! Total Number of bits in a GOP
-		int m_total_GOP_bits;
+		long int m_total_GOP_bits;
 		
 		//! Mean number of bits in a picture
-		int m_picture_bits;
+		long int m_picture_bits;
 		
 		//! Size of the decoded bit buffer
-		const int m_buffer_size;
+		const long int m_buffer_size;
 
 		//! Number of bits in the buffer
-		int m_buffer_bits;
+		long int m_buffer_bits;
 		
 		//! The old buffer occupancy
-		int m_old_buffer_bits;
+		long int m_old_buffer_bits;
 		
 		//! The rate of change of buffer occupancy
 		double m_buffer_rate_of_change;
 
 		//! The Number of bits currently left for allocating the remaining frames in a GOP
-		int m_current_GOP_bits;
+		long int m_current_GOP_bits;
 
 		//! The duration of a GOP 
 		double m_GOP_duration;
@@ -204,7 +204,6 @@ namespace dirac
 
 		//! A frame counter, giving the position within a subgroup
 		int m_fcount;
-
 		
 		// Indicated whether a sequence is being coded intra only or not
 		bool m_intra_only;
