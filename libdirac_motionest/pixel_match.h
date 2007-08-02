@@ -110,9 +110,6 @@ namespace dirac
         // list of candidate vectors for checking
         CandidateList m_cand_list;
 
-        // Lagrangian lambda used for matching
-        float m_lambda;
-
         // Prediction used for each block. This is derived from neighbouring blocks
         // and is used to control the variation in the motion vector field.
         MVector m_mv_prediction;

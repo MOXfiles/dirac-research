@@ -259,13 +259,22 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
     MvArray& mv_array = me_data.Vectors( ref_id );
     const MvArray& guide_array = guide_data.Vectors( ref_id );
     TwoDArray<MvCostData>& pred_costs = me_data.PredCosts( ref_id );
+    
+    // Initialise the arrays
+    for (int y=0; y<mv_array.LengthY(); ++y)
+    {
+        for (int x=0; x<mv_array.LengthX(); ++x)
+        {
+    	    mv_array[y][x].x = 0;
+    	    mv_array[y][x].y = 0;
+    	    pred_costs[y][x].total = 10000000.0f;
+        }// x 
+    }// y 
 
     // Provide a block matching object to do the work
     BlockMatcher my_bmatch( pic_data , ref_data , 
                             m_encparams.LumaBParams(2) , m_encparams.MVPrecision() ,
                             mv_array , pred_costs );
-
-    float loc_lambda( 0.0 );
 
     // Do the work - loop over all the blocks, finding the best match //
     ////////////////////////////////////////////////////////////////////
@@ -294,13 +303,9 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
     // Set the prediction as the zero vector
     m_mv_prediction = zero_mv;
 
-    // m_lambda is the Lagrangian smoothing parameter set to zero to get us started
-    m_lambda = 0.0;
     DoBlock(0, 0 , guide_array , my_bmatch);
 
     // The rest of the first row
-    // ( use reduced lambda here )
-    m_lambda = loc_lambda / float( m_encparams.YNumBlocks() );
     for ( int xpos=1 ; xpos<mv_array.LengthX() ; ++xpos )
     {
         m_mv_prediction = mv_array[0][xpos-1];
@@ -313,11 +318,9 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
 
         // The first element of each row
         m_mv_prediction = mv_array[ypos-1][0];
-        m_lambda = loc_lambda/float(m_encparams.XNumBlocks());
         DoBlock(0, ypos , guide_array , my_bmatch );
 
          // The middle elements of each row
-        m_lambda = loc_lambda;
         for ( int xpos=1 ; xpos<mv_array.LastX() ; ++xpos )
         {
             m_mv_prediction = MvMedian( mv_array[ypos][xpos-1],
@@ -328,7 +331,6 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
         }// xpos
 
          // The last element in each row
-        m_lambda = loc_lambda/float( m_encparams.XNumBlocks() );
         m_mv_prediction = MvMean( mv_array[ypos-1][ mv_array.LastX() ],
                                   mv_array[ypos][ mv_array.LastX()-1 ]);
         DoBlock(mv_array.LastX() , ypos , guide_array , my_bmatch );
@@ -353,17 +355,16 @@ void PixelMatcher::DoBlock(const int xpos, const int ypos ,
 
     // use the spatial prediction, also, as a guide
     if (m_encparams.FullSearch()==false )
-        AddNewVlist( m_cand_list , m_mv_prediction , m_xr , m_yr);
+        AddNewVlist( m_cand_list , m_mv_prediction , m_xr , m_yr );
     else
         AddNewVlist( m_cand_list , m_mv_prediction , 1 , 1);
 
     // Find the best motion vector //
     /////////////////////////////////
 
-    block_match.FindBestMatchPel( xpos , ypos , m_cand_list, m_mv_prediction, m_lambda );
-
+    block_match.FindBestMatchPel( xpos , ypos , m_cand_list, m_mv_prediction, 0 );
+    
     // Reset the lists ready for the next block (don't erase the first sublist as
     // this is a neighbourhood of zero, which we always look at)
     m_cand_list.erase( m_cand_list.begin()+1 , m_cand_list.end() );
-
 }
