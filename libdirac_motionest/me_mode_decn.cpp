@@ -438,7 +438,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
         me_data.IntraCosts()[ypos][xpos] *= m_level_factor[level];
         unit_cost = me_data.IntraCosts()[ypos][xpos] +  mode_cost;
 
-        if ( unit_cost<min_unit_cost && me_data.IntraCosts()[ypos][xpos]<0.8*best_SAD_value)
+        if ( unit_cost<min_unit_cost && me_data.IntraCosts()[ypos][xpos]<0.9*best_SAD_value)
         {
             me_data.Mode()[ypos][xpos] = INTRA;
             min_unit_cost = unit_cost;
