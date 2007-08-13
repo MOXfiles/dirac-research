@@ -494,10 +494,9 @@ void SequenceCompressor::DenoiseComponent( PicArray& pic_data )
         for (int i=1; i<pic_data.LastX(); ++i)
         {
             // Make the value list
-            for (int k=0; k<centre_weight-1; ++k)
-                val_list[k] = pic_copy[j][i];
-
-            pos = centre_weight - 1;
+            int pos=0;
+            for (; pos<centre_weight-1; ++pos)
+                val_list[pos] = pic_copy[j][i];
                 
             for (int s=-1; s<=1; ++s)
             {
