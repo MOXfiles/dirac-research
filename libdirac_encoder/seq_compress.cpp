@@ -487,8 +487,6 @@ void SequenceCompressor::DenoiseComponent( PicArray& pic_data )
     const int list_length = centre_weight+8;
     ValueType val_list[list_length]; 
     
-    int pos;
-    
     for (int j=1; j<pic_data.LastY(); ++j)
     {
         for (int i=1; i<pic_data.LastX(); ++i)
