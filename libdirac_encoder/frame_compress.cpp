@@ -318,39 +318,8 @@ void FrameCompressor::AnalyseMEData( const MEData& me_data )
 
     if ( m_encparams.Verbose() )
         std::cout<<std::endl<<m_intra_ratio<<"% of blocks are intra   ";
-
-    // Check the size of SAD errors across reference 1    
-    const TwoDArray<MvCostData>& pcosts = me_data.PredCosts( 1 );
-
-    // averege SAD across all relevant blocks
-    long double sad_average = 0.0;
-    // average SAD in a given block
-    long double block_average; 
-    // the block parameters
-    const OLBParams& bparams = m_encparams.LumaBParams( 2 ); 
-    //the count of the relevant blocks
-    int block_count = 0;
-
-    for ( int j=0 ; j<pcosts.LengthY() ; ++j )
-    {
-        for ( int i=0 ; i<pcosts.LengthX() ; ++i )
-        {
-
-            if ( modes[j][i] == REF1_ONLY || modes[j][i] == REF1AND2 )
-            {
-                block_average = pcosts[j][i].SAD /
-                                static_cast<long double>( bparams.Xblen() * bparams.Yblen() * 4 );
-                sad_average += block_average;
-                block_count++;
-            }
-
-        }// i
-    }// j
-
-    if ( block_count != 0)
-        sad_average /= static_cast<long double>( block_count );
    
-    if ( (sad_average > 30.0) || (m_intra_ratio > 33.33) )
+    if ( m_intra_ratio > 33.33 )
         m_is_a_cut = true;
     else
         m_is_a_cut = false;
