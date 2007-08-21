@@ -161,11 +161,13 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
                                  xpad_chroma_len, ypad_chroma_len, 
                                  sparams.GetVideoDepth());
 
+    // Retain the original frame dimensions for the Motion estimation
+    // buffer
     m_origbuffer = new FrameBuffer( sparams.CFormat() ,
                                     m_encparams.NumL1() , m_encparams.L1Sep() , 
                                     m_encparams.OrigXl(), m_encparams.OrigYl(),
-                                    xpad_len, ypad_len, 
-                                    xpad_chroma_len, ypad_chroma_len,
+                                    m_encparams.OrigXl(), m_encparams.OrigYl(),
+                                    xl_chroma, yl_chroma,
                                     sparams.GetVideoDepth());
             
     // Set up a rate controller if rate control being used

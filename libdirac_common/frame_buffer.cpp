@@ -321,6 +321,11 @@ std::vector<int> FrameBuffer::Members() const
 void FrameBuffer::PushFrame(const unsigned int frame_num)
 {// Put a new frame onto the top of the stack using built-in frame parameters
  // with frame number frame_num
+    
+    // if frame is present - return
+    if (IsFrameAvail(frame_num))
+        return;
+
     m_fparams.SetFrameNum(frame_num);
     if ( m_fparams.FSort().IsRef() )
         m_ref_count++;
@@ -355,6 +360,10 @@ void FrameBuffer::PushFrame(const unsigned int frame_num)
 void FrameBuffer::PushFrame( const FrameParams& fp )
 {// Put a new frame onto the top of the stack
 
+    // if frame is present - return
+    if (IsFrameAvail(fp.FrameNum()))
+        return;
+
     if ( fp.FSort().IsRef() )
         m_ref_count++;
 
@@ -386,37 +395,15 @@ void FrameBuffer::PushFrame( const FrameParams& fp )
 
 void FrameBuffer::PushFrame( const Frame& frame )
 {
-    if ( frame.GetFparams().FSort().IsRef() )
-        m_ref_count++; 
-     
-    // Put a copy of a new frame onto the top of the stack
+    int fnum = frame.GetFparams().FrameNum();
+    SetFrameParams( fnum );
+    PushFrame(fnum);
 
-    int new_frame_pos = -1;
-    // First check if an unused frame is available in the buffer
-    for (int i = 0; i < (int)m_frame_in_use.size(); ++i)
-    {
-        if (m_frame_in_use[i] == false)
-        {
-            *m_frame_data[i] = frame;
-            new_frame_pos = i;
-            m_frame_in_use[i] = true;
-            break;
-        }
-    }
-    if (new_frame_pos == -1)
-    {
-        // No unused frames in buffer. Allocate a new frame
-        Frame* fptr = new Frame( frame );
+    bool is_present;
 
-        // Add the frame to the buffer
-        m_frame_data.push_back(fptr);
-        new_frame_pos = m_frame_data.size()-1;
-        m_frame_in_use.push_back(true);
-    }
-
-    // Put the frame number into the index table
-    std::pair<unsigned int,unsigned int> tmp_pair(frame.GetFparams().FrameNum() , new_frame_pos);
-    m_fnum_map.insert(tmp_pair);
+    Frame &f = GetFrame(frame.GetFparams().FrameNum(), is_present);
+    if(is_present)
+        frame.CopyContents(f);
 }
 
 void FrameBuffer::PushFrame(StreamPicInput* picin,const FrameParams& fp)
