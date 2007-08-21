@@ -325,6 +325,15 @@ namespace dirac
          */    
         TwoDArray<T>& operator=(const TwoDArray<T>& rhs);
 
+        //! Copy Contents
+        /*!
+            Copy contents of array into output array retaining the dimensions
+            of the output array. If output array is larger that array then
+            pad with last true value.
+            Return true is copy was successful
+         */    
+        bool CopyContents(TwoDArray<T>& out) const;
+
         //! Resizes the array, deleting the current data.    
         void Resize(const int height, const int width);    
 
@@ -439,6 +448,27 @@ namespace dirac
 
         return *this;
 
+    }
+    
+    template <class T>
+    bool TwoDArray<T>::CopyContents(TwoDArray<T>& out) const
+    {
+        if (&out != this)
+        {
+            int rows = std::min (m_length_y, out.m_length_y);
+            int cols = std::min (m_length_x, out.m_length_x);
+            for (int j = 0; j < rows; ++j)
+            {
+                memcpy( out.m_array_of_rows[j], m_array_of_rows[j], cols * sizeof( T )) ;
+                for (int i = cols; i <out.m_length_x; ++i)
+                    out.m_array_of_rows[j][i] = out.m_array_of_rows[j][cols-1];
+            }
+            for (int j = rows; j < out.m_length_y; ++j)
+            {
+                memcpy( out.m_array_of_rows[j], out.m_array_of_rows[rows-1], out.m_length_x * sizeof( T )) ;
+            }
+        }
+        return true;
     }
 
     template <class T>

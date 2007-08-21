@@ -67,6 +67,13 @@ namespace dirac
         //! Assignment =. Private as not currently used [may want to implement reference counting later.]
         Frame& operator=( const Frame& rhs );
 
+        //! Frame Copy
+        /*!
+            Copy contents of frame into the output frame passed to it 
+            retaining the frame dimensions of the output frame.
+        */
+        void CopyContents(Frame& out ) const;
+
         //gets and sets
         //! Gets the frame parameters
         FrameParams& GetFparams() const  {return m_fparams;}

@@ -139,6 +139,19 @@ Frame& Frame::operator=(const Frame& rhs)
 
 }
 
+void Frame::CopyContents(Frame& out) const
+{
+    if ( &out != this)
+    {
+        out.m_redo_upYdata = true;
+        out.m_redo_upUdata = true;
+        out.m_redo_upVdata = true;
+        m_Y_data->CopyContents(*(out.m_Y_data));
+        m_U_data->CopyContents(*(out.m_U_data));
+        m_V_data->CopyContents(*(out.m_V_data));
+    }
+}
+
 //Other functions
 
 void Frame::Init()
