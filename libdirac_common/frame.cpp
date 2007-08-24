@@ -199,7 +199,8 @@ PicArray& Frame::UpYdata()
         if (m_upY_data == 0)
             m_upY_data = new PicArray( 2*m_Y_data->LengthY(),
                                        2*m_Y_data->LengthX() );
-        UpConverter myupconv(0, (1 << m_fparams.GetVideoDepth())-1,
+        UpConverter myupconv(-(1 << (m_fparams.GetVideoDepth()-1)), 
+                             (1 << (m_fparams.GetVideoDepth()-1))-1,
                              m_fparams.OrigXl(), m_fparams.OrigYl());
         myupconv.DoUpConverter( *m_Y_data , *m_upY_data );
 
@@ -219,7 +220,8 @@ PicArray& Frame::UpUdata()
         if (m_upU_data ==0)
             m_upU_data = new PicArray(2*m_U_data->LengthY() ,
                                       2*m_U_data->LengthX());
-        UpConverter myupconv(0, (1 << m_fparams.GetVideoDepth())-1,
+        UpConverter myupconv(-(1 << (m_fparams.GetVideoDepth()-1)), 
+                             (1 << (m_fparams.GetVideoDepth()-1))-1,
                                  m_fparams.OrigChromaXl(),
                                  m_fparams.OrigChromaYl());
 
@@ -240,7 +242,8 @@ PicArray& Frame::UpVdata()
            if (m_upV_data ==0)
             m_upV_data = new PicArray( 2*m_V_data->LengthY(),
                                        2*m_V_data->LengthX() );
-        UpConverter myupconv(0, (1 << m_fparams.GetVideoDepth())-1,
+        UpConverter myupconv(-(1 << (m_fparams.GetVideoDepth()-1)), 
+                             (1 << (m_fparams.GetVideoDepth()-1))-1,
                                  m_fparams.OrigChromaXl(),
                                  m_fparams.OrigChromaYl());
         myupconv.DoUpConverter( *m_V_data , *m_upV_data );
@@ -276,7 +279,8 @@ const PicArray& Frame::UpYdata() const
             m_upY_data = new PicArray( 2*m_Y_data->LengthY(),
                                        2*m_Y_data->LengthX() );
 
-        UpConverter myupconv(0, (1 << m_fparams.GetVideoDepth())-1,
+        UpConverter myupconv(-(1 << (m_fparams.GetVideoDepth()-1)), 
+                             (1 << (m_fparams.GetVideoDepth()-1))-1,
                                  m_fparams.OrigXl(), m_fparams.OrigYl());
         myupconv.DoUpConverter( *m_Y_data , *m_upY_data );
 
@@ -301,7 +305,8 @@ const PicArray& Frame::UpUdata() const
             m_upU_data = new PicArray( 2*m_U_data->LengthY(),
                                        2*m_U_data->LengthX() );
 
-        UpConverter myupconv(0, (1 << m_fparams.GetVideoDepth())-1,
+        UpConverter myupconv(-(1 << (m_fparams.GetVideoDepth()-1)), 
+                             (1 << (m_fparams.GetVideoDepth()-1))-1,
                                  m_fparams.OrigChromaXl(),
                                  m_fparams.OrigChromaYl());
         myupconv.DoUpConverter( *m_U_data , *m_upU_data );
@@ -327,7 +332,8 @@ const PicArray& Frame::UpVdata() const
             m_upV_data = new PicArray( 2*m_V_data->LengthY() ,
                                        2*m_V_data->LengthX() );
 
-        UpConverter myupconv(0, (1 << m_fparams.GetVideoDepth())-1,
+        UpConverter myupconv(-(1 << (m_fparams.GetVideoDepth()-1)), 
+                             (1 << (m_fparams.GetVideoDepth()-1))-1,
                                  m_fparams.OrigChromaXl(),
                                  m_fparams.OrigChromaYl());
         myupconv.DoUpConverter( *m_V_data , *m_upV_data );
@@ -353,8 +359,11 @@ void Frame::ClipComponent(PicArray& pic_data) const
     ValueType *pic = &(pic_data[pic_data.FirstY()][pic_data.FirstX()]);
     int count = pic_data.LengthY() * pic_data.LengthX();
 
-    ValueType min_val = 0;
-    ValueType max_val = (1 << m_fparams.GetVideoDepth())-1;
+    ValueType min_val;
+    ValueType max_val;
+    
+    min_val = -(1 << (m_fparams.GetVideoDepth()-1) );
+    max_val = (1 << (m_fparams.GetVideoDepth()-1) )-1;
 
 #if defined (HAVE_MMX)
     {
@@ -408,15 +417,14 @@ void Frame::Clip()
 {
     //just clips the straight picture data, not the upconverted data
 
-    ClipComponent( *m_Y_data );
-
-    ClipComponent( *m_U_data );
-    ClipComponent( *m_V_data );    
+    ClipComponent( *m_Y_data);
+    ClipComponent( *m_U_data);
+    ClipComponent( *m_V_data);    
 }
 
 void Frame::ClipUpData()
 {
-    //just clips the he upconverted data
+    //just clips the upconverted data
 
     if (m_upY_data)
         ClipComponent( *m_upY_data );

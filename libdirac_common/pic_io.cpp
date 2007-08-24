@@ -70,6 +70,7 @@ bool StreamPicOutput::WriteNextFrame( const Frame& myframe )
 
 bool StreamPicOutput::WriteComponent( const PicArray& pic_data , const CompSort& cs)
 {
+    
     //initially set up for 10-bit data input, rounded to 8 bits on file output
     //This will throw out any padding to the right and bottom of a frame
 
@@ -93,7 +94,7 @@ bool StreamPicOutput::WriteComponent( const PicArray& pic_data , const CompSort&
         {
             for (int i=0 ; i<xl ; ++i)
             {                
-                tempc[i] = (unsigned char) pic_data[j][i];                
+                tempc[i] = (unsigned char) ( pic_data[j][i] + 128 );                           
             }//I
 
             m_op_pic_ptr->write((char*) tempc,xl);
@@ -218,6 +219,7 @@ bool StreamPicInput::ReadNextFrame(Frame& myframe)
 
 bool StreamPicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
 {
+    
     if (! *m_ip_pic_ptr)
         return false;
 
@@ -255,6 +257,11 @@ bool StreamPicInput::ReadComponent(PicArray& pic_data, const CompSort& cs)
         {            
             pic_data[j][i] = (ValueType) temp[i];
         }//I
+        for (int i=0 ; i<xl ; ++i)
+        {            
+            pic_data[j][i] -= 128;
+        }//I
+
 
         //pad the columns on the rhs using the edge value        
         for (int i=xl ; i<pic_data.LengthX() ; ++i ){

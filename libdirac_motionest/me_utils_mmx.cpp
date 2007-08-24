@@ -131,6 +131,8 @@ namespace dirac
                 // sum += (pic)
                 tmp = _mm_xor_si64(tmp, tmp);
                 tmp = _mm_unpackhi_pi16(pic, tmp);
+                tmp = _mm_slli_pi32 (tmp, 16);
+                tmp = _mm_srai_pi32 (tmp, 16);
                 pic = _mm_unpacklo_pi16(pic, pic);
                 pic = _mm_srai_pi32 (pic, 16);
                 pic = _mm_add_pi32 (pic, tmp);

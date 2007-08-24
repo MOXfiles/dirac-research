@@ -207,12 +207,15 @@ static void set_component (const PicArray& pic_data,  const CompSort cs, dirac_d
 
 #if defined HAVE_MMX
     int last_idx = (xl>>3)<<3;
+    __m64 tmp = _mm_set_pi16(128, 128, 128, 128);
     for (int j=0 ; j<yl ;++j)
     {
         for (int i=0 ; i<last_idx ; i+=8 )
         {
             __m64 pic1 = *(__m64 *)&pic_data[j][i];
+            pic1 = _mm_add_pi16 (pic1, tmp);
             __m64 pic2 = *(__m64 *)(&pic_data[j][i+4]);
+            pic2 = _mm_add_pi16 (pic2, tmp);
             __m64 *tmp = (__m64 *)&buf[j*xl+i];
             *tmp = _mm_packs_pu16 (pic1, pic2);
         }//i
@@ -224,19 +227,20 @@ static void set_component (const PicArray& pic_data,  const CompSort cs, dirac_d
     {
         for (int i=last_idx ; i<xl ; i++ )
         {
-            buf[j*xl+i]=(unsigned char) pic_data[j][i];                
+            buf[j*xl+i]=(unsigned char) pic_data[j][i]+128;                
         }//i
     }//j
     return;
 #else
+
     for (int j=0 ; j<yl ;++j)
     {
         for (int i=0 ; i<xl ; ++i)
         {                
-            buf[j*xl+i]=(unsigned char) pic_data[j][i];                
+            buf[j*xl+i]=(unsigned char) (pic_data[j][i]+128);                
         }//i
-
     }//j
+
 #endif
 }
 
