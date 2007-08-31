@@ -114,7 +114,7 @@ void DrawOverlay::DrawPowerBar(int min, int max)
         m_frame.Ydata()[ypx][5]=0;
 
         for (int xpx=0; xpx<5; ++xpx)
-            m_frame.Ydata()[ypx][xpx]=128; // grey background
+            m_frame.Ydata()[ypx][xpx]=0; // grey background
     }
 
     // draw colour on line by line basis
@@ -130,8 +130,8 @@ void DrawOverlay::DrawPowerBar(int min, int max)
 
         for (int xpx=0; xpx<=4/m_draw_params.ChromaFactorX(); ++xpx)
         {
-            m_frame.Udata()[ypx][xpx]=U+128;
-            m_frame.Vdata()[ypx][xpx]=V+128;
+            m_frame.Udata()[ypx][xpx]=U;
+            m_frame.Vdata()[ypx][xpx]=V;
         }
     }
 
@@ -149,7 +149,7 @@ void DrawOverlay::DrawCharacter(const PicArray & ch, int y_offset, int x_offset)
     {
         for (int x=x_offset, x_ch=0; x<x_offset+8; ++x, ++x_ch)
         {
-            m_frame.Ydata()[y][x]=ch[y_ch][x_ch]*256;
+            m_frame.Ydata()[y][x]=ch[y_ch][x_ch]*255-128;
         }// x
     }// y
 
@@ -158,8 +158,8 @@ void DrawOverlay::DrawCharacter(const PicArray & ch, int y_offset, int x_offset)
     {
         for (int xpx=x_offset/m_draw_params.ChromaFactorX(); xpx<(x_offset+8)/m_draw_params.ChromaFactorX(); ++xpx)
         {
-            m_frame.Udata()[ypx][xpx]=128;
-            m_frame.Vdata()[ypx][xpx]=128;
+            m_frame.Udata()[ypx][xpx]=0;
+            m_frame.Vdata()[ypx][xpx]=0;
         }// xpx
     }// ypx
 }

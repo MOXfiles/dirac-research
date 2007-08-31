@@ -62,7 +62,7 @@ void DrawSplitMode::DrawBlock(int j, int i)
         power=200;
 
     GetPowerUV(power, U, V);
-    DrawMvBlockUV(j, i, U+125, V+125);
+    DrawMvBlockUV(j, i, U, V);
 
 }
 
@@ -73,29 +73,29 @@ void DrawSplitMode::DrawLegend()
     for (int ypx=m_draw_params.PicY()-49; ypx<m_draw_params.PicY(); ++ypx)
     {
         for (int xpx=7; xpx>=0; --xpx)
-            m_frame.Ydata()[ypx][xpx]=125; // grey
+            m_frame.Ydata()[ypx][xpx]=0; // grey
     }
 
     int U=0, V=0;
 
     GetPowerUV(200, U, V); // mode 2
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(48/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(40/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(48/m_draw_params.ChromaFactorY())+1, 0, U, V);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(40/m_draw_params.ChromaFactorY())+1, 0, U, V);
     
     GetPowerUV(100, U, V); // mode 1
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(32/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(24/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(32/m_draw_params.ChromaFactorY())+1, 0, U, V);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(24/m_draw_params.ChromaFactorY())+1, 0, U, V);
     
     GetPowerUV(0, U, V); // mode 0
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(16/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
-    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(8/m_draw_params.ChromaFactorY())+1, 0, U+125, V+125);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(16/m_draw_params.ChromaFactorY())+1, 0, U, V);
+    DrawBlockUV((m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(8/m_draw_params.ChromaFactorY())+1, 0, U, V);
 
     // black horizontal lines
     for (int xpx=15; xpx>=0; --xpx)
     {
-        m_frame.Ydata()[m_draw_params.PicY()-49][xpx]=0;
-        m_frame.Ydata()[m_draw_params.PicY()-33][xpx]=0;
-        m_frame.Ydata()[m_draw_params.PicY()-17][xpx]=0;
+        m_frame.Ydata()[m_draw_params.PicY()-49][xpx]=-128;
+        m_frame.Ydata()[m_draw_params.PicY()-33][xpx]=-128;
+        m_frame.Ydata()[m_draw_params.PicY()-17][xpx]=-128;
     }
 
     // draw '2 1 0' label

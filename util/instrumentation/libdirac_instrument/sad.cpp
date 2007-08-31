@@ -59,7 +59,7 @@ void DrawSad::DrawBlock(int j, int i)
     int U = 0, V = 0;
     int value = int(m_cost[j][i].SAD / (double(m_scale) / 250));
     GetPowerUV(value, U, V);
-    DrawMvBlockUV(j, i, U+125, V+125);
+    DrawMvBlockUV(j, i, U, V);
 
     // if intra, draw white box round block
     if (m_mode[j][i]==dirac::INTRA)

@@ -111,7 +111,7 @@ void DrawMotionColourArrows::DrawBlock(int j, int i)
         {
             for (int x=i; x<i+m_blocks_per_arrow_x; ++x)
             {
-                DrawMvBlockUV(y, x, U+128, V+128);
+                DrawMvBlockUV(y, x, U, V);
             }
         }
     }

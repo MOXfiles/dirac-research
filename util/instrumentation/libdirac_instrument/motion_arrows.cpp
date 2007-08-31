@@ -65,8 +65,8 @@ void DrawMotionArrows::DrawBlock(int j, int i)
         {
             if (x >= m_frame.Udata().LengthX() || x >= m_frame.Vdata().LengthX())
                 break;
-            m_frame.Udata()[y][x] = 128;
-            m_frame.Vdata()[y][x] = 128;
+            m_frame.Udata()[y][x] = 0;
+            m_frame.Vdata()[y][x] = 0;
         }
     }
 
