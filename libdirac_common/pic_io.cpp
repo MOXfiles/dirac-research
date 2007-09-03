@@ -50,7 +50,7 @@ StreamPicOutput::StreamPicOutput()
 StreamPicOutput::~StreamPicOutput()
 {}
 
-StreamPicOutput::StreamPicOutput (const SeqParams& sp) :
+StreamPicOutput::StreamPicOutput (const SourceParams& sp) :
     m_sparams(sp),
     m_op_pic_ptr(0)
 { }
@@ -132,6 +132,11 @@ MemoryStreamOutput::~MemoryStreamOutput()
     delete m_op_pic_ptr;
 }
 
+void MemoryStreamOutput::SetSourceParams (SourceParams &sparams)
+{
+    m_sparams = sparams;
+}
+
 void MemoryStreamOutput::SetMembufReference (unsigned char *buf, int buf_size)
 {
     m_membuf.SetMembufReference(buf, buf_size);
@@ -139,7 +144,7 @@ void MemoryStreamOutput::SetMembufReference (unsigned char *buf, int buf_size)
 
 
 FileStreamOutput::FileStreamOutput(const char* output_name,
-                     const SeqParams& sp) : 
+                     const SourceParams& sp) : 
     StreamPicOutput(sp)
 {
     OpenYUV(output_name);
@@ -186,7 +191,7 @@ StreamPicInput::StreamPicInput () :
     m_ypad(0)
 {}
 
-StreamPicInput::StreamPicInput (std::istream *ip_pic_ptr, const SeqParams &sparams) :
+StreamPicInput::StreamPicInput (std::istream *ip_pic_ptr, const SourceParams &sparams) :
     m_sparams(sparams),
     m_ip_pic_ptr(ip_pic_ptr),
     m_xpad(0),
@@ -307,7 +312,7 @@ void MemoryStreamInput::Skip(const int num)
 }
 
 FileStreamInput::FileStreamInput(const char* input_name, 
-                                 const SeqParams &sparams)
+                                 const SourceParams &sparams)
 {
 
     char input_name_yuv[FILENAME_MAX];

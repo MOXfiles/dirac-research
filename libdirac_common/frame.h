@@ -74,6 +74,12 @@ namespace dirac
         */
         void CopyContents(Frame& out ) const;
 
+        //! Frame Fill
+        /*!
+            Initialise contents of frame with value provided
+        */
+        void Fill(ValueType val );
+
         //gets and sets
         //! Gets the frame parameters
         FrameParams& GetFparams() const  {return m_fparams;}
@@ -166,7 +172,7 @@ namespace dirac
         void ClearData();
 
         //! Clip an individual component
-        void ClipComponent(PicArray& pic_data) const;
+        void ClipComponent(PicArray& pic_data, CompSort cs) const;
 
         //! Flag that upconversion needs to be re-done
         mutable bool m_redo_upYdata;

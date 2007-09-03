@@ -85,23 +85,6 @@ typedef struct
     unsigned int level;
 } dirac_parseparams_t;
 
-/*! Structure that holds the sequence parameters */
-typedef struct
-{
-    /*! numper of pixels per line */
-    int width;
-    /*! number of lines per frame */
-    int height;
-    /*! chroma type */
-    dirac_chroma_t chroma;
-    /*! numper of pixels of chroma per line */
-    int chroma_width;
-    /*! number of lines of chroma per frame */
-    int chroma_height;
-    /*! video depth - number of bits in video */
-    int video_depth;
-} dirac_seqparams_t;
-
 typedef struct
 {
     unsigned int width;
@@ -137,12 +120,20 @@ typedef struct
 /*! Structure that holds the source parameters */
 typedef struct
 {
+    /*! numper of pixels per line */
+    unsigned int width;
+    /*! number of lines per frame */
+    unsigned int height;
+    /*! chroma type */
+    dirac_chroma_t chroma;
+    /*! numper of pixels of chroma per line */
+    unsigned int chroma_width;
+    /*! number of lines of chroma per frame */
+    unsigned int chroma_height;
     /*! interlace flag: 0 - progressive; 1 - interlaced */
     int interlace;
     /*! top field comes first : 0 - false; 1 - true */
     int topfieldfirst;
-    /*! sequential fields flag  : 0 - interleaved; 1 - sequential */
-    int seqfields;
     /*! frame rate */
     dirac_frame_rate_t frame_rate;
     /*! pixel aspect ratio */

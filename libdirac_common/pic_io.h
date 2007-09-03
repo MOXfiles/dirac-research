@@ -83,9 +83,9 @@ namespace dirac
             //! Constructor
             /*!
                 Constructor, takes
-                \param sp the sequence parameters
+                \param sp the source parameters
              */  
-            StreamPicOutput( const SeqParams& sp);
+            StreamPicOutput( const SourceParams& sp);
 
             //! virtual Destructor
             virtual ~StreamPicOutput();
@@ -93,13 +93,13 @@ namespace dirac
             //! Write the next frame to the output
             virtual bool WriteNextFrame(const Frame& myframe);
 
-            //! Get the sequence parameters 
-            SeqParams& GetSeqParams() {return m_sparams;}
+            //! Get the source parameters 
+            SourceParams& GetSourceParams() {return m_sparams;}
 
         protected:
 
-            //! Sequence parameters
-            SeqParams m_sparams;
+            //! Source parameters
+            SourceParams m_sparams;
             //! Output stream
             std::ostream* m_op_pic_ptr;
 
@@ -120,9 +120,8 @@ namespace dirac
             //! Destructor
             ~MemoryStreamOutput();
 
-            //! Set sequence parameters
-            void SetSequenceParams ( SeqParams &sparams)
-            { m_sparams = sparams; }
+            //! Set source parameters
+            void SetSourceParams ( SourceParams &sparams);
 
             //! Set the memory buffer to write the data to
             void SetMembufReference (unsigned char *buf, int buf_size);
@@ -218,10 +217,10 @@ namespace dirac
             /*!
                 Constructor, takes
                 \param output_name the name of the output file
-                \param sp the sequence parameters
+                \param sp the source parameters
              */  
             FileStreamOutput (const char* output_name,
-              const SeqParams& sp);
+              const SourceParams& sp);
 
             //! Destructor
             virtual ~FileStreamOutput ();
@@ -247,9 +246,9 @@ namespace dirac
             /*!
                 Constructor, takes
                 \param ip_pic_ptr input stream to read from
-                \param sparams    Sequence parameters
+                \param sparams    Source parameters
              */
-            StreamPicInput(std::istream *ip_pic_ptr, const SeqParams& sparams);
+            StreamPicInput(std::istream *ip_pic_ptr, const SourceParams& sparams);
 
             //! Destructor
             virtual ~StreamPicInput();
@@ -263,16 +262,16 @@ namespace dirac
             //! Read the next frame from the file
             virtual bool ReadNextFrame(Frame& myframe);
 
-            //! Get the sequence parameters 
-            SeqParams& GetSeqParams() const {return m_sparams;}
+            //! Get the source parameters 
+            SourceParams& GetSourceParams() const {return m_sparams;}
 
             //! Returns true if we're at the end of the input, false otherwise
             bool End() const ;
 
         protected:
 
-            //! Sequence parameters
-            mutable SeqParams m_sparams;
+            //! Source parameters
+            mutable SourceParams m_sparams;
 
             //! Input stream
             std::istream* m_ip_pic_ptr;
@@ -296,8 +295,8 @@ namespace dirac
             //! Destructor
             ~MemoryStreamInput();
 
-            //! Set the seqence parameters
-            void SetSequenceParams ( SeqParams &sparams)
+            //! Set the source parameters
+            void SetSourceParams ( SourceParams &sparams)
             { m_sparams = sparams; }
 
             //! Set Memory buffer
@@ -375,9 +374,9 @@ namespace dirac
             /*!
                 Constructor, takes
                 \param input_name the name of the input picture file
-                \param sparams    the sequence parameters
+                \param sparams    the source parameters
              */
-            FileStreamInput (const char* input_name, const SeqParams &sparams);
+            FileStreamInput (const char* input_name, const SourceParams &sparams);
 
             //! Destructor
             virtual ~FileStreamInput ();

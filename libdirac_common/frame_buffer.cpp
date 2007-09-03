@@ -57,9 +57,10 @@ FrameBuffer::FrameBuffer(ChromaFormat cf,
                          const int dwt_ylen, 
                          const int dwt_cxlen, 
                          const int dwt_cylen, 
-                         const unsigned int vd):
+                         unsigned int luma_depth,
+                         unsigned int chroma_depth) :
     m_ref_count(0), 
-    m_fparams(cf, orig_xlen, orig_ylen, dwt_xlen, dwt_ylen, dwt_cxlen, dwt_cylen, vd),
+    m_fparams(cf, orig_xlen, orig_ylen, dwt_xlen, dwt_ylen, dwt_cxlen, dwt_cylen, luma_depth, chroma_depth),
     m_num_L1(0),
     m_L1_sep(1),
     m_gop_len(0)
@@ -75,9 +76,10 @@ FrameBuffer::FrameBuffer(ChromaFormat cf,
                          const int dwt_ylen, 
                          const int dwt_cxlen, 
                          const int dwt_cylen, 
-                         const unsigned int vd): 
+                         unsigned int luma_depth,
+                         unsigned int chroma_depth) :
     m_ref_count(0),
-    m_fparams(cf,orig_xlen, orig_ylen, dwt_xlen, dwt_ylen, dwt_cxlen, dwt_cylen, vd),
+    m_fparams(cf,orig_xlen, orig_ylen, dwt_xlen, dwt_ylen, dwt_cxlen, dwt_cylen, luma_depth, chroma_depth),
     m_num_L1(numL1),
     m_L1_sep(L1sep)
 {    
@@ -121,6 +123,11 @@ FrameBuffer::FrameBuffer(const FrameBuffer& cpy)
     
     // and the reference count
     m_ref_count = cpy.m_ref_count;
+
+    // and the gop structure
+    m_num_L1 = cpy.m_num_L1;
+    m_L1_sep = cpy.m_L1_sep;
+    m_gop_len = cpy.m_gop_len;
 }
 
 //Assignment=. Not sure why this would be used either.

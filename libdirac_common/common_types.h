@@ -65,7 +65,6 @@ typedef enum
     DD13_5,       /* Deslauriers-Dubuc (13,5) */
     HAAR0,        /* Haar, no shift per level*/
     HAAR1,        /* Haar, one shift per level*/
-    HAAR2,        /* Haar, two shifts per level*/
     FIDELITY,    /* Fidelity wavelet */
     DAUB9_7,       /* Integer approximation to Daubechies 97 */
     filterNK
@@ -97,8 +96,12 @@ typedef enum {
         VIDEO_FORMAT_4SIF,
         VIDEO_FORMAT_SD_525_DIGITAL,
         VIDEO_FORMAT_SD_625_DIGITAL,
-        VIDEO_FORMAT_HD_720,
-        VIDEO_FORMAT_HD_1080,
+        VIDEO_FORMAT_HD_720P60,
+        VIDEO_FORMAT_HD_720P50,
+        VIDEO_FORMAT_HD_1080I60,
+        VIDEO_FORMAT_HD_1080I50,
+        VIDEO_FORMAT_HD_1080P60,
+        VIDEO_FORMAT_HD_1080P50,
         VIDEO_FORMAT_DIGI_CINEMA_2K,
         VIDEO_FORMAT_DIGI_CINEMA_4K,
         VIDEO_FORMAT_UNDEFINED
@@ -106,9 +109,9 @@ typedef enum {
 
 /*! Types of Colour primaries */
 typedef enum {
-    CP_ITU_709=0,
-    CP_SMPTE_C,
-    CP_EBU_3213,
+    CP_HDTV_COMP_INTERNET=0,
+    CP_SDTV_525,
+    CP_SDTV_625,
     CP_CIE_XYZ,
     CP_UNDEF
 }ColourPrimaries;
@@ -117,7 +120,7 @@ typedef enum {
 typedef enum {
     CM_HDTV_COMP_INTERNET=0,
     CM_SDTV,
-    CM_DCINEMA,
+    CM_REVERSIBLE,
     CM_UNDEF
 }ColourMatrix;
 
@@ -150,6 +153,8 @@ typedef enum {
     ASPECT_RATIO_1_1,
     ASPECT_RATIO_10_11,
     ASPECT_RATIO_12_11,
+    ASPECT_RATIO_40_33,
+    ASPECT_RATIO_16_11,
     ASPECT_RATIO_UNDEFINED
 } AspectRatioType;
 
@@ -162,14 +167,6 @@ typedef enum {
     SIGNAL_RANGE_10BIT_VIDEO,
     SIGNAL_RANGE_UNDEFINED
 } SignalRangeType;
-
-/*! Types of Transfer functions */
-typedef enum {
-    IT_PROGRESSIVE=0,
-    IT_INTERLACED_TFF,
-    IT_INTERLACED_BFF,
-    IT_UNDEF
-} InterlaceType;
 
 /*! Types of motion-vector precision */
 typedef enum {

@@ -152,6 +152,16 @@ void Frame::CopyContents(Frame& out) const
     }
 }
 
+void Frame::Fill(ValueType val)
+{
+    m_redo_upYdata = true;
+    m_redo_upUdata = true;
+    m_redo_upVdata = true;
+    m_Y_data->Fill(val);
+    m_U_data->Fill(val);
+    m_V_data->Fill(val);
+}
+
 //Other functions
 
 void Frame::Init()
@@ -199,8 +209,8 @@ PicArray& Frame::UpYdata()
         if (m_upY_data == 0)
             m_upY_data = new PicArray( 2*m_Y_data->LengthY(),
                                        2*m_Y_data->LengthX() );
-        UpConverter myupconv(-(1 << (m_fparams.GetVideoDepth()-1)), 
-                             (1 << (m_fparams.GetVideoDepth()-1))-1,
+        UpConverter myupconv(-(1 << (m_fparams.LumaDepth()-1)), 
+                             (1 << (m_fparams.LumaDepth()-1))-1,
                              m_fparams.OrigXl(), m_fparams.OrigYl());
         myupconv.DoUpConverter( *m_Y_data , *m_upY_data );
 
@@ -220,8 +230,8 @@ PicArray& Frame::UpUdata()
         if (m_upU_data ==0)
             m_upU_data = new PicArray(2*m_U_data->LengthY() ,
                                       2*m_U_data->LengthX());
-        UpConverter myupconv(-(1 << (m_fparams.GetVideoDepth()-1)), 
-                             (1 << (m_fparams.GetVideoDepth()-1))-1,
+        UpConverter myupconv(-(1 << (m_fparams.ChromaDepth()-1)), 
+                             (1 << (m_fparams.ChromaDepth()-1))-1,
                                  m_fparams.OrigChromaXl(),
                                  m_fparams.OrigChromaYl());
 
@@ -242,8 +252,8 @@ PicArray& Frame::UpVdata()
            if (m_upV_data ==0)
             m_upV_data = new PicArray( 2*m_V_data->LengthY(),
                                        2*m_V_data->LengthX() );
-        UpConverter myupconv(-(1 << (m_fparams.GetVideoDepth()-1)), 
-                             (1 << (m_fparams.GetVideoDepth()-1))-1,
+        UpConverter myupconv(-(1 << (m_fparams.ChromaDepth()-1)), 
+                             (1 << (m_fparams.ChromaDepth()-1))-1,
                                  m_fparams.OrigChromaXl(),
                                  m_fparams.OrigChromaYl());
         myupconv.DoUpConverter( *m_V_data , *m_upV_data );
@@ -279,9 +289,9 @@ const PicArray& Frame::UpYdata() const
             m_upY_data = new PicArray( 2*m_Y_data->LengthY(),
                                        2*m_Y_data->LengthX() );
 
-        UpConverter myupconv(-(1 << (m_fparams.GetVideoDepth()-1)), 
-                             (1 << (m_fparams.GetVideoDepth()-1))-1,
-                                 m_fparams.OrigXl(), m_fparams.OrigYl());
+        UpConverter myupconv(-(1 << (m_fparams.LumaDepth()-1)), 
+                             (1 << (m_fparams.LumaDepth()-1))-1,
+                             m_fparams.OrigXl(), m_fparams.OrigYl());
         myupconv.DoUpConverter( *m_Y_data , *m_upY_data );
 
         m_redo_upYdata = false;
@@ -305,8 +315,8 @@ const PicArray& Frame::UpUdata() const
             m_upU_data = new PicArray( 2*m_U_data->LengthY(),
                                        2*m_U_data->LengthX() );
 
-        UpConverter myupconv(-(1 << (m_fparams.GetVideoDepth()-1)), 
-                             (1 << (m_fparams.GetVideoDepth()-1))-1,
+        UpConverter myupconv(-(1 << (m_fparams.ChromaDepth()-1)), 
+                             (1 << (m_fparams.ChromaDepth()-1))-1,
                                  m_fparams.OrigChromaXl(),
                                  m_fparams.OrigChromaYl());
         myupconv.DoUpConverter( *m_U_data , *m_upU_data );
@@ -332,8 +342,8 @@ const PicArray& Frame::UpVdata() const
             m_upV_data = new PicArray( 2*m_V_data->LengthY() ,
                                        2*m_V_data->LengthX() );
 
-        UpConverter myupconv(-(1 << (m_fparams.GetVideoDepth()-1)), 
-                             (1 << (m_fparams.GetVideoDepth()-1))-1,
+        UpConverter myupconv(-(1 << (m_fparams.ChromaDepth()-1)), 
+                             (1 << (m_fparams.ChromaDepth()-1))-1,
                                  m_fparams.OrigChromaXl(),
                                  m_fparams.OrigChromaYl());
         myupconv.DoUpConverter( *m_V_data , *m_upV_data );
@@ -354,7 +364,7 @@ const PicArray& Frame::UpData(CompSort cs) const
         return UpYdata();
 }    
 
-void Frame::ClipComponent(PicArray& pic_data) const
+void Frame::ClipComponent(PicArray& pic_data, CompSort cs) const
 {
     ValueType *pic = &(pic_data[pic_data.FirstY()][pic_data.FirstX()]);
     int count = pic_data.LengthY() * pic_data.LengthX();
@@ -362,8 +372,13 @@ void Frame::ClipComponent(PicArray& pic_data) const
     ValueType min_val;
     ValueType max_val;
     
-    min_val = -(1 << (m_fparams.GetVideoDepth()-1) );
-    max_val = (1 << (m_fparams.GetVideoDepth()-1) )-1;
+    min_val = (cs == Y_COMP) ?
+              -(1 << (m_fparams.LumaDepth()-1) ) :
+              -(1 << (m_fparams.ChromaDepth()-1) );
+
+    max_val = (cs == Y_COMP) ?
+              (1 << (m_fparams.LumaDepth()-1) )-1 :
+              (1 << (m_fparams.ChromaDepth()-1) )-1;
 
 #if defined (HAVE_MMX)
     {
@@ -417,9 +432,10 @@ void Frame::Clip()
 {
     //just clips the straight picture data, not the upconverted data
 
-    ClipComponent( *m_Y_data);
-    ClipComponent( *m_U_data);
-    ClipComponent( *m_V_data);    
+    ClipComponent( *m_Y_data, Y_COMP );
+
+    ClipComponent( *m_U_data, U_COMP );
+    ClipComponent( *m_V_data, V_COMP );    
 }
 
 void Frame::ClipUpData()
@@ -427,13 +443,13 @@ void Frame::ClipUpData()
     //just clips the upconverted data
 
     if (m_upY_data)
-        ClipComponent( *m_upY_data );
+        ClipComponent( *m_upY_data, Y_COMP );
 
     if (m_upU_data)
-        ClipComponent( *m_upU_data );
+        ClipComponent( *m_upU_data, U_COMP );
     
     if (m_upV_data)
-        ClipComponent( *m_upV_data );    
+        ClipComponent( *m_upV_data, V_COMP );    
 }
 
 void Frame::ClearData()

@@ -240,10 +240,6 @@ WaveletTransform::WaveletTransform(int d, WltFilter f)
         m_vhfilter = new VHFilterHAAR1;
         break;
         
-    case HAAR2 :
-        m_vhfilter = new VHFilterHAAR2;
-        break;        
-
     default :
         m_vhfilter = new VHFilterDAUB9_7;
     }
@@ -269,7 +265,7 @@ void WaveletTransform::Transform(const Direction d, PicArray& pic_data, CoeffArr
         {
             for ( int i=0; i<coeff_data.LengthX(); ++i)
             {
-        	    coeff_data[j][i] = CoeffType( pic_data[j][i] );
+                coeff_data[j][i] = CoeffType( pic_data[j][i] );
             }// i
         }// j
          
@@ -298,7 +294,7 @@ void WaveletTransform::Transform(const Direction d, PicArray& pic_data, CoeffArr
         {
             for ( int i=0; i<coeff_data.LengthX(); ++i)
             {
-        	    pic_data[j][i] = ValueType( coeff_data[j][i] );
+                pic_data[j][i] = ValueType( coeff_data[j][i] );
             }// i
         }// j    
     }

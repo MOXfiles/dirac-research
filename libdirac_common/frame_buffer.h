@@ -75,7 +75,8 @@ namespace dirac
             \param   dwt_ylen   the padded luma height of frames in the buffer
             \param   dwt_cxlen  the padded chroma width of frames in the buffer
             \param   dwt_cylen  the padded chroma height of frames in the buffer
-            \param   vd      the video depth of the data in the buffer
+            \param   luma_depth the video depth of the luma comp in the buffer
+            \param   chroma_depth the video depth of the chroma comp in the buffer
 
         */
         FrameBuffer(ChromaFormat cf,
@@ -85,7 +86,8 @@ namespace dirac
                     const int dwt_ylen, 
                     const int dwt_cxlen, 
                     const int dwt_cylen, 
-                    const unsigned int vd);
+                    const unsigned int luma_depth,
+                    const unsigned int chroma_depth);
 
         //! Constructor
         /*!
@@ -104,7 +106,8 @@ namespace dirac
             \param  dwt_ylen   the padded luma height of frames in the buffer
             \param  dwt_cxlen  the padded chroma width of frames in the buffer
             \param  dwt_cylen  the padded chroma height of frames in the buffer
-            \param  vd      the video depth of the data in the buffer
+            \param   luma_depth the video depth of the luma comp in the buffer
+            \param   chroma_depth the video depth of the chroma comp in the buffer
         */    
         FrameBuffer(ChromaFormat cf,
                     const int numL1,
@@ -115,7 +118,8 @@ namespace dirac
                     const int dwt_ylen, 
                     const int dwt_cxlen, 
                     const int dwt_cylen, 
-                    const unsigned int vd);
+                    const unsigned int luma_depth,
+                    const unsigned int chroma_depth);
 
         //! Copy constructor
         /*!

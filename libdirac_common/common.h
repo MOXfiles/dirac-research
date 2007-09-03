@@ -66,7 +66,7 @@ namespace dirac
     //Some basic types used throughout the codec ...//
     //////////////////////////////////////////////////////////////
 
-	//! Type of picture data (including motion compensated residuals)
+    //! Type of picture data (including motion compensated residuals)
     typedef short ValueType;
 
 #if !defined(HAVE_MMX)    
@@ -472,81 +472,6 @@ namespace dirac
         int m_yoffset;
     };
 
-    //! Parameters relating to the video sequence being encoded/decoded
-    class SeqParams
-    {
-    public:        
-        //! Default Constructor 
-        SeqParams(const VideoFormat& video_format=VIDEO_FORMAT_CUSTOM,
-                  bool set_defaults=true);
-        
-        ////////////////////////////////////////////////////////////////////
-        //NB: Assume default copy constructor, assignment = and destructor//
-        ////////////////////////////////////////////////////////////////////    
-        
-        //gets ...
-        //! Returns the picture width
-        int Xl() const {return m_xl;}
-        
-        //! Returns the picture height
-        int Yl() const {return m_yl;}
-        
-        //! Returns the chroma format of the sequence (Y only, 420, 422 etc)
-        ChromaFormat CFormat() const {return m_cformat;}
-        
-        //! Returns the chroma width
-        int ChromaWidth() const;
-        
-        //! Returns the chroma height
-        int ChromaHeight() const;
-        
-        //! Returns the bitstream version
-        int BitstreamVersion() const {return m_bs_ver;}
-        
-        //! Returns video-format
-        VideoFormat GetVideoFormat() const { return m_video_format;}
-
-        //! Returns video depth
-        int GetVideoDepth() const { return m_video_depth; }
-
-        // ... Sets
-        
-        //! Sets the picture width
-        void SetXl(int xlen) {m_xl = xlen;}
-        
-        //! Sets the picture height
-        void SetYl(int ylen) {m_yl = ylen;}
-        
-        //! Sets the chroma format (Y only, 420, 422 etc)
-        void SetCFormat(ChromaFormat cf) {m_cformat=cf;}
-        
-        //! Sets number of bits used in coding
-        void SetVideoDepth(int vd){ m_video_depth=vd;}
-
-        //! Sets the bitstream version
-        void SetBitstreamVersion(int bs_ver){m_bs_ver=bs_ver;}
-       
-
-    private:
-        //! Width of video
-        int m_xl;
-        
-        //! Height of video
-        int m_yl;
-        
-        //! Presence of chroma and/or chroma sampling structure 
-        ChromaFormat m_cformat;
-        
-        //! Bitsream version.
-        unsigned char  m_bs_ver;
-
-        //!Video-format
-        VideoFormat m_video_format;
-
-        //! Number of bits used to compress input signal
-        int m_video_depth;
-    };
-
     //! Class defining a rational number
     class Rational
     {
@@ -616,15 +541,30 @@ namespace dirac
         ////////////////////////////////////////////////////////////////////    
 
         // Gets
+        //! Returns video-format
+        VideoFormat GetVideoFormat() const { return m_video_format;}
+        
+        //! Returns the picture width
+        unsigned int Xl() const {return m_xl;}
+
+        //! Returns the picture height
+        unsigned int Yl() const {return m_yl;}
+
+        //! Returns the chroma format of the sequence (420, 422, 444)
+        ChromaFormat CFormat() const {return m_cformat;}
+
+        //! Returns the chroma width
+        int ChromaWidth() const;
+
+        //! Returns the chroma height
+        int ChromaHeight() const;
+
         //! Returns true if the source material is interlaced
         bool Interlace() const { return m_interlace; }
         
         //! Returns true if top field comes first in time
         bool TopFieldFirst() const { return m_topfieldfirst; }
         
-        //! Returns true if fields are sequential i.e. not interleaved
-        bool SequentialFields() const { return m_seq_fields; }
-       
            //! Return the number for frames per second
         Rational FrameRate() const { return m_framerate; }
        
@@ -672,15 +612,25 @@ namespace dirac
         TransferFunction TransferFunctionIndex() const { return m_transfer_func; }
     
         // Sets
+
+        //! Sets the picture width
+        void SetXl(unsigned int xlen) {m_xl = xlen;}
+        
+        //! Sets the picture height
+        void SetYl(unsigned int ylen) {m_yl = ylen;}
+        
+        //! Sets the chroma format (Y only, 420, 422 etc)
+        void SetCFormat(ChromaFormat cf) {m_cformat=cf;}
+
         //! Set if the source material is interlaced
         void SetInterlace(bool interlace) { m_interlace = interlace; }
         
         //! Set Topfield first. True if top field comes first in time
         void SetTopFieldFirst(bool tff) { m_topfieldfirst = tff; }
         
-        //! Set 'sequential fields flag. true if fields are sequential i.e. not interleaved
-        void SetSequentialFields(bool seq_flds) { m_seq_fields = seq_flds; }
-       
+        //! Sets the video format
+        void SetVideoFormat(VideoFormat vf){ m_video_format=vf;}
+
            //! Set the frame rate
         void SetFrameRate(const Rational &frate ) 
         {
@@ -749,15 +699,24 @@ namespace dirac
         void SetTransferFunctionIndex(unsigned int tf);
 
     private:
+        //!Video-format
+        VideoFormat m_video_format;
+
+        //! Width of video
+        unsigned int m_xl;
+
+        //! Height of video
+        unsigned int m_yl;
+
+        //! Presence of chroma and/or chroma sampling structure 
+        ChromaFormat m_cformat;
+
         //! True if interlaced
         bool m_interlace;
         
         //! If interlaced, true if the top field is first in temporal order
         bool m_topfieldfirst;
         
-        //! If interlaced, true if the fields are sequential and not interleaved
-        bool m_seq_fields;
-
         //! Index into frame rate table
         FrameRateType m_fr_idx;
 
@@ -826,7 +785,7 @@ namespace dirac
         FrameParams(const ChromaFormat& cf, int orig_xlen, int orig_ylen, 
                     int dwt_xlen, int dwt_ylen,
                     int c_dwt_xlen, int c_dwt_ylen,
-                    unsigned int video_depth);
+                    unsigned int luma_depth, unsigned int chroma_depth);
         
         //! Constructor
         /*!
@@ -838,13 +797,13 @@ namespace dirac
         /*
             All data is derived from the sequence parameters
         */
-        FrameParams(const SeqParams& sparams);
+        FrameParams(const SourceParams& sparams);
         
         //! Constructor
         /*
            All data is derived from the sequence parameters
         */
-        FrameParams(const SeqParams& sparams, const FrameSort& fs);
+        FrameParams(const SourceParams& sparams, const FrameSort& fs);
         
         ////////////////////////////////////////////////////////////////////
         //NB: Assume default copy constructor, assignment = and destructor//
@@ -878,6 +837,12 @@ namespace dirac
         
         //! Returns the original chroma height of the frame
         int OrigChromaYl() const{return m_orig_cyl;}
+
+        //! Returns the luma depth
+        unsigned int LumaDepth() const { return m_luma_depth; }
+
+        //! Returns the chroma depth
+        unsigned int ChromaDepth() const { return m_chroma_depth; }
         
         //! Returns the type of the frame
         const FrameSort& FSort() const {return m_fsort;}
@@ -909,9 +874,6 @@ namespace dirac
         //! Returns reference frame type (see enum)
         ReferenceType GetReferenceType() const { return m_reference_type;}
         
-        //! Returns the video depth of the frame
-        unsigned int GetVideoDepth() const{return m_video_depth;}
-
         // ... Sets
         
         //! Sets the type of frame
@@ -952,9 +914,12 @@ namespace dirac
         
         //! Sets the chroma height
         void SetDwtChromaYl(int yl){m_dwt_chroma_yl = yl; }
-        
-        //! Sets the video depth of the frame
-        void SetVideoDepth(int vd) { m_video_depth = vd; }
+
+        //! Set Luma Depth
+        void SetLumaDepth(unsigned int luma_depth) { m_luma_depth = luma_depth; }
+
+        //! Set Chroma Depth
+        void SetChromaDepth(unsigned int chroma_depth) { m_chroma_depth = chroma_depth; }
         
         //! Returns a const C++ reference to the set of frame numbers to be retired
         std::vector<int>& RetiredFrames() const {return m_retd_list;}
@@ -1003,9 +968,6 @@ namespace dirac
         //! The set of frame numbers in the retired frame list
         mutable std::vector<int> m_retd_list;
 
-        //! Video depth
-        unsigned int m_video_depth;
-        
         //! Orignal Frame luma width
         int m_orig_xl;
         
@@ -1017,7 +979,12 @@ namespace dirac
         
         //! Orignal Frame chroma height
         int m_orig_cyl;
-        
+
+        //! Luma depth - number of bits required for lumz
+        unsigned int m_luma_depth;
+
+        //! chroma depth - number of bits required for luma
+        unsigned int m_chroma_depth;
         
     };
 
@@ -1060,11 +1027,14 @@ namespace dirac
     public:
         
         //! Default constructor 
-        CodecParams(const VideoFormat& vd, FrameType ftype, unsigned int num_refs, bool set_defaults);
+        CodecParams (const VideoFormat& video_format = VIDEO_FORMAT_CUSTOM,
+                      FrameType ftype = INTRA_FRAME,
+                      unsigned int num_refs = 0, 
+                      bool set_defaults=true);
         
-            ////////////////////////////////////////////////////////////////////
-            //NB: Assume default copy constructor, assignment = and destructor//
-            ////////////////////////////////////////////////////////////////////
+        ////////////////////////////////////////////////////////////////////
+        //NB: Assume default copy constructor, assignment = and destructor//
+        ////////////////////////////////////////////////////////////////////
         
         // Gets ...    
         
@@ -1080,26 +1050,36 @@ namespace dirac
         //! Returns the number of blocks vertically
         int YNumBlocks() const {return m_y_num_blocks;}
         
-        //! Returns true if we're operating verbosely, false otherwise
-        bool Verbose() const {return m_verbose;}
-        
-        //! Returns true if we're operatung using interlace tools [not currently defined]
+        //! Returns true if we're operating using interend tools
         bool Interlace() const {return m_interlace;}
         
-        //! Returns true if the topmost field comes first in time [NB: TBD since this duplicates metadata in the sequence header]
-        bool TopFieldFirst() const {return m_topfieldfirst;}    
+        //! Returns true if the topmost field comes first in time when coding
+        bool TopFieldFirst() const {return m_topfieldfirst;}
+        
+        //! Return the original frame/field luma width
+        int OrigXl() const {return m_orig_xl;}
+
+        //! Return the original frame/field luma height
+        int OrigYl() const {return m_orig_yl;}
+
+        //! Return the original frame/field chroma width
+        int OrigChromaXl() const {return m_orig_cxl;}
+
+        //! Return the original frame/field chroma height
+        int OrigChromaYl() const {return m_orig_cyl;}
+
+        //! Returns the luma depth
+        unsigned int LumaDepth() const { return m_luma_depth; }
+
+        //! Returns the chroma depth
+        unsigned int ChromaDepth() const { return m_chroma_depth; }
+        
         
         //! Return the Luma block parameters for each macroblock splitting level
         const OLBParams& LumaBParams(int n) const {return m_lbparams[n];}
         
         //! Return the Chroma block parameters for each macroblock splitting level
         const OLBParams& ChromaBParams(int n) const {return m_cbparams[n];}    
-
-        //! Return the original frame width
-        int OrigXl() const {return m_orig_xl;}
-
-        //! Return the original frame height
-        int OrigYl() const {return m_orig_yl;}
 
         //! Return the number of accuracy bits used for motion vectors
         MVPrecisionType MVPrecision() const { return m_mv_precision; }
@@ -1152,25 +1132,35 @@ namespace dirac
         //! Set how many blocks there are vertically
         void SetYNumBlocks(const int yn){m_y_num_blocks=yn;}
         
-        //! Sets verbosity on or off
-        void SetVerbose(bool v){m_verbose=v;}
-        
         //! Sets whether interlace tools are to be used
         void SetInterlace(bool intlc){m_interlace=intlc;}
-        
+
         //! Sets whether the topmost field comes first in time [NB: TBD since this duplicates metadata in the sequence header]
         void SetTopFieldFirst(bool topf){m_topfieldfirst=topf;}
+        
+        //! Set the original frame/field luma width
+        void SetOrigXl(const int x){m_orig_xl=x;}
+
+        //! Set the original frame/field luma height
+        void SetOrigYl(const int y){m_orig_yl=y;}
+        
+
+        //! Set the original frame/field chroma width
+        void SetOrigChromaXl(const int x){m_orig_cxl=x;}
+
+        //! Set the original frame/field chroma height
+        void SetOrigChromaYl(const int y){m_orig_cyl=y;}
+
+        //! Set Luma Depth
+        void SetLumaDepth(unsigned int luma_depth) { m_luma_depth = luma_depth; }
+
+        //! Set Chroma Depth
+        void SetChromaDepth(unsigned int chroma_depth) { m_chroma_depth = chroma_depth; }
         
         //! Set the block sizes for all MB splitting levels given these prototype block sizes for level=2
         void SetBlockSizes(const OLBParams& olbparams , const ChromaFormat cformat);
         //! Set block level luma params
         void SetLumaBlockParams(const OLBParams& olbparams) {m_lbparams[2] = olbparams;}
-
-        //! Set the original frame width
-        void SetOrigXl(const int x){m_orig_xl=x;}
-
-        //! Set the original frame height
-        void SetOrigYl(const int y){m_orig_yl=y;}
 
         //! Set the number of accuracy bits for motion vectors
         void SetMVPrecision(const MVPrecisionType p)
@@ -1234,6 +1224,30 @@ namespace dirac
         WltFilter TransformFilter (unsigned int wf_idx);
     private:
         
+        //! True if input is treated as interlaced, false otherwise
+        bool m_interlace;
+        
+        //! True if interlaced and top field is first in temporal order 
+        bool m_topfieldfirst;
+        
+        //! The original frame/field luma width
+        int m_orig_xl;
+
+        //! The original frame/field luma height
+        int m_orig_yl;
+        
+        //! The original frame/field chroma width
+        int m_orig_cxl;
+
+        //! The original frame/field chroma height
+        int m_orig_cyl;
+
+        //! Luma depth - number of bits required for lumz
+        unsigned int m_luma_depth;
+
+        //! chroma depth - number of bits required for luma
+        unsigned int m_chroma_depth;
+        
         //! The number of macroblocks horizontally
         int m_x_num_mb;
         
@@ -1246,23 +1260,9 @@ namespace dirac
         //! The number of blocks vertically
         int m_y_num_blocks;
         
-        //! Code/decode with commentary if true    
-        bool m_verbose;
-        
-        //! True if input is interlaced, false otherwise
-        bool m_interlace;
-        
-        //! True if interlaced and top field is first in temporal order 
-        bool m_topfieldfirst;
-        
         OneDArray<OLBParams> m_lbparams;
+
         OneDArray<OLBParams> m_cbparams;
-
-        //! The original frame width
-        int m_orig_xl;
-
-        //! The original frame height
-        int m_orig_yl;
 
         //! The precision of motion vectors (number of accuracy bits eg 1=half-pel accuracy) 
         mutable MVPrecisionType m_mv_precision;
@@ -1326,6 +1326,10 @@ namespace dirac
         
          // Gets ...
 
+        
+        //! Returns true if we're operating verbosely, false otherwise
+        bool Verbose() const {return m_verbose;}
+        
         //! Returns a flag indicating that we're doing local decoding
         bool LocalDecode() const {return m_loc_decode;}
 
@@ -1406,6 +1410,9 @@ namespace dirac
 
         // ... and Sets
 
+        //! Sets verbosity on or off
+        void SetVerbose(bool v){m_verbose=v;}
+        
         //! Sets a flag indicating that we're producing a locally decoded o/p
         void SetLocalDecode( const bool decode ){m_loc_decode=decode;}
 
@@ -1468,6 +1475,9 @@ namespace dirac
         void CalcLambdas(const float qf);
 
     private:
+        
+        //! Code/decode with commentary if true    
+        bool m_verbose;
 
         //! Flag indicating we're doing local decoding
         bool m_loc_decode;
@@ -1547,6 +1557,12 @@ namespace dirac
             //! Default constructor
         DecoderParams(const VideoFormat& video_format = VIDEO_FORMAT_CIF, FrameType ftype=INTRA_FRAME, unsigned int num_refs = 0, bool set_defaults = false);
         
+        //! Returns true if we're operating verbosely, false otherwise
+        bool Verbose() const {return m_verbose;}
+        
+        //! Sets verbosity on or off
+        void SetVerbose(bool v){m_verbose=v;}
+        
             ////////////////////////////////////////////////////////////////////
             //NB: Assume default copy constructor, assignment = and destructor//
             //This means pointers are copied, not the objects they point to.////       
@@ -1554,6 +1570,9 @@ namespace dirac
         
        
     private:        
+        
+        //! Code/decode with commentary if true    
+        bool m_verbose;
        
     };
 

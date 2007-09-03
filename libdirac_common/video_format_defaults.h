@@ -69,12 +69,6 @@ namespace dirac
     void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams); 
 
     /**
-    * Sets default sequence parameters
-    *@param sparams Params object for setting defaults
-    */
-    void SetDefaultSequenceParameters(SeqParams& sparams); 
-
-    /**
     * Sets default block parameters
     *@param bparams Params object for setting defaults
     *@param video_format Video format 
@@ -97,10 +91,13 @@ namespace dirac
     
     /**
     * Sets the default Transform filter depending on frame type
-    *@param ftype  Frame type i.e. intra or inter
-    *@param wf     WltFilter object for getting the default wavelet filter
+    *@param vformat  Video format type
+    *@param ftype    Frame type i.e. intra or inter
+    *@param wf       WltFilter object for getting the default wavelet filter
     */
-    void SetDefaultTransformFilter(FrameType ftype, WltFilter &wf);
+    void SetDefaultTransformFilter(VideoFormat vformat,
+                                   FrameType ftype, 
+                                   WltFilter &wf);
 } // namespace dirac
 
 #endif

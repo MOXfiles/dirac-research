@@ -334,6 +334,12 @@ namespace dirac
          */    
         bool CopyContents(TwoDArray<T>& out) const;
 
+        //! Fill contents
+        /*!
+            Initialise the array with the val provided.
+         */    
+        void Fill(T val);
+
         //! Resizes the array, deleting the current data.    
         void Resize(const int height, const int width);    
 
@@ -470,6 +476,13 @@ namespace dirac
         }
         return true;
     }
+    
+    template <class T>
+    void TwoDArray<T>::Fill( T val)
+    {
+        if (m_length_x && m_length_y)
+            std::fill_n( m_array_of_rows[0], m_length_x*m_length_y, val);
+    }  
 
     template <class T>
     void TwoDArray<T>::Resize(const int height, const int width)
