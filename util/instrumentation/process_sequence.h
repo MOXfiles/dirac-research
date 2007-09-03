@@ -43,7 +43,7 @@
 #include <libdirac_common/common.h>
 using dirac::FrameParams;
 using dirac::OLBParams;
-using dirac::SeqParams;
+using dirac::SourceParams;
 using dirac::OneDArray;
 
 #include <libdirac_common/motion.h>
@@ -71,7 +71,7 @@ class ProcessSequence
 public :
 
     //! Constructor
-    ProcessSequence(OverlayParams &, FileStreamInput &, FileStreamOutput &, std::ifstream &, bool, int, SeqParams &);
+    ProcessSequence(OverlayParams &, FileStreamInput &, FileStreamOutput &, std::ifstream &, bool, int, SourceParams &);
 
     //! Destructor
     ~ProcessSequence() {}
@@ -121,8 +121,8 @@ private :
     //! Read input frame data signal
     bool used_frame_data;
 
-    //! Output sequence parameters
-    SeqParams & m_seqparams;
+    //! Output source parameters
+    SourceParams & m_srcparams;
 
 };
 

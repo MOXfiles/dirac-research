@@ -261,14 +261,14 @@ DecoderState DiracParser::Parse()
     }
 }
 
-const SeqParams& DiracParser::GetSeqParams() const
-{
-    return m_decomp->GetSeqParams();
-}
-
 const SourceParams& DiracParser::GetSourceParams() const
 {
     return m_decomp->GetSourceParams();
+}
+
+const DecoderParams& DiracParser::GetDecoderParams() const
+{
+    return m_decomp->GetDecoderParams();
 }
 
 const ParseParams& DiracParser::GetParseParams() const

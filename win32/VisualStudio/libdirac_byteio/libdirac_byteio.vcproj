@@ -286,7 +286,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_byteio\seqparams_byteio.cpp"
+				RelativePath="..\..\..\libdirac_byteio\codingparams_byteio.cpp"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -360,7 +360,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_byteio\seqparams_byteio.h"
+				RelativePath="..\..\..\libdirac_byteio\codingparams_byteio.h"
 				>
 			</File>
 			<File

@@ -64,17 +64,11 @@ m_highest_fnum(0)
     // read unit
     NewAccessUnit(parseunit);
 
-    //Set default codec parameters
-    m_decparams.SetVideoFormat(m_sparams.GetVideoFormat());
-    //SetDefaultCodecParameters(m_decparams);
     m_decparams.SetVerbose( verbosity );
-    //Set the original picture dimensions
-    m_decparams.SetOrigXl(m_sparams.Xl());
-    m_decparams.SetOrigYl(m_sparams.Yl());
- 
+   
     m_fbuffer= new FrameBuffer( );
 
-    m_fdecoder = new FrameDecompressor (m_decparams , m_sparams.CFormat(), m_sparams.GetVideoDepth() );
+    m_fdecoder = new FrameDecompressor (m_decparams , m_srcparams.CFormat());
    
 }
 
@@ -93,7 +87,7 @@ void SequenceDecompressor::NewAccessUnit(ParseUnitByteIO& parseunit_byteio)
 {
     // read access-unit data
     AccessUnitByteIO accessunit_byteio(parseunit_byteio,
-                                       m_sparams, m_srcparams, m_parse_params);
+                                       m_parse_params, m_srcparams, m_decparams);
     accessunit_byteio.Input();
 
 }

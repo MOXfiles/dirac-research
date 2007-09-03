@@ -238,20 +238,13 @@ public:
     // Set the buffer to hold the locally decoded frame
     void SetDecodeBuffer (unsigned char *buffer, int buffer_size);
 
-    // Return the sequence parameters
-    const SeqParams& GetSeqParams() const { return m_sparams; }
-
     // Return the encoder parameters
     const EncoderParams& GetEncParams() const { return m_encparams; }
 
     // Return the source parameters
     const SourceParams& GetSrcParams() const { return m_srcparams; }
-
 private:
 
-    // Set the sequence parameters
-    void SetSequenceParams (const dirac_encoder_context_t *enc_ctx);
-    
     // Set the encoder parameters
     void SetEncoderParams (const dirac_encoder_context_t *enc_ctx);
     
@@ -268,10 +261,9 @@ private:
 private:
     // sequence compressor
     SequenceCompressor *m_comp;
-    // sequence parameters
-    SeqParams m_sparams;
     // Source parameters
     SourceParams m_srcparams;
+
     // encoder parameters
     EncoderParams m_encparams;
     // locally encoded frame in coded order
@@ -405,7 +397,6 @@ void DiracEncoder::GetInstrumentationData (dirac_encoder_t *encoder)
 
 DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx, 
                            bool verbose) :
-    m_sparams(static_cast<VideoFormat>(enc_ctx->enc_params.video_format), false),
     m_srcparams(static_cast<VideoFormat>(enc_ctx->enc_params.video_format), true),
     m_encparams(static_cast<VideoFormat>(enc_ctx->enc_params.video_format), INTER_FRAME, 2, true),
     m_show_fnum(-1),
@@ -420,23 +411,19 @@ DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx,
     m_gop_count(0),
     m_frame_count(0)
 {
-    // Setup sequence parameters
-    SetSequenceParams (enc_ctx);
     // Setup source parameters
     SetSourceParams (enc_ctx);
     // Setup encoder parameters
     m_encparams.SetVerbose( verbose );
     SetEncoderParams (enc_ctx);
 
-     // NOTE: FIXME - make video-depth a user-parameter
-    m_sparams.SetVideoDepth(8);
     // Set up the input data stream (uncompressed data)
-    m_inp_ptr.SetSequenceParams(m_sparams);
+    m_inp_ptr.SetSourceParams(m_srcparams);
     // Set up the output data stream (locally decoded frame)
-    m_out_ptr.SetSequenceParams(m_sparams);
+    m_out_ptr.SetSourceParams(m_srcparams);
     
     // initialise the sequence compressor
-    m_comp = new SequenceCompressor (&m_inp_ptr, m_srcparams, m_encparams, m_dirac_byte_stream);
+    m_comp = new SequenceCompressor (&m_inp_ptr, m_encparams, m_dirac_byte_stream);
 
 }
 
@@ -452,19 +439,13 @@ DiracEncoder::~DiracEncoder()
     delete m_comp;
 }
 
-void DiracEncoder::SetSequenceParams (const dirac_encoder_context_t *enc_ctx)
-{
-    m_sparams.SetCFormat( enc_ctx->seq_params.chroma );
-    m_sparams.SetXl( enc_ctx->seq_params.width );
-    m_sparams.SetYl( enc_ctx->seq_params.height );
-    m_sparams.SetVideoDepth( enc_ctx->seq_params.video_depth );
-}
-
 void DiracEncoder::SetSourceParams (const dirac_encoder_context_t *enc_ctx)
 {
+    m_srcparams.SetCFormat( enc_ctx->src_params.chroma );
+    m_srcparams.SetXl( enc_ctx->src_params.width );
+    m_srcparams.SetYl( enc_ctx->src_params.height );
     m_srcparams.SetInterlace( enc_ctx->src_params.interlace );
     m_srcparams.SetTopFieldFirst( enc_ctx->src_params.topfieldfirst );
-    m_srcparams.SetSequentialFields(enc_ctx->src_params.seqfields );
     if (m_srcparams.FrameRate().m_num != (unsigned int)enc_ctx->src_params.frame_rate.numerator ||
         m_srcparams.FrameRate().m_denom != (unsigned int)enc_ctx->src_params.frame_rate.denominator)
     {
@@ -487,6 +468,21 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     OLBParams bparams(12, 12, 8, 8);
 
     m_encparams.SetLocalDecode(enc_ctx->decode_flag);
+    m_encparams.SetOrigXl( enc_ctx->src_params.width );
+    m_encparams.SetOrigYl( enc_ctx->src_params.height );
+    m_encparams.SetOrigChromaXl( enc_ctx->src_params.chroma_width );
+    m_encparams.SetOrigChromaYl( enc_ctx->src_params.chroma_height );
+
+    m_encparams.SetInterlace(enc_ctx->enc_params.interlace);
+
+    unsigned int luma_depth = static_cast<unsigned int> (
+            std::log((double)m_srcparams.LumaExcursion())/std::log(2.0) + 1 );
+    m_encparams.SetLumaDepth(luma_depth);
+
+    unsigned int chroma_depth = static_cast<unsigned int> (
+            std::log((double)m_srcparams.ChromaExcursion())/std::log(2.0) + 1 );
+    m_encparams.SetChromaDepth(chroma_depth);
+
     m_encparams.SetFullSearch(enc_ctx->enc_params.full_search);
     m_encparams.SetXRangeME(enc_ctx->enc_params.x_range_me);
     m_encparams.SetYRangeME(enc_ctx->enc_params.y_range_me);
@@ -517,9 +513,7 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
         //have I-frame only coding
         m_encparams.SetL1Sep(0);
     }
-    m_encparams.SetOrigXl( enc_ctx->seq_params.width );
-    m_encparams.SetOrigYl( enc_ctx->seq_params.height );
-    m_encparams.SetBlockSizes( bparams , enc_ctx->seq_params.chroma );
+    m_encparams.SetBlockSizes( bparams , enc_ctx->src_params.chroma );
 
     // Set transforms parameters
     m_encparams.SetIntraTransformFilter(enc_ctx->enc_params.intra_wlt_filter);
@@ -768,11 +762,11 @@ static bool InitialiseEncoder (const dirac_encoder_context_t *enc_ctx, bool verb
     TEST (enc_ctx != NULL);
     TEST (encoder != NULL);
     
-    if (enc_ctx->seq_params.width == 0 || enc_ctx->seq_params.height == 0)
+    if (enc_ctx->src_params.width == 0 || enc_ctx->src_params.height == 0)
         return false;
 
-    if (enc_ctx->seq_params.chroma < format444 || 
-            enc_ctx->seq_params.chroma >= formatNK)
+    if (enc_ctx->src_params.chroma < format444 || 
+            enc_ctx->src_params.chroma >= formatNK)
         return false;
 
     if (!enc_ctx->src_params.frame_rate.numerator || 
@@ -783,20 +777,20 @@ static bool InitialiseEncoder (const dirac_encoder_context_t *enc_ctx, bool verb
 
     encoder->dec_buf.id = 0;
 
-    switch ( enc_ctx->seq_params.chroma )
+    switch ( enc_ctx->src_params.chroma )
     {
     case format420:
-         encoder->enc_ctx.seq_params.chroma_width = enc_ctx->seq_params.width/2;
-         encoder->enc_ctx.seq_params.chroma_height = enc_ctx->seq_params.height/2;
+         encoder->enc_ctx.src_params.chroma_width = enc_ctx->src_params.width/2;
+         encoder->enc_ctx.src_params.chroma_height = enc_ctx->src_params.height/2;
          break;
     case format422:
-         encoder->enc_ctx.seq_params.chroma_width = enc_ctx->seq_params.width/2;
-         encoder->enc_ctx.seq_params.chroma_height = enc_ctx->seq_params.height;
+         encoder->enc_ctx.src_params.chroma_width = enc_ctx->src_params.width/2;
+         encoder->enc_ctx.src_params.chroma_height = enc_ctx->src_params.height;
          break;
     case format444:
     default:
-         encoder->enc_ctx.seq_params.chroma_width = enc_ctx->seq_params.width;
-         encoder->enc_ctx.seq_params.chroma_height = enc_ctx->seq_params.height;
+         encoder->enc_ctx.src_params.chroma_width = enc_ctx->src_params.width;
+         encoder->enc_ctx.src_params.chroma_height = enc_ctx->src_params.height;
          break;
     }
 
@@ -807,13 +801,13 @@ static bool InitialiseEncoder (const dirac_encoder_context_t *enc_ctx, bool verb
         encoder->compressor = comp;
         if (encoder->enc_ctx.decode_flag)
         {
-            int bufsize = (encoder->enc_ctx.seq_params.width * encoder->enc_ctx.seq_params.height)+ 2*(encoder->enc_ctx.seq_params.chroma_width*encoder->enc_ctx.seq_params.chroma_height);
+            int bufsize = (encoder->enc_ctx.src_params.width * encoder->enc_ctx.src_params.height)+ 2*(encoder->enc_ctx.src_params.chroma_width*encoder->enc_ctx.src_params.chroma_height);
 
             encoder->dec_buf.buf[0] = new unsigned char [bufsize];
             encoder->dec_buf.buf[1] = encoder->dec_buf.buf[0] + 
-                (encoder->enc_ctx.seq_params.width * encoder->enc_ctx.seq_params.height);
+                (encoder->enc_ctx.src_params.width * encoder->enc_ctx.src_params.height);
             encoder->dec_buf.buf[2] = encoder->dec_buf.buf[1] + 
-                (encoder->enc_ctx.seq_params.chroma_width*encoder->enc_ctx.seq_params.chroma_height);
+                (encoder->enc_ctx.src_params.chroma_width*encoder->enc_ctx.src_params.chroma_height);
     
             comp->SetDecodeBuffer (encoder->dec_buf.buf[0], bufsize);
         }
@@ -825,27 +819,31 @@ static bool InitialiseEncoder (const dirac_encoder_context_t *enc_ctx, bool verb
     return true;
 }
     
-static void SetSequenceParameters(dirac_encoder_context_t *enc_ctx,
-                                  const VideoFormat& video_format)
+static void SetSourceParameters(dirac_encoder_context_t *enc_ctx,
+                                const VideoFormat& video_format)
 {
     TEST (enc_ctx != NULL);
-    dirac_seqparams_t &sparams = enc_ctx->seq_params;
     dirac_sourceparams_t &src_params = enc_ctx->src_params;
     
     // create object containing sequence params
-    SeqParams default_seq_params(video_format);
     SourceParams default_src_params(video_format);
 
-    sparams.height = default_seq_params.Yl();
-    sparams.width = default_seq_params.Xl();
-    sparams.chroma = default_seq_params.CFormat();
-    sparams.video_depth = default_seq_params.GetVideoDepth();
+    src_params.height = default_src_params.Yl();
+    src_params.width = default_src_params.Xl();
+    src_params.chroma_height = default_src_params.ChromaHeight();
+    src_params.chroma_width = default_src_params.ChromaWidth();
+    src_params.chroma = default_src_params.CFormat();
     src_params.frame_rate.numerator = default_src_params.FrameRate().m_num;
     src_params.frame_rate.denominator = default_src_params.FrameRate().m_denom;
     src_params.pix_asr.numerator = default_src_params.AspectRatio().m_num;
     src_params.pix_asr.denominator = default_src_params.AspectRatio().m_denom;
     src_params.interlace = default_src_params.Interlace();
     src_params.topfieldfirst = default_src_params.TopFieldFirst();
+
+    //TODO - Need to accept these params from command line
+    //Set clean area
+    //Set signal range
+    //Set colour specification
 }
 
 static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
@@ -886,14 +884,16 @@ static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
 
     // set default transform parameters
     WltFilter wf;
-    SetDefaultTransformFilter(INTRA_FRAME, wf);
+    SetDefaultTransformFilter(video_format, INTRA_FRAME, wf);
     encparams.intra_wlt_filter = wf;
-    SetDefaultTransformFilter(INTER_FRAME, wf);
+    SetDefaultTransformFilter(video_format, INTER_FRAME, wf);
     encparams.inter_wlt_filter = wf;
     encparams.wlt_depth = default_enc_params.TransformDepth();
     encparams.spatial_partition = default_enc_params.SpatialPartition();
     encparams.def_spatial_partition = default_enc_params.DefaultSpatialPartition();
     encparams.multi_quants = default_enc_params.GetCodeBlockMode() == QUANT_MULTIPLE;
+
+    encparams.interlace = default_enc_params.Interlace();
 }
 
 #ifdef __cplusplus
@@ -908,7 +908,7 @@ extern DllExport void dirac_encoder_context_init ( dirac_encoder_context_t *enc_
     // preset is the video format
     int ps = static_cast<int>(preset);
     VideoFormat video_format(static_cast<VideoFormat>(ps));
-    SetSequenceParameters (enc_ctx, video_format);
+    SetSourceParameters (enc_ctx, video_format);
     SetEncoderParameters (enc_ctx, video_format);
 }
 

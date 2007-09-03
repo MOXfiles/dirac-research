@@ -152,9 +152,6 @@ namespace dirac
         //! Return the parse parameters of the current sequence
         const ParseParams& GetParseParams() const;
 
-        //! Return the sequence parameters of the current sequence
-        const SeqParams& GetSeqParams() const;
-
         //! Return the source parameters of the current sequence
         const SourceParams& GetSourceParams() const;
 
@@ -163,6 +160,9 @@ namespace dirac
 
         //! Return the decoded frame
         const Frame& GetNextFrame() const;
+        
+        //! Return the coding parameters of the current sequence
+        const DecoderParams& GetDecoderParams() const;
 
         //! Return the last frame in the sequence
       //  const Frame& GetLastFrame() const;

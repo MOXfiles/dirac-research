@@ -108,13 +108,13 @@ static void WritePicData (dirac_decoder_t *decoder, FILE *fp)
     assert(decoder->fbuf);
 
     assert(decoder->fbuf->buf[0]);
-    fwrite (decoder->fbuf->buf[0], decoder->seq_params.width*decoder->seq_params.height, 1, fp);
+    fwrite (decoder->fbuf->buf[0], decoder->src_params.width*decoder->src_params.height, 1, fp);
 
     assert(decoder->fbuf->buf[1]);
-    fwrite (decoder->fbuf->buf[1], decoder->seq_params.chroma_width*decoder->seq_params.chroma_height, 1, fp);
+    fwrite (decoder->fbuf->buf[1], decoder->src_params.chroma_width*decoder->src_params.chroma_height, 1, fp);
 
     assert(decoder->fbuf->buf[2]);
-    fwrite (decoder->fbuf->buf[2], decoder->seq_params.chroma_width*decoder->seq_params.chroma_height, 1, fp);
+    fwrite (decoder->fbuf->buf[2], decoder->src_params.chroma_width*decoder->src_params.chroma_height, 1, fp);
 }
 
 
@@ -203,11 +203,11 @@ static void DecodeDirac (const char *iname, const char *oname)
                 decoder->parse_params.minor_ver,
                 decoder->parse_params.profile,
                 decoder->parse_params.level,
-                decoder->seq_params.width,
-                decoder->seq_params.height,
-                chroma2string(decoder->seq_params.chroma),
-                decoder->seq_params.chroma_width,
-                decoder->seq_params.chroma_height,
+                decoder->src_params.width,
+                decoder->src_params.height,
+                chroma2string(decoder->src_params.chroma),
+                decoder->src_params.chroma_width,
+                decoder->src_params.chroma_height,
                 decoder->src_params.frame_rate.numerator,
                 decoder->src_params.frame_rate.denominator,
                 decoder->src_params.interlace ? "yes" : "no",
@@ -218,9 +218,9 @@ static void DecodeDirac (const char *iname, const char *oname)
 
             buf[0] = buf[1] = buf[2] = 0;
 
-            buf[0] = (unsigned char *)malloc (decoder->seq_params.width * decoder->seq_params.height);
-            buf[1] = (unsigned char *)malloc (decoder->seq_params.chroma_width * decoder->seq_params.chroma_height);
-            buf[2] = (unsigned char *)malloc (decoder->seq_params.chroma_width * decoder->seq_params.chroma_height);
+            buf[0] = (unsigned char *)malloc (decoder->src_params.width * decoder->src_params.height);
+            buf[1] = (unsigned char *)malloc (decoder->src_params.chroma_width * decoder->src_params.chroma_height);
+            buf[2] = (unsigned char *)malloc (decoder->src_params.chroma_width * decoder->src_params.chroma_height);
             dirac_set_buf (decoder, buf, NULL);
 
          

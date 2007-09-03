@@ -110,6 +110,31 @@ namespace dirac
         */
         ParseUnitType GetType() const { return PU_FRAME;}
 
+        /**
+        * Returns true is frame in Reference frame
+        */
+        int IsRef() const { return (GetParseCode()&0x04)==0x04;}
+
+        /**
+        * Returns true is frame in Non-Reference frame
+        */
+        int IsNonRef() const { return (GetParseCode()&0x04)==0x00;}
+
+        /**
+        * Gets parse-unit type
+        */
+        int NumRefs() const { return (GetParseCode()&0x03);}
+
+        /**
+        * Returns true is frame is Intra frame
+        */
+        bool IsIntra() const { return NumRefs()==0; }
+
+        /**
+        * Returns true is frame is Inter frame
+        */
+        bool IsInter() const { return NumRefs()>0; }
+
         /***
         * Sets the MVDataIO
         */
@@ -134,7 +159,12 @@ namespace dirac
         /**
         * Reads reference-frame data
         */
-        void InputReferenceFrames();
+        void InputReferencePictures();
+
+        /**
+        * Reads retired list
+        */
+        void InputRetiredPictureList();
 
         /**
         * Calculates frame-type (eg INTRA/INTER) of frame

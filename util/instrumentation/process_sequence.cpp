@@ -45,14 +45,14 @@ ProcessSequence::ProcessSequence(OverlayParams & oparams,
                                  FileStreamInput & inputpic,
                                  FileStreamOutput & outputpic,
                                  std::ifstream & in, bool verbose, 
-                                 int buffer, SeqParams & seqparams) :
+                                 int buffer, SourceParams & srcparams) :
     m_oparams(oparams),
     m_inputpic(inputpic),
     m_outputpic(outputpic),
     m_verbose(verbose),
     m_data_in(in),
     m_data_array(buffer),
-    m_seqparams(seqparams)
+    m_srcparams(srcparams)
 {
 
 }
@@ -121,7 +121,7 @@ void ProcessSequence::AddFrameEntry()
         if (m_verbose) std::cout << std::endl << "Reading intra frame " << m_data_fnum << " data";
 
         m_data_array[new_index].me_data = 0;
-        m_data_array[new_index].frame_params = m_seqparams;
+        m_data_array[new_index].frame_params = m_srcparams;
         m_data_array[new_index].frame_params.SetFrameNum(m_data_fnum);
         m_data_array[new_index].frame_params.SetFSort(FrameSort::IntraRefFrameSort());
 
@@ -146,7 +146,7 @@ void ProcessSequence::AddFrameEntry()
         int ref = -1;
 
         // create frame motion data array entry
-        m_data_array[new_index].frame_params = m_seqparams;
+        m_data_array[new_index].frame_params = m_srcparams;
 
         // read reference frame information from top of file
         m_data_in >> total_refs;
@@ -212,7 +212,7 @@ void ProcessSequence::DoSequence(int start, int stop)
     {
         for (int fnum=0; fnum<start; ++fnum)
         {
-            FrameParams fparams(m_inputpic.GetSeqParams());
+            FrameParams fparams(m_inputpic.GetSourceParams());
             Frame * frame = new Frame(fparams);
             m_inputpic.ReadNextFrame(*frame);
             delete frame;

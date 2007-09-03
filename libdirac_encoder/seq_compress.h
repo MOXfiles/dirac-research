@@ -76,12 +76,10 @@ namespace dirac
             with the first frame.Sets up frame padding in the picture input if
             necesary
             \param      pin     an input stream containing a sequence of frames
-            \param      srcp    parameters for the input source
             \param      encp    parameters for the encoding process
             \param      dirac_byte_stream Output destination for compressed data
         */
         SequenceCompressor(StreamPicInput* pin, 
-                           SourceParams& srcp,
                            EncoderParams& encp,
                            DiracByteStream& dirac_byte_stream);
 

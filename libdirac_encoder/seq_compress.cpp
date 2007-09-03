@@ -44,25 +44,22 @@
 using namespace dirac;
 
 SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
-                                        SourceParams& srcp,
                                         EncoderParams& encp,
                                         DiracByteStream& dirac_byte_stream): 
     m_all_done(false),
     m_just_finished(true),
-    m_srcparams(srcp),
+    m_srcparams(pin->GetSourceParams()),
     m_encparams(encp),
     m_pic_in(pin),
     m_current_display_fnum(-1),
     m_current_code_fnum(0),
     m_show_fnum(-1),m_last_frame_read(-1), 
     m_delay(1),
-    m_qmonitor( m_encparams , m_pic_in->GetSeqParams() ),
+    m_qmonitor( m_encparams ),
     m_fcoder( m_encparams ),
     m_dirac_byte_stream(dirac_byte_stream)
 {
     // Set up the compression of the sequence
-
-    const SeqParams& sparams=m_pic_in->GetSeqParams();
 
     //TBD: put into the constructor for EncoderParams
     m_encparams.SetEntropyFactors( new EntropyCorrector(4) );
@@ -76,31 +73,12 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     //Amount of vertical padding for Y,U and V components
     int ypad_luma,ypad_chroma;
 
-    //scaling factors for chroma based on chroma format
-    int x_chroma_fac,y_chroma_fac;    
-
     //First, we need to have sufficient padding to take account of the blocksizes.
     //It's sufficient to check for chroma
 
     
-    if (sparams.CFormat()==format420)
-    {
-        x_chroma_fac = 2;
-        y_chroma_fac = 2;
-    }
-    else if (sparams.CFormat() == format422)
-    {
-        x_chroma_fac = 2;
-        y_chroma_fac = 1;
-    }
-    else
-    {
-        x_chroma_fac = 1;
-        y_chroma_fac = 1;
-    }
-
-    int xl_chroma = sparams.Xl() / x_chroma_fac;
-    int yl_chroma = sparams.Yl() / y_chroma_fac;
+    int xl_chroma = m_encparams.OrigChromaXl();
+    int yl_chroma = m_encparams.OrigChromaYl();
      xpad_chroma = ypad_chroma = 0;  
     // The pic dimensions must be a multiple of 2^(transform depth). 
     int tx_mul = 1<<m_encparams.TransformDepth();
@@ -128,8 +106,8 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
 
 
      xpad_luma = ypad_luma = 0;
-    int xpad_len = sparams.Xl();
-    int ypad_len = sparams.Yl();
+    int xpad_len = m_encparams.OrigXl();
+    int ypad_len = m_encparams.OrigYl();
     
     // The pic dimensions must be a multiple of 2^(transform depth). 
     if ( xpad_len%tx_mul != 0 )
@@ -154,25 +132,28 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     m_pic_in->SetPadding(xpad_luma,ypad_luma);
 
     // Set up the frame buffers with the PADDED picture sizes
-    m_fbuffer = new FrameBuffer( sparams.CFormat() , 
+    m_fbuffer = new FrameBuffer( m_srcparams.CFormat() , 
                                  m_encparams.NumL1() , m_encparams.L1Sep() ,
                                  m_encparams.OrigXl(), m_encparams.OrigYl(),
                                  xpad_len , ypad_len, 
                                  xpad_chroma_len, ypad_chroma_len, 
-                                 sparams.GetVideoDepth());
+                                 m_encparams.LumaDepth(),
+                                 m_encparams.ChromaDepth());
 
     // Retain the original frame dimensions for the Motion estimation
     // buffer
-    m_origbuffer = new FrameBuffer( sparams.CFormat() ,
+    m_origbuffer = new FrameBuffer( m_srcparams.CFormat() ,
                                     m_encparams.NumL1() , m_encparams.L1Sep() , 
                                     m_encparams.OrigXl(), m_encparams.OrigYl(),
                                     m_encparams.OrigXl(), m_encparams.OrigYl(),
                                     xl_chroma, yl_chroma,
-                                    sparams.GetVideoDepth());
+                                    m_encparams.LumaDepth(),
+                                    m_encparams.ChromaDepth());
             
     // Set up a rate controller if rate control being used
     if (m_encparams.TargetRate() != 0)
-        m_ratecontrol = new RateController(m_encparams.TargetRate(), srcp, encp);
+        m_ratecontrol = new RateController(m_encparams.TargetRate(),
+                                           m_pic_in->GetSourceParams(), encp);
 }
 
 SequenceCompressor::~SequenceCompressor()
@@ -253,8 +234,8 @@ Frame& SequenceCompressor::CompressNextFrame()
             // not the coded order.
             AccessUnitByteIO *p_accessunit_byteio = new AccessUnitByteIO
                                             (
-                                                m_pic_in->GetSeqParams(), 
-                                                m_srcparams
+                                                m_pic_in->GetSourceParams(), 
+                                                m_encparams
                                             );
             p_accessunit_byteio->Output();
 
@@ -278,7 +259,7 @@ Frame& SequenceCompressor::CompressNextFrame()
         if ( my_frame.GetFparams().FSort().IsInter() )
         {
            is_a_cut = m_fcoder.MotionEstimate(  *m_origbuffer,        
-                                                                             m_current_display_fnum );
+                                                m_current_display_fnum );
             if ( is_a_cut )
             {             
                 // Set the frame type to intra 

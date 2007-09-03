@@ -96,10 +96,8 @@ static void set_sequence_params (const  DiracParser * const parser, dirac_decode
     TEST (parser != NULL);
     TEST (decoder != NULL);
 
-    dirac_seqparams_t *seq_params = &decoder->seq_params;
     dirac_sourceparams_t *src_params = &decoder->src_params;
     dirac_parseparams_t *parse_params = &decoder->parse_params;
-    const SeqParams& sparams = parser->GetSeqParams();
     const SourceParams& srcparams = parser->GetSourceParams();
     const ParseParams& pparams = parser->GetParseParams();
 
@@ -108,33 +106,16 @@ static void set_sequence_params (const  DiracParser * const parser, dirac_decode
     parse_params->profile = pparams.Profile();
     parse_params->level = pparams.Level();
 
-    seq_params->width = sparams.Xl();
-    seq_params->height = sparams.Yl();
+    src_params->width = srcparams.Xl();
+    src_params->height = srcparams.Yl();
 
-    seq_params->chroma = (dirac_chroma_t)sparams.CFormat();
-    switch(seq_params->chroma)
-    {
-    case format420:
-          seq_params->chroma_width = seq_params->width/2;
-            seq_params->chroma_height = seq_params->height/2;
-        break;
-
-    case format422:
-            seq_params->chroma_width = seq_params->width/2;
-            seq_params->chroma_height = seq_params->height;
-            break;
-    default:
-            seq_params->chroma_width = seq_params->width;
-            seq_params->chroma_height = seq_params->height;
-        break;
-
-   }
-   seq_params->video_depth = sparams.GetVideoDepth();
+    src_params->chroma = (dirac_chroma_t)srcparams.CFormat();
+    src_params->chroma_width = srcparams.ChromaWidth();
+    src_params->chroma_height = srcparams.ChromaHeight();
 
    // set the source parmeters
     src_params->interlace = srcparams.Interlace() ? 1 : 0;
     src_params->topfieldfirst = srcparams.TopFieldFirst() ? 1 : 0;
-    src_params->seqfields = srcparams.SequentialFields() ? 1 : 0;
 
     src_params->frame_rate.numerator = srcparams.FrameRate().m_num;
     src_params->frame_rate.denominator = srcparams.FrameRate().m_denom;
@@ -163,7 +144,7 @@ static void set_sequence_params (const  DiracParser * const parser, dirac_decode
         src_params->colour_spec.col_matrix.kr =  0.299f;
         src_params->colour_spec.col_matrix.kb =  0.114f;
         break;
-    case CM_DCINEMA:
+    case CM_REVERSIBLE:
         src_params->colour_spec.col_matrix.kr =  0.25f;
         src_params->colour_spec.col_matrix.kb =  0.25f;
         break;
@@ -185,20 +166,20 @@ static void set_component (const PicArray& pic_data,  const CompSort cs, dirac_d
     switch (cs)
     {
     case U_COMP:
-        xl = decoder->seq_params.chroma_width;
-        yl = decoder->seq_params.chroma_height;
+        xl = decoder->src_params.chroma_width;
+        yl = decoder->src_params.chroma_height;
            buf = decoder->fbuf->buf[1];
         break;
     case V_COMP:
-        xl = decoder->seq_params.chroma_width;
-        yl = decoder->seq_params.chroma_height;
+        xl = decoder->src_params.chroma_width;
+        yl = decoder->src_params.chroma_height;
            buf = decoder->fbuf->buf[2];
         break;
 
     case Y_COMP:
     default:
-        xl = decoder->seq_params.width;
-        yl = decoder->seq_params.height;
+        xl = decoder->src_params.width;
+        yl = decoder->src_params.height;
         buf = decoder->fbuf->buf[0];
         break;
     }
@@ -227,7 +208,7 @@ static void set_component (const PicArray& pic_data,  const CompSort cs, dirac_d
     {
         for (int i=last_idx ; i<xl ; i++ )
         {
-            buf[j*xl+i]=(unsigned char) pic_data[j][i]+128;                
+            buf[j*xl+i]=(unsigned char) (pic_data[j][i]+128);                
         }//i
     }//j
     return;

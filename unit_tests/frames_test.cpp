@@ -171,7 +171,8 @@ bool FramesTest::equalFrames (const Frame &lhs, const Frame &rhs)
     CPPUNIT_ASSERT (equalPicArrays(lhs.Ydata(), rhs.Ydata()));
     CPPUNIT_ASSERT (equalPicArrays(lhs.Udata(), rhs.Udata()));
     CPPUNIT_ASSERT (equalPicArrays(lhs.Vdata(), rhs.Vdata()));
-    CPPUNIT_ASSERT_EQUAL (lhs.GetFparams().GetVideoDepth(), rhs.GetFparams().GetVideoDepth() );
+    CPPUNIT_ASSERT_EQUAL (lhs.GetFparams().LumaDepth(), rhs.GetFparams().LumaDepth() );
+    CPPUNIT_ASSERT_EQUAL (lhs.GetFparams().ChromaDepth(), rhs.GetFparams().ChromaDepth() );
 
     return true;
 }
@@ -204,7 +205,7 @@ void FramesTest::tearDown()
 
 void FramesTest::testConstructor()
 {
-    FrameParams f_params(format444, 20, 30, 20, 30, 20, 30, 8);
+    FrameParams f_params(format444, 20, 30, 20, 30, 20, 30, 8, 8);
     Frame frame(f_params);
 
     CPPUNIT_ASSERT_EQUAL (20, frame.Ydata().LengthX());
@@ -228,7 +229,7 @@ void FramesTest::testDefaultFParam()
 
 void FramesTest::testCopyConstructor()
 {
-    FrameParams f_params(format444, 20, 30, 20, 30, 20, 30, 8);
+    FrameParams f_params(format444, 20, 30, 20, 30, 20, 30, 8, 8);
     Frame frame(f_params);
     setupFrame(frame, 0);
     
@@ -238,11 +239,11 @@ void FramesTest::testCopyConstructor()
 
 void FramesTest::testAssignment()
 {
-    FrameParams f_params(format444, 20, 30, 20, 30, 20, 30, 8);
+    FrameParams f_params(format444, 20, 30, 20, 30, 20, 30, 8, 8);
     Frame frame(f_params);
     setupFrame(frame, 0);
 
-    FrameParams f_params_copy(format444, 10, 10, 10, 10, 10, 10, 8);
+    FrameParams f_params_copy(format444, 10, 10, 10, 10, 10, 10, 8, 8);
     Frame frame_copy(f_params_copy);
 
     frame_copy = frame;

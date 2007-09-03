@@ -81,7 +81,7 @@ static void DisplayHelp()
     cout << "\nverbose              bool    I  false         Display information during process";
 }
 
-bool ReadSequenceParams (std::istream &in, SeqParams &seqparams, SourceParams& srcparams)
+bool ReadSequenceParams (std::istream &in, SourceParams& srcparams)
 {
     if (! in )
         return false;
@@ -90,17 +90,14 @@ bool ReadSequenceParams (std::istream &in, SeqParams &seqparams, SourceParams& s
     bool temp_bool;
 
     in >> temp_int;
-    seqparams.SetCFormat( (ChromaFormat)temp_int );
+    srcparams.SetCFormat( (ChromaFormat)temp_int );
 
     in >> temp_int;
-    seqparams.SetXl( temp_int );
+    srcparams.SetXl( temp_int );
  
     in >> temp_int;
-    seqparams.SetYl( temp_int );
+    srcparams.SetYl( temp_int );
 
-    in >> temp_int;
-    seqparams.SetVideoDepth( temp_int );
-    
     in >> temp_bool;
     srcparams.SetInterlace( temp_bool );
 
@@ -300,22 +297,21 @@ int main (int argc, char* argv[])
         exit(EXIT_FAILURE);
     }
 
-    SeqParams seqparams;
     SourceParams srcparams;
-    ReadSequenceParams (in, seqparams, srcparams);
+    ReadSequenceParams (in, srcparams);
 
     // Create objects for input and output picture sequences
     char yuv_file[FILENAME_MAX];
     strcpy(yuv_file, input.c_str());
     strcat(yuv_file, ".localdec.yuv");
-    FileStreamInput inputpic(yuv_file, seqparams);
+    FileStreamInput inputpic(yuv_file, srcparams);
 
     
-    FileStreamOutput outputpic(output.c_str(), seqparams);
+    FileStreamOutput outputpic(output.c_str(), srcparams);
     
     if (verbose) cerr << " ... ok" << endl << "Processing sequence...";
     // *** process the sequence ***
-    ProcessSequence process(oparams, inputpic, outputpic, in, verbose, buffer, seqparams);
+    ProcessSequence process(oparams, inputpic, outputpic, in, verbose, buffer, srcparams);
     process.DoSequence(start, stop);
     if (verbose) cerr << endl << "Done sequence." << endl;
     return 0;

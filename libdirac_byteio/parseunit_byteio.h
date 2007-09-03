@@ -173,6 +173,54 @@ namespace dirac
         */
         unsigned char GetParseCode() const { return m_parse_code;}
 
+        /**
+        * Returns true is parse unit is an Access unit
+        */
+        bool IsAU() const
+        { return m_parse_code==0x00; }
+
+        /**
+        * Returns true is parse unit is an End of Sequence unit
+        */
+        bool IsEndOfSequence() const
+        { return m_parse_code==0x10; }
+
+        /**
+        * Returns true is parse unit is Auxiliary Data
+        */
+        bool IsAuxiliaryData() const
+        { return m_parse_code==0x20; }
+
+        /**
+        * Returns true is parse unit is Padding data
+        */
+        bool IsPaddingData() const
+        { return m_parse_code==0x30; }
+
+        /**
+        * Returns true is parse unit is Picture data
+        */
+        bool IsPicture() const
+        { return ((m_parse_code&0x08)==0x08); }
+
+        /**
+        * Returns true is parse unit is Low Delay Sybtax unit
+        */
+        bool IsLowDelay() const
+        { return ((m_parse_code&0xB8)==0x88); }
+
+        /**
+        * Returns true is parse unit is Core syntax unit
+        */
+        bool IsCoreSyntax() const
+        { return ((m_parse_code&0xB8)==0x08); }
+
+        /**
+        * Returns true is parse unit uses Arithmetic coding
+        */
+        bool IsUsingAC() const
+        { return ((m_parse_code&0x78)==0x48); }
+
     private:
 
         /**

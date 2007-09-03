@@ -108,8 +108,6 @@ typedef struct
     dirac_decoder_state_t state;
     /*! parse parameters */
     dirac_parseparams_t parse_params;
-    /*! sequence parameters */
-    dirac_seqparams_t seq_params;
     /*! source parameters */
     dirac_sourceparams_t src_params;
     /*! frame parameters */

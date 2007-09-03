@@ -53,8 +53,7 @@ namespace dirac
         /*
            Constructor sets up initial Lagrangian values.
         */
-        QualityMonitor(EncoderParams& ep,
-                       const SeqParams& sparams );
+        QualityMonitor(EncoderParams& ep);
 
 
         //! Destructor
@@ -88,7 +87,8 @@ namespace dirac
         double QualityVal( const PicArray& coded_data , 
                            const PicArray& orig_data,
                            const int xlen,
-                           const int ylen );
+                           const int ylen,
+                           const CompSort cs);
 
         //member variables//
         ////////////////////
@@ -96,9 +96,6 @@ namespace dirac
         //! A reference to the encoder parameters
         EncoderParams& m_encparams;
 
-        //! A reference to the sequence parameters
-        const SeqParams& m_sparams;
-        
         //! The overall average Y quality
         long double m_totalquality_averageY;
 

@@ -77,16 +77,25 @@ static void display_help()
     cout << "\n4SIF              bool    false         Use 4SIF compression presets";
     cout << "\nSD480             bool    false         Use SD-480 compression presets";
     cout << "\nSD576             bool    false         Use SD-576 compression presets";
-    cout << "\nHD720             bool    false         Use HD-720 compression presets";
-    cout << "\nHD1080            bool    false         Use HD-1080 compression presets";
+    cout << "\nHD720P60          bool    false         Use HD-720P60 compression presets";
+    cout << "\nHD720P50          bool    false         Use HD-720P50 compression presets";
+    cout << "\nHD1080I60         bool    false         Use HD-1080I60 compression presets";
+    cout << "\nHD1080I50         bool    false         Use HD-1080I50 compression presets";
+    cout << "\nHD1080P60         bool    false         Use HD-1080P60 compression presets";
+    cout << "\nHD1080P50         bool    false         Use HD-1080P50 compression presets";
+    cout << "\n2KCINEMA          bool    false         Use DIGITAL CINEMA 2K compression presets";
+    cout << "\ni$KCINEMA         bool    false         Use DIGITAL CINEMA 4K compression presets";
     cout << "\nfull_search     ulong ulong  0UL 0UL         Use full search motion estimation";
     cout << "\nwidth             ulong   Preset        Width of frame";
     cout << "\nheight            ulong   Preset        Length of frame";
     cout << "\nheight            ulong   Preset        Length of frame";
     cout << "\ncformat           ulong   444           Chroma format 0=444 1=422 2=420";
     cout << "\nfr                ulong   Preset        Frame rate(s) (e.n or e/n format)";
+    cout << "\nsource_type       string  progressive   source material type either progressive or interlaced";
+    cout << "\nfield_dominance   string  topfieldfirst Field dominance in interlaced source - topfieldfirst or bottomfield first";
     cout << "\nstart             ulong   0UL           Frame number to start encoding from";
     cout << "\nstop              ulong   EOF           Frame number after which encoding finishes";
+    cout << "\ninterlaced        bool    false         Set coding type to interlaced for interlaced material. Default coding type is progressive";
     cout << "\nL1_sep            ulong   0UL           Separation of L1 frames";
     cout << "\nnum_L1            ulong   0UL           Number of L1 frames";
     cout << "\nxblen             ulong   0UL           Overlapping block horizontal length";
@@ -95,10 +104,10 @@ static void display_help()
     cout << "\nybsep             ulong   0UL           Overlapping block vertical separation";
     cout << "\ncpd               ulong   0UL           Perceptual weighting - vertical cycles per deg.";
     cout << "\nqf                float   0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
-	cout << "\ntargetrate        ulong   0UL           Target Bit Rate in Kbps";
+    cout << "\ntargetrate        ulong   0UL           Target Bit Rate in Kbps";
     cout << "\nlossless          bool    false         Lossless coding (overrides qf)";
-    cout << "\niwlt_filter       string  DD9_5         Intra frame Transform Filter (DD9_5 LEGALL5_3 DD13_5 HAAR0 HAAR1 HAAR2 FIDELITY DAUB9_7)";
-    cout << "\nrwlt_filter       string  LEGALL5_3     Inter frame Transform Filter (DD9_5 LEGALL5_3 DD13_5 HAAR0 HAAR1 HAAR2 FIDELITY DAUB9_7)";
+    cout << "\niwlt_filter       string  DD9_5         Intra frame Transform Filter (DD9_5 LEGALL5_3 DD13_5 HAAR0 HAAR1 FIDELITY DAUB9_7)";
+    cout << "\nrwlt_filter       string  LEGALL5_3     Inter frame Transform Filter (DD9_5 LEGALL5_3 DD13_5 HAAR0 HAAR1 FIDELITY DAUB9_7)";
     cout << "\nwlt_depth         ulong   4             Transform Depth";
     cout << "\nmulti_quants      bool    false         Use multiple quantisers";
     cout << "\nmv_prec           string  false         MV Pixel Precision (1, 1/2, 1/4, 1/8)";
@@ -115,7 +124,7 @@ static void display_help()
 
 bool WritePicData (std::ofstream &fdata, dirac_encoder_t *encoder)
 {
-    dirac_seqparams_t &sparams = encoder->enc_ctx.seq_params;
+    dirac_sourceparams_t &sparams = encoder->enc_ctx.src_params;
     dirac_framebuf_t &fbuf = encoder->dec_buf;
     bool ret_stat = true;
 
@@ -147,18 +156,17 @@ bool WritePicData (std::ofstream &fdata, dirac_encoder_t *encoder)
 bool WriteSequenceHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
 {
     bool ret_stat = true;
-    dirac_seqparams_t &sparams = encoder->enc_ctx.seq_params;
     dirac_sourceparams_t &srcparams = encoder->enc_ctx.src_params;
+    dirac_encparams_t &encparams = encoder->enc_ctx.enc_params;
     ios::iostate oldExceptions = fdata.exceptions();
     fdata.exceptions (ios::failbit | ios::badbit);
 
     try
     {
-        fdata << sparams.chroma << std::endl;
-        fdata << sparams.width << std::endl;
-        fdata << sparams.height << std::endl;
-        fdata << sparams.video_depth << std::endl;
-        fdata << srcparams.interlace << std::endl;
+        fdata << srcparams.chroma << std::endl;
+        fdata << srcparams.width << std::endl;
+        fdata << srcparams.height << std::endl;
+        fdata << encparams.interlace << std::endl;
         fdata << srcparams.topfieldfirst << std::endl;
         fdata << srcparams.frame_rate.numerator << std::endl;
         fdata << srcparams.frame_rate.denominator << std::endl;
@@ -177,7 +185,6 @@ bool WriteSequenceHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
 
 bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
 {
-    //dirac_seqparams_t &sparams = encoder->enc_ctx.seq_params;
     dirac_instr_t &instr = encoder->instr;
     bool ret_stat = true;
 
@@ -350,12 +357,12 @@ bool Skip (std::ifstream &fdata, int start_frame, int frame_size)
 
 int GetFrameBufferSize (const dirac_encoder_context_t &enc_ctx)
 {
-    int xl = enc_ctx.seq_params.width;
-    int yl = enc_ctx.seq_params.height;
+    int xl = enc_ctx.src_params.width;
+    int yl = enc_ctx.src_params.height;
 
     int size;
 
-    switch (enc_ctx.seq_params.chroma)
+    switch (enc_ctx.src_params.chroma)
     {
     case format420:
         size = (xl*yl*3)/2;
@@ -423,8 +430,6 @@ const string TransformFilterToString (WltFilter wf)
         return string("HAAR0");
     case HAAR1:
         return string("HAAR1");
-    case HAAR2:
-        return string("HAAR2");
     case FIDELITY:
         return string("FIDELITY");
     case DAUB9_7:
@@ -446,8 +451,6 @@ WltFilter StringToTransformFilter (string wf)
         return HAAR0;
     else if( wf=="HAAR1" )
         return HAAR1;
-    else if( wf=="HAAR2" )
-        return HAAR2;        
     else if( wf=="FIDELITY" )
         return FIDELITY;
     else if( wf=="DAUB9_7" )
@@ -458,10 +461,10 @@ WltFilter StringToTransformFilter (string wf)
 
 void display_codec_params(dirac_encoder_context_t &enc_ctx)
 {
-    std::cout << "Sequence parameters : " << std::endl;
-    std::cout << "\theight=" << enc_ctx.seq_params.height;
-    std::cout << " width=" << enc_ctx.seq_params.width << std::endl;
-    std::cout << "\tchroma=" << chroma2string(enc_ctx.seq_params.chroma) << std::endl;
+    std::cout << "Source parameters : " << std::endl;
+    std::cout << "\theight=" << enc_ctx.src_params.height;
+    std::cout << " width=" << enc_ctx.src_params.width << std::endl;
+    std::cout << "\tchroma=" << chroma2string(enc_ctx.src_params.chroma) << std::endl;
     std::cout << "\tframe rate=" << enc_ctx.src_params.frame_rate.numerator;
     std::cout << "/" << enc_ctx.src_params.frame_rate.denominator << std::endl;
     std::cout << "Encoder parameters : " << std::endl;
@@ -479,6 +482,7 @@ void display_codec_params(dirac_encoder_context_t &enc_ctx)
     std::cout << " \tSpatial Partitioning=" << (enc_ctx.enc_params.spatial_partition ? "true" : "false") << std::endl;
     std::cout << " \tMultiple Quantisers=" << (enc_ctx.enc_params.multi_quants ? "true" : "false") << std::endl;
     std::cout << " \tDenoising input=" << (enc_ctx.enc_params.denoise ? "true" : "false") << std::endl;
+    std::cout << " \tInterlaced coding=" << (enc_ctx.enc_params.interlace ? "true" : "false") << std::endl;
 }
 
 int main (int argc, char* argv[])
@@ -530,17 +534,17 @@ int main (int argc, char* argv[])
             preset = VIDEO_FORMAT_QSIF;
             parsed[i] = true;
         }
-         if ( strcmp (argv[i], "-QCIF") == 0 )
+        else if ( strcmp (argv[i], "-QCIF") == 0 )
         {
             preset = VIDEO_FORMAT_QCIF;
             parsed[i] = true;
         }
-         if ( strcmp (argv[i], "-SIF") == 0 )
+        else  if ( strcmp (argv[i], "-SIF") == 0 )
         {
             preset = VIDEO_FORMAT_SIF;
             parsed[i] = true;
         }
-        if ( strcmp (argv[i], "-CIF") == 0 )
+        else if ( strcmp (argv[i], "-CIF") == 0 )
         {
             preset = VIDEO_FORMAT_CIF;
             parsed[i] = true;
@@ -565,14 +569,44 @@ int main (int argc, char* argv[])
             preset = VIDEO_FORMAT_SD_625_DIGITAL;
             parsed[i] = true;
         }
-        else if ( strcmp (argv[i], "-HD720") == 0 )
+        else if ( strcmp (argv[i], "-HD720P60") == 0 )
         {
-            preset = VIDEO_FORMAT_HD_720;
+            preset = VIDEO_FORMAT_HD_720P60;
             parsed[i] = true;
         }
-        else if ( strcmp (argv[i], "-HD1080") == 0 )
+        else if ( strcmp (argv[i], "-HD720P50") == 0 )
         {
-            preset = VIDEO_FORMAT_HD_1080;
+            preset = VIDEO_FORMAT_HD_720P50;
+            parsed[i] = true;
+        }
+        else if ( strcmp (argv[i], "-HD1080I60") == 0 )
+        {
+            preset = VIDEO_FORMAT_HD_1080I60;
+            parsed[i] = true;
+        }
+        else if ( strcmp (argv[i], "-HD1080I50") == 0 )
+        {
+            preset = VIDEO_FORMAT_HD_1080I50;
+            parsed[i] = true;
+        }
+        else if ( strcmp (argv[i], "-HD1080P60") == 0 )
+        {
+            preset = VIDEO_FORMAT_HD_1080P60;
+            parsed[i] = true;
+        }
+        else if ( strcmp (argv[i], "-HD1080P50") == 0 )
+        {
+            preset = VIDEO_FORMAT_HD_1080P50;
+            parsed[i] = true;
+        }
+        else if ( strcmp (argv[i], "-2KCINEMA") == 0 )
+        {
+            preset = VIDEO_FORMAT_DIGI_CINEMA_2K;
+            parsed[i] = true;
+        }
+        else if ( strcmp (argv[i], "-4KCINEMA") == 0 )
+        {
+            preset = VIDEO_FORMAT_DIGI_CINEMA_4K;
             parsed[i] = true;
         }
     }
@@ -587,30 +621,27 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             i++;
-            enc_ctx.seq_params.width =  
+            enc_ctx.src_params.width =  
                 strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
-
-        if ( strcmp(argv[i], "-height") == 0 )
+        else if ( strcmp(argv[i], "-height") == 0 )
         {
             parsed[i] = true;
             i++;
-            enc_ctx.seq_params.height =  
+            enc_ctx.src_params.height =  
                 strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
-        
-        if ( strcmp(argv[i], "-cformat") == 0 )
+        else if ( strcmp(argv[i], "-cformat") == 0 )
         {
             parsed[i] = true;
             i++;
-            enc_ctx.seq_params.chroma =  
+            enc_ctx.src_params.chroma =  
                 (ChromaFormat)strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
-
-        if ( strcmp(argv[i], "-fr") == 0 )
+        else if ( strcmp(argv[i], "-fr") == 0 )
         {
             parsed[i] = true;
             i++;
@@ -672,8 +703,41 @@ int main (int argc, char* argv[])
                     strtoul(token, NULL, 10);
              }
         }
-
-        if ( strcmp(argv[i], "-qf") == 0 )
+        else if ( strcmp(argv[i], "-source_type") == 0 )
+        {
+            parsed[i] = true;
+            i++;
+            parsed[i]= true;
+            if (!strcmp(argv[i], "progressive"))
+                enc_ctx.src_params.interlace = 0;
+            else if (!strcmp(argv[i], "interlaced"))
+                enc_ctx.src_params.interlace = 1;
+            else
+            {
+                cerr << "source_type should either be interlaced or progressive" << endl;
+                parsed[i] = false;
+            }
+        }
+        else if ( strcmp(argv[i], "-field_dominance") == 0 )
+        {
+            parsed[i] = true;
+            i++;
+            if (!strcmp(argv[i], "topfieldfirst"))
+                enc_ctx.src_params.topfieldfirst = 1;
+            else if (!strcmp(argv[i], "bottomfieldfirst"))
+                enc_ctx.src_params.topfieldfirst = 0;
+            else
+            {
+                cerr << "field_dominance should either be topfieldfirst or bottomfieldfirst" << endl;
+                parsed[i] = false;
+            }
+        }
+        else if ( strcmp(argv[i], "-interlaced") == 0 )
+        {
+            parsed[i] = true;
+            enc_ctx.enc_params.interlace =  true;
+        }
+        else if ( strcmp(argv[i], "-qf") == 0 )
         {
             parsed[i] = true;
             i++;
@@ -694,11 +758,11 @@ int main (int argc, char* argv[])
             parsed[i] = true;
             
         }    
-		else if ( strcmp(argv[i], "-targetrate") == 0 )
+        else if ( strcmp(argv[i], "-targetrate") == 0 )
         {
             parsed[i] = true;
             i++;
-			enc_ctx.enc_params.trate = strtoul(argv[i],NULL,10);
+            enc_ctx.enc_params.trate = strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-lossless") == 0 )
@@ -893,6 +957,14 @@ int main (int argc, char* argv[])
         exit(1);
     }
 
+    if (enc_ctx.src_params.interlace == false &&
+        enc_ctx.enc_params.interlace)
+    {
+        std::cerr << "Cannot code progressive material as interlaced" << std::endl;
+        display_help();
+        exit(1);
+    }
+
     // check we have parsed everything
     bool all_parsed = true;
     for (int i=0 ; i<argc ; ++i)
@@ -1000,7 +1072,7 @@ int main (int argc, char* argv[])
        WriteSequenceHeader ( *outimt, encoder );
 
 
-    int frames_written = 0;
+    int pictures_written = 0;
     dirac_encoder_state_t state;
 
     clock_t start_t, stop_t;
@@ -1031,7 +1103,7 @@ int main (int argc, char* argv[])
                
                 outfile.write((char *)encoder->enc_buf.buffer, 
                               encoder->enc_buf.size);
-                              frames_written++;
+                              pictures_written++;
                 break;
 
             case ENC_STATE_BUFFER:
@@ -1051,7 +1123,7 @@ int main (int argc, char* argv[])
 
         } while (state == ENC_STATE_AVAIL);
 
-    } while (frames_written <= (end_pos - start_pos));
+    } while (pictures_written <= (end_pos - start_pos));
 
     stop_t = clock();
 
@@ -1071,7 +1143,7 @@ int main (int argc, char* argv[])
 
         if ( verbose )
             std::cout<<"Time per frame: "<<
-                    (double)(stop_t-start_t)/(double)(CLOCKS_PER_SEC*frames_written);
+                    (double)(stop_t-start_t)/(double)(CLOCKS_PER_SEC*pictures_written);
             std::cout<<std::endl<<std::endl;
     }
 

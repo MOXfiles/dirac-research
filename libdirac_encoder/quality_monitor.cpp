@@ -41,11 +41,8 @@ using namespace dirac;
 
 using std::log10;
 
-QualityMonitor::QualityMonitor(EncoderParams& encp, 
-                               const SeqParams& sparams)
-:
+QualityMonitor::QualityMonitor(EncoderParams& encp) :
     m_encparams(encp),
-    m_sparams( sparams ),
     m_quality_averageY(3),
     m_quality_averageU(3),
     m_quality_averageV(3),
@@ -128,17 +125,22 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
     double fqualityY, fqualityU, fqualityV;
     
     fqualityY = QualityVal( ld_frame.Ydata() , orig_frame.Ydata(), 
-                            m_sparams.Xl(), m_sparams.Yl() );
+                            m_encparams.OrigXl(), m_encparams.OrigYl(),
+                            Y_COMP);
     m_quality_averageY[idx] += fqualityY;
     m_totalquality_averageY += fqualityY;
 
     fqualityU = QualityVal( ld_frame.Udata() , orig_frame.Udata(), 
-                          m_sparams.ChromaWidth(), m_sparams.ChromaHeight() );
+                            m_encparams.OrigChromaXl(),
+                            m_encparams.OrigChromaYl(),
+                            U_COMP);
     m_quality_averageU[idx] += fqualityU;
     m_totalquality_averageU += fqualityU;    
 
     fqualityV = QualityVal( ld_frame.Vdata() , orig_frame.Vdata(), 
-                          m_sparams.ChromaWidth(), m_sparams.ChromaHeight() );
+                            m_encparams.OrigChromaXl(),
+                            m_encparams.OrigChromaYl(),
+                            V_COMP);
     m_quality_averageV[idx] += fqualityV;
     m_totalquality_averageV += fqualityV;    
 
@@ -155,8 +157,10 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
 }
 
 
-double QualityMonitor::QualityVal(const PicArray& coded_data, const PicArray& orig_data, 
-const int xlen, const int ylen )
+double QualityMonitor::QualityVal(const PicArray& coded_data, 
+                                  const PicArray& orig_data,
+                                  const int xlen, const int ylen,
+                                  const CompSort cs)
 {
     long double sum_sq_diff = 0.0;
     double diff;
@@ -170,7 +174,10 @@ const int xlen, const int ylen )
         }// i
     }// j
 
-    const double max = double( (1<<m_sparams.GetVideoDepth())-1 );
+    unsigned comp_depth = cs == Y_COMP ? m_encparams.LumaDepth() :
+                                         m_encparams.ChromaDepth();
+    
+    const double max = double( (1<<comp_depth)-1 );
 
     sum_sq_diff /= xlen*ylen;
 

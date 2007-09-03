@@ -52,21 +52,6 @@ const int CODE_PUTYPE_2_BIT = 4;
 // maximum number of refs allowed
 const unsigned int MAX_NUM_REFS = 2;
 
-// determines frame-type
-#define PARSE_CODE_FRAME_TYPE_BITS      (0x03)
-#define PARSE_CODE_INTER_FRAME_BITS     (0x14)
-#define PARSE_CODE_INTRA_FRAME_BITS     (0x10)   
-// determines number of reference frames
-#define NUM_REF_FRAMES(byte)         (byte&0x03)
-#define IS_INTER_FRAME(byte)         ((NUM_REF_FRAMES(byte))>0)
-#define IS_INTRA_FRAME(byte)         ((NUM_REF_FRAMES(byte))==0)
-// determines reference type
-#define IS_REFERENCE_FRAME(byte)     ((byte&0x04)==0x04)
-#define IS_NON_REFERENCE_FRAME(byte) ((byte&0x04)==0x00)
-
-
-
-
 FrameByteIO::FrameByteIO(FrameParams& frame_params,
                          int frame_num) :
 ParseUnitByteIO(),
@@ -125,22 +110,11 @@ bool FrameByteIO::Input()
     m_frame_num = InputFixedLengthUint(PP_FRAME_NUM_SIZE);
     m_frame_params.SetFrameNum(m_frame_num);
 
-    // input reference frame numbers
-    InputReferenceFrames();
+    // input reference Picture numbers
+    InputReferencePictures();
     
-    // input retired frames
-    int val = InputVarLengthUint();
-    // input retired frames
-    std::vector<int>& retd_list = m_frame_params.RetiredFrames();
-    retd_list.resize(val);
-    if (val)
-    {
-        for (size_t i = 0; i < retd_list.size(); ++i)
-        {
-            int offset = InputVarLengthInt();
-            retd_list[i] = m_frame_num + offset;
-        }
-    }
+    // input retired Picture numbers list
+    InputRetiredPictureList();
 
     // byte align
     ByteAlignInput();
@@ -233,10 +207,10 @@ unsigned char FrameByteIO::CalcParseCode() const
     
 }
 
-void FrameByteIO::InputReferenceFrames() 
+void FrameByteIO::InputReferencePictures() 
 {
     // get number of frames referred to
-   int ref_count = NUM_REF_FRAMES(GetParseCode());
+   int ref_count = NumRefs();
 
    // get the number of these frames
     vector<int>& refs = m_frame_params.Refs();
@@ -244,21 +218,41 @@ void FrameByteIO::InputReferenceFrames()
     for(int i=0; i < ref_count; ++i)
         refs[i]=m_frame_num+InputVarLengthInt();
 }
+    
+void FrameByteIO::InputRetiredPictureList() 
+{
+    if (IsLowDelay())
+        return;
+
+    // input retired frames
+    int val = InputVarLengthUint();
+    // input retired frames
+    std::vector<int>& retd_list = m_frame_params.RetiredFrames();
+    retd_list.resize(val);
+    if (val)
+    {
+        for (size_t i = 0; i < retd_list.size(); ++i)
+        {
+            int offset = InputVarLengthInt();
+            retd_list[i] = m_frame_num + offset;
+        }
+    }
+}
 
 void FrameByteIO::SetFrameType()
 {
-    if(IS_INTRA_FRAME(GetParseCode()))
+    if(IsIntra())
         m_frame_params.SetFrameType(INTRA_FRAME);
-    else if(IS_INTER_FRAME(GetParseCode()))
+    else if(IsInter())
         m_frame_params.SetFrameType(INTER_FRAME);
 
 }
 
 void FrameByteIO::SetReferenceType()
 {
-    if(IS_REFERENCE_FRAME(GetParseCode()))
+    if(IsRef())
         m_frame_params.SetReferenceType(REFERENCE_FRAME);
-    else if(IS_NON_REFERENCE_FRAME(GetParseCode()))
+    else if(IsNonRef())
         m_frame_params.SetReferenceType(NON_REFERENCE_FRAME);
 
 }

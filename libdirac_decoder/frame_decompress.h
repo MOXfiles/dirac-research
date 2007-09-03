@@ -68,9 +68,8 @@ namespace dirac
 
             \param  decp    decoder parameters
             \param  cf      the chroma format of the frame being decompressed
-            \param  vd      the video depth of the frame being decompressed
         */
-        FrameDecompressor(DecoderParams& decp, ChromaFormat cf, unsigned int vd);
+        FrameDecompressor(DecoderParams& decp, ChromaFormat cf);
 
         //! Destructor
         /*!
@@ -147,10 +146,6 @@ namespace dirac
 
         //! Current Frame Parameters
         FrameParams m_fparams;
-        
-        //! Video depth of the frame being decompressed
-        unsigned int m_video_depth;
-
     };
 
 } // namespace dirac

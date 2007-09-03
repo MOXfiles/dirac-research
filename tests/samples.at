@@ -25,6 +25,7 @@ height=0
 chroma="unknown"
 preset=""
 
+extras=""
 # first tackle files name in the style nameFORMAT_CHROMA.yuv
 # e.g. waterfallCIF_411 or waterfall576p_444 etc
 case $tsamp in
@@ -90,12 +91,13 @@ then
 	ybsep=8;
 elif test $width -eq 1280 || test $height -eq 720;
 then
-	preset="-HD720";
+	preset="-HD720P50";
 	#luma block parameters
 	xblen=16;
 	xbsep=12;
 	yblen=16
 	ybsep=12;
+	extras="-fr 25"; // sample data  is 25 fps 
 elif test $width -eq 1920 || test $height -eq 1080;
 then
 	preset="-HD1080";
@@ -116,14 +118,14 @@ fi
 #set Motion vector precision here. Possible values are 1, 1/2, 1/4 and 
 # 1/8. Default value is 1/4
 mv_prec=1/4
-echo "$samp $preset $chroma $width $height $mv_prec"
+echo "$samp $preset $chroma $width $height $mv_prec $extras"
 
 #iframe tests
-AT_CHECK([at_wrap dirac_encoder -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep $samp ../../$iframe_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep $extras $samp ../../$iframe_encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$iframe_encout ../../$iframe_decout], 0, [ignore])
 AT_CHECK([cmp ../../$iframe_encout.localdec.yuv ../../$iframe_decout])
 
-AT_CHECK([at_wrap dirac_encoder -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $samp ../../$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$encout ../../$decout], 0, [ignore])
 AT_CHECK([cmp ../../$encout.localdec.yuv ../../$decout])
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mc_instr.yuv -motion_colour -clip 50], 0)
