@@ -75,9 +75,9 @@ namespace dirac
 
         //! Performs motion estimation for a frame and writes the data locally
         /*! Performs motion estimation for a frame and writes the data locally
-            \param my_buffer picture buffer of uncoded originals
+            \param my_fbuffer picture buffer of uncoded originals
             \param fnum    frame number to compress
-            \return true if a cut is detected.
+            \return true   if a cut is detected.
         */                        
         bool MotionEstimate( const FrameBuffer& my_fbuffer, 
                                         int fnum); 
@@ -85,8 +85,8 @@ namespace dirac
         //! Compress a specific frame within a group of pictures (GOP)
         /*!
             Compresses a specified frame within a group of pictures. 
-            \param my_buffer  picture buffer in which the reference frames resides
-            \param fnum       frame number to compress
+            \param my_fbuffer  picture buffer in which the reference frames resides
+            \param fnum        frame number to compress
             \return Compressed frame in Dirac bytestream format
         */
         FrameByteIO* Compress(  FrameBuffer& my_fbuffer , 

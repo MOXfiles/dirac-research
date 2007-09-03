@@ -130,6 +130,8 @@ namespace dirac
                \param  xpos  the horizontal location of the block being matched
                \param  ypos  the vertical location of the block being matched
                \param  cand_list  the list of candidate vectors
+               \param  mv_prediction Prediction used for each block used to control the variation in the motion vector field.
+               \param  list_start  index into the candidate vectors list
         */
         void FindBestMatchPel( const int xpos , const int ypos ,
                                            const CandidateList& cand_list,

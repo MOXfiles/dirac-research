@@ -64,8 +64,6 @@ namespace dirac
         //! Upconvert the picture data
         /*!
             Upconvert the picture data, where the parameters are
-            \param    orig_xlen  unpadded length of original data
-            \param    orig_ylen  unpadded height of original data
             \param    pic_data   is the original data
             \param    up_data    is the upconverted data
          */

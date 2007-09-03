@@ -346,6 +346,7 @@ namespace dirac
             Transforms the data to and from the wavelet domain.
             \param    d    the direction of the transform
             \param    pic_data    the data to be transformed
+            \param    coeff_data  array that holds the transform coefficient data
         */
         void Transform(const Direction d, PicArray& pic_data, CoeffArray& coeff_data);
     
