@@ -22,7 +22,7 @@
 				Name="VCCLCompilerTool"
 				Optimization="0"
 				AdditionalIncludeDirectories="..\..\.."
-				PreprocessorDefinitions="WIN32;_DEBUG;_LIB"
+				PreprocessorDefinitions="WIN32;_DEBUG;_LIB;HAVE_MMX"
 				MinimalRebuild="TRUE"
 				BasicRuntimeChecks="3"
 				RuntimeLibrary="1"
@@ -137,6 +137,15 @@
 				</FileConfiguration>
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_byteio\codingparams_byteio.cpp">
+				<FileConfiguration
+					Name="Release|Win32">
+					<Tool
+						Name="VCCLCompilerTool"
+						CompileAsManaged="0"/>
+				</FileConfiguration>
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_byteio\component_byteio.cpp">
 			</File>
 			<File
@@ -203,15 +212,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_byteio\codingparams_byteio.cpp">
-				<FileConfiguration
-					Name="Release|Win32">
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAsManaged="0"/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\..\libdirac_byteio\subband_byteio.cpp">
 			</File>
 			<File
@@ -227,6 +227,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_byteio\byteio.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_byteio\codingparams_byteio.h">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_byteio\component_byteio.h">
@@ -257,9 +260,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_byteio\parseunit_byteio.h">
-			</File>
-			<File
-				RelativePath="..\..\..\libdirac_byteio\codingparams_byteio.h">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_byteio\subband_byteio.h">
