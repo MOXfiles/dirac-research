@@ -92,32 +92,6 @@ namespace dirac
     
     Context::Context(): m_prob0( 0x8000 ) {}
 
-/*
-    void Context::Update( bool symbol )
-    {
-//        if ( !symbol )
-//            ++m_count0;
-//        else
-//            ++m_count1;
-//
-//        if ( (m_count0+m_count1)%8==0)
-//        {
-//            if ( (m_count0+m_count1) == 256 )
-//            {
-//                m_count0++;
-//                m_count0 >>= 1;
-//                m_count1++;
-//                m_count1 >>= 1;
-//            }
-//            m_prob0 = m_count0*lookup( m_count0+m_count1 );
-//        }
-
-        if (symbol) m_prob0 -= lut[m_prob0>>8];
-        else m_prob0 += lut[255-(m_prob0>>8)];
-
-    }
-*/
-
     class ArithCodecBase {
 
     public:
@@ -353,7 +327,6 @@ namespace dirac
             m_low_code   &= 0xFFFF;
 
          }
-       
     }
 
     inline void ArithCodecBase::EncodeUInt(const unsigned int the_int,

@@ -92,7 +92,7 @@ namespace dirac{
     {
         // Set the m_code word stuff
         m_low_code  = 0;
-        m_range = 0x10000;
+        m_range = 0xFFFF;
         m_underflow = 0;
     }
 
@@ -138,7 +138,7 @@ namespace dirac{
         m_code = 0;
         m_low_code = 0;
 
-        m_range = 0x10000;
+        m_range = 0xFFFF;
 
         m_code = 0;
         for (int i=0; i<16; ++i)
