@@ -50,7 +50,6 @@ m_src_params(src_params),
 m_codec_params(codec_params),
 m_default_source_params(default_source_params)
 {
-    
 
 }
 
@@ -64,29 +63,37 @@ void CodingParamsByteIO::Input()
 {
     // input interlaced coding flag
     InputInterlaceCoding();
-	
-	m_codec_params.SetTopFieldFirst(m_src_params.TopFieldFirst());
 
-	// Set the dimensions to frame dimensions
-	m_codec_params.SetOrigXl(m_src_params.Xl());
-	m_codec_params.SetOrigYl(m_src_params.Yl());
+    m_codec_params.SetTopFieldFirst(m_src_params.TopFieldFirst());
 
-	m_codec_params.SetOrigChromaXl(m_src_params.ChromaWidth());
-	m_codec_params.SetOrigChromaYl(m_src_params.ChromaHeight());
+    // Set the dimensions to frame dimensions
+    m_codec_params.SetOrigXl(m_src_params.Xl());
+    m_codec_params.SetOrigYl(m_src_params.Yl());
 
-	unsigned int luma_depth = static_cast<unsigned int>
-                (
-                    std::log((double)m_src_params.LumaExcursion())/std::log(2.0) + 1
-                );
+    m_codec_params.SetOrigChromaXl(m_src_params.ChromaWidth());
+    m_codec_params.SetOrigChromaYl(m_src_params.ChromaHeight());
+
+    // If source was coded interlaced, halve the vertical dimensions
+    // to set them to field dimensions
+    if (m_codec_params.Interlace())
+    {
+        m_codec_params.SetOrigYl(m_codec_params.OrigYl()>>1);
+        m_codec_params.SetOrigChromaYl(m_codec_params.OrigChromaYl()>>1);
+    }
+
+    unsigned int luma_depth = static_cast<unsigned int>
+            (
+                std::log((double)m_src_params.LumaExcursion())/std::log(2.0) + 1
+            );
     m_codec_params.SetLumaDepth(luma_depth);
 
     unsigned int chroma_depth = static_cast<unsigned int>
-                (
-                    std::log((double)m_src_params.ChromaExcursion())/std::log(2.0) + 1
-                );
+            (
+                std::log((double)m_src_params.ChromaExcursion())/std::log(2.0) + 1
+            );
     m_codec_params.SetChromaDepth(chroma_depth);
 
-	// byte align
+    // byte align
     ByteAlignInput();
 }
 
@@ -95,9 +102,8 @@ void CodingParamsByteIO::Output()
 {
     // output interlaced coding flag
     OutputInterlaceCoding();
-    
 
-	// byte align
+    // byte align
     ByteAlignOutput();
 }
 
@@ -106,30 +112,30 @@ void CodingParamsByteIO::Output()
 void CodingParamsByteIO::InputInterlaceCoding()
 {
 
-	m_codec_params.SetInterlace(false);
-	if (m_src_params.Interlace())
-	{
-		m_codec_params.SetInterlace(m_src_params.Interlace());	
-		if (InputBit()) // custom coding
-			m_codec_params.SetInterlace(InputBit());
-	}
+    m_codec_params.SetInterlace(false);
+    if (m_src_params.Interlace())
+    {
+        m_codec_params.SetInterlace(m_src_params.Interlace());
+        if (InputBit()) // custom coding
+            m_codec_params.SetInterlace(InputBit());
+    }
 }
 
 
 void CodingParamsByteIO::OutputInterlaceCoding()
 {
-	if (!m_default_source_params.Interlace())
-		return;
+    if (!m_default_source_params.Interlace())
+        return;
 
-	bool is_custom = m_codec_params.Interlace() != 
-	                               m_default_source_params.Interlace();
-    
-	OutputBit(is_custom);
+    bool is_custom = m_codec_params.Interlace() !=
+                                   m_default_source_params.Interlace();
 
-	if (is_custom)
-	{
-		OutputBit(m_codec_params.Interlace());
-	}
+    OutputBit(is_custom);
+
+    if (is_custom)
+    {
+        OutputBit(m_codec_params.Interlace());
+    }
 }
 
 

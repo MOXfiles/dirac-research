@@ -59,7 +59,7 @@ static void DisplayHelp()
     cout << "\ninput                string  I  [ required ]  Input file name";
     cout << "\noutput               string  I  [ required ]  Output file name";
     cout << "\n";
-    cout << "\nmotion_colour        bool    I  true          Display motion vectors using colour wheel";    
+    cout << "\nmotion_colour        bool    I  true          Display motion vectors using colour wheel";
     cout << "\nmotion_arrows        bool    I  false         Display motion vectors as arrows";
     cout << "\nmotion_colour_arrows bool    I  false         Display motion vectors as arrows with colour size";
     cout << "\nsplit_mode           bool    I  false         Display macroblock splitting mode";
@@ -71,7 +71,7 @@ static void DisplayHelp()
     cout << "\nno_legend            bool    I  false         Do not display colour legend";
     cout << "\n";
     cout << "\nglobal               bool    I  false         Display global motion";
-    cout << "\nglobal_diff          bool    I  false         Display global motion error";    
+    cout << "\nglobal_diff          bool    I  false         Display global motion error";
     cout << "\nclip                 int     I  25 / 10000    Clip for max value motion vector / SAD overlays";
     cout << "\nref                  int     I  1             Reference frame";
     cout << "\nstart                int     I  0             Frame number at which process starts";
@@ -94,7 +94,7 @@ bool ReadSequenceParams (std::istream &in, SourceParams& srcparams)
 
     in >> temp_int;
     srcparams.SetXl( temp_int );
- 
+
     in >> temp_int;
     srcparams.SetYl( temp_int );
 
@@ -105,8 +105,8 @@ bool ReadSequenceParams (std::istream &in, SourceParams& srcparams)
     srcparams.SetTopFieldFirst( temp_bool );
 
     int num, denom;
-    in >> num;    
-    in >> denom;    
+    in >> num;
+    in >> denom;
     srcparams.SetFrameRate( num, denom );
 
     return true;
@@ -138,19 +138,19 @@ int main (int argc, char* argv[])
     bool_opts.insert("no_legend");
     bool_opts.insert("motion_colour");
     bool_opts.insert("motion_arrows");
-    bool_opts.insert("motion_colour_arrows");    
+    bool_opts.insert("motion_colour_arrows");
     bool_opts.insert("split_mode");
     bool_opts.insert("sad");
-    bool_opts.insert("pred_mode");    
+    bool_opts.insert("pred_mode");
     bool_opts.insert("global");
     bool_opts.insert("global_diff");
     bool_opts.insert("global_inliers");
-    
+
     // parse command line options
     CommandLine args(argc,argv,bool_opts);
 
     // need at least 3 arguments - the program name, an input and an output
-    if (argc < 3) 
+    if (argc < 3)
     {
         DisplayHelp();
         exit(1);
@@ -177,10 +177,10 @@ int main (int argc, char* argv[])
         {
             if (opt->m_name == "motion_arrows")
                 oparams.SetOption(motion_arrows);
-                
+
             else if (opt->m_name == "motion_colour_arrows")
                 oparams.SetOption(motion_colour_arrows);
-                
+
             else if (opt->m_name == "motion_colour")
                 oparams.SetOption(motion_colour);
 
@@ -209,29 +209,29 @@ int main (int argc, char* argv[])
             {
                 if (oparams.Option() == motion_arrows)
                     oparams.SetOption(gm_arrows);
-                    
+
                 if (oparams.Option() == motion_colour_arrows)
                     oparams.SetOption(gm_colour_arrows);
-                    
+
                 if (oparams.Option() == motion_colour)
                     oparams.SetOption(gm_colour);
             }
-            
+
             if (opt->m_name == "global_diff")
             {
                 if (oparams.Option() == motion_arrows
                     || oparams.Option() == gm_arrows)
                     oparams.SetOption(gm_diff_arrows);
-                    
+
                 if (oparams.Option() == motion_colour_arrows
                     || oparams.Option() == gm_colour_arrows)
                     oparams.SetOption(gm_diff_colour_arrows);
-                    
+
                 if (oparams.Option() == motion_colour
                     || oparams.Option() == gm_colour)
                     oparams.SetOption(gm_diff_colour);
             }
-            
+
         }
 
         // parameters
@@ -279,10 +279,10 @@ int main (int argc, char* argv[])
             if (opt->m_name == "buffer")
             {
                 buffer = strtoul(opt->m_value.c_str(),NULL,10);
-            } // m_name            
+            } // m_name
         } // opt
     } // args > 3
-    
+
     // read motion data from file
     if (verbose) cerr << endl << "Opening motion data file ";
     char mv_file[FILENAME_MAX];
@@ -290,7 +290,7 @@ int main (int argc, char* argv[])
     strcat(mv_file, ".imt");
     if (verbose) cerr << mv_file;
     ifstream in(mv_file, ios::in);
-    
+
     if (!in)
     {
         cerr << endl << "Failed to open sequence motion data file. Exiting." << endl;
@@ -299,16 +299,18 @@ int main (int argc, char* argv[])
 
     SourceParams srcparams;
     ReadSequenceParams (in, srcparams);
+    SourceParams out_srcparams(srcparams);
 
     // Create objects for input and output picture sequences
     char yuv_file[FILENAME_MAX];
     strcpy(yuv_file, input.c_str());
     strcat(yuv_file, ".localdec.yuv");
-    FileStreamInput inputpic(yuv_file, srcparams);
+    FileStreamInput inputpic(yuv_file, srcparams, srcparams.Interlace());
 
-    
-    FileStreamOutput outputpic(output.c_str(), srcparams);
-    
+    if (out_srcparams.Interlace())
+        out_srcparams.SetYl(out_srcparams.Yl()>>1);
+    FileStreamOutput outputpic(output.c_str(), out_srcparams, false);
+
     if (verbose) cerr << " ... ok" << endl << "Processing sequence...";
     // *** process the sequence ***
     ProcessSequence process(oparams, inputpic, outputpic, in, verbose, buffer, srcparams);

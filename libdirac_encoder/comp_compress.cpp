@@ -62,13 +62,13 @@ CompCompressor::CompCompressor( EncoderParams& encp,const FrameParams& fp)
   m_cformat( m_fparams.CFormat() )
 {}
 
-ComponentByteIO* CompCompressor::Compress( PicArray& pic_data , 
+ComponentByteIO* CompCompressor::Compress( PicArray& pic_data ,
                                            const bool is_a_cut ,
                                            const double intra_ratio ,
-                                           MEData* me_data )                                           
+                                           MEData* me_data )
 {
     //need to transform, select quantisers for each band, and then compress each component in turn
-    m_csort=pic_data.CSort();    
+    m_csort=pic_data.CSort();
     const int depth=m_encparams.TransformDepth();
     unsigned int num_band_bytes( 0 );
     m_me_data = me_data;
@@ -78,7 +78,7 @@ ComponentByteIO* CompCompressor::Compress( PicArray& pic_data ,
 
     Subband node;
 
-    //set up Lagrangian params    
+    //set up Lagrangian params
     SetCompLambda( intra_ratio, is_a_cut );
 
     WaveletTransform wtransform( depth , m_encparams.TransformFilter() );
@@ -93,11 +93,11 @@ ComponentByteIO* CompCompressor::Compress( PicArray& pic_data ,
     // Set up the code blocks
     SetupCodeBlocks( bands );
 
-    wtransform.SetBandWeights( m_encparams.CPD() , m_fparams.FSort() , m_fparams.CFormat(), m_csort);
+    wtransform.SetBandWeights( m_encparams.CPD() , m_fparams.FSort() , m_fparams.CFormat(), m_csort, m_encparams.Interlace());
 
     OneDArray<unsigned int> estimated_bits( Range( 1 , bands.Length() ) );
 
-    SelectQuantisers( coeff_data , bands , estimated_bits , m_encparams.GetCodeBlockMode() );  
+    SelectQuantisers( coeff_data , bands , estimated_bits , m_encparams.GetCodeBlockMode() );
 
     // create byte output
     ComponentByteIO *p_component_byteio = new ComponentByteIO(m_csort);
@@ -115,14 +115,14 @@ ComponentByteIO* CompCompressor::Compress( PicArray& pic_data ,
             if (b >= bands.Length()-3)
             {
                 if ( m_fsort.IsIntra() && b == bands.Length() )
-                    bcoder=new IntraDCBandCodec(&subband_byteio, 
+                    bcoder=new IntraDCBandCodec(&subband_byteio,
                                                 TOTAL_COEFF_CTXS , bands );
                 else
-                    bcoder=new LFBandCodec(&subband_byteio ,TOTAL_COEFF_CTXS, 
+                    bcoder=new LFBandCodec(&subband_byteio ,TOTAL_COEFF_CTXS,
                                            bands , b, m_fsort.IsIntra());
             }
             else
-                bcoder=new BandCodec(&subband_byteio , TOTAL_COEFF_CTXS , 
+                bcoder=new BandCodec(&subband_byteio , TOTAL_COEFF_CTXS ,
                                      bands , b, m_fsort.IsIntra() );
 
             num_band_bytes = bcoder->Compress(coeff_data);
@@ -130,13 +130,13 @@ ComponentByteIO* CompCompressor::Compress( PicArray& pic_data ,
              // Update the entropy correction factors
             m_encparams.EntropyFactors().Update(b , m_fsort , m_csort , estimated_bits[b] , 8*num_band_bytes);
 
-            delete bcoder;            
+            delete bcoder;
         }
         else
         {   // ... skipped
             SetToVal( coeff_data , bands(b) , 0 );
         }
-       
+
             // output sub-band data
             p_component_byteio->AddSubband(&subband_byteio);
 
@@ -160,16 +160,16 @@ void CompCompressor::SetCompLambda( const double intra_ratio, const bool is_a_cu
         if ( is_a_cut )
         {
             // The intra frame is inserted so we can lower the quality
-            m_lambda *= 8;     
-             
+            m_lambda *= 8;
+
         }
     }
     else
-    {        
+    {
         double log_intra_lambda = std::log10( m_encparams.ILambda() );
         double log_frame_lambda;
-        
-        if (m_fparams.IsBFrame() ) 
+
+        if (m_fparams.IsBFrame() )
             log_frame_lambda= std::log10( m_encparams.L2Lambda() );
         else
             log_frame_lambda= std::log10( m_encparams.L1Lambda() );
@@ -182,7 +182,7 @@ void CompCompressor::SetCompLambda( const double intra_ratio, const bool is_a_cu
 
     if (m_csort == U_COMP)
         m_lambda*= m_encparams.UFactor();
-    if (m_csort == V_COMP) 
+    if (m_csort == V_COMP)
         m_lambda*= m_encparams.VFactor();
 }
 
@@ -213,16 +213,16 @@ void CompCompressor::SetupCodeBlocks( SubbandList& bands )
     }// band_num
 }
 
-void CompCompressor::SelectQuantisers( CoeffArray& coeff_data , 
+void CompCompressor::SelectQuantisers( CoeffArray& coeff_data ,
                                        SubbandList& bands ,
                                        OneDArray<unsigned int>& est_bits,
                                        const CodeBlockMode cb_mode )
 {
 
-   // Set up the multiquantiser mode	
+   // Set up the multiquantiser mode
     for ( int b=bands.Length() ; b>=1 ; --b )
     {
-        // Set multiquants flag in the subband only if 
+        // Set multiquants flag in the subband only if
         // a. Global m_cb_mode flag is set to QUANT_MULTIPLE in encparams
         //           and
         // b. Current subband has more than one block
@@ -235,7 +235,7 @@ void CompCompressor::SelectQuantisers( CoeffArray& coeff_data ,
         else
             bands(b).SetUsingMultiQuants( false );
     }// b
-	
+
     // Select all the quantizers
     if ( !m_encparams.Lossless() )
     {
@@ -284,12 +284,12 @@ int CompCompressor::SelectMultiQuants( CoeffArray& coeff_data , SubbandList& ban
     if ( band_num == bands.Length() && m_fsort.IsIntra() )
         AddSubAverage( coeff_data , node.Xl() , node.Yl() , SUBTRACT);
 
-    // The total estimated bits for the subband 
+    // The total estimated bits for the subband
     int band_bits( 0 );
     qchooser.SetEntropyCorrection( m_encparams.EntropyFactors().Factor( band_num , m_fsort , m_csort ) );
     band_bits = qchooser.GetBestQuant( node );
-        
-    // Put the DC band average back in if necessary   
+
+    // Put the DC band average back in if necessary
     if ( band_num == bands.Length() && m_fsort.IsIntra() )
         AddSubAverage( coeff_data , node.Xl() , node.Yl() , ADD);
 
@@ -297,7 +297,7 @@ int CompCompressor::SelectMultiQuants( CoeffArray& coeff_data , SubbandList& ban
         node.SetSkip( true );
     else
         node.SetSkip( false );
-        
+
     return band_bits;
 }
 
@@ -307,7 +307,7 @@ void CompCompressor::SetToVal(CoeffArray& coeff_data,const Subband& node,ValueTy
 {
 
     for (int j=node.Yp() ; j<node.Yp() + node.Yl() ; ++j)
-    {    
+    {
         for (int i=node.Xp(); i<node.Xp() + node.Xl() ; ++i)
         {
             coeff_data[j][i] = val;
@@ -319,20 +319,20 @@ void CompCompressor::SetToVal(CoeffArray& coeff_data,const Subband& node,ValueTy
 
 void CompCompressor::AddSubAverage( CoeffArray& coeff_data ,
                                     int xl ,
-                                    int yl , 
+                                    int yl ,
                                     AddOrSub dirn)
 {
-    
+
     ValueType last_val=0;
     ValueType last_val2;
- 
+
     if ( dirn == SUBTRACT )
     {
         for ( int j=0 ; j<yl ; j++)
             {
             for ( int i=0 ; i<xl ; i++)
                 {
-                last_val2 = coeff_data[j][i];        
+                last_val2 = coeff_data[j][i];
                 coeff_data[j][i] -= last_val;
                 last_val = last_val2;
             }// i

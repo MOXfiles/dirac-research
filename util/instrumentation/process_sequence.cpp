@@ -41,10 +41,10 @@
 #include <libdirac_common/frame.h>
 using namespace dirac;
 
-ProcessSequence::ProcessSequence(OverlayParams & oparams, 
+ProcessSequence::ProcessSequence(OverlayParams & oparams,
                                  FileStreamInput & inputpic,
                                  FileStreamOutput & outputpic,
-                                 std::ifstream & in, bool verbose, 
+                                 std::ifstream & in, bool verbose,
                                  int buffer, SourceParams & srcparams) :
     m_oparams(oparams),
     m_inputpic(inputpic),
@@ -68,7 +68,7 @@ bool ProcessSequence::DoFrame()
     {
         // read next frame from input sequence
         Frame * frame = new Frame(m_data_array[index].frame_params);
-        m_inputpic.ReadNextFrame(*frame);
+        m_inputpic.GetStream()->ReadNextPicture(*frame);
 
         Overlay overlay(m_oparams, *frame);
 
@@ -92,7 +92,7 @@ bool ProcessSequence::DoFrame()
         frame->Clip();
 
         // write the frame to the output file
-        m_outputpic.WriteNextFrame(*frame);
+        m_outputpic.GetStream()->WriteNextFrame(*frame);
 
         // de-allocate memory for frame
         delete frame;
@@ -140,7 +140,7 @@ void ProcessSequence::AddFrameEntry()
             std::cout << std::endl << "Reading motion-compensated frame ";
             std::cout << m_data_fnum << " data";
         }
-        
+
         int mb_xnum = 0, mb_ynum = 0, mv_xnum = 0, mv_ynum = 0;
         int total_refs = 0;
         int ref = -1;
@@ -153,7 +153,7 @@ void ProcessSequence::AddFrameEntry()
 
         // clear reference vector
         m_data_array[new_index].frame_params.Refs().clear();
-        
+
         for (int i=0; i<total_refs; ++i)
         {
             m_data_in >> ref;
@@ -184,8 +184,8 @@ void ProcessSequence::AddFrameEntry()
             m_data_array[new_index].frame_params.SetFSort(FrameSort::InterRefFrameSort());
 
         // read motion vector data
-        m_data_in >> *m_data_array[new_index].me_data; // overloaded operator>> defined in libdirac_common/motion.cpp      
-        
+        m_data_in >> *m_data_array[new_index].me_data; // overloaded operator>> defined in libdirac_common/motion.cpp
+
         if (m_verbose)
         {
             std::cout << std::endl << "Writing to array position ";
@@ -214,7 +214,7 @@ void ProcessSequence::DoSequence(int start, int stop)
         {
             FrameParams fparams(m_inputpic.GetSourceParams());
             Frame * frame = new Frame(fparams);
-            m_inputpic.ReadNextFrame(*frame);
+            m_inputpic.GetStream()->ReadNextPicture(*frame);
             delete frame;
         }
     }
@@ -278,7 +278,7 @@ void ProcessSequence::DoSequence(int start, int stop)
                     if (m_verbose) std::cout << std::endl << "Updating frame data";
                     AddFrameEntry();
                 }
-                               
+
             } while (m_data_fnum == data_next_fnum && !m_data_in.eof());
 
 
@@ -305,5 +305,5 @@ void ProcessSequence::DoSequence(int start, int stop)
 
     // close motion data file
     m_data_in.close();
-} 
+}
 

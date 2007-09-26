@@ -52,9 +52,9 @@ CodeBlock::CodeBlock()
 }
 
 // Constructor
-CodeBlock::CodeBlock( const int xstart , 
-                      const int ystart , 
-                      const int xend , 
+CodeBlock::CodeBlock( const int xstart ,
+                      const int ystart ,
+                      const int xend ,
                       const int yend)
 :
     m_skipped( false )
@@ -63,9 +63,9 @@ CodeBlock::CodeBlock( const int xstart ,
 }
 
 // Initialises the code block
-void CodeBlock::Init( const int xstart , 
-                      const int ystart , 
-                      const int xend , 
+void CodeBlock::Init( const int xstart ,
+                      const int ystart ,
+                      const int xend ,
                       const int yend )
 {
     m_xstart = xstart;
@@ -102,7 +102,7 @@ Subband::Subband(int xpos,int ypos, int xlen, int ylen, int d)
   :
     m_xp( xpos ),
     m_yp( ypos ),
-    m_xl( xlen ), 
+    m_xl( xlen ),
     m_yl( ylen ),
     m_wt( 1.0 ),
     m_depth( d ),
@@ -140,8 +140,8 @@ void Subband::SetNumBlocks( const int ynum , const int xnum)
 
     for (int j=0; j<m_code_block_array.LengthY() ; ++j)
         for (int i=0; i<m_code_block_array.LengthX() ; ++i)
-            m_code_block_array[j][i].Init( xbounds[i] , ybounds[j] , 
-                                           xbounds[i+1] , ybounds[j+1] ); 
+            m_code_block_array[j][i].Init( xbounds[i] , ybounds[j] ,
+                                           xbounds[i+1] , ybounds[j+1] );
 
 }
 
@@ -153,57 +153,57 @@ Subband::~Subband()
 
 void SubbandList::Init(const int depth,const int xlen,const int ylen)
 {
-    int xl=xlen; 
-    int yl=ylen; 
-    
-    Clear(); 
+    int xl=xlen;
+    int yl=ylen;
+
+    Clear();
     Subband* tmp;
-     
+
     for (int level = 1; level <= depth; ++level)
     {
-        xl/=2; 
-        yl/=2; 
+        xl/=2;
+        yl/=2;
         /* HH */
-        tmp=new Subband( xl , yl , xl , yl , level); 
-        AddBand( *tmp ); 
-        delete tmp; 
+        tmp=new Subband( xl , yl , xl , yl , level);
+        AddBand( *tmp );
+        delete tmp;
 
         /* LH */
-        tmp=new Subband( 0 , yl , xl , yl , level); 
-        AddBand( *tmp ); 
-        delete tmp; 
- 
+        tmp=new Subband( 0 , yl , xl , yl , level);
+        AddBand( *tmp );
+        delete tmp;
+
         /* HL */
-        tmp=new Subband(xl , 0 , xl , yl , level); 
-        AddBand( *tmp ); 
-        delete tmp; 
-        
+        tmp=new Subband(xl , 0 , xl , yl , level);
+        AddBand( *tmp );
+        delete tmp;
+
         if (level == depth)
         {
             /* LL */
-            tmp=new Subband( 0 , 0 , xl , yl , level); 
-            AddBand( *tmp ); 
-            delete tmp; 
-        }        
+            tmp=new Subband( 0 , 0 , xl , yl , level);
+            AddBand( *tmp );
+            delete tmp;
+        }
     }
     //now set the parent-child relationships
-    int len = bands.size(); 
-    (*this)(len).SetParent(0);         
-    (*this)(len-3).SetParent(0); 
-    (*this)(len-2).SetParent(0); 
-    (*this)(len-1).SetParent(0); 
+    int len = bands.size();
+    (*this)(len).SetParent(0);
+    (*this)(len-3).SetParent(0);
+    (*this)(len-2).SetParent(0);
+    (*this)(len-1).SetParent(0);
 
     for (int level = 2; level <= depth; ++level)
     {
          //do parent-child relationship for other bands
-        (*this)( len-3*(level-1) ).AddChild( len-3*(level) ); 
-        (*this)( len-3*(level) ).SetParent( len-3*(level-1) ); 
+        (*this)( len-3*(level-1) ).AddChild( len-3*(level) );
+        (*this)( len-3*(level) ).SetParent( len-3*(level-1) );
 
-        (*this)( len-3*(level-1)+1 ).AddChild( len-3*(level)+1 ); 
-        (*this)(len-3*(level)+1).SetParent(len-3*(level-1)+1); 
+        (*this)( len-3*(level-1)+1 ).AddChild( len-3*(level)+1 );
+        (*this)(len-3*(level)+1).SetParent(len-3*(level-1)+1);
 
         (*this)( len-3*(level-1)+2 ).AddChild( len-3*(level)+2 );
-        (*this)(len-3*(level)+2).SetParent(len-3*(level-1)+2); 
+        (*this)(len-3*(level)+2).SetParent(len-3*(level-1)+2);
     }// level
 
 }
@@ -224,7 +224,7 @@ WaveletTransform::WaveletTransform(int d, WltFilter f)
         m_vhfilter = new VHFilterDD9_5;
         break;
 
-    case LEGALL5_3 : 
+    case LEGALL5_3 :
         m_vhfilter = new VHFilterLEGALL5_3;
         break;
 
@@ -239,7 +239,7 @@ WaveletTransform::WaveletTransform(int d, WltFilter f)
     case HAAR1 :
         m_vhfilter = new VHFilterHAAR1;
         break;
-        
+
     default :
         m_vhfilter = new VHFilterDAUB9_7;
     }
@@ -253,13 +253,13 @@ WaveletTransform::~WaveletTransform()
 
 void WaveletTransform::Transform(const Direction d, PicArray& pic_data, CoeffArray& coeff_data)
 {
-    int xl,yl; 
+    int xl,yl;
 
     if (d == FORWARD)
     {
-        xl=pic_data.LengthX(); 
+        xl=pic_data.LengthX();
         yl=pic_data.LengthY();
-        
+
         // First copy picture data into coeff_data
         for ( int j=0; j<coeff_data.LengthY(); ++j)
         {
@@ -268,27 +268,27 @@ void WaveletTransform::Transform(const Direction d, PicArray& pic_data, CoeffArr
                 coeff_data[j][i] = CoeffType( pic_data[j][i] );
             }// i
         }// j
-         
-        
+
+
         for (int l = 1; l <= m_depth; ++l , xl>>=1 , yl>>=1)
         {
-            m_vhfilter->Split(0,0,xl,yl,coeff_data); 
+            m_vhfilter->Split(0,0,xl,yl,coeff_data);
         }
 
         m_band_list.Init( m_depth , coeff_data.LengthX() , coeff_data.LengthY() );
     }
     else
     {
-        xl = coeff_data.LengthX()/(1<<(m_depth-1)); 
-        yl = coeff_data.LengthY()/(1<<(m_depth-1)); 
-        
+        xl = coeff_data.LengthX()/(1<<(m_depth-1));
+        yl = coeff_data.LengthY()/(1<<(m_depth-1));
+
         for (int l = 1; l <= m_depth; ++l, xl<<=1 , yl<<=1 )
         {
-            m_vhfilter->Synth(0,0,xl,yl,coeff_data); 
+            m_vhfilter->Synth(0,0,xl,yl,coeff_data);
         }
-        //band list now inaccurate, so clear        
-        m_band_list.Clear(); 
-        
+        //band list now inaccurate, so clear
+        m_band_list.Clear();
+
          // Lastly, copy coeff_data back into picture data
         for ( int j=0; j<coeff_data.LengthY(); ++j)
         {
@@ -296,16 +296,17 @@ void WaveletTransform::Transform(const Direction d, PicArray& pic_data, CoeffArr
             {
                 pic_data[j][i] = ValueType( coeff_data[j][i] );
             }// i
-        }// j    
+        }// j
     }
 }
 
-void WaveletTransform::SetBandWeights (const float cpd, 
+void WaveletTransform::SetBandWeights (const float cpd,
                                        const FrameSort& fsort,
                                        const ChromaFormat& cformat,
-                                       const CompSort csort)
+                                       const CompSort csort,
+                                       const bool interlace)
 {
-    //NB - only designed for progressive to date    
+    //NB - only designed for progressive to date
 
     int xlen, ylen, xl, yl, xp, yp;
     float xfreq, yfreq;
@@ -352,7 +353,8 @@ void WaveletTransform::SetBandWeights (const float cpd,
                 xfreq /= 8.0;
                 yfreq /= 8.0;
             }
-
+            if(interlace)
+                yfreq/=2.0;
 
             temp = PerceptualWeight( xfreq/chroma_xfac , yfreq/chroma_yfac , csort );
 
@@ -376,7 +378,7 @@ void WaveletTransform::SetBandWeights (const float cpd,
         // Overall factor to ensure that white noise ends up with the same RMS, whatever the weight
         double overall_factor=0.0;
         //fraction of the total number of samples belonging to each subband
-        double subband_fraction;    
+        double subband_fraction;
 
         for( int i=1 ; i<=m_band_list.Length() ; i++ )
         {
@@ -394,23 +396,23 @@ void WaveletTransform::SetBandWeights (const float cpd,
     {//cpd=0 so set all weights to 1
 
         for( int i=1 ; i<=m_band_list.Length() ; i++ )
-           m_band_list(i).SetWt( 1.0 );        
+           m_band_list(i).SetWt( 1.0 );
 
     }
 
     //Finally, adjust to compensate for the absence of scaling in the transform
     //Factor used to compensate:
-    double lfac = m_vhfilter->GetLowFactor();  
-    double hfac = m_vhfilter->GetHighFactor(); 
+    double lfac = m_vhfilter->GetLowFactor();
+    double hfac = m_vhfilter->GetHighFactor();
 
     int idx;
     int shift;
- 
+
     // Do the DC subband
     idx = m_band_list.Length();
     double cf = (1<<(m_depth*m_vhfilter->GetShift())) / std::pow(lfac,2*m_depth ) ;
     m_band_list(idx).SetWt( m_band_list(idx).Wt()*cf);
-    
+
     // Do the non-DC subbands
     for (int level=1; level<=m_depth; level++)
     {
@@ -421,36 +423,36 @@ void WaveletTransform::SetBandWeights (const float cpd,
 
             // index into the subband list
             idx = 3*(m_depth-level)+orient;
-            
+
             // Divide through by the weight for the LF subband that was decomposed
             // to create this level
             cf = 1.0/ std::pow(lfac,2*(m_depth-level) );
-                                                        
+
             if ( m_band_list(idx).Xp() != 0 && m_band_list(idx).Yp() != 0)
                 // HH subband
                 cf /= (hfac * hfac);
             else
                 // LH or HL subband
                 cf /= (lfac * hfac);
-  
+
             cf *= double(1<<shift);
 
             m_band_list(idx).SetWt( m_band_list(idx).Wt()*cf );
-            
+
         }// orient
     }//level
-    
- 
-} 
+
+
+}
 
 // Private functions //
 ///////////////////////
 // NOTEL MMX version is defined in wavelet_utils_mmx.cpp
 // the corresponding changes are made in wavelet_utils_mmx.cpp as well
-void WaveletTransform::VHFilter::Interleave( const int xp , 
-                                             const int yp , 
-                                             const int xl , 
-                                             const int yl , 
+void WaveletTransform::VHFilter::Interleave( const int xp ,
+                                             const int yp ,
+                                             const int xl ,
+                                             const int yl ,
                                              CoeffArray& coeff_data)
 {
     TwoDArray<CoeffType> temp_data( yl , xl );
@@ -469,7 +471,7 @@ void WaveletTransform::VHFilter::Interleave( const int xp ,
             coeff_data[s][r] = temp_data[j][i];
         for (int i = xl2, r=xp+1; i<xl ; i++ , r += 2)
             coeff_data[s][r] = temp_data[j][i];
-    }// j 
+    }// j
 
     for (int j = yl2, s=yp+1 ; j<yl ; j++ , s += 2)
     {
@@ -477,7 +479,7 @@ void WaveletTransform::VHFilter::Interleave( const int xp ,
             coeff_data[s][r] = temp_data[j][i];
         for (int i = xl2, r=xp+1; i<xl ; i++ , r += 2)
             coeff_data[s][r] = temp_data[j][i];
-    }// j 
+    }// j
 
 }
 
@@ -496,10 +498,10 @@ void WaveletTransform::VHFilter::ShiftRowRight(CoeffType *row, int length, int s
 }
 #endif
 
-void WaveletTransform::VHFilter::DeInterleave( const int xp , 
-                                               const int yp , 
-                                               const int xl , 
-                                               const int yl , 
+void WaveletTransform::VHFilter::DeInterleave( const int xp ,
+                                               const int yp ,
+                                               const int xl ,
+                                               const int yl ,
                                                CoeffArray& coeff_data)
 {
     TwoDArray<CoeffType> temp_data( yl , xl );
@@ -519,7 +521,7 @@ void WaveletTransform::VHFilter::DeInterleave( const int xp ,
             coeff_data[j][i] = temp_data[s][r];
         for (int i = xp+xl2, r=1; i<xend ; i++ , r += 2)
             coeff_data[j][i] = temp_data[s][r];
-    }// j 
+    }// j
 
     for (int j = yp+yl2, s=1 ; j<yend ; j++ , s += 2)
     {
@@ -527,38 +529,38 @@ void WaveletTransform::VHFilter::DeInterleave( const int xp ,
             coeff_data[j][i] = temp_data[s][r];
         for (int i = xp+xl2, r=1; i<xend ; i++ , r += 2)
             coeff_data[j][i] = temp_data[s][r];
-    }// j 
+    }// j
 
 }
 
-void WaveletTransform::VHFilterDAUB9_7::Split (const int xp , 
-                                               const int yp , 
-                                               const int xl , 
-                                               const int yl , 
+void WaveletTransform::VHFilterDAUB9_7::Split (const int xp ,
+                                               const int yp ,
+                                               const int xl ,
+                                               const int yl ,
                                                CoeffArray& coeff_data)
 {
 
     const int xend=xp+xl;
     const int yend=yp+yl;
 
-    CoeffType* line_data; 
+    CoeffType* line_data;
 
     // Positional variables
-    int i,j,k; 
-  
-    // Objects to do lifting stages 
+    int i,j,k;
+
+    // Objects to do lifting stages
     // (in revese order and type from synthesis)
     const PredictStep97< 6497 > predictA;
     const PredictStep97< 217 > predictB;
     const UpdateStep97< 3616 > updateA;
     const UpdateStep97< 1817 > updateB;
 
-     //first do horizontal 
+     //first do horizontal
 
     for (j = yp;  j < yend; ++j)
     {
         // First lifting stage
-        line_data = coeff_data[j];                 
+        line_data = coeff_data[j];
         // Shift left by one bit to give us more accuracy
         ShiftRowLeft(line_data, xl, 1);
 
@@ -570,18 +572,18 @@ void WaveletTransform::VHFilterDAUB9_7::Split (const int xp ,
             predictA.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
             predictB.Filter( line_data[k-1] , line_data[k-2] , line_data[k] );
         }// i
-        
+
         predictA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
         predictB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] );
 
 
-         //second lifting stage 
-        
+         //second lifting stage
+
         updateA.Filter( line_data[xp+1] , line_data[xp+2] , line_data[xp] );
         updateB.Filter( line_data[xp] , line_data[xp+1] , line_data[xp+1] );
 
         for ( k = xp+3;  k < xend-1; k+=2)
-        { 
+        {
             updateA.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
             updateB.Filter( line_data[k-1] , line_data[k-2] , line_data[k] );
         }// i
@@ -649,9 +651,9 @@ void WaveletTransform::VHFilterDAUB9_7::Split (const int xp ,
 }
 
 void WaveletTransform::VHFilterDAUB9_7::Synth (const int xp ,
-                                               const int yp , 
-                                               const int xl , 
-                                               const int yl , 
+                                               const int yp ,
+                                               const int xl ,
+                                               const int yl ,
                                                CoeffArray& coeff_data)
 {
 
@@ -723,14 +725,14 @@ void WaveletTransform::VHFilterDAUB9_7::Synth (const int xp ,
     // Next do the horizontal synthesis
     for (j = yend-1;  j >= yp ; --j)
     {
-        // First lifting stage 
+        // First lifting stage
         line_data = coeff_data[j];
 
-        predictB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] ); 
+        predictB.Filter( line_data[xend-2] , line_data[xend-3] , line_data[xend-1] );
         predictA.Filter( line_data[xend-1] , line_data[xend-2] , line_data[xend-2] );
 
         for ( k = xend-3;  k > xp+1; k-=2)
-        { 
+        {
             predictB.Filter( line_data[k-1] , line_data[k-2] , line_data[k] );
             predictA.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
         }// i
@@ -756,32 +758,32 @@ void WaveletTransform::VHFilterDAUB9_7::Synth (const int xp ,
 
     }
 
-} 
+}
 
 #if !defined HAVE_MMX
 // NOTE: MMX version is defined in wavelet_utils_mmx.cpp
 // the corresponding changes are made in wavelet_utils_mmx.cpp as well
-void WaveletTransform::VHFilterLEGALL5_3::Split(const int xp , 
-                                          const int yp , 
-                                          const int xl , 
-                                          const int yl , 
+void WaveletTransform::VHFilterLEGALL5_3::Split(const int xp ,
+                                          const int yp ,
+                                          const int xl ,
+                                          const int yl ,
                                           CoeffArray& coeff_data)
 {
 
     const int xend=xp+xl;
     const int yend=yp+yl;
 
-    CoeffType* line_data; 
+    CoeffType* line_data;
 
     // Positional variables
-    int i,j,k; 
-  
-    // Objects to do lifting stages 
+    int i,j,k;
+
+    // Objects to do lifting stages
     // (in revese order and type from synthesis)
     const PredictStepShift< 1 > predict;
     const UpdateStepShift< 2 > update;
 
-     //first do horizontal 
+     //first do horizontal
 
     for (j = yp;  j < yend; ++j)
     {
@@ -798,7 +800,7 @@ void WaveletTransform::VHFilterLEGALL5_3::Split(const int xp ,
             predict.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
             update.Filter(  line_data[k-1] , line_data[k-2] , line_data[k] );
         }// i
-        
+
         predict.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] );
         update.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] );
 
@@ -839,9 +841,9 @@ void WaveletTransform::VHFilterLEGALL5_3::Split(const int xp ,
 // NOTE: MMX version is defined in wavelet_utils_mmx.cpp
 // the corresponding changes are made in wavelet_utils_mmx.cpp as well
 void WaveletTransform::VHFilterLEGALL5_3::Synth(const int xp ,
-                                          const int yp , 
-                                          const int xl , 
-                                          const int yl , 
+                                          const int yp ,
+                                          const int xl ,
+                                          const int yl ,
                                           CoeffArray& coeff_data)
 {
     int i,j,k;
@@ -885,21 +887,21 @@ void WaveletTransform::VHFilterLEGALL5_3::Synth(const int xp ,
     // Next do the horizontal synthesis
     for (j = yend-1;  j >= yp ; --j)
     {
-        // First lifting stage 
+        // First lifting stage
         line_data = &coeff_data[j][xp];
 
-        predict.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] ); 
+        predict.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] );
         update.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] );
 
         for ( k = xl-3;  k > 1; k-=2)
-        { 
+        {
             predict.Filter( line_data[k-1] , line_data[k-2] , line_data[k] );
             update.Filter( line_data[k] , line_data[k+1] , line_data[k-1] );
         }// i
 
         predict.Filter( line_data[0] , line_data[1] , line_data[1] );
         update.Filter( line_data[1] , line_data[2] , line_data[0] );
-        
+
         // Shift right by one bit to counter the shift in the analysis stage
         ShiftRowRight(line_data, xl, 1);
 
@@ -908,9 +910,9 @@ void WaveletTransform::VHFilterLEGALL5_3::Synth(const int xp ,
 }
 #endif
 
-void WaveletTransform::VHFilterDD9_5::Split(const int xp , 
-                                                const int yp , 
-                                                const int xl , 
+void WaveletTransform::VHFilterDD9_5::Split(const int xp ,
+                                                const int yp ,
+                                                const int xl ,
                                                 const int yl ,
                                                 CoeffArray& coeff_data)
 {
@@ -918,15 +920,15 @@ void WaveletTransform::VHFilterDD9_5::Split(const int xp ,
     const int xend=xp+xl;
     const int yend=yp+yl;
 
-    CoeffType* line_data; 
+    CoeffType* line_data;
 
     // Positional variables
-    int i,j,k; 
+    int i,j,k;
 
     PredictStepFourTap< 4 , 9 , -1 > predict;
     UpdateStepShift< 2 > update;
 
-    //first do horizontal 
+    //first do horizontal
 
     for (j = yp;  j < yend; ++j)
     {
@@ -939,17 +941,17 @@ void WaveletTransform::VHFilterDD9_5::Split(const int xp ,
         for (k=3 ; k<xl-3 ; k+=2)
         {
             predict.Filter( line_data[k] , line_data[k-1] , line_data[k+1] , line_data[k-3] , line_data[k+3] );
-        }// i 
+        }// i
         predict.Filter( line_data[xl-3] , line_data[xl-4] , line_data[xl-2] , line_data[xl-6] , line_data[xl-2] );
         predict.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] , line_data[xl-4] , line_data[xl-2] );
 
-        //Second lifting stage 
+        //Second lifting stage
 
         update.Filter( line_data[0] , line_data[1] , line_data[1] );
         for (i=2 ; i<xl-1 ; i+=2 )
         {
             update.Filter( line_data[i] , line_data[i-1] , line_data[i+1] );
-        }// i 
+        }// i
 
    }// j
 
@@ -996,17 +998,17 @@ void WaveletTransform::VHFilterDD9_5::Split(const int xp ,
     // Lastly, have to reorder so that subbands are no longer interleaved
     DeInterleave( xp , yp , xl , yl , coeff_data );
 
-    
+
 
 }
 
 #if !defined(HAVE_MMX)
 // NOTE: MMX version is defined in wavelet_utils_mmx.cpp
 // the corresponding changes are made in wavelet_utils_mmx.cpp as well
-void WaveletTransform::VHFilterDD9_5::Synth(const int xp , 
-                                                const int yp , 
-                                                const int xl , 
-                                                const int yl , 
+void WaveletTransform::VHFilterDD9_5::Synth(const int xp ,
+                                                const int yp ,
+                                                const int xl ,
+                                                const int yl ,
                                                 CoeffArray& coeff_data)
 {
     int i,j;
@@ -1066,13 +1068,13 @@ void WaveletTransform::VHFilterDD9_5::Synth(const int xp ,
     // Next do the horizontal synthesis
     for (j = yend-1;  j >= yp; --j)
     {
-        line_data = &coeff_data[j][xp];                 
+        line_data = &coeff_data[j][xp];
 
         // First lifting stage
         for (i=xl-2 ; i>=2 ; i-=2)
         {
             predict.Filter( line_data[i] , line_data[i-1] , line_data[i+1] );
-        }// i 
+        }// i
         predict.Filter( line_data[0] , line_data[1] , line_data[1] );
 
         // Second lifting stage
@@ -1081,9 +1083,9 @@ void WaveletTransform::VHFilterDD9_5::Synth(const int xp ,
         for (i=xl-5 ; i>=3 ; i-=2)
         {
             update.Filter( line_data[i] , line_data[i-1] , line_data[i+1] , line_data[i-3] , line_data[i+3] );
-        }// i 
+        }// i
         update.Filter( line_data[1] , line_data[0] , line_data[2] , line_data[0] , line_data[4] );
-        
+
         // Shift right by one bit to counter the shift in the analysis stage
         ShiftRowRight(line_data, xl, 1);
 
@@ -1092,10 +1094,10 @@ void WaveletTransform::VHFilterDD9_5::Synth(const int xp ,
 }
 #endif
 
-void WaveletTransform::VHFilterDD13_5::Split(const int xp , 
-                                           const int yp , 
-                                           const int xl , 
-                                           const int yl , 
+void WaveletTransform::VHFilterDD13_5::Split(const int xp ,
+                                           const int yp ,
+                                           const int xl ,
+                                           const int yl ,
                                            CoeffArray& coeff_data)
 {
 
@@ -1105,36 +1107,36 @@ void WaveletTransform::VHFilterDD13_5::Split(const int xp ,
     PredictStepFourTap< 4 , 9 , -1 > predict;
     UpdateStepFourTap< 5 , 9 , -1> update;
 
-    CoeffType* line_data; 
+    CoeffType* line_data;
 
     // Positional variables
-    int i,j,k; 
-  
-     //first do horizontal 
+    int i,j,k;
+
+     //first do horizontal
 
     for (j = yp;  j < yend; ++j)
     {
-        line_data = &coeff_data[j][xp];                 
+        line_data = &coeff_data[j][xp];
         // Shift left by one bit to give us more accuracy
         ShiftRowLeft(line_data, xl, 1);
 
         // First lifting stage
-        predict.Filter( line_data[1] , line_data[0] ,line_data[2] , line_data[0] , line_data[4] ); 
+        predict.Filter( line_data[1] , line_data[0] ,line_data[2] , line_data[0] , line_data[4] );
         for (k=3 ; k<xl-3 ; k+=2)
         {
             predict.Filter( line_data[k] , line_data[k-1] , line_data[k+1] , line_data[k-3] , line_data[k+3] );
-        }// i 
+        }// i
 
         predict.Filter( line_data[xl-3] , line_data[xl-4] , line_data[xl-2] , line_data[xl-6] , line_data[xl-2] );
         predict.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] , line_data[xl-4] , line_data[xl-2] );
 
-         //second lifting stage 
+         //second lifting stage
         update.Filter( line_data[0] , line_data[1] , line_data[1] , line_data[3] , line_data[1] );
         update.Filter( line_data[2] , line_data[1] , line_data[3] , line_data[5] , line_data[1] );
         for (k=4 ; k<xl-3 ; k+=2)
         {
             update.Filter( line_data[k] , line_data[k-1] , line_data[k+1] , line_data[k-3] , line_data[k+3] );
-        }// i 
+        }// i
 
         update.Filter( line_data[xl-2] , line_data[xl-3] , line_data[xl-1] , line_data[xl-5] , line_data[xl-1] );
     }// j
@@ -1146,7 +1148,7 @@ void WaveletTransform::VHFilterDD13_5::Split(const int xp ,
     // top edge - j=xp
     for ( i = xp ; i<xend ; ++ i)
     {
-        predict.Filter( coeff_data[yp+1][i] , coeff_data[yp][i] , coeff_data[yp+2][i] , coeff_data[yp][i] , coeff_data[yp+4][i] ); 
+        predict.Filter( coeff_data[yp+1][i] , coeff_data[yp][i] , coeff_data[yp+2][i] , coeff_data[yp][i] , coeff_data[yp+4][i] );
     }// i
 
     // middle bit
@@ -1195,9 +1197,9 @@ void WaveletTransform::VHFilterDD13_5::Split(const int xp ,
 // NOTE: MMX version is defined in wavelet_utils_mmx.cpp
 // the corresponding changes are made in wavelet_utils_mmx.cpp as well
 void WaveletTransform::VHFilterDD13_5::Synth(const int xp ,
-                                           const int yp , 
+                                           const int yp ,
                                            const int xl ,
-                                           const int yl , 
+                                           const int yl ,
                                            CoeffArray& coeff_data)
 {
     int i,j,k;
@@ -1209,7 +1211,7 @@ void WaveletTransform::VHFilterDD13_5::Synth(const int xp ,
     UpdateStepFourTap< 4 , 9 , -1> update;
 
     // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
-    Interleave( xp , yp , xl , yl , coeff_data );  
+    Interleave( xp , yp , xl , yl , coeff_data );
 
     // Next, do the vertical synthesis
 
@@ -1258,7 +1260,7 @@ void WaveletTransform::VHFilterDD13_5::Synth(const int xp ,
     // top edge - j=xp
     for ( i = xp ; i<xend ; ++ i)
     {
-        update.Filter( coeff_data[yp+1][i] , coeff_data[yp][i] , coeff_data[yp+2][i] , coeff_data[yp][i] , coeff_data[yp+4][i] ); 
+        update.Filter( coeff_data[yp+1][i] , coeff_data[yp][i] , coeff_data[yp+2][i] , coeff_data[yp][i] , coeff_data[yp+4][i] );
     }// i
 
     // Next do the horizontal synthesis
@@ -1267,7 +1269,7 @@ void WaveletTransform::VHFilterDD13_5::Synth(const int xp ,
 
     for (j = yend-1;  j >= yp ; --j)
     {
-        line_data = &coeff_data[j][xp];                 
+        line_data = &coeff_data[j][xp];
 
         // First lifting stage
 
@@ -1277,34 +1279,34 @@ void WaveletTransform::VHFilterDD13_5::Synth(const int xp ,
         {
             predict.Filter( line_data[k] , line_data[k-1] , line_data[k+1] , line_data[k-3] , line_data[k+3] );
 
-        }// i 
+        }// i
         predict.Filter( line_data[2] , line_data[1] , line_data[3] , line_data[5] , line_data[1] );
         predict.Filter( line_data[0] , line_data[1] , line_data[1] , line_data[3] , line_data[1] );
 
-         //second lifting stage 
+         //second lifting stage
         update.Filter( line_data[xl-1] , line_data[xl-2] , line_data[xl-2] , line_data[xl-4] , line_data[xl-2] );
         update.Filter( line_data[xl-3] , line_data[xl-4] , line_data[xl-2] , line_data[xl-6] , line_data[xl-2] );
 
         for (k=xl-5 ; k>=3 ; k-=2)
         {
             update.Filter( line_data[k] , line_data[k-1] , line_data[k+1] , line_data[k-3] , line_data[k+3] );
-        }// i 
+        }// i
 
-        update.Filter( line_data[1] , line_data[0] , line_data[2] , line_data[0] , line_data[4] ); 
+        update.Filter( line_data[1] , line_data[0] , line_data[2] , line_data[0] , line_data[4] );
         // Shift right by one bit to counter the shift in the analysis stage
         ShiftRowRight(line_data, xl, 1);
 
     }// j
-} 
+}
 #endif
 
-void WaveletTransform::VHFilterHAAR0::Split(const int xp , 
-                                           const int yp , 
-                                           const int xl , 
-                                           const int yl , 
+void WaveletTransform::VHFilterHAAR0::Split(const int xp ,
+                                           const int yp ,
+                                           const int xl ,
+                                           const int yl ,
                                            CoeffArray& coeff_data)
 {
- 
+
     const int xend=xp+xl;
     const int yend=yp+yl;
 
@@ -1331,22 +1333,22 @@ void WaveletTransform::VHFilterHAAR0::Split(const int xp ,
             coeff_data[j-1][i] += ((coeff_data[j][i]+1)>>1);
         }
     }
-    
+
     // Lastly, have to reorder so that subbands are no longer interleaved
     DeInterleave( xp , yp , xl , yl , coeff_data );
 }
 
 void WaveletTransform::VHFilterHAAR0::Synth(const int xp ,
-                                           const int yp , 
+                                           const int yp ,
                                            const int xl ,
-                                           const int yl , 
+                                           const int yl ,
                                            CoeffArray& coeff_data)
 {
     const int xend( xp+xl );
     const int yend( yp+yl );
 
     // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
-    Interleave( xp , yp , xl , yl , coeff_data );  
+    Interleave( xp , yp , xl , yl , coeff_data );
 
     // First do the vertical
     for (int j = yp+1; j < yend; j+=2)
@@ -1369,10 +1371,10 @@ void WaveletTransform::VHFilterHAAR0::Synth(const int xp ,
     }
 }
 
-void WaveletTransform::VHFilterHAAR1::Split(const int xp , 
-                                           const int yp , 
-                                           const int xl , 
-                                           const int yl , 
+void WaveletTransform::VHFilterHAAR1::Split(const int xp ,
+                                           const int yp ,
+                                           const int xl ,
+                                           const int yl ,
                                            CoeffArray& coeff_data)
 {
     const int xend=xp+xl;
@@ -1383,7 +1385,7 @@ void WaveletTransform::VHFilterHAAR1::Split(const int xp ,
     // first do Horizontal
     for (int j = yp; j < yend; ++j)
     {
-        line_data = &(coeff_data[j][xp]);                 
+        line_data = &(coeff_data[j][xp]);
         ShiftRowLeft(line_data, xl, 1);
         for (int i = xp+1; i < xend; i+=2)
         {
@@ -1405,24 +1407,24 @@ void WaveletTransform::VHFilterHAAR1::Split(const int xp ,
             coeff_data[j-1][i] += ((coeff_data[j][i]+1)>>1);
         }
     }
-    
+
     // Lastly, have to reorder so that subbands are no longer interleaved
     DeInterleave( xp , yp , xl , yl , coeff_data );
 }
 
 void WaveletTransform::VHFilterHAAR1::Synth(const int xp ,
-                                           const int yp , 
+                                           const int yp ,
                                            const int xl ,
-                                           const int yl , 
+                                           const int yl ,
                                            CoeffArray& coeff_data)
-{                                           
+{
     const int xend( xp+xl );
     const int yend( yp+yl );
-    
+
     CoeffType* line_data;
 
     // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
-    Interleave( xp , yp , xl , yl , coeff_data );  
+    Interleave( xp , yp , xl , yl , coeff_data );
 
     // First do the vertical
     for (int j = yp+1; j < yend; j+=2)
@@ -1442,15 +1444,15 @@ void WaveletTransform::VHFilterHAAR1::Synth(const int xp ,
             coeff_data[j][i-1] -= ((coeff_data[j][i]+1)>>1);
             coeff_data[j][i] += coeff_data[j][i-1];
         }
-        line_data = &coeff_data[j][xp];                 
+        line_data = &coeff_data[j][xp];
         ShiftRowRight(line_data, xl, 1);
     }
 }
 
-void WaveletTransform::VHFilterHAAR2::Split(const int xp , 
-                                           const int yp , 
-                                           const int xl , 
-                                           const int yl , 
+void WaveletTransform::VHFilterHAAR2::Split(const int xp ,
+                                           const int yp ,
+                                           const int xl ,
+                                           const int yl ,
                                            CoeffArray& coeff_data)
 {
     const int xend=xp+xl;
@@ -1461,7 +1463,7 @@ void WaveletTransform::VHFilterHAAR2::Split(const int xp ,
     // first do Horizontal
     for (int j = yp; j < yend; ++j)
     {
-        line_data = &coeff_data[j][xp];                 
+        line_data = &coeff_data[j][xp];
         ShiftRowLeft(line_data, xl, 2);
         for (int i = xp+1; i < xend; i+=2)
         {
@@ -1483,24 +1485,24 @@ void WaveletTransform::VHFilterHAAR2::Split(const int xp ,
             coeff_data[j-1][i] += ((coeff_data[j][i]+1)>>1);
         }
     }
-    
+
     // Lastly, have to reorder so that subbands are no longer interleaved
     DeInterleave( xp , yp , xl , yl , coeff_data );
 }
 
 void WaveletTransform::VHFilterHAAR2::Synth(const int xp ,
-                                           const int yp , 
+                                           const int yp ,
                                            const int xl ,
-                                           const int yl , 
+                                           const int yl ,
                                            CoeffArray& coeff_data)
 {
     const int xend( xp+xl );
     const int yend( yp+yl );
-    
+
     CoeffType* line_data;
 
     // Firstly reorder to interleave subbands, so that subsequent calculations can be in-place
-    Interleave( xp , yp , xl , yl , coeff_data );  
+    Interleave( xp , yp , xl , yl , coeff_data );
 
     // First do the vertical
     for (int j = yp+1; j < yend; j+=2)
@@ -1520,7 +1522,7 @@ void WaveletTransform::VHFilterHAAR2::Synth(const int xp ,
             coeff_data[j][i-1] -= ((coeff_data[j][i]+1)>>1);
             coeff_data[j][i] += coeff_data[j][i-1];
         }
-        line_data = &coeff_data[j][xp];                 
+        line_data = &coeff_data[j][xp];
         ShiftRowRight(line_data, xl, 2);
     }
 }
@@ -1528,8 +1530,8 @@ void WaveletTransform::VHFilterHAAR2::Synth(const int xp ,
 
 // Returns a perceptual noise weighting based on extending CCIR 959 values
 // assuming a two-d isotropic response. Also has a fudge factor of 20% for chroma
-float WaveletTransform::PerceptualWeight( const float xf , 
-                                     const float yf ,  
+float WaveletTransform::PerceptualWeight( const float xf ,
+                                     const float yf ,
                                      const CompSort cs )
 {
     double freq_sqd( xf*xf + yf*yf );

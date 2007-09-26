@@ -84,11 +84,11 @@ void QualityMonitor::WriteLog()
     std::cout.width(5);std::cout.precision(4);
     std::cout<<m_totalquality_averageV/m_allframe_total<<std::endl;
 
-     
+
     std::cout<<std::endl<<"Mean PSNR values by frame type and component";
     std::cout<<std::endl<<"--------------------------------------------";
     std::cout<<std::endl;
-    
+
     std::cout<<std::endl<<"                 ||       Y       ||       U       ||       V       ||";
     std::cout<<std::endl<<"=================||===================================================";
     std::cout<<std::endl<<"           Intra ||     ";
@@ -119,37 +119,38 @@ void QualityMonitor::WriteLog()
 
 void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame )
 {
-    const FrameSort& fsort = ld_frame.GetFparams().FSort();    
+    const FrameSort& fsort = ld_frame.GetFparams().FSort();
     int idx = fsort.IsIntra() ? 0 : (fsort.IsRef() ? 1 : 2);
 
     double fqualityY, fqualityU, fqualityV;
-    
-    fqualityY = QualityVal( ld_frame.Ydata() , orig_frame.Ydata(), 
+
+    fqualityY = QualityVal( ld_frame.Ydata() , orig_frame.Ydata(),
                             m_encparams.OrigXl(), m_encparams.OrigYl(),
                             Y_COMP);
     m_quality_averageY[idx] += fqualityY;
     m_totalquality_averageY += fqualityY;
 
-    fqualityU = QualityVal( ld_frame.Udata() , orig_frame.Udata(), 
+    fqualityU = QualityVal( ld_frame.Udata() , orig_frame.Udata(),
                             m_encparams.OrigChromaXl(),
                             m_encparams.OrigChromaYl(),
                             U_COMP);
     m_quality_averageU[idx] += fqualityU;
-    m_totalquality_averageU += fqualityU;    
+    m_totalquality_averageU += fqualityU;
 
-    fqualityV = QualityVal( ld_frame.Vdata() , orig_frame.Vdata(), 
+    fqualityV = QualityVal( ld_frame.Vdata() , orig_frame.Vdata(),
                             m_encparams.OrigChromaXl(),
                             m_encparams.OrigChromaYl(),
                             V_COMP);
     m_quality_averageV[idx] += fqualityV;
-    m_totalquality_averageV += fqualityV;    
+    m_totalquality_averageV += fqualityV;
 
     m_frame_total[idx]++;
     m_allframe_total++;
-    
+
     if (m_encparams.Verbose() )
     {
-        std::cout<<std::endl<<"Frame PSNR: Y="<<fqualityY;
+        std::cout<<std::endl<< (!m_encparams.Interlace() ? "Frame" : "Field");
+        std::cout << " PSNR: Y="<<fqualityY;
         std::cout<<", U="<<fqualityU;
         std::cout<<", V="<<fqualityV;
     }
@@ -157,7 +158,7 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
 }
 
 
-double QualityMonitor::QualityVal(const PicArray& coded_data, 
+double QualityMonitor::QualityVal(const PicArray& coded_data,
                                   const PicArray& orig_data,
                                   const int xlen, const int ylen,
                                   const CompSort cs)
@@ -176,7 +177,7 @@ double QualityMonitor::QualityVal(const PicArray& coded_data,
 
     unsigned comp_depth = cs == Y_COMP ? m_encparams.LumaDepth() :
                                          m_encparams.ChromaDepth();
-    
+
     const double max = double( (1<<comp_depth)-1 );
 
     sum_sq_diff /= xlen*ylen;

@@ -20,12 +20,12 @@
  * Portions created by the Initial Developer are Copyright (C) 2004.
  * All Rights Reserved.
  *
- * Contributor(s): Thomas Davies (Original Author), 
+ * Contributor(s): Thomas Davies (Original Author),
  *                 Scott R Ladd,
- *                 Anuradha Suraparaju 
- *                 Andrew Kennedy
- *                 David Flynn
- *                 Johannes Reinhardt
+ *                 Anuradha Suraparaju,
+ *                 Andrew Kennedy,
+ *                 David Flynn,
+ *                 Johannes Reinhardt,
  *                 Myo Tun (Brunel University)
  *
  * Alternatively, the contents of this file may be used under the terms of
@@ -84,7 +84,7 @@ static void display_help()
     cout << "\nHD1080P60         bool    false         Use HD-1080P60 compression presets";
     cout << "\nHD1080P50         bool    false         Use HD-1080P50 compression presets";
     cout << "\n2KCINEMA          bool    false         Use DIGITAL CINEMA 2K compression presets";
-    cout << "\ni$KCINEMA         bool    false         Use DIGITAL CINEMA 4K compression presets";
+    cout << "\n4KCINEMA         bool    false          Use DIGITAL CINEMA 4K compression presets";
     cout << "\nfull_search     ulong ulong  0UL 0UL         Use full search motion estimation";
     cout << "\nwidth             ulong   Preset        Width of frame";
     cout << "\nheight            ulong   Preset        Length of frame";
@@ -138,9 +138,9 @@ bool WritePicData (std::ofstream &fdata, dirac_encoder_t *encoder)
             fdata.write ((char *)fbuf.buf[0], sparams.width*sparams.height);
             assert (fbuf.buf[1] != 0);
             assert (fbuf.buf[2] != 0);
-            fdata.write ((char *)fbuf.buf[1], 
+            fdata.write ((char *)fbuf.buf[1],
             sparams.chroma_width*sparams.chroma_height);
-            fdata.write ((char *)fbuf.buf[2], 
+            fdata.write ((char *)fbuf.buf[2],
             sparams.chroma_width*sparams.chroma_height);
         }
         catch (...)
@@ -209,7 +209,7 @@ bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
             }
             fdata << instr.ybsep << " " << instr.xbsep << " ";
             fdata << instr.mb_ylen << " " << instr.mb_xlen << " ";
-            fdata << instr.mv_ylen << " " << instr.mv_xlen 
+            fdata << instr.mv_ylen << " " << instr.mv_xlen
                     << std::endl << std::endl ;
             for (int j=0; j<instr.mb_ylen; j++)
             {
@@ -249,7 +249,7 @@ bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
                 {
                     for (int i=0; i<instr.mv_xlen; i++)
                     {
-                        fdata << instr.bipred_costs[j*instr.mv_xlen + i].SAD 
+                        fdata << instr.bipred_costs[j*instr.mv_xlen + i].SAD
                         <<" " << instr.bipred_costs[j*instr.mv_xlen + i].mvcost
                         << " ";;
                     }
@@ -257,14 +257,14 @@ bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
                 }
             }
             fdata << std::endl;
-            
+
             for (int j=0; j<instr.mv_ylen; j++)
             {
                 for (int i=0; i<instr.mv_xlen; i++)
                     fdata << instr.dc_ycomp[j*instr.mv_xlen + i] << " ";
                 fdata << std::endl;
             }
-            
+
             // FIXME: always expects 3 components
             fdata << std::endl;
             for (int j=0; j<instr.mv_ylen; j++)
@@ -288,7 +288,7 @@ bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
                 {
                     for (int i=0; i<instr.mv_xlen; i++)
                     {
-                        fdata << instr.mv[k][j*instr.mv_xlen + i].x 
+                        fdata << instr.mv[k][j*instr.mv_xlen + i].x
                         <<" " << instr.mv[k][j*instr.mv_xlen + i].y
                         << " ";;
                     }
@@ -299,7 +299,7 @@ bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
                 {
                     for (int i=0; i<instr.mv_xlen; i++)
                     {
-                        fdata << instr.pred_costs[k][j*instr.mv_xlen + i].SAD 
+                        fdata << instr.pred_costs[k][j*instr.mv_xlen + i].SAD
                         <<" " << instr.pred_costs[k][j*instr.mv_xlen + i].mvcost
                         << " ";;
                     }
@@ -347,7 +347,7 @@ bool Skip (std::ifstream &fdata, int start_frame, int frame_size)
     }
     catch (...)
     {
-        std::cerr << "Skipping of first "<< start_frame << "frames failed" 
+        std::cerr << "Skipping of first "<< start_frame << "frames failed"
                   << std::endl;
         ret_stat = false;
     }
@@ -494,9 +494,9 @@ int main (int argc, char* argv[])
     bool* parsed = new bool[argc];
 
     // Program name has been parsed
-    parsed[0] = true;    
+    parsed[0] = true;
 
-    // No other parameters 
+    // No other parameters
     for (int i=1 ; i<argc ; ++i )
         parsed[i] = false;
 
@@ -515,9 +515,10 @@ int main (int argc, char* argv[])
     int end_pos = -1;
     bool verbose = false;
     bool nolocal = true;
+    int fields_factor = 1;
 
     memset (&enc_ctx, 0, sizeof(dirac_encoder_context_t));
-    if (argc<3)//need at least 3 arguments - the program name, an input and 
+    if (argc<3)//need at least 3 arguments - the program name, an input and
                //an output
     {
         display_help();
@@ -621,7 +622,7 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             i++;
-            enc_ctx.src_params.width =  
+            enc_ctx.src_params.width =
                 strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
@@ -629,7 +630,7 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             i++;
-            enc_ctx.src_params.height =  
+            enc_ctx.src_params.height =
                 strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
@@ -637,7 +638,7 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             i++;
-            enc_ctx.src_params.chroma =  
+            enc_ctx.src_params.chroma =
                 (ChromaFormat)strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
@@ -654,7 +655,7 @@ int main (int argc, char* argv[])
             else if(strncmp(argv[i], "23.98", 5)==0)
             {
                 parsed[i] = true;
-                enc_ctx.src_params.frame_rate.numerator=24000; 
+                enc_ctx.src_params.frame_rate.numerator=24000;
                 enc_ctx.src_params.frame_rate.denominator=1001;
             }
             else if(strncmp(argv[i], "29.97", 5)==0)
@@ -682,24 +683,24 @@ int main (int argc, char* argv[])
                 }
                 // calculate amount to raise to whole number
                 int multiply = (int)std::pow(10.0, decimal_length);
-                enc_ctx.src_params.frame_rate.numerator =  
+                enc_ctx.src_params.frame_rate.numerator =
                     decimal == 0 ? whole : (multiply*whole)+decimal;
-                enc_ctx.src_params.frame_rate.denominator = 
+                enc_ctx.src_params.frame_rate.denominator =
                     decimal == 0 ? 1 : multiply;
-                 
+
             }
-            else 
+            else
             {
                 parsed[i] = true;
                 // assume e/d format
                 char* token = strtok(argv[i], "/");
-                enc_ctx.src_params.frame_rate.numerator =  
+                enc_ctx.src_params.frame_rate.numerator =
                 strtoul(token,NULL,10);
                 enc_ctx.src_params.frame_rate.denominator = 1;
 
                 token = strtok(NULL, "");
                 if(token)
-                    enc_ctx.src_params.frame_rate.denominator = 
+                    enc_ctx.src_params.frame_rate.denominator =
                     strtoul(token, NULL, 10);
              }
         }
@@ -736,6 +737,7 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             enc_ctx.enc_params.interlace =  true;
+            fields_factor = 2;
         }
         else if ( strcmp(argv[i], "-qf") == 0 )
         {
@@ -752,12 +754,12 @@ int main (int argc, char* argv[])
 
             enc_ctx.enc_params.x_range_me = strtoul(argv[i],NULL,10);
             parsed[i] = true;
-            
+
             i++;
             enc_ctx.enc_params.y_range_me = strtoul(argv[i],NULL,10);
             parsed[i] = true;
-            
-        }    
+
+        }
         else if ( strcmp(argv[i], "-targetrate") == 0 )
         {
             parsed[i] = true;
@@ -774,7 +776,7 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             i++;
-            enc_ctx.enc_params.L1_sep =  
+            enc_ctx.enc_params.L1_sep =
                 strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
@@ -782,7 +784,7 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             i++;
-            enc_ctx.enc_params.num_L1 = 
+            enc_ctx.enc_params.num_L1 =
                 strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
@@ -790,7 +792,7 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             i++;
-            enc_ctx.enc_params.xblen = 
+            enc_ctx.enc_params.xblen =
                 strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
@@ -798,7 +800,7 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             i++;
-             enc_ctx.enc_params.yblen = 
+             enc_ctx.enc_params.yblen =
                  strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
@@ -806,7 +808,7 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             i++;
-             enc_ctx.enc_params.xbsep = 
+             enc_ctx.enc_params.xbsep =
                  strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
@@ -814,7 +816,7 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             i++;
-             enc_ctx.enc_params.ybsep = 
+             enc_ctx.enc_params.ybsep =
                  strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
@@ -822,7 +824,7 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             i++;
-             enc_ctx.enc_params.cpd = 
+             enc_ctx.enc_params.cpd =
                  strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
@@ -864,18 +866,18 @@ int main (int argc, char* argv[])
         {
             parsed[i] = true;
             enc_ctx.enc_params.denoise = true;
-        }        
+        }
         else if ( strcmp(argv[i], "-wlt_depth") == 0 )
         {
             parsed[i] = true;
             i++;
             enc_ctx.enc_params.wlt_depth = strtoul(argv[i],NULL,10);
-#if defined(HAVE_MMX) 
+#if defined(HAVE_MMX)
             if(enc_ctx.enc_params.wlt_depth > 5)
                 cerr << "Exceeds maximum transform depth ";
            else
                 parsed[i] = true;
-#else                
+#else
            parsed[i] = true;
 #endif
         }
@@ -991,7 +993,7 @@ int main (int argc, char* argv[])
         display_codec_params(enc_ctx);
 
     bit_name = output;
-        
+
 
 
   /********************************************************************/
@@ -999,7 +1001,7 @@ int main (int argc, char* argv[])
 
     // Open uncompressed data file
     std::string input_name_yuv = input;
-    std::ifstream 
+    std::ifstream
        ip_pic_ptr (input_name_yuv.c_str(), std::ios::in | std::ios::binary);
     if (!ip_pic_ptr)
     {
@@ -1009,14 +1011,14 @@ int main (int argc, char* argv[])
     }
 
 
-   
+
    /********************************************************************/
     //open the bitstream file
      std::ofstream outfile(bit_name.c_str(),std::ios::out | std::ios::binary);    //bitstream output
 
     // open the decoded ouput file
     std::ofstream *outyuv = NULL, *outimt = NULL;
-    
+
     if (nolocal == false)
     {
         std::string output_name_yuv = output + ".localdec.yuv";
@@ -1057,7 +1059,7 @@ int main (int argc, char* argv[])
         enc_ctx.decode_flag = 1;
         enc_ctx.instr_flag = 1;
     }
- 
+
     encoder = dirac_encoder_init( &enc_ctx, verbose );
 
     if (!encoder)
@@ -1078,20 +1080,22 @@ int main (int argc, char* argv[])
     clock_t start_t, stop_t;
     start_t = clock();
 
-    do 
+    bool end_of_file = false;
+    do
     {
         if (ReadPicData( ip_pic_ptr, frame_buf, frame_size ) == true)
         {
             if (dirac_encoder_load( encoder, frame_buf, frame_size ) < 0)
             {
-                std::cerr << "dirac_encoder_load failed: Unrecoverable Encoder Error. Quitting..." 
+                std::cerr << "dirac_encoder_load failed: Unrecoverable Encoder Error. Quitting..."
                           << std::endl;
                 return EXIT_FAILURE;
             }
         }
         else
-           break; //eof
-
+        {
+           end_of_file = true; //eof
+        }
         do
         {
             encoder->enc_buf.buffer = video_buf;
@@ -1100,8 +1104,8 @@ int main (int argc, char* argv[])
             switch (state) {
             case ENC_STATE_AVAIL:
                 assert (encoder->enc_buf.size > 0);
-               
-                outfile.write((char *)encoder->enc_buf.buffer, 
+
+                outfile.write((char *)encoder->enc_buf.buffer,
                               encoder->enc_buf.size);
                               pictures_written++;
                 break;
@@ -1110,7 +1114,7 @@ int main (int argc, char* argv[])
                 break;
 
             case ENC_STATE_INVALID:
-                std::cerr << "Invalid state. Unrecoverable Encoder Error. Quitting..." 
+                std::cerr << "Invalid state. Unrecoverable Encoder Error. Quitting..."
                           << std::endl;
                 return EXIT_FAILURE;
             default:
@@ -1123,7 +1127,8 @@ int main (int argc, char* argv[])
 
         } while (state == ENC_STATE_AVAIL);
 
-    } while (pictures_written <= (end_pos - start_pos));
+    } while (pictures_written/fields_factor <= (end_pos - start_pos) &&
+             end_of_file == false);
 
     stop_t = clock();
 
@@ -1131,23 +1136,22 @@ int main (int argc, char* argv[])
     encoder->enc_buf.size = VIDEO_BUFFER_SIZE;
     if (dirac_encoder_end_sequence( encoder ) > 0)
     {
-        outfile.write((char *)encoder->enc_buf.buffer, 
+        outfile.write((char *)encoder->enc_buf.buffer,
                       encoder->enc_buf.size);
 
-        if ( verbose )           
+        if ( verbose )
             std::cout << "The resulting bit-rate at "
                       << (double)encoder->enc_ctx.src_params.frame_rate.numerator/
                           encoder->enc_ctx.src_params.frame_rate.denominator
-                      << "Hz is " << encoder->enc_seqstats.bit_rate 
+                      << "Hz is " << encoder->enc_seqstats.bit_rate
                       << " bits/sec." << std::endl;
 
         if ( verbose )
             std::cout<<"Time per frame: "<<
-                    (double)(stop_t-start_t)/(double)(CLOCKS_PER_SEC*pictures_written);
+                    (double)(stop_t-start_t)/(double)(CLOCKS_PER_SEC*pictures_written/fields_factor);
             std::cout<<std::endl<<std::endl;
     }
 
-   
    /********************************************************************/
 
      // close the encoder
@@ -1160,7 +1164,7 @@ int main (int argc, char* argv[])
         outyuv->close();
         delete outyuv;
     }
-   
+
      // close the decoded output header file
      if (outimt)
      {
@@ -1173,7 +1177,7 @@ int main (int argc, char* argv[])
 
     // delete frame buffer
     delete [] frame_buf;
-    
+
     delete[] parsed;
     return EXIT_SUCCESS;
 
