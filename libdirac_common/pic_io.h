@@ -82,7 +82,8 @@ namespace dirac
             //! Constructor
             /*!
                 Constructor, takes
-                \param sp the source parameters
+                \param op_ptr the output stream object
+                \param sp     the source parameters
              */
             StreamPicOutput( std::ostream* op_ptr, const SourceParams& sp);
 
@@ -113,6 +114,7 @@ namespace dirac
 
             /*!
                 Constructor, takes
+                \param op_ptr the output stream object
                 \param sp the source parameters
              */
             StreamFrameOutput( std::ostream *op_ptr, const SourceParams& sp);
@@ -138,6 +140,7 @@ namespace dirac
             //! Constructor
             /*!
                 Constructor, takes
+                \param op_ptr the output stream object
                 \param sp the source parameters
              */
             StreamFieldOutput( std::ostream *op_ptr, const SourceParams& sp);
