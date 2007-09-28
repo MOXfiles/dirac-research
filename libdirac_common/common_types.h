@@ -43,7 +43,7 @@
 #define _COMMON_TYPES_H_
 
 
-/*! This file contains common enumerated types used throughout the encoder and 
+/*! This file contains common enumerated types used throughout the encoder and
     the end user interfaces to the encoder and decoder
 */
 
@@ -58,11 +58,11 @@ extern "C" {
 typedef enum { format444, format422, format420, formatNK } ChromaFormat;
 
 /*! Types of Wavelet filters supported. filterNK -  not known) */
-typedef enum 
+typedef enum
 {
-    DD9_5=0,      /* Deslauriers-Dubuc (9,5) */
+    DD9_7=0,      /* Deslauriers-Dubuc (9,7) */
     LEGALL5_3,    /* LeGall (5,3) */
-    DD13_5,       /* Deslauriers-Dubuc (13,5) */
+    DD13_7,       /* Deslauriers-Dubuc (13,7) */
     HAAR0,        /* Haar, no shift per level*/
     HAAR1,        /* Haar, one shift per level*/
     FIDELITY,    /* Fidelity wavelet */
@@ -189,4 +189,4 @@ typedef enum
 }
 #endif
 
-#endif 
+#endif

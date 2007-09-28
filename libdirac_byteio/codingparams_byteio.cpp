@@ -112,30 +112,18 @@ void CodingParamsByteIO::Output()
 void CodingParamsByteIO::InputInterlaceCoding()
 {
 
-    m_codec_params.SetInterlace(false);
-    if (m_src_params.Interlace())
-    {
-        m_codec_params.SetInterlace(m_src_params.Interlace());
-        if (InputBit()) // custom coding
-            m_codec_params.SetInterlace(InputBit());
-    }
+    m_codec_params.SetInterlace(m_src_params.Interlace());
+    if (InputBit()) // custom coding
+        m_codec_params.SetInterlace(!m_codec_params.Interlace());
 }
 
 
 void CodingParamsByteIO::OutputInterlaceCoding()
 {
-    if (!m_default_source_params.Interlace())
-        return;
-
     bool is_custom = m_codec_params.Interlace() !=
                                    m_default_source_params.Interlace();
 
     OutputBit(is_custom);
-
-    if (is_custom)
-    {
-        OutputBit(m_codec_params.Interlace());
-    }
 }
 
 

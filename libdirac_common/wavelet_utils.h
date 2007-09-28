@@ -472,7 +472,7 @@ namespace dirac
         };
 
         //! A short filter that's actually close to Daubechies (9,7) but with just two lifting steps
-        class VHFilterDD9_5 : public VHFilter
+        class VHFilterDD9_7 : public VHFilter
         {
 
         public:
@@ -495,8 +495,8 @@ namespace dirac
         };
 
 
-        //! An extension of DD9_5, with a better low-pass filter but more computation
-        class VHFilterDD13_5 : public VHFilter
+        //! An extension of DD9_7, with a better low-pass filter but more computation
+        class VHFilterDD13_7 : public VHFilter
         {
 
         public:

@@ -932,9 +932,9 @@ static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
 
     // set default transform parameters
     WltFilter wf;
-    SetDefaultTransformFilter(video_format, INTRA_FRAME, wf);
+    SetDefaultTransformFilter(INTRA_FRAME, wf);
     encparams.intra_wlt_filter = wf;
-    SetDefaultTransformFilter(video_format, INTER_FRAME, wf);
+    SetDefaultTransformFilter(INTER_FRAME, wf);
     encparams.inter_wlt_filter = wf;
     encparams.wlt_depth = default_enc_params.TransformDepth();
     encparams.spatial_partition = default_enc_params.SpatialPartition();

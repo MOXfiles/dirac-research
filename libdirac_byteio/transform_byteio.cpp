@@ -103,7 +103,7 @@ void TransformByteIO::Output()
         OutputBit(true);
         OutputVarLengthUint(m_cparams.TransformFilter());
     }
-    
+
     // Non-default Depth flag
     if (m_cparams.TransformDepth() == m_default_cparams.TransformDepth())
     {
@@ -114,7 +114,7 @@ void TransformByteIO::Output()
         OutputBit(true);
         OutputVarLengthUint(m_cparams.TransformDepth());
     }
-    
+
     // Spatial Partition flag
     OutputBit(m_cparams.SpatialPartition());
     if (m_cparams.SpatialPartition())
@@ -174,16 +174,6 @@ void TransformByteIO::Input()
     {
         // Is default spatial partitioning being used
         m_cparams.SetDefaultSpatialPartition(!InputBit());
-        // If we are using non-default transform depth, spatial partitioning
-        // must be explicitly defined i.e number of code blocks for each
-        // level MUST be specified in bitstream
-        if (m_cparams.DefaultSpatialPartition() && non_default_transform_depth)
-        {
-            DIRAC_THROW_EXCEPTION(
-                ERR_UNSUPPORTED_STREAM_DATA,
-                "Default spatial partitioning is disabled for non-default transform depths",
-                SEVERITY_FRAME_ERROR);
-        }
         if (!m_cparams.DefaultSpatialPartition())
         {
             // Input number of code blocks for each level

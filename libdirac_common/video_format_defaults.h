@@ -91,13 +91,10 @@ namespace dirac
     
     /**
     * Sets the default Transform filter depending on frame type
-    *@param vformat  Video format type
     *@param ftype    Frame type i.e. intra or inter
     *@param wf       WltFilter object for getting the default wavelet filter
     */
-    void SetDefaultTransformFilter(VideoFormat vformat,
-                                   FrameType ftype, 
-                                   WltFilter &wf);
+    void SetDefaultTransformFilter( FrameType ftype, WltFilter &wf);
 } // namespace dirac
 
 #endif

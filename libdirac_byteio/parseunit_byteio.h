@@ -62,10 +62,10 @@ namespace dirac
         PU_LOW_DELAY_FRAME,
         PU_UNDEFINED
     } ParseUnitType;
-    
+
     /**
-    * Represents a collection of data in a Dirac bytestream that can be parsed as a 
-    * self-contained unit 
+    * Represents a collection of data in a Dirac bytestream that can be parsed as a
+    * self-contained unit
     */
     class ParseUnitByteIO : public ByteIO
     {
@@ -116,7 +116,7 @@ namespace dirac
         *@return <B>false</B> Nothing to skip to
         */
         bool Skip();
-      
+
         /**
         * Gets string containing coded bytes
         */
@@ -207,7 +207,7 @@ namespace dirac
         * Returns true is parse unit is Low Delay Sybtax unit
         */
         bool IsLowDelay() const
-        { return ((m_parse_code&0xB8)==0x88); }
+        { return ((m_parse_code&0x80)==0x80); }
 
         /**
         * Returns true is parse unit is Core syntax unit
@@ -219,7 +219,7 @@ namespace dirac
         * Returns true is parse unit uses Arithmetic coding
         */
         bool IsUsingAC() const
-        { return ((m_parse_code&0x78)==0x48); }
+        { return ((m_parse_code&0x40)==0x40); }
 
     private:
 

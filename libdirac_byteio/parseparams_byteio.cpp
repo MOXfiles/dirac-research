@@ -47,7 +47,7 @@ using namespace dirac;
 ParseParamsByteIO::ParseParamsByteIO( const ByteIO& stream_data):
 ByteIO(stream_data)
 {
-    
+
 
 }
 
@@ -56,7 +56,7 @@ ParseParamsByteIO::ParseParamsByteIO( const ByteIO& stream_data,
 ByteIO(stream_data),
 m_parse_params(parse_params)
 {
-    
+
 
 }
 
@@ -69,7 +69,7 @@ ParseParamsByteIO::~ParseParamsByteIO()
 void ParseParamsByteIO::Input()
 {
     ParseParams def_parse_params;
-   
+
     //input version
     m_parse_params.SetMajorVersion(InputVarLengthUint());
     m_parse_params.SetMinorVersion(InputVarLengthUint());
@@ -99,7 +99,7 @@ void ParseParamsByteIO::Input()
         errstr << "Cannot handle profile " << m_parse_params.Profile();
         errstr << ". Supported profile is " << def_parse_params.Profile();
     }
-    
+
     if (m_parse_params.Level() > def_parse_params.Level())
     {
         errstr << "Cannot handle level " << m_parse_params.Level();
@@ -117,14 +117,14 @@ void ParseParamsByteIO::Input()
 
 void ParseParamsByteIO::Output()
 {
-    //:TODO implement
+    ParseParams def_parse_params;
     // output version
-    OutputVarLengthUint(0);
-    OutputVarLengthUint(1);
+    OutputVarLengthUint(def_parse_params.MajorVersion());
+    OutputVarLengthUint(def_parse_params.MinorVersion());
 
     // output profile
-    OutputVarLengthUint(0);
+    OutputVarLengthUint(def_parse_params.Profile());
 
     // output level
-    OutputVarLengthUint(0);
+    OutputVarLengthUint(def_parse_params.Level());
 }

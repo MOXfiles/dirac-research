@@ -106,8 +106,8 @@ static void display_help()
     cout << "\nqf                float   0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
     cout << "\ntargetrate        ulong   0UL           Target Bit Rate in Kbps";
     cout << "\nlossless          bool    false         Lossless coding (overrides qf)";
-    cout << "\niwlt_filter       string  DD9_5         Intra frame Transform Filter (DD9_5 LEGALL5_3 DD13_5 HAAR0 HAAR1 FIDELITY DAUB9_7)";
-    cout << "\nrwlt_filter       string  LEGALL5_3     Inter frame Transform Filter (DD9_5 LEGALL5_3 DD13_5 HAAR0 HAAR1 FIDELITY DAUB9_7)";
+    cout << "\niwlt_filter       string  DD9_7         Intra frame Transform Filter (DD9_7 LEGALL5_3 DD13_7 HAAR0 HAAR1 FIDELITY DAUB9_7)";
+    cout << "\nrwlt_filter       string  LEGALL5_3     Inter frame Transform Filter (DD9_7 LEGALL5_3 DD13_7 HAAR0 HAAR1 FIDELITY DAUB9_7)";
     cout << "\nwlt_depth         ulong   4             Transform Depth";
     cout << "\nmulti_quants      bool    false         Use multiple quantisers";
     cout << "\nmv_prec           string  false         MV Pixel Precision (1, 1/2, 1/4, 1/8)";
@@ -420,12 +420,12 @@ const string TransformFilterToString (WltFilter wf)
 {
     switch (wf)
     {
-    case DD9_5:
-        return string("DD9_5");
+    case DD9_7:
+        return string("DD9_7");
     case LEGALL5_3:
         return string("LEGALL5_3");
-    case DD13_5:
-        return string("DD13_5");
+    case DD13_7:
+        return string("DD13_7");
     case HAAR0:
         return string("HAAR0");
     case HAAR1:
@@ -441,12 +441,12 @@ const string TransformFilterToString (WltFilter wf)
 
 WltFilter StringToTransformFilter (string wf)
 {
-    if( wf=="DD9_5" )
-        return DD9_5;
+    if( wf=="DD9_7" )
+        return DD9_7;
     else if( wf=="LEGALL5_3" )
         return LEGALL5_3;
-    else if( wf=="DD13_5" )
-        return DD13_5;
+    else if( wf=="DD13_7" )
+        return DD13_7;
     else if( wf=="HAAR0" )
         return HAAR0;
     else if( wf=="HAAR1" )
@@ -485,9 +485,14 @@ void display_codec_params(dirac_encoder_context_t &enc_ctx)
     std::cout << " \tInterlaced coding=" << (enc_ctx.enc_params.interlace ? "true" : "false") << std::endl;
 }
 
-int main (int argc, char* argv[])
+int start_pos = 0;
+int end_pos = -1;
+bool verbose = false;
+bool nolocal = true;
+int fields_factor = 1;
+
+bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
 {
-    /*********************************************************************************/
             /**********  command line parameter parsing*********/
 
     // An array indicating whether a parameter has been parsed
@@ -500,22 +505,8 @@ int main (int argc, char* argv[])
     for (int i=1 ; i<argc ; ++i )
         parsed[i] = false;
 
-
-    // the variables we'll read parameters into
-    dirac_encoder_context_t enc_ctx;
-
-    //output name for the bitstream
-    string bit_name;
-
-    string input,output;
-
     // The start and end-points of the parts of the file to be coded
     // (end_pos set to -1 means code to the end)
-    int start_pos = 0;
-    int end_pos = -1;
-    bool verbose = false;
-    bool nolocal = true;
-    int fields_factor = 1;
 
     memset (&enc_ctx, 0, sizeof(dirac_encoder_context_t));
     if (argc<3)//need at least 3 arguments - the program name, an input and
@@ -550,12 +541,12 @@ int main (int argc, char* argv[])
             preset = VIDEO_FORMAT_CIF;
             parsed[i] = true;
         }
-        if ( strcmp (argv[i], "-4CIF") == 0 )
+        else if ( strcmp (argv[i], "-4CIF") == 0 )
         {
             preset = VIDEO_FORMAT_4CIF;
             parsed[i] = true;
         }
-        if ( strcmp (argv[i], "-4SIF") == 0 )
+        else if ( strcmp (argv[i], "-4SIF") == 0 )
         {
             preset = VIDEO_FORMAT_4SIF;
             parsed[i] = true;
@@ -934,8 +925,42 @@ int main (int argc, char* argv[])
     /* check that we have been suplied with input and output files */
     if(parsed[argc-2] || parsed[argc-1]) {
         std::cerr<<std::endl<<"Insufficient arguments"<<std::endl;
-        exit(1);
+        return false;
     }
+
+    // check we have parsed everything
+    bool all_parsed = true;
+    for (int i=0 ; i<argc-2 ; ++i)
+    {
+        if ( !parsed[i] )
+        {
+            all_parsed = false;
+            std::cerr<<std::endl<<"Unknown option "<<argv[i];
+        }
+    }
+    if ( !all_parsed )
+    {
+        display_help();
+        return false;
+    }
+
+    delete[] parsed;
+
+    return true;
+}
+
+int main (int argc, char* argv[])
+{
+    // the variables we'll read parameters into
+    dirac_encoder_context_t enc_ctx;
+
+    if (!parse_command_line(enc_ctx, argc, argv))
+        return EXIT_FAILURE;
+
+    //output name for the bitstream
+    string input,output;
+
+    /*********************************************************************************/
 
     // last two arguments must be file names
     if (argv[argc-1][0] == '-')
@@ -948,9 +973,8 @@ int main (int argc, char* argv[])
         input = "/dev/stdin";
     else
         input = argv[argc-2];
+
     output=argv[argc-1];
-    parsed[argc-2] = true;
-    parsed[argc-1] = true;
 
     //check we have real inputs
     if ((input.length() == 0) || (output.length() ==0))
@@ -959,29 +983,6 @@ int main (int argc, char* argv[])
         exit(1);
     }
 
-    if (enc_ctx.src_params.interlace == false &&
-        enc_ctx.enc_params.interlace)
-    {
-        std::cerr << "Cannot code progressive material as interlaced" << std::endl;
-        display_help();
-        exit(1);
-    }
-
-    // check we have parsed everything
-    bool all_parsed = true;
-    for (int i=0 ; i<argc ; ++i)
-    {
-        if ( !parsed[i] )
-        {
-            all_parsed = false;
-            std::cerr<<std::endl<<"Unknown option "<<argv[i];
-        }
-    }
-    if ( !all_parsed )
-    {
-        display_help();
-        exit(1);
-    }
 
     if ( input==output )
     {
@@ -991,8 +992,6 @@ int main (int argc, char* argv[])
 
     if ( verbose )
         display_codec_params(enc_ctx);
-
-    bit_name = output;
 
 
 
@@ -1014,7 +1013,7 @@ int main (int argc, char* argv[])
 
    /********************************************************************/
     //open the bitstream file
-     std::ofstream outfile(bit_name.c_str(),std::ios::out | std::ios::binary);    //bitstream output
+     std::ofstream outfile(output.c_str(),std::ios::out | std::ios::binary);    //bitstream output
 
     // open the decoded ouput file
     std::ofstream *outyuv = NULL, *outimt = NULL;
@@ -1174,11 +1173,9 @@ int main (int argc, char* argv[])
     // close the pic data file
     ip_pic_ptr.close();
 
-
     // delete frame buffer
     delete [] frame_buf;
 
-    delete[] parsed;
     return EXIT_SUCCESS;
 
 

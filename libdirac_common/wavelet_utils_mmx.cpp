@@ -214,7 +214,7 @@ inline void Interleave_mmx( const int xp ,
     _mm_empty();
 }
 
-void WaveletTransform::VHFilterDD9_5::Synth(const int xp , 
+void WaveletTransform::VHFilterDD9_7::Synth(const int xp , 
                                                 const int yp , 
                                                 const int xl , 
                                                 const int yl , 
@@ -506,7 +506,7 @@ void WaveletTransform::VHFilterDD9_5::Synth(const int xp ,
     Interleave_mmx( xp , yp , xl ,yl , coeff_data );
 }
 
-void WaveletTransform::VHFilterDD13_5::Synth(const int xp ,
+void WaveletTransform::VHFilterDD13_7::Synth(const int xp ,
                                            const int yp , 
                                            const int xl ,
                                            const int yl , 

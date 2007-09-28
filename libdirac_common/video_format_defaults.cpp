@@ -53,7 +53,7 @@ void SetDefaultCodecParameters(CodecParams &cparams,
     cparams.SetZeroTransform(false);
     cparams.SetTransformDepth(4);
     WltFilter wf;
-    SetDefaultTransformFilter(cparams.GetVideoFormat(), ftype, wf);
+    SetDefaultTransformFilter(ftype, wf);
     cparams.SetTransformFilter(wf);
     cparams.SetCodeBlockMode(QUANT_SINGLE);
     cparams.SetSpatialPartition(false);
@@ -457,25 +457,11 @@ unsigned int BlockParametersIndex (const OLBParams& bparams)
         return 0;
 }
 
-void SetDefaultTransformFilter(VideoFormat vformat, FrameType ftype, 
-                               WltFilter &wf)
+void SetDefaultTransformFilter(FrameType ftype, WltFilter &wf)
 {
-    switch (vformat)
-    {
-    case VIDEO_FORMAT_DIGI_CINEMA_2K:
-    case VIDEO_FORMAT_DIGI_CINEMA_4K:
     if (ftype == INTRA_FRAME)
-        wf = FIDELITY;
-    else
-        wf = DD9_5;
-        break;
-    default:
-    if (ftype == INTRA_FRAME)
-        wf = DD9_5;
+        wf = DD9_7;
     else
         wf = LEGALL5_3;
-        break;
-    }
 }
-
 }

@@ -481,34 +481,22 @@ void CodecParams::SetDefaultCodeBlocks ( const FrameType &ftype)
     case VIDEO_FORMAT_DIGI_CINEMA_4K:
         if (ftype == INTRA_FRAME)
         {
-            // Intra frame default number of coeff blocks per level
-            // only the highest two levels are split.
-            int level = TransformDepth();
-            int i = 1;
-            for (; i<= level-2 || i == 1; ++i)
+            int depth = TransformDepth();
+            for (int i = 1; i <= 2; ++i)
             {
                 SetCodeBlocks(i, 1, 1);
             }
-            for (; i <=level; ++i)
+            for (int i = 3; i <=depth; ++i)
             {
                 SetCodeBlocks(i, 4, 3);
             }
         }
         else
         {
-            // Inter frame default number of coeff blocks per level
-            // only the highest three levels are split.
             int level = TransformDepth();
-            int i = 1;
-            for (; i<= level-3 || i == 1; ++i)
-            {
-                SetCodeBlocks(i, 1, 1);
-            }
-            if (i  <= level-2)
-                SetCodeBlocks(level-2, 8, 6);
-            ++i;
-
-            for (; i <=level; ++i)
+            SetCodeBlocks(1, 1, 1);
+            SetCodeBlocks(2, 8, 6);
+            for (int i = 3; i <=level; ++i)
             {
                 SetCodeBlocks(i, 12, 8);
             }
@@ -639,7 +627,7 @@ DecoderParams::DecoderParams(const VideoFormat& video_format,
 // constructor
 ParseParams::ParseParams():
     m_major_ver(0),
-    m_minor_ver(1),
+    m_minor_ver(109),
     m_profile(0),
     m_level(0)
 {}
@@ -768,19 +756,19 @@ void SourceParams::SetSignalRange (SignalRangeType sr)
     case SIGNAL_RANGE_8BIT_FULL:
         m_luma_offset = 0;
         m_luma_excursion = 255;
-        m_chroma_offset = 128;
-        m_chroma_excursion = 254;
+        m_chroma_offset = 0;
+        m_chroma_excursion = 255;
         break;
     case SIGNAL_RANGE_8BIT_VIDEO:
         m_luma_offset = 16;
-        m_luma_excursion = 219;
-        m_chroma_offset = 128;
+        m_luma_excursion = 235;
+        m_chroma_offset = 0;
         m_chroma_excursion = 224;
         break;
     case SIGNAL_RANGE_10BIT_VIDEO:
         m_luma_offset = 64;
         m_luma_excursion = 876;
-        m_chroma_offset = 512;
+        m_chroma_offset = 0;
         m_chroma_excursion = 896;
         break;
     default:

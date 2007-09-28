@@ -220,16 +220,16 @@ WaveletTransform::WaveletTransform(int d, WltFilter f)
     switch( m_filt_sort )
     {
 
-    case DD9_5 :
-        m_vhfilter = new VHFilterDD9_5;
+    case DD9_7 :
+        m_vhfilter = new VHFilterDD9_7;
         break;
 
     case LEGALL5_3 :
         m_vhfilter = new VHFilterLEGALL5_3;
         break;
 
-    case DD13_5 :
-        m_vhfilter = new VHFilterDD13_5;
+    case DD13_7 :
+        m_vhfilter = new VHFilterDD13_7;
         break;
 
     case HAAR0 :
@@ -910,7 +910,7 @@ void WaveletTransform::VHFilterLEGALL5_3::Synth(const int xp ,
 }
 #endif
 
-void WaveletTransform::VHFilterDD9_5::Split(const int xp ,
+void WaveletTransform::VHFilterDD9_7::Split(const int xp ,
                                                 const int yp ,
                                                 const int xl ,
                                                 const int yl ,
@@ -1005,7 +1005,7 @@ void WaveletTransform::VHFilterDD9_5::Split(const int xp ,
 #if !defined(HAVE_MMX)
 // NOTE: MMX version is defined in wavelet_utils_mmx.cpp
 // the corresponding changes are made in wavelet_utils_mmx.cpp as well
-void WaveletTransform::VHFilterDD9_5::Synth(const int xp ,
+void WaveletTransform::VHFilterDD9_7::Synth(const int xp ,
                                                 const int yp ,
                                                 const int xl ,
                                                 const int yl ,
@@ -1094,7 +1094,7 @@ void WaveletTransform::VHFilterDD9_5::Synth(const int xp ,
 }
 #endif
 
-void WaveletTransform::VHFilterDD13_5::Split(const int xp ,
+void WaveletTransform::VHFilterDD13_7::Split(const int xp ,
                                            const int yp ,
                                            const int xl ,
                                            const int yl ,
@@ -1196,7 +1196,7 @@ void WaveletTransform::VHFilterDD13_5::Split(const int xp ,
 #if !defined(HAVE_MMX)
 // NOTE: MMX version is defined in wavelet_utils_mmx.cpp
 // the corresponding changes are made in wavelet_utils_mmx.cpp as well
-void WaveletTransform::VHFilterDD13_5::Synth(const int xp ,
+void WaveletTransform::VHFilterDD13_7::Synth(const int xp ,
                                            const int yp ,
                                            const int xl ,
                                            const int yl ,
