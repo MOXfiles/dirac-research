@@ -1,3 +1,589 @@
+2007-10-01 11:51  asuraparaju
+
+	* configure.ac: Update release version to 0.8.0
+
+2007-10-01 11:48  asuraparaju
+
+	* NEWS: Include 0.8.0 release notes
+
+2007-10-01 11:47  asuraparaju
+
+	* extras/patches/: MPlayer-1.0rc1_dirac-0.8.x.patch,
+	  README_MPlayer-1.0rc1_dirac-0.8.x_patch,
+	  README_ffmpegsvn_trunk_revision_10630-dirac-0.8.x_patch,
+	  ffmpegsvn_trunk_revision_10630-dirac-0.8.x.patch: Mplayer patch
+	  to play back dirac bytestreams. FFMpeg patch to encode and
+	  decoder dirac bytestreams.
+
+2007-09-28 16:46  asuraparaju
+
+	* doc/documentation/code/programmers_guide/common_data_structs.htm,
+	  doc/documentation/code/programmers_guide/encoder_data_structs.htm,
+	  doc/documentation/code/programmers_guide/index.htm,
+	  encoder/encmain.cpp, libdirac_byteio/codingparams_byteio.cpp,
+	  libdirac_byteio/parseparams_byteio.cpp,
+	  libdirac_byteio/parseunit_byteio.h,
+	  libdirac_byteio/transform_byteio.cpp, libdirac_common/common.cpp,
+	  libdirac_common/common_types.h,
+	  libdirac_common/video_format_defaults.cpp,
+	  libdirac_common/video_format_defaults.h,
+	  libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h,
+	  libdirac_common/wavelet_utils_mmx.cpp,
+	  libdirac_encoder/dirac_encoder.cpp: Minor mods to conform to spec
+	  version 1.0.0.pre9_02
+
+2007-09-26 13:23  asuraparaju
+
+	* libdirac_common/pic_io.h: Fix doxygen warnings
+
+2007-09-26 13:18  asuraparaju
+
+	* encoder/encmain.cpp, libdirac_byteio/codingparams_byteio.cpp,
+	  libdirac_common/common.cpp, libdirac_common/common.h,
+	  libdirac_common/frame_buffer.cpp, libdirac_common/frame_buffer.h,
+	  libdirac_common/mot_comp.cpp, libdirac_common/pic_io.cpp,
+	  libdirac_common/pic_io.h, libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h,
+	  libdirac_decoder/dirac_parser.cpp,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/quality_monitor.cpp,
+	  libdirac_encoder/rate_control.cpp,
+	  libdirac_encoder/rate_control.h,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h,
+	  util/instrumentation/instrmain.cpp,
+	  util/instrumentation/process_sequence.cpp: Added support for
+	  interlaced coding. Changes include refactoring of PicIO classes,
+	  SequenceCompressor class to handle interlaced coding. Modified
+	  GOP structure for interlaced coding to code interlaced material
+	  more efficiently.
+
+2007-09-21 10:00  asuraparaju
+
+	* README: Changes to encoder command line interface and preset
+	  values.
+
+2007-09-19 12:20  tjdwave
+
+	* doc/latex_spec/arith.tex:
+	  Changed initial range to be 0xFFFF instead of 0x10000 as per the
+	  software.
+
+2007-09-19 12:19  tjdwave
+
+	* libdirac_common/: arith_codec.cpp, arith_codec.h:
+	  Changed intial range to be 0xFFFF instead of 0x10000 on
+	  suggestion of Dave Schleef. This way the range always stays in 16
+	  bits.
+
+2007-09-06 14:02  asuraparaju
+
+	* win32/: VS2003/DecodeDirac/DecodeDirac.vcproj,
+	  VS2003/DiracDecoder/DiracDecoder.vcproj,
+	  VS2003/DiracEncoder/DiracEncoder.vcproj,
+	  VS2003/DiracEncoder/libdirac_encoder/libdirac_encoder.vcproj,
+	  VS2003/EncodeDirac/EncodeDirac.vcproj,
+	  VS2003/InstrumentDirac/InstrumentDirac.vcproj,
+	  VS2003/InstrumentDirac/libdirac_instrument/libdirac_instrument.vcproj,
+	  VS2003/libdirac_byteio/libdirac_byteio.vcproj,
+	  VisualStudio/DecodeDirac/DecodeDirac.vcproj,
+	  VisualStudio/DiracDecoder/DiracDecoder.vcproj,
+	  VisualStudio/DiracEncoder/DiracEncoder.vcproj,
+	  VisualStudio/DiracEncoder/libdirac_encoder/libdirac_encoder.vcproj,
+	  VisualStudio/EncodeDirac/EncodeDirac.vcproj,
+	  VisualStudio/InstrumentDirac/InstrumentDirac.vcproj,
+	  VisualStudio/InstrumentDirac/libdirac_instrument/libdirac_instrument.vcproj:
+	  Included HAVE_MMX in preprocessor macros for all mmx targets.
+	  This fixed the bug where encoding using mmx builds was crashing.
+
+2007-09-05 14:51  asuraparaju
+
+	* win32/VS2003/DiracEncoder/DiracEncoder.vcproj: Fix typo in
+	  specifying outour directory for dynamically linked Debug-mmx
+	  target.
+
+2007-09-05 14:20  asuraparaju
+
+	* doc/documentation/code/programmers_guide/:
+	  common_data_structs.htm, decoder_api_example.htm,
+	  decoder_api_functions.htm, decoder_api_overview.htm,
+	  decoder_api_reference.htm, decoder_data_structs.htm,
+	  encoder_api_example.htm, encoder_api_functions.htm,
+	  encoder_api_overview.htm, encoder_api_reference.htm,
+	  encoder_data_structs.htm, index.htm, intro.htm: Updated the
+	  programmers guide as per the latest specification.
+
+2007-09-03 15:52  asuraparaju
+
+	* libdirac_common/upconvert.h, libdirac_common/wavelet_utils.h,
+	  libdirac_encoder/frame_compress.h,
+	  libdirac_motionest/block_match.h: Fix doxygen warnings
+
+2007-09-03 12:31  asuraparaju
+
+	* decoder/decmain.cpp,
+	  doc/documentation/code/programmers_guide/common_data_structs.htm,
+	  doc/documentation/code/programmers_guide/encoder_data_structs.htm,
+	  encoder/encmain.cpp,
+	  extras/dirac_dshow/src/diracsplitter/DiracSplitter.cpp,
+	  extras/dirac_dshow/src/diracsplitter/DiracSplitterFile.cpp,
+	  libdirac_byteio/Makefile.am,
+	  libdirac_byteio/accessunit_byteio.cpp,
+	  libdirac_byteio/accessunit_byteio.h,
+	  libdirac_byteio/codingparams_byteio.cpp,
+	  libdirac_byteio/codingparams_byteio.h,
+	  libdirac_byteio/displayparams_byteio.cpp,
+	  libdirac_byteio/displayparams_byteio.h,
+	  libdirac_byteio/frame_byteio.cpp, libdirac_byteio/frame_byteio.h,
+	  libdirac_byteio/mvdata_byteio.cpp,
+	  libdirac_byteio/parseunit_byteio.cpp,
+	  libdirac_byteio/parseunit_byteio.h,
+	  libdirac_decoder/dirac_cppparser.cpp,
+	  libdirac_decoder/dirac_cppparser.h,
+	  libdirac_decoder/dirac_parser.cpp,
+	  libdirac_decoder/dirac_parser.h,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/frame_decompress.h,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_decoder/seq_decompress.h,
+	  libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/dirac_encoder.h,
+	  libdirac_encoder/quality_monitor.cpp,
+	  libdirac_encoder/quality_monitor.h,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h, tests/colourbars.at,
+	  tests/samples.at, unit_tests/frames_test.cpp,
+	  unit_tests/motion_comp_test.cpp,
+	  util/instrumentation/instrmain.cpp,
+	  util/instrumentation/process_sequence.cpp,
+	  util/instrumentation/process_sequence.h,
+	  win32/VS2003/libdirac_byteio/libdirac_byteio.vcproj,
+	  win32/VisualStudio/libdirac_byteio/libdirac_byteio.vcproj:
+	  Changes to conform with latest Spec.	- Changes to Access Unit
+	  Header
+
+2007-09-03 12:30  asuraparaju
+
+	* libdirac_common/: arrays.h, common.cpp, common.h, common_types.h,
+	  dirac_types.h, frame.cpp, frame.h, frame_buffer.cpp,
+	  frame_buffer.h, pic_io.cpp, pic_io.h, video_format_defaults.cpp,
+	  video_format_defaults.h, wavelet_utils.cpp: Changes to conform to
+	  latest spec - Access Unit Header Changes - New video formats
+	  supported - Wavelet filter changes.  - Video format default
+	  values
+
+2007-08-31 14:10  asuraparaju
+
+	* util/instrumentation/libdirac_instrument/: draw_overlay.cpp,
+	  motion_arrows.cpp, motion_colour.cpp, motion_colour_arrows.cpp,
+	  overlay.cpp, pred_mode.cpp, sad.cpp, split_mode.cpp: Treat all
+	  input and intermediate data as bipolar. It is converted to
+	  unsigned byte when written to the output file.
+
+2007-08-24 17:13  asuraparaju
+
+	* libdirac_common/frame.cpp, libdirac_common/pic_io.cpp,
+	  libdirac_decoder/dirac_parser.cpp,
+	  libdirac_motionest/me_utils_mmx.cpp: All the encoded components
+	  now represent signed integer signals i.e. bipolar signals.
+
+2007-08-23 16:05  tjdwave
+
+	* doc/latex_spec/mc.tex: Changed clipping for motion compensation
+	  to take account of bipolar signals
+
+2007-08-23 16:02  tjdwave
+
+	* doc/latex_spec/: bs-spec.tex, picture-dec.tex,
+	  ref-default-videoparams.tex, vidsys.tex: Initial mod to show that
+	  video signals in Dirac should now be considered bipolar. Clipping
+	  therefore applies to the range [-2^{N-1}, 2^{N-1}-1]
+
+2007-08-21 13:46  asuraparaju
+
+	* libdirac_common/frame_buffer.cpp,
+	  libdirac_encoder/seq_compress.cpp: Fix errors reported by
+	  valgrind where unitialiased data was being read from upconverted
+	  arrays. The upconverter uses the actual frame dimensions and not
+	  the padded dimensions whereas the ME engine uses the padded
+	  dimensions which is resulting in unitialised data reads. The
+	  motion estimation frame buffer now holds the actual frames rather
+	  than the padded frames to overcome this problem.
+
+2007-08-21 13:42  asuraparaju
+
+	* libdirac_common/: arrays.h, frame.cpp, frame.h: New functions to
+	  copy contents of one frame to another without altering the
+	  dimensions of the destination frame. The destination frame is
+	  padded with the last true value in the source frame if it is
+	  bigger than the source frame.
+
+2007-08-13 11:41  tjdwave
+
+	* libdirac_encoder/seq_compress.cpp: Typo.
+
+2007-08-13 11:30  tjdwave
+
+	* libdirac_encoder/seq_compress.cpp: Minor tidy.
+
+2007-08-13 11:30  tjdwave
+
+	* libdirac_encoder/frame_compress.cpp: Removed superfluous SAD test
+	  in cut detection.
+
+2007-08-13 11:29  tjdwave
+
+	* libdirac_motionest/me_mode_decn.cpp: Changed anti-intra bias to
+	  10%: i.e. intra only needs to be 10% better in SAD terms to be
+	  chosen, rather than 20%. This (slightly) improves ME mismatches.
+
+2007-08-07 14:19  tjdwave
+
+	* doc/latex_spec/idwt.tex: Clarified IDWT filtering definition.
+
+2007-08-02 15:22  tjdwave
+
+	* libdirac_motionest/: block_match.cpp, block_match.h,
+	  pixel_match.cpp, pixel_match.h: Minor simplification of pixel
+	  matching code.
+
+2007-08-02 15:04  tjdwave
+
+	* doc/latex_spec/bs-spec.tex: Fixed comment over reference picture
+	  removal. Also fixed typo in pseudocode.
+
+2007-07-31 16:21  tjdwave
+
+	* libdirac_encoder/rate_control.cpp: [no log message]
+
+2007-07-31 16:13  tjdwave
+
+	* libdirac_encoder/: rate_control.cpp, rate_control.h: Bug fixes.
+	  Fixed problem with int32 overflow with very high bit rates.
+	  Fixed problem with non-integral frame rates being incorrectly
+	  set.
+
+2007-07-30 19:40  asuraparaju
+
+	* libdirac_common/motion.cpp: Initialise intra costs and dc arrays
+	  to prevent uninitialised read error and memory hogging in
+	  intrumentation utilities.
+
+2007-07-26 13:56  tjdwave
+
+	* libdirac_motionest/me_mode_decn.cpp: Improve Intra mode selection
+	  routine. Incorrect RDO modelling of mode selection has been
+	  removed, and intra is only selected if a) motion compensated
+	  error is not very small, and b) intra gives a substantial SAD
+	  improvement.
+
+2007-07-26 13:53  tjdwave
+
+	* unit_tests/wavelet_utils_test.cpp: Adapted unit test to support a
+	  coefficient array being passed to the transform.
+
+2007-07-26 13:49  tjdwave
+
+	* libdirac_encoder/dirac_encoder.cpp: Added class to cope with
+	  array types being different.
+
+2007-07-26 13:47  tjdwave
+
+	* encoder/encmain.cpp: Supports higher wavelet depth when MMX is
+	  not used.
+
+2007-07-26 13:46  tjdwave
+
+	* libdirac_common/arrays.h, libdirac_common/band_codec.cpp,
+	  libdirac_common/band_codec.h, libdirac_common/common.cpp,
+	  libdirac_common/common.h, libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h,
+	  libdirac_common/wavelet_utils_mmx.cpp,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_decoder/comp_decompress.h,
+	  libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/comp_compress.h,
+	  libdirac_encoder/quant_chooser.cpp,
+	  libdirac_encoder/quant_chooser.h: Added CoeffType and CoeffArray
+	  types for wavelet coefficients and arrays of coefficients. For
+	  MMX optimisation, CoeffType will be short, but otherwise it will
+	  be int. In this way large wavelet depths can be supported.
+
+2007-07-26 13:39  tjdwave
+
+	* libdirac_encoder/rate_control.cpp: Fixed correct initialisation
+	  of QF when CBR is used.
+
+2007-07-25 14:26  asuraparaju
+
+	* libdirac_common/common.h: Remove all references to oicturen
+	  number in access unit.
+
+2007-07-24 16:55  tjdwave
+
+	* doc/latex_spec/: core-wlt-dec.tex, idwt.tex, picture-dec.tex,
+	  unpack-common.tex: Fixed bugs notified on forum.
+
+2007-07-24 09:32  tjdwave
+
+	* doc/latex_spec/: bs-spec.tex, layout-fullsize.tex: Updated parse
+	  codes and version number. _pre8 will now be released.
+
+2007-07-18 09:14  tjdwave
+
+	* libdirac_common/: band_codec.cpp, wavelet_utils.cpp: Clarified
+	  parent-child relationship and context selection. No parent is now
+	  assigned to the lowest 4 subbands and the context selection just
+	  depends on the parent value, which is set to zero when there is
+	  no defined parent band.
+
+2007-07-17 09:46  tjdwave
+
+	* libdirac_common/common.cpp: Fixed bug with 60 fps video.
+
+2007-07-17 09:27  tjdwave
+
+	* doc/latex_spec/: bs-spec.tex, parsediagrams.tex: Bug-fixes.
+
+2007-07-16 16:11  asuraparaju
+
+	* libdirac_byteio/accessunit_byteio.cpp,
+	  libdirac_byteio/accessunit_byteio.h,
+	  libdirac_byteio/frame_byteio.cpp, libdirac_byteio/frame_byteio.h,
+	  libdirac_byteio/parseparams_byteio.cpp,
+	  libdirac_byteio/parseparams_byteio.h,
+	  libdirac_byteio/parseunit_byteio.cpp,
+	  libdirac_byteio/parseunit_byteio.h, libdirac_common/common.cpp,
+	  libdirac_common/common.h, libdirac_common/dirac_types.h,
+	  libdirac_decoder/dirac_parser.cpp,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_decoder/frame_decompress.h,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_decoder/seq_decompress.h,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/frame_compress.h,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h: Modify Access Unit Header as per
+	  latest specification. The Parse Parameters in the AU header no
+	  longer incluse the Picture Number of the 1st frame that follows
+	  the Access Unit Header.
+
+2007-07-05 15:13  tjdwave
+
+	* doc/latex_spec/: bs-spec.tex, core-wlt-dec.tex, lifting.tex,
+	  quant-matrix.tex, spec-structure.tex: Removed the AU Picture
+	  Number, which now serves no purpose. Also added parse code and
+	  operation for doing intra coding without arithmetic coding.  This
+	  latter is still to be agreed.
+
+2007-06-21 14:16  tjdwave
+
+	* doc/latex_spec/: lifting.tex, quant-matrix.tex,
+	  spec-conventions.tex, spec-structure.tex: Added quantisation
+	  matrices for low delay syntax and informative text on
+	  quantisation strategies - also an informative annex on Lifting.
+
+2007-06-21 14:13  tjdwave
+
+	* libdirac_encoder/rate_control.cpp: [no log message]
+
+2007-06-21 12:01  tjdwave
+
+	* libdirac_encoder/rate_control.cpp: Experimental rate control for
+	  intra-only coding. This uses a recursive filter to adjust the
+	  quality factor. The rate of convergence is adaptive, depending on
+	  the difference between the actual and target quality, which
+	  overcomes the usual lag of recursive filtering. When the
+	  difference is large, convergence is steady. When it is relatively
+	  small, convergence is very rapid.
+
+2007-06-20 15:42  tjdwave
+
+	* encoder/encmain.cpp, libdirac_common/common.cpp,
+	  libdirac_common/common.h, libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/dirac_encoder.h,
+	  libdirac_motionest/block_match.cpp,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/pixel_match.cpp,
+	  libdirac_motionest/pixel_match.h: Added support for full-search
+	  block matching. This is controlled by using the flag
+
+	  -full_search [xr] [yr]
+
+	  to do an initial pixel-accurate search in the range
+	  [-xr,xr]x[-yr,yr].  Sub-pixel refinement is unaffected.
+
+	  Mode decision and the standard hierachical block match have been
+	  slightly changed to improve performance.
+
+2007-06-18 17:05  asuraparaju
+
+	* libdirac_common/wavelet_utils_mmx.cpp: Corrected name of DD9_3
+	  filter to DD9_5 to be in sync with non-mmx version of this file.
+
+2007-06-18 16:24  tjdwave
+
+	* doc/specification.html, encoder/encmain.cpp,
+	  libdirac_common/common_types.h,
+	  libdirac_common/video_format_defaults.cpp,
+	  libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h,
+	  libdirac_decoder/frame_decompress.cpp: Corrected name of DD9_3
+	  filter to DD9_5. Changed weights for (13,5) to correspond to
+	  analysis rather than synthesis filter. This seems to give
+	  slightly better results even with perceptual weighting.
+
+2007-06-18 16:22  tjdwave
+
+	* doc/latex_spec/: bs-spec.tex, idwt.tex, low-delay.tex,
+	  quant-matrix.tex, ref-default-videoparams.tex,
+	  spec-structure.tex, state-macros.tex: Added default quantisation
+	  matrices. Also changed name of DD (9,3) filter to (9,5) filter as
+	  these are the correct filter lengths.
+
+2007-06-10 17:19  asuraparaju
+
+	* libdirac_decoder/comp_decompress.cpp: Fix unintialised value bug
+	  reported by valgrind.
+
+2007-06-10 15:00  asuraparaju
+
+	* libdirac_common/common.cpp, libdirac_common/common.h,
+	  libdirac_common/frame.cpp, libdirac_common/frame_buffer.cpp,
+	  libdirac_common/frame_buffer.h, libdirac_common/upconvert.cpp,
+	  libdirac_common/upconvert.h, libdirac_common/upconvert_mmx.cpp,
+	  libdirac_decoder/frame_decompress.cpp,
+	  libdirac_encoder/frame_compress.cpp,
+	  libdirac_encoder/seq_compress.cpp, unit_tests/frames_test.cpp,
+	  unit_tests/motion_comp_test.cpp: Modified FrameParams class to
+	  include the original frame dimensions in addition to the padded
+	  (for dwt) dimensions. All operations in the decoder other than
+	  the inverse wavelet transform are now performed using the
+	  original frame dimensions.
+
+2007-06-10 14:47  asuraparaju
+
+	* libdirac_byteio/dirac_byte_stream.cpp: Fix memory leak reported
+	  by valgrind. Minor indentatiion changes.
+
+2007-06-05 11:01  tjdwave
+
+	* doc/latex_spec/: bs-spec.tex, mc.tex: Fixed bug with chroma MV
+	  scaling so that it now agrees with Dirac and Schro codebase.
+	  Fixed bug with motion compensation weight factors so that these
+	  are now correct.
+
+2007-06-05 10:38  davidf_
+
+	* libdirac_common/mot_comp.cpp: Backing out commit 1.34. (chroma mv
+	  rounding, due to spec change)
+
+2007-06-05 10:08  tjdwave
+
+	* doc/latex_spec/: bs-spec.tex, layout-fullsize.tex, mc.tex: Fixed
+	  bugs and added clarification for chroma motion vectors.
+
+2007-06-05 09:58  tjdwave
+
+	* doc/specification.html: [no log message]
+
+2007-06-05 09:55  davidf_
+
+	* libdirac_common/mot_comp.cpp: Spec compliance, chroma
+	  motionvectors should be scaled using round_divide as per 8.5.2.1
+	  (spec1.0pre7)
+
+2007-06-04 10:58  tjdwave
+
+	* doc/latex_spec/mc.tex: Fixed bug with scaling motion vectors for
+	  chroma.
+
+2007-06-04 10:56  tjdwave
+
+	* doc/latex_spec/: state-macros.tex, unpack-common.tex: [no log
+	  message]
+
+2007-06-04 10:55  tjdwave
+
+	* doc/latex_spec/dataenc.tex: Added brace for clarification.
+
+2007-06-04 10:54  tjdwave
+
+	* doc/latex_spec/bs-spec.tex: Fixed minor spec low-delay bug.
+
+2007-05-15 16:32  tjdwave
+
+	* libdirac_encoder/rate_control.cpp: Removed buffer model because
+	  of performance issues.
+
+2007-05-15 15:54  tjdwave
+
+	* libdirac_encoder/: frame_compress.cpp, frame_compress.h,
+	  rate_control.cpp, rate_control.h, seq_compress.cpp: Modified
+	  constant bit-rate operation, so that when a cut is detected the
+	  long-term qf is used, instead of the current one in the rate
+	  model.  This has the effect of reducing quality crashes and rate
+	  explosions.
+
+2007-05-15 13:40  asuraparaju
+
+	* Makefile.am: In addition to the regular targets (all, check,
+	  valgrind-check), added the following new targets
+
+	  make codec  - builds the libraries and encoder and decoder
+	  utilities
+
+	  make codec-check  - builds the libraries and encoder, decoder and
+	  instrumentation and unit_tests and runs the tests
+
+	  make encoder - builds the libs encoder depends on and the encoder
+
+	  make decoder - builds the libs decoder depends on and the decoder
+
+	  make instrumentation - builds the libraries instrumentation util
+	  depends on the the instrumentation tool.
+
+	  make conversion - builds conversion tool
+
+	  make unit_tests- builds libraries and the unit_test tool
+
+	  make doc - builds the doc
+
+2007-05-15 13:00  tjdwave
+
+	* libdirac_common/wavelet_utils.cpp: Fixed bug with DC weight being
+	  set incorrectly.
+
+2007-05-15 10:19  tjdwave
+
+	* libdirac_common/mot_comp.cpp: Added error message if reference
+	  pictures are not labeled as references.
+
+2007-05-14 13:33  tjdwave
+
+	* doc/latex_spec/: bs-spec.tex, layout-fullsize.tex,
+	  parsediagrams.tex, unpack-common.tex: Modified parse diagrams to
+	  give integrated structure. Minor changes to stream parsing to
+	  agree with the parse diagrams.
+
+2007-05-09 15:35  tjdwave
+
+	* doc/latex_spec/: abstract.tex, bs-spec.tex, conformance.tex,
+	  core-wlt-dec.tex, dataenc.tex, decoding-ops.tex,
+	  dirac-concepts.tex, idwt.tex, intro.tex, layout-fullsize.tex,
+	  low-delay.tex, mc.tex, motion-dec.tex, parsing.tex,
+	  picture-dec.tex, spec-conventions.tex, spec-structure.tex,
+	  state-macros.tex, stream-access.tex, terms.tex,
+	  unpack-common.tex, vidsys.tex, wlt-dec.tex, wlt-unpacking.tex:
+	  Restructuring to integrate the core and low-delay syntaxes
+	  properly. Added text from SMPTE VC-2 draft spec.
+
+2007-05-09 15:06  asuraparaju
+
+	* ChangeLog: [no log message]
+
 2007-05-09 14:47  asuraparaju
 
 	* extras/patches/: MPlayer-1.0rc1_dirac-0.7.x.patch,
@@ -5622,9 +6208,12 @@
 
 	  -  Removed the following CVS tags from all files    $Author$
 	  $Log$
-	  Revision 1.23  2007-05-09 14:06:51  asuraparaju
+	  Revision 1.24  2007-10-01 10:57:15  asuraparaju
 	  *** empty log message ***
-    $Revision$
+
+	  Revision 1.23  2007/05/09 14:06:51  asuraparaju
+	  *** empty log message ***
+	    $Revision$
 
 	  -  Included the following CVS tags in all source and header files
 	     $Id$    $Name$
@@ -5791,7 +6380,10 @@
 
 2004-05-27 13:21  stuart_hc
 
-	* README.developers: Prevent unintended expansion of $Id$ and $Log$
+	* README.developers: Prevent unintended expansion of $Id$ and $Log: ChangeLog,v $
+	* README.developers: Prevent unintended expansion of $Id$ and Revision 1.23  2007/05/09 14:06:51  asuraparaju
+	* README.developers: Prevent unintended expansion of $Id$ and *** empty log message ***
+	* README.developers: Prevent unintended expansion of $Id$ and
 	  in description of keywords.
 
 2004-05-27 13:14  stuart_hc
@@ -11315,9 +11907,12 @@
 
 	  -  Removed the following CVS tags from all files    $Author$
 	  $Log$
-	  Revision 1.23  2007-05-09 14:06:51  asuraparaju
+	  Revision 1.24  2007-10-01 10:57:15  asuraparaju
 	  *** empty log message ***
 
+	  Revision 1.23  2007/05/09 14:06:51  asuraparaju
+	  *** empty log message ***
+	
 	  Revision 1.22  2007/03/22 18:27:16  davidf_
 	  Altered command line file handling.  a) now support taking input from stdin
 	  (input specified as '-' or '/dev/stdin').  b) removed strange filename
@@ -11494,6 +12089,9 @@
 2004-05-27 13:21  stuart_hc
 
 	* README.developers: Prevent unintended expansion of $Id$ and $Log: ChangeLog,v $
+	* README.developers: Prevent unintended expansion of $Id$ and Revision 1.23  2007/05/09 14:06:51  asuraparaju
+	* README.developers: Prevent unintended expansion of $Id$ and *** empty log message ***
+	* README.developers: Prevent unintended expansion of $Id$ and
 	* README.developers: Prevent unintended expansion of $Id$ and Revision 1.22  2007/03/22 18:27:16  davidf_
 	* README.developers: Prevent unintended expansion of $Id$ and Altered command line file handling.  a) now support taking input from stdin
 	* README.developers: Prevent unintended expansion of $Id$ and (input specified as '-' or '/dev/stdin').  b) removed strange filename
