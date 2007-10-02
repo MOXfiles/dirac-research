@@ -432,10 +432,10 @@ xbsep         : the horizontal separation between blocks. Always <xblen
 ybsep         : the vertical separation between blocks. Always <yblen
 cpd           : normalised viewing distance parameter, in cycles per degree.
 iwlt_filter   : transform filter to use when encoding INTRA frames, Valid
-                values are DD9_5, LEGALL5_3, DD13_5, HAAR0, HAAR1, FIDELITY,
+                values are DD9_7, LEGALL5_3, DD13_7, HAAR0, HAAR1, FIDELITY,
                 DAUB97. Default value is DD9_5.
 rwlt_filter   : transform filter to use when encoding INTER frames, Valid
-                values are DD9_5, LEGALL5_3, DD13_5, HAAR0, HAAR1, FIDELITY,
+                values are DD9_7, LEGALL5_3, DD13_7, HAAR0, HAAR1, FIDELITY,
                 DAUB97. Default value is LEGALL5_3.
 wlt_depth     : transform depth, i.e number of times the component is split 
                 while applying the wavelet transform
