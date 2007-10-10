@@ -1050,8 +1050,8 @@ namespace dirac
         //! Returns the number of blocks vertically
         int YNumBlocks() const {return m_y_num_blocks;}
 
-        //! Returns true if we're operating using interend tools
-        bool Interlace() const {return m_interlace;}
+        //! Returns true if we're coding as interlace (independent of source format!)
+        bool InterlaceCoding() const {return m_interlace_coding;}
 
         //! Returns true if the topmost field comes first in time when coding
         bool TopFieldFirst() const {return m_topfieldfirst;}
@@ -1130,8 +1130,8 @@ namespace dirac
         //! Set how many blocks there are vertically
         void SetYNumBlocks(const int yn){m_y_num_blocks=yn;}
 
-        //! Sets whether interlace tools are to be used
-        void SetInterlace(bool intlc){m_interlace=intlc;}
+        //! Sets whether interlace coding tools are to be used
+        void SetInterlaceCoding(bool intlc){m_interlace_coding=intlc;}
 
         //! Sets whether the topmost field comes first in time [NB: TBD since this duplicates metadata in the sequence header]
         void SetTopFieldFirst(bool topf){m_topfieldfirst=topf;}
@@ -1216,8 +1216,8 @@ namespace dirac
         WltFilter TransformFilter (unsigned int wf_idx);
     private:
 
-        //! True if input is treated as interlaced, false otherwise
-        bool m_interlace;
+        //! True if input is treated as interlaced (even if it isn't!), false otherwise
+        bool m_interlace_coding;
 
         //! True if interlaced and top field is first in temporal order
         bool m_topfieldfirst;

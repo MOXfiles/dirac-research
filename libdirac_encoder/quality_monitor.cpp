@@ -149,7 +149,7 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
 
     if (m_encparams.Verbose() )
     {
-        std::cout<<std::endl<< (!m_encparams.Interlace() ? "Frame" : "Field");
+        std::cout<<std::endl<< (!m_encparams.InterlaceCoding() ? "Frame" : "Field");
         std::cout << " PSNR: Y="<<fqualityY;
         std::cout<<", U="<<fqualityU;
         std::cout<<", V="<<fqualityV;

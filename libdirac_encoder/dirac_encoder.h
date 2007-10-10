@@ -208,8 +208,8 @@ typedef struct
     dirac_mvprecision_t mv_precision;
     /*! target bit rate in kbps */
     int trate;
-    /*! interlace flag: 0 - progressive; 1 - interlaced */
-    int interlace;
+    /*! interlace coding flag: 0 - frame coding; 1 - field coding */
+    int interlacecoding;
 } dirac_encparams_t;
 
 /*! Structure that holds the parameters that set up the encoder context */

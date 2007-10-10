@@ -190,7 +190,7 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
             m_encparams.SetQf( m_qf );
 
             if (fparams.FrameNum()==0 ||
-               (m_encparams.Interlace() && fparams.FrameNum() < 2))
+               (m_encparams.InterlaceCoding() && fparams.FrameNum() < 2))
             {
                 // We've just coded the very first frame, which is a special
                 // case as the two L2 frames which normally follow are missing

@@ -75,7 +75,7 @@ void CodingParamsByteIO::Input()
 
     // If source was coded interlaced, halve the vertical dimensions
     // to set them to field dimensions
-    if (m_codec_params.Interlace())
+    if (m_codec_params.InterlaceCoding())
     {
         m_codec_params.SetOrigYl(m_codec_params.OrigYl()>>1);
         m_codec_params.SetOrigChromaYl(m_codec_params.OrigChromaYl()>>1);
@@ -111,19 +111,13 @@ void CodingParamsByteIO::Output()
 
 void CodingParamsByteIO::InputInterlaceCoding()
 {
-
-    m_codec_params.SetInterlace(m_src_params.Interlace());
-    if (InputBit()) // custom coding
-        m_codec_params.SetInterlace(!m_codec_params.Interlace());
+    m_codec_params.SetInterlaceCoding(InputBit());
 }
 
 
 void CodingParamsByteIO::OutputInterlaceCoding()
 {
-    bool is_custom = m_codec_params.Interlace() !=
-                                   m_default_source_params.Interlace();
-
-    OutputBit(is_custom);
+    OutputBit(m_codec_params.InterlaceCoding());
 }
 
 

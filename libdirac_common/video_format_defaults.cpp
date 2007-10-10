@@ -61,7 +61,7 @@ void SetDefaultCodecParameters(CodecParams &cparams,
     // Default is set to progressive specified irrespective
     // of whether the source material is interlaced or progressive.
     // Overridden from command line of encoder or in bytestream for decoder.
-    cparams.SetInterlace(false);
+    cparams.SetInterlaceCoding(false);
     cparams.SetTopFieldFirst(true);
     switch (cparams.GetVideoFormat())
     {
@@ -101,7 +101,7 @@ void SetDefaultCodecParameters(CodecParams &cparams,
         cparams.SetUsingGlobalMotion(false);
         SetDefaultBlockParameters(bparams, cparams.GetVideoFormat());
         cparams.SetLumaBlockParams(bparams);
-        cparams.SetInterlace(false);
+        cparams.SetInterlaceCoding(false);
         cparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
         // NOTE: FIXME - need to add global motion params here
         if (num_refs == 1)

@@ -95,7 +95,7 @@ static void display_help()
     cout << "\nfield_dominance   string  topfieldfirst Field dominance in interlaced source - topfieldfirst or bottomfield first";
     cout << "\nstart             ulong   0UL           Frame number to start encoding from";
     cout << "\nstop              ulong   EOF           Frame number after which encoding finishes";
-    cout << "\ninterlaced        bool    false         Set coding type to interlaced for interlaced material. Default coding type is progressive";
+    cout << "\ninterlace_coding  bool    false         Set coding type to interlaced (fields). Default coding type is by frames";
     cout << "\nL1_sep            ulong   0UL           Separation of L1 frames";
     cout << "\nnum_L1            ulong   0UL           Number of L1 frames";
     cout << "\nxblen             ulong   0UL           Overlapping block horizontal length";
@@ -157,7 +157,6 @@ bool WriteSequenceHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
 {
     bool ret_stat = true;
     dirac_sourceparams_t &srcparams = encoder->enc_ctx.src_params;
-    dirac_encparams_t &encparams = encoder->enc_ctx.enc_params;
     ios::iostate oldExceptions = fdata.exceptions();
     fdata.exceptions (ios::failbit | ios::badbit);
 
@@ -166,7 +165,7 @@ bool WriteSequenceHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
         fdata << srcparams.chroma << std::endl;
         fdata << srcparams.width << std::endl;
         fdata << srcparams.height << std::endl;
-        fdata << encparams.interlace << std::endl;
+        fdata << srcparams.interlace << std::endl;
         fdata << srcparams.topfieldfirst << std::endl;
         fdata << srcparams.frame_rate.numerator << std::endl;
         fdata << srcparams.frame_rate.denominator << std::endl;
@@ -482,7 +481,7 @@ void display_codec_params(dirac_encoder_context_t &enc_ctx)
     std::cout << " \tSpatial Partitioning=" << (enc_ctx.enc_params.spatial_partition ? "true" : "false") << std::endl;
     std::cout << " \tMultiple Quantisers=" << (enc_ctx.enc_params.multi_quants ? "true" : "false") << std::endl;
     std::cout << " \tDenoising input=" << (enc_ctx.enc_params.denoise ? "true" : "false") << std::endl;
-    std::cout << " \tInterlaced coding=" << (enc_ctx.enc_params.interlace ? "true" : "false") << std::endl;
+    std::cout << " \tInterlaced coding=" << (enc_ctx.enc_params.interlacecoding ? "true" : "false") << std::endl;
 }
 
 int start_pos = 0;
@@ -724,10 +723,10 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
                 parsed[i] = false;
             }
         }
-        else if ( strcmp(argv[i], "-interlaced") == 0 )
+        else if ( strcmp(argv[i], "-interlace_coding") == 0 )
         {
             parsed[i] = true;
-            enc_ctx.enc_params.interlace =  true;
+            enc_ctx.enc_params.interlacecoding =  true;
             fields_factor = 2;
         }
         else if ( strcmp(argv[i], "-qf") == 0 )

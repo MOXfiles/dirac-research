@@ -300,7 +300,7 @@ static void set_frame_data (const  DiracParser * const parser, dirac_decoder_t *
 
     const Frame& my_frame = parser->GetNextFrame();
 
-    if (!parser->GetDecoderParams().Interlace())
+    if (!parser->GetDecoderParams().InterlaceCoding())
     {
         set_frame_component (my_frame.Ydata(), Y_COMP, decoder);
         set_frame_component (my_frame.Udata(), U_COMP, decoder);
@@ -365,7 +365,7 @@ extern DllExport dirac_decoder_state_t dirac_parse (dirac_decoder_t *decoder)
                 /* frame params of the frame available for display */
                 set_frame_params (parser->GetNextFrame().GetFparams(), decoder);
                 set_frame_data (parser, decoder);
-                if (!parser->GetDecoderParams().Interlace() ||
+                if (!parser->GetDecoderParams().InterlaceCoding() ||
                     decoder->frame_params.fnum%2)
                 {
                     decoder->frame_avail = 1;
