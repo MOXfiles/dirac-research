@@ -95,25 +95,11 @@ void TransformByteIO::Output()
     // Zero Transform flag - applies only to inter frames
     if (m_fparams.FSort().IsInter())
         OutputBit(false);
-    // Non-default Wavelet flag
-    if (m_cparams.TransformFilter() ==  m_default_cparams.TransformFilter())
-        OutputBit(false);
-    else
-    {
-        OutputBit(true);
-        OutputVarLengthUint(m_cparams.TransformFilter());
-    }
+    // Wavelet index
+    OutputVarLengthUint(m_cparams.TransformFilter());
 
-    // Non-default Depth flag
-    if (m_cparams.TransformDepth() == m_default_cparams.TransformDepth())
-    {
-        OutputBit(false);
-    }
-    else
-    {
-        OutputBit(true);
-        OutputVarLengthUint(m_cparams.TransformDepth());
-    }
+    // Wavelet Depth
+    OutputVarLengthUint(m_cparams.TransformDepth());
 
     // Spatial Partition flag
     OutputBit(m_cparams.SpatialPartition());
@@ -149,17 +135,10 @@ void TransformByteIO::Input()
         return;
 
     // Transform filter
-    if (InputBit())
-        m_cparams.SetTransformFilter(InputVarLengthUint());
-    else
-        m_cparams.SetTransformFilter(m_default_cparams.TransformFilter());
+    m_cparams.SetTransformFilter(InputVarLengthUint());
 
     // transform depth
-    bool non_default_transform_depth = InputBit();
-    if (non_default_transform_depth)
-         m_cparams.SetTransformDepth(InputVarLengthUint());
-    else
-        m_cparams.SetTransformDepth(m_default_cparams.TransformDepth());
+     m_cparams.SetTransformDepth(InputVarLengthUint());
 
     // Spatial partition flag
     m_cparams.SetSpatialPartition(InputBit());
