@@ -119,19 +119,13 @@ void TransformByteIO::Output()
     OutputBit(m_cparams.SpatialPartition());
     if (m_cparams.SpatialPartition())
     {
-        // non-default partition flag
-        OutputBit(!m_cparams.DefaultSpatialPartition());
-        if (!m_cparams.DefaultSpatialPartition())
+        for (unsigned int i = 0; i <= m_cparams.TransformDepth(); ++i)
         {
-            for (unsigned int i = 0; i <= m_cparams.TransformDepth(); ++i)
-            {
-                // non-default partitoning
-                const CodeBlocks &cb = m_cparams.GetCodeBlocks(i);
-                // Number of Horizontal code blocks for level i
-                OutputVarLengthUint(cb.HorizontalCodeBlocks());
-                // Number of Vertical code block for level i
-                OutputVarLengthUint(cb.VerticalCodeBlocks());
-            }
+            const CodeBlocks &cb = m_cparams.GetCodeBlocks(i);
+            // Number of Horizontal code blocks for level i
+            OutputVarLengthUint(cb.HorizontalCodeBlocks());
+            // Number of Vertical code block for level i
+            OutputVarLengthUint(cb.VerticalCodeBlocks());
         }
         // Code block mode index
         OutputVarLengthUint(m_cparams.GetCodeBlockMode());
@@ -172,24 +166,14 @@ void TransformByteIO::Input()
 
     if (m_cparams.SpatialPartition())
     {
-        // Is default spatial partitioning being used
-        m_cparams.SetDefaultSpatialPartition(!InputBit());
-        if (!m_cparams.DefaultSpatialPartition())
+        // Input number of code blocks for each level
+        for (unsigned int i = 0; i <= m_cparams.TransformDepth(); ++i)
         {
-            // Input number of code blocks for each level
-            for (unsigned int i = 0; i <= m_cparams.TransformDepth(); ++i)
-            {
-                // number of horizontal code blocks for level i
-                unsigned int hblocks = InputVarLengthUint();
-                // number of vertical code blocks for level i
-                unsigned int vblocks = InputVarLengthUint();
-                m_cparams.SetCodeBlocks(i, hblocks, vblocks);
-            }
-        }
-        else
-        {
-            // Set the default number of code blocks for each level
-            m_cparams.SetDefaultCodeBlocks(m_fparams.GetFrameType());
+            // number of horizontal code blocks for level i
+            unsigned int hblocks = InputVarLengthUint();
+            // number of vertical code blocks for level i
+            unsigned int vblocks = InputVarLengthUint();
+            m_cparams.SetCodeBlocks(i, hblocks, vblocks);
         }
         // Code block mode index
         m_cparams.SetCodeBlockMode(InputVarLengthUint());

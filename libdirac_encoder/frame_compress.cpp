@@ -117,12 +117,12 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
     if ( fsort.IsIntra() )
     {
         m_encparams.SetTransformFilter( m_encparams.IntraTransformFilter() );
-        m_encparams.SetDefaultCodeBlocks( INTRA_FRAME );
+        m_encparams.SetUsualCodeBlocks( INTRA_FRAME );
     }
     else
     {
         m_encparams.SetTransformFilter( m_encparams.InterTransformFilter() );
-        m_encparams.SetDefaultCodeBlocks( INTER_FRAME );
+        m_encparams.SetUsualCodeBlocks( INTER_FRAME );
         // Set the frame weight parameters.
         // FIXME - setting to default at the moment. Need to process command
         // line args in future

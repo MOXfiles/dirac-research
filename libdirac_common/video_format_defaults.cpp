@@ -57,7 +57,7 @@ void SetDefaultCodecParameters(CodecParams &cparams,
     cparams.SetTransformFilter(wf);
     cparams.SetCodeBlockMode(QUANT_SINGLE);
     cparams.SetSpatialPartition(false);
-    cparams.SetDefaultSpatialPartition(true);
+
     // Default is set to progressive specified irrespective
     // of whether the source material is interlaced or progressive.
     // Overridden from command line of encoder or in bytestream for decoder.
@@ -83,7 +83,6 @@ void SetDefaultCodecParameters(CodecParams &cparams,
     case VIDEO_FORMAT_DIGI_CINEMA_2K:
     case VIDEO_FORMAT_DIGI_CINEMA_4K:
         cparams.SetSpatialPartition(true);
-        cparams.SetDefaultSpatialPartition(true);
         break;
     default:
         errstr << "Unsupported video format " << cparams.GetVideoFormat()
@@ -94,7 +93,6 @@ void SetDefaultCodecParameters(CodecParams &cparams,
             SEVERITY_FRAME_ERROR);
         break;
     }
-    cparams.SetDefaultCodeBlocks(ftype);
 
     if (ftype == INTER_FRAME)
     {

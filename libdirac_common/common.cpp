@@ -447,71 +447,6 @@ void CodecParams::SetCodeBlocks (unsigned int level,
     m_cb[level].SetVerticalCodeBlocks(vblocks);
 }
 
-void CodecParams::SetDefaultCodeBlocks ( const FrameType &ftype)
-{
-    // No subband splitting if  spatial partitioning if false
-    // Since this function is common to encoder and decoder we allow the
-    // setting of code blocks without checking if DefaultSpatialPartition is
-    // true.
-    if (SpatialPartition() == false)
-        return;
-
-    SetCodeBlocks(0, 1, 1);
-    if (m_wlt_depth == 0)
-        return;
-
-    switch (GetVideoFormat())
-    {
-    case VIDEO_FORMAT_QSIF:
-    case VIDEO_FORMAT_QCIF:
-    case VIDEO_FORMAT_CUSTOM:
-    case VIDEO_FORMAT_SIF:
-    case VIDEO_FORMAT_CIF:
-    case VIDEO_FORMAT_4CIF:
-    case VIDEO_FORMAT_4SIF:
-    case VIDEO_FORMAT_SD_525_DIGITAL:
-    case VIDEO_FORMAT_SD_625_DIGITAL:
-    case VIDEO_FORMAT_HD_720P60:
-    case VIDEO_FORMAT_HD_720P50:
-    case VIDEO_FORMAT_HD_1080I60:
-    case VIDEO_FORMAT_HD_1080I50:
-    case VIDEO_FORMAT_HD_1080P60:
-    case VIDEO_FORMAT_HD_1080P50:
-    case VIDEO_FORMAT_DIGI_CINEMA_2K:
-    case VIDEO_FORMAT_DIGI_CINEMA_4K:
-        if (ftype == INTRA_FRAME)
-        {
-            int depth = TransformDepth();
-            for (int i = 1; i <= 2; ++i)
-            {
-                SetCodeBlocks(i, 1, 1);
-            }
-            for (int i = 3; i <=depth; ++i)
-            {
-                SetCodeBlocks(i, 4, 3);
-            }
-        }
-        else
-        {
-            int level = TransformDepth();
-            SetCodeBlocks(1, 1, 1);
-            SetCodeBlocks(2, 8, 6);
-            for (int i = 3; i <=level; ++i)
-            {
-                SetCodeBlocks(i, 12, 8);
-            }
-        }
-        break;
-
-    default:
-        DIRAC_THROW_EXCEPTION(
-            ERR_INVALID_VIDEO_FORMAT,
-            "Unsupported video format",
-            SEVERITY_FRAME_ERROR);
-        break;
-    }
-}
-
 const CodeBlocks &CodecParams::GetCodeBlocks (unsigned int level) const
 {
     if (level > m_wlt_depth)
@@ -605,6 +540,73 @@ void EncoderParams::SetInterTransformFilter(unsigned int wf_idx)
 {
     SetInterTransformFilter(TransformFilter(wf_idx));
 }
+
+void EncoderParams::SetUsualCodeBlocks ( const FrameType &ftype)
+{
+    // No subband splitting if  spatial partitioning if false
+    // Since this function is common to encoder and decoder we allow the
+    // setting of code blocks without checking if DefaultSpatialPartition is
+    // true.
+    if (SpatialPartition() == false)
+        return;
+
+    SetCodeBlocks(0, 1, 1);
+    if (TransformDepth() == 0)
+        return;
+
+    switch (GetVideoFormat())
+    {
+    case VIDEO_FORMAT_QSIF:
+    case VIDEO_FORMAT_QCIF:
+    case VIDEO_FORMAT_CUSTOM:
+    case VIDEO_FORMAT_SIF:
+    case VIDEO_FORMAT_CIF:
+    case VIDEO_FORMAT_4CIF:
+    case VIDEO_FORMAT_4SIF:
+    case VIDEO_FORMAT_SD_525_DIGITAL:
+    case VIDEO_FORMAT_SD_625_DIGITAL:
+    case VIDEO_FORMAT_HD_720P60:
+    case VIDEO_FORMAT_HD_720P50:
+    case VIDEO_FORMAT_HD_1080I60:
+    case VIDEO_FORMAT_HD_1080I50:
+    case VIDEO_FORMAT_HD_1080P60:
+    case VIDEO_FORMAT_HD_1080P50:
+    case VIDEO_FORMAT_DIGI_CINEMA_2K:
+    case VIDEO_FORMAT_DIGI_CINEMA_4K:
+        if (ftype == INTRA_FRAME)
+        {
+            int depth = TransformDepth();
+            for (int i = 1; i <= 2; ++i)
+            {
+                SetCodeBlocks(i, 1, 1);
+            }
+            for (int i = 3; i <=depth; ++i)
+            {
+                SetCodeBlocks(i, 4, 3);
+            }
+        }
+        else
+        {
+            int level = TransformDepth();
+            SetCodeBlocks(1, 1, 1);
+            SetCodeBlocks(2, 8, 6);
+            for (int i = 3; i <=level; ++i)
+            {
+                SetCodeBlocks(i, 12, 8);
+            }
+        }
+        break;
+
+    default:
+        DIRAC_THROW_EXCEPTION(
+            ERR_INVALID_VIDEO_FORMAT,
+            "Unsupported video format",
+            SEVERITY_FRAME_ERROR);
+        break;
+    }
+}
+
+
 
 int EncoderParams::GOPLength() const
 {

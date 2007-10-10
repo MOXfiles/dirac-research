@@ -202,8 +202,6 @@ typedef struct
     unsigned int spatial_partition;
     /*! Denoising flag */
     unsigned int denoise;
-    /*! default Spatial partitioning flag */
-    unsigned int def_spatial_partition;
     /*! Multiple quantisers flag */
     unsigned int multi_quants;
     /*! motion-vector pixel precision */

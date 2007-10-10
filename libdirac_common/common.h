@@ -993,7 +993,7 @@ namespace dirac
     {
     public:
         //! Default Constructor
-        CodeBlocks () : m_hblocks(0), m_vblocks(0)
+        CodeBlocks () : m_hblocks(1), m_vblocks(1)
         {}
 
         //! Constructor
@@ -1099,8 +1099,6 @@ namespace dirac
         //! Return the spatial partitioning flag being used for frame (de)coding
         bool SpatialPartition() const { return m_spatial_partition; }
 
-        //! Return the default spatial partitioning flag being used for frame (de)coding
-        bool DefaultSpatialPartition() const { return m_def_spatial_partition; }
         //! Return the code blocks for a particular level
         const CodeBlocks &GetCodeBlocks(unsigned int level) const;
 
@@ -1195,14 +1193,8 @@ namespace dirac
         //! Set the spatial partition flag usedto frame (de)coding
         void SetSpatialPartition(bool spatial_partition) { m_spatial_partition=spatial_partition; }
 
-        //! Set the spatial partition flag usedto frame (de)coding
-        void SetDefaultSpatialPartition(bool def_spatial_partition) { m_def_spatial_partition=def_spatial_partition; }
-
         //! Set the number of code blocks for a particular level
         void  SetCodeBlocks(unsigned int level, unsigned int hblocks, unsigned int vblocks);
-
-        //! Set the default number of code blocks for all levels
-        void  SetDefaultCodeBlocks(const FrameType& ftype);
 
         //! Set the video format used for frame (de)coding
         void SetVideoFormat(const VideoFormat vd) { m_video_format=vd; }
@@ -1296,9 +1288,6 @@ namespace dirac
 
         //! Spatial partitioning flag
         bool m_spatial_partition;
-
-        //! Default Spatial partitioning flag
-        bool m_def_spatial_partition;
 
         //! Code block array. Number of entries is m_wlt_depth+1
         OneDArray<CodeBlocks> m_cb;
@@ -1462,6 +1451,9 @@ namespace dirac
 
         //! Set the Wavelet filter to be used for intra frames
         void SetIntraTransformFilter(WltFilter wf) { m_intra_wltfilter = wf; }
+        
+         //! Set the number of code blocks for all levels
+        void  SetUsualCodeBlocks(const FrameType& ftype);
 
         //! Set the Wavelet filter to be used for inter frames
         void SetInterTransformFilter(WltFilter wf) { m_inter_wltfilter = wf; }
