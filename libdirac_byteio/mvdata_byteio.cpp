@@ -183,24 +183,9 @@ void MvDataByteIO::Output()
 
 void MvDataByteIO::OutputBlockParams()
 {
-    // output 'is default' flag
-    bool is_default =  true;
-    const OLBParams& def_olb_params = m_default_cparams.LumaBParams(2);
     const OLBParams& olb_params = m_cparams.LumaBParams(2);
 
-    if (olb_params.Xblen() != def_olb_params.Xblen() ||
-        olb_params.Yblen() != def_olb_params.Yblen() ||
-        olb_params.Xbsep() != def_olb_params.Xbsep() ||
-        olb_params.Ybsep() != def_olb_params.Ybsep())
-    {
-        is_default = false;
-    }
-       OutputBit(!is_default);
-    if(is_default)
-        return;
-
     // output custom block params flag 
-    // NOTE: FIXME - need to check if we can set just block inder
     unsigned int pidx = BlockParametersIndex(olb_params);
     OutputVarLengthUint(pidx);
     if (pidx == 0) // custom block params
@@ -218,66 +203,43 @@ void MvDataByteIO::OutputBlockParams()
 
 void MvDataByteIO::InputBlockParams()
 {
-    // output 'is default' flag
-    const OLBParams& def_olb_params = m_default_cparams.LumaBParams(2);
     OLBParams olb_params;
 
-    if (InputBit())
+    unsigned int p_idx = InputVarLengthUint();
+    if (p_idx == 0)
     {
-        unsigned int p_idx = InputVarLengthUint();
-        // FIXME : the default values from block params table must be set
-        // elsehwere
-        if (p_idx == 0)
-        {
-            // Input Xblen
-            olb_params.SetXblen(InputVarLengthUint());
-            // Input Yblen
-            olb_params.SetYblen(InputVarLengthUint());
-            // Input Xbsep
-            olb_params.SetXbsep(InputVarLengthUint());
-            // Input Ybsep
-            olb_params.SetYbsep(InputVarLengthUint());
-        }
-        else
-            SetDefaultBlockParameters (olb_params, p_idx);
-
+        // Input Xblen
+        olb_params.SetXblen(InputVarLengthUint());
+        // Input Yblen
+        olb_params.SetYblen(InputVarLengthUint());
+        // Input Xbsep
+        olb_params.SetXbsep(InputVarLengthUint());
+        // Input Ybsep
+        olb_params.SetYbsep(InputVarLengthUint());
     }
     else
-    {
-        // is default
-        olb_params = def_olb_params;
-    }
+        SetDefaultBlockParameters (olb_params, p_idx);
+
     m_cparams.SetLumaBlockParams(olb_params);
 }
 
 void MvDataByteIO::OutputMVPrecision()
 {
     // Output Motion vector precision
-    if (m_cparams.MVPrecision() != m_default_cparams.MVPrecision())
-    {
-        OutputBit(true);
-        OutputVarLengthUint(m_cparams.MVPrecision());
-    }
-    else
-        OutputBit(false);
+    OutputVarLengthUint(m_cparams.MVPrecision());
 }
 
 void MvDataByteIO::InputMVPrecision()
 {
     // Input Motion vector precision
-    if (InputBit())
-    {
-        MVPrecisionType mv_prec = IntToMVPrecisionType(InputVarLengthUint());
-        if(mv_prec==MV_PRECISION_UNDEFINED)
-            DIRAC_THROW_EXCEPTION(
-                    ERR_INVALID_MOTION_VECTOR_PRECISION,
-                    "Dirac does not recognise the specified MV precision",
-                    SEVERITY_FRAME_ERROR)
+    MVPrecisionType mv_prec = IntToMVPrecisionType(InputVarLengthUint());
+    if(mv_prec==MV_PRECISION_UNDEFINED)
+        DIRAC_THROW_EXCEPTION(
+                ERR_INVALID_MOTION_VECTOR_PRECISION,
+                "Dirac does not recognise the specified MV precision",
+                SEVERITY_FRAME_ERROR)
 
-        m_cparams.SetMVPrecision(mv_prec);
-    }
-    else
-        m_cparams.SetMVPrecision(m_default_cparams.MVPrecision());
+    m_cparams.SetMVPrecision(mv_prec);
 }
 
 void MvDataByteIO::OutputGlobalMotionParams()
@@ -310,23 +272,20 @@ void MvDataByteIO::OutputFramePredictionMode()
 {
     //  TODO: Output default frame prediction mode index until other
     //  modes are supported.
-    OutputBit(false);
+    OutputVarLengthUint(0);
 }
 
 void MvDataByteIO::InputFramePredictionMode()
 {
     // TODO - need to process this field when alternative prediction modes
     // become available.
-    if (InputBit())
+    unsigned int frame_pred_mode = InputVarLengthUint();
+    if (frame_pred_mode != 0)
     {
-        unsigned int frame_pred_mode = InputVarLengthUint();
-        if (frame_pred_mode != 0)
-        {
-            DIRAC_THROW_EXCEPTION(
-                ERR_UNSUPPORTED_STREAM_DATA,
-                "Non-default Picture Prediction Mode not supported",
-                SEVERITY_FRAME_ERROR);
-        }
+        DIRAC_THROW_EXCEPTION(
+            ERR_UNSUPPORTED_STREAM_DATA,
+            "Non-default Picture Prediction Mode not supported",
+            SEVERITY_FRAME_ERROR);
     }
 }
 
