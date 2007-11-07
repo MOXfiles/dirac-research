@@ -42,11 +42,10 @@
 #ifndef accessunit_byteio_h
 #define accessunit_byteio_h
 
-
 //LOCAL INCLUDES
 #include <libdirac_byteio/parseunit_byteio.h>             // Parent class
 #include <libdirac_byteio/parseparams_byteio.h>           // ParseParamsByteIO class
-#include <libdirac_byteio/displayparams_byteio.h>         // DisplayParamsByteIO class
+#include <libdirac_byteio/displayparams_byteio.h>         // SourceParamsByteIO class
 #include <libdirac_byteio/codingparams_byteio.h>         // CodingParamsByteIO class
 
 namespace dirac
@@ -112,9 +111,9 @@ namespace dirac
         unsigned char CalcParseCode() const;
 
          /**
-        * Parse display attributes from bytestream-compatible input (decoding)
+        * Parse source attributes from bytestream-compatible input (decoding)
         */
-        void InputDisplayParams();
+        void InputSourceParams();
         
         /**
         * Parse parse attributes from bytestream-compatible input (decoding)
@@ -127,9 +126,9 @@ namespace dirac
         void InputCodingParams();
 
         /**
-        * Output display attributes for bytestream-compatible output (encoding)
+        * Output source attributes for bytestream-compatible output (encoding)
         */
-        void OutputDisplayParams();
+        void OutputSourceParams();
         
         /**
         * Output parse attributes for bytestream-compatible output (encoding)
@@ -159,7 +158,7 @@ namespace dirac
         /**
         * Source-params byte input/output
         */
-        DisplayParamsByteIO m_displayparams_byteio;
+        SourceParamsByteIO m_sourceparams_byteio;
         
         /**
         * Current codec parameters

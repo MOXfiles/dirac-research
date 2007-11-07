@@ -36,7 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 /**
-* Definition of class DisplayParamsByteIO
+* Definition of class SourceParamsByteIO
 */
 #ifndef displayparams_byteio_h
 #define displayparams_byteio_h
@@ -53,9 +53,9 @@ namespace dirac
 {
              
     /**
-    * Represents compressed display-parameter data contained in an AccessUnit
+    * Represents compressed source-parameter data contained in a sequence header
     */
-    class DisplayParamsByteIO : public ByteIO
+    class SourceParamsByteIO : public ByteIO
     {
     public:
 
@@ -65,21 +65,21 @@ namespace dirac
         *@param default_src_params Default Source parameters
         *@param stream_data Source/Destination of data
         */
-        DisplayParamsByteIO( SourceParams& src_params,
+        SourceParamsByteIO( SourceParams& src_params,
                              const SourceParams& default_src_params,
                              const ByteIO& stream_data);
         /**
         * Destructor
         */
-        ~DisplayParamsByteIO();
+        ~SourceParamsByteIO();
 
         /**
-        * Reads display information from Dirac byte-format
+        * Reads source params information from Dirac byte-format
         */
         void Input();
 
         /**
-        * Outputs sequence information to Dirac byte-format
+        * Outputs source params information to Dirac byte-format
         */
         void Output();
 
