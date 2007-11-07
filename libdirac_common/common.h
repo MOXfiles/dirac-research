@@ -1051,7 +1051,7 @@ namespace dirac
         int YNumBlocks() const {return m_y_num_blocks;}
 
         //! Returns true if we're coding as interlace (independent of source format!)
-        bool InterlaceCoding() const {return m_interlace_coding;}
+        bool InterlacedCoding() const {return m_interlaced_coding;}
 
         //! Returns true if the topmost field comes first in time when coding
         bool TopFieldFirst() const {return m_topfieldfirst;}
@@ -1131,7 +1131,7 @@ namespace dirac
         void SetYNumBlocks(const int yn){m_y_num_blocks=yn;}
 
         //! Sets whether interlace coding tools are to be used
-        void SetInterlaceCoding(bool intlc){m_interlace_coding=intlc;}
+        void SetInterlacedCoding(bool intlc){m_interlaced_coding=intlc;}
 
         //! Sets whether the topmost field comes first in time [NB: TBD since this duplicates metadata in the sequence header]
         void SetTopFieldFirst(bool topf){m_topfieldfirst=topf;}
@@ -1217,7 +1217,7 @@ namespace dirac
     private:
 
         //! True if input is treated as interlaced (even if it isn't!), false otherwise
-        bool m_interlace_coding;
+        bool m_interlaced_coding;
 
         //! True if interlaced and top field is first in temporal order
         bool m_topfieldfirst;

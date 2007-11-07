@@ -66,11 +66,11 @@ fi
 
 case $chroma in
 "444")
-	chroma=0;;
+	chroma="YUV444P";;
 "422")
-	chroma=1;;
+	chroma="YUV422P";;
 "420")
-	chroma=2;;
+	chroma="YUV420P";;
 *)
 	chroma="unknown";;
 esac
@@ -83,7 +83,7 @@ fi
 
 if test $width -eq 720 || test $height -eq 576;
 then
-	preset="-SD576";
+	preset="-SD576I50";
 	#luma block parameters
 	xblen=12;
 	xbsep=8;
@@ -100,7 +100,7 @@ then
 	extras="-fr 25"; // sample data  is 25 fps 
 elif test $width -eq 1920 || test $height -eq 1080;
 then
-	preset="-HD1080";
+	preset="-HD1080I50";
 	#luma block parameters
 	xblen=24;
 	xbsep=16;

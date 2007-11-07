@@ -556,23 +556,23 @@ void EncoderParams::SetUsualCodeBlocks ( const FrameType &ftype)
 
     switch (GetVideoFormat())
     {
-    case VIDEO_FORMAT_QSIF:
+    case VIDEO_FORMAT_QSIF525:
     case VIDEO_FORMAT_QCIF:
     case VIDEO_FORMAT_CUSTOM:
-    case VIDEO_FORMAT_SIF:
+    case VIDEO_FORMAT_SIF525:
     case VIDEO_FORMAT_CIF:
     case VIDEO_FORMAT_4CIF:
-    case VIDEO_FORMAT_4SIF:
-    case VIDEO_FORMAT_SD_525_DIGITAL:
-    case VIDEO_FORMAT_SD_625_DIGITAL:
+    case VIDEO_FORMAT_4SIF525:
+    case VIDEO_FORMAT_SD_480I60:
+    case VIDEO_FORMAT_SD_576I50:
     case VIDEO_FORMAT_HD_720P60:
     case VIDEO_FORMAT_HD_720P50:
     case VIDEO_FORMAT_HD_1080I60:
     case VIDEO_FORMAT_HD_1080I50:
     case VIDEO_FORMAT_HD_1080P60:
     case VIDEO_FORMAT_HD_1080P50:
-    case VIDEO_FORMAT_DIGI_CINEMA_2K:
-    case VIDEO_FORMAT_DIGI_CINEMA_4K:
+    case VIDEO_FORMAT_DIGI_CINEMA_2K24:
+    case VIDEO_FORMAT_DIGI_CINEMA_4K24:
         if (ftype == INTRA_FRAME)
         {
             int depth = TransformDepth();
@@ -629,7 +629,7 @@ DecoderParams::DecoderParams(const VideoFormat& video_format,
 // constructor
 ParseParams::ParseParams():
     m_major_ver(0),
-    m_minor_ver(109),
+    m_minor_ver(1093),
     m_profile(0),
     m_level(0)
 {}
@@ -743,6 +743,10 @@ void SourceParams::SetAspectRatio (AspectRatioType aspect_ratio)
         m_aspect_ratio.m_num = 16;
         m_aspect_ratio.m_denom = 11;
         break;
+    case ASPECT_RATIO_4_3:
+        m_aspect_ratio.m_num = 4;
+        m_aspect_ratio.m_denom = 3;
+        break;
     default:
         m_asr_idx = ASPECT_RATIO_CUSTOM;
         m_aspect_ratio.m_num = m_aspect_ratio.m_denom = 0;
@@ -758,20 +762,26 @@ void SourceParams::SetSignalRange (SignalRangeType sr)
     case SIGNAL_RANGE_8BIT_FULL:
         m_luma_offset = 0;
         m_luma_excursion = 255;
-        m_chroma_offset = 0;
+        m_chroma_offset = 128;
         m_chroma_excursion = 255;
         break;
     case SIGNAL_RANGE_8BIT_VIDEO:
         m_luma_offset = 16;
-        m_luma_excursion = 235;
-        m_chroma_offset = 0;
+        m_luma_excursion = 219;
+        m_chroma_offset = 128;
         m_chroma_excursion = 224;
         break;
     case SIGNAL_RANGE_10BIT_VIDEO:
         m_luma_offset = 64;
         m_luma_excursion = 876;
-        m_chroma_offset = 0;
+        m_chroma_offset = 512;
         m_chroma_excursion = 896;
+        break;
+    case SIGNAL_RANGE_12BIT_VIDEO:
+        m_luma_offset = 256;
+        m_luma_excursion = 3504;
+        m_chroma_offset = 2048;
+        m_chroma_excursion = 3584;
         break;
     default:
         m_sr_idx = SIGNAL_RANGE_CUSTOM;
@@ -805,7 +815,7 @@ void SourceParams::SetColourSpecification (unsigned int cs_idx)
         break;
     case 4:
         m_col_primary = CP_CIE_XYZ;
-        m_col_matrix = CM_REVERSIBLE;
+        m_col_matrix = CM_HDTV_COMP_INTERNET;
         m_transfer_func = TF_DCINEMA;
         break;
     default:
@@ -1104,22 +1114,22 @@ VideoFormat IntToVideoFormat(int video_format)
     {
     case VIDEO_FORMAT_CUSTOM:
         return VIDEO_FORMAT_CUSTOM;
-    case VIDEO_FORMAT_QSIF:
-        return VIDEO_FORMAT_QSIF;
+    case VIDEO_FORMAT_QSIF525:
+        return VIDEO_FORMAT_QSIF525;
     case VIDEO_FORMAT_QCIF:
         return VIDEO_FORMAT_QCIF;
-    case VIDEO_FORMAT_SIF:
-        return VIDEO_FORMAT_SIF;
+    case VIDEO_FORMAT_SIF525:
+        return VIDEO_FORMAT_SIF525;
     case VIDEO_FORMAT_CIF:
         return VIDEO_FORMAT_CIF;
     case VIDEO_FORMAT_4CIF:
         return VIDEO_FORMAT_4CIF;
-    case VIDEO_FORMAT_4SIF:
-        return VIDEO_FORMAT_4SIF;
-    case VIDEO_FORMAT_SD_525_DIGITAL:
-        return VIDEO_FORMAT_SD_525_DIGITAL;
-    case VIDEO_FORMAT_SD_625_DIGITAL:
-        return VIDEO_FORMAT_SD_625_DIGITAL;
+    case VIDEO_FORMAT_4SIF525:
+        return VIDEO_FORMAT_4SIF525;
+    case VIDEO_FORMAT_SD_480I60:
+        return VIDEO_FORMAT_SD_480I60;
+    case VIDEO_FORMAT_SD_576I50:
+        return VIDEO_FORMAT_SD_576I50;
     case VIDEO_FORMAT_HD_720P60:
         return VIDEO_FORMAT_HD_720P60;
     case VIDEO_FORMAT_HD_720P50:
@@ -1132,10 +1142,10 @@ VideoFormat IntToVideoFormat(int video_format)
         return VIDEO_FORMAT_HD_1080P60;
     case VIDEO_FORMAT_HD_1080P50:
         return VIDEO_FORMAT_HD_1080P50;
-    case VIDEO_FORMAT_DIGI_CINEMA_2K:
-        return VIDEO_FORMAT_DIGI_CINEMA_2K;
-    case VIDEO_FORMAT_DIGI_CINEMA_4K:
-        return VIDEO_FORMAT_DIGI_CINEMA_4K;
+    case VIDEO_FORMAT_DIGI_CINEMA_2K24:
+        return VIDEO_FORMAT_DIGI_CINEMA_2K24;
+    case VIDEO_FORMAT_DIGI_CINEMA_4K24:
+        return VIDEO_FORMAT_DIGI_CINEMA_4K24;
     default:
         return VIDEO_FORMAT_UNDEFINED;
     }
@@ -1199,6 +1209,8 @@ AspectRatioType IntToAspectRatioType(int aspect_ratio_idx)
         return ASPECT_RATIO_40_33;
     case ASPECT_RATIO_16_11:
         return ASPECT_RATIO_16_11;
+    case ASPECT_RATIO_4_3:
+        return ASPECT_RATIO_4_3;
     default:
         return ASPECT_RATIO_UNDEFINED;
 
@@ -1217,6 +1229,8 @@ SignalRangeType IntToSignalRangeType(int signal_range_idx)
         return SIGNAL_RANGE_8BIT_VIDEO;
     case SIGNAL_RANGE_10BIT_VIDEO:
         return SIGNAL_RANGE_10BIT_VIDEO;
+    case SIGNAL_RANGE_12BIT_VIDEO:
+        return SIGNAL_RANGE_12BIT_VIDEO;
     default:
         return SIGNAL_RANGE_UNDEFINED;
     }
