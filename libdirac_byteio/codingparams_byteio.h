@@ -100,7 +100,7 @@ namespace dirac
         /**
         * Reads if material was coded interlaced or progressive
         */
-        void InputInterlaceCoding();
+        void InputInterlacedCoding();
 
         /**
         * Outputs number of bits used to compress input signal 
@@ -110,7 +110,7 @@ namespace dirac
         /**
         * Outputs how input was coded - i.e. interlaced or progressive
         */
-        void OutputInterlaceCoding();
+        void OutputInterlacedCoding();
 
         /**
         * Source paramters for intput/output

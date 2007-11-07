@@ -62,7 +62,7 @@ CodingParamsByteIO::~CodingParamsByteIO()
 void CodingParamsByteIO::Input()
 {
     // input interlaced coding flag
-    InputInterlaceCoding();
+    InputInterlacedCoding();
 
     m_codec_params.SetTopFieldFirst(m_src_params.TopFieldFirst());
 
@@ -75,7 +75,7 @@ void CodingParamsByteIO::Input()
 
     // If source was coded interlaced, halve the vertical dimensions
     // to set them to field dimensions
-    if (m_codec_params.InterlaceCoding())
+    if (m_codec_params.InterlacedCoding())
     {
         m_codec_params.SetOrigYl(m_codec_params.OrigYl()>>1);
         m_codec_params.SetOrigChromaYl(m_codec_params.OrigChromaYl()>>1);
@@ -101,7 +101,7 @@ void CodingParamsByteIO::Input()
 void CodingParamsByteIO::Output()
 {
     // output interlaced coding flag
-    OutputInterlaceCoding();
+    OutputInterlacedCoding();
 
     // byte align
     ByteAlignOutput();
@@ -109,15 +109,15 @@ void CodingParamsByteIO::Output()
 
 //-------------private---------------------------------------------------------------
 
-void CodingParamsByteIO::InputInterlaceCoding()
+void CodingParamsByteIO::InputInterlacedCoding()
 {
-    m_codec_params.SetInterlaceCoding(InputBit());
+    m_codec_params.SetInterlacedCoding(InputBit());
 }
 
 
-void CodingParamsByteIO::OutputInterlaceCoding()
+void CodingParamsByteIO::OutputInterlacedCoding()
 {
-    OutputBit(m_codec_params.InterlaceCoding());
+    OutputBit(m_codec_params.InterlacedCoding());
 }
 
 
