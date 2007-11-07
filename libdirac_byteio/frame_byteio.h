@@ -113,12 +113,12 @@ namespace dirac
         /**
         * Returns true is frame in Reference frame
         */
-        int IsRef() const { return (GetParseCode()&0x04)==0x04;}
+        int IsRef() const { return (GetParseCode()&0x0C)==0x0C;}
 
         /**
         * Returns true is frame in Non-Reference frame
         */
-        int IsNonRef() const { return (GetParseCode()&0x04)==0x00;}
+        int IsNonRef() const { return (GetParseCode()&0x0C)==0x08;}
 
         /**
         * Gets parse-unit type
@@ -128,12 +128,12 @@ namespace dirac
         /**
         * Returns true is frame is Intra frame
         */
-        bool IsIntra() const { return NumRefs()==0; }
+        bool IsIntra() const { return IsPicture() && (NumRefs()==0) ; }
 
         /**
         * Returns true is frame is Inter frame
         */
-        bool IsInter() const { return NumRefs()>0; }
+        bool IsInter() const { return IsPicture() && (NumRefs()>0) ; }
 
         /***
         * Sets the MVDataIO

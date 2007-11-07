@@ -207,19 +207,19 @@ namespace dirac
         * Returns true is parse unit is Low Delay Sybtax unit
         */
         bool IsLowDelay() const
-        { return ((m_parse_code&0x80)==0x80); }
+        { return ((m_parse_code&0x88)==0x88); }
 
         /**
         * Returns true is parse unit is Core syntax unit
         */
         bool IsCoreSyntax() const
-        { return ((m_parse_code&0xB8)==0x08); }
+        { return ((m_parse_code&0x88)==0x08); }
 
         /**
         * Returns true is parse unit uses Arithmetic coding
         */
         bool IsUsingAC() const
-        { return ((m_parse_code&0x40)==0x40); }
+        { return ((m_parse_code&0x48)==0x08); }
 
     private:
 
