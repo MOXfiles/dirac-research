@@ -209,7 +209,7 @@ typedef struct
     /*! target bit rate in kbps */
     int trate;
     /*! interlace coding flag: 0 - frame coding; 1 - field coding */
-    int interlacecoding;
+    int interlacedcoding;
 } dirac_encparams_t;
 
 /*! Structure that holds the parameters that set up the encoder context */
@@ -232,9 +232,9 @@ typedef struct
     \param   preset     Preset to be used to initialise the encoder context
     \verbatim
 
-	For a full list of video formats presets supported and the default values
-	of the source and encoder parameters. refer to Annex C of the Dirac
-	ByteStream Specification.
+    For a full list of video formats presets supported and the default values
+    of the source and encoder parameters. refer to Annex C of the Dirac
+    ByteStream Specification.
 
     \endverbatim
 */
