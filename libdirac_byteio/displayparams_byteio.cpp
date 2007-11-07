@@ -40,7 +40,7 @@
 
 using namespace dirac;
 
-DisplayParamsByteIO::DisplayParamsByteIO( SourceParams& src_params,
+SourceParamsByteIO::SourceParamsByteIO( SourceParams& src_params,
                                          const SourceParams& default_src_params,
                                          const ByteIO& stream_data):
 ByteIO(stream_data),
@@ -51,13 +51,13 @@ m_default_src_params(default_src_params)
 
 }
 
-DisplayParamsByteIO::~DisplayParamsByteIO()
+SourceParamsByteIO::~SourceParamsByteIO()
 {
 }
 
 //-----------------public----------------------------------------------------
 
-void DisplayParamsByteIO::Input()
+void SourceParamsByteIO::Input()
 {
     // input frame dimensions
     InputFrameSize();
@@ -84,7 +84,7 @@ void DisplayParamsByteIO::Input()
     InputColourSpecification();
 }
 
-void DisplayParamsByteIO::Output()
+void SourceParamsByteIO::Output()
 {
     // input frame dimensions
     OutputFrameSize();
@@ -112,7 +112,7 @@ void DisplayParamsByteIO::Output()
 }
 
 //-------------------private-----------------------------------------------
-void DisplayParamsByteIO::InputFrameSize()
+void SourceParamsByteIO::InputFrameSize()
 {
     bool custom_flag = InputBit();
 
@@ -126,7 +126,7 @@ void DisplayParamsByteIO::InputFrameSize()
     m_src_params.SetYl(InputVarLengthUint());
 }
 
-void DisplayParamsByteIO::InputSamplingFormat()
+void SourceParamsByteIO::InputSamplingFormat()
 {
     bool chroma_flag = InputBit();
 
@@ -143,7 +143,7 @@ void DisplayParamsByteIO::InputSamplingFormat()
     m_src_params.SetCFormat(chroma_format);
 }
 
-void DisplayParamsByteIO::InputAspectRatio()
+void SourceParamsByteIO::InputAspectRatio()
 {
     bool aspect_ratio_flag = InputBit();
     if(!aspect_ratio_flag)
@@ -172,7 +172,7 @@ void DisplayParamsByteIO::InputAspectRatio()
 
 }
 
-void DisplayParamsByteIO::InputCleanArea()
+void SourceParamsByteIO::InputCleanArea()
 {
     bool clean_area_flag = InputBit();
     if(!clean_area_flag)
@@ -184,7 +184,7 @@ void DisplayParamsByteIO::InputCleanArea()
     m_src_params.SetTopOffset( InputVarLengthUint() );
 }
 
-void DisplayParamsByteIO::InputColourMatrix()
+void SourceParamsByteIO::InputColourMatrix()
 {
     bool colour_matrix_flag = InputBit();
     if(!colour_matrix_flag)
@@ -195,7 +195,7 @@ void DisplayParamsByteIO::InputColourMatrix()
     m_src_params.SetColourMatrixIndex(colour_matrix_index);
 }
 
-void DisplayParamsByteIO::InputColourPrimaries()
+void SourceParamsByteIO::InputColourPrimaries()
 {
     bool colour_primaries_flag = InputBit();
     if(!colour_primaries_flag)
@@ -206,7 +206,7 @@ void DisplayParamsByteIO::InputColourPrimaries()
     m_src_params.SetColourPrimariesIndex(colour_primaries_index);
 }
 
-void DisplayParamsByteIO::InputColourSpecification()
+void SourceParamsByteIO::InputColourSpecification()
 {
     bool colour_spec_flag = InputBit();
     if(!colour_spec_flag)
@@ -226,7 +226,7 @@ void DisplayParamsByteIO::InputColourSpecification()
     }
 }
 
-void DisplayParamsByteIO::InputFrameRate()
+void SourceParamsByteIO::InputFrameRate()
 {
     bool fr_flag = InputBit();
     if(!fr_flag)
@@ -253,7 +253,7 @@ void DisplayParamsByteIO::InputFrameRate()
     }
 }
 
-void DisplayParamsByteIO::InputScanFormat()
+void SourceParamsByteIO::InputScanFormat()
 {
     bool scan_flag = InputBit();
     if(!scan_flag)
@@ -265,12 +265,10 @@ void DisplayParamsByteIO::InputScanFormat()
         return;
 
     // read field dominance flag
-    bool field_flag = InputBit();
-    if(field_flag)
-        m_src_params.SetTopFieldFirst(InputBit());
+    m_src_params.SetTopFieldFirst(InputBit());
 }
 
-void DisplayParamsByteIO::InputSignalRange()
+void SourceParamsByteIO::InputSignalRange()
 {
     bool signal_range_flag = InputBit();
     if(!signal_range_flag)
@@ -300,7 +298,7 @@ void DisplayParamsByteIO::InputSignalRange()
     }
 }
 
-void DisplayParamsByteIO::InputTransferFunction()
+void SourceParamsByteIO::InputTransferFunction()
 {
     bool trans_fun_flag = InputBit();
     if(!trans_fun_flag)
@@ -311,7 +309,7 @@ void DisplayParamsByteIO::InputTransferFunction()
     m_src_params.SetTransferFunctionIndex(trans_fun_index);
 }
 
-void DisplayParamsByteIO::OutputFrameSize()
+void SourceParamsByteIO::OutputFrameSize()
 {
 
     // output 'is custom' dimensions flag
@@ -329,7 +327,7 @@ void DisplayParamsByteIO::OutputFrameSize()
 
 }
 
-void DisplayParamsByteIO::OutputSamplingFormat()
+void SourceParamsByteIO::OutputSamplingFormat()
 {
     // output 'is default' flag
     bool not_default =  m_src_params.CFormat()!=m_default_src_params.CFormat();
@@ -344,7 +342,7 @@ void DisplayParamsByteIO::OutputSamplingFormat()
 }
 
 
-void DisplayParamsByteIO::OutputAspectRatio()
+void SourceParamsByteIO::OutputAspectRatio()
 {
     if (m_src_params.AspectRatioIndex()!= ASPECT_RATIO_CUSTOM
         && m_src_params.AspectRatioIndex() == m_default_src_params.AspectRatioIndex())
@@ -367,7 +365,7 @@ void DisplayParamsByteIO::OutputAspectRatio()
 }
 
 
-void DisplayParamsByteIO::OutputCleanArea()
+void SourceParamsByteIO::OutputCleanArea()
 {
     if (m_src_params.CleanWidth() != m_default_src_params.CleanWidth() ||
         m_src_params.CleanHeight() != m_default_src_params.CleanHeight() ||
@@ -384,7 +382,7 @@ void DisplayParamsByteIO::OutputCleanArea()
         OutputBit(0); // default value
 }
 
-void DisplayParamsByteIO::OutputColourSpecification()
+void SourceParamsByteIO::OutputColourSpecification()
 {
     if (m_src_params.ColourSpecificationIndex() &&
         m_src_params.ColourSpecificationIndex() == 
@@ -440,7 +438,7 @@ void DisplayParamsByteIO::OutputColourSpecification()
     }
 }
 
-void DisplayParamsByteIO::OutputFrameRate()
+void SourceParamsByteIO::OutputFrameRate()
 {
     if (m_src_params.FrameRateIndex()!=FRAMERATE_CUSTOM
         && m_src_params.FrameRateIndex() == m_default_src_params.FrameRateIndex())
@@ -462,7 +460,7 @@ void DisplayParamsByteIO::OutputFrameRate()
     }
 }
 
-void DisplayParamsByteIO::OutputScanFormat()
+void SourceParamsByteIO::OutputScanFormat()
 {
     // output 'is default' flag
     bool not_interlace_default =  m_src_params.Interlace()!=m_default_src_params.Interlace();
@@ -475,23 +473,15 @@ void DisplayParamsByteIO::OutputScanFormat()
     // output interlace value
     OutputBit(m_src_params.Interlace());
 
-    if(!m_src_params.Interlace())
-        return;
-
-    // output field dominance flag
-    bool not_field_dom_default =  m_src_params.TopFieldFirst()!=m_default_src_params.TopFieldFirst();
-    
-    OutputBit(not_field_dom_default);
-
-    if(not_field_dom_default)
+    if(m_src_params.Interlace())
     {
-        // output top field value
+        // output field dominance flag
         OutputBit(m_src_params.TopFieldFirst());
     }
 }
 
 
-void DisplayParamsByteIO::OutputSignalRange()
+void SourceParamsByteIO::OutputSignalRange()
 {
     if (m_src_params.SignalRangeIndex()!=SIGNAL_RANGE_CUSTOM && 
         m_src_params.SignalRangeIndex() == m_default_src_params.SignalRangeIndex())

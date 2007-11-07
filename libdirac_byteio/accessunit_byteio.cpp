@@ -48,7 +48,7 @@ m_parseparams_byteio(*this),
 // create default source parameters for comparisions
 m_default_src_params(src_params.GetVideoFormat()),
 m_src_params(src_params),
-m_displayparams_byteio( m_src_params,
+m_sourceparams_byteio( m_src_params,
                         m_default_src_params,
                        *this),
 m_codec_params(codec_params),
@@ -67,7 +67,7 @@ AccessUnitByteIO::AccessUnitByteIO(const ParseUnitByteIO& parseunit_byteio,
 ParseUnitByteIO(parseunit_byteio),
 m_parseparams_byteio( parseunit_byteio, parse_params),
 m_src_params(src_params),
-m_displayparams_byteio( m_src_params,
+m_sourceparams_byteio( m_src_params,
                         m_default_src_params,
                         parseunit_byteio),
 m_codec_params(codec_params),
@@ -100,7 +100,7 @@ bool AccessUnitByteIO::Input()
     SourceParams src_params(vf, true);
     m_src_params = src_params;
     
-    InputDisplayParams();
+    InputSourceParams();
     
     CodecParams codec_params(vf);
     m_codec_params = codec_params;
@@ -118,7 +118,7 @@ void AccessUnitByteIO::Output()
     SetByteParams(m_parseparams_byteio);
     OutputVarLengthUint(static_cast<int>(m_src_params.GetVideoFormat()));
 
-    OutputDisplayParams();
+    OutputSourceParams();
 
     OutputCodingParams();
   
@@ -129,7 +129,7 @@ int AccessUnitByteIO::GetSize() const
     return ParseUnitByteIO::GetSize()+
            m_parseparams_byteio.GetSize()+
            ByteIO::GetSize() + 
-           m_displayparams_byteio.GetSize()+
+           m_sourceparams_byteio.GetSize()+
            m_codingparams_byteio.GetSize();
 }
 
@@ -147,12 +147,12 @@ unsigned char AccessUnitByteIO::CalcParseCode() const
 }
 
 
-void AccessUnitByteIO::InputDisplayParams()
+void AccessUnitByteIO::InputSourceParams()
 {
      // copy current input params
-    m_displayparams_byteio.SetByteParams(*this);
+    m_sourceparams_byteio.SetByteParams(*this);
 
-    m_displayparams_byteio.Input();
+    m_sourceparams_byteio.Input();
 }
 
 void AccessUnitByteIO::InputParseParams()
@@ -163,17 +163,17 @@ void AccessUnitByteIO::InputParseParams()
 void AccessUnitByteIO::InputCodingParams()
 {
     // copy current input params
-    m_codingparams_byteio.SetByteParams(m_displayparams_byteio);
+    m_codingparams_byteio.SetByteParams(m_sourceparams_byteio);
 
     m_codingparams_byteio.Input();
 }
 
-void AccessUnitByteIO::OutputDisplayParams()
+void AccessUnitByteIO::OutputSourceParams()
 {
     // copy current output params
-    m_displayparams_byteio.SetByteParams(*this);
+    m_sourceparams_byteio.SetByteParams(*this);
 
-    m_displayparams_byteio.Output();
+    m_sourceparams_byteio.Output();
 }
 
 void AccessUnitByteIO::OutputParseParams()
@@ -184,7 +184,7 @@ void AccessUnitByteIO::OutputParseParams()
 void AccessUnitByteIO::OutputCodingParams()
 {
     // copy current output params
-    m_codingparams_byteio.SetByteParams(m_displayparams_byteio);
+    m_codingparams_byteio.SetByteParams(m_sourceparams_byteio);
 
     m_codingparams_byteio.Output();
 }
