@@ -69,27 +69,27 @@ static void display_help()
     cout << "\n";
     cout << "\nName              Type             Default Value Description";
     cout << "\n====              ====             ============= ===========                                       ";
-    cout << "\nQSIF              bool    false         Use QSIF compression presets";
+    cout << "\nQSIF525           bool    false         Use QSIF compression presets";
     cout << "\nQCIF              bool    false         Use QCIF compression presets";
-    cout << "\nSIF               bool    false         Use SIF compression presets";
+    cout << "\nSIF525            bool    false         Use SIF compression presets";
     cout << "\nCIF               bool    false         Use CIF compression presets";
     cout << "\n4CIF              bool    false         Use 4CIF compression presets";
-    cout << "\n4SIF              bool    false         Use 4SIF compression presets";
-    cout << "\nSD480             bool    false         Use SD-480 compression presets";
-    cout << "\nSD576             bool    false         Use SD-576 compression presets";
+    cout << "\n4SIF525           bool    false         Use 4SIF compression presets";
+    cout << "\nSD480I60          bool    false         Use SD-480 compression presets";
+    cout << "\nSD576I50          bool    false         Use SD-576 compression presets";
     cout << "\nHD720P60          bool    false         Use HD-720P60 compression presets";
     cout << "\nHD720P50          bool    false         Use HD-720P50 compression presets";
     cout << "\nHD1080I60         bool    false         Use HD-1080I60 compression presets";
     cout << "\nHD1080I50         bool    false         Use HD-1080I50 compression presets";
     cout << "\nHD1080P60         bool    false         Use HD-1080P60 compression presets";
     cout << "\nHD1080P50         bool    false         Use HD-1080P50 compression presets";
-    cout << "\n2KCINEMA          bool    false         Use DIGITAL CINEMA 2K compression presets";
-    cout << "\n4KCINEMA         bool    false          Use DIGITAL CINEMA 4K compression presets";
+    cout << "\nDC2K24            bool    false         Use DIGITAL CINEMA 2K compression presets";
+    cout << "\nDC4K24           bool    false          Use DIGITAL CINEMA 4K compression presets";
     cout << "\nfull_search     ulong ulong  0UL 0UL         Use full search motion estimation";
     cout << "\nwidth             ulong   Preset        Width of frame";
     cout << "\nheight            ulong   Preset        Length of frame";
     cout << "\nheight            ulong   Preset        Length of frame";
-    cout << "\ncformat           ulong   444           Chroma format 0=444 1=422 2=420";
+    cout << "\ncformat           string  YUV444P       Chroma Sampling Format (YUV444P YUV422P YUV420P)";
     cout << "\nfr                ulong   Preset        Frame rate(s) (e.n or e/n format)";
     cout << "\nsource_type       string  progressive   source material type either progressive or interlaced";
     cout << "\nfield_dominance   string  topfieldfirst Field dominance in interlaced source - topfieldfirst or bottomfield first";
@@ -153,7 +153,7 @@ bool WritePicData (std::ofstream &fdata, dirac_encoder_t *encoder)
     return ret_stat;
 }
 
-bool WriteSequenceHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
+bool WriteDiagnosticsHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
 {
     bool ret_stat = true;
     dirac_sourceparams_t &srcparams = encoder->enc_ctx.src_params;
@@ -171,6 +171,7 @@ bool WriteSequenceHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
         fdata << srcparams.frame_rate.denominator << std::endl;
         fdata << srcparams.pix_asr.numerator << std::endl;
         fdata << srcparams.pix_asr.denominator << std::endl;
+        fdata << encoder->enc_ctx.enc_params.interlacedcoding << std::endl;
     }
 
     catch (...)
@@ -378,24 +379,36 @@ int GetFrameBufferSize (const dirac_encoder_context_t &enc_ctx)
     }
     return size;
 }
-const string chroma2string (dirac_chroma_t chroma)
+const string ChromaToString (dirac_chroma_t chroma)
 {
     switch (chroma)
     {
     case format422:
-        return string("4:2:2");
+        return string("YUV422P");
 
     case format444:
-        return string("4:4:4");
+        return string("YUV444P");
 
     case format420:
-        return string("4:2:0");
+        return string("YUV420P");
 
     default:
         break;
     }
 
     return string("Unknown");
+}
+
+dirac_chroma_t StringToChroma (const char* chroma)
+{
+    if (strcmp(chroma, "YUV444P") == 0)
+        return format444;
+    else if (strcmp(chroma, "YUV422P") == 0)
+        return format422;
+    else if (strcmp(chroma, "YUV420P") == 0)
+        return format420;
+    else
+        return formatNK;
 }
 
 const string MvPrecisionToString (MVPrecisionType mv_type)
@@ -463,7 +476,7 @@ void display_codec_params(dirac_encoder_context_t &enc_ctx)
     std::cout << "Source parameters : " << std::endl;
     std::cout << "\theight=" << enc_ctx.src_params.height;
     std::cout << " width=" << enc_ctx.src_params.width << std::endl;
-    std::cout << "\tchroma=" << chroma2string(enc_ctx.src_params.chroma) << std::endl;
+    std::cout << "\tchroma=" << ChromaToString(enc_ctx.src_params.chroma) << std::endl;
     std::cout << "\tframe rate=" << enc_ctx.src_params.frame_rate.numerator;
     std::cout << "/" << enc_ctx.src_params.frame_rate.denominator << std::endl;
     std::cout << "Encoder parameters : " << std::endl;
@@ -481,7 +494,7 @@ void display_codec_params(dirac_encoder_context_t &enc_ctx)
     std::cout << " \tSpatial Partitioning=" << (enc_ctx.enc_params.spatial_partition ? "true" : "false") << std::endl;
     std::cout << " \tMultiple Quantisers=" << (enc_ctx.enc_params.multi_quants ? "true" : "false") << std::endl;
     std::cout << " \tDenoising input=" << (enc_ctx.enc_params.denoise ? "true" : "false") << std::endl;
-    std::cout << " \tInterlaced coding=" << (enc_ctx.enc_params.interlacecoding ? "true" : "false") << std::endl;
+    std::cout << " \tInterlaced coding=" << (enc_ctx.enc_params.interlacedcoding ? "true" : "false") << std::endl;
 }
 
 int start_pos = 0;
@@ -520,9 +533,9 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
     dirac_encoder_presets_t preset = VIDEO_FORMAT_CUSTOM;
     for (int i = 1; i < argc; i++)
     {
-        if ( strcmp (argv[i], "-QSIF") == 0 )
+        if ( strcmp (argv[i], "-QSIF525") == 0 )
         {
-            preset = VIDEO_FORMAT_QSIF;
+            preset = VIDEO_FORMAT_QSIF525;
             parsed[i] = true;
         }
         else if ( strcmp (argv[i], "-QCIF") == 0 )
@@ -530,9 +543,9 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             preset = VIDEO_FORMAT_QCIF;
             parsed[i] = true;
         }
-        else  if ( strcmp (argv[i], "-SIF") == 0 )
+        else  if ( strcmp (argv[i], "-SIF525") == 0 )
         {
-            preset = VIDEO_FORMAT_SIF;
+            preset = VIDEO_FORMAT_SIF525;
             parsed[i] = true;
         }
         else if ( strcmp (argv[i], "-CIF") == 0 )
@@ -545,19 +558,19 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             preset = VIDEO_FORMAT_4CIF;
             parsed[i] = true;
         }
-        else if ( strcmp (argv[i], "-4SIF") == 0 )
+        else if ( strcmp (argv[i], "-4SIF525") == 0 )
         {
-            preset = VIDEO_FORMAT_4SIF;
+            preset = VIDEO_FORMAT_4SIF525;
             parsed[i] = true;
         }
-        else if ( strcmp (argv[i], "-SD480") == 0 )
+        else if ( strcmp (argv[i], "-SD480I60") == 0 )
         {
-            preset = VIDEO_FORMAT_SD_525_DIGITAL;
+            preset = VIDEO_FORMAT_SD_480I60;
             parsed[i] = true;
         }
-        else if ( strcmp (argv[i], "-SD576") == 0 )
+        else if ( strcmp (argv[i], "-SD576I50") == 0 )
         {
-            preset = VIDEO_FORMAT_SD_625_DIGITAL;
+            preset = VIDEO_FORMAT_SD_576I50;
             parsed[i] = true;
         }
         else if ( strcmp (argv[i], "-HD720P60") == 0 )
@@ -590,14 +603,14 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             preset = VIDEO_FORMAT_HD_1080P50;
             parsed[i] = true;
         }
-        else if ( strcmp (argv[i], "-2KCINEMA") == 0 )
+        else if ( strcmp (argv[i], "-DC2K24") == 0 )
         {
-            preset = VIDEO_FORMAT_DIGI_CINEMA_2K;
+            preset = VIDEO_FORMAT_DIGI_CINEMA_2K24;
             parsed[i] = true;
         }
-        else if ( strcmp (argv[i], "-4KCINEMA") == 0 )
+        else if ( strcmp (argv[i], "-DC4K24") == 0 )
         {
-            preset = VIDEO_FORMAT_DIGI_CINEMA_4K;
+            preset = VIDEO_FORMAT_DIGI_CINEMA_4K24;
             parsed[i] = true;
         }
     }
@@ -628,9 +641,14 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
         {
             parsed[i] = true;
             i++;
-            enc_ctx.src_params.chroma =
-                (ChromaFormat)strtoul(argv[i],NULL,10);
-            parsed[i] = true;
+            enc_ctx.src_params.chroma = StringToChroma (argv[i]);
+            if (enc_ctx.src_params.chroma == formatNK)
+            {
+                cerr << "Unsupported chroma format" << argv[i] << endl;
+                parsed[i] = false;
+            }
+            else
+                parsed[i] = true;
         }
         else if ( strcmp(argv[i], "-fr") == 0 )
         {
@@ -726,7 +744,7 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
         else if ( strcmp(argv[i], "-interlace_coding") == 0 )
         {
             parsed[i] = true;
-            enc_ctx.enc_params.interlacecoding =  true;
+            enc_ctx.enc_params.interlacedcoding =  true;
             fields_factor = 2;
         }
         else if ( strcmp(argv[i], "-qf") == 0 )
@@ -1069,7 +1087,7 @@ int main (int argc, char* argv[])
 
 
     if (outimt)
-       WriteSequenceHeader ( *outimt, encoder );
+       WriteDiagnosticsHeader ( *outimt, encoder );
 
 
     int pictures_written = 0;

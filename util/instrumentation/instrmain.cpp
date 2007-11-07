@@ -81,7 +81,7 @@ static void DisplayHelp()
     cout << "\nverbose              bool    I  false         Display information during process";
 }
 
-bool ReadSequenceParams (std::istream &in, SourceParams& srcparams)
+bool ReadInstrumentationHeader (std::istream &in, SourceParams& srcparams, bool &interlacedcoding)
 {
     if (! in )
         return false;
@@ -109,6 +109,11 @@ bool ReadSequenceParams (std::istream &in, SourceParams& srcparams)
     in >> denom;
     srcparams.SetFrameRate( num, denom );
 
+    in >> num;
+    in >> denom;
+    srcparams.SetAspectRatio( num, denom );
+    
+    in >> interlacedcoding;
     return true;
 }
 
@@ -298,16 +303,20 @@ int main (int argc, char* argv[])
     }
 
     SourceParams srcparams;
-    ReadSequenceParams (in, srcparams);
+    bool interlacedcoding; // true if material has been coded as interlaced
+    ReadInstrumentationHeader (in, srcparams, interlacedcoding);
     SourceParams out_srcparams(srcparams);
 
     // Create objects for input and output picture sequences
     char yuv_file[FILENAME_MAX];
     strcpy(yuv_file, input.c_str());
     strcat(yuv_file, ".localdec.yuv");
-    FileStreamInput inputpic(yuv_file, srcparams, srcparams.Interlace());
+    // hack hack - set interlace flag in source params to interlacedcoding
+    // so that the Frame Parameters are set correctly.
+    srcparams.SetInterlace(interlacedcoding);
+    FileStreamInput inputpic(yuv_file, srcparams, interlacedcoding);
 
-    if (out_srcparams.Interlace())
+    if (interlacedcoding)
         out_srcparams.SetYl(out_srcparams.Yl()>>1);
     FileStreamOutput outputpic(output.c_str(), out_srcparams, false);
 
