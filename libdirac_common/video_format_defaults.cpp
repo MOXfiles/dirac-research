@@ -147,7 +147,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetXl(176);
         sparams.SetYl(120);
         sparams.SetTopFieldFirst(false);
-        sparams.SetFrameRate(15000, 1001);
+        sparams.SetFrameRate(FRAMERATE_14p98_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_10_11);
         sparams.SetCleanWidth(176);
         sparams.SetCleanHeight(120);
@@ -156,7 +156,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
     case VIDEO_FORMAT_QCIF:
         sparams.SetXl(176);
         sparams.SetYl(144);
-        sparams.SetFrameRate(25, 2);
+        sparams.SetFrameRate(FRAMERATE_12p5_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_12_11);
         sparams.SetCleanWidth(176);
         sparams.SetCleanHeight(144);
@@ -166,7 +166,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetXl(352);
         sparams.SetYl(240);
         sparams.SetTopFieldFirst(false);
-        sparams.SetFrameRate(15000, 1001);
+        sparams.SetFrameRate(FRAMERATE_14p98_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_10_11);
         sparams.SetCleanWidth(352);
         sparams.SetCleanHeight(240);
@@ -175,7 +175,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
     case VIDEO_FORMAT_CIF:
         sparams.SetXl(352);
         sparams.SetYl(288);
-        sparams.SetFrameRate(25, 2);
+        sparams.SetFrameRate(FRAMERATE_12p5_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_12_11);
         sparams.SetCleanWidth(352);
         sparams.SetCleanHeight(288);
@@ -185,7 +185,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetXl(704);
         sparams.SetYl(480);
         sparams.SetTopFieldFirst(false);
-        sparams.SetFrameRate(15000, 1001);
+        sparams.SetFrameRate(FRAMERATE_14p98_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_10_11);
         sparams.SetCleanWidth(704);
         sparams.SetCleanHeight(480);
@@ -194,7 +194,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
     case VIDEO_FORMAT_4CIF:
         sparams.SetXl(704);
         sparams.SetYl(576);
-        sparams.SetFrameRate(25, 2);
+        sparams.SetFrameRate(FRAMERATE_12p5_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_12_11);
         sparams.SetCleanWidth(704);
         sparams.SetCleanHeight(576);

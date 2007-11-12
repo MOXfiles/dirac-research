@@ -711,6 +711,14 @@ void SourceParams::SetFrameRate (FrameRateType fr)
         m_framerate.m_num = 60;
         m_framerate.m_denom = 1;
         break;
+    case FRAMERATE_14p98_FPS:
+        m_framerate.m_num = 15000;
+        m_framerate.m_denom = 1001;
+        break;
+    case FRAMERATE_12p5_FPS:
+        m_framerate.m_num = 25;
+        m_framerate.m_denom = 2;
+        break;
     default:
         m_fr_idx = FRAMERATE_CUSTOM;
         m_framerate.m_num = m_framerate.m_denom = 0;
@@ -1188,6 +1196,10 @@ FrameRateType IntToFrameRateType(int frame_rate_idx)
         return FRAMERATE_59p94_FPS;
     case FRAMERATE_60_FPS:
         return FRAMERATE_60_FPS;
+    case FRAMERATE_14p98_FPS:
+        return FRAMERATE_14p98_FPS;
+    case FRAMERATE_12p5_FPS:
+        return FRAMERATE_12p5_FPS;
     default:
         return FRAMERATE_UNDEFINED;
     }
