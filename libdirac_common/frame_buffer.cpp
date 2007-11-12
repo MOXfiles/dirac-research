@@ -452,36 +452,52 @@ void FrameBuffer::Remove(const unsigned int pos)
 }
 
 
-void FrameBuffer::SetRetiredList(const int show_fnum, const int current_coded_fnum)
+void FrameBuffer::SetRetiredFrameNum(const int show_fnum, const int current_coded_fnum)
 {
-    bool is_present;
-    std::vector<int>& retd_list = GetFrame(current_coded_fnum, is_present).GetFparams().RetiredFrames();
-    if (is_present )
+    if ( IsFrameAvail(current_coded_fnum))
     {
-        retd_list.clear();
+        FrameParams &fparams = GetFrame(current_coded_fnum).GetFparams();
+        fparams.SetRetiredFrameNum(-1);
         for (size_t i=0 ; i<m_frame_data.size() ; ++i)
         {
             if (m_frame_in_use[i] == true && (m_frame_data[i]->GetFparams().FrameNum() + m_frame_data[i]->GetFparams().ExpiryTime() ) <= show_fnum)
             {
-                // Only _reference_ frames go in the retired list - the
+                // Only _reference_ frames can be retired - the
                 // decoder will retire non-reference frames as they are displayed
                 if (m_frame_data[i]->GetFparams().FSort().IsRef() )
-                    retd_list.push_back( m_frame_data[i]->GetFparams().FrameNum());
+                {
+                    fparams.SetRetiredFrameNum(m_frame_data[i]->GetFparams().FrameNum()); 
+                    break;
+                }
             }
         }//i
     }
 }
-
-void FrameBuffer::Clean(const int show_fnum, const int current_coded_fnum)
+void FrameBuffer::CleanAll(const int show_fnum, const int current_coded_fnum)
 {// clean out all frames that have expired
-    bool is_present;
-    std::vector<int>& retd_list = GetFrame(current_coded_fnum, is_present).GetFparams().RetiredFrames();
-    if (is_present )
+    if (IsFrameAvail(current_coded_fnum))
     {
-        retd_list.clear();
         for (size_t i=0 ; i<m_frame_data.size() ; ++i)
         {
             if (m_frame_in_use[i] == true && (m_frame_data[i]->GetFparams().FrameNum() + m_frame_data[i]->GetFparams().ExpiryTime() ) <= show_fnum)
+                Remove(i);
+        }//i
+    }
+}
+
+void FrameBuffer::CleanRetired(const int show_fnum, const int current_coded_fnum)
+{// clean out all frames that have expired
+    if ( IsFrameAvail(current_coded_fnum) )
+    {
+        FrameParams &fparams = GetFrame(current_coded_fnum).GetFparams();
+        // Remove Reference frame specified in retired frame number.
+        if (fparams.FSort().IsRef() && fparams.RetiredFrameNum()>= 0)
+            Clean(fparams.RetiredFrameNum());
+        fparams.SetRetiredFrameNum(-1);
+        // Remove non-reference frames that have expired
+        for (size_t i=0 ; i<m_frame_data.size() ; ++i)
+        {
+            if (m_frame_in_use[i] == true && (m_frame_data[i]->GetFparams().FrameNum() + m_frame_data[i]->GetFparams().ExpiryTime() ) <= show_fnum && m_frame_data[i]->GetFparams().FSort().IsNonRef())
                 Remove(i);
         }//i
     }
@@ -512,6 +528,7 @@ void FrameBuffer::SetProgressiveFrameParams( const unsigned int fnum )
     // This function can be ignored by setting the frame parameters directly if required
 
     m_fparams.SetFrameNum( fnum );
+    m_fparams.SetRetiredFrameNum( -1 );
     m_fparams.Refs().clear();
 
     if ( m_gop_len>0 )
@@ -519,8 +536,11 @@ void FrameBuffer::SetProgressiveFrameParams( const unsigned int fnum )
 
         if ( fnum % m_gop_len == 0)
         {
-            m_fparams.SetFSort( FrameSort::IntraRefFrameSort());
-
+            if (m_gop_len > 1)
+                m_fparams.SetFSort( FrameSort::IntraRefFrameSort());
+            else // I-frame only coding
+                m_fparams.SetFSort( FrameSort::IntraNonRefFrameSort());
+                
             // I frame expires after we've coded the next I frame
             m_fparams.SetExpiryTime( m_gop_len );
         }
@@ -601,6 +621,7 @@ void FrameBuffer::SetInterlacedFrameParams( const unsigned int fnum )
     // This function can be ignored by setting the frame parameters directly if required
 
     m_fparams.SetFrameNum( fnum );
+    m_fparams.SetRetiredFrameNum( -1 );
     m_fparams.Refs().clear();
 
 
@@ -610,15 +631,23 @@ void FrameBuffer::SetInterlacedFrameParams( const unsigned int fnum )
         if ( (fnum/2) % m_gop_len == 0)
         {
             // Field 1 is Intra Field
-            m_fparams.SetFSort( FrameSort::IntraRefFrameSort());
-
-            // I frame expires after we've coded the next I frame
-            m_fparams.SetExpiryTime( m_gop_len * 2);
-            if (m_interlace && fnum%2)
+            if (m_gop_len > 1)
             {
-                m_fparams.SetFSort( FrameSort::InterRefFrameSort());
-                // Ref the previous I field
-                m_fparams.Refs().push_back( fnum-1 );
+                m_fparams.SetFSort( FrameSort::IntraRefFrameSort());
+                // I frame expires after we've coded the next I frame
+                m_fparams.SetExpiryTime( m_gop_len * 2);
+                if (m_interlace && fnum%2)
+                {
+                    m_fparams.SetFSort( FrameSort::InterRefFrameSort());
+                    // Ref the previous I field
+                    m_fparams.Refs().push_back( fnum-1 );
+                }
+            }
+            else
+            {
+                // I-frame only coding
+                m_fparams.SetFSort( FrameSort::IntraNonRefFrameSort());
+                m_fparams.SetExpiryTime( m_gop_len );
             }
         }
         else if ((fnum/2) % m_L1_sep == 0)

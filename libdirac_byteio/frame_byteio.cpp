@@ -114,7 +114,9 @@ bool FrameByteIO::Input()
     InputReferencePictures();
     
     // input retired Picture numbers list
-    InputRetiredPictureList();
+    m_frame_params.SetRetiredFrameNum(-1);
+    if (IsRef())
+        InputRetiredPicture();
 
     // byte align
     ByteAlignInput();
@@ -165,14 +167,17 @@ void FrameByteIO::Output()
             OutputVarLengthInt(refs[i] - m_frame_num);
     }
 
-    // output retired frames
-    const std::vector<int>& retd_list = m_frame_params.RetiredFrames();
-    OutputVarLengthUint(retd_list.size());
-    for (size_t i = 0; i < retd_list.size(); ++i)
+    // output retired frame
+    ASSERTM (m_frame_params.GetReferenceType() == REFERENCE_FRAME || m_frame_params.RetiredFrameNum() == -1, "Only Reference frames can retire frames");
+    if(m_frame_params.GetReferenceType() == REFERENCE_FRAME)
     {
-        OutputVarLengthInt(retd_list[i] - m_frame_num);
+        if (m_frame_params.RetiredFrameNum() == -1)
+            OutputVarLengthInt(0);
+        else
+        {
+            OutputVarLengthInt (m_frame_params.RetiredFrameNum() - m_frame_num);
+        }
     }
-
     // byte align output
     ByteAlignOutput();
 
@@ -219,23 +224,16 @@ void FrameByteIO::InputReferencePictures()
         refs[i]=m_frame_num+InputVarLengthInt();
 }
     
-void FrameByteIO::InputRetiredPictureList() 
+void FrameByteIO::InputRetiredPicture() 
 {
-    if (IsLowDelay())
-        return;
+    TESTM(IsRef(), "Retired Picture offset only set for Reference Frames");
 
+    // input retired frame offset
+    int offset = InputVarLengthInt();
     // input retired frames
-    int val = InputVarLengthUint();
-    // input retired frames
-    std::vector<int>& retd_list = m_frame_params.RetiredFrames();
-    retd_list.resize(val);
-    if (val)
+    if (offset)
     {
-        for (size_t i = 0; i < retd_list.size(); ++i)
-        {
-            int offset = InputVarLengthInt();
-            retd_list[i] = m_frame_num + offset;
-        }
+        m_frame_params.SetRetiredFrameNum(m_frame_num + offset);
     }
 }
 

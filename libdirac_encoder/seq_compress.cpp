@@ -231,12 +231,14 @@ Frame& SequenceCompressor::CompressNextFrame()
         // Compress the frame//
         ///////////////////////
 
-        m_fbuffer->SetRetiredList( m_show_fnum, m_current_display_fnum );
 
 
         Frame& my_frame = m_fbuffer->GetFrame( m_current_display_fnum );
 
         FrameParams& fparams = my_frame.GetFparams();
+        
+        if (fparams.FSort().IsRef())
+            m_fbuffer->SetRetiredFrameNum( m_show_fnum, m_current_display_fnum );
 
         // Do motion estimation using the original (not reconstructed) data
         if (m_encparams.Verbose() && my_frame.GetFparams().FSort().IsInter())
@@ -302,7 +304,7 @@ Frame& SequenceCompressor::CompressNextFrame()
         // Increment our position
         m_current_code_fnum++;
 
-        CleanBuffers();
+       CleanBuffers();
 
     }
 
@@ -321,8 +323,8 @@ void SequenceCompressor::CleanBuffers()
     // If we're not at the beginning, clean the buffer
     if ( m_current_code_fnum != 0 )
     {
-        m_fbuffer->Clean( m_show_fnum, m_current_display_fnum );
-        m_mebuffer->Clean( m_show_fnum, m_current_display_fnum );
+        m_fbuffer->CleanRetired( m_show_fnum, m_current_display_fnum );
+        m_mebuffer->CleanAll( m_show_fnum, m_current_display_fnum );
     }
 }
 
@@ -635,7 +637,7 @@ void FieldSequenceCompressor::CleanBuffers()
     {
         SequenceCompressor::CleanBuffers();
         if (m_encparams.LocalDecode())
-            m_origbuffer->Clean( m_show_fnum, m_current_display_fnum );
+            m_origbuffer->CleanAll( m_show_fnum, m_current_display_fnum );
     }
 }
 

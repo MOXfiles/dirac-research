@@ -162,9 +162,9 @@ namespace dirac
         void InputReferencePictures();
 
         /**
-        * Reads retired list
+        * Reads retired picture number
         */
-        void InputRetiredPictureList();
+        void InputRetiredPicture();
 
         /**
         * Calculates frame-type (eg INTRA/INTER) of frame

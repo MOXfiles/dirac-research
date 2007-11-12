@@ -192,17 +192,17 @@ namespace dirac
         */
         void PushFrame( const Frame& frame );
 
-        //! Set retired list for reference frames that will be cleaned
+        //! Sets the reference frame number that will be cleaned
         /*!
-            Indicate frames which have been output and which are no longer
+            Indicate which frame which has been output and which is no longer
             required for reference. Expiry times are set in each frame's
             frame parameters.
             \param show_fnum             frame number in display order that can be output
             \param current_coded_fnum    frame number in display order of frame currently being coded
         */
-        void SetRetiredList(const int show_fnum, const int current_coded_fnum);
+        void SetRetiredFrameNum(const int show_fnum, const int current_coded_fnum);
 
-        //! Delete expired frames
+        //! Delete all expired frames
         /*!
             Delete frames which have been output and which are no longer
             required for reference. Expiry times are set in each frame's
@@ -210,7 +210,16 @@ namespace dirac
             \param show_fnum             frame number in display order that can be output
             \param current_coded_fnum    frame number in display order of frame currently being coded
         */
-        void Clean(const int show_fnum, const int current_coded_fnum);
+        void CleanAll(const int show_fnum, const int current_coded_fnum);
+
+        //! Delete retired reference frames and expired non-ref frames
+        /*!
+            Delete frames which have been output and retired reference frames.
+            Expiry times are set in each frame's frame parameters.
+            \param show_fnum             frame number in display order that can be output
+            \param current_coded_fnum    frame number in display order of frame currently being coded
+        */
+        void CleanRetired(const int show_fnum, const int current_coded_fnum);
 
         //! Delete frame
         /*!

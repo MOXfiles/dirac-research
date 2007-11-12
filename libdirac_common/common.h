@@ -850,6 +850,9 @@ namespace dirac
         //! Returns the number of the frame (in time order)
         int FrameNum() const {return m_fnum;}
 
+        //! Returns the retired reference frame number 
+        int RetiredFrameNum() const {return m_retd_fnum;}
+
         //! Returns whether the frame is bi-directionally predicted by checking references
         bool IsBFrame() const;
 
@@ -921,11 +924,8 @@ namespace dirac
         //! Set Chroma Depth
         void SetChromaDepth(unsigned int chroma_depth) { m_chroma_depth = chroma_depth; }
 
-        //! Returns a const C++ reference to the set of frame numbers to be retired
-        std::vector<int>& RetiredFrames() const {return m_retd_list;}
-
-        //! Returns a non-const C++ reference to the set of frame numbers to be retired
-        std::vector<int>& RetiredFrames() {return m_retd_list;}
+        //! Sets the retired reference frame number 
+        void SetRetiredFrameNum(int retd_fnum) {m_retd_fnum = retd_fnum;}
 
     private:
 
@@ -965,8 +965,8 @@ namespace dirac
         //! DWT Chroma height
         int m_dwt_chroma_yl;
 
-        //! The set of frame numbers in the retired frame list
-        mutable std::vector<int> m_retd_list;
+        //! The frame number of the retired frame
+        mutable  int m_retd_fnum;
 
         //! Orignal Frame luma width
         int m_orig_xl;
