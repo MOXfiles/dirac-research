@@ -198,7 +198,7 @@ static void DecodeDirac (const char *iname, const char *oname)
 
             if (verbose)
             {
-                fprintf (stderr, "SEQUENCE : major_ver=%d minor_version=%d profile=%d level=%d width=%d height=%d chroma=%s chroma_width=%d chroma_height=%d frame_rate=%d/%d, interlace=%s topfieldfirst=%s\n", 
+                fprintf (stdout, "\nSEQUENCE : major_ver=%d minor_version=%d profile=%d level=%d width=%d height=%d chroma=%s chroma_width=%d chroma_height=%d frame_rate=%d/%d, interlace=%s topfieldfirst=%s", 
                 decoder->parse_params.major_ver,
                 decoder->parse_params.minor_ver,
                 decoder->parse_params.profile,
@@ -232,7 +232,7 @@ static void DecodeDirac (const char *iname, const char *oname)
             * End of Sequence detected. Free the frame buffers
             */
             if (verbose)
-                fprintf (stderr, "SEQUENCE_END\n");
+                fprintf (stdout, "\nSEQUENCE_END");
             
             FreeFrameBuffer(decoder);
             break;
@@ -244,7 +244,7 @@ static void DecodeDirac (const char *iname, const char *oname)
             */
             if (verbose)
             {
-                fprintf (stderr, "PICTURE_START : frame_type=%s frame_num=%d\n",
+                fprintf (stdout, "\nPICTURE_START : frame_type=%s frame_num=%d",
                     ftype2string(decoder->frame_params.ftype, decoder->frame_params.rtype),
                     decoder->frame_params.fnum);
             }
@@ -252,7 +252,7 @@ static void DecodeDirac (const char *iname, const char *oname)
             if (skip && decoder->frame_params.rtype == NON_REFERENCE_FRAME)
             {
                 if (verbose)
-                    fprintf (stderr, "              : Skipping frame\n");
+                    fprintf (stdout, "\n              : Skipping frame");
 
                 dirac_skip (decoder, 1);
             }
@@ -264,7 +264,7 @@ static void DecodeDirac (const char *iname, const char *oname)
             num_frames++;
             if (verbose)
             {
-                fprintf (stderr, "PICTURE_AVAIL : frame_type=%s frame_num=%d\n",
+                fprintf (stdout, "\nPICTURE_AVAIL : frame_type=%s frame_num=%d",
                     ftype2string(decoder->frame_params.ftype, decoder->frame_params.rtype), 
                     decoder->frame_params.fnum);
             }
@@ -284,7 +284,7 @@ static void DecodeDirac (const char *iname, const char *oname)
     stop_t=clock();
 
     if ( verbose )
-        fprintf (stdout, "Time per frame: %g\n",
+        fprintf (stdout, "\nTime per frame: %g",
                 (double)(stop_t-start_t)/(double)(CLOCKS_PER_SEC*num_frames));
 
     fclose(fpdata);

@@ -231,7 +231,7 @@ DecoderState DiracParser::Parse()
                     m_show_fnum = my_frame.GetFparams().FrameNum();
                     if (m_verbose)
                     {
-                        std::cerr << "Frame " << m_show_fnum << " available" << std::endl;
+                        std::cout << std::endl << "Frame " << m_show_fnum << " available";
                     }
                     m_state = STATE_PICTURE_AVAIL;
                     return m_state;
