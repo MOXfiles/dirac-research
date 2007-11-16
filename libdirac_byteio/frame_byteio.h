@@ -177,6 +177,11 @@ namespace dirac
         void SetReferenceType();
 
         /**
+        * Sets the entropy coding flag in the frame parameters
+        */
+        void SetEntropyCodingFlag();
+
+        /**
         * Frame parameters
         */
         FrameParams&        m_frame_params;
