@@ -517,6 +517,7 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     m_encparams.SetUFactor(1.5f);
     m_encparams.SetVFactor(0.75f);
     m_encparams.SetMVPrecision(enc_ctx->enc_params.mv_precision);
+    m_encparams.SetUsingAC(enc_ctx->enc_params.using_ac);
     bparams.SetYblen( enc_ctx->enc_params.yblen );
     bparams.SetXblen( enc_ctx->enc_params.xblen );
     bparams.SetYbsep( enc_ctx->enc_params.ybsep );
@@ -910,6 +911,7 @@ static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
     encparams.denoise = default_enc_params.Denoise();
     encparams.L1_sep = default_enc_params.L1Sep();
     encparams.lossless = default_enc_params.Lossless();
+    encparams.using_ac = default_enc_params.UsingAC();
     encparams.num_L1 = default_enc_params.NumL1();
 
     // Set rate to zero by default, meaning no rate control

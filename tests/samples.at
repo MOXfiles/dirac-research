@@ -20,6 +20,11 @@ iframe_encout=`basename $iframe_encout`
 iframe_decout="$tsamp"_"iframe_dec.yuv";
 iframe_decout=`basename $iframe_decout`
 
+vc2_encout="$tsamp"_"vc2_enc.drc";
+vc2_encout=`basename $vc2_encout`
+vc2_decout="$tsamp"_"vc2_dec.yuv";
+vc2_decout=`basename $vc2_decout`
+
 width=0
 height=0
 chroma="unknown"
@@ -121,10 +126,25 @@ mv_prec=1/4
 echo "$samp $preset $chroma $width $height $mv_prec $extras"
 
 #iframe tests
-AT_CHECK([at_wrap dirac_encoder -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep $extras $samp ../../$iframe_encout], 0, [ignore])
+#  progressive
+AT_CHECK([at_wrap dirac_encoder -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma $extras $samp ../../$iframe_encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$iframe_encout ../../$iframe_decout], 0, [ignore])
 AT_CHECK([cmp ../../$iframe_encout.localdec.yuv ../../$iframe_decout])
+# interlaced 
+AT_CHECK([at_wrap dirac_encoder -interlace_coding -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma $extras $samp ../../"inter_"$iframe_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"inter_"$iframe_encout ../../"inter_"$iframe_decout], 0, [ignore])
 
+#vc-2 stream tests
+# progressive
+AT_CHECK([at_wrap dirac_encoder -use_vlc -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  $extras $samp ../../$vc2_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../$vc2_encout ../../$vc2_decout], 0, [ignore])
+AT_CHECK([cmp ../../$vc2_encout.localdec.yuv ../../$vc2_decout])
+# interlaced 
+AT_CHECK([at_wrap dirac_encoder -interlace_coding -use_vlc -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  $extras $samp ../../"inter_"$vc2_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"inter_"$vc2_encout ../../"inter_"$vc2_decout], 0, [ignore])
+
+#Long-GOP tests
+# progressive
 AT_CHECK([at_wrap dirac_encoder -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$encout ../../$decout], 0, [ignore])
 AT_CHECK([cmp ../../$encout.localdec.yuv ../../$decout])
@@ -134,6 +154,15 @@ AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mca_inst
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_spm_instr.yuv -split_mode -clip 50], 0)
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_sad_instr.yuv -sad -clip 50], 0)
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_pred_instr.yuv -pred_mode -clip 50], 0)
+# interlaced
+AT_CHECK([at_wrap dirac_encoder -interlace_coding -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"inter_"$encout ../../"inter_"$decout], 0, [ignore])
+AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_mc_instr.yuv -motion_colour -clip 50], 0)
+AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_ma_instr.yuv -motion_arrows -clip 50], 0)
+AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_mca_instr.yuv -motion_colour_arrows -clip 50], 0)
+AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_spm_instr.yuv -split_mode -clip 50], 0)
+AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_sad_instr.yuv -sad -clip 50], 0)
+AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_pred_instr.yuv -pred_mode -clip 50], 0)
 
 done
 AT_CLEANUP

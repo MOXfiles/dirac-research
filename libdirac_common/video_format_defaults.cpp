@@ -308,6 +308,7 @@ void SetDefaultEncoderParameters(EncoderParams& encparams)
     encparams.SetLossless(false);
     encparams.SetQf(7.0f);
     encparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
+    encparams.SetUsingAC(true);
 
     switch (encparams.GetVideoFormat())
     {

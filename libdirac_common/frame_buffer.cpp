@@ -47,7 +47,8 @@ FrameBuffer::FrameBuffer() :
     m_num_L1(0),
     m_L1_sep(1),
     m_gop_len(0),
-    m_interlace(false)
+    m_interlace(false),
+    m_using_ac(false)
 {}
 
 //Simple constructor for general operation
@@ -59,13 +60,15 @@ FrameBuffer::FrameBuffer(ChromaFormat cf,
                          const int dwt_cxlen,
                          const int dwt_cylen,
                          unsigned int luma_depth,
-                         unsigned int chroma_depth) :
+                         unsigned int chroma_depth,
+                         bool using_ac) :
     m_ref_count(0),
     m_fparams(cf, orig_xlen, orig_ylen, dwt_xlen, dwt_ylen, dwt_cxlen, dwt_cylen, luma_depth, chroma_depth),
     m_num_L1(0),
     m_L1_sep(1),
     m_gop_len(0),
-    m_interlace(false)
+    m_interlace(false),
+    m_using_ac(using_ac)
 {}
 
 //Constructor setting GOP parameters for use with a standard GOP
@@ -80,12 +83,14 @@ FrameBuffer::FrameBuffer(ChromaFormat cf,
                          const int dwt_cylen,
                          unsigned int luma_depth,
                          unsigned int chroma_depth,
-                         bool interlace) :
+                         bool interlace,
+                         bool using_ac) :
     m_ref_count(0),
     m_fparams(cf,orig_xlen, orig_ylen, dwt_xlen, dwt_ylen, dwt_cxlen, dwt_cylen, luma_depth, chroma_depth),
     m_num_L1(numL1),
     m_L1_sep(L1sep),
-    m_interlace(interlace)
+    m_interlace(interlace),
+    m_using_ac(using_ac)
 {
     if (m_num_L1>0)
     {// conventional GOP coding
@@ -133,6 +138,7 @@ FrameBuffer::FrameBuffer(const FrameBuffer& cpy)
     m_L1_sep = cpy.m_L1_sep;
     m_gop_len = cpy.m_gop_len;
     m_interlace = cpy.m_interlace;
+    m_using_ac = cpy.m_using_ac;
 }
 
 //Assignment=. Not sure why this would be used either.
@@ -165,6 +171,9 @@ FrameBuffer& FrameBuffer::operator=(const FrameBuffer& rhs){
 
         // and the interlace flag
         m_interlace = rhs.m_interlace;
+    
+        // and the arithmetic flag
+        m_using_ac = rhs.m_using_ac;
     }
     return *this;
 }
@@ -516,6 +525,7 @@ void FrameBuffer::Clean(const int fnum)
 
 void FrameBuffer::SetFrameParams( const unsigned int fnum )
 {
+    m_fparams.SetUsingAC( m_using_ac);
     if (!m_interlace)
         SetProgressiveFrameParams(fnum);
     else
@@ -539,8 +549,9 @@ void FrameBuffer::SetProgressiveFrameParams( const unsigned int fnum )
             if (m_gop_len > 1)
                 m_fparams.SetFSort( FrameSort::IntraRefFrameSort());
             else // I-frame only coding
+            {
                 m_fparams.SetFSort( FrameSort::IntraNonRefFrameSort());
-                
+            }    
             // I frame expires after we've coded the next I frame
             m_fparams.SetExpiryTime( m_gop_len );
         }

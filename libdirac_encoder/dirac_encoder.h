@@ -210,6 +210,8 @@ typedef struct
     int trate;
     /*! interlace coding flag: 0 - frame coding; 1 - field coding */
     int interlacedcoding;
+    /*! arithmetic coding flag: 0 - vlc coding; 1 - arithmetic coding */
+    int using_ac;
 } dirac_encparams_t;
 
 /*! Structure that holds the parameters that set up the encoder context */

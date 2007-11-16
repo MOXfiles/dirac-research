@@ -870,10 +870,11 @@ void SourceParams::SetTransferFunctionIndex (unsigned int tf)
 
 // Default constructor
 FrameParams::FrameParams():
-m_fsort(FrameSort::IntraRefFrameSort()),
-m_frame_type( INTRA_FRAME ),
-m_reference_type( REFERENCE_FRAME ),
-m_output(false)
+    m_fsort(FrameSort::IntraRefFrameSort()),
+    m_frame_type( INTRA_FRAME ),
+    m_reference_type( REFERENCE_FRAME ),
+    m_output(false),
+    m_using_ac(true)
 {}
 
 // Constructor
@@ -895,7 +896,8 @@ FrameParams::FrameParams(const ChromaFormat& cf,
     m_orig_xl(orig_xlen),
     m_orig_yl(orig_ylen),
     m_luma_depth(luma_depth),
-    m_chroma_depth(chroma_depth)
+    m_chroma_depth(chroma_depth),
+    m_using_ac(true)
 {
     m_orig_cxl = m_orig_cyl = 0;
     if (cf == format420)
@@ -918,7 +920,8 @@ FrameParams::FrameParams(const ChromaFormat& cf,
 // Constructor
 FrameParams::FrameParams(const ChromaFormat& cf, const FrameSort& fs):
     m_cformat(cf),
-    m_output(false)
+    m_output(false),
+    m_using_ac(true)
 {
     SetFSort( fs );
 }
@@ -937,7 +940,8 @@ FrameParams::FrameParams(const SourceParams& sparams):
     m_orig_xl(m_dwt_xl),
     m_orig_yl(m_dwt_yl),
     m_orig_cxl(m_dwt_chroma_xl),
-    m_orig_cyl(m_dwt_chroma_yl)
+    m_orig_cyl(m_dwt_chroma_yl),
+    m_using_ac(true)
 {
     if (sparams.Interlace())
     {
@@ -962,7 +966,8 @@ FrameParams::FrameParams(const SourceParams& sparams, const FrameSort& fs):
     m_dwt_yl(sparams.Yl()),
     m_output(false),
     m_orig_xl(sparams.Xl()),
-    m_orig_yl(sparams.Yl())
+    m_orig_yl(sparams.Yl()),
+    m_using_ac(true)
 {
     SetFSort(fs);
 

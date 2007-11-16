@@ -190,7 +190,7 @@ DecoderState DiracParser::Parse()
             }
             else
                 // otherwise....get remaining frames from buffer
-                pu_type = PU_FRAME;
+                pu_type = PU_CORE_FRAME;
             
         }
         
@@ -205,7 +205,7 @@ DecoderState DiracParser::Parse()
 
         switch(pu_type)
         {
-        case PU_ACCESS_UNIT:
+        case PU_SEQ_HEADER:
 
             if(!m_decomp)
             {
@@ -217,7 +217,7 @@ DecoderState DiracParser::Parse()
             m_decomp->NewAccessUnit(*p_parse_unit);
             break;
 
-        case PU_FRAME:
+        case PU_CORE_FRAME:
             {
                if (!m_decomp)
                    continue;

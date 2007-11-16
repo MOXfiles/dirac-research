@@ -877,6 +877,9 @@ namespace dirac
         //! Returns reference frame type (see enum)
         ReferenceType GetReferenceType() const { return m_reference_type;}
 
+        //! Returns true is entropy coding using Arithmetic coding
+        bool UsingAC() const { return m_using_ac; }
+
         // ... Sets
 
         //! Sets the type of frame
@@ -926,6 +929,9 @@ namespace dirac
 
         //! Sets the retired reference frame number 
         void SetRetiredFrameNum(int retd_fnum) {m_retd_fnum = retd_fnum;}
+
+        //! Sets the arithmetic coding flag
+        void SetUsingAC(bool using_ac) { m_using_ac = using_ac; }
 
     private:
 
@@ -986,6 +992,8 @@ namespace dirac
         //! chroma depth - number of bits required for luma
         unsigned int m_chroma_depth;
 
+        //! arithmetic coding flag
+        bool m_using_ac;
     };
 
     //! Structure to hold code block sizes when spatial partitioning is used
@@ -1112,10 +1120,10 @@ namespace dirac
         unsigned int FrameWeightsBits() const { return m_frame_weights_bits; }
 
         //! Return the Ref1 weight
-        unsigned int Ref1Weight() const { return m_ref1_weight; }
+        int Ref1Weight() const { return m_ref1_weight; }
 
         //! Return the Ref2 weight
-        unsigned int Ref2Weight() const { return m_ref2_weight; }
+        int Ref2Weight() const { return m_ref2_weight; }
 
         // ... and Sets
         //! Set how many MBs there are horizontally
@@ -1206,10 +1214,10 @@ namespace dirac
         void SetFrameWeightsPrecision(unsigned int wt_prec) { m_frame_weights_bits=wt_prec; }
 
         //! Set the ref 1 frame weight
-        void SetRef1Weight(unsigned int wt) { m_ref1_weight=wt; }
+        void SetRef1Weight(int wt) { m_ref1_weight=wt; }
 
         //! Set the ref 2 frame weight
-        void SetRef2Weight(unsigned int wt) { m_ref2_weight=wt; }
+        void SetRef2Weight(int wt) { m_ref2_weight=wt; }
 
     protected:
         //! Return the Wavelet filter associated with the wavelet index
@@ -1269,10 +1277,10 @@ namespace dirac
         unsigned int m_frame_weights_bits;
 
         //! frame predicion parameters - reference frame 1 weight
-        unsigned int m_ref1_weight;
+        int m_ref1_weight;
 
         //! frame predicion parameters - reference frame 1 weight
-        unsigned int m_ref2_weight;
+        int m_ref2_weight;
 
         //! Zero transform flag
         bool m_zero_transform;
@@ -1396,6 +1404,9 @@ namespace dirac
         //! Return the Target Bit Rate in kbps
         int TargetRate() {return m_target_rate;}
 
+        //! Return true if using Arithmetic coding
+        bool UsingAC()  const {return m_using_ac;}
+
         // ... and Sets
 
         //! Sets verbosity on or off
@@ -1460,6 +1471,9 @@ namespace dirac
 
         //! Set the target bit rate
         void SetTargetRate(const int rate){m_target_rate = rate;}
+
+        //! Set the arithmetic coding flag
+        void SetUsingAC(bool using_ac) {m_using_ac = using_ac;}
     private:
 
         //! Calculate the Lagrangian parameters from the quality factor
@@ -1535,6 +1549,9 @@ namespace dirac
 
         //! Target bit rate
         int m_target_rate;
+
+        //! Arithmetic coding flag
+        bool m_using_ac;
 
     };
 

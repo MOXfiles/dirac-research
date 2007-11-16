@@ -47,6 +47,7 @@
 #include <libdirac_encoder/comp_compress.h>
 #include <libdirac_encoder/quant_chooser.h>
 #include <libdirac_common/band_codec.h>
+#include <libdirac_common/band_vlc.h>
 #include <libdirac_common/motion.h>
 
 using namespace dirac;
@@ -72,9 +73,6 @@ ComponentByteIO* CompCompressor::Compress( PicArray& pic_data ,
     const int depth=m_encparams.TransformDepth();
     unsigned int num_band_bytes( 0 );
     m_me_data = me_data;
-
-    // A pointer to an object  for coding the subband data
-    BandCodec* bcoder;
 
     Subband node;
 
@@ -110,27 +108,48 @@ ComponentByteIO* CompCompressor::Compress( PicArray& pic_data ,
 
         if ( !bands(b).Skipped() )
         {   // If not skipped ...
-
-             // Pick the right codec according to the frame type and subband
-            if (b >= bands.Length()-3)
+            if (m_fparams.UsingAC())
             {
-                if ( m_fsort.IsIntra() && b == bands.Length() )
-                    bcoder=new IntraDCBandCodec(&subband_byteio,
+                // A pointer to an object  for coding the subband data
+                BandCodec* bcoder;
+
+
+                 // Pick the right codec according to the frame type and subband
+                if (b >= bands.Length()-3)
+                {
+                    if ( m_fsort.IsIntra() && b == bands.Length() )
+                        bcoder=new IntraDCBandCodec(&subband_byteio,
                                                 TOTAL_COEFF_CTXS , bands );
-                else
-                    bcoder=new LFBandCodec(&subband_byteio ,TOTAL_COEFF_CTXS,
+                    else
+                        bcoder=new LFBandCodec(&subband_byteio ,TOTAL_COEFF_CTXS,
                                            bands , b, m_fsort.IsIntra());
+                }
+                else
+                    bcoder=new BandCodec(&subband_byteio , TOTAL_COEFF_CTXS ,
+                                         bands , b, m_fsort.IsIntra() );
+
+                num_band_bytes = bcoder->Compress(coeff_data);
+
+
+                delete bcoder;
             }
             else
-                bcoder=new BandCodec(&subband_byteio , TOTAL_COEFF_CTXS ,
-                                     bands , b, m_fsort.IsIntra() );
+            {
+                // A pointer to an object  for coding the subband data
+                BandVLC* bcoder;
 
-            num_band_bytes = bcoder->Compress(coeff_data);
+                   if ( m_fsort.IsIntra() && b == bands.Length() )
+                       bcoder=new IntraDCBandVLC(&subband_byteio, bands );
+                else
+                    bcoder=new BandVLC(&subband_byteio , bands , b,
+                                       m_fsort.IsIntra() );
 
+                num_band_bytes = bcoder->Compress(coeff_data);
+
+                delete bcoder;
+            }
              // Update the entropy correction factors
             m_encparams.EntropyFactors().Update(b , m_fsort , m_csort , estimated_bits[b] , 8*num_band_bytes);
-
-            delete bcoder;
         }
         else
         {   // ... skipped

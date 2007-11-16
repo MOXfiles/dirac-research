@@ -135,7 +135,8 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
                                  xpad_chroma_len, ypad_chroma_len,
                                  m_encparams.LumaDepth(),
                                  m_encparams.ChromaDepth(),
-                                 m_encparams.InterlacedCoding());
+                                 m_encparams.InterlacedCoding(),
+                                 m_encparams.UsingAC());
 
     // Retain the original frame dimensions for the Motion estimation
     // buffer
@@ -146,7 +147,8 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
                                     xl_chroma, yl_chroma,
                                     m_encparams.LumaDepth(),
                                     m_encparams.ChromaDepth(),
-                                    m_encparams.InterlacedCoding());
+                                    m_encparams.InterlacedCoding(),
+                                    m_encparams.UsingAC());
 
     // Set up a rate controller if rate control being used
     if (m_encparams.TargetRate() != 0)

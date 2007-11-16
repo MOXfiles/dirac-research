@@ -108,7 +108,7 @@ void MotionCompTest::testZeroMotionComp()
 
 void MotionCompTest::testZeroMotionComp(MVPrecisionType precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, 1, true);
     OLBParams bparams(12, 12, 8, 8);
 
@@ -168,7 +168,7 @@ void MotionCompTest::testAddandSubMotionComp()
 
 void MotionCompTest::testAddandSubMotionComp(MVPrecisionType precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, 1, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
@@ -223,7 +223,7 @@ void MotionCompTest::testL2_frame()
 
 void MotionCompTest::testL2_frame(MVPrecisionType precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, 1, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
@@ -271,7 +271,7 @@ void MotionCompTest::testL2_frame(MVPrecisionType precision)
 
 void MotionCompTest::testI_frame()
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, 2, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
@@ -320,7 +320,7 @@ void MotionCompTest::testRef2()
 
 void MotionCompTest::testRef2(MVPrecisionType precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, 2, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
@@ -381,7 +381,7 @@ void MotionCompTest::testRef1and2()
 
 void MotionCompTest::testRef1and2(MVPrecisionType precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, 2, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);

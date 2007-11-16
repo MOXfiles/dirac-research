@@ -76,6 +76,7 @@ namespace dirac
             \param   dwt_cylen  the padded chroma height of frames in the buffer
             \param   luma_depth the video depth of the luma comp in the buffer
             \param   chroma_depth the video depth of the chroma comp in the buffer
+            \param   using_ac   True if using Arithmetic coding to code coefficient data
 
         */
         FrameBuffer(ChromaFormat cf,
@@ -86,7 +87,8 @@ namespace dirac
                     const int dwt_cxlen,
                     const int dwt_cylen,
                     const unsigned int luma_depth,
-                    const unsigned int chroma_depth);
+                    const unsigned int chroma_depth,
+                    bool using_ac);
 
         //! Constructor
         /*!
@@ -108,6 +110,7 @@ namespace dirac
             \param   luma_depth the video depth of the luma comp in the buffer
             \param   chroma_depth the video depth of the chroma comp in the buffer
             \param   interlace Set true if material is being coded in interlaced mode
+            \param   using_ac   True if using Arithmetic coding to code coefficient data
         */
         FrameBuffer(ChromaFormat cf,
                     const int numL1,
@@ -120,7 +123,8 @@ namespace dirac
                     const int dwt_cylen,
                     const unsigned int luma_depth,
                     const unsigned int chroma_depth,
-                    bool interlace);
+                    bool interlace,
+                    bool using_ac);
 
         //! Copy constructor
         /*!
@@ -280,6 +284,9 @@ namespace dirac
 
         //! Interlaced coding
         bool m_interlace;
+
+        //! Arithmetic coding flag to code coefficients
+        bool m_using_ac;
 
 
 
