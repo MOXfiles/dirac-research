@@ -81,7 +81,7 @@ const std::string MvDataElementByteIO::GetBytes()
 void MvDataElementByteIO::Input()
 {
     // Input block data size
-    m_block_size = InputVarLengthUint();
+    m_block_size = ReadUint();
 
     // Byte Alignment
     ByteAlignInput();
@@ -90,7 +90,7 @@ void MvDataElementByteIO::Input()
 void MvDataElementByteIO::Output()
 {    
     //Output size of block data
-    OutputVarLengthUint(m_block_data.GetSize());
+    WriteUint(m_block_data.GetSize());
 
     // Byte Align
     ByteAlignOutput();

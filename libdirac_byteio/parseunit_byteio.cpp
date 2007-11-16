@@ -103,9 +103,9 @@ bool ParseUnitByteIO::Input()
     m_parse_code = InputUnByte();
 
     // input parse-offsets
-    m_next_parse_offset = InputFixedLengthUint(PU_NEXT_PARSE_OFFSET_SIZE);
+    m_next_parse_offset = ReadUintLit(PU_NEXT_PARSE_OFFSET_SIZE);
 
-    m_previous_parse_offset = InputFixedLengthUint(PU_PREVIOUS_PARSE_OFFSET_SIZE);
+    m_previous_parse_offset = ReadUintLit(PU_PREVIOUS_PARSE_OFFSET_SIZE);
 
     return true;
 }
@@ -207,9 +207,12 @@ void ParseUnitByteIO::SetAdjacentParseUnits(ParseUnitByteIO *p_prev_parseunit)
 
 ParseUnitType ParseUnitByteIO::GetType() const
 {
-    if(IsAU())
-        return PU_ACCESS_UNIT;
+    if(IsSeqHeader())
+        return PU_SEQ_HEADER;
     
+    if(IsCoreSyntax())
+        return PU_CORE_FRAME;
+
     if(IsLowDelay())
         return PU_LOW_DELAY_FRAME;
 

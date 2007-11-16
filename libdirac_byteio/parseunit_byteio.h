@@ -54,11 +54,12 @@ namespace dirac
 
     /* Types of parse-unit */
     typedef enum {
-        PU_ACCESS_UNIT=0,
+        PU_SEQ_HEADER=0,
         PU_FRAME,
         PU_END_OF_SEQUENCE,
         PU_AUXILIARY_DATA,
         PU_PADDING_DATA,
+        PU_CORE_FRAME,
         PU_LOW_DELAY_FRAME,
         PU_UNDEFINED
     } ParseUnitType;
@@ -174,9 +175,9 @@ namespace dirac
         unsigned char GetParseCode() const { return m_parse_code;}
 
         /**
-        * Returns true is parse unit is an Access unit
+        * Returns true is parse unit is a Sequence Header
         */
-        bool IsAU() const
+        bool IsSeqHeader() const
         { return m_parse_code==0x00; }
 
         /**

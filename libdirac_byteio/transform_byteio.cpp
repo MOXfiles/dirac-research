@@ -94,27 +94,27 @@ void TransformByteIO::Output()
 {
     // Zero Transform flag - applies only to inter frames
     if (m_fparams.FSort().IsInter())
-        OutputBit(false);
+        WriteBit(false);
     // Wavelet index
-    OutputVarLengthUint(m_cparams.TransformFilter());
+    WriteUint(m_cparams.TransformFilter());
 
     // Wavelet Depth
-    OutputVarLengthUint(m_cparams.TransformDepth());
+    WriteUint(m_cparams.TransformDepth());
 
     // Spatial Partition flag
-    OutputBit(m_cparams.SpatialPartition());
+    WriteBit(m_cparams.SpatialPartition());
     if (m_cparams.SpatialPartition())
     {
         for (unsigned int i = 0; i <= m_cparams.TransformDepth(); ++i)
         {
             const CodeBlocks &cb = m_cparams.GetCodeBlocks(i);
             // Number of Horizontal code blocks for level i
-            OutputVarLengthUint(cb.HorizontalCodeBlocks());
+            WriteUint(cb.HorizontalCodeBlocks());
             // Number of Vertical code block for level i
-            OutputVarLengthUint(cb.VerticalCodeBlocks());
+            WriteUint(cb.VerticalCodeBlocks());
         }
         // Code block mode index
-        OutputVarLengthUint(m_cparams.GetCodeBlockMode());
+        WriteUint(m_cparams.GetCodeBlockMode());
     }
     // Flush output for bend alignment
     ByteAlignOutput();
@@ -125,23 +125,22 @@ void TransformByteIO::Input()
     // Byte Alignment
     ByteAlignInput();
 
+    m_cparams.SetZeroTransform(false);
     // Zero transform flag - applies only for inter frames
     if (m_fparams.FSort().IsInter())
-        m_cparams.SetZeroTransform(InputBit());
-    else
-        m_cparams.SetZeroTransform(false);
+        m_cparams.SetZeroTransform(ReadBool());
 
     if (m_cparams.ZeroTransform())
         return;
 
     // Transform filter
-    m_cparams.SetTransformFilter(InputVarLengthUint());
+    m_cparams.SetTransformFilter(ReadUint());
 
     // transform depth
-     m_cparams.SetTransformDepth(InputVarLengthUint());
+     m_cparams.SetTransformDepth(ReadUint());
 
     // Spatial partition flag
-    m_cparams.SetSpatialPartition(InputBit());
+    m_cparams.SetSpatialPartition(ReadBool());
 
     if (m_cparams.SpatialPartition())
     {
@@ -149,13 +148,13 @@ void TransformByteIO::Input()
         for (unsigned int i = 0; i <= m_cparams.TransformDepth(); ++i)
         {
             // number of horizontal code blocks for level i
-            unsigned int hblocks = InputVarLengthUint();
+            unsigned int hblocks = ReadUint();
             // number of vertical code blocks for level i
-            unsigned int vblocks = InputVarLengthUint();
+            unsigned int vblocks = ReadUint();
             m_cparams.SetCodeBlocks(i, hblocks, vblocks);
         }
         // Code block mode index
-        m_cparams.SetCodeBlockMode(InputVarLengthUint());
+        m_cparams.SetCodeBlockMode(ReadUint());
     }
     // Byte Alignment
     ByteAlignInput();

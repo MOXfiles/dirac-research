@@ -187,17 +187,17 @@ void MvDataByteIO::OutputBlockParams()
 
     // output custom block params flag 
     unsigned int pidx = BlockParametersIndex(olb_params);
-    OutputVarLengthUint(pidx);
+    WriteUint(pidx);
     if (pidx == 0) // custom block params
     {
         // output Xblen
-        OutputVarLengthUint(olb_params.Xblen());
+        WriteUint(olb_params.Xblen());
         // output Yblen
-        OutputVarLengthUint(olb_params.Yblen());
+        WriteUint(olb_params.Yblen());
         // output Xbsep
-        OutputVarLengthUint(olb_params.Xbsep());
+        WriteUint(olb_params.Xbsep());
         // output Ybsep
-        OutputVarLengthUint(olb_params.Ybsep());
+        WriteUint(olb_params.Ybsep());
     }
 }
 
@@ -205,17 +205,17 @@ void MvDataByteIO::InputBlockParams()
 {
     OLBParams olb_params;
 
-    unsigned int p_idx = InputVarLengthUint();
+    unsigned int p_idx = ReadUint();
     if (p_idx == 0)
     {
         // Input Xblen
-        olb_params.SetXblen(InputVarLengthUint());
+        olb_params.SetXblen(ReadUint());
         // Input Yblen
-        olb_params.SetYblen(InputVarLengthUint());
+        olb_params.SetYblen(ReadUint());
         // Input Xbsep
-        olb_params.SetXbsep(InputVarLengthUint());
+        olb_params.SetXbsep(ReadUint());
         // Input Ybsep
-        olb_params.SetYbsep(InputVarLengthUint());
+        olb_params.SetYbsep(ReadUint());
     }
     else
         SetDefaultBlockParameters (olb_params, p_idx);
@@ -226,13 +226,13 @@ void MvDataByteIO::InputBlockParams()
 void MvDataByteIO::OutputMVPrecision()
 {
     // Output Motion vector precision
-    OutputVarLengthUint(m_cparams.MVPrecision());
+    WriteUint(m_cparams.MVPrecision());
 }
 
 void MvDataByteIO::InputMVPrecision()
 {
     // Input Motion vector precision
-    MVPrecisionType mv_prec = IntToMVPrecisionType(InputVarLengthUint());
+    MVPrecisionType mv_prec = IntToMVPrecisionType(ReadUint());
     if(mv_prec==MV_PRECISION_UNDEFINED)
         DIRAC_THROW_EXCEPTION(
                 ERR_INVALID_MOTION_VECTOR_PRECISION,
@@ -247,14 +247,14 @@ void MvDataByteIO::OutputGlobalMotionParams()
     // Always setting global motion to false
     // NOTE: FIXME - output actual global motion params in future
     // Using Global motion flag
-    OutputBit(false);
+    WriteBit(false);
 }
 
 void MvDataByteIO::InputGlobalMotionParams()
 {
     // Always setting global motion to false
     // Using Global motion flag
-    if (InputBit())
+    if (ReadBool())
     {
         m_cparams.SetUsingGlobalMotion(true);
  
@@ -272,14 +272,14 @@ void MvDataByteIO::OutputFramePredictionMode()
 {
     //  TODO: Output default frame prediction mode index until other
     //  modes are supported.
-    OutputVarLengthUint(0);
+    WriteUint(0);
 }
 
 void MvDataByteIO::InputFramePredictionMode()
 {
     // TODO - need to process this field when alternative prediction modes
     // become available.
-    unsigned int frame_pred_mode = InputVarLengthUint();
+    unsigned int frame_pred_mode = ReadUint();
     if (frame_pred_mode != 0)
     {
         DIRAC_THROW_EXCEPTION(
@@ -297,31 +297,31 @@ void MvDataByteIO::OutputFrameWeights()
         m_cparams.Ref1Weight() !=  m_default_cparams.Ref1Weight() ||
         (m_fparams.Refs().size() > 1 && m_cparams.Ref2Weight() !=  m_default_cparams.Ref2Weight()))
     {
-           OutputBit(true);
+           WriteBit(true);
         // Output weight precision bits
-        OutputVarLengthUint(m_cparams.FrameWeightsBits());
+        WriteUint(m_cparams.FrameWeightsBits());
         // Output Ref1 weight
-        OutputVarLengthUint(m_cparams.Ref1Weight());
+        WriteSint(m_cparams.Ref1Weight());
         if (m_fparams.Refs().size() > 1)
         {
             // Output Ref1 weight
-            OutputVarLengthUint(m_cparams.Ref2Weight());
+            WriteSint(m_cparams.Ref2Weight());
         }
     }
     else
     {
-           OutputBit(false);
+           WriteBit(false);
     }
 }
 
 void MvDataByteIO::InputFrameWeights()
 {
-    if (InputBit())
+    if (ReadBool())
     {
-        m_cparams.SetFrameWeightsPrecision(InputVarLengthUint());
-        m_cparams.SetRef1Weight(InputVarLengthInt());
+        m_cparams.SetFrameWeightsPrecision(ReadUint());
+        m_cparams.SetRef1Weight(ReadSint());
         if (m_fparams.Refs().size() > 1)
-            m_cparams.SetRef2Weight(InputVarLengthInt());
+            m_cparams.SetRef2Weight(ReadSint());
         else
             m_cparams.SetRef2Weight(0);
     }

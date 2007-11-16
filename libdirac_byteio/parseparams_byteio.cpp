@@ -71,14 +71,14 @@ void ParseParamsByteIO::Input()
     ParseParams def_parse_params;
 
     //input version
-    m_parse_params.SetMajorVersion(InputVarLengthUint());
-    m_parse_params.SetMinorVersion(InputVarLengthUint());
+    m_parse_params.SetMajorVersion(ReadUint());
+    m_parse_params.SetMinorVersion(ReadUint());
 
     // input profile
-    m_parse_params.SetProfile(InputVarLengthUint());
+    m_parse_params.SetProfile(ReadUint());
 
     // input level
-    m_parse_params.SetLevel(InputVarLengthUint());
+    m_parse_params.SetLevel(ReadUint());
 
     std::ostringstream errstr;
     // FIXME: for the time being all should be a perfect match until
@@ -119,12 +119,12 @@ void ParseParamsByteIO::Output()
 {
     ParseParams def_parse_params;
     // output version
-    OutputVarLengthUint(def_parse_params.MajorVersion());
-    OutputVarLengthUint(def_parse_params.MinorVersion());
+    WriteUint(def_parse_params.MajorVersion());
+    WriteUint(def_parse_params.MinorVersion());
 
     // output profile
-    OutputVarLengthUint(def_parse_params.Profile());
+    WriteUint(def_parse_params.Profile());
 
     // output level
-    OutputVarLengthUint(def_parse_params.Level());
+    WriteUint(def_parse_params.Level());
 }

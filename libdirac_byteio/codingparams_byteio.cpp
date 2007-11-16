@@ -111,13 +111,13 @@ void CodingParamsByteIO::Output()
 
 void CodingParamsByteIO::InputInterlacedCoding()
 {
-    m_codec_params.SetInterlacedCoding(InputBit());
+    m_codec_params.SetInterlacedCoding(ReadBool());
 }
 
 
 void CodingParamsByteIO::OutputInterlacedCoding()
 {
-    OutputBit(m_codec_params.InterlacedCoding());
+    WriteBit(m_codec_params.InterlacedCoding());
 }
 
 

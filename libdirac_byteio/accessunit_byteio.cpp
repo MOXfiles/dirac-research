@@ -90,7 +90,7 @@ bool AccessUnitByteIO::Input()
 
     // Inout Video format
     SetByteParams(m_parseparams_byteio);
-    VideoFormat vf = IntToVideoFormat(InputVarLengthUint());
+    VideoFormat vf = IntToVideoFormat(ReadUint());
     if(vf==VIDEO_FORMAT_UNDEFINED)
          DIRAC_THROW_EXCEPTION(
                     ERR_INVALID_VIDEO_FORMAT,
@@ -116,7 +116,7 @@ void AccessUnitByteIO::Output()
 
     // Output the video format
     SetByteParams(m_parseparams_byteio);
-    OutputVarLengthUint(static_cast<int>(m_src_params.GetVideoFormat()));
+    WriteUint(static_cast<int>(m_src_params.GetVideoFormat()));
 
     OutputSourceParams();
 
