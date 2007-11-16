@@ -181,7 +181,7 @@ void DiracByteStream::AddAccessUnit(AccessUnitByteIO *p_accessunit_byteio)
     p_accessunit_byteio->SetAdjacentParseUnits(mp_previous_parse_unit);
     
     // push onto to pending list
-    m_parse_unit_list.push(std::make_pair (PU_ACCESS_UNIT, p_accessunit_byteio) );
+    m_parse_unit_list.push(std::make_pair (PU_SEQ_HEADER, p_accessunit_byteio) );
 
     // set previous parse-unit
     mp_previous_parse_unit = p_accessunit_byteio;

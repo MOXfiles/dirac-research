@@ -100,7 +100,7 @@ namespace dirac
         /**
         * Gets parse-unit type
         */
-        ParseUnitType GetType() const { return PU_ACCESS_UNIT;}
+        ParseUnitType GetType() const { return PU_SEQ_HEADER;}
 
     private:
 
