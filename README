@@ -408,7 +408,7 @@ source_type     : Source material type - progressive or interlaced
 field_dominance : If source is interlaced, field dominance type - topfieldfirst
                   (default) or bottomfieldfirst
 
-Fora complete list of source parameters, refer to Annex C of the Dirac 
+For a complete list of source parameters, refer to Annex C of the Dirac 
 Specification.
 
 WARNING!! If you use a preset but don't override source parameters that
@@ -454,7 +454,8 @@ mv_prec       : Motion vector precision. Valid values are 1 (Pixel precision),
 full_search   : Use full search motion estimation
 interlace_coding : Set coding type to interlaced for interlaced for interlaced
                 material. Default coding type is progressive.
-
+use_vlc       : Use VLC for entropy coding of coefficients instead of arithmetic
+                coding.
 Modifying L1_sep and num_L1 allows for new GOP structures to be used, and
 should be entirely safe. There are two non-GOP modes that can also be used for
 encoding: setting num_L1=0 gives I-frame only coding, and setting num_L1<0

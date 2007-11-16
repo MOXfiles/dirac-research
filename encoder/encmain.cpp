@@ -113,6 +113,7 @@ static void display_help()
     cout << "\nmv_prec           string  false         MV Pixel Precision (1, 1/2, 1/4, 1/8)";
     cout << "\nno_spartition     bool    false         Do not use spatial partitioning while coding transform data";
     cout << "\ndenoise           bool    false         Denoise input before coding (NB: PSNR stats will relate to denoised video)";
+    cout << "\nuse_vlc           bool    false         Use VLC for entropy coding of coefficients";
     cout << "\nverbose           bool    false         verbose mode";
     cout << "\nlocal             bool    false         Write diagnostics & locally decoded video";
     cout << "\ninput             string  [ required ]  Input file name";
@@ -482,19 +483,26 @@ void display_codec_params(dirac_encoder_context_t &enc_ctx)
     std::cout << "Encoder parameters : " << std::endl;
     std::cout << "\tquality factor=" << enc_ctx.enc_params.qf << std::endl;
     std::cout << "\tGOP parameters : num_L1="  << enc_ctx.enc_params.num_L1;
-    std::cout << " L1_sep=" << enc_ctx.enc_params.L1_sep << std::endl;
-    std::cout << "\tBlock parameters : xblen="  << enc_ctx.enc_params.xblen;
-    std::cout << " yblen=" << enc_ctx.enc_params.yblen;
-    std::cout << " xbsep=" << enc_ctx.enc_params.xbsep;
-    std::cout << " ybsep=" << enc_ctx.enc_params.ybsep << std::endl;
-    std::cout << " \tMV Precision=" << MvPrecisionToString(enc_ctx.enc_params.mv_precision) << std::endl;
+    if (enc_ctx.enc_params.num_L1 != 0)
+    {
+        std::cout << " L1_sep=" << enc_ctx.enc_params.L1_sep << std::endl;
+        std::cout << "\tBlock parameters : xblen="  << enc_ctx.enc_params.xblen;
+        std::cout << " yblen=" << enc_ctx.enc_params.yblen;
+        std::cout << " xbsep=" << enc_ctx.enc_params.xbsep;
+        std::cout << " ybsep=" << enc_ctx.enc_params.ybsep << std::endl;
+        std::cout << " \tMV Precision=" << MvPrecisionToString(enc_ctx.enc_params.mv_precision) << std::endl;
+        std::cout << " \tInter Frame Transform Filter=" << TransformFilterToString(enc_ctx.enc_params.inter_wlt_filter) << std::endl;
+    }
+    else
+        std::cout << " (I-frame only coding)" << std::endl;
     std::cout << " \tIntra Frame Transform Filter=" << TransformFilterToString(enc_ctx.enc_params.intra_wlt_filter) << std::endl;
-    std::cout << " \tInter Frame Transform Filter=" << TransformFilterToString(enc_ctx.enc_params.inter_wlt_filter) << std::endl;
     std::cout << " \tWavelet depth=" << enc_ctx.enc_params.wlt_depth << std::endl;
     std::cout << " \tSpatial Partitioning=" << (enc_ctx.enc_params.spatial_partition ? "true" : "false") << std::endl;
     std::cout << " \tMultiple Quantisers=" << (enc_ctx.enc_params.multi_quants ? "true" : "false") << std::endl;
     std::cout << " \tDenoising input=" << (enc_ctx.enc_params.denoise ? "true" : "false") << std::endl;
     std::cout << " \tInterlaced coding=" << (enc_ctx.enc_params.interlacedcoding ? "true" : "false") << std::endl;
+    std::cout << " \tLossless Coding=" << (enc_ctx.enc_params.lossless ? "true" : "false") << std::endl;
+    std::cout << " \tEntropy Coding=" << (enc_ctx.enc_params.using_ac ? "Arithmetic Coding" : "Variable Length Coding") << std::endl;
 }
 
 int start_pos = 0;
@@ -836,6 +844,11 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
                  strtoul(argv[i],NULL,10);
             parsed[i] = true;
         }
+        else if ( strcmp(argv[i], "-use_vlc") == 0 )
+        {
+            parsed[i] = true;
+            enc_ctx.enc_params.using_ac = false;
+        }
         else if ( strcmp(argv[i], "-verbose") == 0 )
         {
             parsed[i] = true;
@@ -938,6 +951,14 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
         }
         i++;
     }//opt
+
+    // FIXME: currently only supporting vlc coding for iframe-only
+    // sequences
+    if (enc_ctx.enc_params.num_L1 != 0 && enc_ctx.enc_params.using_ac == 0)
+    {
+        std::cerr<<std::endl<<"Entropy coding of coefficient data using VLC currently enabled for i-frame only sequences only"<<std::endl;
+        return false;
+    }
 
     /* check that we have been suplied with input and output files */
     if(parsed[argc-2] || parsed[argc-1]) {
