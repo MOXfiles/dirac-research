@@ -77,22 +77,14 @@ namespace dirac
         UpConverter& operator=(const UpConverter& rhs);
 
         //! Applies the filter to a row and its successor 
-        void RowLoop(PicArray& up_data, const int row_num );
+        void RowLoop(PicArray& up_data, const int row_num,
+        const int filter_size, const int filter_shift, const short taps[4] );
 
     private:
         //Variable to keep the loops in check
         int m_width_old, m_height_old;
         int m_width_new, m_height_new;
 
-        //Define first set of filter parameters
-        static const int m_filter_size = 5;
-        static const int m_filter_shift = 8;
-
-        static const int m_tap0 = 167;
-        static const int m_tap1 = -56; 
-        static const int m_tap2 = 25;
-        static const int m_tap3 = -11; 
-        static const int m_tap4 = 3;
 
         const int m_min_val;
         const int m_max_val;
