@@ -95,7 +95,7 @@ static void display_help()
     cout << "\nfield_dominance   string  topfieldfirst Field dominance in interlaced source - topfieldfirst or bottomfield first";
     cout << "\nstart             ulong   0UL           Frame number to start encoding from";
     cout << "\nstop              ulong   EOF           Frame number after which encoding finishes";
-    cout << "\ninterlace_coding  bool    false         Set coding type to interlaced (fields). Default coding type is by frames";
+    cout << "\nfield_coding      bool    false         Set picture coding type to field coding. Default coding type is by frames";
     cout << "\nL1_sep            ulong   0UL           Separation of L1 frames";
     cout << "\nnum_L1            ulong   0UL           Number of L1 frames";
     cout << "\nxblen             ulong   0UL           Overlapping block horizontal length";
@@ -172,7 +172,7 @@ bool WriteDiagnosticsHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
         fdata << srcparams.frame_rate.denominator << std::endl;
         fdata << srcparams.pix_asr.numerator << std::endl;
         fdata << srcparams.pix_asr.denominator << std::endl;
-        fdata << encoder->enc_ctx.enc_params.interlacedcoding << std::endl;
+        fdata << encoder->enc_ctx.enc_params.picture_coding_mode << std::endl;
     }
 
     catch (...)
@@ -500,7 +500,7 @@ void display_codec_params(dirac_encoder_context_t &enc_ctx)
     std::cout << " \tSpatial Partitioning=" << (enc_ctx.enc_params.spatial_partition ? "true" : "false") << std::endl;
     std::cout << " \tMultiple Quantisers=" << (enc_ctx.enc_params.multi_quants ? "true" : "false") << std::endl;
     std::cout << " \tDenoising input=" << (enc_ctx.enc_params.denoise ? "true" : "false") << std::endl;
-    std::cout << " \tInterlaced coding=" << (enc_ctx.enc_params.interlacedcoding ? "true" : "false") << std::endl;
+    std::cout << " \tField coding=" << (enc_ctx.enc_params.picture_coding_mode == 1? "true" : "false") << std::endl;
     std::cout << " \tLossless Coding=" << (enc_ctx.enc_params.lossless ? "true" : "false") << std::endl;
     std::cout << " \tEntropy Coding=" << (enc_ctx.enc_params.using_ac ? "Arithmetic Coding" : "Variable Length Coding") << std::endl;
 }
@@ -749,10 +749,10 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
                 parsed[i] = false;
             }
         }
-        else if ( strcmp(argv[i], "-interlace_coding") == 0 )
+        else if ( strcmp(argv[i], "-field_coding") == 0 )
         {
             parsed[i] = true;
-            enc_ctx.enc_params.interlacedcoding =  true;
+            enc_ctx.enc_params.picture_coding_mode =  1;
             fields_factor = 2;
         }
         else if ( strcmp(argv[i], "-qf") == 0 )

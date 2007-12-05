@@ -452,8 +452,8 @@ mv_prec       : Motion vector precision. Valid values are 1 (Pixel precision),
                 1/2 (half-pixel precision), 1/4 (quarter pixel precision which
                 is the default), 1/8 ( Eighth pixel precision).
 full_search   : Use full search motion estimation
-interlace_coding : Set coding type to interlaced for interlaced for interlaced
-                material. Default coding type is progressive.
+field_coding  : Code the input video as fields instead of frames.
+                Default coding is frames.
 use_vlc       : Use VLC for entropy coding of coefficients instead of arithmetic
                 coding.
 Modifying L1_sep and num_L1 allows for new GOP structures to be used, and

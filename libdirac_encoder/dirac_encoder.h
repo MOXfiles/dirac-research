@@ -208,8 +208,8 @@ typedef struct
     dirac_mvprecision_t mv_precision;
     /*! target bit rate in kbps */
     int trate;
-    /*! interlace coding flag: 0 - frame coding; 1 - field coding */
-    int interlacedcoding;
+    /*! picture coding mode: 0 - frame coding; 1 - field coding */
+    unsigned int picture_coding_mode;
     /*! arithmetic coding flag: 0 - vlc coding; 1 - arithmetic coding */
     int using_ac;
 } dirac_encparams_t;

@@ -304,7 +304,7 @@ void WaveletTransform::SetBandWeights (const float cpd,
                                        const FrameSort& fsort,
                                        const ChromaFormat& cformat,
                                        const CompSort csort,
-                                       const bool interlace)
+                                       const bool field_coding)
 {
     //NB - only designed for progressive to date
 
@@ -353,7 +353,7 @@ void WaveletTransform::SetBandWeights (const float cpd,
                 xfreq /= 8.0;
                 yfreq /= 8.0;
             }
-            if(interlace)
+            if(field_coding)
                 yfreq/=2.0;
 
             temp = PerceptualWeight( xfreq/chroma_xfac , yfreq/chroma_yfac , csort );

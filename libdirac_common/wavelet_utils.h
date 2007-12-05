@@ -362,17 +362,17 @@ namespace dirac
             (weight noise less at higher spatial frequencies) and the scaling needed for the
             wavelet transform.
 
-            \param    cpd      perctual factor - the number of cycles per degree
-            \param    fsort    the frame sort (I, L1 or L2)
-            \param    cformat  the chroma format
-            \param    csort    the component type (Y, U or V)
-            \param    interlace Interlaced coding flag
+            \param    cpd          perctual factor - the number of cycles per degree
+            \param    fsort        the frame sort (I, L1 or L2)
+            \param    cformat      the chroma format
+            \param    csort        the component type (Y, U or V)
+            \param    field_coding True if input is coded as fields
         */
         void SetBandWeights (const float cpd,
                              const FrameSort& fsort,
                              const ChromaFormat& cformat,
                              const CompSort csort,
-                             const bool interlace);
+                             const bool field_coding);
 
 
     private:

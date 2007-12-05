@@ -91,7 +91,7 @@ ComponentByteIO* CompCompressor::Compress( PicArray& pic_data ,
     // Set up the code blocks
     SetupCodeBlocks( bands );
 
-    wtransform.SetBandWeights( m_encparams.CPD() , m_fparams.FSort() , m_fparams.CFormat(), m_csort, m_encparams.InterlacedCoding());
+    wtransform.SetBandWeights( m_encparams.CPD() , m_fparams.FSort() , m_fparams.CFormat(), m_csort, m_encparams.FieldCoding());
 
     OneDArray<unsigned int> estimated_bits( Range( 1 , bands.Length() ) );
 

@@ -135,7 +135,7 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
                                  xpad_chroma_len, ypad_chroma_len,
                                  m_encparams.LumaDepth(),
                                  m_encparams.ChromaDepth(),
-                                 m_encparams.InterlacedCoding(),
+                                 m_encparams.FieldCoding(),
                                  m_encparams.UsingAC());
 
     // Retain the original frame dimensions for the Motion estimation
@@ -147,7 +147,7 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
                                     xl_chroma, yl_chroma,
                                     m_encparams.LumaDepth(),
                                     m_encparams.ChromaDepth(),
-                                    m_encparams.InterlacedCoding(),
+                                    m_encparams.FieldCoding(),
                                     m_encparams.UsingAC());
 
     // Set up a rate controller if rate control being used
@@ -204,7 +204,7 @@ Frame& SequenceCompressor::CompressNextFrame()
 
         if ( m_encparams.Verbose() )
         {
-            if (m_encparams.InterlacedCoding())
+            if (m_encparams.FieldCoding())
                 std::cout<<std::endl<<std::endl<<"Compressing field "<<m_current_code_fnum<<", ";
             else
                 std::cout<<std::endl<<std::endl<<"Compressing frame "<<m_current_code_fnum<<", ";
@@ -246,7 +246,7 @@ Frame& SequenceCompressor::CompressNextFrame()
         if (m_encparams.Verbose() && my_frame.GetFparams().FSort().IsInter())
         {
             std::cout<<std::endl<<"References "
-                     << (m_encparams.InterlacedCoding() ? "field " : "frame ")
+                     << (m_encparams.FieldCoding() ? "field " : "frame ")
                      << fparams.Refs()[0];
             if (fparams.Refs().size() > 1)
             {
@@ -314,7 +314,7 @@ Frame& SequenceCompressor::CompressNextFrame()
     if ( m_encparams.Verbose() )
     {
            std::cout<<std::endl<<"Return " <<
-                 (m_encparams.InterlacedCoding() ? "field " : "frame ")  <<
+                 (m_encparams.FieldCoding() ? "field " : "frame ")  <<
                   m_show_fnum << " in display order";
     }
     return m_fbuffer->GetFrame(m_show_fnum );

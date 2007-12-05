@@ -98,9 +98,9 @@ namespace dirac
         void InputVideoDepth();
 
         /**
-        * Reads if material was coded interlaced or progressive
+        * Reads picture coding mode - 0 - frames, 1 - fields
         */
-        void InputInterlacedCoding();
+        void InputPictureCodingMode();
 
         /**
         * Outputs number of bits used to compress input signal 
@@ -108,9 +108,9 @@ namespace dirac
         void OutputVideoDepth();
 
         /**
-        * Outputs how input was coded - i.e. interlaced or progressive
+        * Outputs how input was coded - i.e. frames or fields
         */
-        void OutputInterlacedCoding();
+        void OutputPictureCodingMode();
 
         /**
         * Source paramters for intput/output
