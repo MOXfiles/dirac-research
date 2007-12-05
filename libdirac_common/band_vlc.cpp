@@ -387,15 +387,20 @@ void IntraDCBandVLC::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray&
 
 CoeffType IntraDCBandVLC::GetPrediction( const CoeffArray& data , const int xpos , const int ypos ) const
 {
+    /* NB, 4.5.3 integer division
+     * numbers are rounded down towards -ve infinity, differing from
+     * C's convention that rounds towards 0
+     */
+
     if (ypos!=0)
     {
         if (xpos!=0)
         {
-            int sum = data[ypos][xpos-1] + data[ypos-1][xpos-1] + data[ypos-1][xpos];
-            if (sum>0)
-                return (sum+1)/3;
+            int sum = data[ypos][xpos-1] + data[ypos-1][xpos-1] + data[ypos-1][xpos] + 3/2;
+            if (sum<0)
+                return (sum-2)/3;
             else
-                return -((-sum)+1)/3;
+                return sum/3;
         }
         else
             return data[ypos - 1][0];
