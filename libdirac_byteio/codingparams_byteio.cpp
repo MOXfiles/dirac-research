@@ -111,7 +111,7 @@ void CodingParamsByteIO::Output()
 
 void CodingParamsByteIO::InputPictureCodingMode()
 {
-    unsigned coding_mode = ReadUint();
+    unsigned int coding_mode = ReadUint();
     if (coding_mode > 1)
     {
         std::ostringstream errstr;

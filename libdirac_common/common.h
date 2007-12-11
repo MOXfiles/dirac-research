@@ -559,8 +559,8 @@ namespace dirac
         //! Returns the chroma height
         int ChromaHeight() const;
 
-        //! Returns true if the source material is interlaced
-        bool Interlace() const { return m_interlace; }
+        //! Returns the source sampling field of the source scan format
+        unsigned int SourceSampling() const { return m_source_sampling; }
 
         //! Returns true if top field comes first in time
         bool TopFieldFirst() const { return m_topfieldfirst; }
@@ -622,8 +622,9 @@ namespace dirac
         //! Sets the chroma format (Y only, 420, 422 etc)
         void SetCFormat(ChromaFormat cf) {m_cformat=cf;}
 
-        //! Set if the source material is interlaced
-        void SetInterlace(bool interlace) { m_interlace = interlace; }
+        //! Set if the source sampling field of the scan format
+        void SetSourceSampling(unsigned int source_sampling) 
+        { m_source_sampling = source_sampling; }
 
         //! Set Topfield first. True if top field comes first in time
         void SetTopFieldFirst(bool tff) { m_topfieldfirst = tff; }
@@ -711,10 +712,10 @@ namespace dirac
         //! Presence of chroma and/or chroma sampling structure
         ChromaFormat m_cformat;
 
-        //! True if interlaced
-        bool m_interlace;
+        //! Source sampling field : 0 - progressive, 1 - interlaced
+        unsigned int m_source_sampling;
 
-        //! If interlaced, true if the top field is first in temporal order
+        //! If m_source_sampling=1, true if the top field is first in temporal order
         bool m_topfieldfirst;
 
         //! Index into frame rate table

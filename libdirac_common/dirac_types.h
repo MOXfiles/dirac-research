@@ -130,8 +130,8 @@ typedef struct
     unsigned int chroma_width;
     /*! number of lines of chroma per frame */
     unsigned int chroma_height;
-    /*! interlace flag: 0 - progressive; 1 - interlaced */
-    int interlace;
+    /*! source sampling field: 0 - progressive; 1 - interlaced */
+    unsigned int source_sampling;
     /*! top field comes first : 0 - false; 1 - true */
     int topfieldfirst;
     /*! frame rate */

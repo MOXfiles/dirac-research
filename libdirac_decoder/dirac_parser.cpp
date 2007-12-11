@@ -114,7 +114,7 @@ static void set_sequence_params (const  DiracParser * const parser, dirac_decode
     src_params->chroma_height = srcparams.ChromaHeight();
 
    // set the source parmeters
-    src_params->interlace = srcparams.Interlace() ? 1 : 0;
+    src_params->source_sampling = srcparams.SourceSampling();
     src_params->topfieldfirst = srcparams.TopFieldFirst() ? 1 : 0;
 
     src_params->frame_rate.numerator = srcparams.FrameRate().m_num;

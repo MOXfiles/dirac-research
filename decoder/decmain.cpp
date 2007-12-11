@@ -198,7 +198,7 @@ static void DecodeDirac (const char *iname, const char *oname)
 
             if (verbose)
             {
-                fprintf (stdout, "\nSEQUENCE : major_ver=%d minor_version=%d profile=%d level=%d width=%d height=%d chroma=%s chroma_width=%d chroma_height=%d frame_rate=%d/%d, interlace=%s topfieldfirst=%s", 
+                fprintf (stdout, "\nSEQUENCE : major_ver=%d minor_version=%d profile=%d level=%d width=%d height=%d chroma=%s chroma_width=%d chroma_height=%d frame_rate=%d/%d, source_sampling=%s topfieldfirst=%s", 
                 decoder->parse_params.major_ver,
                 decoder->parse_params.minor_ver,
                 decoder->parse_params.profile,
@@ -210,7 +210,8 @@ static void DecodeDirac (const char *iname, const char *oname)
                 decoder->src_params.chroma_height,
                 decoder->src_params.frame_rate.numerator,
                 decoder->src_params.frame_rate.denominator,
-                decoder->src_params.interlace ? "yes" : "no",
+                decoder->src_params.source_sampling == 0 ? "progressive" : 
+                ( decoder->src_params.source_sampling == 1 ? "interlaced" : "UNKNOWN" ),
                 decoder->src_params.topfieldfirst ? "yes" : "no");
             }
 

@@ -98,8 +98,8 @@ bool ReadInstrumentationHeader (std::istream &in, SourceParams& srcparams, bool 
     in >> temp_int;
     srcparams.SetYl( temp_int );
 
-    in >> temp_bool;
-    srcparams.SetInterlace( temp_bool );
+    in >> temp_int;
+    srcparams.SetSourceSampling( temp_int );
 
     in >> temp_bool;
     srcparams.SetTopFieldFirst( temp_bool );
@@ -313,7 +313,7 @@ int main (int argc, char* argv[])
     strcat(yuv_file, ".localdec.yuv");
     // hack hack - set interlace flag in source params to field_coding
     // so that the Frame Parameters are set correctly.
-    srcparams.SetInterlace(field_coding);
+    srcparams.SetSourceSampling(field_coding);
     FileStreamInput inputpic(yuv_file, srcparams, field_coding);
 
     if (field_coding)

@@ -404,7 +404,7 @@ cformat         : Chroma Sampling format. Acceptable values are
                   YUV444P, YUV422P and YUV420P.
 fr              : Frame rate. Can be a decimal number or a fraction. Examples
                   of acceptable values are 25, 29.97, 12.5, 30000/1001.
-source_type     : Source material type - progressive or interlaced
+source_sampling : Source material type - 0 - progressive or 1 - interlaced
 field_dominance : If source is interlaced, field dominance type - topfieldfirst
                   (default) or bottomfieldfirst
 

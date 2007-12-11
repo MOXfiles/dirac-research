@@ -91,7 +91,7 @@ static void display_help()
     cout << "\nheight            ulong   Preset        Length of frame";
     cout << "\ncformat           string  YUV444P       Chroma Sampling Format (YUV444P YUV422P YUV420P)";
     cout << "\nfr                ulong   Preset        Frame rate(s) (e.n or e/n format)";
-    cout << "\nsource_type       string  progressive   source material type either progressive or interlaced";
+    cout << "\nsource_sampling   string  progressive   source material type either progressive or interlaced";
     cout << "\nfield_dominance   string  topfieldfirst Field dominance in interlaced source - topfieldfirst or bottomfield first";
     cout << "\nstart             ulong   0UL           Frame number to start encoding from";
     cout << "\nstop              ulong   EOF           Frame number after which encoding finishes";
@@ -166,7 +166,7 @@ bool WriteDiagnosticsHeader (std::ofstream &fdata, dirac_encoder_t *encoder)
         fdata << srcparams.chroma << std::endl;
         fdata << srcparams.width << std::endl;
         fdata << srcparams.height << std::endl;
-        fdata << srcparams.interlace << std::endl;
+        fdata << srcparams.source_sampling << std::endl;
         fdata << srcparams.topfieldfirst << std::endl;
         fdata << srcparams.frame_rate.numerator << std::endl;
         fdata << srcparams.frame_rate.denominator << std::endl;
@@ -720,18 +720,18 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
                     strtoul(token, NULL, 10);
              }
         }
-        else if ( strcmp(argv[i], "-source_type") == 0 )
+        else if ( strcmp(argv[i], "-source_sampling") == 0 )
         {
             parsed[i] = true;
             i++;
             parsed[i]= true;
             if (!strcmp(argv[i], "progressive"))
-                enc_ctx.src_params.interlace = 0;
+                enc_ctx.src_params.source_sampling = 0;
             else if (!strcmp(argv[i], "interlaced"))
-                enc_ctx.src_params.interlace = 1;
+                enc_ctx.src_params.source_sampling = 1;
             else
             {
-                cerr << "source_type should either be interlaced or progressive" << endl;
+                cerr << "source_sampling should either be interlaced or progressive" << endl;
                 parsed[i] = false;
             }
         }

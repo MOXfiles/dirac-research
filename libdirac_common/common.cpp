@@ -943,7 +943,7 @@ FrameParams::FrameParams(const SourceParams& sparams):
     m_orig_cyl(m_dwt_chroma_yl),
     m_using_ac(true)
 {
-    if (sparams.Interlace())
+    if (sparams.SourceSampling() == 1)
     {
         m_orig_yl = m_dwt_yl = (m_dwt_yl>>1);
         m_orig_cyl = m_dwt_chroma_yl = (m_dwt_chroma_yl>>1);

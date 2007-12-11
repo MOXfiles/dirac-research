@@ -259,13 +259,22 @@ void SourceParamsByteIO::InputScanFormat()
     if(!scan_flag)
         return;
 
-    m_src_params.SetInterlace(ReadBool());
-
-    if (!m_src_params.Interlace())
-        return;
+    unsigned int source_sampling = ReadUint();
+    if (source_sampling > 1)
+    {
+        std::ostringstream errstr;
+        errstr << "Source Sampling " << source_sampling
+               << " out of range [0-1]";
+        DIRAC_THROW_EXCEPTION(
+            ERR_UNSUPPORTED_STREAM_DATA,
+            errstr.str(),
+            SEVERITY_ACCESSUNIT_ERROR);
+    }
+    m_src_params.SetSourceSampling(source_sampling);
 
     // read field dominance flag
-    m_src_params.SetTopFieldFirst(ReadBool());
+    if (m_src_params.SourceSampling() == 1)
+        m_src_params.SetTopFieldFirst(ReadBool());
 }
 
 void SourceParamsByteIO::InputSignalRange()
@@ -463,7 +472,7 @@ void SourceParamsByteIO::OutputFrameRate()
 void SourceParamsByteIO::OutputScanFormat()
 {
     // output 'is default' flag
-    bool not_interlace_default =  m_src_params.Interlace()!=m_default_src_params.Interlace();
+    bool not_interlace_default =  m_src_params.SourceSampling()!=m_default_src_params.SourceSampling();
     
     WriteBit(not_interlace_default);
 
@@ -471,9 +480,10 @@ void SourceParamsByteIO::OutputScanFormat()
         return;
 
     // output interlace value
-    WriteBit(m_src_params.Interlace());
+    WriteUint(m_src_params.SourceSampling());
 
-    if(m_src_params.Interlace())
+    // if material is interlaced
+    if(m_src_params.SourceSampling() == 1)
     {
         // output field dominance flag
         WriteBit(m_src_params.TopFieldFirst());

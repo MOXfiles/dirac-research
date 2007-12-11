@@ -458,7 +458,7 @@ void DiracEncoder::SetSourceParams (const dirac_encoder_context_t *enc_ctx)
     m_srcparams.SetXl( enc_ctx->src_params.width );
     m_srcparams.SetYl( enc_ctx->src_params.height );
 
-    m_srcparams.SetInterlace( enc_ctx->src_params.interlace );
+    m_srcparams.SetSourceSampling( enc_ctx->src_params.source_sampling );
     m_srcparams.SetTopFieldFirst( enc_ctx->src_params.topfieldfirst );
     if (m_srcparams.FrameRate().m_num != (unsigned int)enc_ctx->src_params.frame_rate.numerator ||
         m_srcparams.FrameRate().m_denom != (unsigned int)enc_ctx->src_params.frame_rate.denominator)
@@ -902,7 +902,7 @@ static void SetSourceParameters(dirac_encoder_context_t *enc_ctx,
     src_params.frame_rate.denominator = default_src_params.FrameRate().m_denom;
     src_params.pix_asr.numerator = default_src_params.AspectRatio().m_num;
     src_params.pix_asr.denominator = default_src_params.AspectRatio().m_denom;
-    src_params.interlace = default_src_params.Interlace();
+    src_params.source_sampling = default_src_params.SourceSampling();
     src_params.topfieldfirst = default_src_params.TopFieldFirst();
 
     //TODO - Need to accept these params from command line

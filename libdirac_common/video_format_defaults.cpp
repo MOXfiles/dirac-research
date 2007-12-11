@@ -124,7 +124,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
     std::ostringstream errstr;
     sparams.SetVideoFormat(vf);
     sparams.SetCFormat(format420);
-    sparams.SetInterlace(false);
+    sparams.SetSourceSampling(0);
     sparams.SetTopFieldFirst(true);
     sparams.SetAspectRatio(ASPECT_RATIO_1_1);
     sparams.SetSignalRange(SIGNAL_RANGE_8BIT_FULL);
@@ -204,7 +204,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetXl(720);
         sparams.SetYl(480);
         sparams.SetCFormat(format422);
-        sparams.SetInterlace(true);
+        sparams.SetSourceSampling(1);
         sparams.SetTopFieldFirst(false);
         sparams.SetFrameRate(FRAMERATE_29p97_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_10_11);
@@ -218,7 +218,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetXl(720);
         sparams.SetYl(576);
         sparams.SetCFormat(format422);
-        sparams.SetInterlace(true);
+        sparams.SetSourceSampling(1);
         sparams.SetFrameRate(FRAMERATE_25_FPS);
         sparams.SetAspectRatio(ASPECT_RATIO_12_11);
         sparams.SetCleanWidth(704);
@@ -251,11 +251,11 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         switch (vf)
         {
         case VIDEO_FORMAT_HD_1080I60:
-            sparams.SetInterlace(true);
+            sparams.SetSourceSampling(1);
             sparams.SetFrameRate(FRAMERATE_29p97_FPS);
             break;
         case VIDEO_FORMAT_HD_1080I50:
-            sparams.SetInterlace(true);
+            sparams.SetSourceSampling(1);
             sparams.SetFrameRate(FRAMERATE_25_FPS);
             break;
         case VIDEO_FORMAT_HD_1080P60:
