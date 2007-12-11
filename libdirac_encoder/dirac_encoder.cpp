@@ -713,6 +713,7 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
     int num_L1 = encoder->enc_ctx.enc_params.num_L1;
     int L1_sep = encoder->enc_ctx.enc_params.L1_sep;
     int GOP_Length = (num_L1+1)*L1_sep*interlace_factor;
+
     int offset;
     if (num_L1 == 0)
     {
@@ -725,7 +726,8 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
     m_gop_bits += encoder->enc_fstats.frame_bits;
     m_frame_count++;
 
-    if (m_frame_count == GOP_Length-offset)
+    if ( (m_gop_count==0 && m_frame_count == GOP_Length-offset) || 
+         (m_gop_count>0 && m_frame_count == GOP_Length))
     {
         int denominator = encoder->enc_ctx.src_params.frame_rate.denominator;
         int numerator = encoder->enc_ctx.src_params.frame_rate.numerator;
@@ -743,7 +745,7 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
 
         m_gop_count++;
         m_gop_bits = 0;
-        m_frame_count = -offset;
+        m_frame_count = 0;
     }
     //End of Rate Control
 
