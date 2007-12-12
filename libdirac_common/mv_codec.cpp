@@ -590,7 +590,7 @@ ValueType DCCodec::Prediction(const TwoDArray < ValueType > & dcdata,
 {
     std::vector < unsigned int >  nbrs; 
     PredMode pmode;
-    ValueType result = 128; 
+    ValueType result = 0; 
     
     if (m_b_xp > 0 && m_b_yp > 0)
     {
