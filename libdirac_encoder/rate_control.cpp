@@ -304,7 +304,8 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
             /* Resetting */
 
             // Reset the frame counter
-            m_fcount = m_encparams.L1Sep();
+            if (m_fcount==0)
+                m_fcount = m_encparams.L1Sep();
 
             // Reset the count of L2 bits
             m_L2_complexity_sum = 0;
@@ -408,7 +409,6 @@ void RateController::Allocate (const int fnum)
     const int XI = m_frame_complexity.IComplexity();
     const int XL1 = m_frame_complexity.L1Complexity();
     const int XL2 = m_frame_complexity.L2Complexity();
-
 
     double buffer_occ = ( (double)m_buffer_bits)/((double)m_buffer_size);
 
