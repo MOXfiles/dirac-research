@@ -121,6 +121,30 @@ namespace dirac
         
         //! Compresses the motion vector data
         void CompressMVData(MvDataByteIO* mv_data);
+        
+        //! Returns the value lambda according to frame and component type
+        float GetCompLambda( const FrameParams& fparams,
+                             const CompSort csort );
+
+        void SelectQuantisers( CoeffArray& coeff_data , 
+                               SubbandList& bands ,
+                               const float lambda,
+                               OneDArray<unsigned int>& est_counts,
+                               const CodeBlockMode cb_mode,
+                               const FrameSort fsort,
+                               const CompSort csort );
+
+        int SelectMultiQuants( CoeffArray& coeff_data , 
+                               SubbandList& bands , 
+                               const int band_num,
+                               const float lambda,
+                               const FrameSort fsort, 
+                               const CompSort csort );
+
+        void SetupCodeBlocks( SubbandList& bands );
+
+
+        void AddSubAverage(CoeffArray& coeff_data,int xl,int yl,AddOrSub dirn);
 
     private:
 

@@ -64,6 +64,8 @@ int QuantChooser::GetBestQuant( Subband& node )
 
     TwoDArray<CodeBlock>& block_list( node.GetCodeBlocks() );
     const int num_blocks( block_list.LengthX() * block_list.LengthY() );
+    
+    m_subband_wt = node.Wt();
 
     // The largest value in the block or band
     CoeffType max_val;
@@ -119,7 +121,7 @@ int QuantChooser::GetBestQuant( Subband& node )
                 block_idx = j*block_list.LengthX() + i;     
 
                 IntegralErrorCalc( block_list[j][i] , block_idx , 2 , 2);
-                LagrangianCalc( block_list[j][i] , block_idx  );
+                LagrangianCalc( block_idx  );
             }// i
         }// j
         SelectBestQuant();
@@ -137,7 +139,7 @@ int QuantChooser::GetBestQuant( Subband& node )
                 block_idx = j*block_list.LengthX() + i;     
 
                 NonIntegralErrorCalc( block_list[j][i] , block_idx  , 2 , 2);
-                LagrangianCalc( block_list[j][i] , block_idx  );
+                LagrangianCalc( block_idx  );
             }// i
         }// j
         SelectBestQuant();
@@ -154,7 +156,7 @@ int QuantChooser::GetBestQuant( Subband& node )
                 block_idx = j*block_list.LengthX() + i;     
 
                 NonIntegralErrorCalc( block_list[j][i] , block_idx  , 1 , 2);
-                LagrangianCalc( block_list[j][i] , block_idx  );
+                LagrangianCalc( block_idx  );
             }// i
         }// j
         SelectBestQuant();
@@ -202,7 +204,7 @@ int QuantChooser::GetBestQuant( Subband& node )
                 m_index_step = 4;
 
                 IntegralErrorCalc( block_list[j][i] , block_idx , 2 , 2);
-                LagrangianCalc( block_list[j][i] , block_idx  );
+                LagrangianCalc( block_idx  );
                 SelectBestQuant( block_idx );
 
                 // Step 2. Do 1/2-bit accuracy next
@@ -211,7 +213,7 @@ int QuantChooser::GetBestQuant( Subband& node )
                 m_index_step = 2;
 
                 NonIntegralErrorCalc( block_list[j][i] , block_idx  , 2 , 2);
-                LagrangianCalc( block_list[j][i] , block_idx  );
+                LagrangianCalc( block_idx  );
                 SelectBestQuant( block_idx );
 
                 // Step 3. Finally, do 1/4-bit accuracy next
@@ -220,7 +222,7 @@ int QuantChooser::GetBestQuant( Subband& node )
                 m_index_step = 1;
 
                 NonIntegralErrorCalc( block_list[j][i] , block_idx  , 1 , 2);
-                LagrangianCalc( block_list[j][i] , block_idx  );
+                LagrangianCalc( block_idx  );
                 SelectBestQuant( block_idx );
 
                 block_bit_cost = ( m_costs[block_idx][m_min_idx].ENTROPY 
@@ -364,7 +366,7 @@ void QuantChooser::NonIntegralErrorCalc( const CodeBlock& code_block , const int
 }
 
 
-void QuantChooser::LagrangianCalc(const CodeBlock& code_block , const int block_idx )
+void QuantChooser::LagrangianCalc(const int block_idx )
 {
     const double vol( static_cast<double>( m_count1[block_idx] ) );
 
@@ -378,7 +380,7 @@ void QuantChooser::LagrangianCalc(const CodeBlock& code_block , const int block_
     {
 
         m_costs[block_idx][q].Error = m_error_total[block_idx][q]/vol;
-        m_costs[block_idx][q].Error = std::sqrt( m_costs[block_idx][q].Error )/( code_block.Wt()*code_block.Wt() );
+        m_costs[block_idx][q].Error = std::sqrt( m_costs[block_idx][q].Error )/( m_subband_wt*m_subband_wt );
 
         // Calculate probabilities and entropy
         p0 = double( m_count0[block_idx][q] )/ double( m_count0[block_idx][q]+m_count1[block_idx] );

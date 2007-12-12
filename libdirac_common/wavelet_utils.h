@@ -99,9 +99,6 @@ namespace dirac
         //! Returns the quantisation index associated to the code block
         int QIndex() const{ return m_qindex; }
 
-        //! Returns the weight associated to the code block
-        float Wt() const { return m_wt; }
-
         //! Returns true if the code-block is skipped, false if not
         bool Skipped() const { return m_skipped; }
 
@@ -123,10 +120,6 @@ namespace dirac
         */
         void Init( const int xstart , const int ystart , const int xend , const int yend );
 
-        //! Sets the perceptual weight (can only be done by friend class, eg Subband
-        void SetWt( const float w ){ m_wt = w; }
-
-
     private:
 
         int m_xstart;
@@ -137,7 +130,6 @@ namespace dirac
         int m_yl;
 
         int m_qindex;
-        float m_wt;
 
         bool m_skipped;
     };

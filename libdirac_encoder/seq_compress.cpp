@@ -202,16 +202,6 @@ Frame& SequenceCompressor::CompressNextFrame()
     if ( can_encode )
     {   // We haven't coded everything, so compress the next frame
 
-        if ( m_encparams.Verbose() )
-        {
-            if (m_encparams.FieldCoding())
-                std::cout<<std::endl<<std::endl<<"Compressing field "<<m_current_code_fnum<<", ";
-            else
-                std::cout<<std::endl<<std::endl<<"Compressing frame "<<m_current_code_fnum<<", ";
-            std::cout<<m_current_display_fnum<<" in display order";
-        }
-
-
         // stream access-unit data if first frame in unit
         if(IsNewAccessUnit())
         {
@@ -229,6 +219,21 @@ Frame& SequenceCompressor::CompressNextFrame()
             m_dirac_byte_stream.AddAccessUnit(p_accessunit_byteio);
 
         }
+
+        if ( m_encparams.Verbose() )
+        {
+            if (m_encparams.TargetRate()!=0 )
+                m_ratecontrol->Report();
+
+            if (m_encparams.FieldCoding())
+                std::cout<<std::endl<<std::endl<<"Compressing field "<<m_current_code_fnum<<", ";
+            else
+                std::cout<<std::endl<<std::endl<<"Compressing frame "<<m_current_code_fnum<<", ";
+            std::cout<<m_current_display_fnum<<" in display order";
+
+
+        }
+
 
         // Compress the frame//
         ///////////////////////
@@ -256,7 +261,7 @@ Frame& SequenceCompressor::CompressNextFrame()
         bool is_a_cut( false );
         if ( my_frame.GetFparams().FSort().IsInter() )
         {
-           is_a_cut = m_fcoder.MotionEstimate(  *m_mebuffer,
+            is_a_cut = m_fcoder.MotionEstimate(  *m_mebuffer,
                                                 m_current_display_fnum );
             if ( is_a_cut )
             {
@@ -513,10 +518,14 @@ void FrameSequenceCompressor::RateControlCompress(Frame& my_frame, bool is_a_cut
     if (m_encparams.TargetRate() == 0)
         return;
 
+    FrameByteIO *p_frame_byteio;
+
+    p_frame_byteio =  m_fcoder.Compress(*m_fbuffer,
+                                            m_current_display_fnum);
+
     FrameParams& fparams = my_frame.GetFparams();
     const FrameSort& fsort = fparams.FSort();
 
-    FrameByteIO *p_frame_byteio;
 
     // Coding using Rate Control Algorithm
 
@@ -536,14 +545,14 @@ void FrameSequenceCompressor::RateControlCompress(Frame& my_frame, bool is_a_cut
             m_ratecontrol->CalcNextIntraQualFactor();
     }
 
-    p_frame_byteio =  m_fcoder.Compress(*m_fbuffer,
-                                            m_current_display_fnum);
+
+    // add the frame to the byte stream
+    m_dirac_byte_stream.AddFrame(p_frame_byteio);
+
 
     // Update the quality factor
     m_ratecontrol->CalcNextQualFactor(fparams, p_frame_byteio->GetSize()*8);
 
-    // add the frame to the byte stream
-    m_dirac_byte_stream.AddFrame(p_frame_byteio);
 }
 
 
@@ -681,13 +690,17 @@ void FieldSequenceCompressor::RateControlCompress(Frame& my_frame, bool is_a_cut
     if (m_encparams.TargetRate() == 0)
         return;
 
-    FrameParams& fparams = my_frame.GetFparams();
-    const FrameSort& fsort = fparams.FSort();
 
     FrameByteIO *p_frame_byteio;
 
-    // Coding using Rate Control Algorithm
+    p_frame_byteio =  m_fcoder.Compress(*m_fbuffer,
+                                            m_current_display_fnum);
 
+
+    FrameParams& fparams = my_frame.GetFparams();
+    const FrameSort& fsort = fparams.FSort();
+
+    // Coding using Rate Control Algorithm
     if ( fsort.IsIntra() &&
          m_current_display_fnum > 1 &&
          m_encparams.NumL1() != 0)
@@ -704,8 +717,6 @@ void FieldSequenceCompressor::RateControlCompress(Frame& my_frame, bool is_a_cut
                 m_ratecontrol->CalcNextIntraQualFactor();
     }
 
-    p_frame_byteio =  m_fcoder.Compress(*m_fbuffer,
-                                            m_current_display_fnum);
 
     if (m_current_display_fnum%2 == 0)
         m_field1_bytes = p_frame_byteio->GetSize();
@@ -715,6 +726,7 @@ void FieldSequenceCompressor::RateControlCompress(Frame& my_frame, bool is_a_cut
     // Update the quality factor
     if (fparams.FrameNum()%2)
         m_ratecontrol->CalcNextQualFactor(fparams, (m_field1_bytes+m_field2_bytes)*8);
+
 
     // add the frame to the byte stream
     m_dirac_byte_stream.AddFrame(p_frame_byteio);

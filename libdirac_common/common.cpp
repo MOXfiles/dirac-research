@@ -52,25 +52,6 @@ using namespace dirac;
 
 //const dirac::QuantiserLists dirac::dirac_quantiser_lists;
 
-//PicArray functions
-PicArray::PicArray(int height, int width, CompSort cs):
-    TwoDArray<ValueType>(height , width),
-    m_csort(cs)
-{
-         //Nothing
-}
-
-const CompSort& PicArray::CSort() const
-{
-    return m_csort;
-}
-
-void PicArray::SetCSort(const CompSort cs)
-{
-    m_csort=cs;
-}
-
-
 
 //EntropyCorrector functions
 

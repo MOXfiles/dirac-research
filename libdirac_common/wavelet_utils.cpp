@@ -115,10 +115,6 @@ Subband::Subband(int xpos,int ypos, int xlen, int ylen, int d)
 void Subband::SetWt( const float w )
 {
     m_wt = w;
-
-    for (int j=0; j<m_code_block_array.LengthY() ; ++j)
-        for (int i=0; i<m_code_block_array.LengthX() ; ++i)
-            m_code_block_array[j][i].SetWt( m_wt );
 }
 
 void Subband::SetNumBlocks( const int ynum , const int xnum)
@@ -306,7 +302,6 @@ void WaveletTransform::SetBandWeights (const float cpd,
                                        const CompSort csort,
                                        const bool field_coding)
 {
-    //NB - only designed for progressive to date
 
     int xlen, ylen, xl, yl, xp, yp;
     float xfreq, yfreq;

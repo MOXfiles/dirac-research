@@ -81,8 +81,7 @@ namespace dirac
                                    const int yratio );
 
         //! Having got statistics, calculate the Lagrangian costs
-        void LagrangianCalc(const CodeBlock& code_block , 
-                            const int block_idx );
+        void LagrangianCalc( const int block_idx );
 
         //! Select the best quantisation index for a whole subband on the basis of the Lagrangian calculations
         void SelectBestQuant();
@@ -94,6 +93,9 @@ namespace dirac
         CoeffType BlockAbsMax( const CodeBlock& code_block );
 
     private:
+        //! The perceptual weighting factor of the subband being tested
+        float m_subband_wt;
+
         //! The smallest quantisation index being tested
         int m_bottom_idx;
         //! The largest quantisation index being tested

@@ -76,10 +76,9 @@ namespace dirac
             \param  me_data     Pointer to the motion vector data
             \return Frame-componentin Dirac-bytestream format
         */
-        ComponentByteIO* Compress( PicArray & pic_data ,
-                                   const bool is_a_cut ,
-                                   const double intra_ratio=100.0 ,
-                                   MEData *me_data=0 );
+        ComponentByteIO* Compress( CoeffArray& coeff_data ,
+                                   SubbandList& bands,
+                                   const OneDArray<unsigned int>& estimated_bits);
 
     private:
         //! Copy constructor is private and body-less. This class should not be copied.
@@ -87,26 +86,10 @@ namespace dirac
 
         //! Assignment = is private and body-less. This class should not be assigned.
         CompCompressor& operator=(const CompCompressor& rhs);
-
-
-        //! Sets the value m_lambda according to frame and component type
-        void SetCompLambda( const double intra_ratio, const bool is_a_cut );
-
-
-        void SelectQuantisers( CoeffArray& coeff_data , 
-                               SubbandList& bands ,
-                               OneDArray<unsigned int>& est_counts,
-                               const CodeBlockMode cb_mode );
-
-        int SelectMultiQuants( CoeffArray& coeff_data , 
-                               SubbandList& bands , 
-                               const int band_num );
-
-        void SetupCodeBlocks( SubbandList& bands );
-
+        
+        //! Set a subband to a constant value
         void SetToVal(CoeffArray& coeff_data,const Subband& node,ValueType val);
 
-        void AddSubAverage(CoeffArray& coeff_data,int xl,int yl,AddOrSub dirn);
 
     private:
 
@@ -123,7 +106,6 @@ namespace dirac
 
         float m_lambda;
         
-        MEData* m_me_data;
     };
 
 } // namespace dirac
