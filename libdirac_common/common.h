@@ -292,7 +292,7 @@ namespace dirac
             format.
         */
         PicArray(int height, int width, CompSort cs=Y_COMP): 
-            TwoDArray<CoeffType>(height, width), m_csort(cs){}
+            TwoDArray<ValueType>(height, width), m_csort(cs){}
 
         //copy constructor and assignment= derived by inheritance
 
