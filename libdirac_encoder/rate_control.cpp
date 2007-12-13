@@ -103,7 +103,7 @@ RateController::RateController(int trate, SourceParams& srcp, EncoderParams& enc
     SetFrameDistribution();
     CalcTotalBits(srcp);
     
-    m_Iframe_bits = m_total_GOP_bits/10.0;
+    m_Iframe_bits = m_total_GOP_bits/10;
     m_L1frame_bits = (m_Iframe_bits*3)/m_num_L1frame;
     m_L2frame_bits = ( m_total_GOP_bits - m_Iframe_bits - 
                        m_L1frame_bits*m_num_L1frame )/

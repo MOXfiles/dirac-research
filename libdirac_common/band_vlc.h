@@ -77,6 +77,8 @@ namespace dirac
 
         int Compress (CoeffArray &in_data);
 
+        virtual ~BandVLC(){}
+
     protected:
         //! Code an individual quantised value and perform inverse-quantisation
         inline void CodeVal( CoeffArray& in_data , const int xpos , const int ypos , const CoeffType val);
