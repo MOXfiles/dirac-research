@@ -803,7 +803,7 @@ void SourceParams::SetColourSpecification (unsigned int cs_idx)
         m_transfer_func = TF_TV;
         break;
     case 4:
-        m_col_primary = CP_CIE_XYZ;
+        m_col_primary = CP_DCINEMA;
         m_col_matrix = CM_HDTV_COMP_INTERNET;
         m_transfer_func = TF_DCINEMA;
         break;

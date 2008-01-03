@@ -112,7 +112,7 @@ typedef enum {
     CP_HDTV_COMP_INTERNET=0,
     CP_SDTV_525,
     CP_SDTV_625,
-    CP_CIE_XYZ,
+    CP_DCINEMA,
     CP_UNDEF
 }ColourPrimaries;
 
