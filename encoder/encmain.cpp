@@ -92,7 +92,6 @@ static void display_help()
     cout << "\ncformat           string  YUV444P       Chroma Sampling Format (YUV444P YUV422P YUV420P)";
     cout << "\nfr                ulong   Preset        Frame rate(s) (e.n or e/n format)";
     cout << "\nsource_sampling   string  progressive   source material type either progressive or interlaced";
-    cout << "\nfield_dominance   string  topfieldfirst Field dominance in interlaced source - topfieldfirst or bottomfield first";
     cout << "\nstart             ulong   0UL           Frame number to start encoding from";
     cout << "\nstop              ulong   EOF           Frame number after which encoding finishes";
     cout << "\nfield_coding      bool    false         Set picture coding type to field coding. Default coding type is by frames";
@@ -732,20 +731,6 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             else
             {
                 cerr << "source_sampling should either be interlaced or progressive" << endl;
-                parsed[i] = false;
-            }
-        }
-        else if ( strcmp(argv[i], "-field_dominance") == 0 )
-        {
-            parsed[i] = true;
-            i++;
-            if (!strcmp(argv[i], "topfieldfirst"))
-                enc_ctx.src_params.topfieldfirst = 1;
-            else if (!strcmp(argv[i], "bottomfieldfirst"))
-                enc_ctx.src_params.topfieldfirst = 0;
-            else
-            {
-                cerr << "field_dominance should either be topfieldfirst or bottomfieldfirst" << endl;
                 parsed[i] = false;
             }
         }

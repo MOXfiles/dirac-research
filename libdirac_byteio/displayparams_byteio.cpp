@@ -271,10 +271,6 @@ void SourceParamsByteIO::InputScanFormat()
             SEVERITY_ACCESSUNIT_ERROR);
     }
     m_src_params.SetSourceSampling(source_sampling);
-
-    // read field dominance flag
-    if (m_src_params.SourceSampling() == 1)
-        m_src_params.SetTopFieldFirst(ReadBool());
 }
 
 void SourceParamsByteIO::InputSignalRange()
@@ -481,13 +477,6 @@ void SourceParamsByteIO::OutputScanFormat()
 
     // output interlace value
     WriteUint(m_src_params.SourceSampling());
-
-    // if material is interlaced
-    if(m_src_params.SourceSampling() == 1)
-    {
-        // output field dominance flag
-        WriteBit(m_src_params.TopFieldFirst());
-    }
 }
 
 

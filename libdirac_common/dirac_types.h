@@ -132,7 +132,7 @@ typedef struct
     unsigned int chroma_height;
     /*! source sampling field: 0 - progressive; 1 - interlaced */
     unsigned int source_sampling;
-    /*! top field comes first : 0 - false; 1 - true */
+    /*! top field comes first : 0 - false; 1 - true. Set by Dirac library. */
     int topfieldfirst;
     /*! frame rate */
     dirac_frame_rate_t frame_rate;
