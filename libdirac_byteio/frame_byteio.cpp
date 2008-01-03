@@ -115,7 +115,7 @@ bool FrameByteIO::Input()
     {
         DIRAC_THROW_EXCEPTION(
                     ERR_UNSUPPORTED_STREAM_DATA,
-                    "VLC codes for entropy coding of coefficient data is currently supported for Intra frames only",
+                    "VLC codes for entropy coding of coefficient data supported for Intra frames only",
                     SEVERITY_FRAME_ERROR);
     }
 
