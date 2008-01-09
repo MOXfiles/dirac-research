@@ -104,18 +104,9 @@ void SetDefaultCodecParameters(CodecParams &cparams,
         cparams.SetFieldCoding(false);
         cparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
         // NOTE: FIXME - need to add global motion params here
-        if (num_refs == 1)
-        {
-            cparams.SetFrameWeightsPrecision(0);
-            cparams.SetRef1Weight(1);
-            cparams.SetRef2Weight(0);
-        }
-        else
-        {
-            cparams.SetFrameWeightsPrecision(1);
-            cparams.SetRef1Weight(1);
-            cparams.SetRef2Weight(1);
-        }
+        cparams.SetFrameWeightsPrecision(1);
+        cparams.SetRef1Weight(1);
+        cparams.SetRef2Weight(1);
     }
 }
 

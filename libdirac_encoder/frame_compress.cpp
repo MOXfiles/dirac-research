@@ -124,25 +124,6 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
     {
         m_encparams.SetTransformFilter( m_encparams.InterTransformFilter() );
         m_encparams.SetUsualCodeBlocks( INTER_FRAME );
-        // Set the frame weight parameters.
-        // FIXME - setting to default at the moment. Need to process command
-        // line args in future
-        if (fparams.Refs().size() == 1)
-        {
-            m_encparams.SetFrameWeightsPrecision(0);
-            m_encparams.SetRef1Weight(1);
-            m_encparams.SetRef2Weight(0);
-        }
-        else
-        {
-            m_encparams.SetFrameWeightsPrecision(1);
-            m_encparams.SetRef1Weight(1);
-            m_encparams.SetRef2Weight(1);
-            // TESTING
-            //m_encparams.SetFrameWeightsPrecision(2);
-            //m_encparams.SetRef1Weight(1);
-            //m_encparams.SetRef2Weight(3);
-        }
     }
 
     // Write the frame header. We wait until after motion estimation, since
