@@ -108,7 +108,7 @@ bool FrameByteIO::Input()
     SetReferenceType();
     SetEntropyCodingFlag();
 
-    // FIXME: currently use of VLC for entropy coding is supported for
+    // Use of VLC for entropy coding is supported for
     // intra frames only
     if (m_frame_params.GetFrameType() == INTER_FRAME && 
         m_frame_params.UsingAC() == false)

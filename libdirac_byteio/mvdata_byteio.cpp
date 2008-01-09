@@ -148,7 +148,7 @@ void MvDataByteIO::Input()
     // Input chroma 
     InputGlobalMotionParams();
 
-    // Input video depth
+    // Input Picture Prediction mode
     InputFramePredictionMode();
 
     // Input frame weights
@@ -169,7 +169,7 @@ void MvDataByteIO::Output()
     // output global motion 
     OutputGlobalMotionParams();
 
-    // output video depth
+    // output picture prediction mode
     OutputFramePredictionMode();
 
     // output frame weights
