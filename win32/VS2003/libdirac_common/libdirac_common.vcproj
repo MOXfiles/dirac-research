@@ -381,6 +381,9 @@
 				RelativePath="..\..\..\libdirac_common\band_codec.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_common\band_vlc.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_common\cmd_line.cpp">
 			</File>
 			<File
@@ -447,6 +450,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\band_codec.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_common\band_vlc.h">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\cmd_line.h">
