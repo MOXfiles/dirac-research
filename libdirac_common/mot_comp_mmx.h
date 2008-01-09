@@ -53,8 +53,10 @@ namespace dirac
     void CompensateComponentAddAndShift_mmx (int start_y, int end_y,
                                            int weight_bits,
                                            const ImageCoords& orig_pic_size, 
-                                           TwoDArray<CalcValueType> &comp_data, 
+                                           TwoDArray<ValueType> &comp_data, 
                                            PicArray &pic_data_out);
+    
+    void AddMCBlock_mmx (const ImageCoords& start_pos, TwoDArray<ValueType> &comp_strip, TwoDArray<ValueType>& block_data);
 }
 
 #endif // HAVE_MMX

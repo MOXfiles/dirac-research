@@ -1138,6 +1138,12 @@ namespace dirac
         //! Return the Ref2 weight
         int Ref2Weight() const { return m_ref2_weight; }
 
+        bool CustomRefWeights()
+        {
+            return (m_frame_weights_bits != 1 ||
+                    m_ref1_weight != 1 ||
+                    m_ref2_weight != 1);
+        }
         // ... and Sets
         //! Set how many MBs there are horizontally
         void SetXNumMB(const int xn){m_x_num_mb=xn;}
