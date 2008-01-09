@@ -214,11 +214,8 @@ void SourceParamsByteIO::InputColourSpecification()
 
     // read index value
     int colour_spec_index = ReadUint();
-    if(colour_spec_index!=0)
-    {
-        m_src_params.SetColourSpecification( colour_spec_index );
-    }
-    else 
+    m_src_params.SetColourSpecification( colour_spec_index );
+    if(colour_spec_index==0)
     {
         InputColourPrimaries();
         InputColourMatrix();
