@@ -111,7 +111,7 @@ bool ReadInstrumentationHeader (std::istream &in, SourceParams& srcparams, bool 
 
     in >> num;
     in >> denom;
-    srcparams.SetAspectRatio( num, denom );
+    srcparams.SetPixelAspectRatio( num, denom );
     
     in >> field_coding;
     return true;

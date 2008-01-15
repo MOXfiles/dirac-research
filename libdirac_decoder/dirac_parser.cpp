@@ -120,8 +120,8 @@ static void set_sequence_params (const  DiracParser * const parser, dirac_decode
     src_params->frame_rate.numerator = srcparams.FrameRate().m_num;
     src_params->frame_rate.denominator = srcparams.FrameRate().m_denom;
 
-    src_params->pix_asr.numerator = srcparams.AspectRatio().m_num;
-    src_params->pix_asr.denominator = srcparams.AspectRatio().m_denom;
+    src_params->pix_asr.numerator = srcparams.PixelAspectRatio().m_num;
+    src_params->pix_asr.denominator = srcparams.PixelAspectRatio().m_denom;
 
     // clean area
     src_params->clean_area.width = srcparams.CleanWidth();

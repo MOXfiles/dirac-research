@@ -465,10 +465,10 @@ void DiracEncoder::SetSourceParams (const dirac_encoder_context_t *enc_ctx)
         m_srcparams.SetFrameRate( enc_ctx->src_params.frame_rate.numerator,
                             enc_ctx->src_params.frame_rate.denominator );
     }
-    if (m_srcparams.AspectRatio().m_num != (unsigned int)enc_ctx->src_params.pix_asr.numerator ||
-        m_srcparams.AspectRatio().m_denom != (unsigned int)enc_ctx->src_params.pix_asr.denominator)
+    if (m_srcparams.PixelAspectRatio().m_num != (unsigned int)enc_ctx->src_params.pix_asr.numerator ||
+        m_srcparams.PixelAspectRatio().m_denom != (unsigned int)enc_ctx->src_params.pix_asr.denominator)
     {
-        m_srcparams.SetAspectRatio( enc_ctx->src_params.pix_asr.numerator,
+        m_srcparams.SetPixelAspectRatio( enc_ctx->src_params.pix_asr.numerator,
                             enc_ctx->src_params.pix_asr.denominator );
     }
     // TO DO: CLEAN AREA and signal range
@@ -901,8 +901,8 @@ static void SetSourceParameters(dirac_encoder_context_t *enc_ctx,
     src_params.chroma = default_src_params.CFormat();
     src_params.frame_rate.numerator = default_src_params.FrameRate().m_num;
     src_params.frame_rate.denominator = default_src_params.FrameRate().m_denom;
-    src_params.pix_asr.numerator = default_src_params.AspectRatio().m_num;
-    src_params.pix_asr.denominator = default_src_params.AspectRatio().m_denom;
+    src_params.pix_asr.numerator = default_src_params.PixelAspectRatio().m_num;
+    src_params.pix_asr.denominator = default_src_params.PixelAspectRatio().m_denom;
     src_params.source_sampling = default_src_params.SourceSampling();
     src_params.topfieldfirst = default_src_params.TopFieldFirst();
 

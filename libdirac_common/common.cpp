@@ -707,38 +707,38 @@ void SourceParams::SetFrameRate (FrameRateType fr)
     }
 }
 
-void SourceParams::SetAspectRatio (AspectRatioType aspect_ratio)
+void SourceParams::SetPixelAspectRatio (PixelAspectRatioType pix_asr_idx)
 {
-    m_asr_idx = aspect_ratio;
+    m_pix_asr_idx = pix_asr_idx;
 
-    switch (aspect_ratio)
+    switch (pix_asr_idx)
     {
-    case ASPECT_RATIO_1_1:
-        m_aspect_ratio.m_num = m_aspect_ratio.m_denom = 1;
+    case PIXEL_ASPECT_RATIO_1_1:
+        m_pixel_aspect_ratio.m_num = m_pixel_aspect_ratio.m_denom = 1;
         break;
-    case ASPECT_RATIO_10_11:
-        m_aspect_ratio.m_num = 10;
-        m_aspect_ratio.m_denom = 11;
+    case PIXEL_ASPECT_RATIO_10_11:
+        m_pixel_aspect_ratio.m_num = 10;
+        m_pixel_aspect_ratio.m_denom = 11;
         break;
-    case ASPECT_RATIO_12_11:
-        m_aspect_ratio.m_num = 12;
-        m_aspect_ratio.m_denom = 11;
+    case PIXEL_ASPECT_RATIO_12_11:
+        m_pixel_aspect_ratio.m_num = 12;
+        m_pixel_aspect_ratio.m_denom = 11;
         break;
-    case ASPECT_RATIO_40_33:
-        m_aspect_ratio.m_num = 40;
-        m_aspect_ratio.m_denom = 33;
+    case PIXEL_ASPECT_RATIO_40_33:
+        m_pixel_aspect_ratio.m_num = 40;
+        m_pixel_aspect_ratio.m_denom = 33;
         break;
-    case ASPECT_RATIO_16_11:
-        m_aspect_ratio.m_num = 16;
-        m_aspect_ratio.m_denom = 11;
+    case PIXEL_ASPECT_RATIO_16_11:
+        m_pixel_aspect_ratio.m_num = 16;
+        m_pixel_aspect_ratio.m_denom = 11;
         break;
-    case ASPECT_RATIO_4_3:
-        m_aspect_ratio.m_num = 4;
-        m_aspect_ratio.m_denom = 3;
+    case PIXEL_ASPECT_RATIO_4_3:
+        m_pixel_aspect_ratio.m_num = 4;
+        m_pixel_aspect_ratio.m_denom = 3;
         break;
     default:
-        m_asr_idx = ASPECT_RATIO_CUSTOM;
-        m_aspect_ratio.m_num = m_aspect_ratio.m_denom = 0;
+        m_pix_asr_idx = PIXEL_ASPECT_RATIO_CUSTOM;
+        m_pixel_aspect_ratio.m_num = m_pixel_aspect_ratio.m_denom = 0;
         break;
     }
 }
@@ -1191,26 +1191,26 @@ FrameRateType IntToFrameRateType(int frame_rate_idx)
     }
 }
 
-AspectRatioType IntToAspectRatioType(int aspect_ratio_idx)
+PixelAspectRatioType IntToPixelAspectRatioType(int pix_asr_idx)
 {
-    switch(aspect_ratio_idx)
+    switch(pix_asr_idx)
     {
-    case ASPECT_RATIO_CUSTOM:
-        return ASPECT_RATIO_CUSTOM;
-    case ASPECT_RATIO_1_1:
-        return ASPECT_RATIO_1_1;
-    case ASPECT_RATIO_10_11:
-        return ASPECT_RATIO_10_11;
-    case ASPECT_RATIO_12_11:
-        return ASPECT_RATIO_12_11;
-    case ASPECT_RATIO_40_33:
-        return ASPECT_RATIO_40_33;
-    case ASPECT_RATIO_16_11:
-        return ASPECT_RATIO_16_11;
-    case ASPECT_RATIO_4_3:
-        return ASPECT_RATIO_4_3;
+    case PIXEL_ASPECT_RATIO_CUSTOM:
+        return PIXEL_ASPECT_RATIO_CUSTOM;
+    case PIXEL_ASPECT_RATIO_1_1:
+        return PIXEL_ASPECT_RATIO_1_1;
+    case PIXEL_ASPECT_RATIO_10_11:
+        return PIXEL_ASPECT_RATIO_10_11;
+    case PIXEL_ASPECT_RATIO_12_11:
+        return PIXEL_ASPECT_RATIO_12_11;
+    case PIXEL_ASPECT_RATIO_40_33:
+        return PIXEL_ASPECT_RATIO_40_33;
+    case PIXEL_ASPECT_RATIO_16_11:
+        return PIXEL_ASPECT_RATIO_16_11;
+    case PIXEL_ASPECT_RATIO_4_3:
+        return PIXEL_ASPECT_RATIO_4_3;
     default:
-        return ASPECT_RATIO_UNDEFINED;
+        return PIXEL_ASPECT_RATIO_UNDEFINED;
 
     }
 }

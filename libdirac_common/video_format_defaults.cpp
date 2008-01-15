@@ -117,7 +117,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
     sparams.SetCFormat(format420);
     sparams.SetSourceSampling(0);
     sparams.SetTopFieldFirst(true);
-    sparams.SetAspectRatio(ASPECT_RATIO_1_1);
+    sparams.SetPixelAspectRatio(PIXEL_ASPECT_RATIO_1_1);
     sparams.SetSignalRange(SIGNAL_RANGE_8BIT_FULL);
     sparams.SetLeftOffset(0);
     sparams.SetTopOffset(0);
@@ -139,7 +139,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetYl(120);
         sparams.SetTopFieldFirst(false);
         sparams.SetFrameRate(FRAMERATE_14p98_FPS);
-        sparams.SetAspectRatio(ASPECT_RATIO_10_11);
+        sparams.SetPixelAspectRatio(PIXEL_ASPECT_RATIO_10_11);
         sparams.SetCleanWidth(176);
         sparams.SetCleanHeight(120);
         sparams.SetColourSpecification(1);
@@ -148,7 +148,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetXl(176);
         sparams.SetYl(144);
         sparams.SetFrameRate(FRAMERATE_12p5_FPS);
-        sparams.SetAspectRatio(ASPECT_RATIO_12_11);
+        sparams.SetPixelAspectRatio(PIXEL_ASPECT_RATIO_12_11);
         sparams.SetCleanWidth(176);
         sparams.SetCleanHeight(144);
         sparams.SetColourSpecification(2);
@@ -158,7 +158,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetYl(240);
         sparams.SetTopFieldFirst(false);
         sparams.SetFrameRate(FRAMERATE_14p98_FPS);
-        sparams.SetAspectRatio(ASPECT_RATIO_10_11);
+        sparams.SetPixelAspectRatio(PIXEL_ASPECT_RATIO_10_11);
         sparams.SetCleanWidth(352);
         sparams.SetCleanHeight(240);
         sparams.SetColourSpecification(1);
@@ -167,7 +167,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetXl(352);
         sparams.SetYl(288);
         sparams.SetFrameRate(FRAMERATE_12p5_FPS);
-        sparams.SetAspectRatio(ASPECT_RATIO_12_11);
+        sparams.SetPixelAspectRatio(PIXEL_ASPECT_RATIO_12_11);
         sparams.SetCleanWidth(352);
         sparams.SetCleanHeight(288);
         sparams.SetColourSpecification(2);
@@ -177,7 +177,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetYl(480);
         sparams.SetTopFieldFirst(false);
         sparams.SetFrameRate(FRAMERATE_14p98_FPS);
-        sparams.SetAspectRatio(ASPECT_RATIO_10_11);
+        sparams.SetPixelAspectRatio(PIXEL_ASPECT_RATIO_10_11);
         sparams.SetCleanWidth(704);
         sparams.SetCleanHeight(480);
         sparams.SetColourSpecification(1);
@@ -186,7 +186,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetXl(704);
         sparams.SetYl(576);
         sparams.SetFrameRate(FRAMERATE_12p5_FPS);
-        sparams.SetAspectRatio(ASPECT_RATIO_12_11);
+        sparams.SetPixelAspectRatio(PIXEL_ASPECT_RATIO_12_11);
         sparams.SetCleanWidth(704);
         sparams.SetCleanHeight(576);
         sparams.SetColourSpecification(2);
@@ -198,7 +198,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetSourceSampling(1);
         sparams.SetTopFieldFirst(false);
         sparams.SetFrameRate(FRAMERATE_29p97_FPS);
-        sparams.SetAspectRatio(ASPECT_RATIO_10_11);
+        sparams.SetPixelAspectRatio(PIXEL_ASPECT_RATIO_10_11);
         sparams.SetCleanWidth(704);
         sparams.SetCleanHeight(480);
         sparams.SetLeftOffset(8);
@@ -211,7 +211,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetCFormat(format422);
         sparams.SetSourceSampling(1);
         sparams.SetFrameRate(FRAMERATE_25_FPS);
-        sparams.SetAspectRatio(ASPECT_RATIO_12_11);
+        sparams.SetPixelAspectRatio(PIXEL_ASPECT_RATIO_12_11);
         sparams.SetCleanWidth(704);
         sparams.SetCleanHeight(576);
         sparams.SetLeftOffset(8);

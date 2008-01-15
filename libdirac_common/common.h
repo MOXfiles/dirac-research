@@ -191,11 +191,11 @@ namespace dirac
     FrameRateType IntToFrameRateType(int frame_rate_idx);
 
     /**
-    * Function to convert an integer to a valid AspectRatio type
-    *@param aspect_ratio_idx Integer corresponding to a aspect-ratio in the spec table
-    *@return Valid AspectRatioType (returns ASPECT_RATIO_UNDEFINED if no valid aspect-ratio found)
+    * Function to convert an integer to a valid PixelAspectRatio type
+    *@param pix_asr_idx Integer corresponding to a pixel aspect ratio in the spec table
+    *@return Valid PixelAspectRatioType (returns PIXEL_ASPECT_RATIO_UNDEFINED if no valid pixel aspect ratio found)
     */
-    AspectRatioType IntToAspectRatioType(int aspect_ratio_idx);
+    PixelAspectRatioType IntToPixelAspectRatioType(int pix_asr_idx);
 
     /**
     * Function to convert an integer to a valid SignalRange type
@@ -584,10 +584,10 @@ namespace dirac
         FrameRateType FrameRateIndex() const { return m_fr_idx; }
 
            //! Return the pixel aspect ratio
-        Rational AspectRatio() const { return m_aspect_ratio; }
+        Rational PixelAspectRatio() const { return m_pixel_aspect_ratio; }
 
-         //! Return the type from the aspect ratio table
-        AspectRatioType AspectRatioIndex() const { return m_asr_idx; }
+         //! Return the type from the pixel aspect ratio table
+        PixelAspectRatioType PixelAspectRatioIndex() const { return m_pix_asr_idx; }
 
         // Clean area parameters
         //! Return the Clean area width
@@ -662,22 +662,22 @@ namespace dirac
         void SetFrameRate(FrameRateType fr);
 
            //! Set the pixel aspect ratio
-        void SetAspectRatio(const Rational &asr)
+        void SetPixelAspectRatio(const Rational &pix_asr)
         {
-            m_asr_idx = ASPECT_RATIO_CUSTOM;
-            m_aspect_ratio = asr;
+            m_pix_asr_idx = PIXEL_ASPECT_RATIO_CUSTOM;
+            m_pixel_aspect_ratio = pix_asr;
         }
 
         //! Set the pixel aspect ratio
-        void SetAspectRatio(unsigned int as_num, unsigned int as_denom )
+        void SetPixelAspectRatio(unsigned int pix_as_num, unsigned int pix_as_denom )
         {
-            m_asr_idx = ASPECT_RATIO_CUSTOM;
-            m_aspect_ratio.m_num = as_num;
-            m_aspect_ratio.m_denom = as_denom;
+            m_pix_asr_idx = PIXEL_ASPECT_RATIO_CUSTOM;
+            m_pixel_aspect_ratio.m_num = pix_as_num;
+            m_pixel_aspect_ratio.m_denom = pix_as_denom;
         }
 
         //! Set the Pixel Aspect Ratio
-        void SetAspectRatio(AspectRatioType aspect_ratio);
+        void SetPixelAspectRatio(PixelAspectRatioType pixel_aspect_ratio);
 
         // Clean area parameters
         //! Set the Clean area width
@@ -737,10 +737,10 @@ namespace dirac
         Rational m_framerate;
 
         //! Index into pixel aspect ratio table
-        AspectRatioType m_asr_idx;
+        PixelAspectRatioType m_pix_asr_idx;
 
         //! Pixel Aspect Ratio
-        Rational m_aspect_ratio;
+        Rational m_pixel_aspect_ratio;
 
         // Clean area parameters
 

@@ -62,8 +62,8 @@ void SourceParamsByteIO::Input()
     // input frame dimensions
     InputFrameSize();
 
-    // input sampling format
-    InputSamplingFormat();
+    // input chroma sampling format
+    InputChromaSamplingFormat();
 
     // input scan format
     InputScanFormat();
@@ -71,8 +71,8 @@ void SourceParamsByteIO::Input()
     // input frame rate
     InputFrameRate();
 
-    // input aspect ratio 
-    InputAspectRatio();
+    // input pixel aspect ratio 
+    InputPixelAspectRatio();
 
     // input clean area
     InputCleanArea();
@@ -86,11 +86,11 @@ void SourceParamsByteIO::Input()
 
 void SourceParamsByteIO::Output()
 {
-    // input frame dimensions
+    // output frame dimensions
     OutputFrameSize();
 
-    // input sampling format
-    OutputSamplingFormat();
+    // output chroma sampling format
+    OutputChromaSamplingFormat();
 
     // output scan format
     OutputScanFormat();
@@ -98,8 +98,8 @@ void SourceParamsByteIO::Output()
     // output frame rate
     OutputFrameRate();
 
-    // output aspect ratio 
-    OutputAspectRatio();
+    // output pixel aspect ratio 
+    OutputPixelAspectRatio();
 
     // output clean area
     OutputCleanArea();
@@ -126,7 +126,7 @@ void SourceParamsByteIO::InputFrameSize()
     m_src_params.SetYl(ReadUint());
 }
 
-void SourceParamsByteIO::InputSamplingFormat()
+void SourceParamsByteIO::InputChromaSamplingFormat()
 {
     bool chroma_flag = ReadBool();
 
@@ -143,31 +143,31 @@ void SourceParamsByteIO::InputSamplingFormat()
     m_src_params.SetCFormat(chroma_format);
 }
 
-void SourceParamsByteIO::InputAspectRatio()
+void SourceParamsByteIO::InputPixelAspectRatio()
 {
-    bool aspect_ratio_flag = ReadBool();
-    if(!aspect_ratio_flag)
+    bool pixel_aspect_ratio_flag = ReadBool();
+    if(!pixel_aspect_ratio_flag)
         return;
 
     // read index value
-    int aspect_ratio_index = ReadUint();
-    AspectRatioType aspect_ratio=IntToAspectRatioType(aspect_ratio_index);
-    if(aspect_ratio==ASPECT_RATIO_UNDEFINED)
+    int pixel_aspect_ratio_index = ReadUint();
+    PixelAspectRatioType pixel_aspect_ratio=IntToPixelAspectRatioType(pixel_aspect_ratio_index);
+    if(pixel_aspect_ratio==PIXEL_ASPECT_RATIO_UNDEFINED)
     DIRAC_THROW_EXCEPTION(
-                    ERR_INVALID_ASPECT_RATIO,
-                    "Dirac does not recognise the specified aspect-ratio",
+                    ERR_INVALID_PIXEL_ASPECT_RATIO,
+                    "Dirac does not recognise the specified pixel_aspect_ratio",
                     SEVERITY_ACCESSUNIT_ERROR)
 
-    if(aspect_ratio_index!=ASPECT_RATIO_CUSTOM)
+    if(pixel_aspect_ratio_index!=PIXEL_ASPECT_RATIO_CUSTOM)
     {
-        m_src_params.SetAspectRatio(aspect_ratio);
+        m_src_params.SetPixelAspectRatio(pixel_aspect_ratio);
     }
     else
     {
         // read num/denom
         int numerator = ReadUint();
         int denominator = ReadUint();
-        m_src_params.SetAspectRatio(numerator, denominator);
+        m_src_params.SetPixelAspectRatio(numerator, denominator);
     }
 
 }
@@ -329,7 +329,7 @@ void SourceParamsByteIO::OutputFrameSize()
 
 }
 
-void SourceParamsByteIO::OutputSamplingFormat()
+void SourceParamsByteIO::OutputChromaSamplingFormat()
 {
     // output 'is default' flag
     bool not_default =  m_src_params.CFormat()!=m_default_src_params.CFormat();
@@ -344,10 +344,10 @@ void SourceParamsByteIO::OutputSamplingFormat()
 }
 
 
-void SourceParamsByteIO::OutputAspectRatio()
+void SourceParamsByteIO::OutputPixelAspectRatio()
 {
-    if (m_src_params.AspectRatioIndex()!= ASPECT_RATIO_CUSTOM
-        && m_src_params.AspectRatioIndex() == m_default_src_params.AspectRatioIndex())
+    if (m_src_params.PixelAspectRatioIndex()!= PIXEL_ASPECT_RATIO_CUSTOM
+        && m_src_params.PixelAspectRatioIndex() == m_default_src_params.PixelAspectRatioIndex())
     {
         // default frame rate index
         WriteBit(0);
@@ -357,12 +357,12 @@ void SourceParamsByteIO::OutputAspectRatio()
        WriteBit(1);
 
     // Frame rate index
-    WriteUint(m_src_params.AspectRatioIndex());
+    WriteUint(m_src_params.PixelAspectRatioIndex());
     
-    if (!m_src_params.AspectRatioIndex()) // i,e. custom value
+    if (!m_src_params.PixelAspectRatioIndex()) // i,e. custom value
     {
-        WriteUint(m_src_params.AspectRatio().m_num);
-        WriteUint(m_src_params.AspectRatio().m_denom);
+        WriteUint(m_src_params.PixelAspectRatio().m_num);
+        WriteUint(m_src_params.PixelAspectRatio().m_denom);
     }
 }
 

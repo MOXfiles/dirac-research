@@ -94,14 +94,14 @@ namespace dirac
         void InputFrameSize();
 
         /**
-        * Reads Sampling Format
+        * Reads Chroma Sampling Format
         */
-        void InputSamplingFormat();
+        void InputChromaSamplingFormat();
     
         /**
-        * Reads aspect ratio info
+        * Reads pixel aspect ratio info
         */
-        void InputAspectRatio();
+        void InputPixelAspectRatio();
 
         /**
         * Reads clean-area info
@@ -149,14 +149,14 @@ namespace dirac
         void OutputFrameSize();
 
         /**
-        * Outputs Sampling Format
+        * Outputs Chroma Sampling Format
         */
-        void OutputSamplingFormat();
+        void OutputChromaSamplingFormat();
 
         /**
-        * Outputs aspect ratio info
+        * Outputs pixel aspect ratio info
         */
-        void OutputAspectRatio();
+        void OutputPixelAspectRatio();
 
         /**
         * Outputs clean-area info
