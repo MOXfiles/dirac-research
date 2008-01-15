@@ -88,7 +88,8 @@ ParseUnitByteIO* DiracByteStream::GetNextParseUnit()
     if(mp_prev_parse_unit)
     {
         // remove the unwanted bytes associated with the previous parse-unit
-        RemoveRedundantBytes(mp_prev_parse_unit->GetNextParseOffset());
+        int prev_offset = mp_prev_parse_unit->GetNextParseOffset();
+        RemoveRedundantBytes(prev_offset ? prev_offset : mp_prev_parse_unit->GetSize());
         delete mp_prev_parse_unit;
         mp_prev_parse_unit=NULL;
         if(!GetSize())
