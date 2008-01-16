@@ -747,7 +747,7 @@ void MotionCompensator::CreateBlock( int xbsep, int ybsep,
     int xoffset = (xblen - xbsep)/2;
     for(int x = 0; x < 2*xoffset; ++x)
     {
-        HWts[x] = 1 + (6*x + xoffset -1)/(2*xoffset-1);
+        HWts[x] = 1 + (6*(x+1) + xoffset)/(2*xoffset+1);
         HWts[x+xbsep] = 8 - HWts[x];
     }// x
     for (int x = 2*xoffset; x < xbsep; ++x)
@@ -757,7 +757,7 @@ void MotionCompensator::CreateBlock( int xbsep, int ybsep,
     int yoffset = (yblen - ybsep)/2;
     for(int y = 0; y < 2*yoffset; ++y)
     {
-        VWts[y] = 1 + (6 *y + yoffset  - 1)/(2*yoffset-1);
+        VWts[y] = 1 + (6 *(y+1) + yoffset)/(2*yoffset+1);
         VWts[y+ybsep] = 8 - VWts[y];
     }// y
     for (int y = 2*yoffset; y < ybsep; ++y)
