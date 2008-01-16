@@ -190,7 +190,7 @@ namespace dirac
         * Returns true is parse unit is Auxiliary Data
         */
         bool IsAuxiliaryData() const
-        { return (m_parse_code&&0xF8)==0x20; }
+        { return (m_parse_code&0xF8)==0x20; }
 
         /**
         * Returns true is parse unit is Padding data
