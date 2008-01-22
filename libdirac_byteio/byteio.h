@@ -179,7 +179,7 @@ namespace dirac
         /**
         * Reads next 'count' bits
         *@param count number of bits to be read
-        *@params unsigned interger read
+        *@return unsigned interger read
         */
         unsigned int ReadNBits(int count);
 

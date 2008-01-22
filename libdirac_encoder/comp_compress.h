@@ -70,11 +70,10 @@ namespace dirac
         //! Compress a frame component
         /*!
             Compress a PicArray containing a frame component (Y, U, or V).
-            \param  pic_data    the component data to be compressed
-            \param  is_a_cut    cut detection flag.
-            \param  intra_ratio proportion of intra blocks that motion estimation has found
-            \param  me_data     Pointer to the motion vector data
-            \return Frame-componentin Dirac-bytestream format
+            \param  coeff_data      the component data to be compressed
+            \param  bands           Subbands list
+            \param  estimated_bits  the list of estimated number of bits in each subband
+            \return Frame-component in Dirac-bytestream format
         */
         ComponentByteIO* Compress( CoeffArray& coeff_data ,
                                    SubbandList& bands,
