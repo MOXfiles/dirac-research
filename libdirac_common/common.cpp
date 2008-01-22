@@ -609,8 +609,8 @@ DecoderParams::DecoderParams(const VideoFormat& video_format,
 // ParseParams functions
 // constructor
 ParseParams::ParseParams():
-    m_major_ver(0),
-    m_minor_ver(1093),
+    m_major_ver(2),
+    m_minor_ver(0),
     m_profile(0),
     m_level(0)
 {}
