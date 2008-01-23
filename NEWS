@@ -1,4 +1,27 @@
-dirac_0.8,0
+dirac_0.9.0
+===========
+Major release complying with the latest Dirac Bytestream Specification
+Dirac 2.0.0.
+
+- Dirac Bytestream Specification Ver 2.0.0 and 1.0.0 released.
+  (http://dirac.sourceforge.net/specification.html)
+- Support for entropy coding of wavelet coefficients data using Variable
+  Length Codes.
+- Improved quantiser selection
+- Modified motion cpmpensation to fit 16 bits.
+- Further changes to constant bit-rate coding mode to improve performance.
+- Fixed bug with calculating bit-rates for individual GOPs in constant
+  bit-rate mode.
+- Fixed bug with dc value prediction in motion decoding.
+- Fixed bug in handling concatenated Dirac streams.
+- API changes to conform with spec revision 2.0.0. Applications using 
+  Dirac libraries will need to be recompiled.
+- Released patches to MPlayer, FFmpeg to comply with this release. Earlier
+  patch to transcode can be used with release.
+- DirectShow Filter released to be able to play back Dirac v2.0.0 files in 
+  Windows Media Player.
+
+dirac_0.8.0
 ===========
 Major release complying with the latest Dirac Bytestream Specification.
 
