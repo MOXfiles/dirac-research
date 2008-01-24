@@ -456,9 +456,9 @@ use_vlc       : Use VLC for entropy coding of coefficients instead of arithmetic
                 coding.
 Modifying L1_sep and num_L1 allows for new GOP structures to be used, and
 should be entirely safe. There are two non-GOP modes that can also be used for
-encoding: setting num_L1=0 gives I-frame only coding, and setting num_L1<0
-will produce a sequence with infinitely many L1 frames i.e. with a single I
-frame at the beginning of the sequence. 
+encoding: setting num_L1=0 gives I-frame only coding, and setting L1_sep to
+1 will do IP-only coding (no B-pictures). P-only coding isn't possible, but
+num_L1=very large and L1_sep=1 will approximate it.
 
 Modifying the block parameters is strongly deprecated: it's likely to break
 the encoder as there are many constraints. Modifying cpd will not break
