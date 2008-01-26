@@ -1,3 +1,69 @@
+2008-01-26 23:02  asuraparaju
+
+	* NEWS: Include 0.9.1 release notes.
+
+2008-01-26 22:58  asuraparaju
+
+	* extras/dirac_dshow/src/diracsplitter/stdafx.h: Fix bug where not
+	  all frame parse codes (e.g. no arith coding intra frames,
+	  auxiliary data, padding data, etc) were being processes by the
+	  parsing function.
+
+2008-01-26 22:54  asuraparaju
+
+	* extras/patches/:
+	  README_ffmpegsvn_trunk_revision_11612-dirac-0.9.x_patch,
+	  ffmpegsvn_trunk_revision_11612-dirac-0.9.x.patch: Dirac patch for
+	  FFmpeg svn revision 11612. Fixed bug# 1877990. Applied patch
+	  supplied with the bug report.  Fixed bug where not all frame type
+	  (.e.g. no-Arith coding intra frames) were being handled by the
+	  parser function.
+
+2008-01-26 22:50  asuraparaju
+
+	* extras/patches/: MPlayer-1.0rc2_dirac-0.9.x.patch,
+	  README_MPlayer-1.0rc2_dirac-0.9.x_patch: Fix bug# 1878017.
+	  Modified dirac detection technique to auto-detection based on
+	  extension.  Fixed bug where not all frame types (.e.g
+	  no-Arith-coding intra frames) were being recognised.
+
+2008-01-26 22:44  asuraparaju
+
+	* libdirac_encoder/rate_control.cpp: Fix bug that caused encoder to
+	  crash when encoding i-frame only streams in constant bitrate
+	  mode.
+
+2008-01-26 22:43  asuraparaju
+
+	* libdirac_common/common.cpp: Update supported version to 2.1
+
+2008-01-26 22:42  asuraparaju
+
+	* configure.ac: Update release id to 0.9.1
+
+2008-01-26 22:42  asuraparaju
+
+	* doc/specification.html: Update Dirac Spec link to point to the
+	  spec release 2.1.0
+
+2008-01-24 22:47  tjdwave
+
+	* README: Fixed incorrect instructions for IP coding.
+
+2008-01-24 21:10  tjdwave
+
+	* doc/latex_spec/abstract.tex, doc/latex_spec/bs-spec.tex,
+	  doc/latex_spec/intro.tex, doc/latex_spec/layout-fullsize.tex,
+	  doc/latex_spec/mc.tex,
+	  doc/latex_spec/ref-default-videoparams.tex,
+	  doc/latex_spec/state-macros.tex, libdirac_common/mot_comp.cpp:
+	  Incorrect motion compensation block weighting matrix specified.
+	  Version moved up to 2.1 for correction. Code updated also.
+
+2008-01-23 12:17  asuraparaju
+
+	* ChangeLog: [no log message]
+
 2008-01-23 12:13  asuraparaju
 
 	* NEWS: Include Dirac 0.9.0 release notes.
@@ -6881,9 +6947,12 @@
 
 	  -  Removed the following CVS tags from all files    $Author$
 	  $Log$
-	  Revision 1.25  2008-01-23 01:17:25  asuraparaju
+	  Revision 1.26  2008-01-26 12:11:44  asuraparaju
 	  *** empty log message ***
 
+	  Revision 1.25  2008/01/23 01:17:25  asuraparaju
+	  *** empty log message ***
+	
 	  Revision 1.24  2007/10/01 10:57:15  asuraparaju
 	  *** empty log message ***
 	
@@ -7057,6 +7126,9 @@
 2004-05-27 13:21  stuart_hc
 
 	* README.developers: Prevent unintended expansion of $Id$ and $Log: ChangeLog,v $
+	* README.developers: Prevent unintended expansion of $Id$ and Revision 1.25  2008/01/23 01:17:25  asuraparaju
+	* README.developers: Prevent unintended expansion of $Id$ and *** empty log message ***
+	* README.developers: Prevent unintended expansion of $Id$ and
 	* README.developers: Prevent unintended expansion of $Id$ and Revision 1.24  2007/10/01 10:57:15  asuraparaju
 	* README.developers: Prevent unintended expansion of $Id$ and *** empty log message ***
 	* README.developers: Prevent unintended expansion of $Id$ and
@@ -12586,9 +12658,12 @@
 
 	  -  Removed the following CVS tags from all files    $Author$
 	  $Log$
-	  Revision 1.25  2008-01-23 01:17:25  asuraparaju
+	  Revision 1.26  2008-01-26 12:11:44  asuraparaju
 	  *** empty log message ***
 
+	  Revision 1.25  2008/01/23 01:17:25  asuraparaju
+	  *** empty log message ***
+	
 	  Revision 1.24  2007/10/01 10:57:15  asuraparaju
 	  *** empty log message ***
 	
@@ -12771,6 +12846,9 @@
 2004-05-27 13:21  stuart_hc
 
 	* README.developers: Prevent unintended expansion of $Id$ and $Log: ChangeLog,v $
+	* README.developers: Prevent unintended expansion of $Id$ and Revision 1.25  2008/01/23 01:17:25  asuraparaju
+	* README.developers: Prevent unintended expansion of $Id$ and *** empty log message ***
+	* README.developers: Prevent unintended expansion of $Id$ and
 	* README.developers: Prevent unintended expansion of $Id$ and Revision 1.24  2007/10/01 10:57:15  asuraparaju
 	* README.developers: Prevent unintended expansion of $Id$ and *** empty log message ***
 	* README.developers: Prevent unintended expansion of $Id$ and
