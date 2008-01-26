@@ -103,12 +103,16 @@ RateController::RateController(int trate, SourceParams& srcp, EncoderParams& enc
     SetFrameDistribution();
     CalcTotalBits(srcp);
     
-    m_Iframe_bits = m_total_GOP_bits/10;
-    m_L1frame_bits = (m_Iframe_bits*3)/m_num_L1frame;
-    m_L2frame_bits = ( m_total_GOP_bits - m_Iframe_bits - 
-                       m_L1frame_bits*m_num_L1frame )/
+    if (m_intra_only)
+        m_Iframe_bits = m_total_GOP_bits;
+    else
+    {
+        m_Iframe_bits = m_total_GOP_bits/10;
+        m_L1frame_bits = (m_Iframe_bits*3)/m_num_L1frame;
+        m_L2frame_bits = ( m_total_GOP_bits - m_Iframe_bits - 
+                           m_L1frame_bits*m_num_L1frame )/
                      (m_encparams.GOPLength()-1-m_num_L1frame);
-
+    }
 }
 
 void RateController::SetFrameDistribution()
@@ -206,8 +210,10 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
             // We have a scheduled I frame
             target = m_Iframe_bits;
 
-            if (num_bits < target/2 ){
-                emergency_realloc = true;std::cout<<std::endl<<num_bits<<" "<<target;}
+            if (num_bits < target/2 )
+            {
+                emergency_realloc = true;
+            }
     
             
             // Update the statistics
