@@ -1,3 +1,20 @@
+dirac_0.9.1
+===========
+Minor release complying with the latest Dirac Bytestream Specification
+Dirac 2.1.0.
+
+- Corrected the motion compensation block weighting matrix.
+- Fixed bug in constant bit rate module which caused the encoder to
+  crash when using the cbr mode for an i-frame only sequence
+- Fixed MPlayer and FFmpeg patches to be able to handle display/coding
+  of all streams supported by Dirac.
+- Fixed Dirac DirectShow filter to be able to display all streams supported 
+  by Dirac.
+- Released new patches for MPlayer and FFmpeg 
+- DirectShow Filter released to be able to play back Dirac v2.1.0 files
+  in Windows Media Player.
+- Bugs fixed - 1877990 (in ffmpeg patch), 1878017 (in MPlayer patch)
+
 dirac_0.9.0
 ===========
 Major release complying with the latest Dirac Bytestream Specification
