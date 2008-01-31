@@ -40,57 +40,57 @@
 
 
 
-#ifndef _FRAME_DECOMPRESS_H_
-#define _FRAME_DECOMPRESS_H_
+#ifndef _PICTURE_DECOMPRESS_H_
+#define _PICTURE_DECOMPRESS_H_
 
-#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/picture_buffer.h>
 #include <libdirac_common/common.h>
-#include <libdirac_byteio/frame_byteio.h>
+#include <libdirac_byteio/picture_byteio.h>
 #include <libdirac_byteio/transform_byteio.h>
 
 namespace dirac
 {
     class MvData;
     
-    //! Compress a single image frame
+    //! Compress a single image picture
     /*!
-        This class decompresses a single frame at a time, using parameters
-        supplied at its construction. FrameDecompressor is used by
+        This class decompresses a single picture at a time, using parameters
+        supplied at its construction. PictureDecompressor is used by
         SequenceDecompressor.
     */
-    class FrameDecompressor{
+    class PictureDecompressor{
     public:
         //! Constructor
         /*!
-            Creates a FrameDecompressor with specific set of parameters the
+            Creates a PictureDecompressor with specific set of parameters the
             control the decompression process. It decodes motion data before
-            decoding each component of the frame.
+            decoding each component of the picture.
 
             \param  decp    decoder parameters
-            \param  cf      the chroma format of the frame being decompressed
+            \param  cf      the chroma format of the picture being decompressed
         */
-        FrameDecompressor(DecoderParams& decp, ChromaFormat cf);
+        PictureDecompressor(DecoderParams& decp, ChromaFormat cf);
 
         //! Destructor
         /*!
             Releases resources. 
         */
-        ~FrameDecompressor();
+        ~PictureDecompressor();
 
-        //! Decompress the next frame into the buffer
+        //! Decompress the next picture into the buffer
         /*!
-            Decompresses the next frame from the stream and place at the end
-            of a frame buffer.
+            Decompresses the next picture from the stream and place at the end
+            of a picture buffer.
             Returns true if able to decode successfully, false otherwise
 
-            \param parseunit_byteio Frame info in Dirac-stream format
-            \param my_buffer   picture buffer into which the frame is placed
+            \param parseunit_byteio Picture info in Dirac-stream format
+            \param my_buffer   picture buffer into which the picture is placed
         */
         bool Decompress(ParseUnitByteIO& parseunit_byteio,
-                        FrameBuffer& my_buffer);
+                        PictureBuffer& my_buffer);
 
-        //! Returns the frame parameters of the current frame being decoded
-        const FrameParams& GetFrameParams() const{ return m_fparams; }
+        //! Returns the picture parameters of the current picture being decoded
+        const PictureParams& GetPicParams() const{ return m_fparams; }
 
     private:
         //! Copy constructor is private and body-less
@@ -98,41 +98,41 @@ namespace dirac
             Copy constructor is private and body-less. This class should not be copied.
 
         */
-        FrameDecompressor(const FrameDecompressor& cpy);
+        PictureDecompressor(const PictureDecompressor& cpy);
 
         //! Assignment = is private and body-less
         /*!
             Assignment = is private and body-less. This class should not be
             assigned.
         */
-        FrameDecompressor& operator=(const FrameDecompressor& rhs);
+        PictureDecompressor& operator=(const PictureDecompressor& rhs);
 
-        //! Removes all the reference frames in the retired list
-        void CleanReferenceFrames( FrameBuffer& my_buffer );
+        //! Removes all the reference pictures in the retired list
+        void CleanReferencePictures( PictureBuffer& my_buffer );
 
         //! Decodes component data    
         void CompDecompress(TransformByteIO *p_transform_byteio,
-                            FrameBuffer& my_buffer,int fnum, CompSort cs);
+                            PictureBuffer& my_buffer,int pnum, CompSort cs);
 
         //! Decodes the motion data
-        void DecompressMVData( std::auto_ptr<MvData>& mv_data, FrameByteIO& frame_byteio );
+        void DecompressMVData( std::auto_ptr<MvData>& mv_data, PictureByteIO& picture_byteio );
          
 
         //! Set the number of superblocks and blocks
         void SetMVBlocks();
 
-        //! Add a frame to the frame buffer
-        void PushFrame(FrameBuffer &my_buffer);
+        //! Add a picture to the picture buffer
+        void PushPicture(PictureBuffer &my_buffer);
 
         //Member variables    
 
         //! Parameters for the decompression, as provided in constructor
         DecoderParams& m_decparams;
 
-        //! Chroma format of the frame being decompressed
+        //! Chroma format of the picture being decompressed
         ChromaFormat m_cformat;
 
-        //! An indicator which is true if the frame has been skipped, false otherwise
+        //! An indicator which is true if the picture has been skipped, false otherwise
         bool m_skipped;
 
         //! An indicator that is true if we use global motion vectors, false otherwise
@@ -144,8 +144,8 @@ namespace dirac
         //! Prediction mode to use if we only have global motion vectors
         PredMode m_global_pred_mode;
 
-        //! Current Frame Parameters
-        FrameParams m_fparams;
+        //! Current Picture Parameters
+        PictureParams m_fparams;
     };
 
 } // namespace dirac

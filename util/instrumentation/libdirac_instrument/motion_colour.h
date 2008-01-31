@@ -56,7 +56,7 @@ namespace dirac_instr
         /*
             Calls DrawOverlay constructor
         */
-        DrawMotionColour(Frame &, DrawFrameMotionParams &, const MvArray &, int, int);
+        DrawMotionColour(Picture &, DrawPictureMotionParams &, const MvArray &, int, int);
         //! Destructor
         ~DrawMotionColour();
 

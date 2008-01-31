@@ -63,9 +63,9 @@ EntropyCorrector::EntropyCorrector(int depth):
     Init();
 }
 
-float EntropyCorrector::Factor(const int bandnum , const FrameSort fsort ,const CompSort c) const
+float EntropyCorrector::Factor(const int bandnum , const PictureSort psort ,const CompSort c) const
 {
-    int idx = fsort.IsIntra() ? 0 : (fsort.IsRef() ? 1 : 2);
+    int idx = psort.IsIntra() ? 0 : (psort.IsRef() ? 1 : 2);
 
     if (c == U_COMP)
         return m_Ufctrs[idx][bandnum-1];
@@ -78,50 +78,50 @@ float EntropyCorrector::Factor(const int bandnum , const FrameSort fsort ,const 
 void EntropyCorrector::Init()
 {
 
-    //do I-frames
+    //do I-pictures
     for (int  i=0 ; i<m_Yfctrs.LengthX() ; ++i )
     {
         if ( i == m_Yfctrs.LastX() )
         {
-            // Set factor for Intra frames
+            // Set factor for Intra pictures
             m_Yfctrs[0][i] = 1.0f;
             m_Ufctrs[0][i] = 1.0f;
             m_Vfctrs[0][i] = 1.0f;
-            // Set factor for Inter Ref frames
+            // Set factor for Inter Ref pictures
             m_Yfctrs[1][i] = 0.85f;
             m_Ufctrs[1][i] = 0.85f;
             m_Vfctrs[1][i] = 0.85f;
-            // Set factor for Inter Non-Ref frames
+            // Set factor for Inter Non-Ref pictures
             m_Yfctrs[2][i] = 0.85f;
             m_Ufctrs[2][i] = 0.85f;
             m_Vfctrs[2][i] = 0.85f;
         }
         else if ( i >= m_Yfctrs.LastX()-3 )
         {
-            // Set factor for Intra frames
+            // Set factor for Intra pictures
             m_Yfctrs[0][i] = 0.85f;
             m_Ufctrs[0][i] = 0.85f;
             m_Vfctrs[0][i] = 0.85f;
-            // Set factor for Inter Ref frames
+            // Set factor for Inter Ref pictures
             m_Yfctrs[1][i] = 0.75f;
             m_Ufctrs[1][i] = 0.75f;
             m_Vfctrs[1][i] = 0.75f;
-            // Set factor for Inter Non-Ref frames
+            // Set factor for Inter Non-Ref pictures
             m_Yfctrs[2][i] = 0.75f;
             m_Ufctrs[2][i] = 0.75f;
             m_Vfctrs[2][i] = 0.75f;
         }
         else
         {
-            // Set factor for Intra frames
+            // Set factor for Intra pictures
             m_Yfctrs[0][i] = 0.75f;
             m_Ufctrs[0][i] = 0.75f;
             m_Vfctrs[0][i] = 0.75f;
-            // Set factor for Inter Ref frames
+            // Set factor for Inter Ref pictures
             m_Yfctrs[1][i] = 0.75f;
             m_Ufctrs[1][i] = 0.75f;
             m_Vfctrs[1][i] = 0.75f;
-            // Set factor for Inter Non-Ref frames
+            // Set factor for Inter Non-Ref pictures
             m_Yfctrs[2][i] = 0.75f;
             m_Ufctrs[2][i] = 0.75f;
             m_Vfctrs[2][i] = 0.75f;
@@ -130,7 +130,7 @@ void EntropyCorrector::Init()
 
 }
 
-void EntropyCorrector::Update(int bandnum , FrameSort fsort , CompSort c ,int est_bits , int actual_bits){
+void EntropyCorrector::Update(int bandnum , PictureSort psort , CompSort c ,int est_bits , int actual_bits){
     //updates the factors - note that the estimated bits are assumed to already include the correction factor
 
     float multiplier;
@@ -139,7 +139,7 @@ void EntropyCorrector::Update(int bandnum , FrameSort fsort , CompSort c ,int es
     else
         multiplier=1.0;
 
-    int idx = fsort.IsIntra() ? 0 : (fsort.IsRef() ? 1 : 2);
+    int idx = psort.IsIntra() ? 0 : (psort.IsRef() ? 1 : 2);
     if (c == U_COMP)
         m_Ufctrs[idx][bandnum-1] *= multiplier;
     else if (c == V_COMP)
@@ -204,7 +204,7 @@ std::istream & operator>> (std::istream & stream, OLBParams & params)
 
 // Codec params functions
 
-CodecParams::CodecParams(const VideoFormat &vd, FrameType ftype, unsigned int num_refs, bool set_defaults):
+CodecParams::CodecParams(const VideoFormat &vd, PictureType ftype, unsigned int num_refs, bool set_defaults):
     m_x_num_mb(0),
     m_y_num_mb(0),
     m_x_num_blocks(0),
@@ -384,7 +384,7 @@ WltFilter CodecParams::TransformFilter (unsigned int wf_idx)
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
             "Wavelet filter idx out of range [0-7]",
-            SEVERITY_FRAME_ERROR);
+            SEVERITY_PICTURE_ERROR);
 
     if (wf_idx==FIDELITY)
     {
@@ -393,7 +393,7 @@ WltFilter CodecParams::TransformFilter (unsigned int wf_idx)
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
             errstr.str(),
-            SEVERITY_FRAME_ERROR);
+            SEVERITY_PICTURE_ERROR);
     }
     return static_cast<WltFilter>(wf_idx);
 }
@@ -421,7 +421,7 @@ void CodecParams::SetCodeBlocks (unsigned int level,
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
             errstr.str(),
-            SEVERITY_FRAME_ERROR);
+            SEVERITY_PICTURE_ERROR);
     }
 
     m_cb[level].SetHorizontalCodeBlocks(hblocks);
@@ -437,7 +437,7 @@ const CodeBlocks &CodecParams::GetCodeBlocks (unsigned int level) const
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
             errstr.str(),
-            SEVERITY_FRAME_ERROR);
+            SEVERITY_PICTURE_ERROR);
     }
 
     return m_cb[level];
@@ -452,7 +452,7 @@ void CodecParams::SetCodeBlockMode (unsigned int cb_mode)
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
             errstr.str(),
-            SEVERITY_FRAME_ERROR);
+            SEVERITY_PICTURE_ERROR);
     }
 
     m_cb_mode = static_cast<CodeBlockMode>(cb_mode);
@@ -462,7 +462,7 @@ void CodecParams::SetCodeBlockMode (unsigned int cb_mode)
 
 //Default constructor
 EncoderParams::EncoderParams(const VideoFormat& video_format,
-                             FrameType ftype,
+                             PictureType ftype,
                              unsigned int num_refs,
                              bool set_defaults):
     CodecParams(video_format, ftype, num_refs, set_defaults),
@@ -497,7 +497,7 @@ void EncoderParams::CalcLambdas(const float qf)
         // Set the lambdas for motion estimation
         const double me_ratio = 2.0;
 
-        // Use the same ME lambda for L1 and L2 frames
+        // Use the same ME lambda for L1 and L2 pictures
         m_L1_me_lambda = std::sqrt(m_L1_lambda)*me_ratio;
         m_L2_me_lambda = m_L1_me_lambda;
     }
@@ -522,7 +522,7 @@ void EncoderParams::SetInterTransformFilter(unsigned int wf_idx)
     SetInterTransformFilter(TransformFilter(wf_idx));
 }
 
-void EncoderParams::SetUsualCodeBlocks ( const FrameType &ftype)
+void EncoderParams::SetUsualCodeBlocks ( const PictureType &ftype)
 {
     // No subband splitting if  spatial partitioning if false
     // Since this function is common to encoder and decoder we allow the
@@ -554,7 +554,7 @@ void EncoderParams::SetUsualCodeBlocks ( const FrameType &ftype)
     case VIDEO_FORMAT_HD_1080P50:
     case VIDEO_FORMAT_DIGI_CINEMA_2K24:
     case VIDEO_FORMAT_DIGI_CINEMA_4K24:
-        if (ftype == INTRA_FRAME)
+        if (ftype == INTRA_PICTURE)
         {
             int depth = TransformDepth();
             for (int i = 1; i <= 2; ++i)
@@ -582,7 +582,7 @@ void EncoderParams::SetUsualCodeBlocks ( const FrameType &ftype)
         DIRAC_THROW_EXCEPTION(
             ERR_INVALID_VIDEO_FORMAT,
             "Unsupported video format",
-            SEVERITY_FRAME_ERROR);
+            SEVERITY_PICTURE_ERROR);
         break;
     }
 }
@@ -598,7 +598,7 @@ int EncoderParams::GOPLength() const
 }
 
 DecoderParams::DecoderParams(const VideoFormat& video_format,
-                             FrameType ftype,
+                             PictureType ftype,
                              unsigned int num_refs,
                              bool set_defaults):
     CodecParams(video_format, ftype, num_refs, set_defaults),
@@ -847,19 +847,19 @@ void SourceParams::SetTransferFunctionIndex (unsigned int tf)
 }
 
 
-//FrameParams functions
+//PictureParams functions
 
 // Default constructor
-FrameParams::FrameParams():
-    m_fsort(FrameSort::IntraRefFrameSort()),
-    m_frame_type( INTRA_FRAME ),
-    m_reference_type( REFERENCE_FRAME ),
+PictureParams::PictureParams():
+    m_psort(PictureSort::IntraRefPictureSort()),
+    m_picture_type( INTRA_PICTURE ),
+    m_reference_type( REFERENCE_PICTURE ),
     m_output(false),
     m_using_ac(true)
 {}
 
 // Constructor
-FrameParams::FrameParams(const ChromaFormat& cf,
+PictureParams::PictureParams(const ChromaFormat& cf,
                          int orig_xlen, int orig_ylen,
                          int dwt_xlen, int dwt_ylen,
                          int c_dwt_xlen, int c_dwt_ylen,
@@ -868,9 +868,9 @@ FrameParams::FrameParams(const ChromaFormat& cf,
     m_cformat(cf),
     m_dwt_xl(dwt_xlen),
     m_dwt_yl(dwt_ylen),
-    m_fsort(FrameSort::IntraRefFrameSort()),
-    m_frame_type( INTRA_FRAME ),
-    m_reference_type( REFERENCE_FRAME ),
+    m_psort(PictureSort::IntraRefPictureSort()),
+    m_picture_type( INTRA_PICTURE ),
+    m_reference_type( REFERENCE_PICTURE ),
     m_output(false),
     m_dwt_chroma_xl(c_dwt_xlen),
     m_dwt_chroma_yl(c_dwt_ylen),
@@ -899,22 +899,22 @@ FrameParams::FrameParams(const ChromaFormat& cf,
 }
 
 // Constructor
-FrameParams::FrameParams(const ChromaFormat& cf, const FrameSort& fs):
+PictureParams::PictureParams(const ChromaFormat& cf, const PictureSort& ps):
     m_cformat(cf),
     m_output(false),
     m_using_ac(true)
 {
-    SetFSort( fs );
+    SetPicSort( ps );
 }
 
 // Constructor
-FrameParams::FrameParams(const SourceParams& sparams):
+PictureParams::PictureParams(const SourceParams& sparams):
     m_cformat(sparams.CFormat()),
     m_dwt_xl(sparams.Xl()),
     m_dwt_yl(sparams.Yl()),
-    m_fsort(FrameSort::IntraRefFrameSort()),
-    m_frame_type( INTRA_FRAME ),
-    m_reference_type( REFERENCE_FRAME ),
+    m_psort(PictureSort::IntraRefPictureSort()),
+    m_picture_type( INTRA_PICTURE ),
+    m_reference_type( REFERENCE_PICTURE ),
     m_output(false),
     m_dwt_chroma_xl(sparams.ChromaWidth()),
     m_dwt_chroma_yl(sparams.ChromaHeight()),
@@ -941,7 +941,7 @@ FrameParams::FrameParams(const SourceParams& sparams):
 }
 
 // Constructor
-FrameParams::FrameParams(const SourceParams& sparams, const FrameSort& fs):
+PictureParams::PictureParams(const SourceParams& sparams, const PictureSort& ps):
     m_cformat(sparams.CFormat()),
     m_dwt_xl(sparams.Xl()),
     m_dwt_yl(sparams.Yl()),
@@ -950,7 +950,7 @@ FrameParams::FrameParams(const SourceParams& sparams, const FrameSort& fs):
     m_orig_yl(sparams.Yl()),
     m_using_ac(true)
 {
-    SetFSort(fs);
+    SetPicSort(ps);
 
     m_orig_cxl = m_orig_cyl = m_dwt_chroma_xl = m_dwt_chroma_yl = 0;
     if(m_cformat == format422)
@@ -970,7 +970,7 @@ FrameParams::FrameParams(const SourceParams& sparams, const FrameSort& fs):
     }
 }
 
-void FrameParams::SetOrigXl(int orig_xlen)
+void PictureParams::SetOrigXl(int orig_xlen)
 {
     m_orig_xl = orig_xlen;
     m_orig_cxl = 0;
@@ -984,7 +984,7 @@ void FrameParams::SetOrigXl(int orig_xlen)
     }
 }
 
-void FrameParams::SetOrigYl(int orig_ylen)
+void PictureParams::SetOrigYl(int orig_ylen)
 {
     m_orig_yl = orig_ylen;
     m_orig_cyl = 0;
@@ -998,53 +998,53 @@ void FrameParams::SetOrigYl(int orig_ylen)
     }
 }
 
-bool FrameParams::IsBFrame() const
+bool PictureParams::IsBPicture() const
 {
-    bool is_B_frame( false );
+    bool is_B_picture( false );
 
     if ( m_refs.size() == 2 )
     {
         if ( m_refs[0] < m_fnum && m_refs[1] > m_fnum )
-            is_B_frame = true;
+            is_B_picture = true;
 
         if ( m_refs[0] > m_fnum && m_refs[1] < m_fnum )
-            is_B_frame = true;
+            is_B_picture = true;
     }
 
-    return is_B_frame;
+    return is_B_picture;
 }
 
-void FrameParams::SetFSort( const FrameSort& fs )
+void PictureParams::SetPicSort( const PictureSort& ps )
 {
-    m_fsort=fs;
-    if ( fs.IsIntra() )
-        m_frame_type = INTRA_FRAME;
+    m_psort=ps;
+    if ( ps.IsIntra() )
+        m_picture_type = INTRA_PICTURE;
     else
-        m_frame_type = INTER_FRAME;
+        m_picture_type = INTER_PICTURE;
 
-    if ( fs.IsRef() )
-        m_reference_type = REFERENCE_FRAME;
+    if ( ps.IsRef() )
+        m_reference_type = REFERENCE_PICTURE;
     else
-        m_reference_type = NON_REFERENCE_FRAME;
+        m_reference_type = NON_REFERENCE_PICTURE;
 
 }
 
-void FrameParams::SetFrameType(const FrameType ftype)
+void PictureParams::SetPictureType(const PictureType ftype)
 {
-    m_frame_type = ftype;
-    if (ftype == INTRA_FRAME )
-        m_fsort.SetIntra();
+    m_picture_type = ftype;
+    if (ftype == INTRA_PICTURE )
+        m_psort.SetIntra();
     else
-        m_fsort.SetInter();
+        m_psort.SetInter();
 }
 
-void FrameParams::SetReferenceType(const ReferenceType rtype)
+void PictureParams::SetReferenceType(const ReferenceType rtype)
 {
     m_reference_type = rtype;
-    if (rtype == REFERENCE_FRAME )
-        m_fsort.SetRef();
+    if (rtype == REFERENCE_PICTURE )
+        m_psort.SetRef();
     else
-        m_fsort.SetNonRef();
+        m_psort.SetNonRef();
 }
 
 

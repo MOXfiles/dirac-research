@@ -55,7 +55,7 @@ namespace dirac_instr
         /*
             Calls DrawMotionArrows constructor
         */
-        DrawMotionColourArrows(Frame &, DrawFrameMotionParams &, const MvArray &, int, int);
+        DrawMotionColourArrows(Picture &, DrawPictureMotionParams &, const MvArray &, int, int);
         
         //! Destructor
         ~DrawMotionColourArrows();

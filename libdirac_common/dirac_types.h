@@ -59,7 +59,7 @@ extern "C" {
 * Some basic enumeration types used by end user encoder and decoder ...//
 */
 typedef ChromaFormat dirac_chroma_t;
-typedef FrameType dirac_frame_type_t;
+typedef PictureType dirac_picture_type_t;
 typedef ReferenceType dirac_reference_type_t;
 typedef WltFilter dirac_wlt_filter_t;
 
@@ -147,19 +147,20 @@ typedef struct
 
 } dirac_sourceparams_t;
 
-/*! Structure that holds the frame parameters */
+/*! Structure that holds the picture parameters */
 typedef struct
 {
-    /*! frame type */
-    dirac_frame_type_t ftype;
+    /*! picture type */
+    dirac_picture_type_t ptype;
     /*! reference type */
     dirac_reference_type_t rtype;
-    /*! frame number in decoded order */
-    int fnum;
-} dirac_frameparams_t;
+    /*! picture number in decoded order */
+    int pnum;
+} dirac_picparams_t;
 
 
-/*! Structure that holds the frame buffers into which data is written */
+/*! Structure that holds the frame buffers into which data is written 
+(NB we have frame-oriented IO even though we code pictures)*/
 typedef struct
 {
     /*! buffers to hold the luma and chroma data */

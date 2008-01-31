@@ -226,7 +226,7 @@ namespace dirac
             \param  ynumMB  the number of MBs vertically
             \param  xnumblocks  the number of blocks horizontally
             \param  ynumblocks  the number of blocks vertically
-            \param  num_refs  the number of references being used for the frame
+            \param  num_refs  the number of references being used for the picture
         */
         MvData( const int xnumMB, const int ynumMB , 
                 const int xnumblocks, const int ynumblocks ,  const int num_refs);
@@ -236,7 +236,7 @@ namespace dirac
             Constructor. Numbers of blocks derived from the number of MBs
             \param  xnumMB  the number of MBs horizontally
             \param  ynumMB  the number of MBs vertically
-            \param  num_refs  the number of references being used for the frame
+            \param  num_refs  the number of references being used for the picture
         */
         MvData( const int xnumMB, const int ynumMB ,  const int num_refs);
 
@@ -328,7 +328,7 @@ namespace dirac
             \param  ynumMB  the number of MBs vertically
             \param  xnumblocks  the number of blocks horizontally
             \param  ynumblocks  the number of blocks vertically
-            \param  num_refs  the number of references being used for the frame
+            \param  num_refs  the number of references being used for the picture
         */
         MEData( const int xnumMB, const int ynumMB , 
                 const int xnumblocks, const int ynumblocks , const int num_refs = 2);
@@ -338,7 +338,7 @@ namespace dirac
             Constructor. Numbers of blocks derived from the number of MBs
             \param  xnumMB  the number of MBs horizontally
             \param  ynumMB  the number of MBs vertically
-            \param  num_refs  the number of references being used for the frame
+            \param  num_refs  the number of references being used for the picture
         */
         MEData( const int xnumMB, const int ynumMB , const int num_refs = 2);
 

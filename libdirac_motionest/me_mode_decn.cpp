@@ -37,7 +37,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_motionest/me_mode_decn.h>
-#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/picture_buffer.h>
 using namespace dirac;
 
 #include <algorithm>
@@ -81,7 +81,7 @@ ModeDecider::~ModeDecider()
     }
 }
 
-void ModeDecider::DoModeDecn(const FrameBuffer& my_buffer, int frame_num, MEData& me_data)
+void ModeDecider::DoModeDecn(const PictureBuffer& my_buffer, int frame_num, MEData& me_data)
 {
 
      // We've got 'raw' block motion vectors for up to two reference frames. Now we want
@@ -93,11 +93,11 @@ void ModeDecider::DoModeDecn(const FrameBuffer& my_buffer, int frame_num, MEData
     // Initialise // 
     ////////////////
 
-    fsort = my_buffer.GetFrame(frame_num).GetFparams().FSort();
+    fsort = my_buffer.GetPicture(frame_num).GetPparams().PicSort();
     if (fsort.IsInter())
     {
         // Extract the references
-        const vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();
+        const vector<int>& refs = my_buffer.GetPicture(frame_num).GetPparams().Refs();
         num_refs = refs.size();
         ref1 = refs[0];
 

@@ -39,9 +39,9 @@
 using namespace dirac_instr;
 
 // constructor
-DrawPredMode::DrawPredMode(Frame & frame, DrawFrameMotionParams & draw_params, const TwoDArray<PredMode> & mode)
+DrawPredMode::DrawPredMode(Picture & picture, DrawPictureMotionParams & draw_params, const TwoDArray<PredMode> & mode)
 :
-    DrawOverlay(frame, draw_params),
+    DrawOverlay(picture, draw_params),
     m_mode(mode)
 {}
 
@@ -49,7 +49,7 @@ DrawPredMode::DrawPredMode(Frame & frame, DrawFrameMotionParams & draw_params, c
 DrawPredMode::~DrawPredMode()
 {}
 
-// colours a motion vector block according to prediction frame
+// colours a motion vector block according to prediction picture
 void DrawPredMode::DrawBlock(int j, int i)
 {
     int power = 0, U = 0, V = 0;
@@ -75,7 +75,7 @@ void DrawPredMode::DrawLegend()
     for (int ypx=m_draw_params.PicY()-65; ypx<m_draw_params.PicY(); ++ypx)
     {
         for (int xpx=7; xpx>=0; --xpx)
-            m_frame.Ydata()[ypx][xpx]=0;
+            m_picture.Ydata()[ypx][xpx]=0;
     }
 
     int U=0, V=0;
@@ -99,14 +99,14 @@ void DrawPredMode::DrawLegend()
     // black horizontal lines
     for (int xpx=15; xpx>=0; --xpx)
     {
-        m_frame.Ydata()[m_draw_params.PicY()-65][xpx]=0;
-        m_frame.Ydata()[m_draw_params.PicY()-49][xpx]=0;
-        m_frame.Ydata()[m_draw_params.PicY()-33][xpx]=0;
+        m_picture.Ydata()[m_draw_params.PicY()-65][xpx]=0;
+        m_picture.Ydata()[m_draw_params.PicY()-49][xpx]=0;
+        m_picture.Ydata()[m_draw_params.PicY()-33][xpx]=0;
     }
 
     for (int xpx=31; xpx>=0; --xpx)
     {
-        m_frame.Ydata()[m_frame.Ydata().LastY()-16][xpx]=0;
+        m_picture.Ydata()[m_picture.Ydata().LastY()-16][xpx]=0;
     }
 
     // draw labels
@@ -119,13 +119,13 @@ void DrawPredMode::DrawLegend()
 
     // blank background
     for (int ypx=(m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(16/m_draw_params.ChromaFactorY());
-        ypx<=m_frame.Udata().LastY(); ++ypx)
+        ypx<=m_picture.Udata().LastY(); ++ypx)
     {
         // no chrominance
         for (int xpx=(32/m_draw_params.MvYBlockX())-1; xpx>=(16/m_draw_params.ChromaFactorX()); --xpx)
         {
-            m_frame.Udata()[ypx][xpx]=0;
-            m_frame.Vdata()[ypx][xpx]=0;
+            m_picture.Udata()[ypx][xpx]=0;
+            m_picture.Vdata()[ypx][xpx]=0;
         }
     }
 }

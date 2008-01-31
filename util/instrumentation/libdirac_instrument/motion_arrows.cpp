@@ -39,10 +39,10 @@
 using namespace dirac_instr;
 
 // constructor
-DrawMotionArrows::DrawMotionArrows(Frame & frame, DrawFrameMotionParams & draw_params,
+DrawMotionArrows::DrawMotionArrows(Picture & picture, DrawPictureMotionParams & draw_params,
                                    const MvArray & mv, int mv_scale)
 :
-    DrawOverlay(frame, draw_params),
+    DrawOverlay(picture, draw_params),
     m_mv_scale(mv_scale),
     m_blocks_per_arrow_y(0),
     m_blocks_per_arrow_x(0),
@@ -56,17 +56,17 @@ DrawMotionArrows::~DrawMotionArrows()
 // manages drawing of arrows, dependent on size of motion vector block
 void DrawMotionArrows::DrawBlock(int j, int i)
 {
-    // no chroma in frame
+    // no chroma in picture
     for (int y=j*m_draw_params.MvUVBlockY(); y<(j+1)*m_draw_params.MvUVBlockY(); ++y)
     {
-        if (y >= m_frame.Udata().LengthY() || y >= m_frame.Vdata().LengthY())
+        if (y >= m_picture.Udata().LengthY() || y >= m_picture.Vdata().LengthY())
             break;
         for (int x=i*m_draw_params.MvUVBlockX(); x<(i+1)*m_draw_params.MvUVBlockX(); ++x)
         {
-            if (x >= m_frame.Udata().LengthX() || x >= m_frame.Vdata().LengthX())
+            if (x >= m_picture.Udata().LengthX() || x >= m_picture.Vdata().LengthX())
                 break;
-            m_frame.Udata()[y][x] = 0;
-            m_frame.Vdata()[y][x] = 0;
+            m_picture.Udata()[y][x] = 0;
+            m_picture.Vdata()[y][x] = 0;
         }
     }
 
@@ -100,8 +100,8 @@ void DrawMotionArrows::DrawBlock(int j, int i)
 
     // draw arrow if this block is TL corner of arrow
     if ( (j == 0 || (j % m_blocks_per_arrow_y) == 0) && ((i == 0 || (i % m_blocks_per_arrow_x) == 0 )) &&
-        (j*m_draw_params.MvYBlockY()+offset_y+15 <= m_frame.Ydata().LengthY()) &&
-        (i*m_draw_params.MvYBlockX()+offset_x+15 <= m_frame.Ydata().LengthX()) )
+        (j*m_draw_params.MvYBlockY()+offset_y+15 <= m_picture.Ydata().LengthY()) &&
+        (i*m_draw_params.MvYBlockX()+offset_x+15 <= m_picture.Ydata().LengthX()) )
     {
         DrawArrow(j, i, (j*m_draw_params.MvYBlockY())+offset_y, (i*m_draw_params.MvYBlockX())+offset_x);
     }
@@ -196,7 +196,7 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
         {
             for (int xpx=0; xpx<16; ++xpx)
             {
-                m_frame.Ydata()[(y_pos)+ypx][(x_pos) + xpx] += m_symbols.Arrow()[ypx][15-xpx] * 256;
+                m_picture.Ydata()[(y_pos)+ypx][(x_pos) + xpx] += m_symbols.Arrow()[ypx][15-xpx] * 256;
             }// xpx
         }// ypx
     }
@@ -206,7 +206,7 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
         {
             for (int xpx=0; xpx<16; ++xpx)
             {
-                m_frame.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[15-ypx][xpx] * 256;
+                m_picture.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[15-ypx][xpx] * 256;
             }// xpx
         }// ypx
     }
@@ -216,7 +216,7 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
         {
             for (int xpx=0; xpx<16; ++xpx)
             {
-                m_frame.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[15-ypx][15-xpx] * 256;
+                m_picture.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[15-ypx][15-xpx] * 256;
             }// xpx
         }// ypx
     }
@@ -226,7 +226,7 @@ void DrawMotionArrows::DrawArrow(int j, int i, int y_pos, int x_pos)
         {
             for (int xpx=0; xpx<16; ++xpx)
             {
-                m_frame.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[ypx][xpx] * 256;
+                m_picture.Ydata()[(y_pos) + ypx][(x_pos) + xpx] += m_symbols.Arrow()[ypx][xpx] * 256;
             }// xpx
         }// ypx
     }

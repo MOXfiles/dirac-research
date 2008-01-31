@@ -97,13 +97,13 @@ namespace dirac
 
 
         //! Calculate the Quality factor of the next frame to encode
-        void CalcNextQualFactor(const FrameParams& fparams, int num_bits);
+        void CalcNextQualFactor(const PictureParams& fparams, int num_bits);
 
         //! Calculate the Quality factor of the next I frame to encode
         void CalcNextIntraQualFactor();
 
         //! Use the long-term average intra quality factor
-        void SetCutFrameQualFactor();
+        void SetCutPictureQualFactor();
 
         //! Return I frame qf
         double IntraQualFactor() {return m_I_qf;}

@@ -63,19 +63,19 @@ namespace dirac
 
         /**
         * Constructor
-        *@param fparams    Frame Params
+        *@param fparams    Picture Params
         *@param c_params   Codec parameters
         */
-        MvDataByteIO(FrameParams& fparams,
+        MvDataByteIO(PictureParams& fparams,
                         CodecParams& c_params);
 
         /**
         * Constructor
         *@param byte_io    Input/Output Byte stream
-        *@param fparams    Frame Params
+        *@param fparams    Picture Params
         *@param c_params   Codec parameters
         */
-        MvDataByteIO(ByteIO &byte_io, FrameParams& fparams,
+        MvDataByteIO(ByteIO &byte_io, PictureParams& fparams,
                         CodecParams& c_params);
 
         /**
@@ -175,14 +175,14 @@ namespace dirac
         void InputGlobalMotionParams();
 
         /**
-        * Inputs frame prediction mode
+        * Inputs picture prediction mode
         */
         void InputFramePredictionMode();
 
         /**
-        * Inputs Frame Weights
+        * Inputs Picture Weights
         */
-        void InputFrameWeights();
+        void InputPictureWeights();
 
         /**
         * Outputs block parameters
@@ -200,19 +200,19 @@ namespace dirac
         void OutputGlobalMotionParams();
 
         /**
-        * Outputs frame prediction mode
+        * Outputs picture prediction mode
         */
         void OutputFramePredictionMode();
 
         /**
-        * Outputs Frame Weights
+        * Outputs Picture Weights
         */
-        void OutputFrameWeights();
+        void OutputPictureWeights();
 
         /**
         * Sequence paramters for intput/output
         */
-        FrameParams&   m_fparams;
+        PictureParams&   m_fparams;
 
         /**
         * Codec params - EncParams for Output and DecParams for input

@@ -59,13 +59,13 @@ namespace dirac
     const unsigned int START_CODE_PREFIX_BYTE3 = 
                                         START_CODE_PREFIX & 0xFF;
 
-    //! Random Access Point (RAP) Intra Frame start Code
+    //! Random Access Point (RAP) Intra Picture start Code
     const unsigned char RAP_START_CODE = 0xD7;
-    //! Non-RAP Intra Frame start code
+    //! Non-RAP Intra Picture start code
     const unsigned char IFRAME_START_CODE = 0xD6;
-    //! L1 Frame start code
+    //! L1 Picture start code
     const unsigned char L1FRAME_START_CODE = 0xD4;
-    //! L2 Frame start code
+    //! L2 Picture start code
     const unsigned char L2FRAME_START_CODE = 0xD5;
     //! Sequence end code
     const unsigned char SEQ_END_CODE = 0xD0;
@@ -271,7 +271,7 @@ namespace dirac
 
         //! Constructor
         /*
-            Constructs a class which manages output for an entire frame.
+            Constructs a class which manages output for an entire picture.
             \param  out_data  pointer to the output stream 
             \param  num_bands  the number of subbands per component
         */
@@ -311,7 +311,7 @@ namespace dirac
         */
         const UnitOutputManager& MVOutput() const { return *m_mv_data; }
 
-        //! Get an output manager for the frame header
+        //! Get an output manager for the picture header
         BasicOutputManager& HeaderOutput(){ return *m_frame_header; }
 
         //! Return the number of bytes used for each component
@@ -326,10 +326,10 @@ namespace dirac
         //! Return the number of motion vector header bytes used
         const size_t MVHeadBytes() const { return m_mv_hdr_bytes;}
 
-        //! Return the number of bytes used for the whole frame
+        //! Return the number of bytes used for the whole picture
         const size_t FrameBytes() const { return m_total_bytes;}
 
-        //! Return the number of header bytes used throughout the frame
+        //! Return the number of header bytes used throughout the picture
         const size_t FrameHeadBytes() const { return m_header_bytes;}
 
         //! Current size of the internal data cache in bytes.
@@ -346,10 +346,10 @@ namespace dirac
         // Motion vector output
         UnitOutputManager* m_mv_data;
 
-        // Frame header output
+        // Picture header output
         BasicOutputManager* m_frame_header;
 
-        // The total number of frame bytes
+        // The total number of picture bytes
         size_t m_total_bytes;
 
         // The total number of header bytes
@@ -381,7 +381,7 @@ namespace dirac
         //! Delete all the data
         void DeleteAll();
 
-        //! Write all the frame data to file
+        //! Write all the picture data to file
         void WriteToFile();
     };
 
@@ -391,7 +391,7 @@ namespace dirac
         //! Constructor
         SequenceOutputManager( std::ostream* out_data );
 
-        //! Return a reference to the output for a single frame
+        //! Return a reference to the output for a single picture
         FrameOutputManager& FrameOutput(){ return m_frame_op_mgr; }
 
         //! Return a reference to the output for the sequence header
@@ -400,13 +400,13 @@ namespace dirac
         //! Return a reference to the output for the sequence trailer
         BasicOutputManager& TrailerOutput(){ return m_seq_end; }
 
-        //! Reset the frame data without outputting
+        //! Reset the picture data without outputting
         void ResetFrame(){ m_frame_op_mgr.Reset(); }
 
         //! Write the sequence header
         void WriteSeqHeaderToFile();
 
-        //! Write all the frame data to file
+        //! Write all the picture data to file
         void WriteFrameData();
 
         //! Write the sequence trailer
@@ -424,13 +424,13 @@ namespace dirac
         //! Return the total number bytes used for a component
         const size_t ComponentBytes( const int comp_num ) { return m_comp_bytes[comp_num]; }
 
-        //! Reset the frame data
+        //! Reset the picture data
         void ResetFrameData();
 
 
     private:
 
-        // The frame output manager
+        // The picture output manager
         FrameOutputManager m_frame_op_mgr;
 
         // Output manager for the sequence header

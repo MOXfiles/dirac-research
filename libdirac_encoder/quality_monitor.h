@@ -39,7 +39,7 @@
 #define _QUALITY_MONITOR_H_
 
 #include <libdirac_common/common.h>
-#include <libdirac_common/frame.h>
+#include <libdirac_common/picture.h>
 #include <libdirac_common/wavelet_utils.h>
 namespace dirac
 {
@@ -68,10 +68,10 @@ namespace dirac
         //! Update the quality factors, returning true if we need to recode
         /*!
             Update the quality factors, returning true if we need to recode
-            \param ld_frame the locally-decoded frame
-            \param orig_frame the original frame
+            \param ld_frame the locally-decoded picture
+            \param orig_frame the original picture
         */
-        void UpdateModel(const Frame& ld_frame, const Frame& orig_frame );
+        void UpdateModel(const Picture& ld_frame, const Picture& orig_frame );
 
         //! Reset the quality factors (say if there's been a cut)
         void ResetAll();
@@ -108,13 +108,13 @@ namespace dirac
         //! The total number of frames coded
         int m_allframe_total;        
 
-        //! The average Y quality for the frame types
+        //! The average Y quality for the picture types
         OneDArray<long double> m_quality_averageY;
 
-        //! The average U quality for the frame types
+        //! The average U quality for the picture types
         OneDArray<long double> m_quality_averageU;
 
-        //! The average V quality for the frame types
+        //! The average V quality for the picture types
         OneDArray<long double> m_quality_averageV;
 
         //! The number of frames of each type  

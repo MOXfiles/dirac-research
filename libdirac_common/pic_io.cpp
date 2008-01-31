@@ -44,7 +44,6 @@
 using namespace dirac;
 
 /*************************************Output***********************************/
-
 StreamPicOutput::~StreamPicOutput()
 {
 }
@@ -64,7 +63,7 @@ StreamFrameOutput::~StreamFrameOutput()
 {
 }
 
-bool StreamFrameOutput::WriteNextFrame( const Frame& myframe )
+bool StreamFrameOutput::WriteToNextFrame( const Picture& myframe )
 {
     bool ret_val;
 
@@ -137,13 +136,13 @@ StreamFieldOutput::~StreamFieldOutput()
         delete [] m_frame_store;
 }
 
-bool StreamFieldOutput::WriteNextFrame( const Frame& myframe )
+bool StreamFieldOutput::WriteToNextFrame( const Picture& myfield )
 {
     bool ret_val;
 
-    ret_val=WriteFieldComponent(myframe.Ydata() , myframe.GetFparams().FrameNum(), Y_COMP );
-    ret_val&=WriteFieldComponent(myframe.Udata() , myframe.GetFparams().FrameNum(), U_COMP );
-    ret_val&=WriteFieldComponent(myframe.Vdata() , myframe.GetFparams().FrameNum(), V_COMP );
+    ret_val=WriteFieldComponent(myfield.Ydata() , myfield.GetPparams().PictureNum(), Y_COMP );
+    ret_val&=WriteFieldComponent(myfield.Udata() , myfield.GetPparams().PictureNum(), U_COMP );
+    ret_val&=WriteFieldComponent(myfield.Vdata() , myfield.GetPparams().PictureNum(), V_COMP );
 
     return ret_val;
 }
@@ -300,6 +299,7 @@ FileStreamOutput::~FileStreamOutput()
     delete m_op_pic_str;
 }
 
+
 /**************************************Input***********************************/
 
 
@@ -343,7 +343,7 @@ void StreamFrameInput::Skip(const int num)
     m_ip_pic_ptr->seekg( num*num_bytes , std::ios::cur );
 }
 
-bool StreamFrameInput::ReadNextPicture(Frame& myframe)
+bool StreamFrameInput::ReadNextPicture(Picture& myframe)
 {
     //return value. Failure if one of the components can't be read,
     //success otherwise/.
@@ -357,24 +357,24 @@ bool StreamFrameInput::ReadNextPicture(Frame& myframe)
     return ret_val;
 }
 
-bool StreamFrameInput::ReadNextFrame(FrameBuffer& my_fbuf, int fnum)
+bool StreamFrameInput::ReadNextFrame(PictureBuffer& my_pbuf, int pnum)
 {
     //return value. Failure if one of the components can't be read,
     //success otherwise/.
 
-    my_fbuf.SetFrameParams(fnum);
-    FrameParams& my_fp = my_fbuf.GetFParams();
-    my_fbuf.PushFrame(my_fp.FrameNum());
+    my_pbuf.SetPictureParams(pnum);
+    PictureParams& my_pp = my_pbuf.GetPictureParams();
+    my_pbuf.PushPicture(my_pp.PictureNum());
     bool ret_val = false;
     bool is_present;
 
-    Frame &myframe1 = my_fbuf.GetFrame(my_fp.FrameNum(), is_present);
+    Picture &myframe = my_pbuf.GetPicture(my_pp.PictureNum(), is_present);
 
     if (is_present)
     {
-        ret_val=ReadFrameComponent( myframe1.Ydata(), Y_COMP);
-        ret_val&=ReadFrameComponent(myframe1.Udata(), U_COMP);
-        ret_val&=ReadFrameComponent(myframe1.Vdata(), V_COMP);
+        ret_val=ReadFrameComponent( myframe.Ydata(), Y_COMP);
+        ret_val&=ReadFrameComponent(myframe.Udata(), U_COMP);
+        ret_val&=ReadFrameComponent(myframe.Vdata(), V_COMP);
     }
     return ret_val;
 }
@@ -457,17 +457,17 @@ void StreamFieldInput::Skip(const int num)
     REPORTM (num && false, "StreamFieldInput::Skip - Reached unimplemented function");
 }
 
-bool StreamFieldInput::ReadNextPicture(Frame& myframe)
+bool StreamFieldInput::ReadNextPicture(Picture& mypic)
 {
     //return value. Failure if one of the components can't be read,
     //success otherwise/.
 
     bool ret_val;
 
-    bool is_field1 = (myframe.GetFparams().FrameNum()%2) == 0;
-    ret_val=ReadFieldComponent( is_field1, myframe.Ydata(), Y_COMP);
-    ret_val&=ReadFieldComponent(is_field1, myframe.Udata(), U_COMP);
-    ret_val&=ReadFieldComponent(is_field1, myframe.Vdata(), V_COMP);
+    bool is_field1 = (mypic.GetPparams().PictureNum()%2) == 0;
+    ret_val=ReadFieldComponent( is_field1, mypic.Ydata(), Y_COMP);
+    ret_val&=ReadFieldComponent(is_field1, mypic.Udata(), U_COMP);
+    ret_val&=ReadFieldComponent(is_field1, mypic.Vdata(), V_COMP);
 
     int picture_size = m_sparams.Xl()*m_sparams.Yl() +
                     2*m_sparams.ChromaWidth()*m_sparams.ChromaHeight();
@@ -481,26 +481,26 @@ bool StreamFieldInput::ReadNextPicture(Frame& myframe)
     return ret_val;
 }
 
-bool StreamFieldInput::ReadNextFrame(FrameBuffer& my_fbuf, int fnum)
+bool StreamFieldInput::ReadNextFrame(PictureBuffer& my_pbuf, int pnum)
 {
     //return value. Failure if one of the components can't be read,
     //success otherwise/.
 
-    my_fbuf.SetFrameParams(fnum);
-    FrameParams& my_fp = my_fbuf.GetFParams();
-    my_fbuf.PushFrame(my_fp.FrameNum());
+    my_pbuf.SetPictureParams(pnum);
+    PictureParams& my_pp = my_pbuf.GetPictureParams();
+    my_pbuf.PushPicture(my_pp.PictureNum());
     bool ret_val = false;
     bool is_present;
 
-    Frame &myframe1 = my_fbuf.GetFrame(my_fp.FrameNum(), is_present);
+    Picture &mypic1 = my_pbuf.GetPicture(my_pp.PictureNum(), is_present);
     if (is_present)
     {
-        my_fbuf.SetFrameParams(fnum+1);
-        my_fbuf.PushFrame(my_fp.FrameNum());
-        Frame &myframe2 = my_fbuf.GetFrame(my_fp.FrameNum(), is_present);
-        ret_val=ReadFieldComponent( myframe1.Ydata(), myframe2.Ydata(), Y_COMP);
-        ret_val&=ReadFieldComponent(myframe1.Udata(), myframe2.Udata(), U_COMP);
-        ret_val&=ReadFieldComponent(myframe1.Vdata(), myframe2.Vdata(), V_COMP);
+        my_pbuf.SetPictureParams(pnum+1);
+        my_pbuf.PushPicture(my_pp.PictureNum());
+        Picture &mypic2 = my_pbuf.GetPicture(my_pp.PictureNum(), is_present);
+        ret_val=ReadFieldComponent( mypic1.Ydata(), mypic2.Ydata(), Y_COMP);
+        ret_val&=ReadFieldComponent(mypic1.Udata(), mypic2.Udata(), U_COMP);
+        ret_val&=ReadFieldComponent(mypic1.Vdata(), mypic2.Vdata(), V_COMP);
     }
     return ret_val;
 }

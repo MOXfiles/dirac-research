@@ -35,9 +35,9 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-//Implementation of frame classes in frame.h
+//Implementation of picture classes in picture.h
 
-#include <libdirac_common/frame.h>
+#include <libdirac_common/picture.h>
 #include <libdirac_common/upconvert.h>
 using namespace dirac;
 
@@ -47,10 +47,10 @@ using namespace dirac;
 #endif
 
 ///////////////
-//---Frame---//
+//---Picture---//
 ///////////////
 
-Frame::Frame(const FrameParams& fp): 
+Picture::Picture(const PictureParams& fp): 
     m_fparams(fp),
     m_Y_data(0),
     m_U_data(0),
@@ -65,7 +65,7 @@ Frame::Frame(const FrameParams& fp):
     Init();
 }
 
-Frame::Frame( const Frame& cpy ): 
+Picture::Picture( const Picture& cpy ): 
     m_fparams(cpy.m_fparams),
     m_Y_data(0),
     m_U_data(0),
@@ -102,12 +102,12 @@ Frame::Frame( const Frame& cpy ):
 }
 
 
-Frame::~Frame()
+Picture::~Picture()
 {
     ClearData();    
 }
 
-Frame& Frame::operator=(const Frame& rhs)
+Picture& Picture::operator=(const Picture& rhs)
 {
     if ( &rhs != this)
     {
@@ -139,7 +139,7 @@ Frame& Frame::operator=(const Frame& rhs)
 
 }
 
-void Frame::CopyContents(Frame& out) const
+void Picture::CopyContents(Picture& out) const
 {
     if ( &out != this)
     {
@@ -152,7 +152,7 @@ void Frame::CopyContents(Frame& out) const
     }
 }
 
-void Frame::Fill(ValueType val)
+void Picture::Fill(ValueType val)
 {
     m_redo_upYdata = true;
     m_redo_upUdata = true;
@@ -164,7 +164,7 @@ void Frame::Fill(ValueType val)
 
 //Other functions
 
-void Frame::Init()
+void Picture::Init()
 {
     //const ChromaFormat cformat=m_fparams.CFormat();
 
@@ -183,7 +183,7 @@ void Frame::Init()
      m_V_data->SetCSort( V_COMP );
 }
 
-PicArray& Frame::Data(CompSort cs)
+PicArray& Picture::Data(CompSort cs)
 {//another way to access the data
 
     if (cs == U_COMP) return *m_U_data; 
@@ -191,7 +191,7 @@ PicArray& Frame::Data(CompSort cs)
     else return *m_Y_data;
 }    
 
-const PicArray& Frame::Data(CompSort cs) const
+const PicArray& Picture::Data(CompSort cs) const
 {//another way to access the data
 
     if (cs == U_COMP) return *m_U_data; 
@@ -199,7 +199,7 @@ const PicArray& Frame::Data(CompSort cs) const
     else return *m_Y_data;
 }
 
-PicArray& Frame::UpYdata()
+PicArray& Picture::UpYdata()
 {
     if (m_upY_data != 0 && m_redo_upYdata == false)
         return *m_upY_data;
@@ -220,7 +220,7 @@ PicArray& Frame::UpYdata()
     }
 }
 
-PicArray& Frame::UpUdata()
+PicArray& Picture::UpUdata()
 {
     if (m_upU_data != 0 && m_redo_upUdata == false)
         return *m_upU_data;
@@ -242,7 +242,7 @@ PicArray& Frame::UpUdata()
     }
 }
 
-PicArray& Frame::UpVdata()
+PicArray& Picture::UpVdata()
 {
     if (m_upV_data != 0 && m_redo_upVdata == false)
         return *m_upV_data;
@@ -264,7 +264,7 @@ PicArray& Frame::UpVdata()
     }
 }
 
-PicArray& Frame::UpData(CompSort cs)
+PicArray& Picture::UpData(CompSort cs)
 {
     if (cs == U_COMP)
         return UpUdata(); 
@@ -274,7 +274,7 @@ PicArray& Frame::UpData(CompSort cs)
         return UpYdata();
 }    
 
-const PicArray& Frame::UpYdata() const
+const PicArray& Picture::UpYdata() const
 {
     if (m_upY_data != 0 && m_redo_upYdata == false)
         return *m_upY_data;
@@ -300,7 +300,7 @@ const PicArray& Frame::UpYdata() const
     }
 }
 
-const PicArray& Frame::UpUdata() const
+const PicArray& Picture::UpUdata() const
 {
     if (m_upU_data != 0 && m_redo_upUdata == false)
         return *m_upU_data;
@@ -327,7 +327,7 @@ const PicArray& Frame::UpUdata() const
     }
 }
 
-const PicArray& Frame::UpVdata() const
+const PicArray& Picture::UpVdata() const
 {
     if (m_upV_data != 0 && m_redo_upVdata == false)
         return *m_upV_data;
@@ -354,7 +354,7 @@ const PicArray& Frame::UpVdata() const
     }
 }
 
-const PicArray& Frame::UpData(CompSort cs) const
+const PicArray& Picture::UpData(CompSort cs) const
 {
     if (cs == U_COMP) 
         return UpUdata(); 
@@ -364,7 +364,7 @@ const PicArray& Frame::UpData(CompSort cs) const
         return UpYdata();
 }    
 
-void Frame::ClipComponent(PicArray& pic_data, CompSort cs) const
+void Picture::ClipComponent(PicArray& pic_data, CompSort cs) const
 {
     ValueType *pic = &(pic_data[pic_data.FirstY()][pic_data.FirstX()]);
     int count = pic_data.LengthY() * pic_data.LengthX();
@@ -428,7 +428,7 @@ void Frame::ClipComponent(PicArray& pic_data, CompSort cs) const
     }
 }
 
-void Frame::Clip()
+void Picture::Clip()
 {
     //just clips the straight picture data, not the upconverted data
 
@@ -438,7 +438,7 @@ void Frame::Clip()
     ClipComponent( *m_V_data, V_COMP );    
 }
 
-void Frame::ClipUpData()
+void Picture::ClipUpData()
 {
     //just clips the upconverted data
 
@@ -452,7 +452,7 @@ void Frame::ClipUpData()
         ClipComponent( *m_upV_data, V_COMP );    
 }
 
-void Frame::ClearData()
+void Picture::ClearData()
 {
     if (m_Y_data != 0)
     {
@@ -491,19 +491,19 @@ void Frame::ClearData()
     }
 }
 
-void Frame::ReconfigFrame(const FrameParams &fp )
+void Picture::ReconfigFrame(const PictureParams &fp )
 {
 
-    FrameParams old_fp = m_fparams;
+    PictureParams old_fp = m_fparams;
     m_fparams = fp;
     m_redo_upYdata = m_redo_upUdata = m_redo_upVdata = true;
 
-    // HAve frame dimensions  or Chroma format changed ?
+    // HAve picture dimensions  or Chroma format changed ?
     if (m_fparams.DwtXl() == old_fp.DwtXl() && 
         m_fparams.DwtYl() == old_fp.DwtYl() &&
         m_fparams.CFormat() == old_fp.CFormat())
         return;
 
-    // Frame dimensions have changed. Re-initialise
+    // Picture dimensions have changed. Re-initialise
     Init();
 }

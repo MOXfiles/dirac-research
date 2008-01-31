@@ -47,7 +47,7 @@ namespace dirac_instr
     //! Class to carry out overlay of prediction mode
     /*
         Sub-clas of DrawOverlay.
-        Displays which reference frame is used as prediction for block
+        Displays which reference picture is used as prediction for block
     */
     class DrawPredMode : public DrawOverlay
     {
@@ -57,7 +57,7 @@ namespace dirac_instr
         /*
             Calls DrawOverlay constructor
         */
-        DrawPredMode(Frame &, DrawFrameMotionParams &, 
+        DrawPredMode(Picture &, DrawPictureMotionParams &, 
                     const TwoDArray<PredMode> &);
 
         //! Destructor

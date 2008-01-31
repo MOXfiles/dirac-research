@@ -3,10 +3,10 @@
 
 INCLUDES = -I$(top_srcdir) -I$(srcdir)
 
-h_sources = comp_decompress.h frame_decompress.h seq_decompress.h \
+h_sources = comp_decompress.h picture_decompress.h seq_decompress.h \
             decoder_types.h dirac_cppparser.h dirac_parser.h
 
-cpp_sources = comp_decompress.cpp frame_decompress.cpp seq_decompress.cpp \
+cpp_sources = comp_decompress.cpp picture_decompress.cpp seq_decompress.cpp \
              dirac_cppparser.cpp dirac_parser.cpp
 
 if USE_MSVC

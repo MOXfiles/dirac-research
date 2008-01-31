@@ -53,7 +53,7 @@ using namespace dirac;
 using std::vector;
 
 //Constructor
-CompDecompressor::CompDecompressor( DecoderParams& decp, const FrameParams& fp)
+CompDecompressor::CompDecompressor( DecoderParams& decp, const PictureParams& fp)
 :
     m_decparams(decp),
     m_fparams(fp)
@@ -63,7 +63,7 @@ CompDecompressor::CompDecompressor( DecoderParams& decp, const FrameParams& fp)
 void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
                                   PicArray& pic_data )
 {
-    const FrameSort& fsort=m_fparams.FSort();
+    const PictureSort& fsort=m_fparams.PicSort();
     const int depth( m_decparams.TransformDepth() );
 
     // The array holding the coefficients

@@ -44,7 +44,7 @@
 /*
 The algorithm controls the bitrate by adaptively changing the Quality
 Factor, QF of each frame before encoding by the
-m_fcoder.Compress( , , , ) function in CompressNextFrame() (seq_compress.cpp).
+m_fcoder.Compress( , , , ) function in CompressNextPicture() (seq_compress.cpp).
 The first sub-group which is I, L1, L2, L2 frames are encoded
 by using the initial QF which is set to 7. The corresponding bitrate R is then
 calculated. Adaption for the next subgroup is carried out by determining a model
@@ -149,7 +149,7 @@ void RateController::CalcTotalBits(const SourceParams& sourceparams)
 
         std::cout<<"GOP Length = "<<GOP_length<< std::endl;
 
-        std::cout<<"Frame Rate = "<<f_rate<< std::endl;
+        std::cout<<"Picture Rate = "<<f_rate<< std::endl;
 
         std::cout<<"GOP Duration = "<<m_GOP_duration<< std::endl;
 
@@ -187,7 +187,7 @@ double RateController::ProjectedSubgroupRate()
 
     return (double)(bits)/(1000.0*m_GOP_duration);
 }
-void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits)
+void RateController::CalcNextQualFactor(const PictureParams& fparams, int num_bits)
 {
 
     // Decrement the subgroup frame counter. This is zero just after the last
@@ -205,7 +205,7 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
 
         // First, do normal coding
 
-        if ( fparams.FrameNum() % m_encparams.GOPLength()==0 )
+        if ( fparams.PictureNum() % m_encparams.GOPLength()==0 )
         {
             // We have a scheduled I frame
             target = m_Iframe_bits;
@@ -223,8 +223,8 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
             // the next group of L2(B) frames
             m_encparams.SetQf( m_qf );
 
-            if (fparams.FrameNum()==0 ||
-               (m_encparams.FieldCoding() && fparams.FrameNum() < 2))
+            if (fparams.PictureNum()==0 ||
+               (m_encparams.FieldCoding() && fparams.PictureNum() < 2))
             {
                 // We've just coded the very first frame, which is a special
                 // case as the two L2 frames which normally follow are missing
@@ -239,7 +239,7 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
             // group if we can (L1 frame) or if we need to (emergency).
 
             //Update complexities
-            if ( fparams.FrameNum() % m_encparams.L1Sep() !=0 )
+            if ( fparams.PictureNum() % m_encparams.L1Sep() !=0 )
             {
                 // Scheduled B/L2 picture 
                 
@@ -281,7 +281,7 @@ void RateController::CalcNextQualFactor(const FrameParams& fparams, int num_bits
                 m_frame_complexity.SetL2Complexity(m_L2_complexity_sum/
                                                   (m_encparams.L1Sep()-1-m_fcount));
             }
-            Allocate(fparams.FrameNum());
+            Allocate(fparams.PictureNum());
 
             /* We work out what this means for the quality factor and set it*/
 
@@ -496,7 +496,7 @@ void RateController::CalcNextIntraQualFactor()
     m_I_qf_long_term += ( 1.0 - ff )*m_I_qf;
 }
 
-void RateController::SetCutFrameQualFactor()
+void RateController::SetCutPictureQualFactor()
 {
     m_qf = std::min( m_qf , m_I_qf_long_term );
     m_encparams.SetQf( m_qf );

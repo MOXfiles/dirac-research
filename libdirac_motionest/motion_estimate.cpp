@@ -36,7 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 
-#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/picture_buffer.h>
 #include <libdirac_motionest/motion_estimate.h>
 #include <libdirac_motionest/pixel_match.h>
 #include <libdirac_motionest/me_subpel.h>
@@ -50,10 +50,10 @@ MotionEstimator::MotionEstimator( const EncoderParams& encp ):
     m_encparams( encp )
 {}
 
-void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& me_data)
+void MotionEstimator::DoME(const PictureBuffer& my_buffer, int frame_num, MEData& me_data)
 {
 
-    const FrameParams& fparams = my_buffer.GetFrame(frame_num).GetFparams();
+    const PictureParams& fparams = my_buffer.GetPicture(frame_num).GetPparams();
 
    // Step 1. 
    //Initial search gives vectors for each reference accurate to 1 pixel
@@ -63,10 +63,10 @@ void MotionEstimator::DoME(const FrameBuffer& my_buffer, int frame_num, MEData& 
 
     float lambda;
     // Get the references
-    const std::vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();
+    const std::vector<int>& refs = my_buffer.GetPicture(frame_num).GetPparams().Refs();
 
     const int num_refs = refs.size();
-    if ( fparams.IsBFrame())
+    if ( fparams.IsBPicture())
         lambda = m_encparams.L2MELambda();
     else
         lambda = m_encparams.L1MELambda();
@@ -235,7 +235,7 @@ void MotionEstimator::SetChromaDC( const PicArray& pic_data , MvData& mv_data , 
     }// ymb
 }
 
-void MotionEstimator::SetChromaDC( const FrameBuffer& my_buffer , int frame_num , MvData& mv_data)
+void MotionEstimator::SetChromaDC( const PictureBuffer& my_buffer , int frame_num , MvData& mv_data)
 {
 
     SetChromaDC( my_buffer.GetComponent( frame_num , U_COMP) , mv_data , U_COMP );

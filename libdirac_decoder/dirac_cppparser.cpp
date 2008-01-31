@@ -42,7 +42,7 @@
 #include <libdirac_common/dirac_assertions.h> 
 #include <libdirac_decoder/dirac_cppparser.h>
 #include <libdirac_decoder/seq_decompress.h>
-#include <libdirac_common/frame.h> 
+#include <libdirac_common/picture.h> 
 #include <libdirac_byteio/parseunit_byteio.h>
 #include <sstream> 
 using namespace dirac;
@@ -145,10 +145,10 @@ InputStreamBuffer::~InputStreamBuffer()
 DiracParser::DiracParser(bool verbose) : 
     m_state(STATE_BUFFER), 
     m_next_state(STATE_SEQUENCE), 
-    m_show_fnum(-1), 
+    m_show_pnum(-1), 
     m_decomp(0), 
     m_skip(false), 
-    m_skip_type(FrameSort::IntraNonRefFrameSort()), 
+    m_skip_type(PictureSort::IntraNonRefPictureSort()), 
     m_verbose(verbose)
 {
  
@@ -180,7 +180,7 @@ DecoderState DiracParser::Parse()
             if (!m_decomp)
                 return STATE_BUFFER;
 
-            // look to see if all frames have been processed
+            // look to see if all pictures have been processed
             if(m_decomp->Finished())
             {
                 // if so....delete
@@ -189,8 +189,8 @@ DecoderState DiracParser::Parse()
                 m_next_state = STATE_BUFFER;
             }
             else
-                // otherwise....get remaining frames from buffer
-                pu_type = PU_CORE_FRAME;
+                // otherwise....get remaining pictures from buffer
+                pu_type = PU_CORE_PICTURE;
             
         }
         
@@ -217,21 +217,23 @@ DecoderState DiracParser::Parse()
             m_decomp->NewAccessUnit(*p_parse_unit);
             break;
 
-        case PU_CORE_FRAME:
+        case PU_CORE_PICTURE:
             {
                if (!m_decomp)
                    continue;
                 
-               Frame &my_frame = m_decomp->DecompressNextFrame(p_parse_unit,
+               Picture &my_picture = m_decomp->DecompressNextPicture(p_parse_unit,
                                                                     m_skip); 
                 
-                int framenum_decoded = my_frame.GetFparams().FrameNum();
-                if (framenum_decoded != m_show_fnum)
+                int picturenum_decoded = my_picture.GetPparams().PictureNum();
+                if (picturenum_decoded != m_show_pnum)
                 {
-                    m_show_fnum = my_frame.GetFparams().FrameNum();
+                    m_show_pnum = my_picture.GetPparams().PictureNum();
                     if (m_verbose)
                     {
-                        std::cout << std::endl << "Frame " << m_show_fnum << " available";
+                        std::cout << std::endl;
+			std::cout << "Picture ";
+			std::cout<< m_show_pnum << " available";
                     }
                     m_state = STATE_PICTURE_AVAIL;
                     return m_state;
@@ -249,9 +251,9 @@ DecoderState DiracParser::Parse()
                 std::cerr << "Ignoring Auxiliary/Padding data" << std::endl;
             // Ignore auxiliary and padding data and continue parsing
             break;
-        case PU_LOW_DELAY_FRAME:
+        case PU_LOW_DELAY_PICTURE:
             if (m_verbose)
-                std::cerr << "Low delay frame decoding not yet supported" << std::endl;
+                std::cerr << "Low delay picture decoding not yet supported" << std::endl;
             return STATE_INVALID;
 
         default:
@@ -276,14 +278,14 @@ const ParseParams& DiracParser::GetParseParams() const
     return m_decomp->GetParseParams();
 }
 
-const FrameParams& DiracParser::GetNextFrameParams() const
+const PictureParams& DiracParser::GetNextPictureParams() const
 {
-    return m_decomp->GetNextFrameParams();
+    return m_decomp->GetNextPictureParams();
 }
 
-const Frame& DiracParser::GetNextFrame() const
+const Picture& DiracParser::GetNextPicture() const
 {
-    return m_decomp->GetNextFrame();
+    return m_decomp->GetNextPicture();
 }
 
 
@@ -293,9 +295,9 @@ void DiracParser::SetSkip(bool skip)
     if (!skip)
         return;
     /***
-    const FrameParams& fparams = m_decomp->GetNextFrameParams();
+    const PictureParams& pparams = m_decomp->GetNextPictureParams();
     // FIXME: need to change this logic once bitstream is finalised. so that
-    // we skip to next RAP when an L1 frame is skipped
+    // we skip to next RAP when an L1 picture is skipped
     if (skip == false)
     {
         if (m_skip_type.IsNonRef())
@@ -303,7 +305,7 @@ void DiracParser::SetSkip(bool skip)
 
         else if (m_skip_type.IsRef() )
         {
-            if (fparams.FSort().IsNonRef() || fparams.FSort().IsInterRef())
+            if (pparams.PicSort().IsNonRef() || pparams.PicSort().IsInterRef())
                 m_skip = true;
             else
             {
@@ -315,12 +317,12 @@ void DiracParser::SetSkip(bool skip)
     else
     {
         m_skip = true;
-        if (m_skip_type.IsRef() != fparams.FSort().IsRef() ||
-            m_skip_type.IsIntra() != fparams.FSort().IsIntra())
+        if (m_skip_type.IsRef() != pparams.PicSort().IsRef() ||
+            m_skip_type.IsIntra() != pparams.PicSort().IsIntra())
         {
-            if (!fparams.FSort().IsNonRef())
+            if (!pparams.PicSort().IsNonRef())
             {
-                if (fparams.FSort().IsInter())
+                if (pparams.PicSort().IsInter())
                 {
                     m_skip_type.SetInterRef();
                 }

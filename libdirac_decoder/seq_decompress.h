@@ -54,13 +54,13 @@
 
 namespace dirac
 {
-    class FrameBuffer;
-    class Frame;
-    class FrameDecompressor;
+    class PictureBuffer;
+    class Picture;
+    class PictureDecompressor;
 
-    //! Decompresses a sequence of frames from a stream.
+    //! Decompresses a sequence of pictures from a stream.
     /*!
-        This class decompresses a sequence of frames, frame by frame.
+        This class decompresses a sequence of frames, picture by picture.
     */
     class SequenceDecompressor{
     public:
@@ -87,35 +87,35 @@ namespace dirac
         void NewAccessUnit(ParseUnitByteIO& parseunit_byteio);
 
 
-        //! Decompress the next frame in sequence
+        //! Decompress the next picture in sequence
         /*!
-            This function decodes the next frame in coding order and returns
-            the next frame in display order. In general these will differ, and
+            This function decodes the next picture in coding order and returns
+            the next picture in display order. In general these will differ, and
             because of re-ordering there is a delay which needs to be imposed.
             This creates problems at the start and at the end of the sequence
             which must be dealt with. At the start we just keep outputting
-            frame 0. At the end you will need to loop for longer to get all
-            the frames out. It's up to the calling function to do something
-            with the decoded frames as they come out -- write them to screen
+            picture 0. At the end you will need to loop for longer to get all
+            the pictures out. It's up to the calling function to do something
+            with the decoded pictures as they come out -- write them to screen
             or to file, as required.
 
-            \param p_parseunit_byteio Frame information in Dirac-stream format
-            \param  skip skip decoding next frame
-            \return      reference to the next locally decoded frame available for display
+            \param p_parseunit_byteio Picture information in Dirac-stream format
+            \param  skip skip decoding next picture
+            \return      reference to the next locally decoded picture available for display
         */
-        Frame& DecompressNextFrame(ParseUnitByteIO* p_parseunit_byteio,
+        Picture& DecompressNextPicture(ParseUnitByteIO* p_parseunit_byteio,
                                    bool skip = false);
 
-        //! Get the next frame available for display
-        Frame& GetNextFrame();
+        //! Get the next picture available for display
+        Picture& GetNextPicture();
 
-        //! Get the next frame parameters
-        const FrameParams& GetNextFrameParams() const;
+        //! Get the next picture parameters
+        const PictureParams& GetNextPictureParams() const;
         //! Determine if decompression is complete.
         /*!
-            Indicates whether or not the last frame in the sequence has been
+            Indicates whether or not the last picture in the sequence has been
             decompressed.
-            \return     true if last frame has been compressed; false if not
+            \return     true if last picture has been compressed; false if not
         */
         bool Finished(); 
         //! Interrogates for parse parameters.
@@ -171,20 +171,20 @@ namespace dirac
         ParseParams m_parse_params;
         //! The source parameters obtained from the stream header
         SourceParams m_srcparams;
-        //! A picture buffer used for local storage of frames whilst pending re-ordering or being used for reference.
-        FrameBuffer* m_fbuffer;   
-        //! Number of the frame in coded order which is to be decoded
-        int m_current_code_fnum;        
+        //! A picture buffer used for local storage of pictures whilst pending re-ordering or being used for reference.
+        PictureBuffer* m_pbuffer;   
+        //! Number of the picture in coded order which is to be decoded
+        int m_current_code_pnum;        
         //! A delay so that we don't display what we haven't decoded
         int m_delay;                    
-        //! Index, in display order, of the last frame read
-        int m_last_frame_read;
-        //! Index, in display order of the frame to be displayed next - computed from delay and current_code_fnum
-        int m_show_fnum;
-        //! Frame decompressor object
-        FrameDecompressor *m_fdecoder;
-        //! Highest frame-num processed - for tracking end-of-sequence
-        int m_highest_fnum;
+        //! Index, in display order, of the last picture read
+        int m_last_picture_read;
+        //! Index, in display order of the picture to be displayed next - computed from delay and current_code_pnum
+        int m_show_pnum;
+        //! Picture decompressor object
+        PictureDecompressor *m_pdecoder;
+        //! Highest picture-num processed - for tracking end-of-sequence
+        int m_highest_pnum;
     };
 
 } // namespace dirac

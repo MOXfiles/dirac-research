@@ -49,11 +49,11 @@ namespace dirac
 {
     class MEData;
           
-    //! Compress a frame component
+    //! Compress a picture component
     /*!
         This class compresses one of the three components (Y, U, or V) of a
-        frame according to a given set or parameters. CompCompressor is used
-        by FrameCompressor.
+        picture according to a given set or parameters. CompCompressor is used
+        by PictureCompressor.
     */
     class CompCompressor
     {
@@ -63,17 +63,17 @@ namespace dirac
             Create and initialize a component compressor with the given
             characteristics.
             \param  encp    encoding parameters
-            \param  fp      frame parameters
+            \param  fp      picture parameters
         */
-        CompCompressor( EncoderParams & encp, const FrameParams& fp);
+        CompCompressor( EncoderParams & encp, const PictureParams& fp);
 
-        //! Compress a frame component
+        //! Compress a picture component
         /*!
-            Compress a PicArray containing a frame component (Y, U, or V).
+            Compress a PicArray containing a picture component (Y, U, or V).
             \param  coeff_data      the component data to be compressed
             \param  bands           Subbands list
             \param  estimated_bits  the list of estimated number of bits in each subband
-            \return Frame-component in Dirac-bytestream format
+            \return Picture-component in Dirac-bytestream format
         */
         ComponentByteIO* Compress( CoeffArray& coeff_data ,
                                    SubbandList& bands,
@@ -95,9 +95,9 @@ namespace dirac
         // member variables
         EncoderParams& m_encparams;
 
-        const FrameParams& m_fparams;
+        const PictureParams& m_fparams;
 
-        const FrameSort& m_fsort;    
+        const PictureSort& m_fsort;    
 
         const ChromaFormat& m_cformat;
 

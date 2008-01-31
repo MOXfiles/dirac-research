@@ -297,7 +297,7 @@ void WaveletTransform::Transform(const Direction d, PicArray& pic_data, CoeffArr
 }
 
 void WaveletTransform::SetBandWeights (const float cpd,
-                                       const FrameSort& fsort,
+                                       const PictureSort& fsort,
                                        const ChromaFormat& cformat,
                                        const CompSort csort,
                                        const bool field_coding)
@@ -357,7 +357,7 @@ void WaveletTransform::SetBandWeights (const float cpd,
         }// i
 
         // Give more welly to DC in a completely unscientific manner ...
-        // (should really relate this to the frame rate)
+        // (should really relate this to the picture rate)
         m_band_list( m_band_list.Length() ).SetWt(m_band_list(m_band_list.Length() ).Wt()/6.0);
 
         // Make sure dc is always the lowest weight

@@ -36,7 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_motionest/me_subpel.h>
-#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/picture_buffer.h>
 using namespace dirac;
 
 #include <iostream>
@@ -62,17 +62,17 @@ SubpelRefine::SubpelRefine(const EncoderParams& encp):
 
 }
 
-void SubpelRefine::DoSubpel(const FrameBuffer& my_buffer,int frame_num, MEData& me_data)
+void SubpelRefine::DoSubpel(const PictureBuffer& my_buffer,int frame_num, MEData& me_data)
 {
     //main loop for the subpel refinement
     int ref1,ref2;
 
-    const FrameSort fsort = my_buffer.GetFrame(frame_num).GetFparams().FSort();
+    const PictureSort fsort = my_buffer.GetPicture(frame_num).GetPparams().PicSort();
 
     if (fsort.IsInter())
     {
         // Get the references
-        const vector<int>& refs = my_buffer.GetFrame(frame_num).GetFparams().Refs();
+        const vector<int>& refs = my_buffer.GetPicture(frame_num).GetPparams().Refs();
 
         int num_refs = refs.size();
         ref1 = refs[0];

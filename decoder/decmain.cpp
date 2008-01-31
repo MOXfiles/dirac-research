@@ -65,32 +65,32 @@ const char *chroma2string (dirac_chroma_t chroma)
     return "Unknown";
 }
 
-const char *ftype2string (dirac_frame_type_t ftype, dirac_reference_type_t rtype)
+const char *ptype2string (dirac_picture_type_t ptype, dirac_reference_type_t rtype)
 {
-    switch (ftype)
+    switch (ptype)
     {
-    case INTRA_FRAME:
+    case INTRA_PICTURE:
     {
         switch (rtype)
         {
-            case REFERENCE_FRAME:
-                return "Intra Ref Frame";
-            case NON_REFERENCE_FRAME:
-                return "Intra Non-Ref Frame";
+            case REFERENCE_PICTURE:
+                return "Intra Ref Picture";
+            case NON_REFERENCE_PICTURE:
+                return "Intra Non-Ref Picture";
             default:
-                return "Intra Unknown-Ref Frame";
+                return "Intra Unknown-Ref Picture";
         }
     }
-    case INTER_FRAME:
+    case INTER_PICTURE:
     {
         switch (rtype)
         {
-            case REFERENCE_FRAME:
-                return "Inter Ref Frame";
-            case NON_REFERENCE_FRAME:
-                return "Inter Non-Ref Frame";
+            case REFERENCE_PICTURE:
+                return "Inter Ref Picture";
+            case NON_REFERENCE_PICTURE:
+                return "Inter Non-Ref Picture";
             default:
-                return "Inter Unknown-Ref Frame";
+                return "Inter Unknown-Ref Picture";
         }
     }
     
@@ -240,17 +240,17 @@ static void DecodeDirac (const char *iname, const char *oname)
         
         case STATE_PICTURE_START:
             /*
-            * Start of frame detected. If decoder is too slow and frame can be
-            * skipped, inform the parser to skip decoding the frame
+            * Start of picture detected. If decoder is too slow and picture can be
+            * skipped, inform the parser to skip decoding the picture
             */
             if (verbose)
             {
-                fprintf (stdout, "\nPICTURE_START : frame_type=%s frame_num=%d",
-                    ftype2string(decoder->frame_params.ftype, decoder->frame_params.rtype),
-                    decoder->frame_params.fnum);
+                fprintf (stdout, "\nPICTURE_START : picture_type=%s picture_num=%d",
+                    ptype2string(decoder->picture_params.ptype, decoder->picture_params.rtype),
+                    decoder->picture_params.pnum);
             }
-            /* Just for testing skip every Non-reference frame */
-            if (skip && decoder->frame_params.rtype == NON_REFERENCE_FRAME)
+            /* Just for testing skip every Non-reference picture. HELP: this will be broken for interlace! */
+            if (skip && decoder->picture_params.rtype == NON_REFERENCE_PICTURE)
             {
                 if (verbose)
                     fprintf (stdout, "\n              : Skipping frame");
@@ -262,12 +262,14 @@ static void DecodeDirac (const char *iname, const char *oname)
             break;
 
         case STATE_PICTURE_AVAIL:
+            // NB: in field coding will only get here every odd field. Picture params will
+            // be of the second field in the frame. FIX ME: do we want to return picture params anyway??
             num_frames++;
             if (verbose)
             {
-                fprintf (stdout, "\nPICTURE_AVAIL : frame_type=%s frame_num=%d",
-                    ftype2string(decoder->frame_params.ftype, decoder->frame_params.rtype), 
-                    decoder->frame_params.fnum);
+                fprintf (stdout, "\nPICTURE_AVAIL : picture_type=%s picture_num=%d",
+                    ptype2string(decoder->picture_params.ptype, decoder->picture_params.rtype), 
+                    decoder->picture_params.pnum);
             }
             /* picture available for display */
             WritePicData(decoder, fpdata);

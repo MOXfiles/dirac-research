@@ -233,7 +233,7 @@ void SourceParamsByteIO::InputFrameRate()
     FrameRateType frame_rate=IntToFrameRateType(frame_rate_index);
     if(frame_rate==FRAMERATE_UNDEFINED)
         DIRAC_THROW_EXCEPTION(
-                    ERR_INVALID_FRAME_RATE,
+                    ERR_INVALID_PICTURE_RATE,
                     "Dirac does not recognise the specified frame-rate",
                     SEVERITY_ACCESSUNIT_ERROR)
 
@@ -356,7 +356,7 @@ void SourceParamsByteIO::OutputPixelAspectRatio()
     // Non-defaults
        WriteBit(1);
 
-    // Frame rate index
+    // Picture rate index
     WriteUint(m_src_params.PixelAspectRatioIndex());
     
     if (!m_src_params.PixelAspectRatioIndex()) // i,e. custom value
@@ -452,7 +452,7 @@ void SourceParamsByteIO::OutputFrameRate()
     // Non-defaults
        WriteBit(1);
 
-    // Frame rate index
+    // Picture rate index
     WriteUint(m_src_params.FrameRateIndex());
     
     if (!m_src_params.FrameRateIndex()) // i,e. custom value

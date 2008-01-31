@@ -55,10 +55,10 @@ using namespace dirac;
 #include <vector>
 #include <iostream>
 
-CompCompressor::CompCompressor( EncoderParams& encp,const FrameParams& fp)
+CompCompressor::CompCompressor( EncoderParams& encp,const PictureParams& fp)
 : m_encparams(encp),
   m_fparams(fp),
-  m_fsort( m_fparams.FSort() ),
+  m_fsort( m_fparams.PicSort() ),
   m_cformat( m_fparams.CFormat() )
 {}
 
@@ -89,7 +89,7 @@ ComponentByteIO* CompCompressor::Compress( CoeffArray& coeff_data ,
                 BandCodec* bcoder;
 
 
-                 // Pick the right codec according to the frame type and subband
+                 // Pick the right codec according to the picture type and subband
                 if (b >= bands.Length()-3)
                 {
                     if ( m_fsort.IsIntra() && b == bands.Length() )

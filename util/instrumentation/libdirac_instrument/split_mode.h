@@ -40,7 +40,7 @@
 
 #include <util/instrumentation/libdirac_instrument/draw_overlay.h>
 using dirac::TwoDArray;
-using dirac::Frame;
+using dirac::Picture;
 
 namespace dirac_instr
 {
@@ -55,7 +55,7 @@ namespace dirac_instr
         /*
             Calls DrawOverlay constructor
         */
-        DrawSplitMode(Frame &, DrawFrameMotionParams &, const TwoDArray<int> &);
+        DrawSplitMode(Picture &, DrawPictureMotionParams &, const TwoDArray<int> &);
         
         //! Destructor
         ~DrawSplitMode();

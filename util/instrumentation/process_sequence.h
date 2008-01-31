@@ -41,7 +41,7 @@
 #include <iostream>
 #include <fstream>
 #include <libdirac_common/common.h>
-using dirac::FrameParams;
+using dirac::PictureParams;
 using dirac::OLBParams;
 using dirac::SourceParams;
 using dirac::OneDArray;
@@ -62,7 +62,7 @@ struct me_data_entry
 {
     MEData * me_data;
     OLBParams block_params;
-    FrameParams frame_params;
+    PictureParams picture_params;
 };
 
 //! Class to carry out instrumentation on sequence
@@ -84,18 +84,18 @@ public :
     
 private :
 
-    //! DoFrame
+    //! DoPicture
     /*
-        Queries data array for frame entry
-        Returns true if frame entry is available
+        Queries data array for picture entry
+        Returns true if picture entry is available
     */
-    bool DoFrame();
+    bool DoPicture();
 
-    //! AddFrameEntry
+    //! AddPictureEntry
     /*
-        Adds data for frame to data array
+        Adds data for picture to data array
     */
-    void AddFrameEntry();
+    void AddPictureEntry();
 
     //! Command-line overlay options
     OverlayParams & m_oparams;
@@ -115,11 +115,11 @@ private :
     //! Data array
     OneDArray<me_data_entry> m_data_array;
 
-    //! Frame numbers of process and overlay data
+    //! Picture numbers of process and overlay data
     int m_data_fnum, m_process_fnum;
 
-    //! Read input frame data signal
-    bool used_frame_data;
+    //! Read input picture data signal
+    bool used_picture_data;
 
     //! Output source parameters
     SourceParams & m_srcparams;

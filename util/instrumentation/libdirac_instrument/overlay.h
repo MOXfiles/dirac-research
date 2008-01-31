@@ -41,7 +41,7 @@
 
 #include <libdirac_common/common.h>
 #include <libdirac_common/motion.h>
-#include <libdirac_common/frame.h>
+#include <libdirac_common/picture.h>
 #include <util/instrumentation/libdirac_instrument/motion_colour.h>
 #include <util/instrumentation/libdirac_instrument/motion_colour_arrows.h>
 #include <util/instrumentation/libdirac_instrument/sad.h>
@@ -85,7 +85,7 @@ namespace dirac_instr
         //! Returns which reference is to be used
         const int Reference() const {return m_ref;}
 
-        //! Returns true if input frame background is used, false if grey
+        //! Returns true if input picture background is used, false if grey
         const int Background() const {return m_bg;}
 
         //! Returns true if colour legend is displayed
@@ -101,10 +101,10 @@ namespace dirac_instr
         //! Set type of instrumentation
         void SetOption(OverlayOption o) {m_option=o;}
 
-        //! Set which reference frame is to be used
+        //! Set which reference picture is to be used
         void SetReference(int r) {m_ref=r;}
 
-        //! Set whether input frame or grey is used as background
+        //! Set whether input picture or grey is used as background
         void SetBackground(bool b) {m_bg=b;}
 
         //! Set display of colour legend
@@ -120,7 +120,7 @@ namespace dirac_instr
         //! Instrumentation command line option
         OverlayOption m_option;
 
-        //! Reference frame
+        //! Reference picture
         int m_ref;
 
         //! Background - original luma or mid-grey
@@ -141,7 +141,7 @@ namespace dirac_instr
     {
     public:
         //! constructor
-        Overlay(const OverlayParams &, Frame &);
+        Overlay(const OverlayParams &, Picture &);
 
         //! Destructor
         ~Overlay();
@@ -152,9 +152,9 @@ namespace dirac_instr
         //                                                        //
         ////////////////////////////////////////////////////////////
 
-        void ProcessFrame(const MEData &, const OLBParams &);
+        void ProcessPicture(const MEData &, const OLBParams &);
 
-        void ProcessFrame();
+        void ProcessPicture();
         
     private:
 
@@ -171,14 +171,14 @@ namespace dirac_instr
         */
         void CalculateFactors(const ChromaFormat &);
 
-        //! Calculates if frame requires padding
+        //! Calculates if picture requires padding
         /*
-            Frames must have an integer number of macroblocks, more
-            macroblocks may have been used during encoding and hence the frame
+            Pictures must have an integer number of macroblocks, more
+            macroblocks may have been used during encoding and hence the picture
             must be padded now in order for the correct macroblock (and motion
             vector block) size to be calculated
         */
-        void PadFrame(const MEData &);
+        void PadPicture(const MEData &);
 
         //! Remove global motion from block motion
         void GlobalMotionDifference(const MEData &, MvArray &);
@@ -192,11 +192,11 @@ namespace dirac_instr
         //! Overlay parameters
         const OverlayParams m_oparams;
 
-        //! Local reference to frame
-        Frame & m_frame;
+        //! Local reference to picture
+        Picture & m_picture;
 
-        //! Parameters for drawing frame overlays
-        DrawFrameMotionParams m_draw_params;
+        //! Parameters for drawing picture overlays
+        DrawPictureMotionParams m_draw_params;
     };
 
 } // namespace dirac_instr

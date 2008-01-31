@@ -45,7 +45,7 @@
 #include <libdirac_common/mot_comp_mmx.h>
 #endif
 #include <libdirac_common/motion.h>
-#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/picture_buffer.h>
 using namespace dirac;
 
 using std::vector;
@@ -56,14 +56,14 @@ using std::vector;
 //--public member functions--//
 ///////////////////////////////
 
-// Convenience function to perform motion compensation on a frame
-// Static function that motion compensates a frame. It uses the
+// Convenience function to perform motion compensation on a picture
+// Static function that motion compensates a picture. It uses the
 // MV precision value in the CodecParams to instantiate the
 // appropriate MotionCompensation sub-class.
-void MotionCompensator::CompensateFrame(const CodecParams &cp,
+void MotionCompensator::CompensatePicture(const CodecParams &cp,
                                         const AddOrSub direction ,
-                                        FrameBuffer& buffer ,
-                                        const int fnum,
+                                        PictureBuffer& buffer ,
+                                        const int pnum,
                                         const MvData& mv_data )
 {
     switch (cp.MVPrecision())
@@ -71,26 +71,26 @@ void MotionCompensator::CompensateFrame(const CodecParams &cp,
     case MV_PRECISION_EIGHTH_PIXEL:
     {
         MotionCompensator_EighthPixel my_comp(cp);
-        my_comp.CompensateFrame( direction , buffer , fnum , mv_data);
+        my_comp.CompensatePicture( direction , buffer , pnum , mv_data);
         break;
     }
     case MV_PRECISION_HALF_PIXEL:
     {
         MotionCompensator_HalfPixel my_comp(cp);
-        my_comp.CompensateFrame( direction , buffer , fnum , mv_data);
+        my_comp.CompensatePicture( direction , buffer , pnum , mv_data);
         break;
     }
     case MV_PRECISION_PIXEL:
     {
         MotionCompensator_Pixel my_comp(cp);
-        my_comp.CompensateFrame( direction , buffer , fnum , mv_data);
+        my_comp.CompensatePicture( direction , buffer , pnum , mv_data);
         break;
     }
     case MV_PRECISION_QUARTER_PIXEL:
     default:
     {
         MotionCompensator_QuarterPixel my_comp(cp);
-        my_comp.CompensateFrame( direction , buffer , fnum , mv_data);
+        my_comp.CompensatePicture( direction , buffer , pnum , mv_data);
         break;
     }
     }
@@ -127,24 +127,24 @@ MotionCompensator::~MotionCompensator()
     delete[] m_sub_block_weights;
 }
 
-//Called to perform motion compensated addition/subtraction on an entire frame.
-void MotionCompensator::CompensateFrame( const AddOrSub direction ,
-                                                    FrameBuffer& my_buffer ,
-                                                    int fnum ,
+//Called to perform motion compensated addition/subtraction on an entire picture.
+void MotionCompensator::CompensatePicture( const AddOrSub direction ,
+                                                    PictureBuffer& my_buffer ,
+                                                    int pnum ,
                                                     const MvData& mv_data)
 {
      m_add_or_sub = direction;
 
      int ref1_idx,ref2_idx;
-     Frame& my_frame=my_buffer.GetFrame(fnum);
-     const FrameSort& fsort=my_frame.GetFparams().FSort();
+     Picture& my_picture=my_buffer.GetPicture(pnum);
+     const PictureSort& fsort=my_picture.GetPparams().PicSort();
 
-     m_cformat = my_frame.GetFparams().CFormat();
+     m_cformat = my_picture.GetPparams().CFormat();
 
      if (fsort.IsInter())
      {//we can motion compensate
 
-         const std::vector<int>& refs=my_frame.GetFparams().Refs();
+         const std::vector<int>& refs=my_picture.GetPparams().Refs();
          if (refs.size()>0)
          {
              //extract the references
@@ -154,43 +154,43 @@ void MotionCompensator::CompensateFrame( const AddOrSub direction ,
              else
                  ref2_idx = refs[0];
 
-             const Frame& ref1frame = my_buffer.GetFrame(ref1_idx);
-             const Frame& ref2frame = refs.size() > 0 ? my_buffer.GetFrame(ref2_idx) : ref1frame;
+             const Picture& ref1pic = my_buffer.GetPicture(ref1_idx);
+             const Picture& ref2pic = refs.size() > 0 ? my_buffer.GetPicture(ref2_idx) : ref1pic;
 
              // Now check that references are marked correctly
-             if ( !ref1frame.GetFparams().FSort().IsRef() )
+             if ( !ref1pic.GetPparams().PicSort().IsRef() )
              {
-                 std::cout<<std::endl<<"WARNING! Reference frame (number "<<ref1_idx;
+                 std::cout<<std::endl<<"WARNING! Reference picture (number "<<ref1_idx;
                  std::cout<<") being used is not marked as a reference. Incorrect output is likely.";
              }
-             if ( ref1frame.GetFparams().FrameNum() != ref1_idx)
+             if ( ref1pic.GetPparams().PictureNum() != ref1_idx)
              {
-                 std::cout<<std::endl<<"WARNING! Reference frame (number "<<ref1_idx;
+                 std::cout<<std::endl<<"WARNING! Reference picture (number "<<ref1_idx;
                  std::cout<<") not available in buffer. Incorrect output is likely.";
              }
 
 
              if ( refs.size()>1 )
              {
-                 if ( !ref2frame.GetFparams().FSort().IsRef() )
+                 if ( !ref2pic.GetPparams().PicSort().IsRef() )
                  {
-                     std::cout<<std::endl<<"WARNING! Reference frame (number ";
+                     std::cout<<std::endl<<"WARNING! Reference picture (number ";
                      std::cout<<ref2_idx<<") being used is not marked as a reference. Incorrect output is likely.";
                  }
-                 if ( ref2frame.GetFparams().FrameNum() != ref2_idx)
+                 if ( ref2pic.GetPparams().PictureNum() != ref2_idx)
                  {
-                     std::cout<<std::endl<<"WARNING! Reference frame (number "<<ref2_idx;
+                     std::cout<<std::endl<<"WARNING! Reference picture (number "<<ref2_idx;
                      std::cout<<") not available in buffer. Incorrect output is likely.";
                  }
              }
 
              luma_or_chroma = true;
              //now do all the components
-             CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , Y_COMP);
+             CompensateComponent( my_picture , ref1pic , ref2pic , mv_data , Y_COMP);
 
              luma_or_chroma = false;
-             CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , U_COMP);
-             CompensateComponent( my_frame , ref1frame , ref2frame , mv_data , V_COMP);
+             CompensateComponent( my_picture , ref1pic , ref2pic , mv_data , U_COMP);
+             CompensateComponent( my_picture , ref1pic , ref2pic , mv_data , V_COMP);
          }
      }
 }
@@ -210,10 +210,10 @@ void MotionCompensator::ReConfig()
         m_bparams = m_cparams.ChromaBParams(2);
 
     // Calculate the shift required in horizontal and vertical direction for
-    // OBMC and the weighting bits for each reference frame.
+    // OBMC and the weighting bits for each reference picture.
 
-    // Total shift = shift assuming equal frame weights +
-    //               frame weights precision
+    // Total shift = shift assuming equal picture weights +
+    //               picture weights precision
     int blocks_per_mb_row = m_cparams.XNumBlocks()/m_cparams.XNumMB();
     int blocks_per_sb_row = blocks_per_mb_row>>1;
     int mb_xlen = m_bparams.Xblen()*blocks_per_mb_row - (m_bparams.Xblen()-m_bparams.Xbsep())*(blocks_per_mb_row-1);
@@ -233,7 +233,7 @@ void MotionCompensator::ReConfig()
     }
 
     // Firstly calculate the non-weighted Weighting blocks. i,e, assuming that
-    // the frame_weight for each reference frame is 1.
+    // the picture_weight for each reference picture is 1.
 
     // Calculate non-weighted Block Weights
     CalculateWeights( m_bparams.Xbsep(), m_bparams.Ybsep(), m_block_weights );
@@ -245,19 +245,19 @@ void MotionCompensator::ReConfig()
     CalculateWeights( sb_xsep, sb_ysep , m_sub_block_weights );
 }
 
-void MotionCompensator::CompensateComponent( Frame& picframe ,
-                                                        const Frame &ref1frame ,
-                                                        const Frame& ref2frame ,
+void MotionCompensator::CompensateComponent( Picture& pic ,
+                                                        const Picture &ref1pic ,
+                                                        const Picture& ref2pic ,
                                                         const MvData& mv_data ,
                                                         const CompSort cs)
 {
     // Set up references to pictures and references
-    PicArray& pic_data_out = picframe.Data( cs );
+    PicArray& pic_data_out = pic.Data( cs );
 
-    // Size of frame component being motion compensated
+    // Size of picture component being motion compensated
 
-    const PicArray& ref1up = ref1frame.UpData( cs );
-    const PicArray& ref2up = ref2frame.UpData( cs );
+    const PicArray& ref1up = ref1pic.UpData( cs );
+    const PicArray& ref2up = ref2pic.UpData( cs );
 
     // Set up a row of blocks which will contain the MC data, which
     // we'll add or subtract to pic_data_out
@@ -280,11 +280,11 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
         }
     }
 
-    ImageCoords orig_pic_size(picframe.GetFparams().OrigXl(), picframe.GetFparams().OrigYl());
+    ImageCoords orig_pic_size(pic.GetPparams().OrigXl(), pic.GetPparams().OrigYl());
     if ( cs != Y_COMP )
     {
-        orig_pic_size.x = picframe.GetFparams().OrigChromaXl();
-        orig_pic_size.y = picframe.GetFparams().OrigChromaYl();
+        orig_pic_size.x = pic.GetPparams().OrigChromaXl();
+        orig_pic_size.y = pic.GetPparams().OrigChromaYl();
     }
 
 
@@ -292,7 +292,7 @@ void MotionCompensator::CompensateComponent( Frame& picframe ,
     const TwoDArray<ValueType>& dcarray = mv_data.DC( cs );
 
     // Set up references to the vectors
-    const int num_refs = picframe.GetFparams().Refs().size();
+    const int num_refs = pic.GetPparams().Refs().size();
     const MvArray* mv_array1;
     const MvArray* mv_array2;
     mv_array1 = &mv_data.Vectors(1);
@@ -629,7 +629,7 @@ void MotionCompensator::AdjustBlockByRefWeights (
     if (m_cparams.CustomRefWeights())
     {
         int ref_wt_prec_bias = 1;
-        for (int i = m_cparams.FrameWeightsBits()-1; i > 0; --i)
+        for (int i = m_cparams.PictureWeightsBits()-1; i > 0; --i)
         {
             ref_wt_prec_bias <<= 1;
         }
@@ -660,7 +660,7 @@ void MotionCompensator::AdjustBlockByRefWeights (
         {
             for (int x = 0; x < val1_block.LengthX(); ++x)
             {
-                val1_block[y][x] = (val1_block[y][x] + ref_wt_prec_bias) >> m_cparams.FrameWeightsBits();
+                val1_block[y][x] = (val1_block[y][x] + ref_wt_prec_bias) >> m_cparams.PictureWeightsBits();
             }
         }
     }
@@ -704,7 +704,7 @@ void MotionCompensator::CalculateWeights( int xbsep, int ybsep,
                                           TwoDArray<ValueType>* wts_array)
 {
     // Firstly calculate the non-weighted Weighting blocks. i,e, assuming that
-    // the frame_weight for each reference frame is 1.
+    // the picture_weight for each reference picture is 1.
     // We can create all nine weighting blocks by calculating values
     // for four blocks and mirroring them to generate the others.
     CreateBlock( xbsep, ybsep, false , false , wts_array[0] );

@@ -298,7 +298,7 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray& out_
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
             errstr.str(),
-            SEVERITY_FRAME_ERROR);
+            SEVERITY_PICTURE_ERROR);
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
@@ -638,7 +638,7 @@ void LFBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray& ou
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
             errstr.str(),
-            SEVERITY_FRAME_ERROR);
+            SEVERITY_PICTURE_ERROR);
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );

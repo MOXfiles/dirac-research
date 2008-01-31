@@ -191,7 +191,7 @@ void DiracByteStream::AddAccessUnit(AccessUnitByteIO *p_accessunit_byteio)
     p_accessunit_byteio->CollateByteStats(m_sequence_stats);
 }
 
-void DiracByteStream::AddFrame(FrameByteIO *p_frame_byteio)
+void DiracByteStream::AddPicture(PictureByteIO *p_frame_byteio)
 {
     // set previous parse-unit details
     ParseUnitByteIO *mp_previous_parse_unit=mp_prev_parse_unit;
@@ -203,7 +203,7 @@ void DiracByteStream::AddFrame(FrameByteIO *p_frame_byteio)
     p_frame_byteio->SetAdjacentParseUnits(mp_previous_parse_unit);
 
      // push onto to pending list
-    m_parse_unit_list.push(std::make_pair(PU_FRAME, p_frame_byteio ) );
+    m_parse_unit_list.push(std::make_pair(PU_PICTURE, p_frame_byteio ) );
 
    // set previous parse-unit
     mp_previous_parse_unit = p_frame_byteio;

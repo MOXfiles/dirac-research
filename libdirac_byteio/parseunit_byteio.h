@@ -55,12 +55,12 @@ namespace dirac
     /* Types of parse-unit */
     typedef enum {
         PU_SEQ_HEADER=0,
-        PU_FRAME,
+        PU_PICTURE,
         PU_END_OF_SEQUENCE,
         PU_AUXILIARY_DATA,
         PU_PADDING_DATA,
-        PU_CORE_FRAME,
-        PU_LOW_DELAY_FRAME,
+        PU_CORE_PICTURE,
+        PU_LOW_DELAY_PICTURE,
         PU_UNDEFINED
     } ParseUnitType;
 

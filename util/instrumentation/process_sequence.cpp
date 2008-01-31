@@ -38,7 +38,7 @@
 
 #include <limits>
 #include <util/instrumentation/process_sequence.h>
-#include <libdirac_common/frame.h>
+#include <libdirac_common/picture.h>
 using namespace dirac;
 
 ProcessSequence::ProcessSequence(OverlayParams & oparams,
@@ -57,26 +57,26 @@ ProcessSequence::ProcessSequence(OverlayParams & oparams,
 
 }
 
-// checks motion data array for entry for current frame
-//  - if entry exists, frame is processed
+// checks motion data array for entry for current picture
+//  - if entry exists, picture is processed
 //  - if no entry exists, return false
-bool ProcessSequence::DoFrame()
+bool ProcessSequence::DoPicture()
 {
     int index = int(m_process_fnum % m_data_array.Length());
 
-    if (m_data_array[index].frame_params.FrameNum() == m_process_fnum)
+    if (m_data_array[index].picture_params.PictureNum() == m_process_fnum)
     {
-        // read next frame from input sequence
-        Frame * frame = new Frame(m_data_array[index].frame_params);
-        m_inputpic.GetStream()->ReadNextPicture(*frame);
+        // read next picture from input sequence
+        Picture * picture = new Picture(m_data_array[index].picture_params);
+        m_inputpic.GetStream()->ReadNextPicture(*picture);
 
-        Overlay overlay(m_oparams, *frame);
+        Overlay overlay(m_oparams, *picture);
 
-        if (m_data_array[index].frame_params.FSort().IsIntra())
-            overlay.ProcessFrame();
+        if (m_data_array[index].picture_params.PicSort().IsIntra())
+            overlay.ProcessPicture();
 
         else
-            overlay.ProcessFrame(*(m_data_array[index].me_data), m_data_array[index].block_params);
+            overlay.ProcessPicture(*(m_data_array[index].me_data), m_data_array[index].block_params);
 
         // release me_data
         if (m_data_array[index].me_data != 0)
@@ -85,17 +85,17 @@ bool ProcessSequence::DoFrame()
             m_data_array[index].me_data = 0;
         }
 
-        // set frame number to -1 to identify it as unallocated
-        m_data_array[index].frame_params.SetFrameNum(-1);
+        // set picture number to -1 to identify it as unallocated
+        m_data_array[index].picture_params.SetPictureNum(-1);
 
         //clip the data to keep it within range
-        frame->Clip();
+        picture->Clip();
 
-        // write the frame to the output file
-        m_outputpic.GetStream()->WriteNextFrame(*frame);
+        // write the picture to the output file
+        m_outputpic.GetStream()->WriteToNextFrame(*picture);
 
-        // de-allocate memory for frame
-        delete frame;
+        // de-allocate memory for picture
+        delete picture;
 
         return true;
     }
@@ -103,27 +103,27 @@ bool ProcessSequence::DoFrame()
     return false;
 }
 
-// reads motion data file and adds entries into motion data array upto and including frame
+// reads motion data file and adds entries into motion data array upto and including picture
 // denoted by fnum
-void ProcessSequence::AddFrameEntry()
+void ProcessSequence::AddPictureEntry()
 {
-    // look for frame sort
+    // look for picture sort
     m_data_in.ignore(10, '>');
-    char mv_frame_sort[10];
-    m_data_in >> mv_frame_sort;
+    char mv_picture_sort[10];
+    m_data_in >> mv_picture_sort;
 
-    // position in array where frame data should be placed
+    // position in array where picture data should be placed
     int new_index = m_data_fnum % m_data_array.Length();
 
-    // reading information for an intra frame
-    if (strcmp(mv_frame_sort, "intra") == 0)
+    // reading information for an intra picture
+    if (strcmp(mv_picture_sort, "intra") == 0)
     {
-        if (m_verbose) std::cout << std::endl << "Reading intra frame " << m_data_fnum << " data";
+        if (m_verbose) std::cout << std::endl << "Reading intra picture " << m_data_fnum << " data";
 
         m_data_array[new_index].me_data = 0;
-        m_data_array[new_index].frame_params = m_srcparams;
-        m_data_array[new_index].frame_params.SetFrameNum(m_data_fnum);
-        m_data_array[new_index].frame_params.SetFSort(FrameSort::IntraRefFrameSort());
+        m_data_array[new_index].picture_params = m_srcparams;
+        m_data_array[new_index].picture_params.SetPictureNum(m_data_fnum);
+        m_data_array[new_index].picture_params.SetPicSort(PictureSort::IntraRefPictureSort());
 
         if (m_verbose)
         {
@@ -132,12 +132,12 @@ void ProcessSequence::AddFrameEntry()
         }
     }
 
-    // reading information for a motion-compensated frame
+    // reading information for a motion-compensated picture
     else
     {
         if (m_verbose)
         {
-            std::cout << std::endl << "Reading motion-compensated frame ";
+            std::cout << std::endl << "Reading motion-compensated picture ";
             std::cout << m_data_fnum << " data";
         }
 
@@ -145,24 +145,24 @@ void ProcessSequence::AddFrameEntry()
         int total_refs = 0;
         int ref = -1;
 
-        // create frame motion data array entry
-        m_data_array[new_index].frame_params = m_srcparams;
+        // create picture motion data array entry
+        m_data_array[new_index].picture_params = m_srcparams;
 
-        // read reference frame information from top of file
+        // read reference picture information from top of file
         m_data_in >> total_refs;
 
         // clear reference vector
-        m_data_array[new_index].frame_params.Refs().clear();
+        m_data_array[new_index].picture_params.Refs().clear();
 
         for (int i=0; i<total_refs; ++i)
         {
             m_data_in >> ref;
-            m_data_array[new_index].frame_params.Refs().push_back(ref);
+            m_data_array[new_index].picture_params.Refs().push_back(ref);
         }
 
         // add NO_REF reference if there is no reference 2
         if (total_refs == 1)
-            m_data_array[new_index].frame_params.Refs().push_back(NO_REF);
+            m_data_array[new_index].picture_params.Refs().push_back(NO_REF);
 
         // read luma motion block dimensions
         m_data_in >> m_data_array[new_index].block_params;
@@ -176,12 +176,12 @@ void ProcessSequence::AddFrameEntry()
         // create motion data object
         m_data_array[new_index].me_data = new MEData(mb_xnum, mb_ynum, mv_xnum, mv_ynum , total_refs );
 
-        m_data_array[new_index].frame_params.SetFrameNum(m_data_fnum);
+        m_data_array[new_index].picture_params.SetPictureNum(m_data_fnum);
 
-        if (m_data_array[new_index].frame_params.Refs().size() > 1)
-            m_data_array[new_index].frame_params.SetFSort(FrameSort::InterNonRefFrameSort());
+        if (m_data_array[new_index].picture_params.Refs().size() > 1)
+            m_data_array[new_index].picture_params.SetPicSort(PictureSort::InterNonRefPictureSort());
         else
-            m_data_array[new_index].frame_params.SetFSort(FrameSort::InterRefFrameSort());
+            m_data_array[new_index].picture_params.SetPicSort(PictureSort::InterRefPictureSort());
 
         // read motion vector data
         m_data_in >> *m_data_array[new_index].me_data; // overloaded operator>> defined in libdirac_common/motion.cpp
@@ -195,27 +195,27 @@ void ProcessSequence::AddFrameEntry()
 }
 
 // manages processing of sequence, operation:
-//  - check motion data array for frame entry
-//  - if exists, process frame and remove entry
-//  - if no entry exists, read motion data file and store frames
-//    up to and including current frame for process,
-//    retrieve frame motion data from array and process
+//  - check motion data array for picture entry
+//  - if exists, process picture and remove entry
+//  - if no entry exists, read motion data file and store pictures
+//    up to and including current picture for process,
+//    retrieve picture motion data from array and process
 void ProcessSequence::DoSequence(int start, int stop)
 {
-    // set all frame numbers to -1 to identify as unallocated
+    // set all picture numbers to -1 to identify as unallocated
     for (int i=0; i<m_data_array.Length(); ++i)
-        m_data_array[i].frame_params.SetFrameNum(-1);
+        m_data_array[i].picture_params.SetPictureNum(-1);
 
-    // read frames until the start frame is found
+    // read pictures until the start picture is found
     // ** is there a better way?? **
     if (start > 0)
     {
         for (int fnum=0; fnum<start; ++fnum)
         {
-            FrameParams fparams(m_inputpic.GetSourceParams());
-            Frame * frame = new Frame(fparams);
-            m_inputpic.GetStream()->ReadNextPicture(*frame);
-            delete frame;
+            PictureParams fparams(m_inputpic.GetSourceParams());
+            Picture * picture = new Picture(fparams);
+            m_inputpic.GetStream()->ReadNextPicture(*picture);
+            delete picture;
         }
     }
 
@@ -226,48 +226,48 @@ void ProcessSequence::DoSequence(int start, int stop)
     int data_next_fnum = -1;
     m_data_fnum = -1;
 
-    // look for frame number
+    // look for picture number
     m_data_in.ignore(100000, ':');
     m_data_in >> m_data_fnum;
 
-    // frame by frame processing
+    // picture by picture processing
     for (m_process_fnum = start; m_process_fnum <= stop; ++m_process_fnum)
     {
-        if (m_verbose) std::cout << std::endl << std::endl << "Frame " << m_process_fnum;
+        if (m_verbose) std::cout << std::endl << std::endl << "Picture " << m_process_fnum;
 
-        // location of frame data in array
+        // location of picture data in array
         int index = int(m_process_fnum % m_data_array.Length());
 
         if (m_verbose)
         {
             std::cout << "\nArray entry " << index << " is ";
-            if (m_data_array[index].frame_params.FrameNum() != -1)
-                std::cout << "frame number " << m_data_array[index].frame_params.FrameNum();
+            if (m_data_array[index].picture_params.PictureNum() != -1)
+                std::cout << "picture number " << m_data_array[index].picture_params.PictureNum();
             else
                 std::cout << "not allocated";
         }
 
-        // if the frame motion data has not already been read, add the motion data to the vector
-        if (!DoFrame())
+        // if the picture motion data has not already been read, add the motion data to the vector
+        if (!DoPicture())
         {
             read_data_fnum = false;
             do
             {
                 if (read_data_fnum)
                 {
-                    // look for frame number of next data
+                    // look for picture number of next data
                     m_data_in.ignore(100000, ':');
                     m_data_in >> m_data_fnum;
                 }
-                AddFrameEntry();
+                AddPictureEntry();
                 read_data_fnum = true;
 
             } while (m_data_fnum != m_process_fnum && !m_data_in.eof());
 
-            // now check the next set of data is not for the same frame
+            // now check the next set of data is not for the same picture
             do
             {
-                // look for frame number
+                // look for picture number
                 m_data_in.ignore(100000, ':');
                 data_next_fnum = -1;
                 m_data_in >> data_next_fnum;
@@ -275,23 +275,23 @@ void ProcessSequence::DoSequence(int start, int stop)
                 if (m_data_fnum == data_next_fnum && !m_data_in.eof())
                 {
                     m_data_fnum = data_next_fnum;
-                    if (m_verbose) std::cout << std::endl << "Updating frame data";
-                    AddFrameEntry();
+                    if (m_verbose) std::cout << std::endl << "Updating picture data";
+                    AddPictureEntry();
                 }
 
             } while (m_data_fnum == data_next_fnum && !m_data_in.eof());
 
 
-            // update data frame number
+            // update data picture number
             m_data_fnum = data_next_fnum;
 
-            // the frame data should be in the array (provided it is big enough!)
+            // the picture data should be in the array (provided it is big enough!)
             // if the data is not available, advise and exit
-            if (!DoFrame())
+            if (!DoPicture())
             {
                 if (m_data_in.eof())
                     break;
-                std::cerr << "Cannot find frame " << m_process_fnum << " motion data. ";
+                std::cerr << "Cannot find picture " << m_process_fnum << " motion data. ";
                 std::cerr << "Check buffer size. Exiting." << std::endl;
                 exit(EXIT_FAILURE);
             }

@@ -355,13 +355,13 @@ namespace dirac
             wavelet transform.
 
             \param    cpd          perctual factor - the number of cycles per degree
-            \param    fsort        the frame sort (I, L1 or L2)
+            \param    fsort        the picture sort (I, L1 or L2)
             \param    cformat      the chroma format
             \param    csort        the component type (Y, U or V)
             \param    field_coding True if input is coded as fields
         */
         void SetBandWeights (const float cpd,
-                             const FrameSort& fsort,
+                             const PictureSort& fsort,
                              const ChromaFormat& cformat,
                              const CompSort csort,
                              const bool field_coding);

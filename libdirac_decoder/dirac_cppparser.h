@@ -50,7 +50,7 @@
 namespace dirac
 {
     class SequenceDecompressor;
-    class Frame;
+    class Picture;
 
     //! Input Stream Buffer Class. 
     class InputStreamBuffer : public std::streambuf
@@ -106,11 +106,11 @@ namespace dirac
     //! Dirac Stream Parser Class
     /*!
         This class is a wrapper around the SequenceDecompressor class. The
-        Sequence Decompressor class needs a full frame of data to be available
-        to decompress a frame successfully.  So, the DiracParser class uses
+        Sequence Decompressor class needs a full picture of data to be available
+        to decompress a picture successfully.  So, the DiracParser class uses
         the InputStreamBuffer class to store data until a chunk is available
         to be processed and then invokes the SequenceDecompressor functions to
-        process data. A chunk of data can be a start of sequence, a frame or
+        process data. A chunk of data can be a start of sequence, a picture or
         end of sequence data.  The istream used to instantiate the
         SequenceDecompressor object is created using an InputStreamBuffer
         object which is manipulated the DiracParser. This ensures that data is
@@ -155,21 +155,21 @@ namespace dirac
         //! Return the source parameters of the current sequence
         const SourceParams& GetSourceParams() const;
 
-        //! Return the frame parameters of the next frame to be decoded
-        const FrameParams& GetNextFrameParams() const;
+        //! Return the picture parameters of the next picture to be decoded
+        const PictureParams& GetNextPictureParams() const;
 
-        //! Return the decoded frame
-        const Frame& GetNextFrame() const;
+        //! Return the decoded picture
+        const Picture& GetNextPicture() const;
         
         //! Return the coding parameters of the current sequence
         const DecoderParams& GetDecoderParams() const;
 
-        //! Return the last frame in the sequence
-      //  const Frame& GetLastFrame() const;
+        //! Return the last picture in the sequence
+      //  const Picture& GetLastPicture() const;
 
         //! Set the skip flag
         /*! Set the skip flag to the value specified in skip. If skip is true,
-            the parser will skip decoding the next frame until the this
+            the parser will skip decoding the next picture until the this
             function is called again with skip set to false
         */
         void  SetSkip (bool skip);
@@ -186,14 +186,14 @@ namespace dirac
         DecoderState m_state;
         //! Next state the parser will enter
         DecoderState m_next_state;
-        //! frame number of last frame decoded in display order
-        int m_show_fnum;
+        //! picture number of last picture decoded in display order
+        int m_show_pnum;
         //! Sequence decompressor object
         SequenceDecompressor *m_decomp;
-        //! skip next frame flag
+        //! skip next picture flag
         bool m_skip;
-        //! skip frame type
-        FrameSort m_skip_type;
+        //! skip picture type
+        PictureSort m_skip_type;
         //! verbose flag
         bool m_verbose;
         //! Byte Stream Buffer

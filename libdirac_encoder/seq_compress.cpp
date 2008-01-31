@@ -51,12 +51,12 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     m_srcparams(pin->GetSourceParams()),
     m_encparams(encp),
     m_pic_in(pin),
-    m_current_display_fnum(-1),
-    m_current_code_fnum(0),
-    m_show_fnum(-1),m_last_frame_read(-1),
+    m_current_display_pnum(-1),
+    m_current_code_pnum(0),
+    m_show_pnum(-1),m_last_picture_read(-1),
     m_delay(1),
     m_qmonitor( m_encparams ),
-    m_fcoder( m_encparams ),
+    m_pcoder( m_encparams ),
     m_dirac_byte_stream(dirac_byte_stream)
 {
     // Set up the compression of the sequence
@@ -127,8 +127,8 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     m_encparams.SetXNumBlocks( 4 * m_encparams.XNumMB() );
     m_encparams.SetYNumBlocks( 4 * m_encparams.YNumMB() );
 
-    // Set up the frame buffers with the PADDED picture sizes
-    m_fbuffer = new FrameBuffer( m_srcparams.CFormat() ,
+    // Set up the picture buffers with the PADDED picture sizes
+    m_fbuffer = new PictureBuffer( m_srcparams.CFormat() ,
                                  m_encparams.NumL1() , m_encparams.L1Sep() ,
                                  m_encparams.OrigXl(), m_encparams.OrigYl(),
                                  xpad_len , ypad_len,
@@ -138,9 +138,9 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
                                  m_encparams.FieldCoding(),
                                  m_encparams.UsingAC());
 
-    // Retain the original frame dimensions for the Motion estimation
+    // Retain the original picture dimensions for the Motion estimation
     // buffer
-    m_mebuffer = new FrameBuffer( m_srcparams.CFormat() ,
+    m_mebuffer = new PictureBuffer( m_srcparams.CFormat() ,
                                     m_encparams.NumL1() , m_encparams.L1Sep() ,
                                     m_encparams.OrigXl(), m_encparams.OrigYl(),
                                     m_encparams.OrigXl(), m_encparams.OrigYl(),
@@ -172,41 +172,41 @@ SequenceCompressor::~SequenceCompressor()
         delete m_ratecontrol;
 }
 
-Frame& SequenceCompressor::CompressNextFrame()
+Picture& SequenceCompressor::CompressNextPicture()
 {
 
-    // This function codes the next frame in coding order and returns the next frame in display order
+    // This function codes the next picture in coding order and returns the next picture in display order
     // In general these will differ, and because of re-ordering there is a m_delay which needs to be imposed.
     // This creates problems at the start and at the end of the sequence which must be dealt with.
-    // At the start we just keep outputting frame 0. At the end you will need to loop for longer to get all
-    // the frames out. It's up to the calling function to do something with the decoded frames as they
+    // At the start we just keep outputting picture 0. At the end you will need to loop for longer to get all
+    // the pictures out. It's up to the calling function to do something with the decoded pictures as they
     // come out - write them to screen or to file, or whatever. TJD 13Feb04.
 
-    // current_fnum is the number of the current frame being coded in display order
-    // m_current_code_fnum is the number of the current frame in coding order. This function increments
-    // m_current_code_fnum by 1 each time and works out what the number is in display order.
-    // m_show_fnum is the index of the frame number that can be shown when current_fnum has been coded.
+    // current_pnum is the number of the current picture being coded in display order
+    // m_current_code_pnum is the number of the current picture in coding order. This function increments
+    // m_current_code_pnum by 1 each time and works out what the number is in display order.
+    // m_show_pnum is the index of the picture number that can be shown when current_pnum has been coded.
     // Var m_delay is the m_delay caused by reordering (as distinct from buffering)
 
-    TESTM (m_last_frame_read >= 0, "Data loaded before calling CompressNextFrame");
-    m_current_display_fnum = CodedToDisplay( m_current_code_fnum );
+    TESTM (m_last_picture_read >= 0, "Data loaded before calling CompressNextPicture");
+    m_current_display_pnum = CodedToDisplay( m_current_code_pnum );
 
-    m_show_fnum = std::max( m_current_code_fnum - m_delay , 0 );
+    m_show_pnum = std::max( m_current_code_pnum - m_delay , 0 );
 
     // Flag saying we're ready to encode
     bool can_encode = false;
 
-    if (m_last_frame_read >= m_current_display_fnum )
+    if (m_last_picture_read >= m_current_display_pnum )
         can_encode = true;
 
     if ( can_encode )
-    {   // We haven't coded everything, so compress the next frame
+    {   // We haven't coded everything, so compress the next picture
 
-        // stream access-unit data if first frame in unit
+        // stream access-unit data if first picture in unit
         if(IsNewAccessUnit())
         {
-            // The access unit frame number must be equal to the frame
-            // number in display order of the I_Frame that follows it and
+            // The access unit picture number must be equal to the picture
+            // number in display order of the I_Picture that follows it and
             // not the coded order.
             AccessUnitByteIO *p_accessunit_byteio = new AccessUnitByteIO
                                         (
@@ -226,29 +226,29 @@ Frame& SequenceCompressor::CompressNextFrame()
                 m_ratecontrol->Report();
 
             if (m_encparams.FieldCoding())
-                std::cout<<std::endl<<std::endl<<"Compressing field "<<m_current_code_fnum<<", ";
+                std::cout<<std::endl<<std::endl<<"Compressing field "<<m_current_code_pnum<<", ";
             else
-                std::cout<<std::endl<<std::endl<<"Compressing frame "<<m_current_code_fnum<<", ";
-            std::cout<<m_current_display_fnum<<" in display order";
+                std::cout<<std::endl<<std::endl<<"Compressing frame "<<m_current_code_pnum<<", ";
+            std::cout<<m_current_display_pnum<<" in display order";
 
 
         }
 
 
-        // Compress the frame//
+        // Compress the picture//
         ///////////////////////
 
 
 
-        Frame& my_frame = m_fbuffer->GetFrame( m_current_display_fnum );
+        Picture& my_picture = m_fbuffer->GetPicture( m_current_display_pnum );
 
-        FrameParams& fparams = my_frame.GetFparams();
+        PictureParams& fparams = my_picture.GetPparams();
         
-        if (fparams.FSort().IsRef())
-            m_fbuffer->SetRetiredFrameNum( m_show_fnum, m_current_display_fnum );
+        if (fparams.PicSort().IsRef())
+            m_fbuffer->SetRetiredPictureNum( m_show_pnum, m_current_display_pnum );
 
         // Do motion estimation using the original (not reconstructed) data
-        if (m_encparams.Verbose() && my_frame.GetFparams().FSort().IsInter())
+        if (m_encparams.Verbose() && my_picture.GetPparams().PicSort().IsInter())
         {
             std::cout<<std::endl<<"References "
                      << (m_encparams.FieldCoding() ? "field " : "frame ")
@@ -259,20 +259,20 @@ Frame& SequenceCompressor::CompressNextFrame()
             }
         }
         bool is_a_cut( false );
-        if ( my_frame.GetFparams().FSort().IsInter() )
+        if ( my_picture.GetPparams().PicSort().IsInter() )
         {
-            is_a_cut = m_fcoder.MotionEstimate(  *m_mebuffer,
-                                                m_current_display_fnum );
+            is_a_cut = m_pcoder.MotionEstimate(  *m_mebuffer,
+                                                m_current_display_pnum );
             if ( is_a_cut )
             {
-                // Set the frame type to intra
-                if (my_frame.GetFparams().FSort().IsRef())
-                    my_frame.SetFrameSort (FrameSort::IntraRefFrameSort());
+                // Set the picture type to intra
+                if (my_picture.GetPparams().PicSort().IsRef())
+                    my_picture.SetPictureSort (PictureSort::IntraRefPictureSort());
                 else
-                    my_frame.SetFrameSort (FrameSort::IntraNonRefFrameSort());
+                    my_picture.SetPictureSort (PictureSort::IntraNonRefPictureSort());
 
                 if ( m_encparams.Verbose() )
-                    std::cout<<std::endl<<"Cut detected and I-frame inserted!";
+                    std::cout<<std::endl<<"Cut detected and I-picture inserted!";
             }
         }
 
@@ -280,73 +280,73 @@ Frame& SequenceCompressor::CompressNextFrame()
         // Now code the residual data
         if (m_encparams.TargetRate() == 0)
         {
-            FrameByteIO *p_frame_byteio;
+            PictureByteIO *p_picture_byteio;
             // Coding Without using Rate Control Algorithm
-            p_frame_byteio =  m_fcoder.Compress(*m_fbuffer ,
-                                         m_current_display_fnum);
+            p_picture_byteio =  m_pcoder.Compress(*m_fbuffer ,
+                                         m_current_display_pnum);
 
-            // add the frame to the byte stream
+            // add the picture to the byte stream
 
-            m_dirac_byte_stream.AddFrame(p_frame_byteio);
+            m_dirac_byte_stream.AddPicture(p_picture_byteio);
         }
         else
         {
-            RateControlCompress(my_frame, is_a_cut);
+            RateControlCompress(my_picture, is_a_cut);
         }
 
-       // Measure the encoded frame quality
+       // Measure the encoded picture quality
        if ( m_encparams.LocalDecode() )
        {
-           const Frame &orig_frame = OriginalFrame( m_current_display_fnum );
-           if (m_current_display_fnum != orig_frame.GetFparams().FrameNum())
+           const Picture &orig_picture = OriginalPicture( m_current_display_pnum );
+           if (m_current_display_pnum != orig_picture.GetPparams().PictureNum())
            {
-               std::cerr << "Error in frame buffer:"
-                         << " Requested : " << m_current_display_fnum
-                         << "  Retrieved : " << orig_frame.GetFparams().FrameNum() << std::endl;
+               std::cerr << "Error in picture buffer:"
+                         << " Requested : " << m_current_display_pnum
+                         << "  Retrieved : " << orig_picture.GetPparams().PictureNum() << std::endl;
            }
            m_qmonitor.UpdateModel(
-               m_fbuffer->GetFrame( m_current_display_fnum ) ,
-               OriginalFrame(m_current_display_fnum) );
+               m_fbuffer->GetPicture( m_current_display_pnum ) ,
+               OriginalPicture(m_current_display_pnum) );
        }
         // Increment our position
-        m_current_code_fnum++;
+        m_current_code_pnum++;
 
        CleanBuffers();
 
     }
 
-    // Return the latest frame that can be shown
+    // Return the latest picture that can be shown
     if ( m_encparams.Verbose() )
     {
            std::cout<<std::endl<<"Return " <<
                  (m_encparams.FieldCoding() ? "field " : "frame ")  <<
-                  m_show_fnum << " in display order";
+                  m_show_pnum << " in display order";
     }
-    return m_fbuffer->GetFrame(m_show_fnum );
+    return m_fbuffer->GetPicture(m_show_pnum );
 }
 
 void SequenceCompressor::CleanBuffers()
 {
     // If we're not at the beginning, clean the buffer
-    if ( m_current_code_fnum != 0 )
+    if ( m_current_code_pnum != 0 )
     {
-        m_fbuffer->CleanRetired( m_show_fnum, m_current_display_fnum );
-        m_mebuffer->CleanAll( m_show_fnum, m_current_display_fnum );
+        m_fbuffer->CleanRetired( m_show_pnum, m_current_display_pnum );
+        m_mebuffer->CleanAll( m_show_pnum, m_current_display_pnum );
     }
 }
 
-const Frame *SequenceCompressor::GetFrameEncoded()
+const Picture *SequenceCompressor::GetPictureEncoded()
 {
-    if (m_current_display_fnum >= 0)
-        return &m_fbuffer->GetFrame( m_current_display_fnum );
+    if (m_current_display_pnum >= 0)
+        return &m_fbuffer->GetPicture( m_current_display_pnum );
 
     return 0;
 }
 
 const MEData *SequenceCompressor::GetMEData()
 {
-    if ( m_fcoder.IsMEDataAvail())
-        return m_fcoder.GetMEData();
+    if ( m_pcoder.IsMEDataAvail())
+        return m_pcoder.GetMEData();
 
     return 0;
 }
@@ -375,11 +375,11 @@ void SequenceCompressor::MakeSequenceReport()
 
 }
 
-void SequenceCompressor::Denoise( Frame& frame )
+void SequenceCompressor::Denoise( Picture& picture )
 {
-    DenoiseComponent( frame.Ydata() );
-    DenoiseComponent( frame.Udata() );
-    DenoiseComponent( frame.Vdata() );
+    DenoiseComponent( picture.Ydata() );
+    DenoiseComponent( picture.Udata() );
+    DenoiseComponent( picture.Vdata() );
 
 }
 
@@ -469,7 +469,7 @@ FrameSequenceCompressor::FrameSequenceCompressor(
 
 bool FrameSequenceCompressor::LoadNextFrame()
 {
-    m_pic_in->ReadNextFrame( *m_fbuffer, m_last_frame_read+1 );
+    m_pic_in->ReadNextFrame( *m_fbuffer, m_last_picture_read+1 );
 
     if ( m_pic_in->End() )
     {
@@ -478,10 +478,10 @@ bool FrameSequenceCompressor::LoadNextFrame()
     }
 
     if ( m_encparams.Denoise() )
-        Denoise(m_fbuffer->GetFrame( m_last_frame_read+1 ) );
+        Denoise(m_fbuffer->GetPicture( m_last_picture_read+1 ) );
 
-    m_last_frame_read++;
-    m_mebuffer->PushFrame( m_fbuffer->GetFrame( m_last_frame_read ) );
+    m_last_picture_read++;
+    m_mebuffer->PushPicture( m_fbuffer->GetPicture( m_last_picture_read ) );
     return true;
 }
 
@@ -491,67 +491,67 @@ int FrameSequenceCompressor::CodedToDisplay( const int pnum )
 
     if (m_encparams.L1Sep()>0)
     {
-        // We have L1 and L2 frames
+        // We have L1 and L2 pictures
         if (pnum==0)
             return 0;
         else if ((pnum-1)% m_encparams.L1Sep()==0)
-        {//we have L1 or subsequent I frames
+        {//we have L1 or subsequent I pictures
             div=(pnum-1)/m_encparams.L1Sep();
             return pnum+m_encparams.L1Sep()-1;
         }
-        else//we have L2 frames
+        else//we have L2 pictures
             return pnum-1;
     }
     else
-    {//we just have I-frames, so no re-ordering
+    {//we just have I-pictures, so no re-ordering
         return pnum;
     }
 }
 
 bool FrameSequenceCompressor::IsNewAccessUnit()
 {
-    return (m_current_display_fnum % m_encparams.GOPLength()==0);
+    return (m_current_display_pnum % m_encparams.GOPLength()==0);
 }
 
-void FrameSequenceCompressor::RateControlCompress(Frame& my_frame, bool is_a_cut)
+void FrameSequenceCompressor::RateControlCompress(Picture& my_frame, bool is_a_cut)
 {
     if (m_encparams.TargetRate() == 0)
         return;
 
-    FrameByteIO *p_frame_byteio;
+    PictureByteIO *p_picture_byteio;
 
-    p_frame_byteio =  m_fcoder.Compress(*m_fbuffer,
-                                            m_current_display_fnum);
+    p_picture_byteio =  m_pcoder.Compress(*m_fbuffer,
+                                            m_current_display_pnum);
 
-    FrameParams& fparams = my_frame.GetFparams();
-    const FrameSort& fsort = fparams.FSort();
+    PictureParams& fparams = my_frame.GetPparams();
+    const PictureSort& fsort = fparams.PicSort();
 
 
     // Coding using Rate Control Algorithm
 
     if ( fsort.IsIntra() &&
-         m_current_display_fnum != 0 &&
+         m_current_display_pnum != 0 &&
          m_encparams.NumL1() != 0)
     {
-        // Calculate the new QF for encoding the following I frames in the sequence
+        // Calculate the new QF for encoding the following I pictures in the sequence
         // in normal coding
 
         if ( is_a_cut )
         {
             // Recompute the QF based on long-term history since recent history is bunk
-            m_ratecontrol->SetCutFrameQualFactor();
+            m_ratecontrol->SetCutPictureQualFactor();
         }
         else
             m_ratecontrol->CalcNextIntraQualFactor();
     }
 
 
-    // add the frame to the byte stream
-    m_dirac_byte_stream.AddFrame(p_frame_byteio);
+    // add the picture to the byte stream
+    m_dirac_byte_stream.AddPicture(p_picture_byteio);
 
 
     // Update the quality factor
-    m_ratecontrol->CalcNextQualFactor(fparams, p_frame_byteio->GetSize()*8);
+    m_ratecontrol->CalcNextQualFactor(fparams, p_picture_byteio->GetSize()*8);
 
 }
 
@@ -564,14 +564,14 @@ FieldSequenceCompressor::FieldSequenceCompressor(
 {
     if ( m_encparams.LocalDecode() )
     {
-        m_origbuffer = new FrameBuffer(*m_mebuffer);
+        m_origbuffer = new PictureBuffer(*m_mebuffer);
     }
     m_delay = 2;
 }
 
 bool FieldSequenceCompressor::LoadNextFrame()
 {
-    m_pic_in->ReadNextFrame( *m_fbuffer, m_last_frame_read+1 );
+    m_pic_in->ReadNextFrame( *m_fbuffer, m_last_picture_read+1 );
 
     if ( m_pic_in->End() )
     {
@@ -579,33 +579,33 @@ bool FieldSequenceCompressor::LoadNextFrame()
         return false;
     }
 
-    ++m_last_frame_read;
+    ++m_last_picture_read;
     if ( m_encparams.Denoise() )
     {
-        Denoise(m_fbuffer->GetFrame( m_last_frame_read ) );
-        Denoise(m_fbuffer->GetFrame( m_last_frame_read+1 ) );
+        Denoise(m_fbuffer->GetPicture( m_last_picture_read ) );
+        Denoise(m_fbuffer->GetPicture( m_last_picture_read+1 ) );
     }
-    m_mebuffer->PushFrame( m_fbuffer->GetFrame( m_last_frame_read ) );
+    m_mebuffer->PushPicture( m_fbuffer->GetPicture( m_last_picture_read ) );
 
-    Frame &field1 = m_mebuffer->GetFrame( m_last_frame_read );
+    Picture &field1 = m_mebuffer->GetPicture( m_last_picture_read );
     PreMotionEstmationFilter(field1.Ydata());
     PreMotionEstmationFilter(field1.Udata());
     PreMotionEstmationFilter(field1.Vdata());
 
     if ( m_encparams.LocalDecode() )
-        m_origbuffer->PushFrame( m_fbuffer->GetFrame( m_last_frame_read ) );
+        m_origbuffer->PushPicture( m_fbuffer->GetPicture( m_last_picture_read ) );
 
-    m_mebuffer->PushFrame( m_fbuffer->GetFrame( m_last_frame_read + 1 ) );
+    m_mebuffer->PushPicture( m_fbuffer->GetPicture( m_last_picture_read + 1 ) );
 
-    Frame &field2 = m_mebuffer->GetFrame( m_last_frame_read + 1 );
+    Picture &field2 = m_mebuffer->GetPicture( m_last_picture_read + 1 );
     PreMotionEstmationFilter(field2.Ydata());
     PreMotionEstmationFilter(field2.Udata());
     PreMotionEstmationFilter(field2.Vdata());
 
     if ( m_encparams.LocalDecode() )
-        m_origbuffer->PushFrame( m_fbuffer->GetFrame( m_last_frame_read + 1 ) );
+        m_origbuffer->PushPicture( m_fbuffer->GetPicture( m_last_picture_read + 1 ) );
 
-    ++m_last_frame_read;
+    ++m_last_picture_read;
     return true;
 }
 
@@ -633,22 +633,22 @@ void FieldSequenceCompressor::PreMotionEstmationFilter(PicArray& comp)
     }
 }
 
-const Frame& FieldSequenceCompressor::OriginalFrame(int frame_num)
+const Picture& FieldSequenceCompressor::OriginalPicture(int picture_num)
 {
     if ( m_encparams.LocalDecode() )
-        return m_origbuffer->GetFrame(frame_num);
+        return m_origbuffer->GetPicture(picture_num);
     else
-        return m_mebuffer->GetFrame(frame_num);
+        return m_mebuffer->GetPicture(picture_num);
 }
 
 void FieldSequenceCompressor::CleanBuffers()
 {
     // If we're not at the beginning, clean the buffer
-    if ( m_current_code_fnum != 0 )
+    if ( m_current_code_pnum != 0 )
     {
         SequenceCompressor::CleanBuffers();
         if (m_encparams.LocalDecode())
-            m_origbuffer->CleanAll( m_show_fnum, m_current_display_fnum );
+            m_origbuffer->CleanAll( m_show_pnum, m_current_display_pnum );
     }
 }
 
@@ -660,7 +660,7 @@ FieldSequenceCompressor::~FieldSequenceCompressor()
 
 int FieldSequenceCompressor::CodedToDisplay( const int pnum )
 {
-    // Frame the field pnum belongs to
+     // Frame the field pnum belongs to
     int fnum = pnum>>1;
     if (m_encparams.L1Sep()>0)
     {
@@ -682,53 +682,53 @@ int FieldSequenceCompressor::CodedToDisplay( const int pnum )
 
 bool FieldSequenceCompressor::IsNewAccessUnit( )
 {
-    return ((m_current_display_fnum) % (m_encparams.GOPLength()<<1)==0);
+    return ((m_current_display_pnum) % (m_encparams.GOPLength()<<1)==0);
 }
 
-void FieldSequenceCompressor::RateControlCompress(Frame& my_frame, bool is_a_cut)
+void FieldSequenceCompressor::RateControlCompress(Picture& my_picture, bool is_a_cut)
 {
     if (m_encparams.TargetRate() == 0)
         return;
 
 
-    FrameByteIO *p_frame_byteio;
+    PictureByteIO *p_picture_byteio;
 
-    p_frame_byteio =  m_fcoder.Compress(*m_fbuffer,
-                                            m_current_display_fnum);
+    p_picture_byteio =  m_pcoder.Compress(*m_fbuffer,
+                                            m_current_display_pnum);
 
 
-    FrameParams& fparams = my_frame.GetFparams();
-    const FrameSort& fsort = fparams.FSort();
+    PictureParams& fparams = my_picture.GetPparams();
+    const PictureSort& fsort = fparams.PicSort();
 
     // Coding using Rate Control Algorithm
     if ( fsort.IsIntra() &&
-         m_current_display_fnum > 1 &&
+         m_current_display_pnum > 1 &&
          m_encparams.NumL1() != 0)
     {
-        // Calculate the new QF for encoding the following I frames in the sequence
+        // Calculate the new QF for encoding the following I pictures in the sequence
         // in normal coding
 
         if ( is_a_cut )
         {
             // Recompute the QF based on long-term history since recent history is bunk
-            m_ratecontrol->SetCutFrameQualFactor();
+            m_ratecontrol->SetCutPictureQualFactor();
         }
-        else if (m_current_display_fnum%2 == 0)
+        else if (m_current_display_pnum%2 == 0)
                 m_ratecontrol->CalcNextIntraQualFactor();
     }
 
 
-    if (m_current_display_fnum%2 == 0)
-        m_field1_bytes = p_frame_byteio->GetSize();
+    if (m_current_display_pnum%2 == 0)
+        m_field1_bytes = p_picture_byteio->GetSize();
     else
-        m_field2_bytes = p_frame_byteio->GetSize();
+        m_field2_bytes = p_picture_byteio->GetSize();
 
     // Update the quality factor
-    if (fparams.FrameNum()%2)
+    if (fparams.PictureNum()%2)
         m_ratecontrol->CalcNextQualFactor(fparams, (m_field1_bytes+m_field2_bytes)*8);
 
 
-    // add the frame to the byte stream
-    m_dirac_byte_stream.AddFrame(p_frame_byteio);
+    // add the picture to the byte stream
+    m_dirac_byte_stream.AddPicture(p_picture_byteio);
 }
 

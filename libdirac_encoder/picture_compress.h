@@ -39,60 +39,60 @@
 * ***** END LICENSE BLOCK ***** */
 
 
-#ifndef _FRAME_COMPRESS_H_
-#define _FRAME_COMPRESS_H_
+#ifndef _PICTURE_COMPRESS_H_
+#define _PICTURE_COMPRESS_H_
 
-#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/picture_buffer.h>
 #include <libdirac_common/common.h>
 #include <libdirac_common/motion.h>
-#include <libdirac_byteio/frame_byteio.h>
+#include <libdirac_byteio/picture_byteio.h>
 
 namespace dirac
 {
 
     class MvData;
 
-    //! Compress a single image frame
+    //! Compress a single image picture
     /*!
-        This class compresses a single frame at a time, using parameters
-        supplied at its construction. FrameCompressor is used by
+        This class compresses a single picture at a time, using parameters
+        supplied at its construction. PictureCompressor is used by
         SequenceCompressor.
     */
-    class FrameCompressor
+    class PictureCompressor
     {
     public:
         //! Constructor
         /*!
             Creates a FrameEncoder with specific set of parameters the control
             the compression process. It encodes motion data before encoding
-            each component of the frame. 
+            each component of the picture. 
             \param encp encoder parameters
         */
-        FrameCompressor( EncoderParams& encp ); 
+        PictureCompressor( EncoderParams& encp ); 
 
         //! Destructor
-        ~FrameCompressor( );
+        ~PictureCompressor( );
 
-        //! Performs motion estimation for a frame and writes the data locally
-        /*! Performs motion estimation for a frame and writes the data locally
+        //! Performs motion estimation for a picture and writes the data locally
+        /*! Performs motion estimation for a picture and writes the data locally
             \param my_fbuffer picture buffer of uncoded originals
-            \param fnum    frame number to compress
+            \param fnum    picture number to compress
             \return true   if a cut is detected.
         */                        
-        bool MotionEstimate( const FrameBuffer& my_fbuffer, 
+        bool MotionEstimate( const PictureBuffer& my_fbuffer, 
                                         int fnum); 
 
-        //! Compress a specific frame within a group of pictures (GOP)
+        //! Compress a specific picture within a group of pictures (GOP)
         /*!
-            Compresses a specified frame within a group of pictures. 
+            Compresses a specified picture within a group of pictures. 
             \param my_fbuffer  picture buffer in which the reference frames resides
-            \param fnum        frame number to compress
-            \return Compressed frame in Dirac bytestream format
+            \param fnum        picture number to compress
+            \return Compressed picture in Dirac bytestream format
         */
-        FrameByteIO* Compress(  FrameBuffer& my_fbuffer , 
+        PictureByteIO* Compress(  PictureBuffer& my_fbuffer , 
                                 int fnum );
 
-        //! Returns true if the frame has been skipped rather than coded normally
+        //! Returns true if the picture has been skipped rather than coded normally
         bool IsSkipped(){ return m_skipped; }
 
         //! Returns true if Motion estimation data is available
@@ -107,14 +107,14 @@ namespace dirac
             Copy constructor is private and body-less. This class should not
             be copied.
         */
-        FrameCompressor( const FrameCompressor& cpy );
+        PictureCompressor( const PictureCompressor& cpy );
 
         //! Assignment = is private and body-less
         /*!
             Assignment = is private and body-less. This class should not be
             assigned.
         */
-        FrameCompressor& operator=(const FrameCompressor& rhs);
+        PictureCompressor& operator=(const PictureCompressor& rhs);
 
         //! Analyses the ME data and returns true if a cut is detected, false otherwise
         void AnalyseMEData( const MEData& );
@@ -122,8 +122,8 @@ namespace dirac
         //! Compresses the motion vector data
         void CompressMVData(MvDataByteIO* mv_data);
         
-        //! Returns the value lambda according to frame and component type
-        float GetCompLambda( const FrameParams& fparams,
+        //! Returns the value lambda according to picture and component type
+        float GetCompLambda( const PictureParams& fparams,
                              const CompSort csort );
 
         void SelectQuantisers( CoeffArray& coeff_data , 
@@ -131,14 +131,14 @@ namespace dirac
                                const float lambda,
                                OneDArray<unsigned int>& est_counts,
                                const CodeBlockMode cb_mode,
-                               const FrameSort fsort,
+                               const PictureSort fsort,
                                const CompSort csort );
 
         int SelectMultiQuants( CoeffArray& coeff_data , 
                                SubbandList& bands , 
                                const int band_num,
                                const float lambda,
-                               const FrameSort fsort, 
+                               const PictureSort fsort, 
                                const CompSort csort );
 
         void SetupCodeBlocks( SubbandList& bands );
@@ -155,7 +155,7 @@ namespace dirac
         // Pointer to the motion vector data
         MEData* m_me_data;
 
-        // True if the frame has been skipped, false otherwise
+        // True if the picture has been skipped, false otherwise
         bool m_skipped;                
 
         // True if we use global motion vectors, false otherwise

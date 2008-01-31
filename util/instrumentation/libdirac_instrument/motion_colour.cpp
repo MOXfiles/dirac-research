@@ -39,10 +39,10 @@
 using namespace dirac_instr;
 
 // constructor
-DrawMotionColour::DrawMotionColour(Frame & frame, DrawFrameMotionParams & draw_params, const MvArray & mv,
+DrawMotionColour::DrawMotionColour(Picture & picture, DrawPictureMotionParams & draw_params, const MvArray & mv,
                                    int mv_scale, int mv_clip)
 :
-    DrawOverlay(frame, draw_params),
+    DrawOverlay(picture, draw_params),
     m_mv_scale(mv_scale),
     m_mv_clip(mv_clip),
     m_mv(mv)
@@ -69,11 +69,11 @@ void DrawMotionColour::DrawLegend()
         // white background
         for (int xpx=1; xpx<40; ++xpx)
         {
-            m_frame.Ydata()[ypx][xpx]=0;
+            m_picture.Ydata()[ypx][xpx]=0;
         }
 
         // crosshair vertical line
-        m_frame.Ydata()[ypx][21]=88-128;
+        m_picture.Ydata()[ypx][21]=88-128;
     }
 
     // colour in the rectangle
@@ -83,29 +83,29 @@ void DrawMotionColour::DrawLegend()
     {
         for (int xpx=40/m_draw_params.ChromaFactorX(), x=20; xpx>=0; --xpx, x-=m_draw_params.ChromaFactorX())
         {
-            m_frame.Udata()[ypx][xpx]=(x*25)-128;
-            m_frame.Vdata()[ypx][xpx]=(y*25)-128;
+            m_picture.Udata()[ypx][xpx]=(x*25)-128;
+            m_picture.Vdata()[ypx][xpx]=(y*25)-128;
         }
     }
 
     // crosshair horizontal linem_
     for (int xpx=0; xpx<40; ++xpx)
     {
-        m_frame.Ydata()[y_start+16][xpx]=88-128;
+        m_picture.Ydata()[y_start+16][xpx]=88-128;
     }
 
     // vertical black line
     for (int ypx=y_start+1; ypx<=y_start+30; ++ypx)
     {
-        m_frame.Ydata()[ypx][41]=-128;
-        m_frame.Ydata()[ypx][0]=-128;
+        m_picture.Ydata()[ypx][41]=-128;
+        m_picture.Ydata()[ypx][0]=-128;
     }
 
     // horizontal black line
     for (int xpx=0; xpx<=41; ++xpx)
     {
-        m_frame.Ydata()[y_start][xpx]=0;
-        m_frame.Ydata()[m_frame.Ydata().LastY()][xpx]=0;
+        m_picture.Ydata()[y_start][xpx]=0;
+        m_picture.Ydata()[m_picture.Ydata().LastY()][xpx]=0;
     }
 
     // display the clip value

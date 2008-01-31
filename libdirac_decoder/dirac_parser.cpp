@@ -41,7 +41,7 @@
 #include <libdirac_decoder/dirac_cppparser.h>
 #include <libdirac_decoder/dirac_parser.h>
 #include <libdirac_common/dirac_exception.h>
-#include <libdirac_common/frame.h>
+#include <libdirac_common/picture.h>
 #if defined (HAVE_MMX)
 #include <mmintrin.h>
 
@@ -260,7 +260,7 @@ static void set_field_component (const PicArray& pic_data,  const CompSort cs, d
     // Seek offset between writing fields to store
     int skip = 0;
 
-    int field_num = decoder->frame_params.fnum;
+    int field_num = decoder->picture_params.pnum;
 
     bool top_field = decoder->src_params.topfieldfirst ? (!(field_num%2)) :
                     (field_num%2);
@@ -298,34 +298,34 @@ static void set_frame_data (const  DiracParser * const parser, dirac_decoder_t *
     TEST (decoder->fbuf != NULL);
     TEST (decoder->state == STATE_PICTURE_AVAIL);
 
-    const Frame& my_frame = parser->GetNextFrame();
+    const Picture& my_picture = parser->GetNextPicture();
 
     if (!parser->GetDecoderParams().FieldCoding())
     {
-        set_frame_component (my_frame.Ydata(), Y_COMP, decoder);
-        set_frame_component (my_frame.Udata(), U_COMP, decoder);
-        set_frame_component (my_frame.Vdata(), V_COMP, decoder);
+        set_frame_component (my_picture.Ydata(), Y_COMP, decoder);
+        set_frame_component (my_picture.Udata(), U_COMP, decoder);
+        set_frame_component (my_picture.Vdata(), V_COMP, decoder);
     }
     else
     {
-        set_field_component (my_frame.Ydata(), Y_COMP, decoder);
-        set_field_component (my_frame.Udata(), U_COMP, decoder);
-        set_field_component (my_frame.Vdata(), V_COMP, decoder);
+        set_field_component (my_picture.Ydata(), Y_COMP, decoder);
+        set_field_component (my_picture.Udata(), U_COMP, decoder);
+        set_field_component (my_picture.Vdata(), V_COMP, decoder);
     }
     return;
 }
 
-static void set_frame_params (const FrameParams& my_frame_params,  dirac_decoder_t *decoder)
+static void set_picture_params (const PictureParams& my_picture_params,  dirac_decoder_t *decoder)
 {
     TEST (decoder != NULL);
-    dirac_frameparams_t *frame_params = &decoder->frame_params;
+    dirac_picparams_t *picture_params = &decoder->picture_params;
 
     TEST (decoder->state == STATE_PICTURE_AVAIL ||
           decoder->state == STATE_PICTURE_START);
 
-    frame_params->ftype = my_frame_params.FSort().IsIntra() ? INTRA_FRAME : INTER_FRAME;
-    frame_params->rtype = my_frame_params.FSort().IsRef() ? REFERENCE_FRAME : NON_REFERENCE_FRAME;
-    frame_params->fnum = my_frame_params.FrameNum();
+    picture_params->ptype = my_picture_params.PicSort().IsIntra() ? INTRA_PICTURE : INTER_PICTURE;
+    picture_params->rtype = my_picture_params.PicSort().IsRef() ? REFERENCE_PICTURE : NON_REFERENCE_PICTURE;
+    picture_params->pnum = my_picture_params.PictureNum();
 
     return;
 }
@@ -355,18 +355,22 @@ extern DllExport dirac_decoder_state_t dirac_parse (dirac_decoder_t *decoder)
                 break;
 
             case STATE_PICTURE_START:
-                /* frame params of the frame being decoded in coding order */
-                set_frame_params (parser->GetNextFrameParams(), decoder);
+                /* picture params of the picture being decoded in coding order */
+                set_picture_params (parser->GetNextPictureParams(), decoder);
                 decoder->frame_avail = 0;
                 return decoder->state;
                 break;
 
             case STATE_PICTURE_AVAIL:
-                /* frame params of the frame available for display */
-                set_frame_params (parser->GetNextFrame().GetFparams(), decoder);
+                /* picture params of the picture available for display */
+                set_picture_params (parser->GetNextPicture().GetPparams(), decoder);
                 set_frame_data (parser, decoder);
+
+                /* A full frame is only available if we're doing progressive coding or
+                   have decoded the second field. Will only return when a full frame
+                   is available */
                 if (!parser->GetDecoderParams().FieldCoding() ||
-                    decoder->frame_params.fnum%2)
+                    decoder->picture_params.pnum%2)
                 {
                     decoder->frame_avail = 1;
                     return decoder->state;

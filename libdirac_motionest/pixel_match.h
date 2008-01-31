@@ -57,7 +57,7 @@
 #include <libdirac_motionest/block_match.h>
 namespace dirac
 {
-    class FrameBuffer;
+    class PictureBuffer;
     class MvData;
     class EncoderParams;
     class PicArray;
@@ -74,11 +74,11 @@ namespace dirac
         /* Do the searching.
 
         \param  my_buffer  the buffer of pictures from which frames are taken
-        \param  frame_num  the number of the frame for which motion is to be estimated
+        \param  frame_num  the number of the picture for which motion is to be estimated
         \param  mv_data    class in which the measured motion vectors are stored, together with costs
         
         */
-        void DoSearch(const FrameBuffer& my_buffer, 
+        void DoSearch(const PictureBuffer& my_buffer, 
                       int frame_num, 
                       MEData& me_data);
 
@@ -104,8 +104,8 @@ namespace dirac
         // the temporal distances to the reference frames
         int m_tdiff[2];
 
-        // the frame sort - I, L1 or L2
-        FrameSort m_fsort;
+        // the picture sort - I, L1 or L2
+        PictureSort m_fsort;
 
         // list of candidate vectors for checking
         CandidateList m_cand_list;

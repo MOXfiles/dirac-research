@@ -47,7 +47,7 @@
 //LOCAL INCLUDES
 #include "byteio.h"             // Parent class
 #include "accessunit_byteio.h"  // manages parse-unit types
-#include "frame_byteio.h"       // manages parse-unit types
+#include "picture_byteio.h"       // manages parse-unit types
 
 namespace dirac
 {
@@ -102,10 +102,10 @@ namespace dirac
         void AddAccessUnit(AccessUnitByteIO *p_accessunit_byteio);
 
         /**
-        * Adds a frame to the current Dirac byte stream
-        *@param p_frame_byteio Frame stream. This class is now responsible for deleting.
+        * Adds a picture to the current Dirac byte stream
+        *@param p_frame_byteio Picture stream. This class is now responsible for deleting.
         */
-        void AddFrame(FrameByteIO *p_frame_byteio);
+        void AddPicture(PictureByteIO *p_frame_byteio);
 
         /**
         * Clear parse-units

@@ -39,10 +39,10 @@
 using namespace dirac_instr;
 
 // constructor
-DrawMotionColourArrows::DrawMotionColourArrows(Frame & frame, DrawFrameMotionParams & draw_params,
+DrawMotionColourArrows::DrawMotionColourArrows(Picture & picture, DrawPictureMotionParams & draw_params,
                                                const MvArray & mv, int mv_scale, int mv_clip)
 :
-    DrawMotionArrows(frame, draw_params, mv, mv_scale),
+    DrawMotionArrows(picture, draw_params, mv, mv_scale),
     m_mv_clip(mv_clip)
 {}
 
@@ -83,8 +83,8 @@ void DrawMotionColourArrows::DrawBlock(int j, int i)
 
     // draw arrow if this block is TL corner of arrow
     if ( (j == 0 || (j % m_blocks_per_arrow_y) == 0) && ((i == 0 || (i % m_blocks_per_arrow_x) == 0 )) &&
-        (j*m_draw_params.MvYBlockY()+offset_y+15 <= m_frame.Ydata().LengthY()) &&
-        (i*m_draw_params.MvYBlockX()+offset_x+15 <= m_frame.Ydata().LengthX()) )
+        (j*m_draw_params.MvYBlockY()+offset_y+15 <= m_picture.Ydata().LengthY()) &&
+        (i*m_draw_params.MvYBlockX()+offset_x+15 <= m_picture.Ydata().LengthX()) )
     {
         DrawArrow(j, i, (j*m_draw_params.MvYBlockY())+offset_y, (i*m_draw_params.MvYBlockX())+offset_x);
 

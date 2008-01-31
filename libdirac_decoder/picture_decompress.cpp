@@ -40,15 +40,15 @@
 * ***** END LICENSE BLOCK ***** */
 
 
-//Decompression of frames
+//Decompression of pictures
 /////////////////////////
 
 #include <libdirac_common/dirac_assertions.h>
-#include <libdirac_decoder/frame_decompress.h>
+#include <libdirac_decoder/picture_decompress.h>
 #include <libdirac_decoder/comp_decompress.h>
 #include <libdirac_common/mot_comp.h>
 #include <libdirac_common/mv_codec.h>
-#include <libdirac_byteio/frame_byteio.h>
+#include <libdirac_byteio/picture_byteio.h>
 #include <libdirac_common/dirac_exception.h>
 using namespace dirac;
 
@@ -58,59 +58,59 @@ using namespace dirac;
 using std::vector;
 using std::auto_ptr;
 
-FrameDecompressor::FrameDecompressor(DecoderParams& decp, ChromaFormat cf)
+PictureDecompressor::PictureDecompressor(DecoderParams& decp, ChromaFormat cf)
 : 
 m_decparams(decp),
 m_cformat(cf)
 {
 }
 
-FrameDecompressor::~FrameDecompressor()
+PictureDecompressor::~PictureDecompressor()
 {
 }
 
 
-bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
-                                   FrameBuffer& my_buffer)
+bool PictureDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
+                                   PictureBuffer& my_buffer)
 {
     // get current byte position
     //int start_pos = parseunit_byteio.GetReadBytePosition();
     try {
 
-    // read frame data
-    FrameByteIO frame_byteio(m_fparams,
+    // read picture data
+    PictureByteIO picture_byteio(m_fparams,
                              parseunit_byteio);
 
-    frame_byteio.Input();
+    picture_byteio.Input();
     
-    FrameSort fs;
+    PictureSort fs;
     
-    if (m_fparams.GetFrameType() == INTRA_FRAME)
+    if (m_fparams.GetPictureType() == INTRA_PICTURE)
         fs.SetIntra();
     else
         fs.SetInter();
     
-    if (m_fparams.GetReferenceType() == REFERENCE_FRAME)
+    if (m_fparams.GetReferenceType() == REFERENCE_PICTURE)
         fs.SetRef();
     else
         fs.SetNonRef();
 
-    m_fparams.SetFSort(fs);
+    m_fparams.SetPicSort(fs);
 
-    if (m_fparams.GetReferenceType() == REFERENCE_FRAME)
+    if (m_fparams.GetReferenceType() == REFERENCE_PICTURE)
     {
-        // Now clean the reference frames from the buffer
-        CleanReferenceFrames( my_buffer );
+        // Now clean the reference pictures from the buffer
+        CleanReferencePictures( my_buffer );
     }
         
-    // Check if the frame can be decoded
-    if (m_fparams.FSort().IsInter())
+    // Check if the picture can be decoded
+    if (m_fparams.PicSort().IsInter())
     {
         const std::vector<int>& refs = m_fparams.Refs();
 
         for (unsigned int i = 0; i < refs.size(); ++i)
         {
-            if ( !my_buffer.IsFrameAvail(refs[i]) )
+            if ( !my_buffer.IsPictureAvail(refs[i]) )
             {
                 return false;
             }
@@ -119,12 +119,12 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
 
     m_skipped=false;
     if ( !m_skipped )
-    {//if we're not m_skipped then we can decode the rest of the frame
+    {//if we're not m_skipped then we can decode the rest of the picture
 
        if ( m_decparams.Verbose() )
        {
-             std::cout<<std::endl<<"Decoding frame "<<m_fparams.FrameNum()<<" in display order";        
-             if ( m_fparams.FSort().IsInter() )
+             std::cout<<std::endl<<"Decoding picture "<<m_fparams.PictureNum()<<" in display order";        
+             if ( m_fparams.PicSort().IsInter() )
              {
                  std::cout<<std::endl<<"References: "<<m_fparams.Refs()[0];
                  if ( m_fparams.Refs().size()>1 )
@@ -132,58 +132,58 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
              }
        }   
 
-       FrameSort fsort = m_fparams.FSort();
+       PictureSort fsort = m_fparams.PicSort();
        auto_ptr<MvData> mv_data;
 
        if ( fsort.IsInter() )
        {    //do all the MV stuff 
-            DecompressMVData( mv_data, frame_byteio );                
+            DecompressMVData( mv_data, picture_byteio );                
        }
            
         // Read the  transform header
-        TransformByteIO transform_byteio(frame_byteio, m_fparams, m_decparams);
+        TransformByteIO transform_byteio(picture_byteio, m_fparams, m_decparams);
         transform_byteio.Input();
         
-        if (m_fparams.FSort().IsIntra() && m_decparams.ZeroTransform())
+        if (m_fparams.PicSort().IsIntra() && m_decparams.ZeroTransform())
         {
             DIRAC_THROW_EXCEPTION(
                 ERR_UNSUPPORTED_STREAM_DATA,
-                "Intra frames cannot have Zero-Residual",
-                SEVERITY_FRAME_ERROR);
+                "Intra pictures cannot have Zero-Residual",
+                SEVERITY_PICTURE_ERROR);
         }
             
-        // Set frame dimensions based on the transform depth. If zero residual
+        // Set picture dimensions based on the transform depth. If zero residual
         // then use the actual picture dimensions
-        PushFrame(my_buffer);
+        PushPicture(my_buffer);
 
-        //Reference to the frame being decoded
-        Frame& my_frame = my_buffer.GetFrame(m_fparams.FrameNum());
+        //Reference to the picture being decoded
+        Picture& my_picture = my_buffer.GetPicture(m_fparams.PictureNum());
 
         if (!m_decparams.ZeroTransform())
         {
             //decode components
-            CompDecompress( &transform_byteio, my_buffer,m_fparams.FrameNum() , Y_COMP );
-            CompDecompress( &transform_byteio, my_buffer , m_fparams.FrameNum() , U_COMP );        
-            CompDecompress( &transform_byteio, my_buffer , m_fparams.FrameNum() , V_COMP );
+            CompDecompress( &transform_byteio, my_buffer,m_fparams.PictureNum() , Y_COMP );
+            CompDecompress( &transform_byteio, my_buffer , m_fparams.PictureNum() , U_COMP );        
+            CompDecompress( &transform_byteio, my_buffer , m_fparams.PictureNum() , V_COMP );
         }
         else
         {
-            my_frame.Fill(0);
+            my_picture.Fill(0);
         }
 
         if ( fsort.IsInter() )
-        //motion compensate to add the data back in if we don't have an I frame
-            MotionCompensator::CompensateFrame( m_decparams , ADD , 
-                                                my_buffer , m_fparams.FrameNum() ,
+        //motion compensate to add the data back in if we don't have an I picture
+            MotionCompensator::CompensatePicture( m_decparams , ADD , 
+                                                my_buffer , m_fparams.PictureNum() ,
                                                 *(mv_data.get()) );
-        my_frame.Clip();
+        my_picture.Clip();
 
         if (m_decparams.Verbose())
             std::cout<<std::endl;        
 
         }//?m_skipped,!End()
         else if (m_skipped){
-         //TBD: decide what to return if we're m_skipped. Nearest frame in temporal order??    
+         //TBD: decide what to return if we're m_skipped. Nearest picture in temporal order??    
 
         }
 
@@ -191,7 +191,7 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
         return true;
     }// try
     catch (const DiracException& e) {
-        // skip frame
+        // skip picture
         throw e;
     }
 
@@ -199,35 +199,35 @@ bool FrameDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
     return false;
 }
 
-void FrameDecompressor::CleanReferenceFrames( FrameBuffer& my_buffer )
+void PictureDecompressor::CleanReferencePictures( PictureBuffer& my_buffer )
 {
     if ( m_decparams.Verbose() )
         std::cout<<std::endl<<"Cleaning reference buffer: ";
-    // Do frame buffer cleaning
-    int retd_fnum = m_fparams.RetiredFrameNum();
+    // Do picture buffer cleaning
+    int retd_pnum = m_fparams.RetiredPictureNum();
 
-    if ( retd_fnum >= 0 && my_buffer.IsFrameAvail(retd_fnum) && my_buffer.GetFrame(retd_fnum).GetFparams().FSort().IsRef() )
+    if ( retd_pnum >= 0 && my_buffer.IsPictureAvail(retd_pnum) && my_buffer.GetPicture(retd_pnum).GetPparams().PicSort().IsRef() )
     {
-        my_buffer.Clean(retd_fnum);
+        my_buffer.Clean(retd_pnum);
         if ( m_decparams.Verbose() )
-            std::cout<<retd_fnum<<" ";    
+            std::cout<<retd_pnum<<" ";    
     }
 }
 
-void FrameDecompressor::CompDecompress(TransformByteIO *p_transform_byteio,
-                                       FrameBuffer& my_buffer, int fnum,CompSort cs)
+void PictureDecompressor::CompDecompress(TransformByteIO *p_transform_byteio,
+                                       PictureBuffer& my_buffer, int pnum,CompSort cs)
 {
     if ( m_decparams.Verbose() )
         std::cout<<std::endl<<"Decoding component data ...";
     
     ComponentByteIO component_byteio(cs, *p_transform_byteio);
-    CompDecompressor my_compdecoder( m_decparams , my_buffer.GetFrame(fnum).GetFparams() );    
-    PicArray& comp_data=my_buffer.GetComponent( fnum , cs );
+    CompDecompressor my_compdecoder( m_decparams , my_buffer.GetPicture(pnum).GetPparams() );    
+    PicArray& comp_data=my_buffer.GetComponent( pnum , cs );
     my_compdecoder.Decompress(&component_byteio, 
                               comp_data );
 }
 
-void FrameDecompressor::SetMVBlocks()
+void PictureDecompressor::SetMVBlocks()
 {
     OLBParams olb_params = m_decparams.LumaBParams(2);
     m_decparams.SetBlockSizes(olb_params, m_cformat);
@@ -256,7 +256,7 @@ void FrameDecompressor::SetMVBlocks()
     // consideration while doing Motion Compensation
 }
 
-void FrameDecompressor::PushFrame(FrameBuffer &my_buffer)
+void PictureDecompressor::PushPicture(PictureBuffer &my_buffer)
 {
     int xl_luma = m_decparams.OrigXl();
     int yl_luma = m_decparams.OrigYl();
@@ -288,7 +288,7 @@ void FrameDecompressor::PushFrame(FrameBuffer &my_buffer)
 
     if (!m_decparams.ZeroTransform())
     {
-        // Use the transform depth to pad the frame
+        // Use the transform depth to pad the picture
 
         //Amount of horizontal padding for Y,U and V components
         int xpad_luma,xpad_chroma;
@@ -298,7 +298,7 @@ void FrameDecompressor::PushFrame(FrameBuffer &my_buffer)
 
         xpad_chroma = ypad_chroma = 0;
     
-        // The frame dimensions must be a multiple of 2^(transform_depth)
+        // The picture dimensions must be a multiple of 2^(transform_depth)
         int tx_mul = 1<<m_decparams.TransformDepth();
 
         if ( xl_chroma%tx_mul != 0 )
@@ -311,7 +311,7 @@ void FrameDecompressor::PushFrame(FrameBuffer &my_buffer)
     
         xpad_luma = ypad_luma = 0;
     
-        // The frame dimensions must be a multiple of 2^(transform_depth)
+        // The picture dimensions must be a multiple of 2^(transform_depth)
         if ( xl_luma%tx_mul != 0 )
             xpad_luma=( ( xl_luma/tx_mul ) + 1 )*tx_mul - xl_luma;
         if ( yl_luma%tx_mul != 0)
@@ -322,7 +322,7 @@ void FrameDecompressor::PushFrame(FrameBuffer &my_buffer)
     }
     else
     {
-        // Use the original frame dimensions.
+        // Use the original picture dimensions.
     }
         
     m_fparams.SetCFormat(m_cformat);
@@ -339,15 +339,15 @@ void FrameDecompressor::PushFrame(FrameBuffer &my_buffer)
     m_fparams.SetLumaDepth(m_decparams.LumaDepth());
     m_fparams.SetChromaDepth(m_decparams.ChromaDepth());
 
-    my_buffer.PushFrame(m_fparams);
+    my_buffer.PushPicture(m_fparams);
 }
 
-void FrameDecompressor::DecompressMVData( std::auto_ptr<MvData>& mv_data, 
-                                          FrameByteIO& frame_byteio )
+void PictureDecompressor::DecompressMVData( std::auto_ptr<MvData>& mv_data, 
+                                          PictureByteIO& picture_byteio )
 {
-    MvDataByteIO mvdata_byteio (frame_byteio, m_fparams, m_decparams);
+    MvDataByteIO mvdata_byteio (picture_byteio, m_fparams, m_decparams);
 
-    // Read in the frame prediction parameters
+    // Read in the picture prediction parameters
     mvdata_byteio.Input();
 
     SetMVBlocks();

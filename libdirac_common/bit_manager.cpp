@@ -202,7 +202,7 @@ FrameOutputManager::~FrameOutputManager()
 void FrameOutputManager::WriteToFile()
 {
 
-    // Write out the frame header
+    // Write out the picture header
     m_frame_header->WriteToFile();
     m_total_bytes = m_frame_header->GetNumBytes();
     m_header_bytes = m_frame_header->GetNumBytes();
@@ -251,12 +251,12 @@ const UnitOutputManager& FrameOutputManager::BandOutput( const int csort , const
     return *( m_data_array[csort][band_num-1] );
 }
 
-// Frame stuff
+// Picture stuff
 
 
 void FrameOutputManager::Init( int num_bands )
 {
-    // Initialise output for the frame header
+    // Initialise output for the picture header
     m_frame_header = new BasicOutputManager( m_out_stream );
 
     // Initialise output for the MV data
@@ -285,7 +285,7 @@ void FrameOutputManager::DeleteAll()
     // Delete MV data op
     delete m_mv_data;
 
-    // Delete frame header op
+    // Delete picture header op
     delete m_frame_header;
 } 
 

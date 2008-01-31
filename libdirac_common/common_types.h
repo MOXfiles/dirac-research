@@ -73,16 +73,16 @@ typedef enum
 
 static const int NUM_WLT_FILTERS = 8;
 
-/*! Types of frame */
+/*! Types of picture */
 typedef enum {
-        INTRA_FRAME=0,
-        INTER_FRAME
-    } FrameType;
+        INTRA_PICTURE=0,
+        INTER_PICTURE
+    } PictureType;
 
 /*! Types of referencing */
 typedef enum {
-        REFERENCE_FRAME=0,
-        NON_REFERENCE_FRAME
+        REFERENCE_PICTURE=0,
+        NON_REFERENCE_PICTURE
 }   ReferenceType;
 
 /*! Types for video-format */
@@ -133,7 +133,7 @@ typedef enum {
     TF_UNDEF
 } TransferFunction;
 
-/*! Types of Frame-rate */
+/*! Types of Picture-rate */
 typedef enum {
     FRAMERATE_CUSTOM=0,
     FRAMERATE_23p97_FPS,

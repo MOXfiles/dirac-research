@@ -39,7 +39,7 @@
 #define _GM_INLIERS_H_
 
 #include <util/instrumentation/libdirac_instrument/draw_overlay.h>
-using dirac::Frame;
+using dirac::Picture;
 using dirac::TwoDArray;
 
 namespace dirac_instr
@@ -55,7 +55,7 @@ namespace dirac_instr
         /*
             Calls DrawOverlay constructor
         */
-        DrawGMInliers(Frame &, DrawFrameMotionParams &, const TwoDArray<int> &);
+        DrawGMInliers(Picture &, DrawPictureMotionParams &, const TwoDArray<int> &);
 
         //! Destructor
         ~DrawGMInliers();

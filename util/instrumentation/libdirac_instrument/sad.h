@@ -56,7 +56,7 @@ namespace dirac_instr
         /*
             Calls DrawOverlay constructor
         */
-        DrawSad(Frame &, DrawFrameMotionParams &, const TwoDArray<MvCostData> &, const TwoDArray<PredMode>&, int);
+        DrawSad(Picture &, DrawPictureMotionParams &, const TwoDArray<MvCostData> &, const TwoDArray<PredMode>&, int);
         //! Destructor
         ~DrawSad();
 

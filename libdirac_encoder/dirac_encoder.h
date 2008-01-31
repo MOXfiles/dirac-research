@@ -252,7 +252,7 @@ typedef struct
     int size;
 } dirac_enc_data_t;
 
-/*! Structure that holds the statistics about the encoded frame */
+/*! Structure that holds the statistics about the encoded picture */
 typedef struct
 {
     /*! Number of motion vector bits */
@@ -263,9 +263,9 @@ typedef struct
     unsigned int ucomp_bits;
     /*! Number of  used to encode v component */
     unsigned int vcomp_bits;
-    /*! Total number of bits used to encode frame */
-    unsigned int frame_bits;
-} dirac_enc_framestats_t;
+    /*! Total number of bits used to encode picture */
+    unsigned int pic_bits;
+} dirac_enc_picstats_t;
 
 /*! Structure that holds the statistics about the encoded sequence */
 typedef struct
@@ -306,14 +306,14 @@ typedef struct
 typedef struct
 {
     /*! Frame type */
-    dirac_frame_type_t ftype;
+    dirac_picture_type_t ptype;
     /*! Reference type */
     dirac_reference_type_t rtype;
-    /*! Frame number */
-    int fnum;
-    /*! Number of reference frames */
+    /*! Picture number */
+    int pnum;
+    /*! Number of reference pictures */
     int num_refs;
-    /*! Array of Reference frame numbers */
+    /*! Array of Reference picture numbers */
     int refs[2];
     /*! Block separation in X direction */
     int xbsep;
@@ -355,7 +355,7 @@ typedef struct
     /*! Encoder context */
     dirac_encoder_context_t enc_ctx;
 
-    /*! encoded frame avail flag */
+    /*! encoded frame (NB: not picture) available flag */
     int encoded_frame_avail;
 
     /*! 
@@ -364,19 +364,19 @@ typedef struct
     */
     dirac_enc_data_t enc_buf;
 
-    /*! encoded frame params */
-    dirac_frameparams_t enc_fparams;
+    /*! encoded picture params */
+    dirac_picparams_t enc_pparams;
 
-    /*! encoded frame stats */
-    dirac_enc_framestats_t enc_fstats;
+    /*! encoded picture stats */
+    dirac_enc_picstats_t enc_pstats;
 
-    /*! encoded frame stats */
+    /*! encoded sequence stats */
     dirac_enc_seqstats_t enc_seqstats;
 
     /*! end of sequence */
     int end_of_sequence;
 
-    /* locally decoded frame available flag. 
+    /* locally decoded frame (NB: not picture) available flag. 
        1 - locally decoded frame available in dec_buf. 
        0 - locally decoded frame not available.
     */
@@ -388,8 +388,8 @@ typedef struct
     */
     dirac_framebuf_t dec_buf;
 
-    /*! locally decoded frame params */
-    dirac_frameparams_t dec_fparams;
+    /*! locally decoded picture params */
+    dirac_picparams_t dec_pparams;
 
     /*! 
        instrumentation data buffer. This buffer is allocated and managed by 

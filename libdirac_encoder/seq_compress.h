@@ -49,11 +49,11 @@
 
 #include <libdirac_byteio/dirac_byte_stream.h>
 #include <libdirac_common/common.h>
-#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/picture_buffer.h>
 #include <libdirac_common/pic_io.h>
 #include <libdirac_common/dirac_assertions.h>
 #include <libdirac_encoder/quality_monitor.h>
-#include <libdirac_encoder/frame_compress.h>
+#include <libdirac_encoder/picture_compress.h>
 #include <libdirac_encoder/rate_control.h>
 
 #include <fstream>
@@ -75,7 +75,7 @@ namespace dirac
         //! Constructor
         /*!
             Creates a sequence compressor, and prepares to begin compressing
-            with the first frame.Sets up frame padding in the picture input if
+            with the first picture.Sets up picture padding in the picture input if
             necesary
             \param      pin     an input stream containing a sequence of frames
             \param      encp    parameters for the encoding process
@@ -93,7 +93,7 @@ namespace dirac
 
         //! Load data
         /*!
-            Load one frame of data into the Sequence Compressor. Sets
+            Load one picture of data into the Sequence Compressor. Sets
             m_all_done to true if no more data is available to be loaded.
             Input can be frame or field. So the child class will have to
             implement this function.
@@ -102,16 +102,16 @@ namespace dirac
         */
         virtual bool LoadNextFrame() = 0;
 
-        //! Compress the next frame in sequence
+        //! Compress the next picture in sequence
         /*!
-            This function codes the next frame in coding order and returns the
-            next frame in display order. In general these will differ, and
+            This function codes the next picture in coding order and returns the
+            next picture in display order. In general these will differ, and
             because of re-ordering there is a delay which needs to be imposed.
             This creates problems at the start and at the end of the sequence
             which must be dealt with. At the start we just keep outputting
-            frame 0. At the end you will need to loop for longer to get all
-            the frames out. It's up to the calling function to do something
-            with the decoded frames as they come out -- write them to screen
+            picture 0. At the end you will need to loop for longer to get all
+            the pictures out. It's up to the calling function to do something
+            with the decoded pictures as they come out -- write them to screen
             or to file, for example.  .
             If coding is fast enough the compressed version could be watched
             real-time (with suitable buffering in the calling function to
@@ -120,38 +120,38 @@ namespace dirac
             NOTE: LoadNextFrame must be called atleast once before invoking this
             method.
 
-            \return           reference to the next locally decoded frame available for display
+            \return           reference to the next locally decoded picture available for display
         */
-        Frame &CompressNextFrame();
+        Picture &CompressNextPicture();
 
-        //! Return a pointer to the most recent frame encoded
-        const Frame *GetFrameEncoded();
+        //! Return a pointer to the most recent picture encoded
+        const Picture *GetPictureEncoded();
 
-        //! Return Motion estimation info related to the most recent frame encoded
+        //! Return Motion estimation info related to the most recent picture encoded
         const MEData *GetMEData();
 
         DiracByteStats EndSequence();
 
         //! Determine if compression is complete.
         /*!
-            Indicates whether or not the last frame in the sequence has been
+            Indicates whether or not the last picture in the sequence has been
             compressed.
-            \return     true if last frame has been compressed; false if not
+            \return     true if last picture has been compressed; false if not
         */
         bool Finished(){return m_all_done;}
 
 
     protected:
-        void Denoise( Frame& frame );
+        void Denoise( Picture& picture );
 
         //! Denoises a component
         void DenoiseComponent( PicArray& pic_data );
 
         ValueType Median( const ValueType* val_list, const int length);
 
-        //! Uses the GOP parameters to convert frame numbers in coded order to display order.
+        //! Uses the GOP parameters to convert picture numbers in coded order to display order.
         /*!
-             Uses the GOP parameters to convert frame numbers in coded order
+             Uses the GOP parameters to convert picture numbers in coded order
              to display order. Pure virtual function. The child class will
              have to define it.
             \param  pnum  the picture number in coded order
@@ -161,18 +161,18 @@ namespace dirac
         //! Make a report to screen on the coding results for the whole sequence
         void MakeSequenceReport();
 
-        //! Return original un-encoded frame
-        virtual const Frame& OriginalFrame(int frame_num)
-        { return m_mebuffer->GetFrame(frame_num); }
+        //! Return original un-encoded picture
+        virtual const Picture& OriginalPicture(int picture_num)
+        { return m_mebuffer->GetPicture(picture_num); }
 
-        //! Remove unwanted frames from frame buffers
+        //! Remove unwanted pictures from picture buffers
         virtual void CleanBuffers();
 
         //! Return true if we need to start a new access unit. Purely virtual. The child class will have to define it.
         virtual bool IsNewAccessUnit() = 0;
 
-        //! Compress the frame using constant bit rate coding. Purely virtual. The child class will have to define it.
-        virtual void RateControlCompress(Frame& my_frame, bool is_a_cut) = 0;
+        //! Compress the picture using constant bit rate coding. Purely virtual. The child class will have to define it.
+        virtual void RateControlCompress(Picture& my_picture, bool is_a_cut) = 0;
 
         //! Completion flag, returned via the Finished method.
         bool m_all_done;
@@ -180,7 +180,7 @@ namespace dirac
         //! Flag indicating whether we've just finished.
         /*!
             Flag which is false if we've been all-done for more than one
-            frame, true otherwise (so that we can take actions on finishing
+            picture, true otherwise (so that we can take actions on finishing
             once only).
         */
         bool m_just_finished;
@@ -194,25 +194,25 @@ namespace dirac
         //! Pointer pointing at the picture input.
         StreamPicInput* m_pic_in;
 
-        //! A picture buffer used for local storage of frames whilst pending re-ordering or being used for reference.
-        FrameBuffer* m_fbuffer;
+        //! A picture buffer used for local storage of pictures whilst pending re-ordering or being used for reference.
+        PictureBuffer* m_fbuffer;
 
         //! A picture buffer for motion estimation
-        FrameBuffer* m_mebuffer;
+        PictureBuffer* m_mebuffer;
 
-        //state variables for CompressNextFrame
+        //state variables for CompressNextPicture
 
-        //! The number of the current frame to be coded, in display order
-        int m_current_display_fnum;
+        //! The number of the current picture to be coded, in display order
+        int m_current_display_pnum;
 
-        //! The number of the current frame to be coded, in coded order
-        int m_current_code_fnum;
+        //! The number of the current picture to be coded, in coded order
+        int m_current_code_pnum;
 
-        //! The number of the frame which should be output for concurrent display or storage
-        int m_show_fnum;
+        //! The number of the picture which should be output for concurrent display or storage
+        int m_show_pnum;
 
-        //! The index, in display order, of the last frame read
-        int m_last_frame_read;
+        //! The index, in display order, of the last picture read
+        int m_last_picture_read;
 
         //! A delay so that we don't display what we haven't coded
         int m_delay;
@@ -223,8 +223,8 @@ namespace dirac
         //! A class for monitoring and controlling bit rate
         RateController* m_ratecontrol;
 
-        //! A class to hold the frame compressor object
-        FrameCompressor m_fcoder;
+        //! A class to hold the picture compressor object
+        PictureCompressor m_pcoder;
 
         //! Output destination for compressed data in bitstream format
         DiracByteStream& m_dirac_byte_stream;
@@ -288,7 +288,7 @@ namespace dirac
     protected:
         virtual int CodedToDisplay(const int pnum);
         virtual bool IsNewAccessUnit();
-        virtual void RateControlCompress(Frame& my_frame, bool is_a_cut);
+        virtual void RateControlCompress(Picture& my_picture, bool is_a_cut);
 
     };
 
@@ -332,14 +332,14 @@ namespace dirac
         virtual bool LoadNextFrame();
 
     protected:
-        virtual const Frame& OriginalFrame(int frame_num);
+        virtual const Picture& OriginalPicture(int picture_num);
 
         virtual void CleanBuffers();
 
         virtual int CodedToDisplay(const int pnum);
         virtual bool IsNewAccessUnit();
 
-        virtual void RateControlCompress(Frame& my_frame, bool is_a_cut);
+        virtual void RateControlCompress(Picture& my_picture, bool is_a_cut);
     private:
         //! Filter fields
         /*!
@@ -348,8 +348,8 @@ namespace dirac
         */
         void PreMotionEstmationFilter (PicArray& comp);
 
-        //! A picture buffer for original frames
-        FrameBuffer* m_origbuffer;
+        //! A picture buffer for original pictures
+        PictureBuffer* m_origbuffer;
 
         // Field1 bytes
         int m_field1_bytes;

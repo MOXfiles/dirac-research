@@ -40,8 +40,8 @@
 
 
 #include <libdirac_common/motion.h>
-#include <libdirac_common/frame.h>
-using dirac::Frame;
+#include <libdirac_common/picture.h>
+using dirac::Picture;
 using dirac::PicArray;
 using dirac::MvArray;
 
@@ -51,16 +51,16 @@ namespace dirac_instr
 {
 #define NO_REF -1
 
-    //! Class encapsulating parameters for drawing the frame
-    class DrawFrameMotionParams
+    //! Class encapsulating parameters for drawing the picture
+    class DrawPictureMotionParams
     {
     public :
 
         //! Default constuctor, does nothing
-        DrawFrameMotionParams() {}
+        DrawPictureMotionParams() {}
 
         //! Default destructor, does nothing
-        ~DrawFrameMotionParams() {}
+        ~DrawPictureMotionParams() {}
         //! Gets...
         //! Returns luma motion vector block height
         const int MvYBlockY() const {return m_mv_Y_block_y;}
@@ -135,7 +135,7 @@ namespace dirac_instr
     {
     public :
         //! Constructor
-        DrawOverlay(Frame &, DrawFrameMotionParams &);
+        DrawOverlay(Picture &, DrawPictureMotionParams &);
         
         //! Destructor
         virtual ~DrawOverlay();
@@ -152,14 +152,14 @@ namespace dirac_instr
         //                                                        //
         ////////////////////////////////////////////////////////////
 
-        //! Draws frame numbers for both references
+        //! Draws picture numbers for both references
         void DrawReferenceNumbers(int, int);
         
-        //! Draws frame number for chosen reference
+        //! Draws picture number for chosen reference
         void DrawReferenceNumber(int, int);
         
-        //! Draws current frame number
-        void DrawFrameNumber(int);
+        //! Draws current picture number
+        void DrawPictureNumber(int);
         
         //! Draws a character / number / symbol
         void DrawCharacter(const PicArray &, int, int);
@@ -185,11 +185,11 @@ namespace dirac_instr
         //! Colours an 8x8 block referenced by TL chroma pixel
         void DrawBlockUV(int, int, int, int);
         
-        //! Frame data
-        Frame & m_frame;
+        //! Picture data
+        Picture & m_picture;
         
         //! Block parameters and chroma scaling
-        DrawFrameMotionParams & m_draw_params;
+        DrawPictureMotionParams & m_draw_params;
         
         //! Symbols
         OverlaySymbols m_symbols;

@@ -62,19 +62,19 @@ namespace dirac
 
         /**
         * Output Constructor
-        *@param fparams   Frame parameters
+        *@param fparams   Picture parameters
         *@param c_params  Codec params
         */
-        TransformByteIO(FrameParams& fparams,
+        TransformByteIO(PictureParams& fparams,
                         CodecParams& c_params);
 
         /**
         * Input Constructor
         *@param byte_io   ByteIO object for copy constructor
-        *@param fparams    Frame parameters
+        *@param fparams    Picture parameters
         *@param c_params   Codec params
         */
-        TransformByteIO(ByteIO &byte_io, FrameParams& fparams,
+        TransformByteIO(ByteIO &byte_io, PictureParams& fparams,
                         CodecParams& c_params);
 
         /**
@@ -110,8 +110,8 @@ namespace dirac
         int GetSize() const;
         
         /**
-        * Adds a Frame-component in Dirac-bytestream format
-        *@param component_byteio Frame-component bytestream
+        * Adds a Picture-component in Dirac-bytestream format
+        *@param component_byteio Picture-component bytestream
         */
         void AddComponent(ComponentByteIO *component_byteio);
 
@@ -123,7 +123,7 @@ namespace dirac
         /**
         * Sequence paramters for intput/output
         */
-        FrameParams&   m_fparams;
+        PictureParams&   m_fparams;
 
         /**
         * Codec params - EncParams for Output and DecParams for input

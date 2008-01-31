@@ -65,7 +65,7 @@ namespace dirac
             \param    subband_byteio   input/output for the encoded bits
             \param    band_list    the set of all the subbands
             \param    band_num    the number of the subband being coded 
-            \param    is_intra    Flag indicating whether the band comes from an intra frame
+            \param    is_intra    Flag indicating whether the band comes from an intra picture
          */
         BandVLC(SubbandByteIO* subband_byteio,
                   const SubbandList& band_list,
@@ -114,7 +114,7 @@ namespace dirac
 
     protected:
               
-        //! Flag indicating whether the band comes from an intra frame
+        //! Flag indicating whether the band comes from an intra picture
         bool m_is_intra;
     
         //! variables    

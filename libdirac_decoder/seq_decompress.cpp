@@ -48,39 +48,39 @@
 #include <libdirac_common/dirac_assertions.h>
 #include <libdirac_decoder/seq_decompress.h>
 #include <libdirac_common/common.h>
-#include <libdirac_common/frame_buffer.h>
-#include <libdirac_decoder/frame_decompress.h>
+#include <libdirac_common/picture_buffer.h>
+#include <libdirac_decoder/picture_decompress.h>
 #include <libdirac_byteio/accessunit_byteio.h>
 using namespace dirac;
 
 SequenceDecompressor::SequenceDecompressor(ParseUnitByteIO& parseunit,bool verbosity)
 : 
 m_all_done(false),
-m_current_code_fnum(0),
+m_current_code_pnum(0),
 m_delay(1),
-m_show_fnum(-1),
-m_highest_fnum(0)
+m_show_pnum(-1),
+m_highest_pnum(0)
 {
     // read unit
     NewAccessUnit(parseunit);
 
     m_decparams.SetVerbose( verbosity );
    
-    m_fbuffer= new FrameBuffer( );
+    m_pbuffer= new PictureBuffer( );
 
-    m_fdecoder = new FrameDecompressor (m_decparams , m_srcparams.CFormat());
+    m_pdecoder = new PictureDecompressor (m_decparams , m_srcparams.CFormat());
    
 }
 
 SequenceDecompressor::~SequenceDecompressor()
 {
-    delete m_fbuffer;
-    delete m_fdecoder;
+    delete m_pbuffer;
+    delete m_pdecoder;
 }
 
-const FrameParams& SequenceDecompressor::GetNextFrameParams() const
+const PictureParams& SequenceDecompressor::GetNextPictureParams() const
 {
-    return m_fdecoder->GetFrameParams();
+    return m_pdecoder->GetPicParams();
 }
 
 void SequenceDecompressor::NewAccessUnit(ParseUnitByteIO& parseunit_byteio)
@@ -92,29 +92,29 @@ void SequenceDecompressor::NewAccessUnit(ParseUnitByteIO& parseunit_byteio)
 
 }
 
-Frame& SequenceDecompressor::DecompressNextFrame(ParseUnitByteIO* p_parseunit_byteio,
+Picture& SequenceDecompressor::DecompressNextPicture(ParseUnitByteIO* p_parseunit_byteio,
                                                  bool skip /* = false */)
 {
-    //this function decodes the next frame in coding order and returns the next frame in display order
+    //this function decodes the next picture in coding order and returns the next picture in display order
     //In general these will differ, and because of re-ordering there is a m_delay which needs to be imposed.
     //This creates problems at the start and at the end of the sequence which must be dealt with.
-    //At the start we just keep outputting frame 0. At the end you will need to loop for longer to get all
+    //At the start we just keep outputting picture 0. At the end you will need to loop for longer to get all
     //the frames out. It's up to the calling function to do something with the decoded frames as they
     //come out - write them to screen or to file, as required.
 
-    TEST (m_fdecoder != NULL);
+    TEST (m_pdecoder != NULL);
     
-    // Remove the last displayed frame from the buffer if it wasn't a reference
-    if ( m_show_fnum>0 )
+    // Remove the last displayed picture from the buffer if it wasn't a reference
+    if ( m_show_pnum>0 )
     {
         if ( m_decparams.Verbose() )
             std::cout<<std::endl<<"Cleaning display buffer: ";         
-        if ( m_fbuffer->IsFrameAvail(m_show_fnum-1) && 
-            m_fbuffer->GetFrame(m_show_fnum-1).GetFparams().FSort().IsNonRef() )
+        if ( m_pbuffer->IsPictureAvail(m_show_pnum-1) && 
+            m_pbuffer->GetPicture(m_show_pnum-1).GetPparams().PicSort().IsNonRef() )
         {
-            m_fbuffer->Clean(m_show_fnum-1);
+            m_pbuffer->Clean(m_show_pnum-1);
             if ( m_decparams.Verbose() )
-                std::cout<<(m_show_fnum-1)<<" ";
+                std::cout<<(m_show_pnum-1)<<" ";
         }
     }
 
@@ -123,40 +123,40 @@ Frame& SequenceDecompressor::DecompressNextFrame(ParseUnitByteIO* p_parseunit_by
     if (!skip && p_parseunit_byteio)
     {
        if (m_decparams.Verbose())
-           std::cout<<std::endl<<"Calling frame decompression function";
-       new_frame_to_display = m_fdecoder->Decompress(*p_parseunit_byteio,
-                                                     *m_fbuffer);
+           std::cout<<std::endl<<"Calling picture decompression function";
+       new_frame_to_display = m_pdecoder->Decompress(*p_parseunit_byteio,
+                                                     *m_pbuffer);
     }
     /***
-    //if we've exited with success, there's a new frame to display, so increment
-    //the counters. Otherwise, freeze on the last frame shown
-    m_show_fnum=std::max(m_current_code_fnum-m_delay,0);
+    //if we've exited with success, there's a new picture to display, so increment
+    //the counters. Otherwise, freeze on the last picture shown
+    m_show_pnum=std::max(m_current_code_pnum-m_delay,0);
     if (new_frame_to_display || skip)
     {
-        m_current_code_fnum++;
+        m_current_code_pnum++;
     }
     ***/
-    // FIXME - temporary fix to fix frame delay for i-frames
+    // FIXME - temporary fix to fix picture delay for i-frames
 
-    Frame &f = m_fbuffer->GetFrame(m_show_fnum+1 );
-    m_show_fnum = m_show_fnum >= 0 ? m_show_fnum : m_fdecoder->GetFrameParams().FrameNum()-1;
+    Picture &f = m_pbuffer->GetPicture(m_show_pnum+1 );
+    m_show_pnum = m_show_pnum >= 0 ? m_show_pnum : m_pdecoder->GetPicParams().PictureNum()-1;
 
-    m_highest_fnum = std::max(m_fdecoder->GetFrameParams().FrameNum(), m_highest_fnum);
-    if (f.GetFparams().FrameNum() == m_show_fnum+1)
+    m_highest_pnum = std::max(m_pdecoder->GetPicParams().PictureNum(), m_highest_pnum);
+    if (f.GetPparams().PictureNum() == m_show_pnum+1)
     {
-        ++m_show_fnum;
+        ++m_show_pnum;
         return f;
     }
     
-    return m_fbuffer->GetFrame(m_show_fnum);
+    return m_pbuffer->GetPicture(m_show_pnum);
 }
 
-Frame& SequenceDecompressor::GetNextFrame()
+Picture& SequenceDecompressor::GetNextPicture()
 {
-    return m_fbuffer->GetFrame(m_show_fnum);
+    return m_pbuffer->GetPicture(m_show_pnum);
 }
 
 bool SequenceDecompressor::Finished()
 {
-    return m_show_fnum==m_highest_fnum;
+    return m_show_pnum==m_highest_pnum;
 }

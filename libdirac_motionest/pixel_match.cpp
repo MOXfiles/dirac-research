@@ -39,7 +39,7 @@
 #include <libdirac_motionest/pixel_match.h>
 #include <libdirac_motionest/block_match.h>
 #include <libdirac_common/motion.h>
-#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/picture_buffer.h>
 #include <libdirac_motionest/downconvert.h>
 #include <libdirac_motionest/me_mode_decn.h>
 #include <libdirac_motionest/me_subpel.h>
@@ -56,18 +56,18 @@ PixelMatcher::PixelMatcher( const EncoderParams& encp):
 {}
 
 
-void PixelMatcher::DoSearch(const FrameBuffer& my_buffer, int frame_num, MEData& me_data)
+void PixelMatcher::DoSearch(const PictureBuffer& my_buffer, int frame_num, MEData& me_data)
 {
 
      //does an initial search using hierarchical matching to get guide vectors    
 
-    // Frame numbers of references
+    // Picture numbers of references
     int ref1,ref2;
 
     // Use the luminance only for motion estimating
     const PicArray& pic_data = my_buffer.GetComponent( frame_num , Y_COMP );
 
-    const vector<int>& refs = my_buffer.GetFrame( frame_num ).GetFparams().Refs();
+    const vector<int>& refs = my_buffer.GetPicture( frame_num ).GetPparams().Refs();
     ref1 = refs[0];
 
     if (refs.size()>1)
@@ -83,8 +83,8 @@ void PixelMatcher::DoSearch(const FrameBuffer& my_buffer, int frame_num, MEData&
     const PicArray& ref1_data = my_buffer.GetComponent(ref1 , Y_COMP);
     const PicArray& ref2_data = my_buffer.GetComponent(ref2 , Y_COMP);
 
-    // Determine the frame sort - this affects the motion estimation Lagrangian parameter
-    m_fsort = my_buffer.GetFrame(frame_num).GetFparams().FSort();
+    // Determine the picture sort - this affects the motion estimation Lagrangian parameter
+    m_fsort = my_buffer.GetPicture(frame_num).GetPparams().PicSort();
 
 
     if ( m_encparams.FullSearch() == false )

@@ -95,6 +95,7 @@ static void display_help()
     cout << "\nstart             ulong   0UL           Frame number to start encoding from";
     cout << "\nstop              ulong   EOF           Frame number after which encoding finishes";
     cout << "\nfield_coding      bool    false         Set picture coding type to field coding. Default coding type is by frames";
+    cout << "\nqcx_coding        bool    false         Experimental quincunxial coding mode. Not selectable if field_coding is true";
     cout << "\nL1_sep            ulong   0UL           Separation of L1 frames";
     cout << "\nnum_L1            ulong   0UL           Number of L1 frames";
     cout << "\nxblen             ulong   0UL           Overlapping block horizontal length";
@@ -194,8 +195,8 @@ bool WriteDiagnosticsData (std::ofstream &fdata, dirac_encoder_t *encoder)
         fdata.exceptions (ios::failbit | ios::badbit);
         try
         {
-            fdata << std::endl << "[frame:" << instr.fnum << "]";
-            if (instr.ftype == INTRA_FRAME)
+            fdata << std::endl << "[frame:" << instr.pnum << "]";
+            if (instr.ptype == INTRA_PICTURE)
             {
                 fdata << ">intra" << std::endl;
                 return true;
@@ -740,6 +741,12 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             enc_ctx.enc_params.picture_coding_mode =  1;
             fields_factor = 2;
         }
+        else if ( strcmp(argv[i], "-qcx_coding") == 0 )
+        {
+            parsed[i] = true;
+            enc_ctx.enc_params.picture_coding_mode =  2;
+            fields_factor = 1;
+        }
         else if ( strcmp(argv[i], "-qf") == 0 )
         {
             parsed[i] = true;
@@ -1062,7 +1069,7 @@ int main (int argc, char* argv[])
     if ( end_pos == -1 )
         end_pos = INT_MAX;
 
-    /* don't try and skup frames if they aren't any to skip, eg
+    /* don't try and skip frames if they aren't any to skip, eg
      * this won't work on nonseekable filehandles. */
     if (start_pos && !Skip( ip_pic_ptr, start_pos, frame_size ))
     {
@@ -1129,7 +1136,7 @@ int main (int argc, char* argv[])
 
                 outfile.write((char *)encoder->enc_buf.buffer,
                               encoder->enc_buf.size);
-                              pictures_written++;
+                              pictures_written++;// Frames?????????????????????
                 break;
 
             case ENC_STATE_BUFFER:

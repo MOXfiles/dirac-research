@@ -211,13 +211,13 @@ ParseUnitType ParseUnitByteIO::GetType() const
         return PU_SEQ_HEADER;
     
     if(IsCoreSyntax())
-        return PU_CORE_FRAME;
+        return PU_CORE_PICTURE;
 
     if(IsLowDelay())
-        return PU_LOW_DELAY_FRAME;
+        return PU_LOW_DELAY_PICTURE;
 
     if(IsPicture())
-        return PU_FRAME;
+        return PU_PICTURE;
 
     if(IsEndOfSequence())
         return PU_END_OF_SEQUENCE;

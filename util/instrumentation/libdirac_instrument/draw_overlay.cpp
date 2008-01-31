@@ -39,9 +39,9 @@
 using namespace dirac_instr;
 
 // constructor
-DrawOverlay::DrawOverlay(Frame & frame, DrawFrameMotionParams & draw_params)
+DrawOverlay::DrawOverlay(Picture & picture, DrawPictureMotionParams & draw_params)
 :
-    m_frame(frame),
+    m_picture(picture),
     m_draw_params(draw_params)
 {}
 
@@ -111,10 +111,10 @@ void DrawOverlay::DrawPowerBar(int min, int max)
     for (int ypx=40; ypx<m_draw_params.PicY(); ++ypx)
     {
         // black line
-        m_frame.Ydata()[ypx][5]=0;
+        m_picture.Ydata()[ypx][5]=0;
 
         for (int xpx=0; xpx<5; ++xpx)
-            m_frame.Ydata()[ypx][xpx]=0; // grey background
+            m_picture.Ydata()[ypx][xpx]=0; // grey background
     }
 
     // draw colour on line by line basis
@@ -130,8 +130,8 @@ void DrawOverlay::DrawPowerBar(int min, int max)
 
         for (int xpx=0; xpx<=4/m_draw_params.ChromaFactorX(); ++xpx)
         {
-            m_frame.Udata()[ypx][xpx]=U;
-            m_frame.Vdata()[ypx][xpx]=V;
+            m_picture.Udata()[ypx][xpx]=U;
+            m_picture.Vdata()[ypx][xpx]=V;
         }
     }
 
@@ -149,7 +149,7 @@ void DrawOverlay::DrawCharacter(const PicArray & ch, int y_offset, int x_offset)
     {
         for (int x=x_offset, x_ch=0; x<x_offset+8; ++x, ++x_ch)
         {
-            m_frame.Ydata()[y][x]=ch[y_ch][x_ch]*255-128;
+            m_picture.Ydata()[y][x]=ch[y_ch][x_ch]*255-128;
         }// x
     }// y
 
@@ -158,8 +158,8 @@ void DrawOverlay::DrawCharacter(const PicArray & ch, int y_offset, int x_offset)
     {
         for (int xpx=x_offset/m_draw_params.ChromaFactorX(); xpx<(x_offset+8)/m_draw_params.ChromaFactorX(); ++xpx)
         {
-            m_frame.Udata()[ypx][xpx]=0;
-            m_frame.Vdata()[ypx][xpx]=0;
+            m_picture.Udata()[ypx][xpx]=0;
+            m_picture.Vdata()[ypx][xpx]=0;
         }// xpx
     }// ypx
 }
@@ -168,7 +168,7 @@ void DrawOverlay::DrawCharacter(const PicArray & ch, int y_offset, int x_offset)
 void DrawOverlay::DrawValue(int number, int y_offset, int x_offset)
 {
     int digits = 0;
-    // number of digits in frame number
+    // number of digits in picture number
     if (number < 10)
         digits = 1;
     else if (number >= 10 && number < 100)
@@ -233,7 +233,7 @@ void DrawOverlay::DrawValue(int number, int y_offset, int x_offset)
     }
 }
 
-// draws both reference frame numbers
+// draws both reference picture numbers
 void DrawOverlay::DrawReferenceNumbers(int ref1, int ref2)
 {
     // draw letters: 'R1:' and 'R2:' on consecutive lines
@@ -254,15 +254,15 @@ void DrawOverlay::DrawReferenceNumbers(int ref1, int ref2)
         DrawValue(ref2, 32, 24);
 }
 
-// draws frame number
-void DrawOverlay::DrawFrameNumber(int fnum)
+// draws picture number
+void DrawOverlay::DrawPictureNumber(int pnum)
 {
     DrawCharacter(m_symbols.LetterF(), 0, 0);
-    DrawValue(fnum, 0, 8);
+    DrawValue(pnum, 0, 8);
 }
 
-// draws used reference frame number
-void DrawOverlay::DrawReferenceNumber(int ref, int ref_frame)
+// draws used reference picture number
+void DrawOverlay::DrawReferenceNumber(int ref, int ref_picture)
 {
     DrawCharacter(m_symbols.LetterR(), 16, 0);
     DrawCharacter(m_symbols.SymbolColon(), 16, 16);
@@ -272,10 +272,10 @@ void DrawOverlay::DrawReferenceNumber(int ref, int ref_frame)
     else if (ref==2)
         DrawCharacter(m_symbols.Number2(), 16, 8);
     
-    if (ref_frame==-1)
+    if (ref_picture==-1)
         DrawCharacter(m_symbols.SymbolMinus(), 16, 24);
     else
-        DrawValue(ref_frame, 16, 24);
+        DrawValue(ref_picture, 16, 24);
 }
 
 // colours a single block, referenced by motion vector
@@ -285,20 +285,20 @@ void DrawOverlay::DrawMvBlockUV(int ymv, int xmv, int U, int V)
     for (int y=0; y<m_draw_params.MvUVBlockY(); ++y)
     {
         int y_idx = (ymv*m_draw_params.MvUVBlockY())+y;
-        if (y_idx >= m_frame.Udata().LengthY() || 
-            y_idx >= m_frame.Vdata().LengthY())
+        if (y_idx >= m_picture.Udata().LengthY() || 
+            y_idx >= m_picture.Vdata().LengthY())
             break;
         for (int x=0; x<m_draw_params.MvUVBlockX(); ++x)
         {
             int x_idx = (xmv*m_draw_params.MvUVBlockX())+x;
-            if (x_idx >= m_frame.Udata().LengthX() || 
-                x_idx >= m_frame.Vdata().LengthX())
+            if (x_idx >= m_picture.Udata().LengthX() || 
+                x_idx >= m_picture.Vdata().LengthX())
                 break;
               
-            //m_frame.Udata()[(ymv*m_draw_params.MvUVBlockY())+y][(xmv*m_draw_params.MvUVBlockX())+x]=U;
-            //m_frame.Vdata()[(ymv*m_draw_params.MvUVBlockY())+y][(xmv*m_draw_params.MvUVBlockX())+x]=V;
-            m_frame.Udata()[y_idx][x_idx]=U;
-            m_frame.Vdata()[y_idx][x_idx]=V;
+            //m_picture.Udata()[(ymv*m_draw_params.MvUVBlockY())+y][(xmv*m_draw_params.MvUVBlockX())+x]=U;
+            //m_picture.Vdata()[(ymv*m_draw_params.MvUVBlockY())+y][(xmv*m_draw_params.MvUVBlockX())+x]=V;
+            m_picture.Udata()[y_idx][x_idx]=U;
+            m_picture.Vdata()[y_idx][x_idx]=V;
         }// xpx
     }// ypx
 }
@@ -311,8 +311,8 @@ void DrawOverlay::DrawBlockUV(int ypx, int xpx, int U, int V)
     {
         for (int x=xpx; x<xpx+(8/m_draw_params.ChromaFactorX()); ++x)
         {
-            m_frame.Udata()[y][x]=U;
-            m_frame.Vdata()[y][x]=V;
+            m_picture.Udata()[y][x]=U;
+            m_picture.Vdata()[y][x]=V;
         }// xpx
     }// ypx
 }

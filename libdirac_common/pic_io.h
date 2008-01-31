@@ -47,11 +47,11 @@
 #include <streambuf>
 
 #include <libdirac_common/common.h>
-#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/picture_buffer.h>
 
 namespace dirac
 {
-    class FrameBuffer;
+    class PictureBuffer;
 
     //////////////////////////////////////////
     //--------------------------------------//
@@ -90,8 +90,8 @@ namespace dirac
             //! virtual Destructor
             virtual ~StreamPicOutput();
 
-            //! Write the next frame to the output
-            virtual bool WriteNextFrame(const Frame& myframe) = 0;
+            //! Write a picture to the next frame to be output
+            virtual bool WriteToNextFrame(const Picture& myframe) = 0;
 
             //! Get the source parameters
             SourceParams& GetSourceParams() {return m_sparams;}
@@ -123,7 +123,7 @@ namespace dirac
             virtual ~StreamFrameOutput();
 
             //! Write the next frame to the output
-            bool WriteNextFrame(const Frame& myframe);
+            bool WriteToNextFrame(const Picture& myframe);
 
         protected:
             //! Write a frame component to file
@@ -148,8 +148,8 @@ namespace dirac
             //! virtual Destructor
             virtual ~StreamFieldOutput();
 
-            //! Write the next frame to the output
-            bool WriteNextFrame(const Frame& myframe);
+            //! Write a field to the next frame to be output
+            bool WriteToNextFrame(const Picture& myfield);
 
         protected:
             //! Write a field component to file
@@ -321,7 +321,7 @@ namespace dirac
             virtual void Skip( const int n)= 0;
 
             //! Read the next picture frame/field from the file
-            virtual bool ReadNextPicture(Frame& myframe) = 0;
+            virtual bool ReadNextPicture(Picture& mypic) = 0;
 
             //! Read the next frame/two fields from the file
             /*!
@@ -329,7 +329,7 @@ namespace dirac
                 \param my_fbuf     Frame Buffer
                 \param fnum        Frame/Field number
             */
-            virtual bool ReadNextFrame(FrameBuffer &my_fbuf, int fnum) = 0;
+            virtual bool ReadNextFrame(PictureBuffer &my_buf, int num) = 0;
 
             //! Get the source parameters
             SourceParams& GetSourceParams() const {return m_sparams;}
@@ -367,16 +367,16 @@ namespace dirac
             //! Skip n frames of input
             virtual void Skip( const int n);
 
-            //! Read the next picture frame/field from the file
-            virtual bool ReadNextPicture(Frame& myframe);
+            //! Read the next frame from the file
+            virtual bool ReadNextPicture(Picture& myframe);
 
-            //! Read the next frame/two fields from the file
+            //! Read the next frame from the file
             /*!
-                Read next frame/two fields into the frame buffer
-                \param my_fbuf     Frame Buffer
-                \param fnum        Frame/Field number
+                Read next frame/two fields into the picture buffer
+                \param my_fbuf     Picture Buffer
+                \param pnum        Picture number
             */
-            virtual bool ReadNextFrame(FrameBuffer &my_fbuf, int fnum);
+            virtual bool ReadNextFrame(PictureBuffer &my_pbuf, int pnum);
 
         private:
 
@@ -405,16 +405,16 @@ namespace dirac
             //! Skip n frames of input
             virtual void Skip( const int n);
 
-            //! Read the next picture frame/field from the file
-            virtual bool ReadNextPicture(Frame& myframe);
+            //! Read the next field from the file
+            virtual bool ReadNextPicture(Picture& myfield);
 
             //! Read the next frame/two fields from the file
             /*!
                 Read next frame/two fields into the frame buffer
-                \param my_fbuf     Frame Buffer
-                \param fnum        Frame/Field number
+                \param my_pbuf     Picture Buffer
+                \param pnum        Frame/Field number
             */
-            virtual bool ReadNextFrame(FrameBuffer &my_fbuf, int fnum);
+            virtual bool ReadNextFrame(PictureBuffer &my_pbuf, int pnum);
 
         protected:
             //! Read both Field components from the file

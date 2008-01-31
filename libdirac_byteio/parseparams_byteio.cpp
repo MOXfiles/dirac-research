@@ -40,7 +40,7 @@
 #include <libdirac_byteio/parseparams_byteio.h>
 #include <libdirac_common/dirac_exception.h>
 
-const unsigned int PP_AU_FRAME_NUM_SIZE = 4;
+const unsigned int PP_AU_PICTURE_NUM_SIZE = 4;
 
 using namespace dirac;
 
@@ -111,7 +111,7 @@ void ParseParamsByteIO::Input()
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
             errstr.str(),
-            SEVERITY_FRAME_ERROR);
+            SEVERITY_PICTURE_ERROR);
     }
 }
 

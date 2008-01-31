@@ -45,7 +45,7 @@ using namespace dirac;
 namespace dirac 
 {
 void SetDefaultCodecParameters(CodecParams &cparams, 
-                               FrameType ftype,
+                               PictureType ptype,
                                unsigned int num_refs)
 {
     std::ostringstream errstr;
@@ -53,7 +53,7 @@ void SetDefaultCodecParameters(CodecParams &cparams,
     cparams.SetZeroTransform(false);
     cparams.SetTransformDepth(5);
     WltFilter wf;
-    SetDefaultTransformFilter(ftype, wf);
+    SetDefaultTransformFilter(ptype, wf);
     cparams.SetTransformFilter(wf);
     cparams.SetCodeBlockMode(QUANT_SINGLE);
     cparams.SetSpatialPartition(false);
@@ -90,11 +90,11 @@ void SetDefaultCodecParameters(CodecParams &cparams,
         DIRAC_THROW_EXCEPTION(
             ERR_INVALID_VIDEO_FORMAT,
             errstr.str(),
-            SEVERITY_FRAME_ERROR);
+            SEVERITY_PICTURE_ERROR);
         break;
     }
 
-    if (ftype == INTER_FRAME)
+    if (ptype == INTER_PICTURE)
     {
         ASSERTM (num_refs > 0 && num_refs < 3, "Number of reference frames should be 1 or 2 fo INTER frames" );
         OLBParams bparams;
@@ -104,7 +104,7 @@ void SetDefaultCodecParameters(CodecParams &cparams,
         cparams.SetFieldCoding(false);
         cparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
         // NOTE: FIXME - need to add global motion params here
-        cparams.SetFrameWeightsPrecision(1);
+        cparams.SetPictureWeightsPrecision(1);
         cparams.SetRef1Weight(1);
         cparams.SetRef2Weight(1);
     }
@@ -289,7 +289,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         DIRAC_THROW_EXCEPTION(
             ERR_INVALID_VIDEO_FORMAT,
             errstr.str(),
-            SEVERITY_FRAME_ERROR);
+            SEVERITY_PICTURE_ERROR);
         break;
     }
 }
@@ -415,7 +415,7 @@ void SetDefaultBlockParameters(OLBParams& bparams, int pidx)
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
             "Block params index out of range [0-4]",
-            SEVERITY_FRAME_ERROR);
+            SEVERITY_PICTURE_ERROR);
         break;
     }
 }
@@ -439,9 +439,9 @@ unsigned int BlockParametersIndex (const OLBParams& bparams)
         return 0;
 }
 
-void SetDefaultTransformFilter(FrameType ftype, WltFilter &wf)
+void SetDefaultTransformFilter(PictureType ptype, WltFilter &wf)
 {
-    if (ftype == INTRA_FRAME)
+    if (ptype == INTRA_PICTURE)
         wf = DD9_7;
     else
         wf = LEGALL5_3;

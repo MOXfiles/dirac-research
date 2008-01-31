@@ -4,13 +4,13 @@
 INCLUDES = -I$(top_srcdir) -I$(srcdir)
 
 h_sources = accessunit_byteio.h displayparams_byteio.h parseunit_byteio.h \
-            byteio.h frame_byteio.h codingparams_byteio.h dirac_byte_stream.h \
+            byteio.h picture_byteio.h codingparams_byteio.h dirac_byte_stream.h \
             parseparams_byteio.h mvdata_byteio.h mvdataelement_byteio.h \
             transform_byteio.h endofsequence_byteio.h component_byteio.h \
             subband_byteio.h dirac_byte_stats.h
 
 cpp_sources = accessunit_byteio.cpp displayparams_byteio.cpp \
-              parseunit_byteio.cpp byteio.cpp frame_byteio.cpp \
+              parseunit_byteio.cpp byteio.cpp picture_byteio.cpp \
               codingparams_byteio.cpp dirac_byte_stream.cpp \
               parseparams_byteio.cpp mvdata_byteio.cpp  \
               mvdataelement_byteio.cpp \

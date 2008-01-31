@@ -53,12 +53,12 @@
 #include <libdirac_common/common.h>
 #include <libdirac_common/upconvert.h>
 #include <libdirac_common/motion.h>
-#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/picture_buffer.h>
 
 namespace dirac
 {
-    class FrameBuffer;
-    class Frame;
+    class PictureBuffer;
+    class Picture;
 
  
     //! Abstract Motion compensator class. 
@@ -80,35 +80,35 @@ namespace dirac
         //! Destructor
         virtual ~MotionCompensator();
 
-        //! Convenience function to perform motion compensation on a frame
+        //! Convenience function to perform motion compensation on a picture
         /*!
-            Static function that motion compensates a frame. It uses the
+            Static function that motion compensates a picture. It uses the
             MV precision value in the CodecParams to instantiate the 
             appropriate MotionCompensation sub-class.
             \param    cp        Encoder/decoder parameters
             \param    direction whether we're subtracting or adding
-            \param    buffer    the FrameBuffer object containing the frame and the reference frames
-            \param    fnum    number of frame in the frame buffer to be compensated
+            \param    buffer    the PictureBuffer object containing the picture and the reference pictures
+            \param    pnum    number of picture in the picture buffer to be compensated
     `       \param    mv_data    the motion vector data
          */
-        static void CompensateFrame ( const CodecParams &cp, 
+        static void CompensatePicture ( const CodecParams &cp, 
                                       const AddOrSub direction , 
-                                      FrameBuffer& buffer , 
-                                      const int fnum, 
+                                      PictureBuffer& buffer , 
+                                      const int pnum, 
                                       const MvData& mv_data );
 
-        //! Compensate a frame
+        //! Compensate a picture
         /*!
-            Perform motion compensated addition/subtraction on a frame using 
+            Perform motion compensated addition/subtraction on a picture using 
             parameters
             \param    direction whether we're subtracting or adding
-            \param    fnum    number of frame in the frame buffer to be compensated
-            \param    my_buffer    the FrameBuffer object containing the frame and the reference frames
+            \param    pnum    number of picture in the picture buffer to be compensated
+            \param    my_buffer    the PictureBuffer object containing the picture and the reference pictures
     `       \param    mv_data    the motion vector data
          */
-        void CompensateFrame( const AddOrSub direction , 
-                              FrameBuffer& my_buffer , 
-                              int fnum , 
+        void CompensatePicture( const AddOrSub direction , 
+                              PictureBuffer& my_buffer , 
+                              int pnum , 
                               const MvData& mv_data );
 
     private:
@@ -120,9 +120,9 @@ namespace dirac
         //functions
 
         //! Motion-compensate a component
-        void CompensateComponent( Frame& picframe , 
-                                  const Frame& ref1frame , 
-                                  const Frame& ref2frame ,
+        void CompensateComponent( Picture& pic , 
+                                  const Picture& ref1picture , 
+                                  const Picture& ref2picture ,
                                   const MvData& mv_data , const CompSort cs);
 
         //! Recalculate the weight matrix and store other key block related parameters.
@@ -191,7 +191,7 @@ namespace dirac
         /*
         * Adjust the block value based on spatial weighting matrix
         * val_block - Predicted block
-        * pos       - position of top lef corner of block in frame
+        * pos       - position of top lef corner of block in picture
         * wt_array  - spatial weighting matrix
         *
         * On return, val_block will contain the spatial weight adjusted block 

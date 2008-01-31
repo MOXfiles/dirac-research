@@ -37,10 +37,10 @@
 * ***** END LICENSE BLOCK ***** */
 
 /**
-* Definition of class FrameByteIO
+* Definition of class PictureByteIO
 */
-#ifndef frame_byteio_h
-#define frame_byteio_h
+#ifndef picture_byteio_h
+#define picture_byteio_h
 
 
 //LOCAL INCLUDES
@@ -49,24 +49,24 @@
 #include <libdirac_byteio/transform_byteio.h>       // Transform header
 
 // DIRAC includes
-#include <libdirac_common/common.h>                 // FrameType etc
+#include <libdirac_common/common.h>                 // PictureType etc
 
 
 namespace dirac
 {
     /**
-    * A compressed frame in Dirac bytestream format
+    * A compressed picture in Dirac bytestream format
     */
-    class FrameByteIO : public ParseUnitByteIO
+    class PictureByteIO : public ParseUnitByteIO
     {
     public:
 
         /**
         * Constructor
-        *@param frame_params Frame parameters
-        *@param frame_num Frame number
+        *@param frame_params Picture parameters
+        *@param frame_num Picture number
         */
-        FrameByteIO(FrameParams& frame_params,
+        PictureByteIO(PictureParams& frame_params,
                     int frame_num);
 
 
@@ -75,16 +75,16 @@ namespace dirac
         *@param frame_params Destination of data
         *@param parseunit_byteio Source of data
         */
-        FrameByteIO(FrameParams& frame_params,
+        PictureByteIO(PictureParams& frame_params,
                     const ParseUnitByteIO& parseunit_byteio);
 
        /**
        * Destructor
        */
-        virtual ~FrameByteIO();
+        virtual ~PictureByteIO();
 
          /**
-        * Gathers byte stats on the frame data
+        * Gathers byte stats on the picture data
         *@param dirac_byte_stats Stat container
         */
         void CollateByteStats(DiracByteStats& dirac_byte_stats);
@@ -95,7 +95,7 @@ namespace dirac
         bool Input();
 
         /**
-        * Outputs frame values to Dirac stream-format
+        * Outputs picture values to Dirac stream-format
         */
         void Output();
 
@@ -108,15 +108,15 @@ namespace dirac
         /**
         * Gets parse-unit type
         */
-        ParseUnitType GetType() const { return PU_FRAME;}
+        ParseUnitType GetType() const { return PU_PICTURE;}
 
         /**
-        * Returns true is frame in Reference frame
+        * Returns true is picture in Reference picture
         */
         int IsRef() const { return (GetParseCode()&0x0C)==0x0C;}
 
         /**
-        * Returns true is frame in Non-Reference frame
+        * Returns true is picture in Non-Reference picture
         */
         int IsNonRef() const { return (GetParseCode()&0x0C)==0x08;}
 
@@ -126,12 +126,12 @@ namespace dirac
         int NumRefs() const { return (GetParseCode()&0x03);}
 
         /**
-        * Returns true is frame is Intra frame
+        * Returns true is picture is Intra picture
         */
         bool IsIntra() const { return IsPicture() && (NumRefs()==0) ; }
 
         /**
-        * Returns true is frame is Inter frame
+        * Returns true is picture is Inter picture
         */
         bool IsInter() const { return IsPicture() && (NumRefs()>0) ; }
 
@@ -151,13 +151,13 @@ namespace dirac
    private:
       
         /**
-        * Calculates parse-code based on frame parameters
+        * Calculates parse-code based on picture parameters
         *@return Char bit-set 
         */
         unsigned char CalcParseCode() const;
 
         /**
-        * Reads reference-frame data
+        * Reads reference-picture data
         */
         void InputReferencePictures();
 
@@ -167,27 +167,27 @@ namespace dirac
         void InputRetiredPicture();
 
         /**
-        * Calculates frame-type (eg INTRA/INTER) of frame
+        * Calculates picture-type (eg INTRA/INTER) of picture
         */
-        void SetFrameType();
+        void SetPictureType();
 
         /**
-        * Calculates reference-type of frame
+        * Calculates reference-type of picture
         */
         void SetReferenceType();
 
         /**
-        * Sets the entropy coding flag in the frame parameters
+        * Sets the entropy coding flag in the picture parameters
         */
         void SetEntropyCodingFlag();
 
         /**
-        * Frame parameters
+        * Picture parameters
         */
-        FrameParams&        m_frame_params;
+        PictureParams&        m_frame_params;
 
         /**
-        * Frame number
+        * Picture number
         */
         int     m_frame_num;
 

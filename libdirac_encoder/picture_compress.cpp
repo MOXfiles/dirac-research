@@ -40,10 +40,10 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-//Compression of frames//
+//Compression of pictures//
 /////////////////////////
 
-#include <libdirac_encoder/frame_compress.h>
+#include <libdirac_encoder/picture_compress.h>
 #include <libdirac_encoder/comp_compress.h>
 #include <libdirac_common/mot_comp.h>
 #include <libdirac_motionest/motion_estimate.h>
@@ -55,7 +55,7 @@ using namespace dirac;
 #include <iostream>
 #include <sstream>
 
-FrameCompressor::FrameCompressor( EncoderParams& encp ) :
+PictureCompressor::PictureCompressor( EncoderParams& encp ) :
     m_encparams(encp),
     m_me_data(0),
     m_skipped(false),
@@ -66,14 +66,14 @@ FrameCompressor::FrameCompressor( EncoderParams& encp ) :
     m_is_a_cut(false)
 {}
 
-FrameCompressor::~FrameCompressor()
+PictureCompressor::~PictureCompressor()
 {
     if (m_me_data)
         delete m_me_data;
 }
 
-bool FrameCompressor::MotionEstimate(const  FrameBuffer& my_fbuffer ,
-                                                            int fnum )
+bool PictureCompressor::MotionEstimate(const  PictureBuffer& my_fbuffer ,
+                                                            int pnum )
 {
     m_is_a_cut = false;
 
@@ -85,10 +85,10 @@ bool FrameCompressor::MotionEstimate(const  FrameBuffer& my_fbuffer ,
     
     m_me_data = new MEData( m_encparams.XNumMB() , 
                             m_encparams.YNumMB(), 
-                            my_fbuffer.GetFrame( fnum).GetFparams().NumRefs() );
+                            my_fbuffer.GetPicture( pnum).GetPparams().NumRefs() );
 
     MotionEstimator my_motEst( m_encparams );
-    my_motEst.DoME( my_fbuffer , fnum , *m_me_data );
+    my_motEst.DoME( my_fbuffer , pnum , *m_me_data );
 
     // If we have a cut....
     AnalyseMEData( *m_me_data );
@@ -106,35 +106,35 @@ bool FrameCompressor::MotionEstimate(const  FrameBuffer& my_fbuffer ,
     return m_is_a_cut;
 }
 
-FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
-                                        int fnum)
+PictureByteIO* PictureCompressor::Compress( PictureBuffer& my_buffer ,
+                                        int pnum)
 {
-    Frame& my_frame = my_buffer.GetFrame( fnum );
+    Picture& my_picture = my_buffer.GetPicture( pnum );
 
-    FrameParams& fparams = my_frame.GetFparams();
-    const FrameSort& fsort = fparams.FSort();
+    PictureParams& fparams = my_picture.GetPparams();
+    const PictureSort& fsort = fparams.PicSort();
     
     // Set the wavelet filter
     if ( fsort.IsIntra() )
     {
         m_encparams.SetTransformFilter( m_encparams.IntraTransformFilter() );
-        m_encparams.SetUsualCodeBlocks( INTRA_FRAME );
+        m_encparams.SetUsualCodeBlocks( INTRA_PICTURE );
     }
     else
     {
         m_encparams.SetTransformFilter( m_encparams.InterTransformFilter() );
-        m_encparams.SetUsualCodeBlocks( INTER_FRAME );
+        m_encparams.SetUsualCodeBlocks( INTER_PICTURE );
     }
 
-    // Write the frame header. We wait until after motion estimation, since
+    // Write the picture header. We wait until after motion estimation, since
     // this allows us to do cut-detection and (possibly) to decide whether
-    // or not to skip a frame before actually encoding anything. However we
-    // can do this at any point prior to actually writing any frame data.
-    //WriteFrameHeader( my_frame.GetFparams() );
-    FrameByteIO* p_frame_byteio = new FrameByteIO(fparams,
-                                                  fnum);
+    // or not to skip a picture before actually encoding anything. However we
+    // can do this at any point prior to actually writing any picture data.
+    //WritePictureHeader( my_picture.GetPparams() );
+    PictureByteIO* p_picture_byteio = new PictureByteIO(fparams,
+                                                  pnum);
    
-    p_frame_byteio->Output();
+    p_picture_byteio->Output();
 
     if ( !m_skipped )
     {    // If not skipped we continue with the coding ...
@@ -159,14 +159,14 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
             {
                 MvDataByteIO *mv_data = new MvDataByteIO(fparams, 
                                         static_cast<CodecParams&>(m_encparams));
-                p_frame_byteio->SetMvData(mv_data);
+                p_picture_byteio->SetMvData(mv_data);
                 
                 CompressMVData( mv_data );
             }
 
              // Then motion compensate
-            MotionCompensator::CompensateFrame( m_encparams , SUBTRACT , 
-                                                my_buffer , fnum , 
+            MotionCompensator::CompensatePicture( m_encparams , SUBTRACT , 
+                                                my_buffer , pnum , 
                                                 *m_me_data );
  
         }//?fsort
@@ -174,7 +174,7 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
         //Write Transform Header
         TransformByteIO *p_transform_byteio = new TransformByteIO(fparams, 
                                 static_cast<CodecParams&>(m_encparams));
-        p_frame_byteio->SetTransformData(p_transform_byteio);
+        p_picture_byteio->SetTransformData(p_transform_byteio);
         p_transform_byteio->Output();
 
         /* Code component data */
@@ -194,7 +194,7 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
 
         // Construction and definition of objects
         for (int i=0;i<3;++i){
-            comp_data[i] = &my_buffer.GetComponent( fnum , (CompSort) i );
+            comp_data[i] = &my_buffer.GetComponent( pnum , (CompSort) i );
             comp_transform[i] = new WaveletTransform( depth, filter );
             comp_coeff_data[i] = new CoeffArray(comp_data[i]->LengthY(),
                                            comp_data[i]->LengthX(), (CompSort) i );
@@ -257,22 +257,22 @@ FrameByteIO* FrameCompressor::Compress( FrameBuffer& my_buffer ,
         {
             if ( fsort.IsRef() || m_encparams.LocalDecode() )
             {
-                MotionCompensator::CompensateFrame( m_encparams , ADD , 
-                                                    my_buffer , fnum , 
+                MotionCompensator::CompensatePicture( m_encparams , ADD , 
+                                                    my_buffer , pnum , 
                                                     *m_me_data );   
             }
         }//?fsort
 
          //finally clip the data to keep it in range
-        my_buffer.GetFrame( fnum ).Clip();
+        my_buffer.GetPicture( pnum ).Clip();
 
     }//?m_skipped
 
-    // return compressed frame
-    return p_frame_byteio;
+    // return compressed picture
+    return p_picture_byteio;
 }
 
-const MEData* FrameCompressor::GetMEData() const
+const MEData* PictureCompressor::GetMEData() const
 {
     TESTM (m_me_data != NULL, "m_medata allocated");
     TESTM (m_medata_avail == true, "ME Data available");
@@ -280,7 +280,7 @@ const MEData* FrameCompressor::GetMEData() const
     return m_me_data;
 }
 
-void FrameCompressor::CompressMVData(MvDataByteIO* mv_data)
+void PictureCompressor::CompressMVData(MvDataByteIO* mv_data)
 {
     SplitModeCodec smode_coder( mv_data->SplitModeData()->DataBlock(), TOTAL_MV_CTXS);
     smode_coder.Compress( *m_me_data );
@@ -328,7 +328,7 @@ void FrameCompressor::CompressMVData(MvDataByteIO* mv_data)
     mv_data->Output();    
 }
 
-void FrameCompressor::AnalyseMEData( const MEData& me_data )
+void PictureCompressor::AnalyseMEData( const MEData& me_data )
 {
     // Count the number of intra blocks
     const TwoDArray<PredMode>& modes = me_data.Mode();
@@ -356,10 +356,10 @@ void FrameCompressor::AnalyseMEData( const MEData& me_data )
   
 }
 
-float FrameCompressor::GetCompLambda( const FrameParams& fparams,
+float PictureCompressor::GetCompLambda( const PictureParams& fparams,
                                       const CompSort csort )
 {
-    const FrameSort fsort = fparams.FSort();
+    const PictureSort fsort = fparams.PicSort();
     
     float lambda;
     
@@ -368,7 +368,7 @@ float FrameCompressor::GetCompLambda( const FrameParams& fparams,
         lambda= m_encparams.ILambda();
         if ( m_is_a_cut )
         {
-            // The intra frame is inserted so we can lower the quality
+            // The intra picture is inserted so we can lower the quality
             lambda *= 5;
 
         }
@@ -376,16 +376,16 @@ float FrameCompressor::GetCompLambda( const FrameParams& fparams,
     else
     {
         double log_intra_lambda = std::log10( m_encparams.ILambda() );
-        double log_frame_lambda;
+        double log_picture_lambda;
 
-        if (fparams.IsBFrame() )
-            log_frame_lambda= std::log10( m_encparams.L2Lambda() );
+        if (fparams.IsBPicture() )
+            log_picture_lambda= std::log10( m_encparams.L2Lambda() );
         else
-            log_frame_lambda= std::log10( m_encparams.L1Lambda() );
+            log_picture_lambda= std::log10( m_encparams.L1Lambda() );
 
 
         lambda= std::pow(10.0, ( (1.7*m_intra_ratio*log_intra_lambda+
-                         (100.0-2*m_intra_ratio)*log_frame_lambda )/100.0) );
+                         (100.0-2*m_intra_ratio)*log_picture_lambda )/100.0) );
     }
 
 
@@ -397,7 +397,7 @@ float FrameCompressor::GetCompLambda( const FrameParams& fparams,
     return lambda;
 }
 
-void FrameCompressor::SetupCodeBlocks( SubbandList& bands )
+void PictureCompressor::SetupCodeBlocks( SubbandList& bands )
 {
     int xregions;
     int yregions;
@@ -424,12 +424,12 @@ void FrameCompressor::SetupCodeBlocks( SubbandList& bands )
     }// band_num
 }
 
-void FrameCompressor::SelectQuantisers( CoeffArray& coeff_data ,
+void PictureCompressor::SelectQuantisers( CoeffArray& coeff_data ,
                                        SubbandList& bands ,
                                        const float lambda,
                                        OneDArray<unsigned int>& est_bits,
                                        const CodeBlockMode cb_mode,
-                                       const FrameSort fsort,
+                                       const PictureSort fsort,
                                        const CompSort csort )
 {
 
@@ -486,8 +486,8 @@ void FrameCompressor::SelectQuantisers( CoeffArray& coeff_data ,
     }
 }
 
-int FrameCompressor::SelectMultiQuants( CoeffArray& coeff_data , SubbandList& bands , 
-    const int band_num , const float lambda, const FrameSort fsort, const CompSort csort)
+int PictureCompressor::SelectMultiQuants( CoeffArray& coeff_data , SubbandList& bands , 
+    const int band_num , const float lambda, const PictureSort fsort, const CompSort csort)
 {
     Subband& node( bands( band_num ) );
 
@@ -496,7 +496,7 @@ int FrameCompressor::SelectMultiQuants( CoeffArray& coeff_data , SubbandList& ba
 
     QuantChooser qchooser( coeff_data , lambda );
 
-    // For the DC band in I frames, remove the average
+    // For the DC band in I pictures, remove the average
     if ( band_num == bands.Length() && fsort.IsIntra() )
         AddSubAverage( coeff_data , node.Xl() , node.Yl() , SUBTRACT);
 
@@ -518,7 +518,7 @@ int FrameCompressor::SelectMultiQuants( CoeffArray& coeff_data , SubbandList& ba
 }
 
 
-void FrameCompressor::AddSubAverage( CoeffArray& coeff_data, int xl, int yl ,
+void PictureCompressor::AddSubAverage( CoeffArray& coeff_data, int xl, int yl ,
                                     AddOrSub dirn)
 {
 

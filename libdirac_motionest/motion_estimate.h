@@ -43,7 +43,7 @@
 namespace dirac
 {
 
-    class FrameBuffer;
+    class PictureBuffer;
 
 
     //! Class to handle the whole motion estimation process. 
@@ -53,7 +53,7 @@ namespace dirac
      three stages. 
 
      First a pixel-accurate estimate is formed by looking at the current 
-     frame data and the data from the reference frame(s). Motion vectors
+     picture data and the data from the reference picture(s). Motion vectors
      are found for every block.
 
      Second, these pixel-accurate motion vectors are refined to sub-pixel
@@ -76,7 +76,7 @@ namespace dirac
         ~MotionEstimator(){}
 
         //! Do the motion estimation
-        void DoME(const FrameBuffer& my_buffer , int frame_num , MEData& me_data);
+        void DoME(const PictureBuffer& my_buffer , int frame_num , MEData& me_data);
 
     private:
         //! Copy constructor: private, body-less - class should not be copied
@@ -86,7 +86,7 @@ namespace dirac
         MotionEstimator& operator=( const MotionEstimator& rhs );
 
         //! Go through all the intra blocks and extract the chroma dc values to be coded
-        void SetChromaDC(const FrameBuffer& my_buffer, int frame_num, MvData& mv_data);
+        void SetChromaDC(const PictureBuffer& my_buffer, int frame_num, MvData& mv_data);
 
         //! Called by previous fn for each component
         void SetChromaDC(const PicArray& pic_data, MvData& mv_data,CompSort csort);        

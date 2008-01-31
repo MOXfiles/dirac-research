@@ -85,7 +85,7 @@ void QualityMonitor::WriteLog()
     std::cout<<m_totalquality_averageV/m_allframe_total<<std::endl;
 
 
-    std::cout<<std::endl<<"Mean PSNR values by frame type and component";
+    std::cout<<std::endl<<"Mean PSNR values by picture type and component";
     std::cout<<std::endl<<"--------------------------------------------";
     std::cout<<std::endl;
 
@@ -117,9 +117,9 @@ void QualityMonitor::WriteLog()
     std::cout<<std::endl<<"-----------------||---------------------------------------------------";
 }
 
-void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame )
+void QualityMonitor::UpdateModel(const Picture& ld_frame, const Picture& orig_frame )
 {
-    const FrameSort& fsort = ld_frame.GetFparams().FSort();
+    const PictureSort& fsort = ld_frame.GetPparams().PicSort();
     int idx = fsort.IsIntra() ? 0 : (fsort.IsRef() ? 1 : 2);
 
     double fqualityY, fqualityU, fqualityV;
@@ -149,7 +149,7 @@ void QualityMonitor::UpdateModel(const Frame& ld_frame, const Frame& orig_frame 
 
     if (m_encparams.Verbose() )
     {
-        std::cout<<std::endl<< (!m_encparams.FieldCoding() ? "Frame" : "Field");
+        std::cout<<std::endl<< (!m_encparams.FieldCoding() ? "Picture" : "Field");
         std::cout << " PSNR: Y="<<fqualityY;
         std::cout<<", U="<<fqualityU;
         std::cout<<", V="<<fqualityV;

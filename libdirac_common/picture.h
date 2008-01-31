@@ -35,66 +35,66 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-#ifndef _FRAME_H_
-#define _FRAME_H_
+#ifndef _PICTURE_H_
+#define _PICTURE_H_
 
 #include <libdirac_common/common.h>
 
 namespace dirac
 {
-    //! A class for encapsulating all the data relating to a frame.
+    //! A class for encapsulating all the data relating to a picture.
     /*!
-        A class for encapsulating all the data relating to a frame - all the 
+        A class for encapsulating all the data relating to a picture - all the 
         component data, including upconverted data.
      */
-    class Frame
+    class Picture
     {
 
     public:
 
         //! Constructor
         /*!
-            Constructor initialises the frame parameters and the data
+            Constructor initialises the picture parameters and the data
          */    
-        Frame( const FrameParams& fp );
+        Picture( const PictureParams& fp );
 
         //! Copy constructor. Private as not currently used [may want to implement reference counting later.]
-        Frame(const Frame& cpy);
+        Picture(const Picture& cpy);
 
         //! Destructor
-        virtual ~Frame();
+        virtual ~Picture();
 
         //! Assignment =. Private as not currently used [may want to implement reference counting later.]
-        Frame& operator=( const Frame& rhs );
+        Picture& operator=( const Picture& rhs );
 
-        //! Frame Copy
+        //! Picture Copy
         /*!
-            Copy contents of frame into the output frame passed to it 
-            retaining the frame dimensions of the output frame.
+            Copy contents of picture into the output picture passed to it 
+            retaining the picture dimensions of the output picture.
         */
-        void CopyContents(Frame& out ) const;
+        void CopyContents(Picture& out ) const;
 
-        //! Frame Fill
+        //! Picture Fill
         /*!
-            Initialise contents of frame with value provided
+            Initialise contents of picture with value provided
         */
         void Fill(ValueType val );
 
         //gets and sets
-        //! Gets the frame parameters
-        FrameParams& GetFparams() const  {return m_fparams;}
+        //! Gets the picture parameters
+        PictureParams& GetPparams() const  {return m_fparams;}
 
-        //! Sets the frame sort
-        void SetFrameSort( const FrameSort fs ){m_fparams.SetFSort( fs ); }
+        //! Sets the picture sort
+        void SetPictureSort( const PictureSort fs ){m_fparams.SetPicSort( fs ); }
 
-        //! Sets the frame type
-        void SetFrameType( const FrameType ftype ){m_fparams.SetFrameType( ftype ); }
+        //! Sets the picture type
+        void SetPictureType( const PictureType ftype ){m_fparams.SetPictureType( ftype ); }
 
-        //! Sets the frame type
+        //! Sets the picture type
         void SetReferenceType( const ReferenceType rtype ){m_fparams.SetReferenceType( rtype ); }
 
         //! Reconfigures the the framend to the new parameters. 
-        void ReconfigFrame( const FrameParams &fp );
+        void ReconfigFrame( const PictureParams &fp );
 
         //! Returns the luma data array
         PicArray& Ydata() {return *m_Y_data;}
@@ -157,7 +157,7 @@ namespace dirac
         void ClipUpData();
 
     private:
-        mutable FrameParams m_fparams;
+        mutable PictureParams m_fparams;
         PicArray* m_Y_data;//the 
         PicArray* m_U_data;//component
         PicArray* m_V_data;//data
@@ -165,7 +165,7 @@ namespace dirac
         mutable PicArray* m_upU_data;//create them on the fly even in const
         mutable PicArray* m_upV_data;//functions.
 
-        //! Initialises the frame once the frame parameters have been set
+        //! Initialises the picture once the picture parameters have been set
         void Init();
 
         //! Delete all the data

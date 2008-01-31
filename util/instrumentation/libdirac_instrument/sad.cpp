@@ -39,10 +39,10 @@
 using namespace dirac_instr;
 
 // constructor
-DrawSad::DrawSad(Frame & frame, DrawFrameMotionParams & draw_params, const TwoDArray<MvCostData> & cost, const TwoDArray<PredMode> & mode, 
+DrawSad::DrawSad(Picture & picture, DrawPictureMotionParams & draw_params, const TwoDArray<MvCostData> & cost, const TwoDArray<PredMode> & mode, 
                  int scale)
 :
-    DrawOverlay(frame, draw_params),
+    DrawOverlay(picture, draw_params),
     m_scale(scale),
     m_cost(cost),
     m_mode(mode)
@@ -68,20 +68,20 @@ void DrawSad::DrawBlock(int j, int i)
         int xidx = (i*m_draw_params.MvYBlockX());
         for (int ypx=0; ypx<m_draw_params.MvYBlockY(); ++ypx)
         {
-            if ((yidx+ypx)>=m_frame.Ydata().LengthY() ||
-                (xidx+m_draw_params.MvYBlockX()-1)>= m_frame.Ydata().LengthX())
+            if ((yidx+ypx)>=m_picture.Ydata().LengthY() ||
+                (xidx+m_draw_params.MvYBlockX()-1)>= m_picture.Ydata().LengthX())
                 break;
-            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())+ypx][(i*m_draw_params.MvYBlockX())] = 250;
-            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())+ypx][(i*m_draw_params.MvYBlockX())+m_draw_params.MvYBlockX()-1] = 250;
+            m_picture.Ydata()[(j*m_draw_params.MvYBlockY())+ypx][(i*m_draw_params.MvYBlockX())] = 250;
+            m_picture.Ydata()[(j*m_draw_params.MvYBlockY())+ypx][(i*m_draw_params.MvYBlockX())+m_draw_params.MvYBlockX()-1] = 250;
         }// ypx
 
         for (int xpx=0; xpx<m_draw_params.MvYBlockX(); ++xpx)
         {
-            if ((yidx+m_draw_params.MvYBlockY()-1)>=m_frame.Ydata().LengthY() ||
-                (xidx+xpx)>= m_frame.Ydata().LengthX())
+            if ((yidx+m_draw_params.MvYBlockY()-1)>=m_picture.Ydata().LengthY() ||
+                (xidx+xpx)>= m_picture.Ydata().LengthX())
                 break;
-            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())][(i*m_draw_params.MvYBlockX())+xpx] = 250;
-            m_frame.Ydata()[(j*m_draw_params.MvYBlockY())+m_draw_params.MvYBlockY()-1][(i*m_draw_params.MvYBlockX())+xpx] = 250;
+            m_picture.Ydata()[(j*m_draw_params.MvYBlockY())][(i*m_draw_params.MvYBlockX())+xpx] = 250;
+            m_picture.Ydata()[(j*m_draw_params.MvYBlockY())+m_draw_params.MvYBlockY()-1][(i*m_draw_params.MvYBlockX())+xpx] = 250;
         }// xpx
     }
 }

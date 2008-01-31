@@ -110,13 +110,13 @@ typedef struct
     dirac_parseparams_t parse_params;
     /*! source parameters */
     dirac_sourceparams_t src_params;
-    /*! frame parameters */
-    dirac_frameparams_t frame_params;
+    /*! picture parameters */
+    dirac_picparams_t picture_params;
     /*! void pointer to internal parser */
     void *parser;
-    /*! frame buffer to hold luma and chroma data */
+    /*! frame (NOT picture) buffer to hold luma and chroma data */
     dirac_framebuf_t *fbuf;
-    /*! boolean flag that indicates if a decoded frame is available */
+    /*! boolean flag that indicates if a decoded frame (NOT picture) is available */
     int frame_avail;
     /*! verbose output */
     int verbose;

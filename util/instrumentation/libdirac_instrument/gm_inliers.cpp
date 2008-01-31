@@ -39,9 +39,9 @@
 using namespace dirac_instr;
 
 // constructor
-DrawGMInliers::DrawGMInliers(Frame & frame, DrawFrameMotionParams & draw_params, const TwoDArray<int> & inliers)
+DrawGMInliers::DrawGMInliers(Picture & picture, DrawPictureMotionParams & draw_params, const TwoDArray<int> & inliers)
 :
-    DrawOverlay(frame, draw_params),
+    DrawOverlay(picture, draw_params),
     m_inliers(inliers)
 {}
 
@@ -68,7 +68,7 @@ void DrawGMInliers::DrawLegend()
     for (int ypx=m_draw_params.PicY()-33; ypx<m_draw_params.PicY(); ++ypx)
     {
         for (int xpx=7; xpx>=0; --xpx)
-            m_frame.Ydata()[ypx][xpx]=500; // grey
+            m_picture.Ydata()[ypx][xpx]=500; // grey
     }
 
     int U=0, V=0;
@@ -84,8 +84,8 @@ void DrawGMInliers::DrawLegend()
     // black horizontal lines
     for (int xpx=15; xpx>=0; --xpx)
     {
-        m_frame.Ydata()[m_draw_params.PicY()-33][xpx]=0;
-        m_frame.Ydata()[m_draw_params.PicY()-17][xpx]=0;
+        m_picture.Ydata()[m_draw_params.PicY()-33][xpx]=0;
+        m_picture.Ydata()[m_draw_params.PicY()-17][xpx]=0;
     }
 
     // draw '1 0' label

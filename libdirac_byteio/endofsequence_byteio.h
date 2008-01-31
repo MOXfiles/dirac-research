@@ -46,7 +46,7 @@
 #include <libdirac_byteio/parseunit_byteio.h>      // Parent class
 
 // DIRAC includes
-#include <libdirac_common/common.h>                // FrameType etc
+#include <libdirac_common/common.h>                // PictureType etc
 
 namespace dirac
 {
@@ -91,7 +91,7 @@ namespace dirac
    private:
       
         /**
-        * Calculates parse-code based on frame parameters
+        * Calculates parse-code based on picture parameters
         *@return Char bit-set 
         */
         unsigned char CalcParseCode() const;
