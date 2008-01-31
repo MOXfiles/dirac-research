@@ -149,7 +149,7 @@ void QualityMonitor::UpdateModel(const Picture& ld_frame, const Picture& orig_fr
 
     if (m_encparams.Verbose() )
     {
-        std::cout<<std::endl<< (!m_encparams.FieldCoding() ? "Picture" : "Field");
+        std::cout<<std::endl<< (!m_encparams.FieldCoding() ? "Frame" : "Field");
         std::cout << " PSNR: Y="<<fqualityY;
         std::cout<<", U="<<fqualityU;
         std::cout<<", V="<<fqualityV;
