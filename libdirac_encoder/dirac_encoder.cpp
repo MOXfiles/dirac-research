@@ -870,7 +870,6 @@ static bool InitialiseEncoder (const dirac_encoder_context_t *enc_ctx, bool verb
         if (encoder->enc_ctx.decode_flag)
         {
             int bufsize = (encoder->enc_ctx.src_params.width * encoder->enc_ctx.src_params.height)+ 2*(encoder->enc_ctx.src_params.chroma_width*encoder->enc_ctx.src_params.chroma_height);
-
             encoder->dec_buf.buf[0] = new unsigned char [bufsize];
             encoder->dec_buf.buf[1] = encoder->dec_buf.buf[0] +
                 (encoder->enc_ctx.src_params.width * encoder->enc_ctx.src_params.height);

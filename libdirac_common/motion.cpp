@@ -696,20 +696,24 @@ unsigned int GetUMean(std::vector<unsigned int>& values)
 //! Return the mean of a set of signed integer values
 int GetSMean(std::vector<int>& values)
 {
+    if (values.size()==0)
+        return 0;
+
     int sum=0;
-    for (unsigned int I=0;I<values.size();++I)
-        sum+=values[I];
-    if ( sum>0 )
+    for (unsigned int i=0;i<values.size();++i)
+        sum+=values[i];
+    if ( sum>=0 )
     {
         sum+=(values.size()>>1);
         sum/=values.size();
     }
     else
     {
-        sum = -sum;
+        int old_sum = sum;
+        sum -= values.size()*old_sum;
         sum+=(values.size()>>1);
         sum/=values.size();
-        sum = -sum;
+        sum += old_sum;
     }
 
     return sum;
