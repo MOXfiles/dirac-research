@@ -45,8 +45,8 @@ class MotionCompTest : public CPPUNIT_NS::TestFixture
   CPPUNIT_TEST_SUITE( MotionCompTest );
   CPPUNIT_TEST( testZeroMotionComp );
   CPPUNIT_TEST( testAddandSubMotionComp );
-  CPPUNIT_TEST( testL2_frame );
-  CPPUNIT_TEST( testI_frame );
+  CPPUNIT_TEST( testL2_picture );
+  CPPUNIT_TEST( testI_picture );
   CPPUNIT_TEST( testRef2 );
   CPPUNIT_TEST( testRef1and2 );
   CPPUNIT_TEST_SUITE_END();
@@ -60,8 +60,8 @@ public:
 
   void testZeroMotionComp();
   void testAddandSubMotionComp();
-  void testL2_frame();
-  void testI_frame();
+  void testL2_picture();
+  void testI_picture();
   void testRef2();
   void testRef1and2();
 private:
@@ -70,7 +70,7 @@ private:
 private:
   void testZeroMotionComp(MVPrecisionType precision);
   void testAddandSubMotionComp(MVPrecisionType precision);
-  void testL2_frame(MVPrecisionType precision);
+  void testL2_picture(MVPrecisionType precision);
   void testRef2(MVPrecisionType precision);
   void testRef1and2(MVPrecisionType precision);
 };

@@ -38,8 +38,8 @@
 #include "motion_comp_test.h"
 #include "frames_test.h"
 
-#include <libdirac_common/frame.h>
-#include <libdirac_common/frame_buffer.h>
+#include <libdirac_common/picture.h>
+#include <libdirac_common/picture_buffer.h>
 #include <libdirac_common/mot_comp.h>
 using namespace dirac;
 
@@ -108,12 +108,12 @@ void MotionCompTest::testZeroMotionComp()
 
 void MotionCompTest::testZeroMotionComp(MVPrecisionType precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
-    CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, 1, true);
+    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
+    CodecParams cp(VIDEO_FORMAT_CIF, INTER_PICTURE, 1, true);
     OLBParams bparams(12, 12, 8, 8);
 
     cp.SetMVPrecision(precision);
-    cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
+    cp.SetBlockSizes(bparams, pbuffer.GetPictureParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
@@ -127,34 +127,34 @@ void MotionCompTest::testZeroMotionComp(MVPrecisionType precision)
     
     MvData* mv_data = setupMV1Data(cp, 0, 0, REF1_ONLY);
 
-    FrameParams fp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    PictureParams pp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
 
-    fp.SetFSort(FrameSort::IntraRefFrameSort());
-    fp.SetFrameNum(0);
-    fbuffer.PushFrame(fp);
-    FramesTest::setupFrame(fbuffer.GetFrame(0),0);
+    pp.SetPicSort(PictureSort::IntraRefPictureSort());
+    pp.SetPictureNum(0);
+    pbuffer.PushPicture(pp);
+    PicturesTest::setupPicture(pbuffer.GetPicture(0),0);
 
-    fp.SetFSort(FrameSort::InterRefFrameSort());
-    fp.SetFrameNum(1);
-    fp.Refs().push_back(0);
-    fbuffer.PushFrame(fp);
-    FramesTest::zeroFrame(fbuffer.GetFrame(1));
+    pp.SetPicSort(PictureSort::InterRefPictureSort());
+    pp.SetPictureNum(1);
+    pp.Refs().push_back(0);
+    pbuffer.PushPicture(pp);
+    PicturesTest::zeroPicture(pbuffer.GetPicture(1));
 
-    fp.SetFrameNum(2);
-    fbuffer.PushFrame(fp);
-    FramesTest::zeroFrame(fbuffer.GetFrame(2));
+    pp.SetPictureNum(2);
+    pbuffer.PushPicture(pp);
+    PicturesTest::zeroPicture(pbuffer.GetPicture(2));
 
-    // mc.CompensateFrame(ADD, fbuffer, 1, *mv_data);
-    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 1, *mv_data);
+    // mc.CompensatePicture(ADD, pbuffer, 1, *mv_data);
+    MotionCompensator::CompensatePicture(cp, ADD, pbuffer, 1, *mv_data);
 
     // MotionCompensator mc2( cp );
 
     //too many rounding errors for this to be exactly true;
-    //CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(0), fbuffer.GetFrame(1)));
-    // mc2.CompensateFrame(SUBTRACT, fbuffer, 1, *mv_data);
-    MotionCompensator::CompensateFrame(cp, SUBTRACT, fbuffer, 1, *mv_data);
+    //CPPUNIT_ASSERT (PicturesTest::equalPictures (pbuffer.GetPicture(0), pbuffer.GetPicture(1)));
+    // mc2.CompensatePicture(SUBTRACT, pbuffer, 1, *mv_data);
+    MotionCompensator::CompensatePicture(cp, SUBTRACT, pbuffer, 1, *mv_data);
 
-    CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(2), fbuffer.GetFrame(1)));
+    CPPUNIT_ASSERT (PicturesTest::equalPictures (pbuffer.GetPicture(2), pbuffer.GetPicture(1)));
     delete mv_data;
 }
 
@@ -168,11 +168,11 @@ void MotionCompTest::testAddandSubMotionComp()
 
 void MotionCompTest::testAddandSubMotionComp(MVPrecisionType precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
-    CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, 1, true);
+    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
+    CodecParams cp(VIDEO_FORMAT_CIF, INTER_PICTURE, 1, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
-    cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
+    cp.SetBlockSizes(bparams, pbuffer.GetPictureParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
     cp.SetOrigXl( X_SIZE );
@@ -184,50 +184,50 @@ void MotionCompTest::testAddandSubMotionComp(MVPrecisionType precision)
     
     MvData* mv_data = setupMV1Data(cp, 5, 5, REF1_ONLY);
 
-    FrameParams fp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    PictureParams pp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
 
-    fp.SetFSort(FrameSort::IntraRefFrameSort());
-    fp.SetFrameNum(0);
-    fbuffer.PushFrame(fp);
-    FramesTest::setupFrame(fbuffer.GetFrame(0),0);
+    pp.SetPicSort(PictureSort::IntraRefPictureSort());
+    pp.SetPictureNum(0);
+    pbuffer.PushPicture(pp);
+    PicturesTest::setupPicture(pbuffer.GetPicture(0),0);
 
-    fp.SetFSort(FrameSort::InterRefFrameSort());
-    fp.SetFrameNum(1);
-    fp.Refs().push_back(0);
-    fbuffer.PushFrame(fp);
-    FramesTest::zeroFrame(fbuffer.GetFrame(1));
+    pp.SetPicSort(PictureSort::InterRefPictureSort());
+    pp.SetPictureNum(1);
+    pp.Refs().push_back(0);
+    pbuffer.PushPicture(pp);
+    PicturesTest::zeroPicture(pbuffer.GetPicture(1));
 
-    fp.SetFrameNum(2);
-    fbuffer.PushFrame(fp);
-    FramesTest::zeroFrame(fbuffer.GetFrame(2));
+    pp.SetPictureNum(2);
+    pbuffer.PushPicture(pp);
+    PicturesTest::zeroPicture(pbuffer.GetPicture(2));
 
     // MotionCompensator mc( cp );
-    // mc.CompensateFrame(ADD, fbuffer, 1, *mv_data);
-    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 1, *mv_data);
+    // mc.CompensatePicture(ADD, pbuffer, 1, *mv_data);
+    MotionCompensator::CompensatePicture(cp, ADD, pbuffer, 1, *mv_data);
 
     // MotionCompensator mc2( cp );
-    // mc2.CompensateFrame(SUBTRACT, fbuffer, 1, *mv_data);
-    MotionCompensator::CompensateFrame(cp, SUBTRACT, fbuffer, 1, *mv_data);
+    // mc2.CompensatePicture(SUBTRACT, pbuffer, 1, *mv_data);
+    MotionCompensator::CompensatePicture(cp, SUBTRACT, pbuffer, 1, *mv_data);
 
-    CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(2), fbuffer.GetFrame(1)));
+    CPPUNIT_ASSERT (PicturesTest::equalPictures (pbuffer.GetPicture(2), pbuffer.GetPicture(1)));
     delete mv_data;
 }
 
-void MotionCompTest::testL2_frame()
+void MotionCompTest::testL2_picture()
 {
     for (int i = 0; i < 4; ++i)
     {
-        testL2_frame(static_cast<MVPrecisionType>(i));
+        testL2_picture(static_cast<MVPrecisionType>(i));
     }
 }
 
-void MotionCompTest::testL2_frame(MVPrecisionType precision)
+void MotionCompTest::testL2_picture(MVPrecisionType precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
-    CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, 1, true);
+    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
+    CodecParams cp(VIDEO_FORMAT_CIF, INTER_PICTURE, 1, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
-    cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
+    cp.SetBlockSizes(bparams, pbuffer.GetPictureParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
     cp.SetOrigXl( X_SIZE );
@@ -239,42 +239,42 @@ void MotionCompTest::testL2_frame(MVPrecisionType precision)
     
     MvData* mv_data = setupMV1Data(cp, 5, 5, REF1_ONLY);
 
-    FrameParams fp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    PictureParams pp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
 
-    fp.SetFSort(FrameSort::IntraRefFrameSort());
-    fp.SetFrameNum(0);
-    fbuffer.PushFrame(fp);
-    FramesTest::setupFrame(fbuffer.GetFrame(0),0);
+    pp.SetPicSort(PictureSort::IntraRefPictureSort());
+    pp.SetPictureNum(0);
+    pbuffer.PushPicture(pp);
+    PicturesTest::setupPicture(pbuffer.GetPicture(0),0);
 
-    fp.SetFSort(FrameSort::InterNonRefFrameSort());
-    fp.SetFrameNum(1);
-    fp.Refs().push_back(0);
-    fbuffer.PushFrame(fp);
-    FramesTest::zeroFrame(fbuffer.GetFrame(1));
+    pp.SetPicSort(PictureSort::InterNonRefPictureSort());
+    pp.SetPictureNum(1);
+    pp.Refs().push_back(0);
+    pbuffer.PushPicture(pp);
+    PicturesTest::zeroPicture(pbuffer.GetPicture(1));
 
-    fp.SetFrameNum(2);
-    fbuffer.PushFrame(fp);
-    FramesTest::zeroFrame(fbuffer.GetFrame(2));
+    pp.SetPictureNum(2);
+    pbuffer.PushPicture(pp);
+    PicturesTest::zeroPicture(pbuffer.GetPicture(2));
 
     // MotionCompensator mc( cp );
-    // mc.CompensateFrame(ADD, fbuffer, 1, *mv_data);
-    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 1, *mv_data);
+    // mc.CompensatePicture(ADD, pbuffer, 1, *mv_data);
+    MotionCompensator::CompensatePicture(cp, ADD, pbuffer, 1, *mv_data);
 
     // MotionCompensator mc2( cp );
-    // mc2.CompensateFrame(SUBTRACT, fbuffer, 1, *mv_data);
-    MotionCompensator::CompensateFrame(cp, SUBTRACT, fbuffer, 1, *mv_data);
+    // mc2.CompensatePicture(SUBTRACT, pbuffer, 1, *mv_data);
+    MotionCompensator::CompensatePicture(cp, SUBTRACT, pbuffer, 1, *mv_data);
 
-    CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(2), fbuffer.GetFrame(1)));
+    CPPUNIT_ASSERT (PicturesTest::equalPictures (pbuffer.GetPicture(2), pbuffer.GetPicture(1)));
     delete mv_data;
 }
 
 
-void MotionCompTest::testI_frame()
+void MotionCompTest::testI_picture()
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
-    CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, 2, true);
+    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
+    CodecParams cp(VIDEO_FORMAT_CIF, INTER_PICTURE, 2, true);
     OLBParams bparams(12, 12, 8, 8);
-    cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
+    cp.SetBlockSizes(bparams, pbuffer.GetPictureParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
     cp.SetOrigXl( X_SIZE );
@@ -287,25 +287,25 @@ void MotionCompTest::testI_frame()
     
     MvData* mv_data = setupMV1Data(cp, 5, 5, REF1_ONLY);
 
-    FrameParams fp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    PictureParams pp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
 
-    fp.SetFSort(FrameSort::IntraRefFrameSort());
-    fp.SetFrameNum(0);
-    fbuffer.PushFrame(fp);
-    FramesTest::setupFrame(fbuffer.GetFrame(0),0);
+    pp.SetPicSort(PictureSort::IntraRefPictureSort());
+    pp.SetPictureNum(0);
+    pbuffer.PushPicture(pp);
+    PicturesTest::setupPicture(pbuffer.GetPicture(0),0);
 
-    fp.SetFSort(FrameSort::IntraRefFrameSort());
-    fp.SetFrameNum(1);
-    fp.Refs().push_back(0);
-    fbuffer.PushFrame(fp);
-    FramesTest::setupFrame(fbuffer.GetFrame(1),0);
+    pp.SetPicSort(PictureSort::IntraRefPictureSort());
+    pp.SetPictureNum(1);
+    pp.Refs().push_back(0);
+    pbuffer.PushPicture(pp);
+    PicturesTest::setupPicture(pbuffer.GetPicture(1),0);
 
 
     // MotionCompensator mc( cp );
-    // mc.CompensateFrame(ADD, fbuffer, 1, *mv_data);
-    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 1, *mv_data);
+    // mc.CompensatePicture(ADD, pbuffer, 1, *mv_data);
+    MotionCompensator::CompensatePicture(cp, ADD, pbuffer, 1, *mv_data);
 
-    CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(0), fbuffer.GetFrame(1)));
+    CPPUNIT_ASSERT (PicturesTest::equalPictures (pbuffer.GetPicture(0), pbuffer.GetPicture(1)));
     delete mv_data;
 }
 
@@ -320,11 +320,11 @@ void MotionCompTest::testRef2()
 
 void MotionCompTest::testRef2(MVPrecisionType precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
-    CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, 2, true);
+    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
+    CodecParams cp(VIDEO_FORMAT_CIF, INTER_PICTURE, 2, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
-    cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
+    cp.SetBlockSizes(bparams, pbuffer.GetPictureParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
     cp.SetOrigXl( X_SIZE );
@@ -338,36 +338,36 @@ void MotionCompTest::testRef2(MVPrecisionType precision)
     MvData* mv_data = setupMV1Data(cp, 5, 5, REF2_ONLY);
     setupMV2Data(mv_data, 0, 0);
 
-    FrameParams fp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    PictureParams pp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
 
-    fp.SetFSort(FrameSort::IntraRefFrameSort());
-    fp.SetFrameNum(0);
-    fbuffer.PushFrame(fp);
-    FramesTest::setupFrame(fbuffer.GetFrame(0),0);
+    pp.SetPicSort(PictureSort::IntraRefPictureSort());
+    pp.SetPictureNum(0);
+    pbuffer.PushPicture(pp);
+    PicturesTest::setupPicture(pbuffer.GetPicture(0),0);
 
-    fp.SetFSort(FrameSort::InterRefFrameSort());
-    fp.SetFrameNum(1);
-    fp.Refs().push_back(2);
-    fp.Refs().push_back(0);
-    fbuffer.PushFrame(fp);
-    FramesTest::zeroFrame(fbuffer.GetFrame(1));
+    pp.SetPicSort(PictureSort::InterRefPictureSort());
+    pp.SetPictureNum(1);
+    pp.Refs().push_back(2);
+    pp.Refs().push_back(0);
+    pbuffer.PushPicture(pp);
+    PicturesTest::zeroPicture(pbuffer.GetPicture(1));
 
-    fp.SetFrameNum(2);
-    fbuffer.PushFrame(fp);
-    FramesTest::zeroFrame(fbuffer.GetFrame(2));
+    pp.SetPictureNum(2);
+    pbuffer.PushPicture(pp);
+    PicturesTest::zeroPicture(pbuffer.GetPicture(2));
 
     // MotionCompensator mc( cp );
-    // mc.CompensateFrame(ADD, fbuffer, 1, *mv_data);
-    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 1, *mv_data);
+    // mc.CompensatePicture(ADD, pbuffer, 1, *mv_data);
+    MotionCompensator::CompensatePicture(cp, ADD, pbuffer, 1, *mv_data);
 
     //too many rounding errors for this to be exactly true;
-    //CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(0), fbuffer.GetFrame(1)));
+    //CPPUNIT_ASSERT (PicturesTest::equalPictures (pbuffer.GetPicture(0), pbuffer.GetPicture(1)));
 
     // MotionCompensator mc2( cp );
-    // mc2.CompensateFrame(SUBTRACT, fbuffer, 1, *mv_data);
-    MotionCompensator::CompensateFrame(cp, SUBTRACT, fbuffer, 1, *mv_data);
+    // mc2.CompensatePicture(SUBTRACT, pbuffer, 1, *mv_data);
+    MotionCompensator::CompensatePicture(cp, SUBTRACT, pbuffer, 1, *mv_data);
 
-    CPPUNIT_ASSERT (FramesTest::equalFrames (fbuffer.GetFrame(2), fbuffer.GetFrame(1)));
+    CPPUNIT_ASSERT (PicturesTest::equalPictures (pbuffer.GetPicture(2), pbuffer.GetPicture(1)));
     delete mv_data;
 }
 
@@ -381,11 +381,11 @@ void MotionCompTest::testRef1and2()
 
 void MotionCompTest::testRef1and2(MVPrecisionType precision)
 {
-    FrameBuffer fbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
-    CodecParams cp(VIDEO_FORMAT_CIF, INTER_FRAME, 2, true);
+    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
+    CodecParams cp(VIDEO_FORMAT_CIF, INTER_PICTURE, 2, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
-    cp.SetBlockSizes(bparams, fbuffer.GetFParams().CFormat());
+    cp.SetBlockSizes(bparams, pbuffer.GetPictureParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
     cp.SetOrigXl( X_SIZE );
@@ -403,50 +403,50 @@ void MotionCompTest::testRef1and2(MVPrecisionType precision)
     MvData* mv_data2 = setupMV1Data(cp, 5, 5, REF1AND2);
     setupMV2Data(mv_data2, 7, 3);
 
-    FrameParams fp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    PictureParams pp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
 
-    fp.SetFSort(FrameSort::IntraRefFrameSort());
-    fp.SetFrameNum(0);
-    fbuffer.PushFrame(fp);
-    FramesTest::setupFrame(fbuffer.GetFrame(0),0);
+    pp.SetPicSort(PictureSort::IntraRefPictureSort());
+    pp.SetPictureNum(0);
+    pbuffer.PushPicture(pp);
+    PicturesTest::setupPicture(pbuffer.GetPicture(0),0);
 
-    fp.SetFSort(FrameSort::IntraRefFrameSort());
-    fp.SetFrameNum(1);
-    fbuffer.PushFrame(fp);
-    FramesTest::setupFrame(fbuffer.GetFrame(1),50);
+    pp.SetPicSort(PictureSort::IntraRefPictureSort());
+    pp.SetPictureNum(1);
+    pbuffer.PushPicture(pp);
+    PicturesTest::setupPicture(pbuffer.GetPicture(1),50);
 
-    fp.SetFSort(FrameSort::InterRefFrameSort());
-    fp.SetFrameNum(2);
-    fp.Refs().push_back(0);
-    fp.Refs().push_back(1);
-    fbuffer.PushFrame(fp);
-    FramesTest::zeroFrame(fbuffer.GetFrame(2));
+    pp.SetPicSort(PictureSort::InterRefPictureSort());
+    pp.SetPictureNum(2);
+    pp.Refs().push_back(0);
+    pp.Refs().push_back(1);
+    pbuffer.PushPicture(pp);
+    PicturesTest::zeroPicture(pbuffer.GetPicture(2));
 
-    fp.SetFrameNum(3);
-    fbuffer.PushFrame(fp);
-    FramesTest::zeroFrame(fbuffer.GetFrame(3));
+    pp.SetPictureNum(3);
+    pbuffer.PushPicture(pp);
+    PicturesTest::zeroPicture(pbuffer.GetPicture(3));
 
     //MotionCompensator mc( cp );
 
-    //mc.CompensateFrame(ADD, fbuffer, 2, *mv_data);
-    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 2, *mv_data);
+    //mc.CompensatePicture(ADD, pbuffer, 2, *mv_data);
+    MotionCompensator::CompensatePicture(cp, ADD, pbuffer, 2, *mv_data);
 
     //MotionCompensator mc2( cp );
 
-    //mc2.CompensateFrame(ADD, fbuffer, 2, *mv_data1);
-    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 2, *mv_data1);
+    //mc2.CompensatePicture(ADD, pbuffer, 2, *mv_data1);
+    MotionCompensator::CompensatePicture(cp, ADD, pbuffer, 2, *mv_data1);
 
     // MotionCompensator mc3( cp );
 
-    // mc3.CompensateFrame(ADD, fbuffer, 3, *mv_data2);
-    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 3, *mv_data2);
+    // mc3.CompensatePicture(ADD, pbuffer, 3, *mv_data2);
+    MotionCompensator::CompensatePicture(cp, ADD, pbuffer, 3, *mv_data2);
 
     //MotionCompensator mc4( cp );
 
-    //mc4.CompensateFrame(ADD, fbuffer, 3, *mv_data2);
-    MotionCompensator::CompensateFrame(cp, ADD, fbuffer, 3, *mv_data2);
+    //mc4.CompensatePicture(ADD, pbuffer, 3, *mv_data2);
+    MotionCompensator::CompensatePicture(cp, ADD, pbuffer, 3, *mv_data2);
 
-    CPPUNIT_ASSERT (FramesTest::almostEqualFrames (fbuffer.GetFrame(2), fbuffer.GetFrame(3), 5    ));
+    CPPUNIT_ASSERT (PicturesTest::almostEqualPictures (pbuffer.GetPicture(2), pbuffer.GetPicture(3), 5    ));
     delete mv_data;
     delete mv_data1;
     delete mv_data2;

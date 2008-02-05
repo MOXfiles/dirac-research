@@ -37,15 +37,15 @@
 #ifndef FRAMES_TEST_H
 #define FRAMES_TEST_H
 #include <cppunit/extensions/HelperMacros.h>
-#include <libdirac_common/frame.h>
+#include <libdirac_common/picture.h>
 #include <libdirac_common/common.h>
-using dirac::Frame;
+using dirac::Picture;
 using dirac::PicArray;
 
-class FramesTest : public CPPUNIT_NS::TestFixture
+class PicturesTest : public CPPUNIT_NS::TestFixture
 {
     
-  CPPUNIT_TEST_SUITE( FramesTest );
+  CPPUNIT_TEST_SUITE( PicturesTest );
   CPPUNIT_TEST( testConstructor );
 //  CPPUNIT_TEST( testDefaultFParam );
   CPPUNIT_TEST( testCopyConstructor );
@@ -53,28 +53,28 @@ class FramesTest : public CPPUNIT_NS::TestFixture
   CPPUNIT_TEST_SUITE_END();
 
 public:
-  FramesTest();
-  virtual ~FramesTest();
+  PicturesTest();
+  virtual ~PicturesTest();
 
   virtual void setUp();
   virtual void tearDown();
 
   void testConstructor();
-  void testDefaultFParam();
+  void testDefaultPictureParams();
   void testCopyConstructor();
   void testAssignment();
 
-  static void setupFrame (Frame& frame, int start_val);
-  static void zeroFrame (Frame& frame);
+  static void setupPicture (Picture& picture, int start_val);
+  static void zeroPicture (Picture& picture);
   static bool zeroPicArray (PicArray &arr);
   static bool equalPicArrays (const PicArray &lhs, const PicArray &rhs);
   static bool almostEqualPicArrays (const PicArray &lhs, const PicArray &rhs, int allowedError);
-  static bool equalFrames (const Frame &lhs, const Frame &rhs);
-  static bool almostEqualFrames (const Frame &lhs, const Frame &rhs, int allowedError);
+  static bool equalPictures (const Picture &lhs, const Picture &rhs);
+  static bool almostEqualPictures (const Picture &lhs, const Picture &rhs, int allowedError);
   static bool setupPicArray (PicArray &arr, int start_val);
 private:
-  FramesTest( const FramesTest &copy );
-  void operator =( const FramesTest &copy );
+  PicturesTest( const PicturesTest &copy );
+  void operator =( const PicturesTest &copy );
 private:
 };
 #endif

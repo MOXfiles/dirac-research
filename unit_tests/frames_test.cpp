@@ -37,23 +37,23 @@
 #include "frames_test.h"
 #include "arrays_test.h"
 
-#include <libdirac_common/frame.h>
+#include <libdirac_common/picture.h>
 using namespace dirac;
 
 #include <memory>
 
 //NOTE: ensure that the suite is added to the default registry in
 //cppunit_testsuite.cpp
-CPPUNIT_TEST_SUITE_NAMED_REGISTRATION (FramesTest, coreSuiteName());
+CPPUNIT_TEST_SUITE_NAMED_REGISTRATION (PicturesTest, coreSuiteName());
 
-void FramesTest::setupFrame (Frame& frame, int start_val)
+void PicturesTest::setupPicture (Picture& picture, int start_val)
 {
-    setupPicArray(frame.Ydata(), start_val);
-    setupPicArray(frame.Udata(), start_val);
-    setupPicArray(frame.Vdata(), start_val);
+    setupPicArray(picture.Ydata(), start_val);
+    setupPicArray(picture.Udata(), start_val);
+    setupPicArray(picture.Vdata(), start_val);
 }
 
-bool FramesTest::setupPicArray (PicArray &arr, int start_val)
+bool PicturesTest::setupPicArray (PicArray &arr, int start_val)
 {
     char value =start_val; // use char to limit values to 8 bits
     int err_count = 0;
@@ -79,14 +79,14 @@ bool FramesTest::setupPicArray (PicArray &arr, int start_val)
     return true;
 }
 
-void FramesTest::zeroFrame (Frame& frame)
+void PicturesTest::zeroPicture (Picture& picture)
 {
-    zeroPicArray(frame.Ydata());
-    zeroPicArray(frame.Udata());
-    zeroPicArray(frame.Vdata());
+    zeroPicArray(picture.Ydata());
+    zeroPicArray(picture.Udata());
+    zeroPicArray(picture.Vdata());
 }
 
-bool FramesTest::zeroPicArray (PicArray &arr)
+bool PicturesTest::zeroPicArray (PicArray &arr)
 {
     short value =0;
     int err_count = 0;
@@ -112,7 +112,7 @@ bool FramesTest::zeroPicArray (PicArray &arr)
 }
 
 
-bool FramesTest::equalPicArrays (const PicArray &lhs, const PicArray &rhs)
+bool PicturesTest::equalPicArrays (const PicArray &lhs, const PicArray &rhs)
 {
     CPPUNIT_ASSERT_EQUAL (lhs.CSort(), rhs.CSort());
     CPPUNIT_ASSERT_EQUAL (lhs.LengthX(), rhs.LengthX());
@@ -139,7 +139,7 @@ bool FramesTest::equalPicArrays (const PicArray &lhs, const PicArray &rhs)
 }
 
 
-bool FramesTest::almostEqualPicArrays (const PicArray &lhs, const PicArray &rhs, int allowedError)
+bool PicturesTest::almostEqualPicArrays (const PicArray &lhs, const PicArray &rhs, int allowedError)
 {
     CPPUNIT_ASSERT_EQUAL (lhs.CSort(), rhs.CSort());
     CPPUNIT_ASSERT_EQUAL (lhs.LengthX(), rhs.LengthX());
@@ -165,21 +165,21 @@ bool FramesTest::almostEqualPicArrays (const PicArray &lhs, const PicArray &rhs,
     return true;
 }
 
-bool FramesTest::equalFrames (const Frame &lhs, const Frame &rhs)
+bool PicturesTest::equalPictures (const Picture &lhs, const Picture &rhs)
 {
-    CPPUNIT_ASSERT_EQUAL (lhs.GetFparams().CFormat(), rhs.GetFparams().CFormat() );
+    CPPUNIT_ASSERT_EQUAL (lhs.GetPparams().CFormat(), rhs.GetPparams().CFormat() );
     CPPUNIT_ASSERT (equalPicArrays(lhs.Ydata(), rhs.Ydata()));
     CPPUNIT_ASSERT (equalPicArrays(lhs.Udata(), rhs.Udata()));
     CPPUNIT_ASSERT (equalPicArrays(lhs.Vdata(), rhs.Vdata()));
-    CPPUNIT_ASSERT_EQUAL (lhs.GetFparams().LumaDepth(), rhs.GetFparams().LumaDepth() );
-    CPPUNIT_ASSERT_EQUAL (lhs.GetFparams().ChromaDepth(), rhs.GetFparams().ChromaDepth() );
+    CPPUNIT_ASSERT_EQUAL (lhs.GetPparams().LumaDepth(), rhs.GetPparams().LumaDepth() );
+    CPPUNIT_ASSERT_EQUAL (lhs.GetPparams().ChromaDepth(), rhs.GetPparams().ChromaDepth() );
 
     return true;
 }
 
-bool FramesTest::almostEqualFrames (const Frame &lhs, const Frame &rhs, int allowedError)
+bool PicturesTest::almostEqualPictures (const Picture &lhs, const Picture &rhs, int allowedError)
 {
-    CPPUNIT_ASSERT_EQUAL (lhs.GetFparams().CFormat(), rhs.GetFparams().CFormat() );
+    CPPUNIT_ASSERT_EQUAL (lhs.GetPparams().CFormat(), rhs.GetPparams().CFormat() );
     CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Ydata(), rhs.Ydata(), allowedError));
     CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Udata(), rhs.Udata(), allowedError));
     CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Vdata(), rhs.Vdata(), allowedError));
@@ -187,67 +187,67 @@ bool FramesTest::almostEqualFrames (const Frame &lhs, const Frame &rhs, int allo
     return true;
 }
 
-FramesTest::FramesTest()
+PicturesTest::PicturesTest()
 {
 }
 
-FramesTest::~FramesTest()
+PicturesTest::~PicturesTest()
 {
 }
 
-void FramesTest::setUp()
+void PicturesTest::setUp()
 {
 }
 
-void FramesTest::tearDown()
+void PicturesTest::tearDown()
 {
 }
 
-void FramesTest::testConstructor()
+void PicturesTest::testConstructor()
 {
-    FrameParams f_params(format444, 20, 30, 20, 30, 20, 30, 8, 8);
-    Frame frame(f_params);
+    PictureParams p_params(format444, 20, 30, 20, 30, 20, 30, 8, 8);
+    Picture picture(p_params);
 
-    CPPUNIT_ASSERT_EQUAL (20, frame.Ydata().LengthX());
-    CPPUNIT_ASSERT_EQUAL (30, frame.Ydata().LengthY());
-    CPPUNIT_ASSERT_EQUAL (20, frame.Ydata().LastX() - frame.Ydata().FirstX() + 1);
-    CPPUNIT_ASSERT_EQUAL (30, frame.Ydata().LastY() - frame.Ydata().FirstY() + 1);
+    CPPUNIT_ASSERT_EQUAL (20, picture.Ydata().LengthX());
+    CPPUNIT_ASSERT_EQUAL (30, picture.Ydata().LengthY());
+    CPPUNIT_ASSERT_EQUAL (20, picture.Ydata().LastX() - picture.Ydata().FirstX() + 1);
+    CPPUNIT_ASSERT_EQUAL (30, picture.Ydata().LastY() - picture.Ydata().FirstY() + 1);
 }
 
-void FramesTest::testDefaultFParam()
+void PicturesTest::testDefaultPictureParams()
 {
-    FrameParams f_params;
-    Frame frame(f_params);
+    PictureParams p_params;
+    Picture picture(p_params);
 
-    CPPUNIT_ASSERT_EQUAL (0, frame.Ydata().LengthX());
-    CPPUNIT_ASSERT_EQUAL (0, frame.Ydata().LengthY());
-    CPPUNIT_ASSERT_EQUAL (0, frame.Ydata().FirstX());
-    CPPUNIT_ASSERT_EQUAL (0, frame.Ydata().FirstY());
-    CPPUNIT_ASSERT_EQUAL (-1, frame.Ydata().LastX());
-    CPPUNIT_ASSERT_EQUAL (-1, frame.Ydata().LastY());
+    CPPUNIT_ASSERT_EQUAL (0, picture.Ydata().LengthX());
+    CPPUNIT_ASSERT_EQUAL (0, picture.Ydata().LengthY());
+    CPPUNIT_ASSERT_EQUAL (0, picture.Ydata().FirstX());
+    CPPUNIT_ASSERT_EQUAL (0, picture.Ydata().FirstY());
+    CPPUNIT_ASSERT_EQUAL (-1, picture.Ydata().LastX());
+    CPPUNIT_ASSERT_EQUAL (-1, picture.Ydata().LastY());
 }
 
-void FramesTest::testCopyConstructor()
+void PicturesTest::testCopyConstructor()
 {
-    FrameParams f_params(format444, 20, 30, 20, 30, 20, 30, 8, 8);
-    Frame frame(f_params);
-    setupFrame(frame, 0);
+    PictureParams p_params(format444, 20, 30, 20, 30, 20, 30, 8, 8);
+    Picture picture(p_params);
+    setupPicture(picture, 0);
     
-    Frame frame_copy(frame);
-    CPPUNIT_ASSERT (equalFrames (frame, frame_copy));
+    Picture picture_copy(picture);
+    CPPUNIT_ASSERT (equalPictures (picture, picture_copy));
 }
 
-void FramesTest::testAssignment()
+void PicturesTest::testAssignment()
 {
-    FrameParams f_params(format444, 20, 30, 20, 30, 20, 30, 8, 8);
-    Frame frame(f_params);
-    setupFrame(frame, 0);
+    PictureParams p_params(format444, 20, 30, 20, 30, 20, 30, 8, 8);
+    Picture picture(p_params);
+    setupPicture(picture, 0);
 
-    FrameParams f_params_copy(format444, 10, 10, 10, 10, 10, 10, 8, 8);
-    Frame frame_copy(f_params_copy);
+    PictureParams p_params_copy(format444, 10, 10, 10, 10, 10, 10, 8, 8);
+    Picture picture_copy(p_params_copy);
 
-    frame_copy = frame;
+    picture_copy = picture;
 
-    CPPUNIT_ASSERT (equalFrames (frame, frame_copy));
+    CPPUNIT_ASSERT (equalPictures (picture, picture_copy));
 }
 
