@@ -557,7 +557,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\libdirac_encoder\frame_compress.cpp"
+				RelativePath="..\..\..\..\libdirac_encoder\picture_compress.cpp"
 				>
 			</File>
 			<File
@@ -587,7 +587,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\libdirac_encoder\frame_compress.h"
+				RelativePath="..\..\..\..\libdirac_encoder\picture_compress.h"
 				>
 			</File>
 			<File

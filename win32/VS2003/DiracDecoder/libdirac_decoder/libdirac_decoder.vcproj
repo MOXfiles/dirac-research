@@ -375,7 +375,7 @@
 				RelativePath="..\..\..\..\libdirac_decoder\comp_decompress.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\..\libdirac_decoder\frame_decompress.cpp">
+				RelativePath="..\..\..\..\libdirac_decoder\picture_decompress.cpp">
 			</File>
 			<File
 				RelativePath="..\..\..\..\libdirac_decoder\seq_decompress.cpp">
@@ -389,7 +389,7 @@
 				RelativePath="..\..\..\..\libdirac_decoder\comp_decompress.h">
 			</File>
 			<File
-				RelativePath="..\..\..\..\libdirac_decoder\frame_decompress.h">
+				RelativePath="..\..\..\..\libdirac_decoder\picture_decompress.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\libdirac_decoder\seq_decompress.h">

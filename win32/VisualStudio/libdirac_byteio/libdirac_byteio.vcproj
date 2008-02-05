@@ -242,7 +242,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_byteio\frame_byteio.cpp"
+				RelativePath="..\..\..\libdirac_byteio\picture_byteio.cpp"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -340,7 +340,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_byteio\frame_byteio.h"
+				RelativePath="..\..\..\libdirac_byteio\picture_byteio.h"
 				>
 			</File>
 			<File

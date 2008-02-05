@@ -557,7 +557,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\libdirac_decoder\frame_decompress.cpp"
+				RelativePath="..\..\..\..\libdirac_decoder\picture_decompress.cpp"
 				>
 			</File>
 			<File
@@ -575,7 +575,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\..\libdirac_decoder\frame_decompress.h"
+				RelativePath="..\..\..\..\libdirac_decoder\picture_decompress.h"
 				>
 			</File>
 			<File

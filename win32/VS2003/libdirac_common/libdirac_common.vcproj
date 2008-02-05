@@ -396,10 +396,10 @@
 				RelativePath="..\..\..\libdirac_common\dirac_exception.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_common\frame.cpp">
+				RelativePath="..\..\..\libdirac_common\picture.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_common\frame_buffer.cpp">
+				RelativePath="..\..\..\libdirac_common\picture_buffer.cpp">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\mot_comp.cpp">
@@ -473,10 +473,10 @@
 				RelativePath="..\..\..\libdirac_common\dirac_types.h">
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_common\frame.h">
+				RelativePath="..\..\..\libdirac_common\picture.h">
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_common\frame_buffer.h">
+				RelativePath="..\..\..\libdirac_common\picture_buffer.h">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\mot_comp.h">
