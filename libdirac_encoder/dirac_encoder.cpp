@@ -614,7 +614,7 @@ int DiracEncoder::CompressNextPicture ()
 
 
     m_num_coded_pictures++;
-    TESTM (m_enc_frame != 0, "Encoder picture available");
+    TESTM (m_enc_picture != 0, "Encoder picture available");
 
     return 1;
 }
