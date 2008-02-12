@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="libdirac_common"
 	ProjectGUID="{A45B7D48-9E8D-4475-BED4-CBE3E3CCAD21}"
 	Keyword="Win32Proj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -584,14 +585,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_common\picture.cpp"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\libdirac_common\picture_buffer.cpp"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\libdirac_common\mot_comp.cpp"
 				>
 			</File>
@@ -609,6 +602,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\pic_io.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_common\picture.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_common\picture_buffer.cpp"
 				>
 			</File>
 			<File
@@ -686,14 +687,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_common\picture.h"
-				>
-			</File>
-			<File
-				RelativePath="..\..\..\libdirac_common\picture_buffer.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\libdirac_common\mot_comp.h"
 				>
 			</File>
@@ -711,6 +704,14 @@
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\pic_io.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_common\picture.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_common\picture_buffer.h"
 				>
 			</File>
 			<File

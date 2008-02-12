@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="Windows-1252"?>
 <VisualStudioProject
 	ProjectType="Visual C++"
-	Version="8.00"
+	Version="9.00"
 	Name="libdirac_byteio"
 	ProjectGUID="{E474E61D-AA40-40C5-8DDD-208CCC21463E}"
 	RootNamespace="libdirac_byteio"
 	Keyword="ManagedCProj"
+	TargetFrameworkVersion="131072"
 	>
 	<Platforms>
 		<Platform
@@ -156,14 +157,17 @@
 		<AssemblyReference
 			RelativePath="mscorlib.dll"
 			AssemblyName="mscorlib, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=IA64"
+			MinFrameworkVersion="131072"
 		/>
 		<AssemblyReference
 			RelativePath="System.dll"
 			AssemblyName="System, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=MSIL"
+			MinFrameworkVersion="131072"
 		/>
 		<AssemblyReference
 			RelativePath="System.Data.dll"
 			AssemblyName="System.Data, Version=2.0.0.0, PublicKeyToken=b77a5c561934e089, processorArchitecture=x86"
+			MinFrameworkVersion="131072"
 		/>
 	</References>
 	<Files>
@@ -193,6 +197,18 @@
 					<Tool
 						Name="VCCLCompilerTool"
 						RuntimeLibrary="0"
+						CompileAsManaged="0"
+					/>
+				</FileConfiguration>
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_byteio\codingparams_byteio.cpp"
+				>
+				<FileConfiguration
+					Name="Release|Win32"
+					>
+					<Tool
+						Name="VCCLCompilerTool"
 						CompileAsManaged="0"
 					/>
 				</FileConfiguration>
@@ -242,18 +258,6 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_byteio\picture_byteio.cpp"
-				>
-				<FileConfiguration
-					Name="Release|Win32"
-					>
-					<Tool
-						Name="VCCLCompilerTool"
-						CompileAsManaged="0"
-					/>
-				</FileConfiguration>
-			</File>
-			<File
 				RelativePath="..\..\..\libdirac_byteio\mvdata_byteio.cpp"
 				>
 			</File>
@@ -286,7 +290,7 @@
 				</FileConfiguration>
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_byteio\codingparams_byteio.cpp"
+				RelativePath="..\..\..\libdirac_byteio\picture_byteio.cpp"
 				>
 				<FileConfiguration
 					Name="Release|Win32"
@@ -320,6 +324,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_byteio\codingparams_byteio.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_byteio\component_byteio.h"
 				>
 			</File>
@@ -340,10 +348,6 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_byteio\picture_byteio.h"
-				>
-			</File>
-			<File
 				RelativePath="..\..\..\libdirac_byteio\mvdata_byteio.h"
 				>
 			</File>
@@ -360,7 +364,7 @@
 				>
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_byteio\codingparams_byteio.h"
+				RelativePath="..\..\..\libdirac_byteio\picture_byteio.h"
 				>
 			</File>
 			<File

@@ -1,5 +1,5 @@
-Microsoft Visual Studio Solution File, Format Version 9.00
-# Visual C++ Express 2005
+Microsoft Visual Studio Solution File, Format Version 10.00
+# Visual C++ Express 2008
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "EncodeDirac", "EncodeDirac\EncodeDirac.vcproj", "{547FE1E9-70EF-48D4-B45B-2FF39B39855D}"
 	ProjectSection(ProjectDependencies) = postProject
 		{2C769629-D6F8-471D-91E7-E01CD8F02634} = {2C769629-D6F8-471D-91E7-E01CD8F02634}
