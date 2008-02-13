@@ -100,11 +100,9 @@ namespace dirac
             or to file, as required.
 
             \param p_parseunit_byteio Picture information in Dirac-stream format
-            \param  skip skip decoding next picture
             \return      reference to the next locally decoded picture available for display
         */
-        Picture& DecompressNextPicture(ParseUnitByteIO* p_parseunit_byteio,
-                                   bool skip = false);
+        Picture& DecompressNextPicture(ParseUnitByteIO* p_parseunit_byteio);
 
         //! Get the next picture available for display
         Picture& GetNextPicture();

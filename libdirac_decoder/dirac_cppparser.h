@@ -142,7 +142,6 @@ namespace dirac
             of the following values
             \n STATE_BUFFER        : Not enough data in internal buffer to process 
             \n STATE_SEQUENCE      : Start of sequence detected
-            \n STATE_PICTURE_START : Start of picture detected
             \n STATE_PICTURE_AVAIL : Decoded picture available
             \n STATE_SEQUENCE_END  : End of sequence detected
             \n STATE_INVALID       : Invalid stream. Stop further processing
@@ -164,16 +163,6 @@ namespace dirac
         //! Return the coding parameters of the current sequence
         const DecoderParams& GetDecoderParams() const;
 
-        //! Return the last picture in the sequence
-      //  const Picture& GetLastPicture() const;
-
-        //! Set the skip flag
-        /*! Set the skip flag to the value specified in skip. If skip is true,
-            the parser will skip decoding the next picture until the this
-            function is called again with skip set to false
-        */
-        void  SetSkip (bool skip);
-
     private:
 
     private:
@@ -190,10 +179,6 @@ namespace dirac
         int m_show_pnum;
         //! Sequence decompressor object
         SequenceDecompressor *m_decomp;
-        //! skip next picture flag
-        bool m_skip;
-        //! skip picture type
-        PictureSort m_skip_type;
         //! verbose flag
         bool m_verbose;
         //! Byte Stream Buffer

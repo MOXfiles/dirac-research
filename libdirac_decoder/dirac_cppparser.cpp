@@ -147,8 +147,6 @@ DiracParser::DiracParser(bool verbose) :
     m_next_state(STATE_SEQUENCE), 
     m_show_pnum(-1), 
     m_decomp(0), 
-    m_skip(false), 
-    m_skip_type(PictureSort::IntraNonRefPictureSort()), 
     m_verbose(verbose)
 {
  
@@ -222,8 +220,7 @@ DecoderState DiracParser::Parse()
                if (!m_decomp)
                    continue;
                 
-               Picture &my_picture = m_decomp->DecompressNextPicture(p_parse_unit,
-                                                                    m_skip); 
+               Picture &my_picture = m_decomp->DecompressNextPicture(p_parse_unit);
                 
                 int picturenum_decoded = my_picture.GetPparams().PictureNum();
                 if (picturenum_decoded != m_show_pnum)
@@ -232,8 +229,8 @@ DecoderState DiracParser::Parse()
                     if (m_verbose)
                     {
                         std::cout << std::endl;
-			std::cout << "Picture ";
-			std::cout<< m_show_pnum << " available";
+                        std::cout << "Picture ";
+                        std::cout<< m_show_pnum << " available";
                     }
                     m_state = STATE_PICTURE_AVAIL;
                     return m_state;
@@ -287,54 +284,3 @@ const Picture& DiracParser::GetNextPicture() const
 {
     return m_decomp->GetNextPicture();
 }
-
-
-// NOTE - FIXME - Temporarily comment out skip
-void DiracParser::SetSkip(bool skip)
-{
-    if (!skip)
-        return;
-    /***
-    const PictureParams& pparams = m_decomp->GetNextPictureParams();
-    // FIXME: need to change this logic once bitstream is finalised. so that
-    // we skip to next RAP when an L1 picture is skipped
-    if (skip == false)
-    {
-        if (m_skip_type.IsNonRef())
-            m_skip = false;
-
-        else if (m_skip_type.IsRef() )
-        {
-            if (pparams.PicSort().IsNonRef() || pparams.PicSort().IsInterRef())
-                m_skip = true;
-            else
-            {
-                m_skip_type.SetInterNonRef();
-                m_skip = false;
-            }
-        }
-    }
-    else
-    {
-        m_skip = true;
-        if (m_skip_type.IsRef() != pparams.PicSort().IsRef() ||
-            m_skip_type.IsIntra() != pparams.PicSort().IsIntra())
-        {
-            if (!pparams.PicSort().IsNonRef())
-            {
-                if (pparams.PicSort().IsInter())
-                {
-                    m_skip_type.SetInterRef();
-                }
-                else
-                {
-                    m_skip_type.SetIntraRef();
-                }
-            }
-        }
-    }
-    ***/
-}
-
-
-

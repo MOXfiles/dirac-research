@@ -92,8 +92,7 @@ void SequenceDecompressor::NewAccessUnit(ParseUnitByteIO& parseunit_byteio)
 
 }
 
-Picture& SequenceDecompressor::DecompressNextPicture(ParseUnitByteIO* p_parseunit_byteio,
-                                                 bool skip /* = false */)
+Picture& SequenceDecompressor::DecompressNextPicture(ParseUnitByteIO* p_parseunit_byteio)
 {
     //this function decodes the next picture in coding order and returns the next picture in display order
     //In general these will differ, and because of re-ordering there is a m_delay which needs to be imposed.
@@ -120,7 +119,7 @@ Picture& SequenceDecompressor::DecompressNextPicture(ParseUnitByteIO* p_parseuni
 
     bool new_frame_to_display=false;
        
-    if (!skip && p_parseunit_byteio)
+    if (p_parseunit_byteio)
     {
        if (m_decparams.Verbose())
            std::cout<<std::endl<<"Calling picture decompression function";

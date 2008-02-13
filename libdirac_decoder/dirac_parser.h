@@ -52,12 +52,12 @@
 
 \verbatim
  #include <libdirac_decoder/dirac_parser.h>\n
- Initialise the decodern
+ Initialise the decoder
 
- decoder_handle = dirac_decoder_init();
+ dirac_decoder_t *decoder_handle = dirac_decoder_init();
  do
  {
-     dirac_decoder_state_t state = dirac_parse (decoder);
+     dirac_decoder_state_t state = dirac_parse (decoder_handle);
      switch (state)
      {
      case STATE_BUFFER:
@@ -110,8 +110,8 @@ typedef struct
     dirac_parseparams_t parse_params;
     /*! source parameters */
     dirac_sourceparams_t src_params;
-    /*! picture parameters */
-    dirac_picparams_t picture_params;
+    /*! frame (NOT picture) number */
+    unsigned int frame_num;
     /*! void pointer to internal parser */
     void *parser;
     /*! frame (NOT picture) buffer to hold luma and chroma data */
@@ -176,13 +176,6 @@ extern DllExport void dirac_buffer (dirac_decoder_t *decoder, unsigned char *sta
     \param id       User data
 */
 extern DllExport void dirac_set_buf (dirac_decoder_t *decoder, unsigned char *buf[3], void *id);
-
-/*!
-    Skip the next frame to be decoded
-    \param decoder  Decoder object
-    \param skip     Value 0 - decode next frame; 1 - skip next frame
-*/
-extern DllExport void dirac_skip(dirac_decoder_t *decoder, int skip);
 
 #ifdef __cplusplus
 }
