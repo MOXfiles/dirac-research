@@ -81,10 +81,11 @@ void ParseParamsByteIO::Input()
     m_parse_params.SetLevel(ReadUint());
 
     std::ostringstream errstr;
-    // FIXME: for the time being all should be a perfect match until
-    // we add support for previous versions
+    // FIXME: for the time being major version should be a perfect match until
+    // we add support for previous major versions
     if (m_parse_params.MajorVersion() != def_parse_params.MajorVersion() ||
-        m_parse_params.MinorVersion() != def_parse_params.MinorVersion())
+       (m_parse_params.MajorVersion() == def_parse_params.MajorVersion() &&
+        m_parse_params.MinorVersion() > def_parse_params.MinorVersion()))
     {
         errstr << "Cannot handle version ";
         errstr << m_parse_params.MajorVersion() << ".";
