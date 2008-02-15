@@ -62,7 +62,7 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     // Set up the compression of the sequence
 
     //TBD: put into the constructor for EncoderParams
-    m_encparams.SetEntropyFactors( new EntropyCorrector(4) );
+    m_encparams.SetEntropyFactors( new EntropyCorrector(m_encparams.TransformDepth()) );
 
     //We have to set up the block parameters and file padding. This needs to take into
     //account both blocks for motion compensation and also wavelet transforms
