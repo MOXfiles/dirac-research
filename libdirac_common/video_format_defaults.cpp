@@ -51,7 +51,7 @@ void SetDefaultCodecParameters(CodecParams &cparams,
     std::ostringstream errstr;
     // Transform parameters
     cparams.SetZeroTransform(false);
-    cparams.SetTransformDepth(5);
+    cparams.SetTransformDepth(4);
     WltFilter wf;
     SetDefaultTransformFilter(ptype, wf);
     cparams.SetTransformFilter(wf);

@@ -886,7 +886,7 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             i++;
             enc_ctx.enc_params.wlt_depth = strtoul(argv[i],NULL,10);
 #if defined(HAVE_MMX)
-            if(enc_ctx.enc_params.wlt_depth > 5)
+            if(enc_ctx.enc_params.wlt_depth > 4)
                 cerr << "Exceeds maximum transform depth ";
            else
                 parsed[i] = true;
