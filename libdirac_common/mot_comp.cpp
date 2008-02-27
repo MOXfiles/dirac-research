@@ -51,7 +51,7 @@ using namespace dirac;
 using std::vector;
 
 
-#define NUM_USED_BLKS(w,sep,len) ((w+sep-(len-sep)/2-1)/sep)
+#define NUM_USED_BLKS(w,sep,len) ((w+sep+(len-sep)/2-1)/sep)
 
 //--public member functions--//
 ///////////////////////////////
@@ -327,8 +327,8 @@ void MotionCompensator::CompensateComponent( Picture& pic ,
     // The picture does not contain integral number of blocks. So not all
     // blocks need to be processed. Compute the relevant blocks to be
     // processed using the original picturesize and not the padded pic size
-    int y_num_blocks = NUM_USED_BLKS(orig_pic_size.y,m_bparams.Ybsep(),m_bparams.Yblen());
-    int x_num_blocks = NUM_USED_BLKS(orig_pic_size.x,m_bparams.Xbsep(),m_bparams.Xblen());
+    int y_num_blocks = std::min((NUM_USED_BLKS(orig_pic_size.y,m_bparams.Ybsep(),m_bparams.Yblen())), m_cparams.YNumBlocks());
+    int x_num_blocks = std::min((NUM_USED_BLKS(orig_pic_size.x,m_bparams.Xbsep(),m_bparams.Xblen())),  m_cparams.XNumBlocks());
 
     //Loop over all the block rows
     pos.y = -m_bparams.Yoffset();
@@ -341,29 +341,29 @@ void MotionCompensator::CompensateComponent( Picture& pic ,
         {
             int split_mode =  mv_data.MBSplit()[yblock/blocks_per_mb_row][xblock/blocks_per_mb_row];
 
-            int blk_len_x, blk_len_y = m_bparams.Yblen();
+            int blk_x, blk_y = 1;
 
             switch (split_mode)
             {
             case 0: // processing superblock
-                blk_len_x = blocks_per_mb_row * m_bparams.Xblen();
+                blk_x = blocks_per_mb_row;
                 break;
             case 1: // processing sub-superblock
-                blk_len_x = blocks_per_sb_row * m_bparams.Xblen();
+                blk_x = blocks_per_sb_row;
                 break;
             case 2: // processing block
             default:
-                blk_len_x = m_bparams.Xblen();
+                blk_x = 1;
                 break;
             }
 
             //Decide which weights to use.
-            if (pos.x >=0 && (pos.x+blk_len_x) < orig_pic_size.x)
+            if (pos.x >=0 && (xblock+blk_x) < x_num_blocks)
             {
                 // block is entirely within picture in x direction
                 if (pos.y < 0)
                     wgt_idx = 1;
-                else if ((pos.y+blk_len_y) < orig_pic_size.y)
+                else if ((yblock+blk_y) < y_num_blocks)
                     wgt_idx = 4;
                 else
                     wgt_idx = 7;
@@ -373,7 +373,7 @@ void MotionCompensator::CompensateComponent( Picture& pic ,
                 // left edge of block is outside picture in x direction
                 if (pos.y < 0)
                     wgt_idx = 0;
-                else if ((pos.y+blk_len_y) < orig_pic_size.y)
+                else if ((yblock+blk_y) < y_num_blocks)
                     wgt_idx = 3;
                 else
                     wgt_idx = 6;
@@ -383,7 +383,7 @@ void MotionCompensator::CompensateComponent( Picture& pic ,
                 // right edge of block is outside picture in x direction
                 if (pos.y < 0)
                     wgt_idx = 2;
-                else if ((pos.y+blk_len_y) < orig_pic_size.y)
+                else if ((yblock+blk_y) < y_num_blocks)
                     wgt_idx = 5;
                 else
                     wgt_idx = 8;
