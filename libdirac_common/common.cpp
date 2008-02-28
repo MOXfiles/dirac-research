@@ -554,27 +554,19 @@ void EncoderParams::SetUsualCodeBlocks ( const PictureType &ftype)
     case VIDEO_FORMAT_HD_1080P50:
     case VIDEO_FORMAT_DIGI_CINEMA_2K24:
     case VIDEO_FORMAT_DIGI_CINEMA_4K24:
-        if (ftype == INTRA_PICTURE)
-        {
+        if (ftype == INTRA_PICTURE){
             int depth = TransformDepth();
-            for (int i = 1; i <= 2; ++i)
-            {
+            for (int i=depth; i>=std::max(1,depth-1); --i)
+	        SetCodeBlocks(i, OrigXl()/(24*2^(depth-i)), OrigYl()/(24*2^(depth-i)));
+            for (int i = 0; i<std::max(1,depth-1); ++i)
                 SetCodeBlocks(i, 1, 1);
-            }
-            for (int i = 3; i <=depth; ++i)
-            {
-                SetCodeBlocks(i, 4, 3);
-            }
         }
-        else
-        {
-            int level = TransformDepth();
-            SetCodeBlocks(1, 1, 1);
-            SetCodeBlocks(2, 8, 6);
-            for (int i = 3; i <=level; ++i)
-            {
-                SetCodeBlocks(i, 12, 8);
-            }
+        else{
+            int depth = TransformDepth();
+            for (int i=depth; i>=std::max(1,depth-3); --i)
+	        SetCodeBlocks(i, OrigXl()/(24*2^(depth-i)), OrigYl()/(24*2^(depth-i)));
+            for (int i = 0; i<std::max(1,depth-3); ++i)
+                SetCodeBlocks(i, 1, 1);
         }
         break;
 

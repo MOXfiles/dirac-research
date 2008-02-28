@@ -482,7 +482,10 @@ float RateController::ReviewQualityFactor( const float qfac, const long int num_
 float RateController::ClipQualityFactor( const float qfac )
 {
     // Keep the quality factor in a sensible range
-    return std::min( std::max( qfac, 2.0f), 12.5f);
+    if ( !m_intra_only )
+        return std::min( std::max( qfac, 2.0f), 12.5f);
+    else
+        return std::max( qfac, 2.0f);
 }
 
 void RateController::CalcNextIntraQualFactor()
