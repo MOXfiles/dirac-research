@@ -135,7 +135,7 @@ bool ParseUnitByteIO::IsValid(const ParseUnitByteIO& next_unit)
 
 bool ParseUnitByteIO::Skip()
 {
-    if(m_next_parse_offset==0)
+    if(m_next_parse_offset==0 || m_next_parse_offset == GetSize())
         return false;
 
     //int curr_pos = GetReadBytePosition();

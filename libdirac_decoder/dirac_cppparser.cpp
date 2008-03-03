@@ -185,6 +185,7 @@ DecoderState DiracParser::Parse()
                 delete m_decomp;
                 m_decomp=NULL;
                 m_next_state = STATE_BUFFER;
+                return STATE_SEQUENCE_END;
             }
             else
                 // otherwise....get remaining pictures from buffer

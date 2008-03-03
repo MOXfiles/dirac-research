@@ -365,6 +365,10 @@ extern DllExport dirac_decoder_state_t dirac_parse (dirac_decoder_t *decoder)
             case STATE_INVALID:
                 return decoder->state;
                 break;
+            
+            case STATE_SEQUENCE_END:
+                return decoder->state;
+                break;
 
             default:
                 break;
