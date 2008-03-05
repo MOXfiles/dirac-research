@@ -474,6 +474,7 @@ void PictureCompressor::SelectQuantisers( CoeffArray& coeff_data ,
         for ( int b=bands.Length() ; b>=1 ; --b )
         {
             bands(b).SetQIndex( 0 );
+            est_bits[b] = 0;
             TwoDArray<CodeBlock>& blocks = bands(b).GetCodeBlocks();
             for (int j=0; j<blocks.LengthY() ;++j)
             {
