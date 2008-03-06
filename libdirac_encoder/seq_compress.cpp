@@ -57,7 +57,8 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     m_delay(1),
     m_qmonitor( m_encparams ),
     m_pcoder( m_encparams ),
-    m_dirac_byte_stream(dirac_byte_stream)
+    m_dirac_byte_stream(dirac_byte_stream),
+    m_eos_signalled(false)
 {
     // Set up the compression of the sequence
 
@@ -172,6 +173,65 @@ SequenceCompressor::~SequenceCompressor()
         delete m_ratecontrol;
 }
 
+bool SequenceCompressor::CanEncode()
+{
+    if (m_eos_signalled)
+    {
+        /*
+        * Encode the remaining picture in the frame buffer. We check if the
+        * reference pictures are available and modify the picture sort
+        * accordingly.
+        */
+        if (m_current_code_pnum <= m_last_picture_read)
+        {
+            m_current_display_pnum = m_current_code_pnum;
+            Picture& fbuf_picture = m_fbuffer->GetPicture( m_current_display_pnum );
+            PictureParams& fbuf_pparams = fbuf_picture.GetPparams();
+            Picture& me_picture = m_mebuffer->GetPicture( m_current_display_pnum );
+            PictureParams& me_pparams = me_picture.GetPparams();
+            // If INTRA pic, no further checks necessary
+            if (fbuf_pparams.PicSort().IsIntra())
+                return true;
+
+            // Bit of a hack since same frame info is available in two different
+            // buffers - decoded pic buffer and motion estimation buffer.
+            std::vector<int>& fbuf_refs = fbuf_pparams.Refs();
+            std::vector<int>& me_refs = me_pparams.Refs();
+            int num_refs = 0;
+            if (m_fbuffer->IsPictureAvail(fbuf_refs[0]))
+                ++num_refs;
+            if (fbuf_refs.size() > 1)
+            {
+                if (m_fbuffer->IsPictureAvail(fbuf_refs[1]))
+                {
+                    if (num_refs == 0)
+                    {
+                        fbuf_refs[0] = fbuf_refs[1];
+                        me_refs[0] = me_refs[1];
+                    }
+                    ++num_refs;
+                }
+            }
+            fbuf_refs.resize(num_refs);
+            me_refs.resize(num_refs);
+
+            if (fbuf_refs.size() == 0)
+            {
+                fbuf_picture.SetPictureSort (PictureSort::IntraNonRefPictureSort());
+                me_picture.SetPictureSort (PictureSort::IntraNonRefPictureSort());
+            }
+
+            return true;
+        }
+    }
+    else
+    {
+        if (m_last_picture_read >= m_current_display_pnum)
+            return true;
+    }
+    return false;
+}
+
 Picture& SequenceCompressor::CompressNextPicture()
 {
 
@@ -193,13 +253,7 @@ Picture& SequenceCompressor::CompressNextPicture()
 
     m_show_pnum = std::max( m_current_code_pnum - m_delay , 0 );
 
-    // Flag saying we're ready to encode
-    bool can_encode = false;
-
-    if (m_last_picture_read >= m_current_display_pnum )
-        can_encode = true;
-
-    if ( can_encode )
+    if ( CanEncode() )
     {   // We haven't coded everything, so compress the next picture
 
         // stream access-unit data if first picture in unit

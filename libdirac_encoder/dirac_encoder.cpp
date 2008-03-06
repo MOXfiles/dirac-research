@@ -246,6 +246,12 @@ public:
     // Return the source parameters
     const SourceParams& GetSrcParams() const { return m_srcparams; }
 
+    // Signal End of Sequence
+    void SignalEOS() { m_eos_signalled = true; m_seqcomp->SignalEOS(); }
+
+    //  End of Sequence
+    bool EOS() { return m_eos_signalled == true; }
+
 private:
 
     // Set the encoder parameters
@@ -314,6 +320,10 @@ private:
 
     // field 1 stats if interlaced
     dirac_enc_picstats_t m_field1_stats;
+
+    // End of sequence flag. Set to true when user app signals end of
+    // sequence
+    bool m_eos_signalled;
 
 };
 
@@ -414,7 +424,8 @@ DiracEncoder::DiracEncoder(const dirac_encoder_context_t *enc_ctx,
     m_return_instr_data(enc_ctx->instr_flag > 0),
        m_gop_bits(0),
     m_gop_count(0),
-    m_picture_count(0)
+    m_picture_count(0),
+    m_eos_signalled(false)
 {
     // Setup source parameters
     SetSourceParams (enc_ctx);
@@ -1036,6 +1047,7 @@ extern DllExport dirac_encoder_state_t
 
     try
     {
+        // Get the next compressed picture 
         if (compressor->CompressNextPicture() != 0)
         {
             if (compressor->GetEncodedData (encoder) < 0)
@@ -1047,6 +1059,16 @@ extern DllExport dirac_encoder_state_t
                     ret_stat = ENC_STATE_AVAIL;
                 }
 
+            }
+        }
+        else
+        {
+            // check if EOS has been signalled by the user app
+            if (compressor->EOS())
+            {
+                compressor->GetSequenceEnd (encoder);
+                encoder->end_of_sequence = 1;
+                ret_stat = ENC_STATE_EOS;
             }
         }
         if (encoder->enc_ctx.decode_flag)
@@ -1062,34 +1084,18 @@ extern DllExport dirac_encoder_state_t
     return ret_stat;
 }
 
-extern DllExport int dirac_encoder_end_sequence (dirac_encoder_t *encoder)
+extern DllExport void dirac_encoder_end_sequence (dirac_encoder_t *encoder)
 {
     TEST (encoder != NULL);
     TEST (encoder->compressor != NULL);
     DiracEncoder *compressor = (DiracEncoder *)encoder->compressor;
-    int ret_stat;
 
     encoder->encoded_frame_avail = 0;
     encoder->decoded_frame_avail = 0;
     encoder->instr_data_avail = 0;
 
-    try
-    {
-        ret_stat = compressor->GetSequenceEnd (encoder);
-        encoder->end_of_sequence = 1;
+    compressor->SignalEOS();
 
-        if (compressor->GetDecodedData(encoder))
-        {
-            encoder->decoded_frame_avail = 1;
-        }
-    }
-    catch (...)
-    {
-        if (compressor->GetEncParams().Verbose())
-            std::cerr << "GetSequenceEnd failed..." << std::endl;
-        ret_stat = -1;
-    }
-    return ret_stat;
 }
 
 extern DllExport void dirac_encoder_close (dirac_encoder_t *encoder)

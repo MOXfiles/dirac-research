@@ -140,6 +140,8 @@ namespace dirac
         */
         bool Finished(){return m_all_done;}
 
+        //! Signal end of sequence
+        void SignalEOS() { m_eos_signalled = true; }
 
     protected:
         void Denoise( Picture& picture );
@@ -173,6 +175,8 @@ namespace dirac
 
         //! Compress the picture using constant bit rate coding. Purely virtual. The child class will have to define it.
         virtual void RateControlCompress(Picture& my_picture, bool is_a_cut) = 0;
+        //! Returns true if the encoder can encode a picture
+        bool CanEncode();
 
         //! Completion flag, returned via the Finished method.
         bool m_all_done;
@@ -228,6 +232,9 @@ namespace dirac
 
         //! Output destination for compressed data in bitstream format
         DiracByteStream& m_dirac_byte_stream;
+
+        //! Flag to check if End of Sequence has been signalled by the end user
+        bool m_eos_signalled;
 
     private:
         //! Copy constructor is private and body-less

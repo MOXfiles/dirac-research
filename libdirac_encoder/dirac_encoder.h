@@ -85,9 +85,15 @@
  // Output buffer
 
  dirac_encoder_state_t state;
-
- while (read uncompressed frame data into buffer)
+ int go = 1;
+ do
  {
+    read uncompressed frame data into buffer
+    if (end of file)
+    {
+        // push end of sequence
+        dirac_encoder_end_sequence(encoder);
+    }
     // load one frame of data into encoder
      if (dirac_encoder_load(encoder, buffer, buffer_size) == 0)
     {
@@ -105,6 +111,12 @@
                  // Encoded frame stats available in enccoder->enc_fstats
                  break;
             case ENC_STATE_BUFFER:
+                break;
+            case ENC_STATE_EOS:
+                // Reached end of sequence
+                // End of sequence information is available in encoder->enc_buf
+                // Sequence statistics available in encoder->enc_seqstats;
+                go = 0; // exit from the encoding loop
                 break;
             case ENC_STATE_INVALID:
             default:
@@ -125,13 +137,7 @@
             }
         } while (state == ENC_STATE_AVAIL)
     }
- }
- // Retrieve end of sequence info
- encoder->enc_buf.buffer = video_buf;
- encoder->enc_buf.size = VIDEO_BUFFER_SIZE;
- dirac_encoder_end_sequence( encoder );
- // End of sequence info is availale in encoder->enc_buf
- // Sequence statistics available in encoder->enc_seqstats;
+ } while (go == 1);
 
  // Free the encoder resources
  dirac_encoder_close(encoder)
@@ -150,7 +156,8 @@ typedef enum
 { 
     ENC_STATE_INVALID = -1, 
     ENC_STATE_BUFFER, 
-    ENC_STATE_AVAIL
+    ENC_STATE_AVAIL,
+    ENC_STATE_EOS
 } dirac_encoder_state_t ;
 
 /*! Enumerated type that defines encoder presets that set the encoder and
@@ -429,21 +436,19 @@ extern DllExport int dirac_encoder_load (dirac_encoder_t *encoder, unsigned char
     Retrieve an encoded frame from the encoder. Returns the state of the
     encoder. The encoder buffer enc_buf in the encodermust be
     set up with the buffer and buffer_size that will hold the encoded frame
-    \param   encoder         Encoder Handle
-    \return                  ENC_STATE_INVALID - unrecoverable error
-                             ENC_STATE_BUFFER - load data into encoder
-                             ENC_STATE_AVAIL - Encoded frame available
+    \param   encoder    Encoder Handle
+    \return             ENC_STATE_INVALID - unrecoverable error
+                        ENC_STATE_BUFFER  - load data into encoder
+                        ENC_STATE_AVAIL   - Encoded frame available
+                        ENC_STATE_EOS     - End of Sequence info available
 */
 extern DllExport dirac_encoder_state_t dirac_encoder_output (dirac_encoder_t *encoder);
 
 /*!
-    Retrieve end of sequence information from the encoder. The encoder buffer,
-    enc_buf, in the encodermust be set up with the buffer and 
-    buffer_size that will hold the end of sequence information.
+    Request the encoder to end the sequence.  
     \param   encoder         Encoder Handle
-    \return                  return status. >=0 - successful; -1 failed
 */
-extern DllExport int dirac_encoder_end_sequence (dirac_encoder_t *encoder);
+extern DllExport void dirac_encoder_end_sequence (dirac_encoder_t *encoder);
 
 /*!
     Free resources held by encoder

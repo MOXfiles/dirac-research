@@ -1103,16 +1103,17 @@ int main (int argc, char* argv[])
        WriteDiagnosticsHeader ( *outimt, encoder );
 
 
-    int pictures_written = 0;
+    int frames_loaded = 0;
     dirac_encoder_state_t state;
 
     clock_t start_t, stop_t;
     start_t = clock();
 
-    bool end_of_file = false;
+    bool go = true;
     do
     {
-        if (ReadPicData( ip_pic_ptr, frame_buf, frame_size ) == true)
+        if (frames_loaded <= (end_pos - start_pos) && 
+            ReadPicData( ip_pic_ptr, frame_buf, frame_size ) == true)
         {
             if (dirac_encoder_load( encoder, frame_buf, frame_size ) < 0)
             {
@@ -1120,28 +1121,34 @@ int main (int argc, char* argv[])
                           << std::endl;
                 return EXIT_FAILURE;
             }
+            frames_loaded++;
         }
         else
         {
-           end_of_file = true; //eof
+           // push end of stream
+           dirac_encoder_end_sequence( encoder );
         }
         do
         {
             encoder->enc_buf.buffer = video_buf;
             encoder->enc_buf.size = VIDEO_BUFFER_SIZE;
             state = dirac_encoder_output ( encoder );
-            switch (state) {
+            switch (state)
+            {
             case ENC_STATE_AVAIL:
                 assert (encoder->enc_buf.size > 0);
 
                 outfile.write((char *)encoder->enc_buf.buffer,
                               encoder->enc_buf.size);
-                              pictures_written++;// Frames?????????????????????
                 break;
 
             case ENC_STATE_BUFFER:
                 break;
-
+            case ENC_STATE_EOS:
+                outfile.write((char *)encoder->enc_buf.buffer,
+                encoder->enc_buf.size);
+                go = false;
+                break;
             case ENC_STATE_INVALID:
                 std::cerr << "Invalid state. Unrecoverable Encoder Error. Quitting..."
                           << std::endl;
@@ -1156,30 +1163,21 @@ int main (int argc, char* argv[])
 
         } while (state == ENC_STATE_AVAIL);
 
-    } while (pictures_written/fields_factor <= (end_pos - start_pos) &&
-             end_of_file == false);
+    } while (go);
 
     stop_t = clock();
 
-    encoder->enc_buf.buffer = video_buf;
-    encoder->enc_buf.size = VIDEO_BUFFER_SIZE;
-    if (dirac_encoder_end_sequence( encoder ) > 0)
-    {
-        outfile.write((char *)encoder->enc_buf.buffer,
-                      encoder->enc_buf.size);
+    if ( verbose )
+        std::cout << "The resulting bit-rate at "
+                  << (double)encoder->enc_ctx.src_params.frame_rate.numerator/
+                     encoder->enc_ctx.src_params.frame_rate.denominator
+                  << "Hz is " << encoder->enc_seqstats.bit_rate
+                  << " bits/sec." << std::endl;
 
-        if ( verbose )
-            std::cout << "The resulting bit-rate at "
-                      << (double)encoder->enc_ctx.src_params.frame_rate.numerator/
-                          encoder->enc_ctx.src_params.frame_rate.denominator
-                      << "Hz is " << encoder->enc_seqstats.bit_rate
-                      << " bits/sec." << std::endl;
-
-        if ( verbose )
-            std::cout<<"Time per frame: "<<
-                    (double)(stop_t-start_t)/(double)(CLOCKS_PER_SEC*pictures_written/fields_factor);
-            std::cout<<std::endl<<std::endl;
-    }
+    if ( verbose )
+        std::cout<<"Time per frame: "<<
+           (double)(stop_t-start_t)/(double)(CLOCKS_PER_SEC*frames_loaded);
+        std::cout<<std::endl<<std::endl;
 
    /********************************************************************/
 
