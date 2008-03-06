@@ -22,6 +22,7 @@
 *
 * Contributor(s): Chris Bowley (Original Author),
 *                 Tim Borer
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -68,8 +69,13 @@ bool ProcessSequence::DoPicture()
     {
         // read next picture from input sequence
         Picture * picture = new Picture(m_data_array[index].picture_params);
-        m_inputpic.GetStream()->ReadNextPicture(*picture);
-
+        if(m_inputpic.GetStream()->ReadNextPicture(*picture) == false)
+        {
+            delete m_data_array[index].me_data;
+            m_data_array[index].me_data = 0;
+            delete picture;
+            return false;
+        }
         Overlay overlay(m_oparams, *picture);
 
         if (m_data_array[index].picture_params.PicSort().IsIntra())
@@ -289,18 +295,13 @@ void ProcessSequence::DoSequence(int start, int stop)
             // if the data is not available, advise and exit
             if (!DoPicture())
             {
-                if (m_data_in.eof())
-                    break;
-                std::cerr << "Cannot find picture " << m_process_fnum << " motion data. ";
-                std::cerr << "Check buffer size. Exiting." << std::endl;
-                exit(EXIT_FAILURE);
+                if (!m_data_in.eof())
+                    std::cout << "Cannot find picture " << m_process_fnum << " motion data. " << std::endl;
+                break;
             }
         }
-        else
-        {
-            if (data_next_fnum == -1)
-                break;
-        }
+        if (data_next_fnum == -1)
+            break;
     }
 
     // close motion data file
