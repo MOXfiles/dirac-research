@@ -111,6 +111,14 @@ then
 	xbsep=16;
 	yblen=24;
 	ybsep=16;
+elif test $width -eq 176 || test $height -eq 144;
+then
+	preset="-QCIF";
+	#luma block parameters
+	xblen=8;
+	xbsep=4;
+	yblen=8;
+	ybsep=4;
 else
 	#luma block parameters
 	xblen=12;
@@ -148,21 +156,21 @@ AT_CHECK([at_wrap dirac_decoder ../../"inter_"$vc2_encout ../../"inter_"$vc2_dec
 AT_CHECK([at_wrap dirac_encoder -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$encout ../../$decout], 0, [ignore])
 AT_CHECK([cmp ../../$encout.localdec.yuv ../../$decout])
-AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mc_instr.yuv -motion_colour -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_ma_instr.yuv -motion_arrows -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mca_instr.yuv -motion_colour_arrows -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_spm_instr.yuv -split_mode -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_sad_instr.yuv -sad -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_pred_instr.yuv -pred_mode -clip 50], 0)
+AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mc_instr.yuv -motion_colour -clip 50], 0, [ignore])
+AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_ma_instr.yuv -motion_arrows -clip 50], 0, [ignore])
+AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mca_instr.yuv -motion_colour_arrows -clip 50], 0, [ignore])
+AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_spm_instr.yuv -split_mode -clip 50], 0, [ignore])
+AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_sad_instr.yuv -sad -clip 50], 0, [ignore])
+AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_pred_instr.yuv -pred_mode -clip 50], 0, [ignore])
 # interlaced
 AT_CHECK([at_wrap dirac_encoder -field_coding -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"inter_"$encout ../../"inter_"$decout], 0, [ignore])
-AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_mc_instr.yuv -motion_colour -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_ma_instr.yuv -motion_arrows -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_mca_instr.yuv -motion_colour_arrows -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_spm_instr.yuv -split_mode -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_sad_instr.yuv -sad -clip 50], 0)
-AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_pred_instr.yuv -pred_mode -clip 50], 0)
+AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_mc_instr.yuv -motion_colour -clip 50], 0, [ignore])
+AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_ma_instr.yuv -motion_arrows -clip 50], 0, [ignore])
+AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_mca_instr.yuv -motion_colour_arrows -clip 50], 0, [ignore])
+AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_spm_instr.yuv -split_mode -clip 50], 0, [ignore])
+AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_sad_instr.yuv -sad -clip 50], 0, [ignore])
+AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_pred_instr.yuv -pred_mode -clip 50], 0, [ignore])
 
 done
 AT_CLEANUP
