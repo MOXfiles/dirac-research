@@ -43,6 +43,7 @@
 
 // SYSTEM INCLUDES
 #include <map>                          // for byte-counts
+#include <climits>
 
 namespace dirac
 {

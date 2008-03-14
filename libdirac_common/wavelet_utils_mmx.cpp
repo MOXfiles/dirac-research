@@ -228,7 +228,7 @@ void WaveletTransform::VHFilterDD9_7::Synth(const int xp ,
     PredictStepShift<2> predict;
     __m64 pred_round = _mm_set_pi16 (1<<(2-1), 1<<(2-1), 1<<(2-1), 1<<(2-1));
     
-    int xstop = xp + (xl>>2)<<2;
+    int xstop = xp + ((xl>>2)<<2);
 
     // First lifting stage
     // Top edge
@@ -525,7 +525,7 @@ void WaveletTransform::VHFilterDD13_7::Synth(const int xp ,
     // Next, do the vertical synthesis
     int ymid = yp + yl/2;
 
-    int xstop = xp + (xl>>2)<<2;
+    int xstop = xp + ((xl>>2)<<2);
     // First lifting stage - odd samples
     // bottom edge
     CoeffType *out = coeff_data[ymid-1];

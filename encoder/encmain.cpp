@@ -54,6 +54,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <cstdlib>
+#include <cstring>
+#include <climits>
 
 using namespace std;
 

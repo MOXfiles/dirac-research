@@ -46,6 +46,7 @@
 #include <iostream>             // IO classes
 #include <sstream>              // IO classes
 #include <iomanip>              // setw
+#include <climits>              // CHAR_BIT
 
 //LOCAL INCLUDEs
 #include <libdirac_byteio/dirac_byte_stats.h>   // stores stats
@@ -128,7 +129,7 @@ namespace dirac
         *@param value Integer to be output
         */
         //void OutputVarLengthUint(const unsigned int& value);
-        void WriteUint(const unsigned int& value);
+        void WriteUint(unsigned int value);
 
          /**
          * Sets input size in bits. Read is limited by this
@@ -313,7 +314,7 @@ namespace dirac
         *@param val Integer to be output
         */ 
        //void OutputVarLengthInt(const int val);
-       void WriteSint(const int val);
+       void WriteSint(int val);
 
        /**
        * Output unsigned int value in big endian format

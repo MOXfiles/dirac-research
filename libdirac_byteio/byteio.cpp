@@ -258,17 +258,18 @@ int ByteIO::WriteNBits(unsigned int val)
     return nbits;
 }
 
-void ByteIO::WriteSint(const int val)
+void ByteIO::WriteSint(int val)
 {
+    unsigned int value = (val >= 0 ? val : -val);
     //output magnitude
-    WriteUint(abs(val));
+    WriteUint(value);
 
     //do sign
     if (val<0) WriteBit(1);
     else if (val>0) WriteBit(0);
 }
 
-void ByteIO::WriteUint(const unsigned int& value)
+void ByteIO::WriteUint(unsigned int value)
 {
     unsigned int val = value+1;
 

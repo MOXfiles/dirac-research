@@ -43,6 +43,9 @@
 //-------------------------------//
 ///////////////////////////////////
 
+#if defined(HAVE_MMX)
+#include <climits>
+#endif
 #include <libdirac_motionest/me_utils.h>
 #include <libdirac_motionest/me_utils_mmx.h>
 #include <libdirac_common/common.h>

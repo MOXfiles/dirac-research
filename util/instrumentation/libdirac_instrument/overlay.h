@@ -80,22 +80,22 @@ namespace dirac_instr
         
         //! Get functions...
         //! Returns instrumentation command line option
-        const OverlayOption Option() const {return m_option;}
+        OverlayOption Option() const {return m_option;}
 
         //! Returns which reference is to be used
-        const int Reference() const {return m_ref;}
+        int Reference() const {return m_ref;}
 
         //! Returns true if input picture background is used, false if grey
-        const int Background() const {return m_bg;}
+        int Background() const {return m_bg;}
 
         //! Returns true if colour legend is displayed
-        const int Legend() const {return m_legend;}
+        int Legend() const {return m_legend;}
 
         //! Returns clip value for motion vectors
-        const int MvClip() const {return m_mv_clip;}
+        int MvClip() const {return m_mv_clip;}
 
         //! Returns clip value for sad
-        const int SADClip() const {return m_sad_clip;}
+        int SADClip() const {return m_sad_clip;}
         
         //! Set functions...
         //! Set type of instrumentation

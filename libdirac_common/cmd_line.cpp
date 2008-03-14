@@ -35,6 +35,7 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
+#include <cstring>
 #include "cmd_line.h"
 using namespace dirac;
 

@@ -37,7 +37,7 @@
 * or the LGPL.
 * ***** END LICENSE BLOCK ***** */
 
-#include <limits>
+#include <climits>
 #include <util/instrumentation/process_sequence.h>
 #include <libdirac_common/picture.h>
 using namespace dirac;

@@ -63,28 +63,28 @@ namespace dirac_instr
         ~DrawPictureMotionParams() {}
         //! Gets...
         //! Returns luma motion vector block height
-        const int MvYBlockY() const {return m_mv_Y_block_y;}
+        int MvYBlockY() const {return m_mv_Y_block_y;}
         
         //! Returns luma motion vector block width
-        const int MvYBlockX() const {return m_mv_Y_block_x;}
+        int MvYBlockX() const {return m_mv_Y_block_x;}
 
         //! Returns chroma motion vector height
-        const int MvUVBlockY() const {return m_mv_UV_block_y;}
+        int MvUVBlockY() const {return m_mv_UV_block_y;}
 
         //! Returns chroma motion vector width
-        const int MvUVBlockX() const {return m_mv_UV_block_x;}
+        int MvUVBlockX() const {return m_mv_UV_block_x;}
 
         //! Returns chroma - luma vertical smaple ratio
-        const int ChromaFactorY() const {return m_chroma_factor_y;}
+        int ChromaFactorY() const {return m_chroma_factor_y;}
         
         //! Returns chroma - luma horizontal sample ratio
-        const int ChromaFactorX() const {return m_chroma_factor_x;}
+        int ChromaFactorX() const {return m_chroma_factor_x;}
 
         //! Returns original picture height
-        const int PicY() const {return m_pic_y;}
+        int PicY() const {return m_pic_y;}
 
         //! Returns original picture width
-        const int PicX() const {return m_pic_x;}
+        int PicX() const {return m_pic_x;}
 
         //! Sets...
         //! Set luma motion vector block height    

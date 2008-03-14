@@ -283,7 +283,7 @@ namespace dirac
         const OneDArray<float>& GlobalMotionParameters(const int ref_id) const { return *( m_gm_params[ref_id] ); }
 
         //! Return the number of reference frames
-        const unsigned int NumRefs()const {return m_num_refs;}
+        unsigned int NumRefs()const {return m_num_refs;}
 
     private:
         // Initialises the arrays of data
