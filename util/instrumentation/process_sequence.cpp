@@ -72,6 +72,8 @@ bool ProcessSequence::DoPicture()
         if(m_inputpic.GetStream()->ReadNextPicture(*picture) == false)
         {
             delete m_data_array[index].me_data;
+            if (m_verbose)
+                std::cout << std::endl << "Cannot read Next Picture. Deleting " << index << " MEData object";
             m_data_array[index].me_data = 0;
             delete picture;
             return false;
@@ -88,6 +90,8 @@ bool ProcessSequence::DoPicture()
         if (m_data_array[index].me_data != 0)
         {
             delete m_data_array[index].me_data;
+            if (m_verbose)
+                std::cout << std::endl << "Deleting " << index << " MEData object";
             m_data_array[index].me_data = 0;
         }
 
@@ -181,6 +185,8 @@ void ProcessSequence::AddPictureEntry()
 
         // create motion data object
         m_data_array[new_index].me_data = new MEData(mb_xnum, mb_ynum, mv_xnum, mv_ynum , total_refs );
+        if (m_verbose)
+            std::cout << std::endl << "Allocating " << new_index << " MEData object";
 
         m_data_array[new_index].picture_params.SetPictureNum(m_data_fnum);
 
@@ -256,6 +262,8 @@ void ProcessSequence::DoSequence(int start, int stop)
         // if the picture motion data has not already been read, add the motion data to the vector
         if (!DoPicture())
         {
+            if (m_data_fnum == -1)
+                break;
             read_data_fnum = false;
             do
             {
@@ -300,8 +308,6 @@ void ProcessSequence::DoSequence(int start, int stop)
                 break;
             }
         }
-        if (data_next_fnum == -1)
-            break;
     }
 
     // close motion data file
