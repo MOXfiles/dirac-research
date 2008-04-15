@@ -524,10 +524,10 @@ namespace dirac
         void SetMinorVersion(unsigned int minor_ver) { m_minor_ver = minor_ver; }
 
         //! Set the Profile
-        void SetProfile(unsigned int level) { m_level = level; }
+        void SetProfile(unsigned int profile) { m_profile = profile; }
 
         //! Set the Level
-        void SetLevel(unsigned int profile) { m_profile = profile; }
+        void SetLevel(unsigned int level) { m_level = level; }
 
     private:
         //! Major Version
