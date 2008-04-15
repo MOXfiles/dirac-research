@@ -557,14 +557,14 @@ void EncoderParams::SetUsualCodeBlocks ( const PictureType &ftype)
         if (ftype == INTRA_PICTURE){
             int depth = TransformDepth();
             for (int i=depth; i>=std::max(1,depth-1); --i)
-	        SetCodeBlocks(i, OrigXl()/(24*2^(depth-i)), OrigYl()/(24*2^(depth-i)));
+            SetCodeBlocks(i, OrigXl()/(24*2^(depth-i)), OrigYl()/(24*2^(depth-i)));
             for (int i = 0; i<std::max(1,depth-1); ++i)
                 SetCodeBlocks(i, 1, 1);
         }
         else{
             int depth = TransformDepth();
             for (int i=depth; i>=std::max(1,depth-3); --i)
-	        SetCodeBlocks(i, OrigXl()/(24*2^(depth-i)), OrigYl()/(24*2^(depth-i)));
+            SetCodeBlocks(i, OrigXl()/(24*2^(depth-i)), OrigYl()/(24*2^(depth-i)));
             for (int i = 0; i<std::max(1,depth-3); ++i)
                 SetCodeBlocks(i, 1, 1);
         }
@@ -602,8 +602,8 @@ DecoderParams::DecoderParams(const VideoFormat& video_format,
 // constructor
 ParseParams::ParseParams():
     m_major_ver(2),
-    m_minor_ver(1),
-    m_profile(0),
+    m_minor_ver(2),
+    m_profile(8),
     m_level(0)
 {}
 

@@ -60,10 +60,10 @@ namespace dirac
         /**
         * Constructor (encoding)
         *@param src_params Source parameters for current AccessUnit
-        *@param codec_params Coding parameters for current AccessUnit
+        *@param enc_params Encoder parameters for current AccessUnit
         */
         AccessUnitByteIO( SourceParams& src_params,
-                          CodecParams& codec_params);
+                          EncoderParams& enc_params);
 
         /**
         * Constructor (decoding)
@@ -139,6 +139,12 @@ namespace dirac
         * Output coding attributes for bytestream-compatible output (encoding)
         */
         void OutputCodingParams();
+
+        /**
+        * Current parse parameters
+        */
+        ParseParams m_parse_params;
+   
     
         /**
         * Parse-params byte input/output

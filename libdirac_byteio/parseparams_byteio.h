@@ -62,8 +62,11 @@ namespace dirac
         /**
         * Constructor
         *@param stream_data Destination of data
+        *@param enc_params  Encoder parameters
         */
-        ParseParamsByteIO(const ByteIO& stream_data);
+        ParseParamsByteIO(const ByteIO& stream_data,
+                          ParseParams &parse_params,
+                          EncoderParams &enc_params);
 
         /**
         * Constructor
@@ -95,12 +98,16 @@ namespace dirac
 
     protected:
     
+    private:
+        void CheckVersion();
+        void CheckProfile();
+        void CheckLevel();
 
     private:
         /**
         * Reference to parse parameters
         */
-        ParseParams m_parse_params;
+        ParseParams& m_parse_params;
     };
 
 

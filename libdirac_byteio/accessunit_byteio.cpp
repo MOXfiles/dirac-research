@@ -42,16 +42,17 @@
 using namespace dirac;
 
 // Constructor for encoding
-AccessUnitByteIO::AccessUnitByteIO( SourceParams& src_params, CodecParams& codec_params):                  
+AccessUnitByteIO::AccessUnitByteIO( SourceParams& src_params, 
+                                    EncoderParams& enc_params):                  
 ParseUnitByteIO(),
-m_parseparams_byteio(*this),
+m_parseparams_byteio(*this, m_parse_params, enc_params),
 // create default source parameters for comparisions
 m_default_src_params(src_params.GetVideoFormat()),
 m_src_params(src_params),
 m_sourceparams_byteio( m_src_params,
                         m_default_src_params,
                        *this),
-m_codec_params(codec_params),
+m_codec_params(enc_params),
 m_codingparams_byteio(m_src_params,
                       m_codec_params,
                       m_default_src_params,
