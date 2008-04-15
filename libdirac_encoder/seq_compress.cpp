@@ -368,6 +368,12 @@ Picture& SequenceCompressor::CompressNextPicture()
        CleanBuffers();
 
     }
+    else
+    {
+        // Hack to extract last field 
+        if (m_eos_signalled && m_fbuffer->IsPictureAvail(m_show_pnum+1))
+            ++m_show_pnum;
+    }
 
     // Return the latest picture that can be shown
     if ( m_encparams.Verbose() )
