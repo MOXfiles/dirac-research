@@ -114,7 +114,7 @@ static void display_help()
     cout << "\nmulti_quants      bool    false         Use multiple quantisers";
     cout << "\nmv_prec           string  false         MV Pixel Precision (1, 1/2, 1/4, 1/8)";
     cout << "\nno_spartition     bool    false         Do not use spatial partitioning while coding transform data";
-    cout << "\ndenoise           bool    false         Denoise input before coding (NB: PSNR stats will relate to denoised video)";
+    cout << "\nprefilter         string/int NO_PF 0    Prefilter input giving filter name (NO_PF, CWM, RECTLP, DIAGLP) and strength (0-10)";
     cout << "\nuse_vlc           bool    false         Use VLC for entropy coding of coefficients";
     cout << "\nverbose           bool    false         verbose mode";
     cout << "\nlocal             bool    false         Write diagnostics & locally decoded video";
@@ -402,6 +402,22 @@ const string ChromaToString (dirac_chroma_t chroma)
     return string("Unknown");
 }
 
+const string PrefilterToString(dirac_prefilter_t pf)
+{
+    switch (pf)
+    {
+    case CWM:
+        return string("CWM");
+    case RECTLP:
+        return string("RECTLP");
+    case DIAGLP:
+        return string("DIAGLP");
+    default:
+        return string("NO_PF");
+    };
+
+}
+
 dirac_chroma_t StringToChroma (const char* chroma)
 {
     if (strcmp(chroma, "YUV444P") == 0)
@@ -501,7 +517,7 @@ void display_codec_params(dirac_encoder_context_t &enc_ctx)
     std::cout << " \tWavelet depth=" << enc_ctx.enc_params.wlt_depth << std::endl;
     std::cout << " \tSpatial Partitioning=" << (enc_ctx.enc_params.spatial_partition ? "true" : "false") << std::endl;
     std::cout << " \tMultiple Quantisers=" << (enc_ctx.enc_params.multi_quants ? "true" : "false") << std::endl;
-    std::cout << " \tDenoising input=" << (enc_ctx.enc_params.denoise ? "true" : "false") << std::endl;
+    std::cout << " \tPrefilter=" << PrefilterToString(enc_ctx.enc_params.prefilter) << std::endl;
     std::cout << " \tField coding=" << (enc_ctx.enc_params.picture_coding_mode == 1? "true" : "false") << std::endl;
     std::cout << " \tLossless Coding=" << (enc_ctx.enc_params.lossless ? "true" : "false") << std::endl;
     std::cout << " \tEntropy Coding=" << (enc_ctx.enc_params.using_ac ? "Arithmetic Coding" : "Variable Length Coding") << std::endl;
@@ -871,10 +887,46 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             parsed[i] = true;
             enc_ctx.enc_params.spatial_partition = false;
         }
-        else if ( strcmp(argv[i], "-denoise") == 0 )
+	else if ( strcmp(argv[i], "-prefilter") == 0 )
         {
             parsed[i] = true;
-            enc_ctx.enc_params.denoise = true;
+	    i++;
+	    if(strcmp(argv[i], "DIAGLP")==0)
+            {
+                parsed[i] = true;
+                enc_ctx.enc_params.prefilter = DIAGLP;
+		i++;
+                enc_ctx.enc_params.prefilter_strength =
+                strtoul(argv[i],NULL,10);
+                parsed[i] = true;
+            }
+            else if(strcmp(argv[i], "RECTLP")==0)
+            {
+                parsed[i] = true;
+                enc_ctx.enc_params.prefilter = RECTLP;
+		i++;
+                enc_ctx.enc_params.prefilter_strength =
+                strtoul(argv[i],NULL,10);
+                parsed[i] = true;
+            }
+	    else if(strcmp(argv[i], "CWM")==0)
+            {
+                parsed[i] = true;
+                enc_ctx.enc_params.prefilter = CWM;
+		i++;
+                enc_ctx.enc_params.prefilter_strength =
+                strtoul(argv[i],NULL,10);
+                parsed[i] = true;
+            }
+	    else if(strcmp(argv[i], "NO_PF")==0)
+            {
+                parsed[i] = true;
+                enc_ctx.enc_params.prefilter = NO_PF;
+		i++;
+                enc_ctx.enc_params.prefilter_strength =
+                strtoul(argv[i],NULL,10);
+                parsed[i] = true;
+            }
         }
         else if ( strcmp(argv[i], "-wlt_depth") == 0 )
         {

@@ -160,14 +160,17 @@ typedef enum
     ENC_STATE_EOS
 } dirac_encoder_state_t ;
 
+/*! Enumerated type that defines prefiltering types supported by the
+    encoder. */
+typedef PrefilterType dirac_prefilter_t;
+
 /*! Enumerated type that defines encoder presets that set the encoder and
     sequence paramters.  More presets may be added in future*/
 typedef VideoFormat dirac_encoder_presets_t;
 
-/*! Enumerated type that defined motion vector precisions supported by the
-    encoder. More mv precisions may be added in future.*/
+/*! Enumerated type that defines motion vector precisions supported by the
+    encoder.*/
 typedef MVPrecisionType dirac_mvprecision_t;
-
 /*! Structure that holds the encoder specific parameters */
 typedef struct 
 {
@@ -207,8 +210,10 @@ typedef struct
     unsigned int wlt_depth;
     /*! Spatial partitioning flag */
     unsigned int spatial_partition;
-    /*! Denoising flag */
-    unsigned int denoise;
+    /*! prefilter indicator */
+    dirac_prefilter_t prefilter;
+    /*! prefilter strength*/
+    unsigned int prefilter_strength;
     /*! Multiple quantisers flag */
     unsigned int multi_quants;
     /*! motion-vector pixel precision */

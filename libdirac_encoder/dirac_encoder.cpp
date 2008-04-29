@@ -538,7 +538,8 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     m_encparams.SetLossless(enc_ctx->enc_params.lossless);
     m_encparams.SetL1Sep(enc_ctx->enc_params.L1_sep);
     m_encparams.SetNumL1(enc_ctx->enc_params.num_L1);
-    m_encparams.SetDenoise(enc_ctx->enc_params.denoise);
+    m_encparams.SetPrefilter(enc_ctx->enc_params.prefilter,
+                             enc_ctx->enc_params.prefilter_strength);
     m_encparams.SetUFactor(1.5f);
     m_encparams.SetVFactor(0.75f);
     m_encparams.SetMVPrecision(enc_ctx->enc_params.mv_precision);
@@ -936,7 +937,8 @@ static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
 
     encparams.qf = default_enc_params.Qf();
     encparams.cpd = default_enc_params.CPD();
-    encparams.denoise = default_enc_params.Denoise();
+    encparams.prefilter = default_enc_params.Prefilter();
+    encparams.prefilter_strength = default_enc_params.PrefilterStrength();
     encparams.L1_sep = default_enc_params.L1Sep();
     encparams.lossless = default_enc_params.Lossless();
     encparams.using_ac = default_enc_params.UsingAC();

@@ -1356,8 +1356,11 @@ namespace dirac
         //! Return the number of cycles per degree at the nominal viewing distance for the raster
         float CPD() const {return m_cpd;}
 
-        //! Return whether input denoising is on or off
-        bool Denoise() const {return m_denoise;}
+        //! Return what prefiltering is in place
+        PrefilterType Prefilter() const {return m_prefilter;}
+
+        //! Return the prefiltering strength
+        int PrefilterStrength() const {return m_prefilter_strength;}
 
         //! Return the Lagrangian parameter to be used for I pictures
         float ILambda() const {return m_I_lambda;}
@@ -1436,9 +1439,9 @@ namespace dirac
         //! Set the number of cycles per degree at the nominal viewing distance
         void SetCPD(const float cpd){m_cpd=cpd;}
 
-
         //! Set denoising value - true or false
-        void SetDenoise(const bool denoise){m_denoise=denoise;}
+        void SetPrefilter(const PrefilterType pf, const int str){m_prefilter=pf;
+	                                            m_prefilter_strength=str;}
 
         //! Set the output path to be used for diagnostic data
         void SetOutputPath(const char * op){ m_output_path = op; }
@@ -1508,8 +1511,11 @@ namespace dirac
         //! Cycles per degree assumed for viewing the video
         float m_cpd;
 
-        //! Flag indicating input denoising
-        bool m_denoise;
+        //! Indicator for prefiltering
+        PrefilterType m_prefilter;
+
+	//! Prefiltering strength
+	int m_prefilter_strength;
 
         //! Lagrangian parameter for Intra picture coding
         float m_I_lambda;

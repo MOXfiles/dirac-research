@@ -40,6 +40,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_encoder/seq_compress.h>
+#include <libdirac_encoder/prefilter.h>
 
 using namespace dirac;
 
@@ -376,90 +377,6 @@ void SequenceCompressor::MakeSequenceReport()
 
 }
 
-void SequenceCompressor::Denoise( Picture& picture )
-{
-    DenoiseComponent( picture.Ydata() );
-    DenoiseComponent( picture.Udata() );
-    DenoiseComponent( picture.Vdata() );
-
-}
-
-void SequenceCompressor::DenoiseComponent( PicArray& pic_data )
-{
-    // Do centre-weighted median denoising
-
-    PicArray pic_copy( pic_data );
-
-    const int centre_weight = 5;
-    const int list_length = centre_weight+8;
-    ValueType val_list[list_length];
-
-    for (int j=1; j<pic_data.LastY(); ++j)
-    {
-        for (int i=1; i<pic_data.LastX(); ++i)
-        {
-            // Make the value list
-            int pos=0;
-            for (; pos<centre_weight-1; ++pos)
-                val_list[pos] = pic_copy[j][i];
-
-            for (int s=-1; s<=1; ++s)
-            {
-                for (int r=-1; r<=1; ++r)
-                {
-                    val_list[pos]=pic_copy[j+s][i+r];
-                    pos++;
-                }// r
-            }// s
-
-            pic_data[j][i] = Median( val_list, list_length );
-        }// i
-    }// j
-
-}
-
-ValueType SequenceCompressor::Median( const ValueType* val_list, const int length)
-{
-
-
-    OneDArray<ValueType> ordered_vals( length );
-
-    // Place the values in order
-    int pos=0;
-    ordered_vals[0] = val_list[0];
-    for (int i=1 ; i<length ; ++i )
-    {
-        for (int k=0 ; k<i ; ++k)
-        {
-            if (val_list[i]<ordered_vals[k])
-            {
-                pos=k;
-                break;
-            }
-            else
-                pos=k+1;
-        }// k
-
-        if ( pos==i)
-            ordered_vals[i] = val_list[i];
-        else
-        {
-            for (int k=i-1 ; k>=pos ; --k )
-            {
-                ordered_vals[k+1] = ordered_vals[k];
-            }// k
-            ordered_vals[pos] = val_list[i];
-        }
-    }// i
-
-    // return the middle value
-    if ( length%2!=0 )
-        return ordered_vals[(length-1)/2];
-    else
-        return (ordered_vals[(length/2)-1]+ordered_vals[length/2]+1)>>1;
-
-}
-
 FrameSequenceCompressor::FrameSequenceCompressor(
                                   StreamPicInput* pin ,
                                   EncoderParams& encp,
@@ -478,8 +395,9 @@ bool FrameSequenceCompressor::LoadNextFrame()
         return false;
     }
 
-    if ( m_encparams.Denoise() )
-        Denoise(m_fbuffer->GetPicture( m_last_picture_read+1 ) );
+    if ( m_encparams.Prefilter()==CWM )
+        CWMFilter(m_fbuffer->GetPicture( m_last_picture_read+1 ) , 
+	                                 m_encparams.PrefilterStrength() );
 
     m_last_picture_read++;
     m_mebuffer->PushPicture( m_fbuffer->GetPicture( m_last_picture_read ) );
@@ -572,10 +490,12 @@ bool FieldSequenceCompressor::LoadNextFrame()
     }
 
     ++m_last_picture_read;
-    if ( m_encparams.Denoise() )
+    if ( m_encparams.Prefilter()==CWM )
     {
-        Denoise(m_fbuffer->GetPicture( m_last_picture_read ) );
-        Denoise(m_fbuffer->GetPicture( m_last_picture_read+1 ) );
+        CWMFilter(m_fbuffer->GetPicture( m_last_picture_read ), 
+	                               m_encparams.PrefilterStrength() );
+        CWMFilter(m_fbuffer->GetPicture( m_last_picture_read+1 ) , 
+	                               m_encparams.PrefilterStrength() );
     }
     m_mebuffer->PushPicture( m_fbuffer->GetPicture( m_last_picture_read ) );
 

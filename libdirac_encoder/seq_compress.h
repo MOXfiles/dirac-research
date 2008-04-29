@@ -144,12 +144,6 @@ namespace dirac
         void SignalEOS() { m_eos_signalled = true; }
 
     protected:
-        void Denoise( Picture& picture );
-
-        //! Denoises a component
-        void DenoiseComponent( PicArray& pic_data );
-
-        ValueType Median( const ValueType* val_list, const int length);
 
         //! Uses the GOP parameters to convert picture numbers in coded order to display order.
         /*!

@@ -45,6 +45,7 @@
 
 #include <libdirac_encoder/picture_compress.h>
 #include <libdirac_encoder/comp_compress.h>
+#include <libdirac_encoder/prefilter.h>
 #include <libdirac_common/mot_comp.h>
 #include <libdirac_motionest/motion_estimate.h>
 #include <libdirac_common/mv_codec.h>
@@ -196,6 +197,14 @@ PictureByteIO* PictureCompressor::Compress( PictureBuffer& my_buffer ,
 	 */
         for (int c=0; c<3; ++c){
             lambda[c] = GetCompLambda( pparams, (CompSort) c );
+
+            if ( m_encparams.Prefilter() == RECTLP )
+	        LPFilter( *comp_data[c] , m_encparams.Qf(), 
+		           m_encparams.PrefilterStrength() );
+
+            if ( m_encparams.Prefilter() == DIAGLP )
+	        DiagFilter( *comp_data[c] , m_encparams.Qf(), 
+		               m_encparams.PrefilterStrength() );
 
             wtransform.Transform( FORWARD , *comp_data[c], coeff_data[c] );
 	    wtransform.SetBandWeights( m_encparams.CPD() , psort , 

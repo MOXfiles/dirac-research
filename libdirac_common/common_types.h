@@ -70,6 +70,15 @@ typedef enum
     filterNK
 } WltFilter;
 
+/*! Enumerated type that defines prefiltering types supported by the
+    encoder. */
+typedef enum
+{
+    NO_PF = 0,
+    DIAGLP,
+    RECTLP,
+    CWM
+} PrefilterType;
 
 static const int NUM_WLT_FILTERS = 8;
 
