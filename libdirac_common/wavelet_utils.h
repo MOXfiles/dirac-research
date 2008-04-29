@@ -97,13 +97,13 @@ namespace dirac
         int Yl() const { return m_yl; }
 
         //! Returns the quantisation index associated to the code block
-        int QIndex() const{ return m_qindex; }
+        int QuantIndex() const{ return m_quantindex; }
 
         //! Returns true if the code-block is skipped, false if not
         bool Skipped() const { return m_skipped; }
 
         //! Sets the quantisation index
-        void SetQIndex( const int qindex ){ m_qindex = qindex; }
+        void SetQuantIndex( const int quantindex ){ m_quantindex = quantindex; }
 
         //! Sets whether the code block is skipped or not
         void SetSkip( bool skip ){ m_skipped = skip; }
@@ -129,7 +129,7 @@ namespace dirac
         int m_xl;
         int m_yl;
 
-        int m_qindex;
+        int m_quantindex;
 
         bool m_skipped;
     };
@@ -195,8 +195,8 @@ namespace dirac
         //! Return the scale of the subband, viewed as a subsampled version of the picture
         int Scale() const {return ( 1<<m_depth );}
 
-        //! Return a quantisation factor
-        int QIndex() const {return m_qindex;}
+        //! Return a quantisation index
+        int QuantIndex() const {return m_qindex;}
 
         //! Return a flag indicating whether we have separate quantisers for each code block
         bool UsingMultiQuants() const {return m_multi_quants; }
@@ -231,17 +231,11 @@ namespace dirac
         //! Set the index of the maximum bit of the largest coefficient
         void SetMax( const int m ){ m_max_bit=m; };
 
-        //! Set the indices of the children of the subband
-        void SetChildren( const std::vector<int>& clist ){ m_children = clist; }
-
-        //! Add a child to the list of child subbands
-        void AddChild( const int c ){ m_children.push_back(c); }
-
         //! Set the number of (spatial) quantisers in the subband. Creates code block structure
         void SetNumBlocks( const int ynum , const int xnum );
 
         //! Set the quantisation index
-        void SetQIndex( const int idx){ m_qindex = idx; }
+        void SetQuantIndex( const int idx){ m_qindex = idx; }
 
         //! Set the number of (spatial) quantisers in the subband. Creates code block structure
         void SetUsingMultiQuants( const bool multi){ m_multi_quants = multi; }
@@ -354,7 +348,7 @@ namespace dirac
             (weight noise less at higher spatial frequencies) and the scaling needed for the
             wavelet transform.
 
-            \param    cpd          perctual factor - the number of cycles per degree
+            \param    cpd          perceptual factor - the number of cycles per degree
             \param    fsort        the picture sort (I, L1 or L2)
             \param    cformat      the chroma format
             \param    csort        the component type (Y, U or V)
@@ -366,10 +360,9 @@ namespace dirac
                              const CompSort csort,
                              const bool field_coding);
 
-
     private:
         // Classes used within wavelet transform
-
+        
         //! A virtual parent class to do vertical and horizontal splitting with wavelet filters
         class VHFilter
         {
@@ -719,15 +712,16 @@ namespace dirac
 
         // Private variables
 
+        // The subband list to be used for conventional transform apps
         SubbandList m_band_list;
 
         //! Depth of the transform
         int m_depth;
 
-        //! The filter set to be used
+        //! The (vertical and horizontal) wavelet filter set to be used
         WltFilter m_filt_sort;
 
-        //! A class to do the filtering required
+        //! A class to do the vertical and horizontal filtering required
         VHFilter* m_vhfilter;
 
     private:
@@ -740,8 +734,8 @@ namespace dirac
 
         //! Given x and y spatial frequencies in cycles per degree, returns a weighting value
         float PerceptualWeight(float xf,float yf,CompSort cs);
-   };
-
+    
+    };
 }// end namespace dirac
 
 #endif

@@ -84,10 +84,10 @@ namespace dirac
         inline void DecodeVal(CoeffArray& out_data , const int xpos , const int ypos );
 
         //! Encode the offset for a code block quantiser
-        void CodeQIndexOffset( const int offset );
+        void CodeQuantIndexOffset( const int offset );
 
         //! Decode the offset for a code block quantiser
-        int DecodeQIndexOffset();
+        int DecodeQuantIndexOffset();
 
         //! Set a code block area to a given value
         inline void SetToVal( const CodeBlock& code_block , CoeffArray& coeff_data , const CoeffType val);

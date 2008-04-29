@@ -91,17 +91,17 @@ namespace dirac
         /**
         * Gets number of bits for a particular stat-type
         */
-        int GetBitCount(const StatType& stat_type) const;
+        long int GetBitCount(const StatType& stat_type) const;
 
         /**
         * Gets number of bytes for a particular stat-type
         */
-        int GetByteCount(const StatType& stat_type) const;
+        long int GetByteCount(const StatType& stat_type) const;
       
         /**
         * Sets number of bytes for a particular stat-type
         */
-        void SetByteCount(const StatType& stat_type, int count);
+        void SetByteCount(const StatType& stat_type, int64_t count);
        
 
     private:
@@ -109,7 +109,7 @@ namespace dirac
         /**
         * Map of byte-counts
         */
-        std::map<StatType, int> m_byte_count;
+        std::map<StatType, int64_t> m_byte_count;
 
    };
 

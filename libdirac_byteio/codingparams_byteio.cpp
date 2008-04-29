@@ -67,18 +67,18 @@ void CodingParamsByteIO::Input()
     m_codec_params.SetTopFieldFirst(m_src_params.TopFieldFirst());
 
     // Set the dimensions to frame dimensions
-    m_codec_params.SetOrigXl(m_src_params.Xl());
-    m_codec_params.SetOrigYl(m_src_params.Yl());
+    m_codec_params.SetXl(m_src_params.Xl());
+    m_codec_params.SetYl(m_src_params.Yl());
 
-    m_codec_params.SetOrigChromaXl(m_src_params.ChromaWidth());
-    m_codec_params.SetOrigChromaYl(m_src_params.ChromaHeight());
+    m_codec_params.SetChromaXl(m_src_params.ChromaWidth());
+    m_codec_params.SetChromaYl(m_src_params.ChromaHeight());
 
     // If source was coded as fields, halve the vertical dimensions
     // to set them to field dimensions
     if (m_codec_params.FieldCoding())
     {
-        m_codec_params.SetOrigYl(m_codec_params.OrigYl()>>1);
-        m_codec_params.SetOrigChromaYl(m_codec_params.OrigChromaYl()>>1);
+        m_codec_params.SetYl(m_codec_params.Yl()>>1);
+        m_codec_params.SetChromaYl(m_codec_params.ChromaYl()>>1);
     }
 
     unsigned int luma_depth = static_cast<unsigned int>
@@ -122,7 +122,7 @@ void CodingParamsByteIO::InputPictureCodingMode()
             errstr.str(),
             SEVERITY_ACCESSUNIT_ERROR);
     }
-    m_codec_params.SetFieldCoding(coding_mode == 1);
+    m_codec_params.SetPictureCodingMode(coding_mode);
 }
 
 

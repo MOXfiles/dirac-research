@@ -127,27 +127,19 @@ int QuantChooser::GetBestQuant( Subband& node )
 
     bit_sum = m_costs[m_min_idx].ENTROPY * node.Xl() * node.Yl();
 
-    node.SetQIndex( m_min_idx );
+    node.SetQuantIndex( m_min_idx );
 
     TwoDArray<CodeBlock>& block_list( node.GetCodeBlocks() );
 
     // Set the codeblock quantisers
     for (int j=0 ; j<block_list.LengthY() ; ++j )
-    {
         for (int i=0 ; i<block_list.LengthX() ; ++i )
-        {
-            block_list[j][i].SetQIndex( m_min_idx );
-        }// i
-    }// j        
+            block_list[j][i].SetQuantIndex( m_min_idx );
         
     // Set the codeblock skip flags
     for (int j=0 ; j<block_list.LengthY() ; ++j )
-    {
         for (int i=0 ; i<block_list.LengthX() ; ++i )
-        {
             SetSkip( block_list[j][i], m_min_idx );
-        }// i
-    }// j        
         
         
     return static_cast<int>( bit_sum );

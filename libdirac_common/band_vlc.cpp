@@ -53,7 +53,7 @@ BandVLC::BandVLC( SubbandByteIO* subband_byteio,
     m_is_intra(is_intra),
     m_bnum(band_num),
     m_node(band_list(band_num)),
-    m_last_qf_idx(m_node.QIndex()),
+    m_last_qf_idx(m_node.QuantIndex()),
     m_byteio(subband_byteio)
 {
 }
@@ -100,11 +100,11 @@ void BandVLC::CodeCoeffBlock(const CodeBlock& code_block , CoeffArray& in_data)
     const int xend = code_block.Xend();
     const int yend = code_block.Yend();
  
-    const int qf_idx = code_block.QIndex();
+    const int qf_idx = code_block.QuantIndex();
 
     if ( m_node.UsingMultiQuants() )
     {
-          CodeQIndexOffset( qf_idx - m_last_qf_idx);
+          CodeQuantIndexOffset( qf_idx - m_last_qf_idx);
           m_last_qf_idx = qf_idx;
     }
 
@@ -124,7 +124,7 @@ void BandVLC::CodeCoeffBlock(const CodeBlock& code_block , CoeffArray& in_data)
 
 }
 
-void BandVLC::CodeQIndexOffset( const int offset )
+void BandVLC::CodeQuantIndexOffset( const int offset )
 {
     m_byteio->WriteSint(offset);
 }
@@ -201,19 +201,19 @@ void BandVLC::DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_dat
     const int xend = code_block.Xend();
     const int yend = code_block.Yend();
 
-    int qf_idx = m_node.QIndex();
+    int qf_idx = m_node.QuantIndex();
 
     if ( m_node.UsingMultiQuants() )
     {
-        qf_idx = m_last_qf_idx+DecodeQIndexOffset(); 
+        qf_idx = m_last_qf_idx+DecodeQuantIndexOffset(); 
         m_last_qf_idx = qf_idx;
     }
 
-    if (qf_idx > (int)dirac_quantiser_lists.MaxQIndex())
+    if (qf_idx > (int)dirac_quantiser_lists.MaxQuantIndex())
     {
         std::ostringstream errstr;
         errstr << "Quantiser index out of range [0.."  
-               << (int)dirac_quantiser_lists.MaxQIndex() << "]";
+               << (int)dirac_quantiser_lists.MaxQuantIndex() << "]";
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
             errstr.str(),
@@ -238,7 +238,7 @@ void BandVLC::DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_dat
     }// ypos
 }
 
-int BandVLC::DecodeQIndexOffset( )
+int BandVLC::DecodeQuantIndexOffset( )
 {
     return m_byteio->ReadSintB();
 }
@@ -314,11 +314,11 @@ void IntraDCBandVLC::CodeCoeffBlock( const CodeBlock& code_block , CoeffArray& i
     
     CoeffType prediction;
 
-    const int qf_idx = code_block.QIndex();
+    const int qf_idx = code_block.QuantIndex();
 
     if ( m_node.UsingMultiQuants() )
     {
-          CodeQIndexOffset( qf_idx - m_last_qf_idx);
+          CodeQuantIndexOffset( qf_idx - m_last_qf_idx);
           m_last_qf_idx = qf_idx;
     }
 
@@ -360,11 +360,11 @@ void IntraDCBandVLC::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray&
     const int xend = code_block.Xend();
     const int yend = code_block.Yend();
 
-    int qf_idx = m_node.QIndex();
+    int qf_idx = m_node.QuantIndex();
 
     if ( m_node.UsingMultiQuants() )
     {
-        qf_idx = DecodeQIndexOffset()+m_last_qf_idx;
+        qf_idx = DecodeQuantIndexOffset()+m_last_qf_idx;
         m_last_qf_idx = qf_idx;
     }
 

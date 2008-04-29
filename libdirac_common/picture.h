@@ -56,7 +56,7 @@ namespace dirac
         /*!
             Constructor initialises the picture parameters and the data
          */    
-        Picture( const PictureParams& fp );
+        Picture( const PictureParams& pp );
 
         //! Copy constructor. Private as not currently used [may want to implement reference counting later.]
         Picture(const Picture& cpy);
@@ -82,19 +82,19 @@ namespace dirac
 
         //gets and sets
         //! Gets the picture parameters
-        PictureParams& GetPparams() const  {return m_fparams;}
+        PictureParams& GetPparams() const  {return m_pparams;}
 
         //! Sets the picture sort
-        void SetPictureSort( const PictureSort fs ){m_fparams.SetPicSort( fs ); }
+        void SetPictureSort( const PictureSort ps ){m_pparams.SetPicSort( ps ); }
 
         //! Sets the picture type
-        void SetPictureType( const PictureType ftype ){m_fparams.SetPictureType( ftype ); }
+        void SetPictureType( const PictureType ftype ){m_pparams.SetPictureType( ftype ); }
 
         //! Sets the picture type
-        void SetReferenceType( const ReferenceType rtype ){m_fparams.SetReferenceType( rtype ); }
+        void SetReferenceType( const ReferenceType rtype ){m_pparams.SetReferenceType( rtype ); }
 
-        //! Reconfigures the the framend to the new parameters. 
-        void ReconfigFrame( const PictureParams &fp );
+        //! Reconfigures to the new parameters. 
+        void ReconfigPicture( const PictureParams &pp );
 
         //! Returns the luma data array
         PicArray& Ydata() {return *m_Y_data;}
@@ -157,7 +157,7 @@ namespace dirac
         void ClipUpData();
 
     private:
-        mutable PictureParams m_fparams;
+        mutable PictureParams m_pparams;
         PicArray* m_Y_data;//the 
         PicArray* m_U_data;//component
         PicArray* m_V_data;//data

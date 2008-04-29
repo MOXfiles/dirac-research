@@ -77,6 +77,7 @@ namespace dirac
         */
         ComponentByteIO* Compress( CoeffArray& coeff_data ,
                                    SubbandList& bands,
+				   CompSort csort,
                                    const OneDArray<unsigned int>& estimated_bits);
 
     private:
@@ -95,13 +96,11 @@ namespace dirac
         // member variables
         EncoderParams& m_encparams;
 
-        const PictureParams& m_fparams;
+        const PictureParams& m_pparams;
 
-        const PictureSort& m_fsort;    
+        const PictureSort& m_psort;    
 
         const ChromaFormat& m_cformat;
-
-        CompSort m_csort;
 
         float m_lambda;
         

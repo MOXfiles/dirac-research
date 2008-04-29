@@ -65,87 +65,34 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     //TBD: put into the constructor for EncoderParams
     m_encparams.SetEntropyFactors( new EntropyCorrector(m_encparams.TransformDepth()) );
 
-    //We have to set up the block parameters and file padding. This needs to take into
-    //account both blocks for motion compensation and also wavelet transforms
-
-    //Amount of horizontal padding for Y,U and V components
-    int xpad_luma,xpad_chroma;
-
-    //Amount of vertical padding for Y,U and V components
-    int ypad_luma,ypad_chroma;
-
-    //First, we need to have sufficient padding to take account of the blocksizes.
-    //It's sufficient to check for chroma
-
-
-    int xl_chroma = m_encparams.OrigChromaXl();
-    int yl_chroma = m_encparams.OrigChromaYl();
-     xpad_chroma = ypad_chroma = 0;
-    // The pic dimensions must be a multiple of 2^(transform depth).
-    int tx_mul = 1<<m_encparams.TransformDepth();
-
-    if ( xl_chroma%tx_mul != 0 )
-        xpad_chroma = ( (xl_chroma/tx_mul)+1 ) *tx_mul - xl_chroma;
-    if ( yl_chroma%tx_mul != 0 )
-        ypad_chroma = ( (yl_chroma/tx_mul)+1 ) * tx_mul - yl_chroma;
-
-    int xpad_chroma_len = xl_chroma+xpad_chroma;
-    int ypad_chroma_len = yl_chroma+ypad_chroma;
+    int xl_chroma = m_encparams.ChromaXl();
+    int yl_chroma = m_encparams.ChromaYl();
 
     // Make sure we have enough macroblocks to cover the pictures
     m_encparams.SetXNumMB( xl_chroma/m_encparams.ChromaBParams(0).Xbsep() );
     m_encparams.SetYNumMB( yl_chroma/m_encparams.ChromaBParams(0).Ybsep() );
+    
     if ( m_encparams.XNumMB() * m_encparams.ChromaBParams(0).Xbsep() < xl_chroma )
-    {
         m_encparams.SetXNumMB( m_encparams.XNumMB() + 1 );
-    }
-
     if ( m_encparams.YNumMB() * m_encparams.ChromaBParams(0).Ybsep() < yl_chroma )
-    {
         m_encparams.SetYNumMB( m_encparams.YNumMB() + 1 );
-    }
 
-
-     xpad_luma = ypad_luma = 0;
-    int xpad_len = m_encparams.OrigXl();
-    int ypad_len = m_encparams.OrigYl();
-
-    // The pic dimensions must be a multiple of 2^(transform depth).
-    if ( xpad_len%tx_mul != 0 )
-        xpad_luma = ( (xpad_len/tx_mul)+1 ) *tx_mul - xpad_len;
-    if ( ypad_len%tx_mul != 0 )
-        ypad_luma = ( (ypad_len/tx_mul)+1 ) * tx_mul - ypad_len;
-
-    xpad_len += xpad_luma;
-    ypad_len += ypad_luma;
-
-    // NOTE: Do we need to recalculate the number of Macro blocks!!!
-
-    // Note that we do not have an integral number of macroblocks in a picture
-    // So it is possible that part of a macro-block and some blocks can fall
-    // of the edge of the padded picture. We need to take this into
-    // consideration while doing Motion Estimation
     m_encparams.SetXNumBlocks( 4 * m_encparams.XNumMB() );
     m_encparams.SetYNumBlocks( 4 * m_encparams.YNumMB() );
 
-    // Set up the picture buffers with the PADDED picture sizes
+    // Set up the picture buffers
     m_fbuffer = new PictureBuffer( m_srcparams.CFormat() ,
                                  m_encparams.NumL1() , m_encparams.L1Sep() ,
-                                 m_encparams.OrigXl(), m_encparams.OrigYl(),
-                                 xpad_len , ypad_len,
-                                 xpad_chroma_len, ypad_chroma_len,
+                                 m_encparams.Xl(), m_encparams.Yl(),
                                  m_encparams.LumaDepth(),
                                  m_encparams.ChromaDepth(),
                                  m_encparams.FieldCoding(),
                                  m_encparams.UsingAC());
 
-    // Retain the original picture dimensions for the Motion estimation
-    // buffer
+    // Retain the original pictures the motion estimation buffer
     m_mebuffer = new PictureBuffer( m_srcparams.CFormat() ,
                                     m_encparams.NumL1() , m_encparams.L1Sep() ,
-                                    m_encparams.OrigXl(), m_encparams.OrigYl(),
-                                    m_encparams.OrigXl(), m_encparams.OrigYl(),
-                                    xl_chroma, yl_chroma,
+                                    m_encparams.Xl(), m_encparams.Yl(),
                                     m_encparams.LumaDepth(),
                                     m_encparams.ChromaDepth(),
                                     m_encparams.FieldCoding(),
@@ -296,9 +243,9 @@ Picture& SequenceCompressor::CompressNextPicture()
 
         Picture& my_picture = m_fbuffer->GetPicture( m_current_display_pnum );
 
-        PictureParams& fparams = my_picture.GetPparams();
+        PictureParams& pparams = my_picture.GetPparams();
         
-        if (fparams.PicSort().IsRef())
+        if (pparams.PicSort().IsRef())
             m_fbuffer->SetRetiredPictureNum( m_show_pnum, m_current_display_pnum );
 
         // Do motion estimation using the original (not reconstructed) data
@@ -306,10 +253,10 @@ Picture& SequenceCompressor::CompressNextPicture()
         {
             std::cout<<std::endl<<"References "
                      << (m_encparams.FieldCoding() ? "field " : "frame ")
-                     << fparams.Refs()[0];
-            if (fparams.Refs().size() > 1)
+                     << pparams.Refs()[0];
+            if (pparams.Refs().size() > 1)
             {
-                std::cout<<" and "<< fparams.Refs()[1];
+                std::cout<<" and "<< pparams.Refs()[1];
             }
         }
         bool is_a_cut( false );
@@ -572,40 +519,32 @@ void FrameSequenceCompressor::RateControlCompress(Picture& my_frame, bool is_a_c
     if (m_encparams.TargetRate() == 0)
         return;
 
-    PictureByteIO *p_picture_byteio;
-
-    p_picture_byteio =  m_pcoder.Compress(*m_fbuffer,
-                                            m_current_display_pnum);
-
-    PictureParams& fparams = my_frame.GetPparams();
-    const PictureSort& fsort = fparams.PicSort();
-
+    PictureParams& pparams = my_frame.GetPparams();
+    const PictureSort& fsort = pparams.PicSort();
 
     // Coding using Rate Control Algorithm
 
-    if ( fsort.IsIntra() &&
-         m_current_display_pnum != 0 &&
-         m_encparams.NumL1() != 0)
-    {
+    if ( fsort.IsIntra() && m_current_display_pnum != 0 &&
+         m_encparams.NumL1() != 0){
         // Calculate the new QF for encoding the following I pictures in the sequence
         // in normal coding
 
-        if ( is_a_cut )
-        {
-            // Recompute the QF based on long-term history since recent history is bunk
+        if ( is_a_cut ) // Recompute the QF based on long-term history since recent history is bunk
             m_ratecontrol->SetCutPictureQualFactor();
-        }
         else
             m_ratecontrol->CalcNextIntraQualFactor();
     }
 
+    PictureByteIO *p_picture_byteio;
+    p_picture_byteio =  m_pcoder.Compress(*m_fbuffer,
+                                            m_current_display_pnum);
 
     // add the picture to the byte stream
     m_dirac_byte_stream.AddPicture(p_picture_byteio);
 
 
     // Update the quality factor
-    m_ratecontrol->CalcNextQualFactor(fparams, p_picture_byteio->GetSize()*8);
+    m_ratecontrol->CalcNextQualFactor(pparams, p_picture_byteio->GetSize()*8);
 
 }
 
@@ -627,8 +566,7 @@ bool FieldSequenceCompressor::LoadNextFrame()
 {
     m_pic_in->ReadNextFrame( *m_fbuffer, m_last_picture_read+1 );
 
-    if ( m_pic_in->End() )
-    {
+    if ( m_pic_in->End() ){
         m_all_done = true;
         return false;
     }
@@ -744,15 +682,8 @@ void FieldSequenceCompressor::RateControlCompress(Picture& my_picture, bool is_a
     if (m_encparams.TargetRate() == 0)
         return;
 
-
-    PictureByteIO *p_picture_byteio;
-
-    p_picture_byteio =  m_pcoder.Compress(*m_fbuffer,
-                                            m_current_display_pnum);
-
-
-    PictureParams& fparams = my_picture.GetPparams();
-    const PictureSort& fsort = fparams.PicSort();
+    PictureParams& pparams = my_picture.GetPparams();
+    const PictureSort& fsort = pparams.PicSort();
 
     // Coding using Rate Control Algorithm
     if ( fsort.IsIntra() &&
@@ -763,14 +694,15 @@ void FieldSequenceCompressor::RateControlCompress(Picture& my_picture, bool is_a
         // in normal coding
 
         if ( is_a_cut )
-        {
             // Recompute the QF based on long-term history since recent history is bunk
             m_ratecontrol->SetCutPictureQualFactor();
-        }
         else if (m_current_display_pnum%2 == 0)
                 m_ratecontrol->CalcNextIntraQualFactor();
     }
 
+    PictureByteIO *p_picture_byteio;
+    p_picture_byteio =  m_pcoder.Compress(*m_fbuffer,
+                                            m_current_display_pnum);
 
     if (m_current_display_pnum%2 == 0)
         m_field1_bytes = p_picture_byteio->GetSize();
@@ -778,9 +710,8 @@ void FieldSequenceCompressor::RateControlCompress(Picture& my_picture, bool is_a
         m_field2_bytes = p_picture_byteio->GetSize();
 
     // Update the quality factor
-    if (fparams.PictureNum()%2)
-        m_ratecontrol->CalcNextQualFactor(fparams, (m_field1_bytes+m_field2_bytes)*8);
-
+    if (pparams.PictureNum()%2)
+        m_ratecontrol->CalcNextQualFactor(pparams, (m_field1_bytes+m_field2_bytes)*8);
 
     // add the picture to the byte stream
     m_dirac_byte_stream.AddPicture(p_picture_byteio);

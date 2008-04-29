@@ -278,17 +278,17 @@ typedef struct
 typedef struct
 {
     /*! Number of motion vector bits */
-    unsigned int mv_bits;
+    int64_t mv_bits;
     /*! Total number of bits used to encode sequence */
-    unsigned int seq_bits;
+    int64_t seq_bits;
     /*! Number of  used to encode y component */
-    unsigned int ycomp_bits;
+    int64_t ycomp_bits;
     /*! Number of  used to encode u component */
-    unsigned int ucomp_bits;
+    int64_t ucomp_bits;
     /*! Number of  used to encode v component */
-    unsigned int vcomp_bits;
+    int64_t vcomp_bits;
     /*! Average bit rate for the sequence */
-    unsigned int bit_rate;
+    int64_t bit_rate;
 } dirac_enc_seqstats_t;
 
 /*! Structure that holds the motion vector information */

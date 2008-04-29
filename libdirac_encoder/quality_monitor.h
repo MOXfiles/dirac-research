@@ -68,10 +68,10 @@ namespace dirac
         //! Update the quality factors, returning true if we need to recode
         /*!
             Update the quality factors, returning true if we need to recode
-            \param ld_frame the locally-decoded picture
-            \param orig_frame the original picture
+            \param ld_picture the locally-decoded picture
+            \param orig_picture the original picture
         */
-        void UpdateModel(const Picture& ld_frame, const Picture& orig_frame );
+        void UpdateModel(const Picture& ld_picture, const Picture& orig_picture );
 
         //! Reset the quality factors (say if there's been a cut)
         void ResetAll();
@@ -105,8 +105,8 @@ namespace dirac
         //! The overall average V quality
         long double m_totalquality_averageV;
 
-        //! The total number of frames coded
-        int m_allframe_total;        
+        //! The total number of pictures coded
+        int m_allpicture_total;        
 
         //! The average Y quality for the picture types
         OneDArray<long double> m_quality_averageY;
@@ -117,8 +117,8 @@ namespace dirac
         //! The average V quality for the picture types
         OneDArray<long double> m_quality_averageV;
 
-        //! The number of frames of each type  
-        OneDArray<int> m_frame_total;
+        //! The number of pictures of each type  
+        OneDArray<int> m_picture_total;
     };
 
 } // namespace dirac

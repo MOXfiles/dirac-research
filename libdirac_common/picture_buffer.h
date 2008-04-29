@@ -46,13 +46,13 @@
 
 namespace dirac
 {
-    //! Holds frames both for reference and to overcome reordering delay
+    //! Holds pictures both for reference and to overcome reordering delay
     /*!
-        The buffer holds frames in a stack to overcome both reordering due to
+        The buffer holds pictures in a stack to overcome both reordering due to
         bi-directional prediction and use as references for subsequence motion
-        estimation. Frames, and components of frames, can be accessed by their
+        estimation. Pictures, and components of pictures, can be accessed by their
         picture numbers. GOP parameters can be included in the constructors so
-        that frames can be given types (I picture, L1 picture or L2 picture) on
+        that pictures can be given types (I picture, L1 picture or L2 picture) on
         being pushed onto the stack; alternatively, these parameters can be
         overridden.
     */
@@ -64,28 +64,20 @@ namespace dirac
         //! Constructor
         /*!
             Creates a PictureBuffer using the chroma format. Suitable for
-            compressing when there are no L2 frames, or when the temporal
+            compressing when there are no L2 pictures, or when the temporal
             prediction structure is to be determined on the fly.
 
-            \param   cf    the Chroma format of frames in the buffer
-            \param   orig_xlen  the original luma width of frames in the buffer
-            \param   orig_ylen  the original luma height of frames in the buffer
-            \param   dwt_xlen   the padded luma width of frames in the buffer
-            \param   dwt_ylen   the padded luma height of frames in the buffer
-            \param   dwt_cxlen  the padded chroma width of frames in the buffer
-            \param   dwt_cylen  the padded chroma height of frames in the buffer
+            \param   cf    the Chroma format of pictures in the buffer
+            \param   orig_xlen  the luma width of pictures in the buffer
+            \param   orig_ylen  the luma height of pictures in the buffer
             \param   luma_depth the video depth of the luma comp in the buffer
             \param   chroma_depth the video depth of the chroma comp in the buffer
             \param   using_ac   True if using Arithmetic coding to code coefficient data
 
         */
         PictureBuffer(ChromaFormat cf,
-                    const int orig_xlen,
-                    const int orig_ylen,
-                    const int dwt_xlen,
-                    const int dwt_ylen,
-                    const int dwt_cxlen,
-                    const int dwt_cylen,
+                    const int xlen,
+                    const int ylen,
                     const unsigned int luma_depth,
                     const unsigned int chroma_depth,
                     bool using_ac);
@@ -93,20 +85,16 @@ namespace dirac
         //! Constructor
         /*!
             Creates a PictureBuffer using the chroma format, the number of L1
-            frames between I frames and the separation in frames between L1
-            frames. Suitable for compressing when there is a full GOP structure
+            pictures between I pictures and the separation in pictures between L1
+            pictures. Suitable for compressing when there is a full GOP structure
             or when the temporal prediction structure is to be determined on
             the fly.
 
-            \param  cf    the Chroma format of frames in the buffer
-            \param  numL1    the number of Layer 1 frames before the next I picture. 0 means that there is only one I picture.
-            \param  L1sep    the number of Layer 2 frames between Layer 1 frames
-            \param  orig_xlen  the original luma width of frames in the buffer
-            \param  orig_ylen  the original luma height of frames in the buffer
-            \param  dwt_xlen   the padded luma width of frames in the buffer
-            \param  dwt_ylen   the padded luma height of frames in the buffer
-            \param  dwt_cxlen  the padded chroma width of frames in the buffer
-            \param  dwt_cylen  the padded chroma height of frames in the buffer
+            \param  cf    the Chroma format of pictures in the buffer
+            \param  numL1    the number of Layer 1 pictures before the next I picture. 0 means that there is only one I picture.
+            \param  L1sep    the number of Layer 2 pictures between Layer 1 pictures
+            \param  xlen  the luma width of pictures in the buffer
+            \param  ylen  the luma height of pictures in the buffer
             \param   luma_depth the video depth of the luma comp in the buffer
             \param   chroma_depth the video depth of the chroma comp in the buffer
             \param   interlace Set true if material is being coded in interlaced mode
@@ -115,12 +103,8 @@ namespace dirac
         PictureBuffer(ChromaFormat cf,
                     const int numL1,
                     const int L1sep,
-                    const int orig_xlen,
-                    const int orig_ylen,
-                    const int dwt_xlen,
-                    const int dwt_ylen,
-                    const int dwt_cxlen,
-                    const int dwt_cylen,
+                    const int xlen,
+                    const int ylen,
                     const unsigned int luma_depth,
                     const unsigned int chroma_depth,
                     bool interlace,
@@ -128,7 +112,7 @@ namespace dirac
 
         //! Copy constructor
         /*!
-            Copy constructor. Removes the current contents of the picture buffer
+            Copy constructor. Removes the current contents of the pictureture buffer
             and copies in the contents of the initialising buffer.
         */
         PictureBuffer(const PictureBuffer& cpy);
@@ -143,33 +127,33 @@ namespace dirac
         ~PictureBuffer();
 
         //! Get picture with a given picture number (NOT with a given position in the buffer)
-        Picture& GetPicture(const unsigned int fnum );
+        Picture& GetPicture(const unsigned int pnum );
 
         //! Get picture with a given picture number (NOT with a given position in the buffer)
-        const Picture& GetPicture(const unsigned int fnum) const;
+        const Picture& GetPicture(const unsigned int pnum) const;
 
         //! Get picture with a given picture number, setting a flag to true if it's there
-        Picture& GetPicture(const unsigned int fnum, bool& is_present);
+        Picture& GetPicture(const unsigned int pnum, bool& is_present);
 
         //! Get picture with a given picture number, setting a flag to true if it's there
-        const Picture& GetPicture(const unsigned int fnum, bool& is_present) const;
+        const Picture& GetPicture(const unsigned int pnum, bool& is_present) const;
 
         //! Return true if picture with the particular picture number is available else return false
-        bool IsPictureAvail(const unsigned int fnum) const;
+        bool IsPictureAvail(const unsigned int pnum) const;
 
         //! Get component with a given component sort and picture number (NOT with a given position in the buffer)
-        PicArray& GetComponent(const unsigned int frame_num, CompSort c);
+        PicArray& GetComponent(const unsigned int pic_num, CompSort c);
 
         //! Get component with a given component sort and picture number (NOT with a given position in the buffer)
-        const PicArray& GetComponent(const unsigned int frame_num, CompSort c) const;
+        const PicArray& GetComponent(const unsigned int pic_num, CompSort c) const;
 
         //! Get upconverted component with a given component sort and picture number (NOT with a given position in the buffer)
-        PicArray& GetUpComponent(const unsigned int frame_num, CompSort c);
+        PicArray& GetUpComponent(const unsigned int pic_num, CompSort c);
 
         //! Get upconverted component with a given component sort and picture number (NOT with a given position in the buffer)
-        const PicArray& GetUpComponent(const unsigned int frame_num, CompSort c) const;
+        const PicArray& GetUpComponent(const unsigned int pic_num, CompSort c) const;
 
-        //! Returns a list of member frames
+        //! Returns a list of member pictures
         std::vector<int> Members() const;
 
         //! Put a new picture into the top of the buffer
@@ -178,9 +162,9 @@ namespace dirac
             associated with the picture will be the built-in parameters for the
             buffer.
 
-            \param    frame_num    the number of the picture being inserted
+            \param    pic_num    the number of the picture being inserted
         */
-        void PushPicture(const unsigned int frame_num);
+        void PushPicture(const unsigned int pic_num);
 
         //! Put a new picture into the top of the buffer
         /*!
@@ -201,45 +185,45 @@ namespace dirac
             Indicate which picture which has been output and which is no longer
             required for reference. Expiry times are set in each picture's
             picture parameters.
-            \param show_fnum             picture number in display order that can be output
-            \param current_coded_fnum    picture number in display order of picture currently being coded
+            \param show_pnum             picture number in display order that can be output
+            \param current_coded_pnum    picture number in display order of picture currently being coded
         */
-        void SetRetiredPictureNum(const int show_fnum, const int current_coded_fnum);
+        void SetRetiredPictureNum(const int show_pnum, const int current_coded_pnum);
 
-        //! Delete all expired frames
+        //! Delete all expired pictures
         /*!
-            Delete frames which have been output and which are no longer
+            Delete pictures which have been output and which are no longer
             required for reference. Expiry times are set in each picture's
             picture parameters.
-            \param show_fnum             picture number in display order that can be output
-            \param current_coded_fnum    picture number in display order of picture currently being coded
+            \param show_pnum             picture number in display order that can be output
+            \param current_coded_pnum    picture number in display order of picture currently being coded
         */
-        void CleanAll(const int show_fnum, const int current_coded_fnum);
+        void CleanAll(const int show_pnum, const int current_coded_pnum);
 
-        //! Delete retired reference frames and expired non-ref frames
+        //! Delete retired reference pictures and expired non-ref pictures
         /*!
-            Delete frames which have been output and retired reference frames.
+            Delete pictures which have been output and retired reference pictures.
             Expiry times are set in each picture's picture parameters.
-            \param show_fnum             picture number in display order that can be output
-            \param current_coded_fnum    picture number in display order of picture currently being coded
+            \param show_pnum             picture number in display order that can be output
+            \param current_coded_pnum    picture number in display order of picture currently being coded
         */
-        void CleanRetired(const int show_fnum, const int current_coded_fnum);
+        void CleanRetired(const int show_pnum, const int current_coded_pnum);
 
         //! Delete picture
         /*!
             Delete picture.
-            \param fnum             picture number in display order to be deleted from picture buffer
+            \param pnum             picture number in display order to be deleted from picture buffer
         */
-        void Clean(int fnum);
+        void Clean(int pnum);
 
         //! Return the default picture parameters
-        const PictureParams& GetPictureParams() const{return m_fparams;}
+        const PictureParams& GetPictureParams() const{return m_pparams;}
 
         //! Returnthe default picture parameters
-        PictureParams& GetPictureParams() { return m_fparams; }
+        PictureParams& GetPictureParams() { return m_pparams; }
 
         //! Set the picture parameters based on the picture number in display order and internal GOP parameters
-        void SetPictureParams(const unsigned int fnum);
+        void SetPictureParams(const unsigned int pnum);
 
     private:
         //! Remove a picture with a given picture number from the buffer
@@ -248,35 +232,35 @@ namespace dirac
             the buffer. Searches through the buffer and removes picture(s) with
             that number.
         */
-        void Remove(const unsigned int fnum);
+        void Remove(const unsigned int pnum);
 
         //! Set the picture parameters for a progressive picture based on the picture number in display order and internal GOP parameters
-        void SetProgressiveFrameParams(const unsigned int fnum);
+        void SetProgressiveParams(const unsigned int pnum);
 
         //! Set the picture parameters for an interlaced picture based on the picture number in display order and internal GOP parameters
-        void SetInterlacedFrameParams(const unsigned int fnum);
+        void SetInterlacedParams(const unsigned int pnum);
 
     private:
 
-        //! the count of the number of reference frames in the buffer
+        //! the count of the number of reference pictures in the buffer
         int m_ref_count;
 
         //! the buffer storing all the values
-        std::vector<Picture*> m_frame_data;
+        std::vector<Picture*> m_pic_data;
 
         //! the flags that specifies if the picture is currently in use or not
-        std::vector<bool> m_frame_in_use;
+        std::vector<bool> m_pic_in_use;
 
         //!the map from picture numbers to position in the buffer
-        std::map<unsigned int,unsigned int> m_fnum_map;
+        std::map<unsigned int,unsigned int> m_pnum_map;
 
         //! The picture parameters to use as a default if none are supplied with the picture
-        PictureParams m_fparams;
+        PictureParams m_pparams;
 
-        //! The number of L1 frames before next I picture
+        //! The number of L1 pictures before next I picture
         unsigned int m_num_L1;
 
-        //! The distance, in frames, between L1 frames
+        //! The distance, in pictures, between L1 pictures
         unsigned int m_L1_sep;
 
         //! The length of the group of pictures (GOP)

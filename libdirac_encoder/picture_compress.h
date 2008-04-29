@@ -116,6 +116,9 @@ namespace dirac
         */
         PictureCompressor& operator=(const PictureCompressor& rhs);
 
+        //! Initialise the coefficient data array for holding wavelet coefficients
+        void InitCoeffData( CoeffArray& coeff_data, const int xl, const int yl );
+
         //! Analyses the ME data and returns true if a cut is detected, false otherwise
         void AnalyseMEData( const MEData& );
         
@@ -131,14 +134,14 @@ namespace dirac
                                const float lambda,
                                OneDArray<unsigned int>& est_counts,
                                const CodeBlockMode cb_mode,
-                               const PictureSort fsort,
+                               const PictureParams& pp,
                                const CompSort csort );
 
         int SelectMultiQuants( CoeffArray& coeff_data , 
                                SubbandList& bands , 
                                const int band_num,
                                const float lambda,
-                               const PictureSort fsort, 
+                               const PictureParams& pp, 
                                const CompSort csort );
 
         void SetupCodeBlocks( SubbandList& bands );

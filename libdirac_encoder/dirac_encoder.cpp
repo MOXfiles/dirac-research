@@ -495,30 +495,30 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     OLBParams bparams(12, 12, 8, 8);
 
     m_encparams.SetLocalDecode(enc_ctx->decode_flag);
-    m_encparams.SetOrigXl( enc_ctx->src_params.width );
-    m_encparams.SetOrigYl( enc_ctx->src_params.height );
-    m_encparams.SetOrigChromaXl( enc_ctx->src_params.chroma_width );
-    m_encparams.SetOrigChromaYl( enc_ctx->src_params.chroma_height );
+    m_encparams.SetXl( enc_ctx->src_params.width );
+    m_encparams.SetYl( enc_ctx->src_params.height );
+    m_encparams.SetChromaXl( enc_ctx->src_params.chroma_width );
+    m_encparams.SetChromaYl( enc_ctx->src_params.chroma_height );
 
-    if (enc_ctx->enc_params.picture_coding_mode > 1)
+    if (enc_ctx->enc_params.picture_coding_mode > 3)
     {
         std::ostringstream errstr;
 
         errstr << "Picture coding mode " 
                << enc_ctx->enc_params.picture_coding_mode
-               << " out of supported range [0-2]";
+               << " out of supported range [0-3]";
         DIRAC_THROW_EXCEPTION(
             ERR_INVALID_INIT_DATA,
             errstr.str(),
             SEVERITY_TERMINATE);
     }
 
-    m_encparams.SetFieldCoding(enc_ctx->enc_params.picture_coding_mode == 1);
+    m_encparams.SetPictureCodingMode(enc_ctx->enc_params.picture_coding_mode);
     if (m_encparams.FieldCoding())
     {
         // Change coding dimensions to field dimensions
-        m_encparams.SetOrigYl( enc_ctx->src_params.height>>1 );
-        m_encparams.SetOrigChromaYl( enc_ctx->src_params.chroma_height >> 1);
+        m_encparams.SetYl( enc_ctx->src_params.height>>1 );
+        m_encparams.SetChromaYl( enc_ctx->src_params.chroma_height >> 1);
     }
 
     unsigned int luma_depth = static_cast<unsigned int> (
@@ -793,7 +793,7 @@ void DiracEncoder::GetSequenceStats(dirac_encoder_t *encoder,
     sstats->ucomp_bits = dirac_seq_stats.GetBitCount(STAT_UCOMP_BYTE_COUNT);
     sstats->vcomp_bits = dirac_seq_stats.GetBitCount(STAT_VCOMP_BYTE_COUNT);
 
-    sstats->bit_rate = int((sstats->seq_bits *
+    sstats->bit_rate = int64_t((sstats->seq_bits *
                         (double)m_srcparams.FrameRate().m_num)/
                         (m_srcparams.FrameRate().m_denom * m_num_coded_pictures));
     if (encoder->enc_ctx.enc_params.picture_coding_mode==1)

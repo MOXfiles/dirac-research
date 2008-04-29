@@ -98,7 +98,6 @@ static void display_help()
     cout << "\nstart             ulong   0UL           Frame number to start encoding from";
     cout << "\nstop              ulong   EOF           Frame number after which encoding finishes";
     cout << "\nfield_coding      bool    false         Set picture coding type to field coding. Default coding type is by frames";
-    cout << "\nqcx_coding        bool    false         Experimental quincunxial coding mode. Not selectable if field_coding is true";
     cout << "\nL1_sep            ulong   0UL           Separation of L1 frames";
     cout << "\nnum_L1            ulong   0UL           Number of L1 frames";
     cout << "\nxblen             ulong   0UL           Overlapping block horizontal length";
@@ -743,12 +742,6 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             parsed[i] = true;
             enc_ctx.enc_params.picture_coding_mode =  1;
             fields_factor = 2;
-        }
-        else if ( strcmp(argv[i], "-qcx_coding") == 0 )
-        {
-            parsed[i] = true;
-            enc_ctx.enc_params.picture_coding_mode =  2;
-            fields_factor = 1;
         }
         else if ( strcmp(argv[i], "-qf") == 0 )
         {

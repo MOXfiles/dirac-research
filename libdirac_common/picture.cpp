@@ -50,8 +50,8 @@ using namespace dirac;
 //---Picture---//
 ///////////////
 
-Picture::Picture(const PictureParams& fp): 
-    m_fparams(fp),
+Picture::Picture(const PictureParams& pp): 
+    m_pparams(pp),
     m_Y_data(0),
     m_U_data(0),
     m_V_data(0),
@@ -66,7 +66,7 @@ Picture::Picture(const PictureParams& fp):
 }
 
 Picture::Picture( const Picture& cpy ): 
-    m_fparams(cpy.m_fparams),
+    m_pparams(cpy.m_pparams),
     m_Y_data(0),
     m_U_data(0),
     m_V_data(0),
@@ -77,7 +77,7 @@ Picture::Picture( const Picture& cpy ):
     m_redo_upUdata(cpy.m_redo_upUdata),
     m_redo_upVdata(cpy.m_redo_upVdata)
 {
-    //const ChromaFormat& cformat = m_fparams.CFormat();
+    //const ChromaFormat& cformat = m_pparams.CFormat();
 
     //delete data to be overwritten
     ClearData();
@@ -111,11 +111,11 @@ Picture& Picture::operator=(const Picture& rhs)
 {
     if ( &rhs != this)
     {
-        m_fparams=rhs.m_fparams;
+        m_pparams=rhs.m_pparams;
         m_redo_upYdata = rhs.m_redo_upYdata;
         m_redo_upUdata = rhs.m_redo_upUdata;
         m_redo_upVdata = rhs.m_redo_upVdata;
-        //const ChromaFormat& cformat=m_fparams.CFormat();
+        //const ChromaFormat& cformat=m_pparams.CFormat();
 
         // Delete current data
         ClearData();
@@ -166,20 +166,20 @@ void Picture::Fill(ValueType val)
 
 void Picture::Init()
 {
-    //const ChromaFormat cformat=m_fparams.CFormat();
+    //const ChromaFormat cformat=m_pparams.CFormat();
 
     //first delete data if we need to
     ClearData();
 
-     m_Y_data=new PicArray( m_fparams.DwtYl() , m_fparams.DwtXl());
+     m_Y_data=new PicArray( m_pparams.Yl() , m_pparams.Xl());
      m_Y_data->SetCSort( Y_COMP );
 
-     m_U_data = new PicArray( m_fparams.DwtChromaYl() ,
-                              m_fparams.DwtChromaXl() ); 
+     m_U_data = new PicArray( m_pparams.ChromaYl() ,
+                              m_pparams.ChromaXl() ); 
      m_U_data->SetCSort( U_COMP );
 
-     m_V_data = new PicArray( m_fparams.DwtChromaYl() ,
-                              m_fparams.DwtChromaXl() );
+     m_V_data = new PicArray( m_pparams.ChromaYl() ,
+                              m_pparams.ChromaXl() );
      m_V_data->SetCSort( V_COMP );
 }
 
@@ -209,9 +209,9 @@ PicArray& Picture::UpYdata()
         if (m_upY_data == 0)
             m_upY_data = new PicArray( 2*m_Y_data->LengthY(),
                                        2*m_Y_data->LengthX() );
-        UpConverter myupconv(-(1 << (m_fparams.LumaDepth()-1)), 
-                             (1 << (m_fparams.LumaDepth()-1))-1,
-                             m_fparams.OrigXl(), m_fparams.OrigYl());
+        UpConverter myupconv(-(1 << (m_pparams.LumaDepth()-1)), 
+                             (1 << (m_pparams.LumaDepth()-1))-1,
+                             m_pparams.Xl(), m_pparams.Yl());
         myupconv.DoUpConverter( *m_Y_data , *m_upY_data );
 
         m_redo_upYdata = false;
@@ -230,10 +230,10 @@ PicArray& Picture::UpUdata()
         if (m_upU_data ==0)
             m_upU_data = new PicArray(2*m_U_data->LengthY() ,
                                       2*m_U_data->LengthX());
-        UpConverter myupconv(-(1 << (m_fparams.ChromaDepth()-1)), 
-                             (1 << (m_fparams.ChromaDepth()-1))-1,
-                                 m_fparams.OrigChromaXl(),
-                                 m_fparams.OrigChromaYl());
+        UpConverter myupconv(-(1 << (m_pparams.ChromaDepth()-1)), 
+                             (1 << (m_pparams.ChromaDepth()-1))-1,
+                                 m_pparams.ChromaXl(),
+                                 m_pparams.ChromaYl());
 
         myupconv.DoUpConverter( *m_U_data , *m_upU_data );
         m_redo_upUdata = false;
@@ -252,10 +252,10 @@ PicArray& Picture::UpVdata()
            if (m_upV_data ==0)
             m_upV_data = new PicArray( 2*m_V_data->LengthY(),
                                        2*m_V_data->LengthX() );
-        UpConverter myupconv(-(1 << (m_fparams.ChromaDepth()-1)), 
-                             (1 << (m_fparams.ChromaDepth()-1))-1,
-                                 m_fparams.OrigChromaXl(),
-                                 m_fparams.OrigChromaYl());
+        UpConverter myupconv(-(1 << (m_pparams.ChromaDepth()-1)), 
+                             (1 << (m_pparams.ChromaDepth()-1))-1,
+                                 m_pparams.ChromaXl(),
+                                 m_pparams.ChromaYl());
         myupconv.DoUpConverter( *m_V_data , *m_upV_data );
         m_redo_upVdata = false;
 
@@ -289,9 +289,9 @@ const PicArray& Picture::UpYdata() const
             m_upY_data = new PicArray( 2*m_Y_data->LengthY(),
                                        2*m_Y_data->LengthX() );
 
-        UpConverter myupconv(-(1 << (m_fparams.LumaDepth()-1)), 
-                             (1 << (m_fparams.LumaDepth()-1))-1,
-                             m_fparams.OrigXl(), m_fparams.OrigYl());
+        UpConverter myupconv(-(1 << (m_pparams.LumaDepth()-1)), 
+                             (1 << (m_pparams.LumaDepth()-1))-1,
+                             m_pparams.Xl(), m_pparams.Yl());
         myupconv.DoUpConverter( *m_Y_data , *m_upY_data );
 
         m_redo_upYdata = false;
@@ -315,10 +315,10 @@ const PicArray& Picture::UpUdata() const
             m_upU_data = new PicArray( 2*m_U_data->LengthY(),
                                        2*m_U_data->LengthX() );
 
-        UpConverter myupconv(-(1 << (m_fparams.ChromaDepth()-1)), 
-                             (1 << (m_fparams.ChromaDepth()-1))-1,
-                                 m_fparams.OrigChromaXl(),
-                                 m_fparams.OrigChromaYl());
+        UpConverter myupconv(-(1 << (m_pparams.ChromaDepth()-1)), 
+                             (1 << (m_pparams.ChromaDepth()-1))-1,
+                                 m_pparams.ChromaXl(),
+                                 m_pparams.ChromaYl());
         myupconv.DoUpConverter( *m_U_data , *m_upU_data );
         m_redo_upUdata = false;
 
@@ -342,10 +342,10 @@ const PicArray& Picture::UpVdata() const
             m_upV_data = new PicArray( 2*m_V_data->LengthY() ,
                                        2*m_V_data->LengthX() );
 
-        UpConverter myupconv(-(1 << (m_fparams.ChromaDepth()-1)), 
-                             (1 << (m_fparams.ChromaDepth()-1))-1,
-                                 m_fparams.OrigChromaXl(),
-                                 m_fparams.OrigChromaYl());
+        UpConverter myupconv(-(1 << (m_pparams.ChromaDepth()-1)), 
+                             (1 << (m_pparams.ChromaDepth()-1))-1,
+                                 m_pparams.ChromaXl(),
+                                 m_pparams.ChromaYl());
         myupconv.DoUpConverter( *m_V_data , *m_upV_data );
         m_redo_upVdata = false;
 
@@ -373,12 +373,12 @@ void Picture::ClipComponent(PicArray& pic_data, CompSort cs) const
     ValueType max_val;
     
     min_val = (cs == Y_COMP) ?
-              -(1 << (m_fparams.LumaDepth()-1) ) :
-              -(1 << (m_fparams.ChromaDepth()-1) );
+              -(1 << (m_pparams.LumaDepth()-1) ) :
+              -(1 << (m_pparams.ChromaDepth()-1) );
 
     max_val = (cs == Y_COMP) ?
-              (1 << (m_fparams.LumaDepth()-1) )-1 :
-              (1 << (m_fparams.ChromaDepth()-1) )-1;
+              (1 << (m_pparams.LumaDepth()-1) )-1 :
+              (1 << (m_pparams.ChromaDepth()-1) )-1;
 
 #if defined (HAVE_MMX)
     {
@@ -491,17 +491,17 @@ void Picture::ClearData()
     }
 }
 
-void Picture::ReconfigFrame(const PictureParams &fp )
+void Picture::ReconfigPicture(const PictureParams &pp )
 {
 
-    PictureParams old_fp = m_fparams;
-    m_fparams = fp;
+    PictureParams old_pp = m_pparams;
+    m_pparams = pp;
     m_redo_upYdata = m_redo_upUdata = m_redo_upVdata = true;
 
     // HAve picture dimensions  or Chroma format changed ?
-    if (m_fparams.DwtXl() == old_fp.DwtXl() && 
-        m_fparams.DwtYl() == old_fp.DwtYl() &&
-        m_fparams.CFormat() == old_fp.CFormat())
+    if (m_pparams.Xl() == old_pp.Xl() && 
+        m_pparams.Yl() == old_pp.Yl() &&
+        m_pparams.CFormat() == old_pp.CFormat())
         return;
 
     // Picture dimensions have changed. Re-initialise

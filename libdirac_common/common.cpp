@@ -50,6 +50,7 @@
 #include <libdirac_common/dirac_exception.h>
 using namespace dirac;
 
+
 //const dirac::QuantiserLists dirac::dirac_quantiser_lists;
 
 
@@ -63,10 +64,10 @@ EntropyCorrector::EntropyCorrector(int depth):
     Init();
 }
 
-float EntropyCorrector::Factor(const int bandnum , const PictureSort psort ,const CompSort c) const
+float EntropyCorrector::Factor(const int bandnum , const PictureParams& pp ,
+                               const CompSort c) const
 {
-    int idx = psort.IsIntra() ? 0 : (psort.IsRef() ? 1 : 2);
-
+    int idx = pp.PicSort().IsIntra() ? 0 : (pp.IsBPicture() ? 1 : 2);
     if (c == U_COMP)
         return m_Ufctrs[idx][bandnum-1];
     else if (c == V_COMP)
@@ -130,7 +131,8 @@ void EntropyCorrector::Init()
 
 }
 
-void EntropyCorrector::Update(int bandnum , PictureSort psort , CompSort c ,int est_bits , int actual_bits){
+void EntropyCorrector::Update(int bandnum , const PictureParams& pp , 
+                       CompSort c ,int est_bits , int actual_bits){
     //updates the factors - note that the estimated bits are assumed to already include the correction factor
 
     float multiplier;
@@ -139,7 +141,7 @@ void EntropyCorrector::Update(int bandnum , PictureSort psort , CompSort c ,int 
     else
         multiplier=1.0;
 
-    int idx = psort.IsIntra() ? 0 : (psort.IsRef() ? 1 : 2);
+    int idx = pp.PicSort().IsIntra() ? 0 : (pp.IsBPicture() ? 1 : 2);
     if (c == U_COMP)
         m_Ufctrs[idx][bandnum-1] *= multiplier;
     else if (c == V_COMP)
@@ -491,8 +493,8 @@ void EncoderParams::CalcLambdas(const float qf)
     if (!m_lossless )
     {
         m_I_lambda = std::pow( 10.0 , (10.0-qf )/2.5 )/16.0;
-        m_L1_lambda = m_I_lambda*32.0;
-        m_L2_lambda = m_I_lambda*256.0;
+        m_L1_lambda = m_I_lambda*8.0;
+        m_L2_lambda = m_I_lambda*64.0;
 
         // Set the lambdas for motion estimation
         const double me_ratio = 2.0;
@@ -557,14 +559,14 @@ void EncoderParams::SetUsualCodeBlocks ( const PictureType &ftype)
         if (ftype == INTRA_PICTURE){
             int depth = TransformDepth();
             for (int i=depth; i>=std::max(1,depth-1); --i)
-            SetCodeBlocks(i, OrigXl()/(24*2^(depth-i)), OrigYl()/(24*2^(depth-i)));
+	        SetCodeBlocks(i, Xl()/(24*2^(depth-i)), Yl()/(24*2^(depth-i)));
             for (int i = 0; i<std::max(1,depth-1); ++i)
                 SetCodeBlocks(i, 1, 1);
         }
         else{
             int depth = TransformDepth();
             for (int i=depth; i>=std::max(1,depth-3); --i)
-            SetCodeBlocks(i, OrigXl()/(24*2^(depth-i)), OrigYl()/(24*2^(depth-i)));
+	        SetCodeBlocks(i, Xl()/(24*2^(depth-i)), Yl()/(24*2^(depth-i)));
             for (int i = 0; i<std::max(1,depth-3); ++i)
                 SetCodeBlocks(i, 1, 1);
         }
@@ -852,41 +854,35 @@ PictureParams::PictureParams():
 
 // Constructor
 PictureParams::PictureParams(const ChromaFormat& cf,
-                         int orig_xlen, int orig_ylen,
-                         int dwt_xlen, int dwt_ylen,
-                         int c_dwt_xlen, int c_dwt_ylen,
+                         int xlen, int ylen,
                          unsigned int luma_depth,
                          unsigned int chroma_depth) :
     m_cformat(cf),
-    m_dwt_xl(dwt_xlen),
-    m_dwt_yl(dwt_ylen),
     m_psort(PictureSort::IntraRefPictureSort()),
     m_picture_type( INTRA_PICTURE ),
     m_reference_type( REFERENCE_PICTURE ),
     m_output(false),
-    m_dwt_chroma_xl(c_dwt_xlen),
-    m_dwt_chroma_yl(c_dwt_ylen),
-    m_orig_xl(orig_xlen),
-    m_orig_yl(orig_ylen),
+    m_xl(xlen),
+    m_yl(ylen),
     m_luma_depth(luma_depth),
     m_chroma_depth(chroma_depth),
     m_using_ac(true)
 {
-    m_orig_cxl = m_orig_cyl = 0;
+    m_cxl = m_cyl = 0;
     if (cf == format420)
     {
-        m_orig_cxl = orig_xlen>>1;
-        m_orig_cyl = orig_ylen>>1;
+        m_cxl = xlen>>1;
+        m_cyl = ylen>>1;
     }
     else if (cf == format422)
     {
-        m_orig_cxl = orig_xlen>>1;
-        m_orig_cyl = orig_ylen;
+        m_cxl = xlen>>1;
+        m_cyl = ylen;
     }
     else if (cf == format444)
     {
-        m_orig_cxl = orig_xlen;
-        m_orig_cyl = orig_ylen;
+        m_cxl = xlen;
+        m_cyl = ylen;
     }
 }
 
@@ -902,24 +898,20 @@ PictureParams::PictureParams(const ChromaFormat& cf, const PictureSort& ps):
 // Constructor
 PictureParams::PictureParams(const SourceParams& sparams):
     m_cformat(sparams.CFormat()),
-    m_dwt_xl(sparams.Xl()),
-    m_dwt_yl(sparams.Yl()),
     m_psort(PictureSort::IntraRefPictureSort()),
     m_picture_type( INTRA_PICTURE ),
     m_reference_type( REFERENCE_PICTURE ),
     m_output(false),
-    m_dwt_chroma_xl(sparams.ChromaWidth()),
-    m_dwt_chroma_yl(sparams.ChromaHeight()),
-    m_orig_xl(m_dwt_xl),
-    m_orig_yl(m_dwt_yl),
-    m_orig_cxl(m_dwt_chroma_xl),
-    m_orig_cyl(m_dwt_chroma_yl),
+    m_xl(sparams.Xl()),
+    m_yl(sparams.Yl()),
+    m_cxl(sparams.ChromaWidth()),
+    m_cyl(sparams.ChromaHeight()),
     m_using_ac(true)
 {
     if (sparams.SourceSampling() == 1)
     {
-        m_orig_yl = m_dwt_yl = (m_dwt_yl>>1);
-        m_orig_cyl = m_dwt_chroma_yl = (m_dwt_chroma_yl>>1);
+        m_yl = (m_yl>>1);
+        m_cyl = (m_cyl>>1);
     }
     m_luma_depth = static_cast<unsigned int>
          (
@@ -935,58 +927,56 @@ PictureParams::PictureParams(const SourceParams& sparams):
 // Constructor
 PictureParams::PictureParams(const SourceParams& sparams, const PictureSort& ps):
     m_cformat(sparams.CFormat()),
-    m_dwt_xl(sparams.Xl()),
-    m_dwt_yl(sparams.Yl()),
     m_output(false),
-    m_orig_xl(sparams.Xl()),
-    m_orig_yl(sparams.Yl()),
+    m_xl(sparams.Xl()),
+    m_yl(sparams.Yl()),
     m_using_ac(true)
 {
     SetPicSort(ps);
 
-    m_orig_cxl = m_orig_cyl = m_dwt_chroma_xl = m_dwt_chroma_yl = 0;
+    m_cxl = m_cyl = 0;
     if(m_cformat == format422)
     {
-        m_orig_cxl = m_dwt_chroma_xl = m_orig_xl/2;
-        m_orig_cyl = m_dwt_chroma_yl = m_orig_yl;
+        m_cxl = m_xl/2;
+        m_cyl = m_yl;
     }
     else if (m_cformat == format420)
     {
-        m_orig_cxl = m_dwt_chroma_xl = m_orig_xl/2;
-        m_orig_cyl = m_dwt_chroma_yl = m_orig_yl/2;
+        m_cxl = m_xl/2;
+        m_cyl = m_yl/2;
     }
     else if (m_cformat==format444)
     {
-        m_orig_cxl = m_dwt_chroma_xl = m_orig_xl;
-        m_orig_cyl = m_dwt_chroma_yl = m_orig_yl;
+        m_cxl = m_xl;
+        m_cyl = m_yl;
     }
 }
 
-void PictureParams::SetOrigXl(int orig_xlen)
+void PictureParams::SetXl(int xlen)
 {
-    m_orig_xl = orig_xlen;
-    m_orig_cxl = 0;
+    m_xl = xlen;
+    m_cxl = 0;
     if (m_cformat == format420 || m_cformat == format422)
     {
-        m_orig_cxl = m_orig_xl>>1;
+        m_cxl = m_xl>>1;
     }
     else if (m_cformat == format444)
     {
-        m_orig_cxl = m_orig_xl;
+        m_cxl = m_xl;
     }
 }
 
-void PictureParams::SetOrigYl(int orig_ylen)
+void PictureParams::SetYl(int ylen)
 {
-    m_orig_yl = orig_ylen;
-    m_orig_cyl = 0;
+    m_yl = ylen;
+    m_cyl = 0;
     if (m_cformat == format420)
     {
-        m_orig_cyl = m_orig_yl>>1;
+        m_cyl = m_yl>>1;
     }
     else if (m_cformat == format422 || m_cformat == format444)
     {
-        m_orig_cyl = m_orig_yl;
+        m_cyl = m_yl;
     }
 }
 

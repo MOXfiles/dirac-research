@@ -64,14 +64,14 @@ namespace dirac
         *@param cs Picture-component type
         *@param byteIO Input/output Byte stream
         */
-        ComponentByteIO(CompSort& cs,
+        ComponentByteIO(CompSort cs,
                         const ByteIO& byteIO);
 
         /**
         * Constructor
         *@param cs Picture-component type
         */
-        ComponentByteIO(CompSort& cs);
+        ComponentByteIO(CompSort cs);
 
        /**
        * Destructor

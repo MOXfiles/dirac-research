@@ -80,7 +80,7 @@ bool SubbandByteIO::Input()
     }
 
      // If we're not skipped, we need a quantisation index for the subband
-    m_subband.SetQIndex(ReadUint() );
+    m_subband.SetQuantIndex(ReadUint() );
 
     if ( !m_subband.UsingMultiQuants() )
     {
@@ -88,7 +88,7 @@ bool SubbandByteIO::Input()
         // don't have multiquants
         for ( int j=0 ; j<m_subband.GetCodeBlocks().LengthY() ; ++j )
             for ( int i=0 ; i<m_subband.GetCodeBlocks().LengthX() ; ++i )
-           m_subband.GetCodeBlocks()[j][i].SetQIndex( m_subband.QIndex() );
+           m_subband.GetCodeBlocks()[j][i].SetQuantIndex( m_subband.QuantIndex() );
     }
 
     // byte align
@@ -120,7 +120,7 @@ const string SubbandByteIO::GetBytes()
     }
 
     // output quantisation
-    byte_io.WriteUint(m_subband.QIndex());
+    byte_io.WriteUint(m_subband.QuantIndex());
 
     // byte align
     byte_io.ByteAlignOutput();

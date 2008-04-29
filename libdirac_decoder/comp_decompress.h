@@ -74,7 +74,8 @@ namespace dirac
             \param  pic_data          contains the component data to be decompressed
         */
         void Decompress(ComponentByteIO *p_component_byteio,
-                        PicArray& pic_data);
+	                CoeffArray& coeff_data,
+                        SubbandList& bands);
 
     private:
         //! Copy constructor is private and body-less
@@ -114,7 +115,11 @@ namespace dirac
         DecoderParams& m_decparams;
 
         //! Reference to the picture parameters provided to the constructor
-        const PictureParams& m_fparams;
+        const PictureParams& m_pparams;
+
+	//! Reference to the picture sort
+	const PictureSort& m_psort;
+
 
     };
 

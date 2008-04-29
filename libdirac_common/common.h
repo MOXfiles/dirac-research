@@ -213,7 +213,18 @@ namespace dirac
 
     //Classes used throughout the codec//
     /////////////////////////////////////
-    //! Picture type Class
+ 
+    //! Class defining a rational number
+    class Rational
+    {
+    public:
+        //! Numerator
+        unsigned int m_num;
+        //! Denominator
+        unsigned int m_denom;
+    };
+
+   //! Picture type Class
     class PictureSort
     {
     public:
@@ -271,273 +282,6 @@ namespace dirac
 
     private:
         unsigned char fs;
-    };
-
-    //! A class for picture component data.
-    /*!
-        A class for encapsulating picture data, derived from TwoDArray.
-     */
-    class PicArray: public TwoDArray<ValueType>
-    {
-    public:
-        //! Default constructor
-        /*!
-            Default constructor creates an empty array.
-        */
-        PicArray(): TwoDArray<ValueType>(){}
-
-        //! Constructor.
-        /*!
-            Contructor creates a two-D array, with specified size and colour
-            format.
-        */
-        PicArray(int height, int width, CompSort cs=Y_COMP): 
-            TwoDArray<ValueType>(height, width), m_csort(cs){}
-
-        //copy constructor and assignment= derived by inheritance
-
-        //! Destructor
-        ~PicArray(){}
-
-        //! Return which component is stored
-        const CompSort& CSort() const {return m_csort;}
-        
-        //! Set the type of component being stored
-        void SetCSort(const CompSort cs){ m_csort = cs; }
-
-    private:
-
-        CompSort m_csort;
-    };
-
-    //! A class for picture component data.
-    /*!
-        A class for encapsulating coefficient data, derived from TwoDArray..
-     */
-    class CoeffArray: public TwoDArray<CoeffType>
-    {
-    public:
-        //! Default constructor
-        /*!
-            Default constructor creates an empty array.
-        */
-        CoeffArray(): TwoDArray<CoeffType>(){}
-
-        //! Constructor.
-        /*!
-            Contructor creates a two-D array, with specified size and colour
-            format.
-        */
-        CoeffArray(int height, int width, CompSort cs=Y_COMP): 
-            TwoDArray<CoeffType>(height, width), m_csort(cs){}
-
-        //copy constructor and assignment= derived by inheritance
-
-        //! Destructor
-        ~CoeffArray(){}
-        
-        //! Return which component is stored
-        const CompSort& CSort() const {return m_csort;}
-        
-        //! Set the type of component being stored
-        void SetCSort(const CompSort cs){ m_csort = cs; }
-        
-        private:
-
-        CompSort m_csort;
-
-    };
-
-
-    //! A structure for recording costs, particularly in quantisation.
-    class CostType
-    {
-    public:
-        //! The error (MSE or 4th power)
-        double Error;
-
-        //! The entropy in bits per symbol.
-        double ENTROPY;
-
-        //! The Lagrangian combination of MSE+lambda*entropy
-        double TOTAL;
-    };
-
-
-    //! A class used for correcting estimates of entropy.
-    /*!
-        A class used by the encoder for correcting estimates of entropy. Used
-        for selecting quantisers in subband coefficient coding. Factors can be
-        adjusted in the light of previous experience.
-     */
-    class EntropyCorrector
-    {
-    public:
-        //! Constructor.
-        /*!
-        Constructs arrays of correction factors of size.
-        \param    depth    the depth of the wavelet transform.
-        */
-        EntropyCorrector(int depth);
-
-        ////////////////////////////////////////////////////////////////////
-        //NB: Assume default copy constructor, assignment = and destructor//
-        ////////////////////////////////////////////////////////////////////
-
-        //! Returns the correction factor.
-        /*!
-        Returns the correction factor for the band given also the type of
-        picture and component.
-        */
-        float Factor(const int bandnum, const PictureSort fsort,const CompSort c) const;
-
-        //! Update the correction factors.
-        /*!
-        Update the factors for a given subband, component and picture type.
-        \param    bandnum    the number of the subband to update
-        \param    fsort      picture type
-        \param    c          component type
-        \param    est_bits    the number of bits it was estimated would be used
-        \param    actual_bits    the number of bits that actually were used
-         */
-        void Update(int bandnum, PictureSort fsort, CompSort c,int est_bits,int actual_bits);
-
-    private:
-        //! Initialises the correction factors
-        void Init();
-
-        TwoDArray<float> m_Yfctrs;
-        TwoDArray<float> m_Ufctrs;
-        TwoDArray<float> m_Vfctrs;
-    };
-
-    //! Parameters for overlapped block motion compensation
-    class OLBParams
-    {
-
-    public:
-
-        //! Default constructor does nothing
-        OLBParams(){}
-
-        //! Constructor
-        /*
-            Constructor rationalises proposed parameters to allow suitable
-            overlap and fit in with chroma format
-            \param    xblen    the horizontal block length
-            \param    yblen    the vertical block length
-            \param    xblen    the horizontal block separation
-            \param    yblen    the vertical block separation
-
-        */
-        OLBParams(const int xblen, const int yblen,
-                  const int xbsep, const int ybsep);
-
-        // Gets ...
-
-        //! Returns the horizontal block length
-        int Xblen() const {return m_xblen;}
-
-        //! Returns the vertical block length
-        int Yblen() const {return m_yblen;}
-
-        //! Returns the horizontal block separation
-        int Xbsep() const {return m_xbsep;}
-
-        //! Returns the vertical block separation
-        int Ybsep() const {return m_ybsep;}
-
-        //! The offset in the horizontal start of the block caused by overlap,=(XBLEN-XBSEP)/2
-        int Xoffset() const {return m_xoffset;}
-
-        //! The offset in the vertical start of the block caused by overlap,=(YBLEN-YBSEP)/2
-        int Yoffset() const {return m_yoffset;}
-
-        // ... and sets
-
-        //! Sets the block width
-        void SetXblen( int xblen ){ m_xblen = xblen; m_xoffset = (m_xblen-m_xbsep)/2;}
-
-        //! Sets the block height
-        void SetYblen( int yblen ){ m_yblen = yblen; m_yoffset = (m_yblen-m_ybsep)/2;}
-
-        //! Sets the block horizontal separation
-        void SetXbsep( int xbsep ){ m_xbsep = xbsep; m_xoffset = (m_xblen-m_xbsep)/2;}
-
-        //! Sets the block vertical separation
-        void SetYbsep( int ybsep ){ m_ybsep = ybsep; m_yoffset = (m_yblen-m_ybsep)/2;}
-
-        bool operator == (const OLBParams bparams) const;
-
-        // overloaded stream operators
-        friend std::ostream & operator<< (std::ostream &, OLBParams &);
-        friend std::istream & operator>> (std::istream &, OLBParams &);
-
-
-    private:
-
-        int m_xblen;
-        int m_yblen;
-        int m_xbsep;
-        int m_ybsep;
-        int m_xoffset;
-        int m_yoffset;
-    };
-
-    //! Class defining a rational number
-    class Rational
-    {
-    public:
-        //! Numerator
-        unsigned int m_num;
-        //! Denominator
-        unsigned int m_denom;
-    };
-
-    //! Parameters relating to the complexity of encoder/decoder
-    class ParseParams
-    {
-    public:
-        //! Default constructor
-        ParseParams();
-
-        // Gets
-
-        //! Get the major version
-        unsigned int MajorVersion() const { return m_major_ver; }
-
-        //! Get the minor version
-        unsigned int MinorVersion() const { return m_minor_ver; }
-
-        //! Get the Profile
-        unsigned int Profile() const { return m_profile; }
-
-        //! Get the Level
-        unsigned int Level() const { return m_level; }
-
-        // Sets
-
-        //! Set the major version
-        void SetMajorVersion(unsigned int major_ver) {m_major_ver = major_ver; }
-
-        //! Set the minor version
-        void SetMinorVersion(unsigned int minor_ver) { m_minor_ver = minor_ver; }
-
-        //! Set the Profile
-        void SetProfile(unsigned int profile) { m_profile = profile; }
-
-        //! Set the Level
-        void SetLevel(unsigned int level) { m_level = level; }
-
-    private:
-        //! Major Version
-        unsigned int m_major_ver;
-        //! Minor Version
-        unsigned int m_minor_ver;
-        //! Profile
-        unsigned int m_profile;
-        //! Level
-        unsigned int m_level;
     };
 
     //! Parameters relating to the source material being encoded/decoded
@@ -783,6 +527,7 @@ namespace dirac
         TransferFunction m_transfer_func;
     };
 
+
     //! Parameters for initialising picture class objects
     class PictureParams
     {
@@ -795,9 +540,7 @@ namespace dirac
         /*!
            Picture chroma format is set Picture sort defaults to I picture.
         */
-        PictureParams(const ChromaFormat& cf, int orig_xlen, int orig_ylen,
-                    int dwt_xlen, int dwt_ylen,
-                    int c_dwt_xlen, int c_dwt_ylen,
+        PictureParams(const ChromaFormat& cf, int xlen, int ylen,
                     unsigned int luma_depth, unsigned int chroma_depth);
 
         //! Constructor
@@ -827,29 +570,17 @@ namespace dirac
         //! Returns the chroma format of the picture
         const ChromaFormat& CFormat() const{return m_cformat;}
 
-        //! Returns the luma width of the padded picture
-        int DwtXl() const{return m_dwt_xl;}
+        //! Returns the picture width
+        int Xl() const {return m_xl;}
 
-        //! Returns the luma height of the padded picture
-        int DwtYl() const{return m_dwt_yl;}
+        //! Returns the picture height
+        int Yl() const {return m_yl;}
 
-        //! Returns the chroma width of the padded picture
-        int DwtChromaXl() const{return m_dwt_chroma_xl;}
+        //! Returns the chroma width of the picture
+        int ChromaXl() const{return m_cxl;}
 
-        //! Returns the chroma height of the padded picture
-        int DwtChromaYl() const{return m_dwt_chroma_yl;}
-
-        //! Returns the original picture width
-        int OrigXl() const {return m_orig_xl;}
-
-        //! Returns the original picture height
-        int OrigYl() const {return m_orig_yl;}
-
-        //! Returns the original chroma width of the picture
-        int OrigChromaXl() const{return m_orig_cxl;}
-
-        //! Returns the original chroma height of the picture
-        int OrigChromaYl() const{return m_orig_cyl;}
+        //! Returns the chroma height of the picture
+        int ChromaYl() const{return m_cyl;}
 
         //! Returns the luma depth
         unsigned int LumaDepth() const { return m_luma_depth; }
@@ -916,23 +647,11 @@ namespace dirac
         //! Sets the chroma format
         void SetCFormat(ChromaFormat cf){ m_cformat = cf; }
 
-        //! Sets the padded picture luma length
-        void SetDwtXl(int xl){m_dwt_xl = xl; }
+        //! Sets the picture width
+        void SetXl(int xlen);
 
-        //! Sets the padded picture luma height
-        void SetDwtYl(int yl){m_dwt_yl = yl; }
-
-        //! Sets the original picture width
-        void SetOrigXl(int orig_xlen);
-
-        //! Sets the original picture height
-        void SetOrigYl(int orig_ylen);
-
-        //! Sets the chroma length
-        void SetDwtChromaXl(int xl){m_dwt_chroma_xl = xl; }
-
-        //! Sets the chroma height
-        void SetDwtChromaYl(int yl){m_dwt_chroma_yl = yl; }
+        //! Sets the picture height
+        void SetYl(int ylen);
 
         //! Set Luma Depth
         void SetLumaDepth(unsigned int luma_depth) { m_luma_depth = luma_depth; }
@@ -950,12 +669,6 @@ namespace dirac
 
         //! The chroma format
         ChromaFormat m_cformat;
-
-        //! Padded Picture luma width for Discrete Wavelet Transform
-        int m_dwt_xl;
-
-        //! Padded Picture luma height for Discrete Wavelet Transform
-        int m_dwt_yl;
 
         //! The picture sort
         PictureSort m_psort;
@@ -978,26 +691,20 @@ namespace dirac
         //! True if the picture has been output, false if not
         bool m_output;
 
-        //! DWT Chroma length
-        int m_dwt_chroma_xl;
-
-        //! DWT Chroma height
-        int m_dwt_chroma_yl;
-
         //! The picture number of the retired picture
         mutable  int m_retd_fnum;
 
-        //! Orignal Picture luma width
-        int m_orig_xl;
+        //! Picture luma width
+        int m_xl;
 
-        //! Orignal Picture luma height
-        int m_orig_yl;
+        //! Picture luma height
+        int m_yl;
 
-        //! Orignal Picture chroma width
-        int m_orig_cxl;
+        //! Picture chroma width
+        int m_cxl;
 
-        //! Orignal Picture chroma height
-        int m_orig_cyl;
+        //! Picture chroma height
+        int m_cyl;
 
         //! Luma depth - number of bits required for lumz
         unsigned int m_luma_depth;
@@ -1007,6 +714,266 @@ namespace dirac
 
         //! arithmetic coding flag
         bool m_using_ac;
+    };
+
+
+    //! A class for picture component data.
+    /*!
+        A class for encapsulating picture data, derived from TwoDArray.
+     */
+    class PicArray: public TwoDArray<ValueType>
+    {
+    public:
+        //! Default constructor
+        /*!
+            Default constructor creates an empty array.
+        */
+        PicArray(): TwoDArray<ValueType>(){}
+
+        //! Constructor.
+        /*!
+            Contructor creates a two-D array, with specified size and colour
+            format.
+        */
+        PicArray(int height, int width, CompSort cs=Y_COMP): 
+            TwoDArray<ValueType>(height, width), m_csort(cs){}
+
+        //copy constructor and assignment= derived by inheritance
+
+        //! Destructor
+        ~PicArray(){}
+
+        //! Return which component is stored
+        const CompSort& CSort() const {return m_csort;}
+        
+        //! Set the type of component being stored
+        void SetCSort(const CompSort cs){ m_csort = cs; }
+
+    private:
+
+        CompSort m_csort;
+    };
+
+    //! A class for picture component data.
+    /*!
+        A class for encapsulating coefficient data, derived from TwoDArray..
+     */
+    class CoeffArray: public TwoDArray<CoeffType>
+    {
+    public:
+        //! Default constructor
+        /*!
+            Default constructor creates an empty array.
+        */
+        CoeffArray(): TwoDArray<CoeffType>(){}
+
+        //! Constructor.
+        /*!
+            Contructor creates a two-D array, with specified size and colour
+            format.
+        */
+        CoeffArray(int height, int width, CompSort cs=Y_COMP): 
+            TwoDArray<CoeffType>(height, width), m_csort(cs){}
+
+        //copy constructor and assignment= derived by inheritance
+
+        //! Destructor
+        ~CoeffArray(){}
+        
+        //! Return which component is stored
+        const CompSort& CSort() const {return m_csort;}
+        
+        //! Set the type of component being stored
+        void SetCSort(const CompSort cs){ m_csort = cs; }
+        
+        private:
+
+        CompSort m_csort;
+
+    };
+
+
+    //! A structure for recording costs, particularly in quantisation.
+    class CostType
+    {
+    public:
+        //! The error (MSE or 4th power)
+        double Error;
+
+        //! The entropy in bits per symbol.
+        double ENTROPY;
+
+        //! The Lagrangian combination of MSE+lambda*entropy
+        double TOTAL;
+    };
+
+
+    //! A class used for correcting estimates of entropy.
+    /*!
+        A class used by the encoder for correcting estimates of entropy. Used
+        for selecting quantisers in subband coefficient coding. Factors can be
+        adjusted in the light of previous experience.
+     */
+    class EntropyCorrector
+    {
+    public:
+        //! Constructor.
+        /*!
+        Constructs arrays of correction factors of size.
+        \param    depth    the depth of the wavelet transform.
+        */
+        EntropyCorrector(int depth);
+
+        ////////////////////////////////////////////////////////////////////
+        //NB: Assume default copy constructor, assignment = and destructor//
+        ////////////////////////////////////////////////////////////////////
+
+        //! Returns the correction factor.
+        /*!
+        Returns the correction factor for the band given also the type of
+        picture and component.
+        */
+        float Factor(const int bandnum, const PictureParams& pp,
+	             const CompSort c) const;
+
+        //! Update the correction factors.
+        /*!
+        Update the factors for a given subband, component and picture type.
+        \param    bandnum    the number of the subband to update
+        \param    pp         picture parameters
+        \param    c          component type
+        \param    est_bits    the number of bits it was estimated would be used
+        \param    actual_bits    the number of bits that actually were used
+         */
+        void Update(int bandnum, const PictureParams& pp, 
+	CompSort c,int est_bits,int actual_bits);
+
+    private:
+        //! Initialises the correction factors
+        void Init();
+
+        TwoDArray<float> m_Yfctrs;
+        TwoDArray<float> m_Ufctrs;
+        TwoDArray<float> m_Vfctrs;
+    };
+
+    //! Parameters for overlapped block motion compensation
+    class OLBParams
+    {
+
+    public:
+
+        //! Default constructor does nothing
+        OLBParams(){}
+
+        //! Constructor
+        /*
+            Constructor rationalises proposed parameters to allow suitable
+            overlap and fit in with chroma format
+            \param    xblen    the horizontal block length
+            \param    yblen    the vertical block length
+            \param    xblen    the horizontal block separation
+            \param    yblen    the vertical block separation
+
+        */
+        OLBParams(const int xblen, const int yblen,
+                  const int xbsep, const int ybsep);
+
+        // Gets ...
+
+        //! Returns the horizontal block length
+        int Xblen() const {return m_xblen;}
+
+        //! Returns the vertical block length
+        int Yblen() const {return m_yblen;}
+
+        //! Returns the horizontal block separation
+        int Xbsep() const {return m_xbsep;}
+
+        //! Returns the vertical block separation
+        int Ybsep() const {return m_ybsep;}
+
+        //! The offset in the horizontal start of the block caused by overlap,=(XBLEN-XBSEP)/2
+        int Xoffset() const {return m_xoffset;}
+
+        //! The offset in the vertical start of the block caused by overlap,=(YBLEN-YBSEP)/2
+        int Yoffset() const {return m_yoffset;}
+
+        // ... and sets
+
+        //! Sets the block width
+        void SetXblen( int xblen ){ m_xblen = xblen; m_xoffset = (m_xblen-m_xbsep)/2;}
+
+        //! Sets the block height
+        void SetYblen( int yblen ){ m_yblen = yblen; m_yoffset = (m_yblen-m_ybsep)/2;}
+
+        //! Sets the block horizontal separation
+        void SetXbsep( int xbsep ){ m_xbsep = xbsep; m_xoffset = (m_xblen-m_xbsep)/2;}
+
+        //! Sets the block vertical separation
+        void SetYbsep( int ybsep ){ m_ybsep = ybsep; m_yoffset = (m_yblen-m_ybsep)/2;}
+
+        bool operator == (const OLBParams bparams) const;
+
+        // overloaded stream operators
+        friend std::ostream & operator<< (std::ostream &, OLBParams &);
+        friend std::istream & operator>> (std::istream &, OLBParams &);
+
+
+    private:
+
+        int m_xblen;
+        int m_yblen;
+        int m_xbsep;
+        int m_ybsep;
+        int m_xoffset;
+        int m_yoffset;
+    };
+
+    //! Parameters relating to the complexity of encoder/decoder
+    class ParseParams
+    {
+    public:
+        //! Default constructor
+        ParseParams();
+
+        // Gets
+
+        //! Get the major version
+        unsigned int MajorVersion() const { return m_major_ver; }
+
+        //! Get the minor version
+        unsigned int MinorVersion() const { return m_minor_ver; }
+
+        //! Get the Profile
+        unsigned int Profile() const { return m_profile; }
+
+        //! Get the Level
+        unsigned int Level() const { return m_level; }
+
+        // Sets
+
+        //! Set the major version
+        void SetMajorVersion(unsigned int major_ver) {m_major_ver = major_ver; }
+
+        //! Set the minor version
+        void SetMinorVersion(unsigned int minor_ver) { m_minor_ver = minor_ver; }
+
+        //! Set the Profile
+        void SetProfile(unsigned int profile) { m_profile = profile; }
+
+        //! Set the Level
+        void SetLevel(unsigned int level) { m_level = level; }
+
+    private:
+        //! Major Version
+        unsigned int m_major_ver;
+        //! Minor Version
+        unsigned int m_minor_ver;
+        //! Profile
+        unsigned int m_profile;
+        //! Level
+        unsigned int m_level;
     };
 
     //! Structure to hold code block sizes when spatial partitioning is used
@@ -1071,30 +1038,36 @@ namespace dirac
         //! Returns the number of blocks vertically
         int YNumBlocks() const {return m_y_num_blocks;}
 
-        //! Returns true if we're coding input as fields (independent of source format!)
-        bool FieldCoding() const {return m_field_coding;}
+        //! Returns the picture coding mode (independent of source format)
+	/*! Returns the picture coding mode (independent of source format)
+	 *  0 = Frame coding (no quincunx)
+	 *  1 = Field coding (no quincunx)
+	 */
+        int PictureCodingMode() const {return m_pic_coding_mode;}
+
+        //! Returns true if the pictures are being coded as fields (mode 1 or 3)
+        bool FieldCoding() const { return  (m_pic_coding_mode==1); } 
 
         //! Returns true if the topmost field comes first in time when coding
         bool TopFieldFirst() const {return m_topfieldfirst;}
 
-        //! Return the original picture/field luma width
-        int OrigXl() const {return m_orig_xl;}
+        //! Return the picture/field luma width
+        int Xl() const {return m_xl;}
 
-        //! Return the original picture/field luma height
-        int OrigYl() const {return m_orig_yl;}
+        //! Return the picture/field luma height
+        int Yl() const {return m_yl;}
 
-        //! Return the original picture/field chroma width
-        int OrigChromaXl() const {return m_orig_cxl;}
+        //! Return the picture/field chroma width
+        int ChromaXl() const {return m_cxl;}
 
-        //! Return the original picture/field chroma height
-        int OrigChromaYl() const {return m_orig_cyl;}
+        //! Return the picture/field chroma height
+        int ChromaYl() const {return m_cyl;}
 
         //! Returns the luma depth
         unsigned int LumaDepth() const { return m_luma_depth; }
 
         //! Returns the chroma depth
         unsigned int ChromaDepth() const { return m_chroma_depth; }
-
 
         //! Return the Luma block parameters for each macroblock splitting level
         const OLBParams& LumaBParams(int n) const {return m_lbparams[n];}
@@ -1157,24 +1130,23 @@ namespace dirac
         //! Set how many blocks there are vertically
         void SetYNumBlocks(const int yn){m_y_num_blocks=yn;}
 
-        //! Sets whether input is coded as fields
-        void SetFieldCoding(bool field_coding){m_field_coding=field_coding;}
+        //! Sets whether input is coded as fields or quincunxially
+        void SetPictureCodingMode(int pic_coding){m_pic_coding_mode=pic_coding;}
 
         //! Sets whether the topmost field comes first in time [NB: TBD since this duplicates metadata in the sequence header]
         void SetTopFieldFirst(bool topf){m_topfieldfirst=topf;}
 
-        //! Set the original picture/field luma width
-        void SetOrigXl(const int x){m_orig_xl=x;}
+        //! Set the picture/field luma width
+        void SetXl(const int x){m_xl=x;}
 
-        //! Set the original picture/field luma height
-        void SetOrigYl(const int y){m_orig_yl=y;}
+        //! Set the picture/field luma height
+        void SetYl(const int y){m_yl=y;}
 
+        //! Set the frame/field chroma width
+        void SetChromaXl(const int x){m_cxl=x;}
 
-        //! Set the original frame/field chroma width
-        void SetOrigChromaXl(const int x){m_orig_cxl=x;}
-
-        //! Set the original frame/field chroma height
-        void SetOrigChromaYl(const int y){m_orig_cyl=y;}
+        //! Set the frame/field chroma height
+        void SetChromaYl(const int y){m_cyl=y;}
 
         //! Set Luma Depth
         void SetLumaDepth(unsigned int luma_depth) { m_luma_depth = luma_depth; }
@@ -1243,23 +1215,23 @@ namespace dirac
         WltFilter TransformFilter (unsigned int wf_idx);
     private:
 
-        //! True if input is coded as fields, false if coded as frames
-        bool m_field_coding;
+        //! The picture coding mode
+        int m_pic_coding_mode;
 
         //! True if interlaced and top field is first in temporal order
         bool m_topfieldfirst;
 
-        //! The original frame/field luma width
-        int m_orig_xl;
+        //! The frame/field luma width
+        int m_xl;
 
-        //! The original frame/field luma height
-        int m_orig_yl;
+        //! The frame/field luma height
+        int m_yl;
 
-        //! The original frame/field chroma width
-        int m_orig_cxl;
+        //! The frame/field chroma width
+        int m_cxl;
 
-        //! The original frame/field chroma height
-        int m_orig_cyl;
+        //! The frame/field chroma height
+        int m_cyl;
 
         //! Luma depth - number of bits required for lumz
         unsigned int m_luma_depth;
@@ -1627,7 +1599,7 @@ namespace dirac
         inline int InterQuantOffset4( const int index ) const {return m_inter_offset4[index]; }
 
         //! Returns the maximum quantiser index supported
-        inline int MaxQIndex() const {return m_max_qindex; }
+        inline int MaxQuantIndex() const {return m_max_qindex; }
 
 
     private:

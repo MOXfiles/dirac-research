@@ -90,7 +90,7 @@ namespace dirac
                         PictureBuffer& my_buffer);
 
         //! Returns the picture parameters of the current picture being decoded
-        const PictureParams& GetPicParams() const{ return m_fparams; }
+        const PictureParams& GetPicParams() const{ return m_pparams; }
 
     private:
         //! Copy constructor is private and body-less
@@ -106,6 +106,9 @@ namespace dirac
             assigned.
         */
         PictureDecompressor& operator=(const PictureDecompressor& rhs);
+
+        //! Initialise the padded coefficient data for the IDWT and subband decoding
+        void InitCoeffData( CoeffArray& coeff_data, const int xl, const int yl );
 
         //! Removes all the reference pictures in the retired list
         void CleanReferencePictures( PictureBuffer& my_buffer );
@@ -145,7 +148,7 @@ namespace dirac
         PredMode m_global_pred_mode;
 
         //! Current Picture Parameters
-        PictureParams m_fparams;
+        PictureParams m_pparams;
     };
 
 } // namespace dirac

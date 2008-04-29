@@ -40,24 +40,19 @@
 using namespace dirac;
 using namespace std;
 
-ComponentByteIO::ComponentByteIO(CompSort& cs,
+ComponentByteIO::ComponentByteIO(CompSort cs,
                                  const ByteIO& byteio):
 ByteIO(byteio),
 m_compsort(cs)
-{
-   
-}
+{}
 
-ComponentByteIO::ComponentByteIO(CompSort& cs):
+ComponentByteIO::ComponentByteIO(CompSort cs):
 ByteIO(),
 m_compsort(cs)
-{
-}
+{}
 
 ComponentByteIO::~ComponentByteIO()
-{
-   
-}
+{}
 
 //--------------public----------------------------------------------
 

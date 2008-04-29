@@ -46,7 +46,7 @@ QualityMonitor::QualityMonitor(EncoderParams& encp) :
     m_quality_averageY(3),
     m_quality_averageU(3),
     m_quality_averageV(3),
-    m_frame_total(3)
+    m_picture_total(3)
 {
     ResetAll();
 }
@@ -62,12 +62,12 @@ void QualityMonitor::ResetAll()
         m_quality_averageY[i] = 0.0;
         m_quality_averageU[i] = 0.0;
         m_quality_averageV[i] = 0.0;
-        m_frame_total[i] = 0;
+        m_picture_total[i] = 0;
     }// i
     m_totalquality_averageY = 0.0;
     m_totalquality_averageU = 0.0;
     m_totalquality_averageV = 0.0;
-    m_allframe_total = 0;
+    m_allpicture_total = 0;
 }
 
 void QualityMonitor::WriteLog()
@@ -76,13 +76,13 @@ void QualityMonitor::WriteLog()
     std::cout<<std::endl<<"------------------------";
     std::cout<<std::endl<<"Y: ";
     std::cout.width(5);std::cout.precision(4);
-    std::cout<<m_totalquality_averageY/m_allframe_total<<std::endl;
+    std::cout<<m_totalquality_averageY/m_allpicture_total<<std::endl;
     std::cout<<std::endl<<"U: ";
     std::cout.width(5);std::cout.precision(4);
-    std::cout<<m_totalquality_averageU/m_allframe_total<<std::endl;
+    std::cout<<m_totalquality_averageU/m_allpicture_total<<std::endl;
     std::cout<<std::endl<<"V: ";
     std::cout.width(5);std::cout.precision(4);
-    std::cout<<m_totalquality_averageV/m_allframe_total<<std::endl;
+    std::cout<<m_totalquality_averageV/m_allpicture_total<<std::endl;
 
 
     std::cout<<std::endl<<"Mean PSNR values by picture type and component";
@@ -93,59 +93,59 @@ void QualityMonitor::WriteLog()
     std::cout<<std::endl<<"=================||===================================================";
     std::cout<<std::endl<<"           Intra ||     ";
     std::cout.width(5);std::cout.precision(4);
-    std::cout<<m_quality_averageY[0]/m_frame_total[0]<<"     ||     ";
+    std::cout<<m_quality_averageY[0]/m_picture_total[0]<<"     ||     ";
     std::cout.width(5);std::cout.precision(4);
-    std::cout<<m_quality_averageU[0]/m_frame_total[0]<<"     ||     ";
+    std::cout<<m_quality_averageU[0]/m_picture_total[0]<<"     ||     ";
     std::cout.width(5);std::cout.precision(4);
-    std::cout<<m_quality_averageV[0]/m_frame_total[0]<<"     ||    ";
+    std::cout<<m_quality_averageV[0]/m_picture_total[0]<<"     ||    ";
     std::cout<<std::endl<<"-----------------||---------------------------------------------------";
     std::cout<<std::endl<<"       Inter Ref ||     ";
     std::cout.width(5);std::cout.precision(4);
-    std::cout<<m_quality_averageY[1]/m_frame_total[1]<<"     ||     ";
+    std::cout<<m_quality_averageY[1]/m_picture_total[1]<<"     ||     ";
     std::cout.width(5);std::cout.precision(4);
-    std::cout<<m_quality_averageU[1]/m_frame_total[1]<<"     ||     ";
+    std::cout<<m_quality_averageU[1]/m_picture_total[1]<<"     ||     ";
     std::cout.width(5);std::cout.precision(4);
-    std::cout<<m_quality_averageV[1]/m_frame_total[1]<<"     ||    ";
+    std::cout<<m_quality_averageV[1]/m_picture_total[1]<<"     ||    ";
     std::cout<<std::endl<<"-----------------||---------------------------------------------------";
     std::cout<<std::endl<<"   Inter Non Ref ||     ";
     std::cout.width(5);std::cout.precision(4);
-    std::cout<<m_quality_averageY[2]/m_frame_total[2]<<"     ||     ";
+    std::cout<<m_quality_averageY[2]/m_picture_total[2]<<"     ||     ";
     std::cout.width(5);std::cout.precision(4);
-    std::cout<<m_quality_averageU[2]/m_frame_total[2]<<"     ||     ";
+    std::cout<<m_quality_averageU[2]/m_picture_total[2]<<"     ||     ";
     std::cout.width(5);std::cout.precision(4);
-    std::cout<<m_quality_averageV[2]/m_frame_total[2]<<"     ||     ";
+    std::cout<<m_quality_averageV[2]/m_picture_total[2]<<"     ||     ";
     std::cout<<std::endl<<"-----------------||---------------------------------------------------";
 }
 
-void QualityMonitor::UpdateModel(const Picture& ld_frame, const Picture& orig_frame )
+void QualityMonitor::UpdateModel(const Picture& ld_picture, const Picture& orig_picture )
 {
-    const PictureSort& fsort = ld_frame.GetPparams().PicSort();
+    const PictureSort& fsort = ld_picture.GetPparams().PicSort();
     int idx = fsort.IsIntra() ? 0 : (fsort.IsRef() ? 1 : 2);
 
     double fqualityY, fqualityU, fqualityV;
 
-    fqualityY = QualityVal( ld_frame.Ydata() , orig_frame.Ydata(),
-                            m_encparams.OrigXl(), m_encparams.OrigYl(),
+    fqualityY = QualityVal( ld_picture.Ydata() , orig_picture.Ydata(),
+                            m_encparams.Xl(), m_encparams.Yl(),
                             Y_COMP);
     m_quality_averageY[idx] += fqualityY;
     m_totalquality_averageY += fqualityY;
 
-    fqualityU = QualityVal( ld_frame.Udata() , orig_frame.Udata(),
-                            m_encparams.OrigChromaXl(),
-                            m_encparams.OrigChromaYl(),
+    fqualityU = QualityVal( ld_picture.Udata() , orig_picture.Udata(),
+                            m_encparams.ChromaXl(),
+                            m_encparams.ChromaYl(),
                             U_COMP);
     m_quality_averageU[idx] += fqualityU;
     m_totalquality_averageU += fqualityU;
 
-    fqualityV = QualityVal( ld_frame.Vdata() , orig_frame.Vdata(),
-                            m_encparams.OrigChromaXl(),
-                            m_encparams.OrigChromaYl(),
+    fqualityV = QualityVal( ld_picture.Vdata() , orig_picture.Vdata(),
+                            m_encparams.ChromaXl(),
+                            m_encparams.ChromaYl(),
                             V_COMP);
     m_quality_averageV[idx] += fqualityV;
     m_totalquality_averageV += fqualityV;
 
-    m_frame_total[idx]++;
-    m_allframe_total++;
+    m_picture_total[idx]++;
+    m_allpicture_total++;
 
     if (m_encparams.Verbose() )
     {
