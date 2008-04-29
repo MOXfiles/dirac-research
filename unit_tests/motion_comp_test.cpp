@@ -108,7 +108,7 @@ void MotionCompTest::testZeroMotionComp()
 
 void MotionCompTest::testZeroMotionComp(MVPrecisionType precision)
 {
-    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
+    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, 8, 8, true);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_PICTURE, 1, true);
     OLBParams bparams(12, 12, 8, 8);
 
@@ -117,8 +117,6 @@ void MotionCompTest::testZeroMotionComp(MVPrecisionType precision)
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
-    cp.SetOrigXl( X_SIZE );
-    cp.SetOrigYl( Y_SIZE );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
@@ -127,7 +125,7 @@ void MotionCompTest::testZeroMotionComp(MVPrecisionType precision)
     
     MvData* mv_data = setupMV1Data(cp, 0, 0, REF1_ONLY);
 
-    PictureParams pp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    PictureParams pp(format420, X_SIZE, Y_SIZE, 8, 8);
 
     pp.SetPicSort(PictureSort::IntraRefPictureSort());
     pp.SetPictureNum(0);
@@ -168,15 +166,13 @@ void MotionCompTest::testAddandSubMotionComp()
 
 void MotionCompTest::testAddandSubMotionComp(MVPrecisionType precision)
 {
-    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
+    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, 8, 8, true);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_PICTURE, 1, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
     cp.SetBlockSizes(bparams, pbuffer.GetPictureParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
-    cp.SetOrigXl( X_SIZE );
-    cp.SetOrigYl( Y_SIZE );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
@@ -184,7 +180,7 @@ void MotionCompTest::testAddandSubMotionComp(MVPrecisionType precision)
     
     MvData* mv_data = setupMV1Data(cp, 5, 5, REF1_ONLY);
 
-    PictureParams pp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    PictureParams pp(format420, X_SIZE, Y_SIZE, 8, 8);
 
     pp.SetPicSort(PictureSort::IntraRefPictureSort());
     pp.SetPictureNum(0);
@@ -223,15 +219,13 @@ void MotionCompTest::testL2_picture()
 
 void MotionCompTest::testL2_picture(MVPrecisionType precision)
 {
-    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
+    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, 8, 8, true);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_PICTURE, 1, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
     cp.SetBlockSizes(bparams, pbuffer.GetPictureParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
-    cp.SetOrigXl( X_SIZE );
-    cp.SetOrigYl( Y_SIZE );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
@@ -239,7 +233,7 @@ void MotionCompTest::testL2_picture(MVPrecisionType precision)
     
     MvData* mv_data = setupMV1Data(cp, 5, 5, REF1_ONLY);
 
-    PictureParams pp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    PictureParams pp(format420, X_SIZE, Y_SIZE, 8, 8);
 
     pp.SetPicSort(PictureSort::IntraRefPictureSort());
     pp.SetPictureNum(0);
@@ -271,14 +265,12 @@ void MotionCompTest::testL2_picture(MVPrecisionType precision)
 
 void MotionCompTest::testI_picture()
 {
-    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
+    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, 8, 8, true);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_PICTURE, 2, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetBlockSizes(bparams, pbuffer.GetPictureParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
-    cp.SetOrigXl( X_SIZE );
-    cp.SetOrigYl( Y_SIZE );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
@@ -287,7 +279,7 @@ void MotionCompTest::testI_picture()
     
     MvData* mv_data = setupMV1Data(cp, 5, 5, REF1_ONLY);
 
-    PictureParams pp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    PictureParams pp(format420, X_SIZE, Y_SIZE, 8, 8);
 
     pp.SetPicSort(PictureSort::IntraRefPictureSort());
     pp.SetPictureNum(0);
@@ -320,15 +312,13 @@ void MotionCompTest::testRef2()
 
 void MotionCompTest::testRef2(MVPrecisionType precision)
 {
-    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
+    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, 8, 8, true);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_PICTURE, 2, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
     cp.SetBlockSizes(bparams, pbuffer.GetPictureParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
-    cp.SetOrigXl( X_SIZE );
-    cp.SetOrigYl( Y_SIZE );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
@@ -338,7 +328,7 @@ void MotionCompTest::testRef2(MVPrecisionType precision)
     MvData* mv_data = setupMV1Data(cp, 5, 5, REF2_ONLY);
     setupMV2Data(mv_data, 0, 0);
 
-    PictureParams pp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    PictureParams pp(format420, X_SIZE, Y_SIZE, 8, 8);
 
     pp.SetPicSort(PictureSort::IntraRefPictureSort());
     pp.SetPictureNum(0);
@@ -381,15 +371,13 @@ void MotionCompTest::testRef1and2()
 
 void MotionCompTest::testRef1and2(MVPrecisionType precision)
 {
-    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8, true);
+    PictureBuffer pbuffer(format420, X_SIZE, Y_SIZE, 8, 8, true);
     CodecParams cp(VIDEO_FORMAT_CIF, INTER_PICTURE, 2, true);
     OLBParams bparams(12, 12, 8, 8);
     cp.SetMVPrecision(precision);
     cp.SetBlockSizes(bparams, pbuffer.GetPictureParams().CFormat());
     cp.SetXNumMB( X_SIZE / cp.LumaBParams(0).Xbsep() );
     cp.SetYNumMB( Y_SIZE / cp.LumaBParams(0).Ybsep() );
-    cp.SetOrigXl( X_SIZE );
-    cp.SetOrigYl( Y_SIZE );
 
     cp.SetXNumBlocks( 4*cp.XNumMB() );
     cp.SetYNumBlocks( 4*cp.YNumMB() );
@@ -403,7 +391,7 @@ void MotionCompTest::testRef1and2(MVPrecisionType precision)
     MvData* mv_data2 = setupMV1Data(cp, 5, 5, REF1AND2);
     setupMV2Data(mv_data2, 7, 3);
 
-    PictureParams pp(format420, X_SIZE, Y_SIZE, X_SIZE, Y_SIZE, X_SIZE/2, Y_SIZE/2, 8, 8);
+    PictureParams pp(format420, X_SIZE, Y_SIZE, 8, 8);
 
     pp.SetPicSort(PictureSort::IntraRefPictureSort());
     pp.SetPictureNum(0);

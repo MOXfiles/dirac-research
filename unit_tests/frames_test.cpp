@@ -205,7 +205,7 @@ void PicturesTest::tearDown()
 
 void PicturesTest::testConstructor()
 {
-    PictureParams p_params(format444, 20, 30, 20, 30, 20, 30, 8, 8);
+    PictureParams p_params(format444, 20, 30, 8, 8);
     Picture picture(p_params);
 
     CPPUNIT_ASSERT_EQUAL (20, picture.Ydata().LengthX());
@@ -229,7 +229,7 @@ void PicturesTest::testDefaultPictureParams()
 
 void PicturesTest::testCopyConstructor()
 {
-    PictureParams p_params(format444, 20, 30, 20, 30, 20, 30, 8, 8);
+    PictureParams p_params(format444, 20, 30, 8, 8);
     Picture picture(p_params);
     setupPicture(picture, 0);
     
@@ -239,11 +239,11 @@ void PicturesTest::testCopyConstructor()
 
 void PicturesTest::testAssignment()
 {
-    PictureParams p_params(format444, 20, 30, 20, 30, 20, 30, 8, 8);
+    PictureParams p_params(format444, 20, 30, 8, 8);
     Picture picture(p_params);
     setupPicture(picture, 0);
 
-    PictureParams p_params_copy(format444, 10, 10, 10, 10, 10, 10, 8, 8);
+    PictureParams p_params_copy(format444, 10, 10, 8, 8);
     Picture picture_copy(p_params_copy);
 
     picture_copy = picture;
