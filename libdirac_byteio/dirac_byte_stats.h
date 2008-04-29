@@ -42,6 +42,8 @@
 #define dirac_byte_stats_h
 
 // SYSTEM INCLUDES
+// FIXME - need to fix for MS Windows
+#include <inttypes.h>
 #include <map>                          // for byte-counts
 #include <climits>
 
@@ -91,12 +93,12 @@ namespace dirac
         /**
         * Gets number of bits for a particular stat-type
         */
-        long int GetBitCount(const StatType& stat_type) const;
+        int64_t GetBitCount(const StatType& stat_type) const;
 
         /**
         * Gets number of bytes for a particular stat-type
         */
-        long int GetByteCount(const StatType& stat_type) const;
+        int64_t GetByteCount(const StatType& stat_type) const;
       
         /**
         * Sets number of bytes for a particular stat-type

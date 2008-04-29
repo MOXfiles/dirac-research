@@ -67,7 +67,7 @@ int64_t DiracByteStats::GetBitCount(const StatType& stat_type) const
 
 int64_t DiracByteStats::GetByteCount(const StatType& stat_type) const
 {
-     std::map<StatType, long int>::const_iterator it;
+     std::map<StatType, int64_t>::const_iterator it;
      it = m_byte_count.find(stat_type);
      if(it==m_byte_count.end())
            return 0;
