@@ -582,7 +582,7 @@ void PictureBuffer::SetProgressiveParams( const unsigned int pnum )
             // Refs are the next I or L1 picture ...
             m_pparams.Refs().push_back(((pnum/m_L1_sep)+1)*m_L1_sep);
 
-            m_pparams.SetExpiryTime( 1 );
+            m_pparams.SetExpiryTime( 22 );
         }
 
     }
@@ -699,7 +699,7 @@ void PictureBuffer::SetInterlacedParams( const unsigned int pnum )
             // Refs are the same parity fields in the next I or L1 picture ...
             m_pparams.Refs().push_back((((pnum/2)/m_L1_sep+1)*m_L1_sep)*2+(pnum%2));
 
-            m_pparams.SetExpiryTime( 2 );
+            m_pparams.SetExpiryTime( 4 );
         }
 
     }
