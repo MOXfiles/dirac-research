@@ -86,6 +86,11 @@ static void display_help()
     cout << "\nHD1080I50         bool    false         Use HD-1080I50 compression presets";
     cout << "\nHD1080P60         bool    false         Use HD-1080P60 compression presets";
     cout << "\nHD1080P50         bool    false         Use HD-1080P50 compression presets";
+    cout << "\nDC4K24            bool    false         Use DIGITAL CINEMA 4K compression presets";
+    cout << "\nUHDTV4K60         bool    false         Use UHDTV 4K60 compression presets";
+    cout << "\nUHDTV4K50         bool    false         Use UHDTV 4K50 compression presets";
+    cout << "\nUHDTV8K60         bool    false         Use UHDTV 8K60 compression presets";
+    cout << "\nUHDTV8K50         bool    false         Use UHDTV 8K50 compression presets";
     cout << "\nDC2K24            bool    false         Use DIGITAL CINEMA 2K compression presets";
     cout << "\nDC4K24           bool    false          Use DIGITAL CINEMA 4K compression presets";
     cout << "\nfull_search     ulong ulong  0UL 0UL         Use full search motion estimation";
@@ -629,6 +634,26 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             preset = VIDEO_FORMAT_HD_1080P50;
             parsed[i] = true;
         }
+	else if ( strcmp (argv[i], "-UHDTV4K60") == 0 )
+	{
+	    preset = VIDEO_FORMAT_UHDTV_4K60;
+	    parsed[i] = true;
+	}
+	else if ( strcmp (argv[i], "-UHDTV4K50") == 0 )
+	{
+	    preset = VIDEO_FORMAT_UHDTV_4K50;
+	    parsed[i] = true;
+	}
+	else if ( strcmp (argv[i], "-UHDTV8K60") == 0 )
+	{
+	      preset = VIDEO_FORMAT_UHDTV_8K60;
+	      parsed[i] = true;
+	}
+	else if ( strcmp (argv[i], "-UHDTV8K50") == 0 )
+	{
+	      preset = VIDEO_FORMAT_UHDTV_8K50;
+	      parsed[i] = true;
+	}
         else if ( strcmp (argv[i], "-DC2K24") == 0 )
         {
             preset = VIDEO_FORMAT_DIGI_CINEMA_2K24;

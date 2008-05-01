@@ -80,7 +80,6 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
 
     m_encparams.SetXNumBlocks( 4 * m_encparams.XNumMB() );
     m_encparams.SetYNumBlocks( 4 * m_encparams.YNumMB() );
-
     // Set up the picture buffers
     m_fbuffer = new PictureBuffer( m_srcparams.CFormat() ,
                                  m_encparams.NumL1() , m_encparams.L1Sep() ,
@@ -200,7 +199,6 @@ Picture& SequenceCompressor::CompressNextPicture()
     m_current_display_pnum = CodedToDisplay( m_current_code_pnum );
 
     m_show_pnum = std::max( m_current_code_pnum - m_delay , 0 );
-
     if ( CanEncode() )
     {   // We haven't coded everything, so compress the next picture
 
@@ -423,6 +421,7 @@ int FrameSequenceCompressor::CodedToDisplay( const int pnum )
     }
     else
     {//we just have I-pictures, so no re-ordering
+
         return pnum;
     }
 }

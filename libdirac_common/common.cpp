@@ -298,41 +298,6 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
         m_lbparams[2].SetYblen( m_lbparams[2].Ybsep()+4);
     }
 
-    // Check if the luma block overlap is zero or implies a chroma overlap >1
-    int overlap = m_lbparams[2].Xblen() - m_lbparams[2].Xbsep();
-    if (overlap!=0 && overlap<2*xcfactor)
-    {
-        m_lbparams[2].SetXblen( m_lbparams[2].Xbsep()+4);
-    }
-    overlap = m_lbparams[2].Yblen() - m_lbparams[2].Ybsep();
-    if (overlap!=0 && overlap<2*ycfactor)
-    {
-        m_lbparams[2].SetYblen( m_lbparams[2].Ybsep()+4);
-    }
-
-    // Now check that the overlap is a power of 2
-    int count = 0;
-    overlap = m_lbparams[2].Xblen() - m_lbparams[2].Xbsep();
-    while ((overlap>>=1))
-        ++count;
-
-    overlap = m_lbparams[2].Xblen() - m_lbparams[2].Xbsep();
-    if ((1<<count) != overlap && overlap!=0)
-    {
-        m_lbparams[2].SetXblen( m_lbparams[2].Xbsep()+4);
-    }
-    count = 0;
-    overlap = m_lbparams[2].Yblen() - m_lbparams[2].Ybsep();
-    while ((overlap>>=1))
-        ++count;
-
-    overlap = m_lbparams[2].Yblen() - m_lbparams[2].Ybsep();
-    if ((1<<count) != overlap && overlap!=0)
-    {
-        m_lbparams[2].SetYblen( m_lbparams[2].Ybsep()+4);
-    }
-
-
     // Set the chroma values
     m_cbparams[2].SetXbsep( m_lbparams[2].Xbsep()/xcfactor );
     m_cbparams[2].SetXblen( m_lbparams[2].Xblen()/xcfactor );
@@ -371,7 +336,6 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
         std::cout<<std::endl<<"\t 1. Lengths and separations must be positive multiples of 4";
         std::cout<<std::endl<<"\t 2. Length can't be more than twice separations";
         std::cout<<std::endl<<"\t 3. Lengths must be greater than or equal to separations";
-        std::cout<<std::endl<<"\t 4. Overlap=length-separation must be a power of 2 i.e. 0 or 2^k, k>=2";
         std::cout<<std::endl<<std::endl<<"Instead, using:";
         std::cout<<" xblen="<<m_lbparams[2].Xblen();
         std::cout<<" yblen="<<m_lbparams[2].Yblen();
@@ -555,6 +519,10 @@ void EncoderParams::SetUsualCodeBlocks ( const PictureType &ftype)
     case VIDEO_FORMAT_HD_1080I50:
     case VIDEO_FORMAT_HD_1080P60:
     case VIDEO_FORMAT_HD_1080P50:
+    case VIDEO_FORMAT_UHDTV_4K60:
+    case VIDEO_FORMAT_UHDTV_4K50:
+    case VIDEO_FORMAT_UHDTV_8K60:
+    case VIDEO_FORMAT_UHDTV_8K50:
     case VIDEO_FORMAT_DIGI_CINEMA_2K24:
     case VIDEO_FORMAT_DIGI_CINEMA_4K24:
         if (ftype == INTRA_PICTURE){
@@ -1123,6 +1091,14 @@ VideoFormat IntToVideoFormat(int video_format)
         return VIDEO_FORMAT_DIGI_CINEMA_2K24;
     case VIDEO_FORMAT_DIGI_CINEMA_4K24:
         return VIDEO_FORMAT_DIGI_CINEMA_4K24;
+    case VIDEO_FORMAT_UHDTV_4K60:
+        return VIDEO_FORMAT_UHDTV_4K60;
+    case VIDEO_FORMAT_UHDTV_4K50:
+        return VIDEO_FORMAT_UHDTV_4K50;
+    case VIDEO_FORMAT_UHDTV_8K60:
+        return VIDEO_FORMAT_UHDTV_8K60;
+    case VIDEO_FORMAT_UHDTV_8K50:
+        return VIDEO_FORMAT_UHDTV_8K50;
     default:
         return VIDEO_FORMAT_UNDEFINED;
     }

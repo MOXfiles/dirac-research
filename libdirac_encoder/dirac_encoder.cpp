@@ -500,13 +500,13 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     m_encparams.SetChromaXl( enc_ctx->src_params.chroma_width );
     m_encparams.SetChromaYl( enc_ctx->src_params.chroma_height );
 
-    if (enc_ctx->enc_params.picture_coding_mode > 3)
+    if (enc_ctx->enc_params.picture_coding_mode > 1)
     {
         std::ostringstream errstr;
 
         errstr << "Picture coding mode " 
                << enc_ctx->enc_params.picture_coding_mode
-               << " out of supported range [0-3]";
+               << " out of supported range [0-1]";
         DIRAC_THROW_EXCEPTION(
             ERR_INVALID_INIT_DATA,
             errstr.str(),

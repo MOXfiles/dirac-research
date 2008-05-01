@@ -82,6 +82,10 @@ void SetDefaultCodecParameters(CodecParams &cparams,
     case VIDEO_FORMAT_HD_1080P50:
     case VIDEO_FORMAT_DIGI_CINEMA_2K24:
     case VIDEO_FORMAT_DIGI_CINEMA_4K24:
+    case VIDEO_FORMAT_UHDTV_4K60:
+    case VIDEO_FORMAT_UHDTV_4K50:
+    case VIDEO_FORMAT_UHDTV_8K60:
+    case VIDEO_FORMAT_UHDTV_8K50:
         cparams.SetSpatialPartition(true);
         break;
     default:
@@ -283,6 +287,51 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetSignalRange(SIGNAL_RANGE_12BIT_VIDEO);
         sparams.SetColourSpecification(4);
         break;
+	
+    case VIDEO_FORMAT_UHDTV_4K60:
+    case VIDEO_FORMAT_UHDTV_4K50:
+        sparams.SetXl(3840);
+        sparams.SetYl(2160);
+        sparams.SetCFormat(format422);
+        sparams.SetSourceSampling(0);
+        switch (vf)
+        {
+        case VIDEO_FORMAT_UHDTV_4K60:
+            sparams.SetFrameRate(FRAMERATE_59p94_FPS);
+            break;
+        case VIDEO_FORMAT_UHDTV_4K50:
+            sparams.SetFrameRate(FRAMERATE_50_FPS);
+            break;
+        default:
+            break;
+        }
+        sparams.SetSignalRange(SIGNAL_RANGE_10BIT_VIDEO);
+        sparams.SetCleanWidth(3840);
+        sparams.SetCleanHeight(2160);
+        sparams.SetColourSpecification(3);
+        break;
+    case VIDEO_FORMAT_UHDTV_8K60:
+    case VIDEO_FORMAT_UHDTV_8K50:
+        sparams.SetXl(7680);
+        sparams.SetYl(4320);
+        sparams.SetCFormat(format422);
+        sparams.SetSourceSampling(0);
+        switch (vf)
+        {
+        case VIDEO_FORMAT_UHDTV_8K60:
+            sparams.SetFrameRate(FRAMERATE_59p94_FPS);
+            break;
+        case VIDEO_FORMAT_UHDTV_8K50:
+            sparams.SetFrameRate(FRAMERATE_50_FPS);
+            break;
+        default:
+            break;
+        }
+        sparams.SetSignalRange(SIGNAL_RANGE_10BIT_VIDEO);
+        sparams.SetCleanWidth(7680);
+        sparams.SetCleanHeight(4320);
+        sparams.SetColourSpecification(3);
+        break;
     default:
         errstr << "Unsupported video format " << sparams.GetVideoFormat()
                << std::endl;
@@ -327,7 +376,14 @@ void SetDefaultEncoderParameters(EncoderParams& encparams)
         encparams.SetNumL1(7);
         encparams.SetCPD(32.0f);
         break;
-
+    case VIDEO_FORMAT_UHDTV_4K60:
+    case VIDEO_FORMAT_UHDTV_4K50:
+    case VIDEO_FORMAT_UHDTV_8K60:
+    case VIDEO_FORMAT_UHDTV_8K50:
+        encparams.SetL1Sep(6);
+	encparams.SetNumL1(7);
+	encparams.SetCPD(48.0f);
+        break;
     case VIDEO_FORMAT_CIF:
     default:
         encparams.SetL1Sep(3);
@@ -383,7 +439,15 @@ void SetDefaultBlockParameters(OLBParams& bparams,
         bparams.SetXbsep(16);
         bparams.SetYbsep(16);
         break;
-
+    case VIDEO_FORMAT_UHDTV_4K60:
+    case VIDEO_FORMAT_UHDTV_4K50:
+    case VIDEO_FORMAT_UHDTV_8K60:
+    case VIDEO_FORMAT_UHDTV_8K50:
+        bparams.SetXblen(36);
+        bparams.SetYblen(36);
+        bparams.SetXbsep(24);
+        bparams.SetYbsep(24);
+        break;
     default:
         bparams.SetXblen(12);
         bparams.SetYblen(12);
