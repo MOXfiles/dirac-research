@@ -54,7 +54,7 @@
 using namespace dirac;
 
 SequenceDecompressor::SequenceDecompressor(ParseUnitByteIO& parseunit,bool verbosity)
-: 
+:
 m_all_done(false),
 m_current_code_pnum(0),
 m_delay(1),
@@ -64,12 +64,15 @@ m_highest_pnum(0)
     // read unit
     NewAccessUnit(parseunit);
 
+    if ( m_decparams.FieldCoding() )
+        m_delay = 2;
+
     m_decparams.SetVerbose( verbosity );
-   
+
     m_pbuffer= new PictureBuffer( );
 
     m_pdecoder = new PictureDecompressor (m_decparams , m_srcparams.CFormat());
-   
+
 }
 
 SequenceDecompressor::~SequenceDecompressor()
@@ -78,9 +81,9 @@ SequenceDecompressor::~SequenceDecompressor()
     delete m_pdecoder;
 }
 
-const PictureParams& SequenceDecompressor::GetNextPictureParams() const
+const PictureParams* SequenceDecompressor::GetNextPictureParams() const
 {
-    return m_pdecoder->GetPicParams();
+    return &m_pdecoder->GetPicParams();
 }
 
 void SequenceDecompressor::NewAccessUnit(ParseUnitByteIO& parseunit_byteio)
@@ -92,23 +95,23 @@ void SequenceDecompressor::NewAccessUnit(ParseUnitByteIO& parseunit_byteio)
 
 }
 
-Picture& SequenceDecompressor::DecompressNextPicture(ParseUnitByteIO* p_parseunit_byteio)
+const Picture* SequenceDecompressor::DecompressNextPicture(ParseUnitByteIO* p_parseunit_byteio)
 {
     //this function decodes the next picture in coding order and returns the next picture in display order
     //In general these will differ, and because of re-ordering there is a m_delay which needs to be imposed.
     //This creates problems at the start and at the end of the sequence which must be dealt with.
     //At the start we just keep outputting picture 0. At the end you will need to loop for longer to get all
-    //the frames out. It's up to the calling function to do something with the decoded frames as they
+    //the pictures out. It's up to the calling function to do something with the decoded pictures as they
     //come out - write them to screen or to file, as required.
 
     TEST (m_pdecoder != NULL);
-    
+
     // Remove the last displayed picture from the buffer if it wasn't a reference
     if ( m_show_pnum>0 )
     {
         if ( m_decparams.Verbose() )
-            std::cout<<std::endl<<"Cleaning display buffer: ";         
-        if ( m_pbuffer->IsPictureAvail(m_show_pnum-1) && 
+            std::cout<<std::endl<<"Cleaning display buffer: ";
+        if ( m_pbuffer->IsPictureAvail(m_show_pnum-1) &&
             m_pbuffer->GetPicture(m_show_pnum-1).GetPparams().PicSort().IsNonRef() )
         {
             m_pbuffer->Clean(m_show_pnum-1);
@@ -117,45 +120,52 @@ Picture& SequenceDecompressor::DecompressNextPicture(ParseUnitByteIO* p_parseuni
         }
     }
 
-    bool new_frame_to_display=false;
-       
+    bool new_picture_to_display=false;
+
     if (p_parseunit_byteio)
     {
        if (m_decparams.Verbose())
            std::cout<<std::endl<<"Calling picture decompression function";
-       new_frame_to_display = m_pdecoder->Decompress(*p_parseunit_byteio,
-                                                     *m_pbuffer);
+       new_picture_to_display = m_pdecoder->Decompress(*p_parseunit_byteio,
+                                                       *m_pbuffer);
     }
-    /***
-    //if we've exited with success, there's a new picture to display, so increment
-    //the counters. Otherwise, freeze on the last picture shown
-    m_show_pnum=std::max(m_current_code_pnum-m_delay,0);
-    if (new_frame_to_display || skip)
-    {
-        m_current_code_pnum++;
-    }
-    ***/
-    // FIXME - temporary fix to fix picture delay for i-frames
 
-    Picture &f = m_pbuffer->GetPicture(m_show_pnum+1 );
-    m_show_pnum = m_show_pnum >= 0 ? m_show_pnum : m_pdecoder->GetPicParams().PictureNum()-1;
+    if (m_show_pnum < 0 && new_picture_to_display == false)
+        return NULL;
+
+    if (m_pbuffer->IsPictureAvail(m_show_pnum+1 ))
+        ++m_show_pnum;
+    else if (new_picture_to_display && m_pdecoder->GetPicParams().PicSort().IsNonRef())
+    {
+        // if a decoded future non reference frame is available it implies
+        // that some frames have been skipped because of possible truncation
+        // errors
+        m_show_pnum =  m_pdecoder->GetPicParams().PictureNum();
+    }
 
     m_highest_pnum = std::max(m_pdecoder->GetPicParams().PictureNum(), m_highest_pnum);
-    if (f.GetPparams().PictureNum() == m_show_pnum+1)
-    {
-        ++m_show_pnum;
-        return f;
-    }
-    
-    return m_pbuffer->GetPicture(m_show_pnum);
+
+    if (m_pbuffer->IsPictureAvail(m_show_pnum))
+        return &m_pbuffer->GetPicture(m_show_pnum);
+    else
+        return NULL;
 }
 
-Picture& SequenceDecompressor::GetNextPicture()
+const Picture* SequenceDecompressor::GetNextPicture()
 {
-    return m_pbuffer->GetPicture(m_show_pnum);
+    if (m_pbuffer->IsPictureAvail(m_show_pnum))
+        return &m_pbuffer->GetPicture(m_show_pnum);
+    else
+        return NULL;
 }
 
 bool SequenceDecompressor::Finished()
 {
-    return m_show_pnum==m_highest_pnum;
+    if (m_show_pnum>=m_highest_pnum)
+        return true;
+
+    if (!m_pbuffer->IsPictureAvail(m_show_pnum+1 ))
+        ++m_show_pnum;
+
+    return false;
 }

@@ -44,15 +44,15 @@
 #include <istream>
 #include <streambuf>
 #include <libdirac_decoder/decoder_types.h> //for DecoderState
-#include <libdirac_common/common.h> 
-#include <libdirac_byteio/dirac_byte_stream.h>  
+#include <libdirac_common/common.h>
+#include <libdirac_byteio/dirac_byte_stream.h>
 
 namespace dirac
 {
     class SequenceDecompressor;
     class Picture;
 
-    //! Input Stream Buffer Class. 
+    //! Input Stream Buffer Class.
     class InputStreamBuffer : public std::streambuf
     {
     public:
@@ -65,13 +65,13 @@ namespace dirac
         //! Rewind buffer to start of data
         std::ios::pos_type Rewind();
 
-        //! Seek to position specified by bytes offset from pos 
+        //! Seek to position specified by bytes offset from pos
         /*!
             Seek takes
-            \param bytes offset in bytes 
+            \param bytes offset in bytes
             \param pos   the position from which the offset is applied
         */
-        std::ios::pos_type Seek(std::ios::pos_type bytes, 
+        std::ios::pos_type Seek(std::ios::pos_type bytes,
                                 std::ios::seekdir pos = std::ios::cur);
 
         //! Return the current read position in the buffer
@@ -128,7 +128,7 @@ namespace dirac
 
         //! Destructor
         ~DiracParser();
-        
+
         //! Adds bytes to encoder
         /*! SetBuffer takes
             \param start   Start of input buffer
@@ -138,9 +138,9 @@ namespace dirac
 
         //! Parse the data in internal buffer
         /*!
-            Parses the data in the input buffer. This function returns one 
+            Parses the data in the input buffer. This function returns one
             of the following values
-            \n STATE_BUFFER        : Not enough data in internal buffer to process 
+            \n STATE_BUFFER        : Not enough data in internal buffer to process
             \n STATE_SEQUENCE      : Start of sequence detected
             \n STATE_PICTURE_AVAIL : Decoded picture available
             \n STATE_SEQUENCE_END  : End of sequence detected
@@ -155,11 +155,11 @@ namespace dirac
         const SourceParams& GetSourceParams() const;
 
         //! Return the picture parameters of the next picture to be decoded
-        const PictureParams& GetNextPictureParams() const;
+        const PictureParams* GetNextPictureParams() const;
 
         //! Return the decoded picture
-        const Picture& GetNextPicture() const;
-        
+        const Picture* GetNextPicture() const;
+
         //! Return the coding parameters of the current sequence
         const DecoderParams& GetDecoderParams() const;
 

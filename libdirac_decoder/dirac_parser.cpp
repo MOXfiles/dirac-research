@@ -297,21 +297,24 @@ static void set_frame_data (const  DiracParser * const parser, dirac_decoder_t *
     TEST (decoder->fbuf != NULL);
     TEST (decoder->state == STATE_PICTURE_AVAIL);
 
-    const Picture& my_picture = parser->GetNextPicture();
+    const Picture* my_picture = parser->GetNextPicture();
 
-    int pic_num = parser->GetNextPicture().GetPparams().PictureNum();
+    if (my_picture)
+    {
+        int pic_num = my_picture->GetPparams().PictureNum();
 
-    if (!parser->GetDecoderParams().FieldCoding())
-    {
-        set_frame_component (my_picture.Ydata(), Y_COMP, decoder);
-        set_frame_component (my_picture.Udata(), U_COMP, decoder);
-        set_frame_component (my_picture.Vdata(), V_COMP, decoder);
-    }
-    else
-    {
-        set_field_component (my_picture.Ydata(), Y_COMP, decoder, pic_num);
-        set_field_component (my_picture.Udata(), U_COMP, decoder, pic_num);
-        set_field_component (my_picture.Vdata(), V_COMP, decoder, pic_num);
+        if (!parser->GetDecoderParams().FieldCoding())
+        {
+            set_frame_component (my_picture->Ydata(), Y_COMP, decoder);
+            set_frame_component (my_picture->Udata(), U_COMP, decoder);
+            set_frame_component (my_picture->Vdata(), V_COMP, decoder);
+        }
+        else
+        {
+            set_field_component (my_picture->Ydata(), Y_COMP, decoder, pic_num);
+            set_field_component (my_picture->Udata(), U_COMP, decoder, pic_num);
+            set_field_component (my_picture->Vdata(), V_COMP, decoder, pic_num);
+        }
     }
     return;
 }
@@ -343,29 +346,36 @@ extern DllExport dirac_decoder_state_t dirac_parse (dirac_decoder_t *decoder)
                 break;
 
             case STATE_PICTURE_AVAIL:
-                pic_num = parser->GetNextPicture().GetPparams().PictureNum();
-                decoder->frame_num = pic_num;
-                set_frame_data (parser, decoder);
-
-                /* A full frame is only available if we're doing progressive 
-                   coding or have decoded the second field. Will only return 
-                   when a full frame is available */
-                if (!parser->GetDecoderParams().FieldCoding() ||
-                    pic_num%2)
+            {
+                const Picture *my_picture = parser->GetNextPicture();
+                if (my_picture)
                 {
-                    /* Frame number currently available for display */
+                    pic_num = parser->GetNextPicture()->GetPparams().PictureNum();
                     decoder->frame_num = pic_num;
-                    if (parser->GetDecoderParams().FieldCoding())
-                        decoder->frame_num = pic_num>>1;
-                    decoder->frame_avail = 1;
-                    return decoder->state;
+                    set_frame_data (parser, decoder);
+
+                    /* A full frame is only available if we're doing
+                    * progressive coding or have decoded the second field.
+                    * Will only return when a full frame is available
+                    */
+                    if (!parser->GetDecoderParams().FieldCoding() ||
+                        pic_num%2)
+                    {
+                        /* Frame number currently available for display */
+                        decoder->frame_num = pic_num;
+                        if (parser->GetDecoderParams().FieldCoding())
+                            decoder->frame_num = pic_num>>1;
+                        decoder->frame_avail = 1;
+                        return decoder->state;
+                    }
                 }
                 break;
+            }
 
             case STATE_INVALID:
                 return decoder->state;
                 break;
-            
+
             case STATE_SEQUENCE_END:
                 return decoder->state;
                 break;

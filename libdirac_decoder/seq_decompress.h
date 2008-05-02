@@ -76,7 +76,7 @@ namespace dirac
 
         //! Destructor
         /*!
-            Closes files and releases resources. 
+            Closes files and releases resources.
         */
         ~SequenceDecompressor();
 
@@ -102,20 +102,20 @@ namespace dirac
             \param p_parseunit_byteio Picture information in Dirac-stream format
             \return      reference to the next locally decoded picture available for display
         */
-        Picture& DecompressNextPicture(ParseUnitByteIO* p_parseunit_byteio);
+        const Picture* DecompressNextPicture(ParseUnitByteIO* p_parseunit_byteio);
 
         //! Get the next picture available for display
-        Picture& GetNextPicture();
+        const Picture* GetNextPicture();
 
         //! Get the next picture parameters
-        const PictureParams& GetNextPictureParams() const;
+        const PictureParams* GetNextPictureParams() const;
         //! Determine if decompression is complete.
         /*!
             Indicates whether or not the last picture in the sequence has been
             decompressed.
             \return     true if last picture has been compressed; false if not
         */
-        bool Finished(); 
+        bool Finished();
         //! Interrogates for parse parameters.
         /*!
             Returns the parse parameters used for this decompression run.
@@ -170,11 +170,11 @@ namespace dirac
         //! The source parameters obtained from the stream header
         SourceParams m_srcparams;
         //! A picture buffer used for local storage of pictures whilst pending re-ordering or being used for reference.
-        PictureBuffer* m_pbuffer;   
+        PictureBuffer* m_pbuffer;
         //! Number of the picture in coded order which is to be decoded
-        int m_current_code_pnum;        
+        int m_current_code_pnum;
         //! A delay so that we don't display what we haven't decoded
-        int m_delay;                    
+        int m_delay;
         //! Index, in display order, of the last picture read
         int m_last_picture_read;
         //! Index, in display order of the picture to be displayed next - computed from delay and current_code_pnum
