@@ -20,7 +20,8 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Andrew Kennedy
+* Contributor(s): Andrew Kennedy (Original Author)
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -69,7 +70,7 @@ namespace dirac
         * Destructor
         */
         ~DiracByteStream();
-       
+
         /**
         * Adds Dirac-formatted bytes to internal-byte-stream for processing
         *@param start Start of char list
@@ -129,7 +130,11 @@ namespace dirac
         bool IsUnitAvailable() const;
 
         private:
-       
+
+        void Reset(ParseUnitByteIO* p_curr_unit, int pos);
+
+        private:
+
         /**
         * Parse-units in Dirac stream
         */
@@ -143,17 +148,10 @@ namespace dirac
         ParseUnitByteIO* mp_prev_parse_unit;
 
         /**
-        * Next parse-unit waiting to be processed
-        * A parse-unit can only be declared valid only if it has been validated
-        * against the next unit in the stream
-        */
-        ParseUnitByteIO* mp_next_parse_unit;
-
-        /**
         * Stats for current sequence
         */
         DiracByteStats      m_sequence_stats;
-        
+
     };
 
 } // namespace dirac

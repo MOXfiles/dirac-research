@@ -21,6 +21,7 @@
 * All Rights Reserved.
 *
 * Contributor(s): Andrew Kennedy (Original Author)
+*                 Anuradha Suraparaju
 *
 * Alternatively, the contents of this file may be used under the terms of
 * the GNU General Public License Version 2 (the "GPL"), or the GNU Lesser
@@ -108,15 +109,14 @@ namespace dirac
 
         /**
         * Accesses validity of a unit by comparing it with an adjacent unit
-        *@param next_unit Next unit i stream after this one
         */
-        bool IsValid(const ParseUnitByteIO& next_unit);
+        bool IsValid();
 
         /**
-        * Skip past the entire parse-unit
+        * Can Skip past the entire parse-unit
         *@return <B>false</B> Nothing to skip to
         */
-        bool Skip();
+        bool CanSkip();
 
         /**
         * Gets string containing coded bytes
@@ -148,31 +148,6 @@ namespace dirac
         * Gets parse-unit type
         */
         virtual ParseUnitType GetType() const;
-
-    protected:
-
-        /**
-        * Calculates number of bytes to start of next unit
-        *@return Number of bytes to next unit
-        */
-        virtual int CalcNextUnitOffset();
-
-        /**
-        * Pure virtual method for calculating parse-code
-        *@return Char containing bit-set for parse-unit parameters
-        */
-        virtual unsigned char CalcParseCode() const { return 0;}    // encoding
-
-         /**
-        * Locates start of parse-unit
-        *@return <B>false</B> if not enough data
-        */
-        bool SyncToUnitStart();   // decoding
-
-        /**
-        * Get parse code
-        */
-        unsigned char GetParseCode() const { return m_parse_code;}
 
         /**
         * Returns true is parse unit is a Sequence Header
@@ -221,6 +196,31 @@ namespace dirac
         */
         bool IsUsingAC() const
         { return ((m_parse_code&0x48)==0x08); }
+
+    protected:
+
+        /**
+        * Calculates number of bytes to start of next unit
+        *@return Number of bytes to next unit
+        */
+        virtual int CalcNextUnitOffset();
+
+        /**
+        * Pure virtual method for calculating parse-code
+        *@return Char containing bit-set for parse-unit parameters
+        */
+        virtual unsigned char CalcParseCode() const { return 0;}    // encoding
+
+         /**
+        * Locates start of parse-unit
+        *@return <B>false</B> if not enough data
+        */
+        bool SyncToUnitStart();   // decoding
+
+        /**
+        * Get parse code
+        */
+        unsigned char GetParseCode() const { return m_parse_code;}
 
     private:
 
