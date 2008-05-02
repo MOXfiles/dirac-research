@@ -75,6 +75,7 @@ bool ProcessSequence::DoPicture()
             if (m_verbose)
                 std::cout << std::endl << "Cannot read Next Picture. Deleting " << index << " MEData object";
             m_data_array[index].me_data = 0;
+            m_data_array[index].picture_params.SetPictureNum(-1);
             delete picture;
             return false;
         }
@@ -216,7 +217,10 @@ void ProcessSequence::DoSequence(int start, int stop)
 {
     // set all picture numbers to -1 to identify as unallocated
     for (int i=0; i<m_data_array.Length(); ++i)
+    {
         m_data_array[i].picture_params.SetPictureNum(-1);
+        m_data_array[i].me_data = 0;
+    }
 
     // read pictures until the start picture is found
     // ** is there a better way?? **
@@ -309,6 +313,15 @@ void ProcessSequence::DoSequence(int start, int stop)
             }
         }
     }
+    for (int i=0; i<m_data_array.Length(); ++i)
+    {
+        if (m_data_array[i].picture_params.PictureNum() != -1)
+        {
+            if (m_data_array[i].me_data != 0)
+                delete m_data_array[i].me_data;
+        }
+    }
+
 
     // close motion data file
     m_data_in.close();
