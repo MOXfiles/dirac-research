@@ -396,12 +396,6 @@
 				RelativePath="..\..\..\libdirac_common\dirac_exception.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_common\picture.cpp">
-			</File>
-			<File
-				RelativePath="..\..\..\libdirac_common\picture_buffer.cpp">
-			</File>
-			<File
 				RelativePath="..\..\..\libdirac_common\mot_comp.cpp">
 			</File>
 			<File
@@ -415,6 +409,12 @@
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\pic_io.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_common\picture.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_common\picture_buffer.cpp">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\upconvert.cpp">
@@ -470,13 +470,10 @@
 				RelativePath="..\..\..\libdirac_common\dirac_exception.h">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_common\dirac_inttypes.h">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_common\dirac_types.h">
-			</File>
-			<File
-				RelativePath="..\..\..\libdirac_common\picture.h">
-			</File>
-			<File
-				RelativePath="..\..\..\libdirac_common\picture_buffer.h">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\mot_comp.h">
@@ -492,6 +489,12 @@
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\pic_io.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_common\picture.h">
+			</File>
+			<File
+				RelativePath="..\..\..\libdirac_common\picture_buffer.h">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_common\upconvert.h">
