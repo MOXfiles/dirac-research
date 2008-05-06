@@ -137,18 +137,18 @@ running the codec can be found at http://dirac.sourceforge.net/
   Static-Release-mmx - builds optimised encoder and decoder static libraries 
                        with mmx optmisations enabled.
  
-  Static libraries are created in the win32/VisualStudio/lib/<build-type> directory.
+  Static libraries are created in the win32/VisualStudio/build/lib/<build-type> directory.
 
   Encoder and Decoder dlls and import libraries, encoder and decoder apps are 
-  created in the win32/VisualStudio/bin/<build-type> directory. The "C" public 
-  API is exported using the _declspec(dllexport) mechanism.
+  created in the win32/VisualStudio/build/bin/<build-type> directory. The "C" 
+  public API is exported using the _declspec(dllexport) mechanism.
 
   Conversion utilites are created in the 
-  win32/isualStudio/utils/conversion/<build-type> directory. Only static 
+  win32/VisualStudio/build/utils/conversion/<build-type> directory. Only static 
   versions are  built.  
   Instrumentation utility is created in the 
-  win32/VisualStudio/utils/instrumentation/<build-type> directory. Only static
-  versions are built.
+  win32/VisualStudio/build/utils/instrumentation/<build-type> directory. Only 
+  static versions are built.
 
 
   Older editions of Microsoft Visual C++  (e.g. 2003 and 2005)
