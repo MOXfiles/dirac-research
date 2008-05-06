@@ -1,7 +1,7 @@
 # $Id$
 #
 
-INCLUDES = -I$(top_srcdir) -I$(srcdir)
+INCLUDES = -I$(top_srcdir) -I$(srcdir) -I$(top_builddir)
 
 h_sources = comp_decompress.h picture_decompress.h seq_decompress.h \
             decoder_types.h dirac_cppparser.h dirac_parser.h

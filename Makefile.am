@@ -1,8 +1,9 @@
 # $Id$
 #
 
-SUBDIRS = libdirac_byteio libdirac_common libdirac_motionest libdirac_encoder libdirac_decoder \
-encoder decoder util $(CPPUNITTESTS_DIR) tests $(DOC_DIR) win32
+SUBDIRS = libdirac_byteio libdirac_common libdirac_motionest libdirac_encoder \
+          libdirac_decoder encoder decoder util $(CPPUNITTESTS_DIR) \
+          tests $(DOC_DIR) win32
 
 .PHONY: valgrind-check
 valgrind-check:

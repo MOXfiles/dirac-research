@@ -1,7 +1,7 @@
 # $Id$
 #
 
-INCLUDES = -I$(top_srcdir) -I$(srcdir)
+INCLUDES = -I$(top_srcdir) -I$(srcdir) -I$(top_builddir)
 
 h_sources = accessunit_byteio.h displayparams_byteio.h parseunit_byteio.h \
             byteio.h picture_byteio.h codingparams_byteio.h dirac_byte_stream.h \

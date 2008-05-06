@@ -1,7 +1,7 @@
 # $Id$
 #
 
-INCLUDES = -I$(top_srcdir) -I$(srcdir)
+INCLUDES = -I$(top_srcdir) -I$(top_builddir)
 
 bin_PROGRAMS = dirac_encoder
 

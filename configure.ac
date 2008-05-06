@@ -1,4 +1,3 @@
-
 dnl --------------------------------
 dnl Initialization macros.
 dnl --------------------------------
@@ -13,8 +12,8 @@ GENERIC_LIBRARY_NAME=dirac
 
 #release versioning
 GENERIC_MAJOR_VERSION=0
-GENERIC_MINOR_VERSION=9
-GENERIC_MICRO_VERSION=1
+GENERIC_MINOR_VERSION=10
+GENERIC_MICRO_VERSION=0
 
 #shared library versioning
 GENERIC_LIBRARY_VERSION=0:0:0
@@ -57,6 +56,11 @@ AM_SANITY_CHECK
 AC_LIBTOOL_WIN32_DLL
 AM_PROG_LIBTOOL
 AC_SYS_LARGEFILE
+
+ACLOCAL_AMFLAGS="-I m4 $ACLOCAL_AMFLAGS"
+AC_SUBST(ACLOCAL_AMFLAGS)
+
+
 dnl -------------------------------------------------------------------------
 dnl Check if compiling using MS VC++ compiler in msys environment on Windows
 dnl -------------------------------------------------------------------------
@@ -97,6 +101,8 @@ AC_CHECK_HEADER(streambuf,[], [AC_MSG_ERROR(["Unsupported Compiler version"])])
 AC_LANG_POP(C++)
 dnl ** We probably need this line, but not now
 dnl AC_CHECK_HEADERS(stdint.h unistd.h fcntl.h)
+
+AX_CREATE_STDINT_H([libdirac_common/dirac-stdint.h])
 
 dnl -----------------------------------------------
 dnl Checks for libraries.

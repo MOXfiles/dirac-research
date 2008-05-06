@@ -41,6 +41,7 @@
 #ifndef DIRAC_ENCODER_H
 #define DIRAC_ENCODER_H
 
+#include <libdirac_common/dirac_inttypes.h>
 #include <libdirac_common/dirac_types.h>
 
 /*! \file

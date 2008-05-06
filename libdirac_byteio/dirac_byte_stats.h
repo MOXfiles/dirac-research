@@ -42,10 +42,10 @@
 #define dirac_byte_stats_h
 
 // SYSTEM INCLUDES
-// FIXME - need to fix for MS Windows
-#include <inttypes.h>
 #include <map>                          // for byte-counts
 #include <climits>
+
+#include <libdirac_common/dirac_inttypes.h>
 
 namespace dirac
 {

@@ -1,7 +1,7 @@
 # $Id$
 #
 
-INCLUDES = -I$(top_srcdir) -I$(srcdir)
+INCLUDES = -I$(top_srcdir) -I$(srcdir) -I$(top_builddir)
 
 h_sources = comp_compress.h picture_compress.h quality_monitor.h \
             quant_chooser.h seq_compress.h dirac_encoder.h \
