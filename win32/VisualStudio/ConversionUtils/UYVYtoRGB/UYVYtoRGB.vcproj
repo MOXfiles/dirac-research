@@ -17,8 +17,8 @@
 	<Configurations>
 		<Configuration
 			Name="Debug|Win32"
-			OutputDirectory="../../utils/conversion/Debug"
-			IntermediateDirectory="Debug"
+			OutputDirectory="../../build/utils/conversion/Debug"
+			IntermediateDirectory="../../build/$(ProjectName)/Debug"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -95,8 +95,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release|Win32"
-			OutputDirectory="../../utils/conversion/Release"
-			IntermediateDirectory="Release"
+			OutputDirectory="../../build/utils/conversion/Release"
+			IntermediateDirectory="../../build/$(ProjectName)/Release"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -171,8 +171,8 @@
 		</Configuration>
 		<Configuration
 			Name="Debug-mmx|Win32"
-			OutputDirectory="../../utils/conversion/$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="../../build/utils/conversion/$(ConfigurationName)"
+			IntermediateDirectory="../../build/$(ProjectName)/$(ConfigurationName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -249,8 +249,8 @@
 		</Configuration>
 		<Configuration
 			Name="Static-release-mmx|Win32"
-			OutputDirectory="../../util/conversion/$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="../../build/utils/conversion/$(ConfigurationName)"
+			IntermediateDirectory="../../build/$(ProjectName)/$(ConfigurationName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -325,8 +325,8 @@
 		</Configuration>
 		<Configuration
 			Name="Static-Debug-mmx|Win32"
-			OutputDirectory="../../utils/conversion/$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="../../build/utils/conversion/$(ConfigurationName)"
+			IntermediateDirectory="../../build/$(ProjectName)/$(ConfigurationName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"
@@ -403,8 +403,8 @@
 		</Configuration>
 		<Configuration
 			Name="Release-mmx|Win32"
-			OutputDirectory="../../utils/conversion/$(ConfigurationName)"
-			IntermediateDirectory="$(ConfigurationName)"
+			OutputDirectory="../../build/utils/conversion/$(ConfigurationName)"
+			IntermediateDirectory="../../build/$(ProjectName)/$(ConfigurationName)"
 			ConfigurationType="1"
 			InheritedPropertySheets="$(VCInstallDir)VCProjectDefaults\UpgradeFromVC71.vsprops"
 			CharacterSet="2"

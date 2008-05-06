@@ -19,8 +19,12 @@ EXTRA_DIST = dirac.sln \
     ./ConversionUtils/RGBtoUYVY/RGBtoUYVY.vcproj \
     ./ConversionUtils/BMPtoRGB/BMPtoRGB.vcproj \
     ./ConversionUtils/YUV420toRGB/YUV420toRGB.vcproj \
+	./ConversionUtils/YUV420toYUV422/YUV420toYUV422.vcproj \
     ./ConversionUtils/YUV422toRGB/YUV422toRGB.vcproj \
+	./ConversionUtils/YUV422toYUV420/YUV422toYUV420.vcproj \
+	./ConversionUtils/YUV422toUYVY/YUV422toUYVY.vcproj \
     ./ConversionUtils/UYVYtoRGB/UYVYtoRGB.vcproj \
+	./ConversionUtils/UYVYtoYUV422/UYVYtoYUV422.vcproj \
     ./ConversionUtils/ConversionUtils.vcproj \
     ./ConversionUtils/YUV444toRGB/YUV444toRGB.vcproj \
     ./ConversionUtils/RGBtoBMP/RGBtoBMP.vcproj \
