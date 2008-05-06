@@ -378,6 +378,9 @@
 				RelativePath="..\..\..\..\libdirac_encoder\picture_compress.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\libdirac_encoder\prefilter.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\libdirac_encoder\quality_monitor.cpp">
 			</File>
 			<File
@@ -399,6 +402,9 @@
 			</File>
 			<File
 				RelativePath="..\..\..\..\libdirac_encoder\picture_compress.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\libdirac_encoder\prefilter.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\libdirac_encoder\quality_monitor.h">
