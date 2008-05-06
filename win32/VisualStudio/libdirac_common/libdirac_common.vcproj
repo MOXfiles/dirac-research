@@ -683,6 +683,10 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_common\dirac_inttypes.h"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_common\dirac_types.h"
 				>
 			</File>
