@@ -446,5 +446,4 @@ AC_OUTPUT(Makefile dirac.pc \
           decoder/Makefile \
           unit_tests/Makefile \
           win32/Makefile \
-          win32/VS2003/Makefile \
           win32/VisualStudio/Makefile )
