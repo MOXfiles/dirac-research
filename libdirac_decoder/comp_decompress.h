@@ -70,11 +70,12 @@ namespace dirac
         /*!
             Decompress a PicArray containing a picture component (Y, U, or V).
 
-            \param p_component_byteio Bytestream of component data
-            \param  pic_data          contains the component data to be decompressed
+            \param  p_component_byteio Bytestream of component data
+            \param  coeff_data    contains the component data to be decompressed
+            \param  bands         the set of all subbands
         */
         void Decompress(ComponentByteIO *p_component_byteio,
-	                CoeffArray& coeff_data,
+                        CoeffArray& coeff_data,
                         SubbandList& bands);
 
     private:
@@ -117,8 +118,8 @@ namespace dirac
         //! Reference to the picture parameters provided to the constructor
         const PictureParams& m_pparams;
 
-	//! Reference to the picture sort
-	const PictureSort& m_psort;
+        //! Reference to the picture sort
+        const PictureSort& m_psort;
 
 
     };

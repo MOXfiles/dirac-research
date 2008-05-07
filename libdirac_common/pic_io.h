@@ -326,8 +326,8 @@ namespace dirac
             //! Read the next frame/two fields from the file
             /*!
                 Read next frame/two fields into the frame buffer
-                \param my_fbuf     Frame Buffer
-                \param fnum        Frame/Field number
+                \param my_buf     Picture Buffer
+                \param num        Frame/Field number
             */
             virtual bool ReadNextFrame(PictureBuffer &my_buf, int num) = 0;
 
@@ -373,7 +373,7 @@ namespace dirac
             //! Read the next frame from the file
             /*!
                 Read next frame/two fields into the picture buffer
-                \param my_fbuf     Picture Buffer
+                \param my_pbuf     Picture Buffer
                 \param pnum        Picture number
             */
             virtual bool ReadNextFrame(PictureBuffer &my_pbuf, int pnum);

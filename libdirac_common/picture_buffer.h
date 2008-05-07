@@ -68,8 +68,8 @@ namespace dirac
             prediction structure is to be determined on the fly.
 
             \param   cf    the Chroma format of pictures in the buffer
-            \param   orig_xlen  the luma width of pictures in the buffer
-            \param   orig_ylen  the luma height of pictures in the buffer
+            \param   xlen  the luma width of pictures in the buffer
+            \param   ylen  the luma height of pictures in the buffer
             \param   luma_depth the video depth of the luma comp in the buffer
             \param   chroma_depth the video depth of the chroma comp in the buffer
             \param   using_ac   True if using Arithmetic coding to code coefficient data

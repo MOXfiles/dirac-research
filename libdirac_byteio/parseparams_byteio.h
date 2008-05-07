@@ -61,8 +61,9 @@ namespace dirac
 
         /**
         * Constructor
-        *@param stream_data Destination of data
-        *@param enc_params  Encoder parameters
+        *@param stream_data   Destination of data
+        *@param parse_params  Parse parameters
+        *@param enc_params    Encoder parameters
         */
         ParseParamsByteIO(const ByteIO& stream_data,
                           ParseParams &parse_params,

@@ -72,13 +72,14 @@ namespace dirac
             Compress a PicArray containing a picture component (Y, U, or V).
             \param  coeff_data      the component data to be compressed
             \param  bands           Subbands list
+            \param  csort           Chroma format
             \param  estimated_bits  the list of estimated number of bits in each subband
             \return Picture-component in Dirac-bytestream format
         */
         ComponentByteIO* Compress( CoeffArray& coeff_data ,
-                                   SubbandList& bands,
-				   CompSort csort,
-                                   const OneDArray<unsigned int>& estimated_bits);
+                                 SubbandList& bands,
+                                 CompSort csort,
+                                 const OneDArray<unsigned int>& estimated_bits);
 
     private:
         //! Copy constructor is private and body-less. This class should not be copied.

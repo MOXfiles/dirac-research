@@ -94,7 +94,7 @@ namespace dirac
     *@param ptype    Picture type i.e. intra or inter
     *@param wf       WltFilter object for getting the default wavelet filter
     */
-    void SetDefaultTransformFilter( PictureType ftype, WltFilter &wf);
+    void SetDefaultTransformFilter( PictureType ptype, WltFilter &wf);
 } // namespace dirac
 
 #endif
