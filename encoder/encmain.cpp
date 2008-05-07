@@ -86,7 +86,6 @@ static void display_help()
     cout << "\nHD1080I50         bool    false         Use HD-1080I50 compression presets";
     cout << "\nHD1080P60         bool    false         Use HD-1080P60 compression presets";
     cout << "\nHD1080P50         bool    false         Use HD-1080P50 compression presets";
-    cout << "\nDC4K24            bool    false         Use DIGITAL CINEMA 4K compression presets";
     cout << "\nUHDTV4K60         bool    false         Use UHDTV 4K60 compression presets";
     cout << "\nUHDTV4K50         bool    false         Use UHDTV 4K50 compression presets";
     cout << "\nUHDTV8K60         bool    false         Use UHDTV 8K60 compression presets";
