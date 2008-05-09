@@ -711,7 +711,7 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
         encdata->size = size;
 
         GetInstrumentationData(encoder);
-        encoder->encoded_frame_avail = 1;
+        encoder->encoded_picture_avail = 1;
     }
     else
     {
@@ -1005,7 +1005,7 @@ extern DllExport dirac_encoder_t *dirac_encoder_init (const dirac_encoder_contex
         return NULL;
     }
 
-    encoder->encoded_frame_avail = encoder->decoded_frame_avail = 0;
+    encoder->encoded_picture_avail = encoder->decoded_frame_avail = 0;
     encoder->instr_data_avail = 0;
 
     return encoder;
@@ -1043,7 +1043,7 @@ extern DllExport dirac_encoder_state_t
     DiracEncoder *compressor = (DiracEncoder *)encoder->compressor;
     dirac_encoder_state_t ret_stat = ENC_STATE_BUFFER;
 
-    encoder->encoded_frame_avail = 0;
+    encoder->encoded_picture_avail = 0;
     encoder->decoded_frame_avail = 0;
     encoder->instr_data_avail = 0;
 
@@ -1092,7 +1092,7 @@ extern DllExport void dirac_encoder_end_sequence (dirac_encoder_t *encoder)
     TEST (encoder->compressor != NULL);
     DiracEncoder *compressor = (DiracEncoder *)encoder->compressor;
 
-    encoder->encoded_frame_avail = 0;
+    encoder->encoded_picture_avail = 0;
     encoder->decoded_frame_avail = 0;
     encoder->instr_data_avail = 0;
 

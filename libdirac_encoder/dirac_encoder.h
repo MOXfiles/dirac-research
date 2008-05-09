@@ -368,8 +368,8 @@ typedef struct
     /*! Encoder context */
     dirac_encoder_context_t enc_ctx;
 
-    /*! encoded frame (NB: not picture) available flag */
-    int encoded_frame_avail;
+    /*! encoded picture available flag */
+    int encoded_picture_avail;
 
     /*! 
         encoded output. This buffer must be initialised by the user of the
