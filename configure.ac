@@ -193,6 +193,22 @@ AC_CHECK_FILE($srcdir/doc/documentation/tools/diagnostics/index.htm,[HAVE_DIAG="
 AM_CONDITIONAL(HAVE_DIAG, $HAVE_DIAG)
 
 dnl -----------------------------------------------
+dnl Checks for optional files in doc directory.
+dnl Publications documentation is not distributed in
+dnl the release. It is available only from CVS
+dnl -----------------------------------------------
+AC_CHECK_FILE($srcdir/doc/documentation/publications/diracoverview-ibc2006.pdf,[HAVE_PUBLICATIONS="true"], [HAVE_PUBLICATIONS="false"])
+AM_CONDITIONAL(HAVE_PUBLICATIONS, $HAVE_PUBLICATIONS)
+
+dnl -----------------------------------------------
+dnl Checks for optional files in doc directory.
+dnl Support documentation is not distributed in
+dnl the release. It is available only from CVS
+dnl -----------------------------------------------
+AC_CHECK_FILE($srcdir/doc/documentation/support/test.html,[HAVE_SUPPORT="true"], [HAVE_SUPPORT="false"])
+AM_CONDITIONAL(HAVE_SUPPORT, $HAVE_SUPPORT)
+
+dnl -----------------------------------------------
 dnl Setup for the testsuite
 dnl -----------------------------------------------
 AC_CONFIG_TESTDIR([tests], [tests:encoder:decoder:unit_tests:util/instrumentation])
