@@ -94,6 +94,7 @@ then
 	xbsep=8;
 	yblen=12;
 	ybsep=8;
+	bitrate="2000"
 elif test $width -eq 1280 || test $height -eq 720;
 then
 	preset="-HD720P50";
@@ -102,7 +103,8 @@ then
 	xbsep=12;
 	yblen=16
 	ybsep=12;
-	extras="-fr 25"; // sample data  is 25 fps 
+	extras="-fr 25"; #sample data  is 25 fps 
+	bitrate="4000"
 elif test $width -eq 1920 || test $height -eq 1080;
 then
 	preset="-HD1080I50";
@@ -111,6 +113,7 @@ then
 	xbsep=16;
 	yblen=24;
 	ybsep=16;
+	bitrate="8000"
 elif test $width -eq 176 || test $height -eq 144;
 then
 	preset="-QCIF";
@@ -119,6 +122,7 @@ then
 	xbsep=4;
 	yblen=8;
 	ybsep=4;
+	bitrate="100"
 else
 	#luma block parameters
 	xblen=12;
@@ -126,33 +130,81 @@ else
 	yblen=12;
 	ybsep=8;
 	preset="-CIF";
+	bitrate="500"
 fi
 
 #set Motion vector precision here. Possible values are 1, 1/2, 1/4 and 
 # 1/8. Default value is 1/4
 mv_prec=1/4
-echo "$samp $preset $chroma $width $height $mv_prec $extras"
+#extras=`echo $extras`" -L1_sep 6 -stop 6"
 
 #iframe tests
 #  progressive
+#      constant quality
+echo "iframe $samp $preset $chroma $width $height $mv_prec $extras"
 AT_CHECK([at_wrap dirac_encoder -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma $extras $samp ../../$iframe_encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$iframe_encout ../../$iframe_decout], 0, [ignore])
 AT_CHECK([cmp ../../$iframe_encout.localdec.yuv ../../$iframe_decout])
+#      constant bit-rate
+echo "iframe $samp $preset $chroma $width $height $mv_prec $extras $bitrate"
+AT_CHECK([at_wrap dirac_encoder -targetrate $bitrate -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma $extras $samp ../../$bitrate"Kbps_"$iframe_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../$bitrate"Kbps_"$iframe_encout ../../$bitrate"Kbps_"$iframe_decout], 0, [ignore])
+AT_CHECK([cmp ../../$bitrate"Kbps_"$iframe_encout.localdec.yuv ../../$bitrate"Kbps_"$iframe_decout])
+#      lossless
+echo "iframe lossless $samp $preset $chroma $width $height $mv_prec $extras"
+AT_CHECK([at_wrap dirac_encoder -lossless -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma $extras $samp ../../"lossless_"$iframe_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"lossless_"$iframe_encout ../../"lossless_"$iframe_decout], 0, [ignore])
+AT_CHECK([cmp ../../"lossless_"$iframe_encout.localdec.yuv ../../"lossless_"$iframe_decout])
+AT_CHECK([cmp $samp ../../"lossless_"$iframe_decout])
+
 # interlaced 
+#      constant quality
+echo "interlaced iframe $samp $preset $chroma $width $height $mv_prec $extras"
 AT_CHECK([at_wrap dirac_encoder -field_coding -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma $extras $samp ../../"inter_"$iframe_encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"inter_"$iframe_encout ../../"inter_"$iframe_decout], 0, [ignore])
+#      constant bit-rate 
+echo "interlaced iframe $samp $preset $chroma $width $height $mv_prec $extras $bitrate"
+AT_CHECK([at_wrap dirac_encoder -targetrate $bitrate -field_coding -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma $extras $samp ../../$bitrate"Kbps_inter_"$iframe_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../$bitrate"Kbps_inter_"$iframe_encout ../../$bitrate"Kbps_inter_"$iframe_decout], 0, [ignore])
+#      lossless
+echo "interlaced iframe lossless $samp $preset $chroma $width $height $mv_prec $extras"
+AT_CHECK([at_wrap dirac_encoder -lossless -field_coding -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma $extras $samp ../../"lossless_inter_"$iframe_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"lossless_inter_"$iframe_encout ../../"lossless_inter_"$iframe_decout], 0, [ignore])
+AT_CHECK([cmp $samp ../../"lossless_inter_"$iframe_decout])
+
+
 
 #vc-2 stream tests
 # progressive
+#      constant quality
 AT_CHECK([at_wrap dirac_encoder -use_vlc -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  $extras $samp ../../$vc2_encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$vc2_encout ../../$vc2_decout], 0, [ignore])
 AT_CHECK([cmp ../../$vc2_encout.localdec.yuv ../../$vc2_decout])
+#      constant bit-rate
+AT_CHECK([at_wrap dirac_encoder -targetrate $bitrate -use_vlc -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  $extras $samp ../../$bitrate"Kbps_"$vc2_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../$bitrate"Kbps_"$vc2_encout ../../$bitrate"Kbps_"$vc2_decout], 0, [ignore])
+AT_CHECK([cmp ../../$bitrate"Kbps_"$vc2_encout.localdec.yuv ../../$bitrate"Kbps_"$vc2_decout])
+#      lossless
+AT_CHECK([at_wrap dirac_encoder -lossless -use_vlc -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  $extras $samp ../../"lossless_"$vc2_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"lossless_"$vc2_encout ../../"lossless_"$vc2_decout], 0, [ignore])
+AT_CHECK([cmp ../../"lossless_"$vc2_encout.localdec.yuv ../../"lossless_"$vc2_decout])
+AT_CHECK([cmp $samp ../../"lossless_"$vc2_decout])
+
 # interlaced 
+#      constant quality
 AT_CHECK([at_wrap dirac_encoder -field_coding -use_vlc -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  $extras $samp ../../"inter_"$vc2_encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"inter_"$vc2_encout ../../"inter_"$vc2_decout], 0, [ignore])
+#      constant bit-rate
+AT_CHECK([at_wrap dirac_encoder -targetrate $bitrate -field_coding -use_vlc -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  $extras $samp ../../$bitrate"Kbps_inter_"$vc2_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../$bitrate"Kbps_inter_"$vc2_encout ../../$bitrate"Kbps_inter_"$vc2_decout], 0, [ignore])
+#      lossless
+AT_CHECK([at_wrap dirac_encoder -lossless -field_coding -use_vlc -local -num_L1 0 $preset -qf 7 -width $width -height $height -cformat $chroma  $extras $samp ../../"lossless_inter_"$vc2_encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"lossless_inter_"$vc2_encout ../../"lossless_inter_"$vc2_decout], 0, [ignore])
+AT_CHECK([cmp $samp ../../"lossless_inter_"$vc2_decout])
 
 #Long-GOP tests
 # progressive
+#      constant quality
 AT_CHECK([at_wrap dirac_encoder -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$encout ../../$decout], 0, [ignore])
 AT_CHECK([cmp ../../$encout.localdec.yuv ../../$decout])
@@ -162,7 +214,18 @@ AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mca_inst
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_spm_instr.yuv -split_mode -clip 50], 0, [ignore])
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_sad_instr.yuv -sad -clip 50], 0, [ignore])
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_pred_instr.yuv -pred_mode -clip 50], 0, [ignore])
+#      constant bit-rate
+AT_CHECK([at_wrap dirac_encoder -targetrate $bitrate -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../$bitrate"Kbps_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../$bitrate"Kbps_"$encout ../../$bitrate"Kbps_"$decout], 0, [ignore])
+AT_CHECK([cmp ../../$bitrate"Kbps_"$encout.localdec.yuv ../../$bitrate"Kbps_"$decout])
+#      lossless
+AT_CHECK([at_wrap dirac_encoder -lossless -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"lossless_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"lossless_"$encout ../../"lossless_"$decout], 0, [ignore])
+AT_CHECK([cmp ../../"lossless_"$encout.localdec.yuv ../../"lossless_"$decout])
+AT_CHECK([cmp $samp ../../"lossless_"$decout])
+
 # interlaced
+#      constant quality
 AT_CHECK([at_wrap dirac_encoder -field_coding -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"inter_"$encout ../../"inter_"$decout], 0, [ignore])
 AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_mc_instr.yuv -motion_colour -clip 50], 0, [ignore])
@@ -171,6 +234,13 @@ AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$in
 AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_spm_instr.yuv -split_mode -clip 50], 0, [ignore])
 AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_sad_instr.yuv -sad -clip 50], 0, [ignore])
 AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_pred_instr.yuv -pred_mode -clip 50], 0, [ignore])
+#      constant bit-rate
+AT_CHECK([at_wrap dirac_encoder -targetrate $bitrate -field_coding -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../$bitrate"Kbps_inter_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../$bitrate"Kbps_inter_"$encout ../../$bitrate"Kbps_inter_"$decout], 0, [ignore])
+#      lossless
+AT_CHECK([at_wrap dirac_encoder -lossless -field_coding -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"lossless_inter_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"lossless_inter_"$encout ../../"lossless_inter_"$decout], 0, [ignore])
+AT_CHECK([cmp $samp ../../"lossless_inter_"$decout])
 
 done
 AT_CLEANUP
