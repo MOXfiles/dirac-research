@@ -63,7 +63,7 @@
 
  // Initialse the encoder context with the presets for SD576 - Standard
  // Definition Digital
- dirac_encoder_context_init (&enc_ctx, SD576);
+ dirac_encoder_context_init (&enc_ctx, VIDEO_FORMAT_SD576I50);
 
  // Override parameters if required
  // interlace : 1 - interlaced; 0 - progressive
