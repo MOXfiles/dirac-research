@@ -120,9 +120,9 @@ namespace dirac
             NOTE: LoadNextFrame must be called atleast once before invoking this
             method.
 
-            \return           reference to the next locally decoded picture available for display
+            \return           pointer to the next locally decoded picture available for display
         */
-        Picture &CompressNextPicture();
+        const Picture *CompressNextPicture();
 
         //! Return a pointer to the most recent picture encoded
         const Picture *GetPictureEncoded();
@@ -229,6 +229,9 @@ namespace dirac
 
         //! Flag to check if End of Sequence has been signalled by the end user
         bool m_eos_signalled;
+
+        //! Picture number where previous GOP started
+        int m_prev_gop_start;
 
     private:
         //! Copy constructor is private and body-less

@@ -59,7 +59,8 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     m_qmonitor( m_encparams ),
     m_pcoder( m_encparams ),
     m_dirac_byte_stream(dirac_byte_stream),
-    m_eos_signalled(false)
+    m_eos_signalled(false),
+    m_prev_gop_start(-1)
 {
     // Set up the compression of the sequence
 
@@ -72,7 +73,7 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     // Make sure we have enough macroblocks to cover the pictures
     m_encparams.SetXNumMB( xl_chroma/m_encparams.ChromaBParams(0).Xbsep() );
     m_encparams.SetYNumMB( yl_chroma/m_encparams.ChromaBParams(0).Ybsep() );
-    
+
     if ( m_encparams.XNumMB() * m_encparams.ChromaBParams(0).Xbsep() < xl_chroma )
         m_encparams.SetXNumMB( m_encparams.XNumMB() + 1 );
     if ( m_encparams.YNumMB() * m_encparams.ChromaBParams(0).Ybsep() < yl_chroma )
@@ -179,7 +180,7 @@ bool SequenceCompressor::CanEncode()
     return false;
 }
 
-Picture& SequenceCompressor::CompressNextPicture()
+const Picture* SequenceCompressor::CompressNextPicture()
 {
 
     // This function codes the next picture in coding order and returns the next picture in display order
@@ -218,6 +219,9 @@ Picture& SequenceCompressor::CompressNextPicture()
             // add the unit to the byte stream
             m_dirac_byte_stream.AddAccessUnit(p_accessunit_byteio);
 
+            m_prev_gop_start = m_current_display_pnum;
+
+            return NULL;
         }
 
         if ( m_encparams.Verbose() )
@@ -243,7 +247,7 @@ Picture& SequenceCompressor::CompressNextPicture()
         Picture& my_picture = m_fbuffer->GetPicture( m_current_display_pnum );
 
         PictureParams& pparams = my_picture.GetPparams();
-        
+
         if (pparams.PicSort().IsRef())
             m_fbuffer->SetRetiredPictureNum( m_show_pnum, m_current_display_pnum );
 
@@ -322,7 +326,7 @@ Picture& SequenceCompressor::CompressNextPicture()
                  (m_encparams.FieldCoding() ? "field " : "frame ")  <<
                   m_show_pnum << " in display order";
     }
-    return m_fbuffer->GetPicture(m_show_pnum );
+    return &m_fbuffer->GetPicture(m_show_pnum );
 }
 
 void SequenceCompressor::CleanBuffers()
@@ -394,8 +398,8 @@ bool FrameSequenceCompressor::LoadNextFrame()
     }
 
     if ( m_encparams.Prefilter()==CWM )
-        CWMFilter(m_fbuffer->GetPicture( m_last_picture_read+1 ) , 
-	                                 m_encparams.PrefilterStrength() );
+        CWMFilter(m_fbuffer->GetPicture( m_last_picture_read+1 ) ,
+                                     m_encparams.PrefilterStrength() );
 
     m_last_picture_read++;
     m_mebuffer->PushPicture( m_fbuffer->GetPicture( m_last_picture_read ) );
@@ -428,7 +432,7 @@ int FrameSequenceCompressor::CodedToDisplay( const int pnum )
 
 bool FrameSequenceCompressor::IsNewAccessUnit()
 {
-    return (m_current_display_pnum % m_encparams.GOPLength()==0);
+    return (m_current_display_pnum > m_prev_gop_start && m_current_display_pnum % m_encparams.GOPLength()==0);
 }
 
 void FrameSequenceCompressor::RateControlCompress(Picture& my_frame, bool is_a_cut)
@@ -491,10 +495,10 @@ bool FieldSequenceCompressor::LoadNextFrame()
     ++m_last_picture_read;
     if ( m_encparams.Prefilter()==CWM )
     {
-        CWMFilter(m_fbuffer->GetPicture( m_last_picture_read ), 
-	                               m_encparams.PrefilterStrength() );
-        CWMFilter(m_fbuffer->GetPicture( m_last_picture_read+1 ) , 
-	                               m_encparams.PrefilterStrength() );
+        CWMFilter(m_fbuffer->GetPicture( m_last_picture_read ),
+                                   m_encparams.PrefilterStrength() );
+        CWMFilter(m_fbuffer->GetPicture( m_last_picture_read+1 ) ,
+                                   m_encparams.PrefilterStrength() );
     }
     m_mebuffer->PushPicture( m_fbuffer->GetPicture( m_last_picture_read ) );
 
@@ -593,7 +597,7 @@ int FieldSequenceCompressor::CodedToDisplay( const int pnum )
 
 bool FieldSequenceCompressor::IsNewAccessUnit( )
 {
-    return ((m_current_display_pnum) % (m_encparams.GOPLength()<<1)==0);
+    return ((m_current_display_pnum > m_prev_gop_start) && ((m_current_display_pnum) % (m_encparams.GOPLength()<<1))==0);
 }
 
 void FieldSequenceCompressor::RateControlCompress(Picture& my_picture, bool is_a_cut)
