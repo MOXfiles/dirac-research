@@ -189,25 +189,25 @@ PictureByteIO* PictureCompressor::Compress( PictureBuffer& my_buffer ,
         for (int c=0;c<3;++c){
             comp_data[c] = &my_buffer.GetComponent( pnum , (CompSort) c );
             InitCoeffData( coeff_data[c], comp_data[c]->LengthX(), comp_data[c]->LengthY() );
-	    est_bits[c] =  new OneDArray<unsigned int>( Range( 1, 3*depth+1 ) );
+            est_bits[c] =  new OneDArray<unsigned int>( Range( 1, 3*depth+1 ) );
         }// c
 
         /* Do the wavelet transforms and select the component 
-	 * quantisers using perceptual weighting
-	 */
+     * quantisers using perceptual weighting
+     */
         for (int c=0; c<3; ++c){
             lambda[c] = GetCompLambda( pparams, (CompSort) c );
 
             if ( m_encparams.Prefilter() == RECTLP )
-	        LPFilter( *comp_data[c] , m_encparams.Qf(), 
-		           m_encparams.PrefilterStrength() );
+            LPFilter( *comp_data[c] , m_encparams.Qf(), 
+                   m_encparams.PrefilterStrength() );
 
             if ( m_encparams.Prefilter() == DIAGLP )
-	        DiagFilter( *comp_data[c] , m_encparams.Qf(), 
-		               m_encparams.PrefilterStrength() );
+            DiagFilter( *comp_data[c] , m_encparams.Qf(), 
+                       m_encparams.PrefilterStrength() );
 
             wtransform.Transform( FORWARD , *comp_data[c], coeff_data[c] );
-	    wtransform.SetBandWeights( m_encparams.CPD() , psort , 
+            wtransform.SetBandWeights( m_encparams.CPD() , psort , 
                 pparams.CFormat(), (CompSort) c, m_encparams.FieldCoding());
 
             SubbandList& bands = wtransform.BandList();

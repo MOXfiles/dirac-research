@@ -85,7 +85,7 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
         SubbandByteIO subband_byteio(bands(b), *p_component_byteio);
         subband_byteio.Input();
         
-	if ( !bands(b).Skipped() ){
+        if ( !bands(b).Skipped() ){
             if (m_pparams.UsingAC()){
                 // A pointer to the object(s) we'll be using for coding the bands
                 BandCodec* bdecoder;
@@ -95,8 +95,9 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
                         bdecoder=new IntraDCBandCodec(&subband_byteio, 
                                                        TOTAL_COEFF_CTXS ,bands);
                     else
-                        bdecoder=new LFBandCodec(&subband_byteio , TOTAL_COEFF_CTXS,
-                                             bands , b, m_psort.IsIntra());
+                        bdecoder=new LFBandCodec(&subband_byteio ,
+                                                 TOTAL_COEFF_CTXS, bands ,
+                                                 b, m_psort.IsIntra());
                 }
                 else
                     bdecoder=new BandCodec( &subband_byteio , TOTAL_COEFF_CTXS ,

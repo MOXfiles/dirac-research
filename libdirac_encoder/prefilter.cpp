@@ -307,8 +307,8 @@ void VFilter( PicArray& pic_data, const OneDArray<int>& filter, const int bits )
 
 ValueType DiagFilterBchkD( const PicArray& pic, 
                            const int xpos, const int ypos, 
-		           const int filter[7][7],
-			   const int shift)
+                           const int filter[7][7],
+                           const int shift)
 {
     // Half the filter length
     const int len2 = 6;
@@ -357,9 +357,9 @@ ValueType DiagFilterBchkD( const PicArray& pic,
 }
 
 ValueType DiagFilterD( const PicArray& pic, 
-                                            const int xpos, const int ypos, 
-					    const int filter[7][7],
-					    const int shift)
+                       const int xpos, const int ypos, 
+                       const int filter[7][7],
+                       const int shift)
 {
     // Half the filter length
     const int len2 = 6;
@@ -437,13 +437,13 @@ void dirac::DiagFilter( PicArray& pic_data, const float qf, const int strength )
 
     for (int j=7; j<pic_data.LengthY()-7;++j){
         
-	for (int i=0; i<7;++i)
+    for (int i=0; i<7;++i)
             tmp_data[j][i] = DiagFilterBchkD( pic_data, i, j, filter, shift );
         
         for (int i=7; i<pic_data.LengthX()-7;++i)
             tmp_data[j][i] = DiagFilterD( pic_data, i, j, filter, shift );
         
-	for (int i=pic_data.LengthX()-7; i<pic_data.LengthX();++i)
+    for (int i=pic_data.LengthX()-7; i<pic_data.LengthX();++i)
             tmp_data[j][i] = DiagFilterBchkD( pic_data, i, j, filter, shift );
 
     }

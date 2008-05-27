@@ -163,7 +163,7 @@ int main(int argc, char * argv[] ) {
                                               3*UBufferIn[(height2-1)*width2+x]+
                                               UBufferIn[(height2-1)*width2+x]+4)>>3;
             
-	    VBufferOut[(height-4)*width2+x] = VBufferIn[(height2-2)*width2+x];
+            VBufferOut[(height-4)*width2+x] = VBufferIn[(height2-2)*width2+x];
             VBufferOut[(height-3)*width2+x] = (VBufferIn[(height2-3)*width2+x]+
                                               3*VBufferIn[(height2-2)*width2+x]+
                                               3*VBufferIn[(height2-1)*width2+x]+

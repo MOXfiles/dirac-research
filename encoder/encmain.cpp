@@ -633,26 +633,26 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             preset = VIDEO_FORMAT_HD_1080P50;
             parsed[i] = true;
         }
-	else if ( strcmp (argv[i], "-UHDTV4K60") == 0 )
-	{
-	    preset = VIDEO_FORMAT_UHDTV_4K60;
-	    parsed[i] = true;
-	}
-	else if ( strcmp (argv[i], "-UHDTV4K50") == 0 )
-	{
-	    preset = VIDEO_FORMAT_UHDTV_4K50;
-	    parsed[i] = true;
-	}
-	else if ( strcmp (argv[i], "-UHDTV8K60") == 0 )
-	{
-	      preset = VIDEO_FORMAT_UHDTV_8K60;
-	      parsed[i] = true;
-	}
-	else if ( strcmp (argv[i], "-UHDTV8K50") == 0 )
-	{
-	      preset = VIDEO_FORMAT_UHDTV_8K50;
-	      parsed[i] = true;
-	}
+        else if ( strcmp (argv[i], "-UHDTV4K60") == 0 )
+        {
+            preset = VIDEO_FORMAT_UHDTV_4K60;
+            parsed[i] = true;
+        }
+        else if ( strcmp (argv[i], "-UHDTV4K50") == 0 )
+        {
+            preset = VIDEO_FORMAT_UHDTV_4K50;
+            parsed[i] = true;
+        }
+        else if ( strcmp (argv[i], "-UHDTV8K60") == 0 )
+        {
+            preset = VIDEO_FORMAT_UHDTV_8K60;
+            parsed[i] = true;
+        }
+        else if ( strcmp (argv[i], "-UHDTV8K50") == 0 )
+        {
+            preset = VIDEO_FORMAT_UHDTV_8K50;
+            parsed[i] = true;
+        }
         else if ( strcmp (argv[i], "-DC2K24") == 0 )
         {
             preset = VIDEO_FORMAT_DIGI_CINEMA_2K24;
@@ -911,15 +911,15 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             parsed[i] = true;
             enc_ctx.enc_params.spatial_partition = false;
         }
-	else if ( strcmp(argv[i], "-prefilter") == 0 )
+        else if ( strcmp(argv[i], "-prefilter") == 0 )
         {
             parsed[i] = true;
-	    i++;
-	    if(strcmp(argv[i], "DIAGLP")==0)
+            i++;
+            if(strcmp(argv[i], "DIAGLP")==0)
             {
                 parsed[i] = true;
                 enc_ctx.enc_params.prefilter = DIAGLP;
-		i++;
+                i++;
                 enc_ctx.enc_params.prefilter_strength =
                 strtoul(argv[i],NULL,10);
                 parsed[i] = true;
@@ -928,25 +928,25 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             {
                 parsed[i] = true;
                 enc_ctx.enc_params.prefilter = RECTLP;
-		i++;
+                i++;
                 enc_ctx.enc_params.prefilter_strength =
                 strtoul(argv[i],NULL,10);
                 parsed[i] = true;
             }
-	    else if(strcmp(argv[i], "CWM")==0)
+            else if(strcmp(argv[i], "CWM")==0)
             {
                 parsed[i] = true;
                 enc_ctx.enc_params.prefilter = CWM;
-		i++;
+                i++;
                 enc_ctx.enc_params.prefilter_strength =
                 strtoul(argv[i],NULL,10);
                 parsed[i] = true;
             }
-	    else if(strcmp(argv[i], "NO_PF")==0)
+            else if(strcmp(argv[i], "NO_PF")==0)
             {
                 parsed[i] = true;
                 enc_ctx.enc_params.prefilter = NO_PF;
-		i++;
+                i++;
                 enc_ctx.enc_params.prefilter_strength =
                 strtoul(argv[i],NULL,10);
                 parsed[i] = true;
@@ -1184,7 +1184,7 @@ int main (int argc, char* argv[])
     bool go = true;
     do
     {
-        if (frames_loaded <= (end_pos - start_pos) && 
+        if (frames_loaded <= (end_pos - start_pos) &&
             ReadPicData( ip_pic_ptr, frame_buf, frame_size ) == true)
         {
             if (dirac_encoder_load( encoder, frame_buf, frame_size ) < 0)

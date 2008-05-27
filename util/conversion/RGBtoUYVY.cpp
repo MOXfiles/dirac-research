@@ -136,7 +136,7 @@ int main(int argc, char * argv[] ) {
                 U = ((-38*R -  74*G + 112*B + 128)>>8)+128;
                 V = ((112*R -  94*G -  18*B + 128)>>8)+128;
 
-		//Copy YUV to line buffers prior to filtering
+                //Copy YUV to line buffers prior to filtering
                 YLine[pixel] = Y;
                 ULine[pixel] = U;
                 VLine[pixel] = V;

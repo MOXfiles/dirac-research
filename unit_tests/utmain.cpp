@@ -73,7 +73,7 @@ main( int argc, char* argv[] )
   runner.addTest( CPPUNIT_NS::TestFactoryRegistry::getRegistry().makeTest() );   
   try
   {
-  	std::string test_path = testPath.empty() ? " all unit tests" : testPath;
+    std::string test_path = testPath.empty() ? " all unit tests" : testPath;
     std::cerr << "Running "  <<  test_path << std::endl;
     runner.run( controller, testPath );
 

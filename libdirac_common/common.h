@@ -834,7 +834,7 @@ namespace dirac
         picture and component.
         */
         float Factor(const int bandnum, const PictureParams& pp,
-	             const CompSort c) const;
+                     const CompSort c) const;
 
         //! Update the correction factors.
         /*!
@@ -846,7 +846,7 @@ namespace dirac
         \param    actual_bits    the number of bits that actually were used
          */
         void Update(int bandnum, const PictureParams& pp, 
-	CompSort c,int est_bits,int actual_bits);
+                    CompSort c,int est_bits,int actual_bits);
 
     private:
         //! Initialises the correction factors
@@ -1039,10 +1039,10 @@ namespace dirac
         int YNumBlocks() const {return m_y_num_blocks;}
 
         //! Returns the picture coding mode (independent of source format)
-	/*! Returns the picture coding mode (independent of source format)
-	 *  0 = Frame coding (no quincunx)
-	 *  1 = Field coding (no quincunx)
-	 */
+        /*! Returns the picture coding mode (independent of source format)
+         *  0 = Frame coding (no quincunx)
+         *  1 = Field coding (no quincunx)
+         */
         int PictureCodingMode() const {return m_pic_coding_mode;}
 
         //! Returns true if the pictures are being coded as fields (mode 1 or 3)
@@ -1441,7 +1441,7 @@ namespace dirac
 
         //! Set denoising value - true or false
         void SetPrefilter(const PrefilterType pf, const int str){m_prefilter=pf;
-	                                            m_prefilter_strength=str;}
+                                                   m_prefilter_strength=str;}
 
         //! Set the output path to be used for diagnostic data
         void SetOutputPath(const char * op){ m_output_path = op; }
@@ -1514,8 +1514,8 @@ namespace dirac
         //! Indicator for prefiltering
         PrefilterType m_prefilter;
 
-	//! Prefiltering strength
-	int m_prefilter_strength;
+        //! Prefiltering strength
+        int m_prefilter_strength;
 
         //! Lagrangian parameter for Intra picture coding
         float m_I_lambda;

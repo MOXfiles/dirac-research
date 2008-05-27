@@ -147,7 +147,7 @@ bool PictureDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
 
     if (!m_decparams.ZeroTransform()){
         //decode components
-	Picture& pic = my_buffer.GetPicture( m_pparams.PictureNum() );
+        Picture& pic = my_buffer.GetPicture( m_pparams.PictureNum() );
  
         CompDecompressor my_compdecoder( m_decparams , pic.GetPparams() );
 
@@ -157,7 +157,7 @@ bool PictureDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
         const int depth( m_decparams.TransformDepth() );
         WaveletTransform wtransform( depth, m_decparams.TransformFilter() );
 
-	for (int c=0; c<3; ++c){
+        for (int c=0; c<3; ++c){
             ComponentByteIO component_byteio((CompSort) c, transform_byteio);
             comp_data[c] = &pic.Data((CompSort) c);
 

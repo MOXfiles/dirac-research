@@ -287,7 +287,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetSignalRange(SIGNAL_RANGE_12BIT_VIDEO);
         sparams.SetColourSpecification(4);
         break;
-	
+
     case VIDEO_FORMAT_UHDTV_4K60:
     case VIDEO_FORMAT_UHDTV_4K50:
         sparams.SetXl(3840);
@@ -381,8 +381,8 @@ void SetDefaultEncoderParameters(EncoderParams& encparams)
     case VIDEO_FORMAT_UHDTV_8K60:
     case VIDEO_FORMAT_UHDTV_8K50:
         encparams.SetL1Sep(6);
-	encparams.SetNumL1(7);
-	encparams.SetCPD(48.0f);
+        encparams.SetNumL1(7);
+        encparams.SetCPD(48.0f);
         break;
     case VIDEO_FORMAT_CIF:
     default:

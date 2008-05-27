@@ -265,9 +265,9 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
     {
         for (int x=0; x<mv_array.LengthX(); ++x)
         {
-    	    mv_array[y][x].x = 0;
-    	    mv_array[y][x].y = 0;
-    	    pred_costs[y][x].total = 10000000.0f;
+            mv_array[y][x].x = 0;
+            mv_array[y][x].y = 0;
+            pred_costs[y][x].total = 10000000.0f;
         }// x 
     }// y 
 

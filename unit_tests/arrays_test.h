@@ -44,23 +44,23 @@ using dirac::TwoDArray;
 template <class T>
 bool equalArrays (const TwoDArray<T> &lhs, const TwoDArray<T> &rhs)
 {
-	CPPUNIT_ASSERT_EQUAL (lhs.LengthX(), rhs.LengthX());
-	CPPUNIT_ASSERT_EQUAL (lhs.LengthY(), rhs.LengthY());
-	CPPUNIT_ASSERT_EQUAL (lhs.FirstX(), rhs.FirstX());
-	CPPUNIT_ASSERT_EQUAL (lhs.FirstY(), rhs.FirstY());
-	CPPUNIT_ASSERT_EQUAL (lhs.LastX(), rhs.LastX() );
-	CPPUNIT_ASSERT_EQUAL (lhs.LastY(), rhs.LastY() );
+    CPPUNIT_ASSERT_EQUAL (lhs.LengthX(), rhs.LengthX());
+    CPPUNIT_ASSERT_EQUAL (lhs.LengthY(), rhs.LengthY());
+    CPPUNIT_ASSERT_EQUAL (lhs.FirstX(), rhs.FirstX());
+    CPPUNIT_ASSERT_EQUAL (lhs.FirstY(), rhs.FirstY());
+    CPPUNIT_ASSERT_EQUAL (lhs.LastX(), rhs.LastX() );
+    CPPUNIT_ASSERT_EQUAL (lhs.LastY(), rhs.LastY() );
 
-	for (int i =lhs.FirstY(); i <= lhs.LastY(); i++)
-	{
-		for (int j =lhs.FirstX(); j <= lhs.LastX(); j++)
-		{
-			if ( lhs[i][j] != rhs[i][j] )
-				return false;
-		}
-	}
+    for (int i =lhs.FirstY(); i <= lhs.LastY(); i++)
+    {
+        for (int j =lhs.FirstX(); j <= lhs.LastX(); j++)
+        {
+            if ( lhs[i][j] != rhs[i][j] )
+                return false;
+        }
+    }
 
-	return true;
+    return true;
 }
 
 class TwoDArraysTest : public CPPUNIT_NS::TestFixture

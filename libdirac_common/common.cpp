@@ -528,14 +528,14 @@ void EncoderParams::SetUsualCodeBlocks ( const PictureType &ftype)
         if (ftype == INTRA_PICTURE){
             int depth = TransformDepth();
             for (int i=depth; i>=std::max(1,depth-1); --i)
-	        SetCodeBlocks(i, Xl()/(24*2^(depth-i)), Yl()/(24*2^(depth-i)));
+                SetCodeBlocks(i, Xl()/(24*2^(depth-i)), Yl()/(24*2^(depth-i)));
             for (int i = 0; i<std::max(1,depth-1); ++i)
                 SetCodeBlocks(i, 1, 1);
         }
         else{
             int depth = TransformDepth();
             for (int i=depth; i>=std::max(1,depth-3); --i)
-	        SetCodeBlocks(i, Xl()/(24*2^(depth-i)), Yl()/(24*2^(depth-i)));
+                SetCodeBlocks(i, Xl()/(24*2^(depth-i)), Yl()/(24*2^(depth-i)));
             for (int i = 0; i<std::max(1,depth-3); ++i)
                 SetCodeBlocks(i, 1, 1);
         }

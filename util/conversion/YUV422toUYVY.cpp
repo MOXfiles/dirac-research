@@ -125,12 +125,12 @@ int main(int argc, char * argv[] ) {
             return EXIT_FAILURE; }
 
         // Write into a single buffer
-	int YUVpos = 0;
+        int YUVpos = 0;
         for (int uvpos=0,ypos=0; uvpos<UVBufferSize; ) {
             YUVBuffer[YUVpos++] = UBuffer[uvpos];
-	    YUVBuffer[YUVpos++] = YBuffer[ypos++];
-	    YUVBuffer[YUVpos++] = VBuffer[uvpos++];
-	    YUVBuffer[YUVpos++]=YBuffer[ypos++];
+        YUVBuffer[YUVpos++] = YBuffer[ypos++];
+        YUVBuffer[YUVpos++] = VBuffer[uvpos++];
+        YUVBuffer[YUVpos++]=YBuffer[ypos++];
         }
 
             

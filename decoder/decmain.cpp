@@ -69,7 +69,7 @@ static void WritePicData (dirac_decoder_t *decoder, FILE *fp)
 {
     assert (decoder != NULL);
     assert (fp);
-    
+
     assert(decoder->fbuf);
 
     assert(decoder->fbuf->buf[0]);
@@ -136,11 +136,11 @@ static void DecodeDirac (const char *iname, const char *oname)
 
 
     start_t=clock();
-    do 
+    do
     {
         /* parse the input data */
         state = dirac_parse(decoder);
-        
+
         switch (state)
         {
         case STATE_BUFFER:
@@ -163,7 +163,7 @@ static void DecodeDirac (const char *iname, const char *oname)
 
             if (verbose)
             {
-                fprintf (stdout, "\nSEQUENCE : major_ver=%d minor_version=%d profile=%d level=%d width=%d height=%d chroma=%s chroma_width=%d chroma_height=%d frame_rate=%d/%d, source_sampling=%s topfieldfirst=%s", 
+                fprintf (stdout, "\nSEQUENCE : major_ver=%d minor_version=%d profile=%d level=%d width=%d height=%d chroma=%s chroma_width=%d chroma_height=%d frame_rate=%d/%d, source_sampling=%s topfieldfirst=%s",
                 decoder->parse_params.major_ver,
                 decoder->parse_params.minor_ver,
                 decoder->parse_params.profile,
@@ -175,7 +175,7 @@ static void DecodeDirac (const char *iname, const char *oname)
                 decoder->src_params.chroma_height,
                 decoder->src_params.frame_rate.numerator,
                 decoder->src_params.frame_rate.denominator,
-                decoder->src_params.source_sampling == 0 ? "progressive" : 
+                decoder->src_params.source_sampling == 0 ? "progressive" :
                 ( decoder->src_params.source_sampling == 1 ? "interlaced" : "UNKNOWN" ),
                 decoder->src_params.topfieldfirst ? "yes" : "no");
             }
@@ -189,7 +189,7 @@ static void DecodeDirac (const char *iname, const char *oname)
             buf[2] = (unsigned char *)malloc (decoder->src_params.chroma_width * decoder->src_params.chroma_height);
             dirac_set_buf (decoder, buf, NULL);
 
-         
+
             }
             break;
 
@@ -199,10 +199,10 @@ static void DecodeDirac (const char *iname, const char *oname)
             */
             if (verbose)
                 fprintf (stdout, "\nSEQUENCE_END");
-            
+
             FreeFrameBuffer(decoder);
             break;
-        
+
         case STATE_PICTURE_AVAIL:
             num_frames++;
             if (verbose)

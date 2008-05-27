@@ -132,7 +132,7 @@ void Subband::SetNumBlocks( const int ynum , const int xnum){
     for (int j=0; j<m_code_block_array.LengthY() ; ++j)
         for (int i=0; i<m_code_block_array.LengthX() ; ++i)
             m_code_block_array[j][i].Init( xbounds[i] , ybounds[j] ,
-						   xbounds[i+1] , ybounds[j+1] );
+                                           xbounds[i+1] , ybounds[j+1] );
 
 }
 
@@ -149,29 +149,29 @@ void SubbandList::Init(const int depth,const int xlen,const int ylen){
     Subband* tmp;
 
     for (int level = 1; level <= depth; ++level){
-	xl/=2;
-	yl/=2;
-	/* HH */
-	tmp=new Subband( xl , yl , xl , yl , level);
-	AddBand( *tmp );
-	delete tmp;
+    xl/=2;
+    yl/=2;
+    /* HH */
+    tmp=new Subband( xl , yl , xl , yl , level);
+    AddBand( *tmp );
+    delete tmp;
 
-	/* LH */
-	tmp=new Subband( 0 , yl , xl , yl , level);
-	AddBand( *tmp );
-	delete tmp;
+    /* LH */
+    tmp=new Subband( 0 , yl , xl , yl , level);
+    AddBand( *tmp );
+    delete tmp;
 
-	/* HL */
-	tmp=new Subband(xl , 0 , xl , yl , level);
-	AddBand( *tmp );
-	delete tmp;
+    /* HL */
+    tmp=new Subband(xl , 0 , xl , yl , level);
+    AddBand( *tmp );
+    delete tmp;
 
-	if (level == depth){
-	    /* LL */
-	    tmp=new Subband( 0 , 0 , xl , yl , level);
-	    AddBand( *tmp );
-	    delete tmp;
-	}
+    if (level == depth){
+        /* LL */
+        tmp=new Subband( 0 , 0 , xl , yl , level);
+        AddBand( *tmp );
+        delete tmp;
+    }
     }
     //now set the parent-child relationships
     int len = bands.size();
@@ -181,10 +181,10 @@ void SubbandList::Init(const int depth,const int xlen,const int ylen){
     (*this)(len-1).SetParent(0);
 
     for (int level = 2; level <= depth; ++level){
-	 //do parent-child relationship for other bands
-	(*this)( len-3*(level) ).SetParent( len-3*(level-1) );
-	(*this)(len-3*(level)+1).SetParent(len-3*(level-1)+1);
-	(*this)(len-3*(level)+2).SetParent(len-3*(level-1)+2);
+     //do parent-child relationship for other bands
+    (*this)( len-3*(level) ).SetParent( len-3*(level-1) );
+    (*this)(len-3*(level)+1).SetParent(len-3*(level-1)+1);
+    (*this)(len-3*(level)+2).SetParent(len-3*(level-1)+2);
     }// level
 
 }
@@ -246,7 +246,7 @@ void WaveletTransform::Transform(const Direction d, PicArray& pic_data, CoeffArr
         for ( int j=pic_data.LengthY(); j<coeff_data.LengthY(); ++j){
             for ( int i=0; i<coeff_data.LengthX(); ++i)
                 coeff_data[j][i] = coeff_data[pic_data.LastY()][i];
-	}
+        }
 
         for (int l = 1; l <= m_depth; ++l , xl>>=1 , yl>>=1){
             m_vhfilter->Split(0,0,xl,yl,coeff_data);
@@ -261,7 +261,7 @@ void WaveletTransform::Transform(const Direction d, PicArray& pic_data, CoeffArr
         for (int l = 1; l <= m_depth; ++l, xl<<=1 , yl<<=1 )
             m_vhfilter->Synth(0,0,xl,yl,coeff_data);
         
-	//band list now inaccurate, so clear
+        //band list now inaccurate, so clear
         m_band_list.Clear();
 
          // Lastly, copy coeff_data back into picture data
