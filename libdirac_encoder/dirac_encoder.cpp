@@ -1091,6 +1091,7 @@ extern DllExport dirac_encoder_state_t
             {
                 compressor->GetSequenceEnd (encoder);
                 encoder->end_of_sequence = 1;
+                encoder->enc_pparams.pnum = -1;
                 ret_stat = ENC_STATE_EOS;
             }
         }
