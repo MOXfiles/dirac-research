@@ -1,7 +1,7 @@
 README for the Dirac video codec
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-by the BBC R&D Dirac team (dirac@rd.bbc.co.uk)
+by the BBC R&D Dirac team (diracinfo@rd.bbc.co.uk)
 
 
 1. Executive Summary
@@ -341,6 +341,12 @@ HD1080I60 : width=1920; height=1080; 4:2:2 format; 29,97 frames/sec
 HD1080I50 : width=1920; height=1080; 4:2:2 format; 25 frames/sec
 HD1080P60 : width=1920; height=1080; 4:2:2 format; 59.94 frames/sec
 HD1080P50 : width=1920; height=1080; 4:2:2 format; 50 frames/sec
+DC2K24    : width=2048; height=1080; 4:2:2 format; 24 frames/sec
+DC4K24    : width=4096; height=2160; 4:2:2 format; 24 frames/sec
+UHDTV4K60 : width=3840; height=2160; 4:2:2 format; 59.94 frames/sec
+UHDTV4K50 : width=3840; height=2160; 4:2:2 format; 50 frames/sec
+UHDTV8K60 : width=7680; height=4320; 4:2:2 format; 59.94 frames/sec
+UHDTV8K50 : width=7680; height=4320; 4:2:2 format; 50 frames/sec
 
 The default format used is CUSTOM format which has the following preset values
 width=640; height=480; 4:2:0 format; 23.97 frames/sec.
@@ -408,8 +414,11 @@ no_spartition : Do not split a subband into coefficient blocks before
 multi_quants  : If subbands are split into multiple coefficient blocks before
                 entropy coding, assign different quantisers to each block 
                 within the subband.
-denoise       : Apply a denoising filter to the input video before encoding
-                (note PSNR statistics will be computed relative to the denoised 
+prefilter     : Prefilter to apply to input video before encoding. The name of
+                the filter to be used and the filter strength have to be 
+                supplied. Valid filter names are NO_PF, CWM, RECTLP and
+                DIAGLP. Filter strenth range should be in the range 0-10.
+                (note PSNR statistics will be computed relative to the filtered 
                 video if -local is enabled)
 lossless      : Lossless coding.(overrides -qf and -targetrate)
 mv_prec       : Motion vector precision. Valid values are 1 (Pixel precision),
