@@ -556,8 +556,8 @@ void PictureBuffer::SetProgressiveParams( const unsigned int pnum )
 
             // if we don't have the first L1 picture ...
             if ((pnum-m_L1_sep) % m_gop_len>0)
-                // ... other ref is the prior I picture
-                m_pparams.Refs().push_back( ( pnum/m_gop_len ) * m_gop_len  );
+                // ... other ref is the I/L1 picture but one
+                m_pparams.Refs().push_back( pnum - 2*m_L1_sep  );
 
             // Expires after the next L1 or I picture
             m_pparams.SetExpiryTime( m_L1_sep );
