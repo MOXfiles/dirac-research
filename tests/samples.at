@@ -223,6 +223,10 @@ AT_CHECK([at_wrap dirac_encoder -lossless -local $preset -qf 7 -width $width -he
 AT_CHECK([at_wrap dirac_decoder ../../"lossless_"$encout ../../"lossless_"$decout], 0, [ignore])
 AT_CHECK([cmp ../../"lossless_"$encout.localdec.yuv ../../"lossless_"$decout])
 AT_CHECK([cmp $samp ../../"lossless_"$decout])
+#     modified GOP structure
+AT_CHECK([at_wrap dirac_encoder -L1_sep 6 -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"L1sep6_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"L1sep6_"$encout ../../"L1sep6_"$decout], 0, [ignore])
+AT_CHECK([cmp ../../"L1sep6_"$encout.localdec.yuv ../../"L1sep6_"$decout])
 
 # interlaced
 #      constant quality
@@ -241,6 +245,8 @@ AT_CHECK([at_wrap dirac_decoder ../../$bitrate"Kbps_inter_"$encout ../../$bitrat
 AT_CHECK([at_wrap dirac_encoder -lossless -field_coding -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"lossless_inter_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"lossless_inter_"$encout ../../"lossless_inter_"$decout], 0, [ignore])
 AT_CHECK([cmp $samp ../../"lossless_inter_"$decout])
-
+#     modified GOP structure
+AT_CHECK([at_wrap dirac_encoder -L1_sep 6 -field_coding -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"L1sep6_inter_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"L1sep6_inter_"$encout ../../"L1sep6_inter_"$decout], 0, [ignore])
 done
 AT_CLEANUP
