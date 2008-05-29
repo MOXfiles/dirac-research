@@ -227,6 +227,18 @@ AT_CHECK([cmp $samp ../../"lossless_"$decout])
 AT_CHECK([at_wrap dirac_encoder -L1_sep 6 -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"L1sep6_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"L1sep6_"$encout ../../"L1sep6_"$decout], 0, [ignore])
 AT_CHECK([cmp ../../"L1sep6_"$encout.localdec.yuv ../../"L1sep6_"$decout])
+#     pre-filter CWM
+AT_CHECK([at_wrap dirac_encoder -prefilter CWM 5 -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"cwm5_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"cwm5_"$encout ../../"cwm5_"$decout], 0, [ignore])
+AT_CHECK([cmp ../../"cwm5_"$encout.localdec.yuv ../../"cwm5_"$decout])
+#     pre-filter RECTLP
+AT_CHECK([at_wrap dirac_encoder -prefilter RECTLP 5 -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"rectlp5_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"rectlp5_"$encout ../../"rectlp5_"$decout], 0, [ignore])
+AT_CHECK([cmp ../../"rectlp5_"$encout.localdec.yuv ../../"rectlp5_"$decout])
+#     pre-filter DIAGLP
+AT_CHECK([at_wrap dirac_encoder -prefilter DIAGLP 5 -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"diaglp5_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"diaglp5_"$encout ../../"diaglp5_"$decout], 0, [ignore])
+AT_CHECK([cmp ../../"diaglp5_"$encout.localdec.yuv ../../"diaglp5_"$decout])
 
 # interlaced
 #      constant quality
@@ -248,5 +260,14 @@ AT_CHECK([cmp $samp ../../"lossless_inter_"$decout])
 #     modified GOP structure
 AT_CHECK([at_wrap dirac_encoder -L1_sep 6 -field_coding -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"L1sep6_inter_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"L1sep6_inter_"$encout ../../"L1sep6_inter_"$decout], 0, [ignore])
+#     pre-filter CWM
+AT_CHECK([at_wrap dirac_encoder -field_coding -prefilter CWM 5 -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_cwm5_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"inter_cwm5_"$encout ../../"inter_cwm5_"$decout], 0, [ignore])
+#     pre-filter RECTLP
+AT_CHECK([at_wrap dirac_encoder -field_coding -prefilter RECTLP 5 -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_rectlp5_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"inter_rectlp5_"$encout ../../"inter_rectlp5_"$decout], 0, [ignore])
+#     pre-filter DIAGLP
+AT_CHECK([at_wrap dirac_encoder -field_coding -prefilter DIAGLP 5 -local $preset -qf 7 -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_diaglp5_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"inter_diaglp5_"$encout ../../"inter_diaglp5_"$decout], 0, [ignore])
 done
 AT_CLEANUP
