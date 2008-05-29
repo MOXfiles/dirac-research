@@ -560,7 +560,7 @@ void PictureBuffer::SetProgressiveParams( const unsigned int pnum )
                 m_pparams.Refs().push_back( pnum - 2*m_L1_sep  );
 
             // Expires after the next L1 or I picture
-            m_pparams.SetExpiryTime( m_L1_sep );
+            m_pparams.SetExpiryTime( 2*m_L1_sep );
         }
         else if ((pnum+1) % m_L1_sep == 0)
         {
