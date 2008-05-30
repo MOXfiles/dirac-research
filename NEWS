@@ -1,3 +1,42 @@
+dirac_0.10.0
+============
+This is a Beta release complying with the latest Dirac Bytestream Specification
+Dirac 2.2.0.
+
+- Code refactor to distinguish between fields and frames. Generic term
+  picture is used instead of frames to indicate either fields or frame.
+  Public API has changed as a result.
+- Added support for various forms of pre-filtering.
+- Added support for Ultra High Definition video formats.
+- New conversion utilities to convert from packed YUV format to planar
+  UIV formats and vice versa.
+- Improved GOP structure.
+- Fixed bug in intialising entropy factors while encoding which caused the
+  encoder to crash when coding losslessly.
+- Fixed bug where the decoder would go into a permanent loop when 
+  processing a truncated packet.
+- Fixed bug handling end of sequence packets in decoder. These packets
+  are now handled correctly and the decoder library returns an EOS status to 
+  the user application.
+- Fixed encoder bug where not all frames loaded into the encoder were being
+  coded. The API has been modified to ensure that all encoded frames can
+  now be retrieved.
+- Fixed bug that caused the decoder to go into a loop when processing
+  non-standard GOP structures.
+- Fixed bug with DC value prediction in motion data coding.
+- Fixed bug handling edge blocks in motion compensation.
+- Fixed bug with perceptual weighting when coding losslessly.
+- Fixed bug with rate control when coding in constant bit-rate mode.
+- Replaced VS 2005 build environment with Visual Studio 2008 under MS
+  Windows.
+- Bugs fixed: 1944681, 1906788, 1893223, 1874587
+- Released new pacthes for MPlayer. There is no FFmpeg patch in this 
+  release because Dirac encoding and decoding using Dirac and Schroedinger
+  libraries is available directly in FFmpeg.
+- Released a self-installing executable with Dirac binaries, Dirac dlls
+  and Dirac DirectShow filter to enable play back using Windows Media
+  Player.
+
 dirac_0.9.1
 ===========
 Minor release complying with the latest Dirac Bytestream Specification
