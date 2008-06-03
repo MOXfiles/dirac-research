@@ -346,7 +346,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
 void SetDefaultEncoderParameters(EncoderParams& encparams)
 {
     encparams.SetLossless(false);
-    encparams.SetQf(7.0f);
+    encparams.SetQf(5.5f);
     encparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
     encparams.SetUsingAC(true);
 

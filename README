@@ -366,7 +366,7 @@ medium quality
 
 Solution
 
-  dirac_encoder -SD576I50 -width 720 -height 486 -fr 29.97 -cformat YUV422P -qf 7 test.yuv test_out.drc
+  dirac_encoder -SD576I50 -width 720 -height 486 -fr 29.97 -cformat YUV422P -qf 5.5 test.yuv test_out.drc
 
 Source parameters that affect coding are:
 
