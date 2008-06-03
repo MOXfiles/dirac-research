@@ -189,6 +189,11 @@ namespace dirac
         //! The parameters used for encoding.
         EncoderParams& m_encparams;
 
+        //! A class to hold the basic block parameters
+        OLBParams m_basic_olb_params0;
+        OLBParams m_basic_olb_params1;
+        OLBParams m_basic_olb_params2;
+
         //! Pointer pointing at the picture input.
         StreamPicInput* m_pic_in;
 

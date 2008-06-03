@@ -103,6 +103,11 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     if (m_encparams.TargetRate() != 0)
         m_ratecontrol = new RateController(m_encparams.TargetRate(),
                                            m_pic_in->GetSourceParams(), encp);
+
+    // Copy in the block parameters in case we want to change them dynamically
+    m_basic_olb_params2 = m_encparams.LumaBParams(2);
+    m_basic_olb_params1 = m_encparams.LumaBParams(1);
+    m_basic_olb_params0 = m_encparams.LumaBParams(0);
 }
 
 SequenceCompressor::~SequenceCompressor()
@@ -265,6 +270,27 @@ const Picture* SequenceCompressor::CompressNextPicture()
         bool is_a_cut( false );
         if ( my_picture.GetPparams().PicSort().IsInter() )
         {
+	    // Set the block sizes based on the QF 
+            OLBParams new_olb_params=m_basic_olb_params2;
+ 
+            if (m_encparams.Qf()<2.5)
+                new_olb_params=m_basic_olb_params1;
+            else if (m_encparams.Qf()<1.5)
+                new_olb_params=m_basic_olb_params0;
+                
+            m_encparams.SetBlockSizes(new_olb_params,pparams.CFormat());
+
+            // Make sure we have enough macroblocks to cover the pictures
+            m_encparams.SetXNumMB( pparams.ChromaXl()/m_encparams.ChromaBParams(0).Xbsep() );
+            m_encparams.SetYNumMB( pparams.ChromaYl()/m_encparams.ChromaBParams(0).Ybsep() );
+            if ( m_encparams.XNumMB()*m_encparams.ChromaBParams(0).Xbsep() < pparams.ChromaXl() )
+               m_encparams.SetXNumMB( m_encparams.XNumMB() + 1 );
+
+            if ( m_encparams.YNumMB()*m_encparams.ChromaBParams(0).Ybsep() < pparams.ChromaYl() )
+                m_encparams.SetYNumMB( m_encparams.YNumMB() + 1 );
+            m_encparams.SetXNumBlocks( 4 * m_encparams.XNumMB() );
+            m_encparams.SetYNumBlocks( 4 * m_encparams.YNumMB() );
+
             is_a_cut = m_pcoder.MotionEstimate(  *m_mebuffer,
                                                 m_current_display_pnum );
             if ( is_a_cut )
