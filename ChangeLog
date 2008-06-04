@@ -1,3 +1,40 @@
+2008-06-04 15:33  asuraparaju
+
+	* NEWS: Updated 0.10.0 release notes
+
+2008-06-04 15:32  asuraparaju
+
+	* README.release: Update pre-release checks
+
+2008-06-04 14:48  asuraparaju
+
+	* extras/dirac_dshow/INSTALL: Modify install notes to use the
+	  supported MS VC++ environment.
+
+2008-06-04 14:46  asuraparaju
+
+	* extras/patches/:
+	  README_mplayersvn_trunk_revision_26980_dirac-0.10.x_patch,
+	  mplayersvn_trunk_revision_26980-dirac-0.10.x.patch: Patch to
+	  enable Dirac decoding support in MPlayer svn revision 26980.
+
+2008-06-03 19:57  tjdwave
+
+	* libdirac_encoder/: rate_control.cpp, seq_compress.cpp,
+	  seq_compress.h: Fix for low bit rate operation.
+
+	  Adaptive block sizes used for high QF values.
+
+2008-06-03 15:10  asuraparaju
+
+	* README, libdirac_common/video_format_defaults.cpp,
+	  tests/samples.at: Default quality factor that produces medium
+	  quality output modified to 5.5 from 7.0.
+
+2008-05-30 16:33  asuraparaju
+
+	* ChangeLog: [no log message]
+
 2008-05-30 13:36  asuraparaju
 
 	* NEWS: Included Dirac 0.10.0 release notes
@@ -7717,9 +7754,12 @@
 
 	  -  Removed the following CVS tags from all files    $Author$
 	  $Log$
-	  Revision 1.27  2008-05-30 06:33:56  asuraparaju
+	  Revision 1.28  2008-06-04 05:39:17  asuraparaju
 	  *** empty log message ***
 
+	  Revision 1.27  2008/05/30 06:33:56  asuraparaju
+	  *** empty log message ***
+	
 	  Revision 1.26  2008/01/26 12:11:44  asuraparaju
 	  *** empty log message ***
 	
@@ -7899,6 +7939,9 @@
 2004-05-27 13:21  stuart_hc
 
 	* README.developers: Prevent unintended expansion of $Id$ and $Log: ChangeLog,v $
+	* README.developers: Prevent unintended expansion of $Id$ and Revision 1.27  2008/05/30 06:33:56  asuraparaju
+	* README.developers: Prevent unintended expansion of $Id$ and *** empty log message ***
+	* README.developers: Prevent unintended expansion of $Id$ and
 	* README.developers: Prevent unintended expansion of $Id$ and Revision 1.26  2008/01/26 12:11:44  asuraparaju
 	* README.developers: Prevent unintended expansion of $Id$ and *** empty log message ***
 	* README.developers: Prevent unintended expansion of $Id$ and
@@ -13434,9 +13477,12 @@
 
 	  -  Removed the following CVS tags from all files    $Author$
 	  $Log$
-	  Revision 1.27  2008-05-30 06:33:56  asuraparaju
+	  Revision 1.28  2008-06-04 05:39:17  asuraparaju
 	  *** empty log message ***
 
+	  Revision 1.27  2008/05/30 06:33:56  asuraparaju
+	  *** empty log message ***
+	
 	  Revision 1.26  2008/01/26 12:11:44  asuraparaju
 	  *** empty log message ***
 	
@@ -13625,6 +13671,9 @@
 2004-05-27 13:21  stuart_hc
 
 	* README.developers: Prevent unintended expansion of $Id$ and $Log: ChangeLog,v $
+	* README.developers: Prevent unintended expansion of $Id$ and Revision 1.27  2008/05/30 06:33:56  asuraparaju
+	* README.developers: Prevent unintended expansion of $Id$ and *** empty log message ***
+	* README.developers: Prevent unintended expansion of $Id$ and
 	* README.developers: Prevent unintended expansion of $Id$ and Revision 1.26  2008/01/26 12:11:44  asuraparaju
 	* README.developers: Prevent unintended expansion of $Id$ and *** empty log message ***
 	* README.developers: Prevent unintended expansion of $Id$ and
