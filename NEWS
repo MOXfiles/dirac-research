@@ -10,6 +10,7 @@ Dirac 2.2.0.
 - Added support for Ultra High Definition video formats.
 - New conversion utilities to convert from packed YUV format to planar
   UIV formats and vice versa.
+- Improved compression performance in constant bit-rate mode.
 - Improved GOP structure.
 - Fixed bug in intialising entropy factors while encoding which caused the
   encoder to crash when coding losslessly.
@@ -30,12 +31,11 @@ Dirac 2.2.0.
 - Replaced VS 2005 build environment with Visual Studio 2008 under MS
   Windows.
 - Bugs fixed: 1944681, 1906788, 1893223, 1874587
-- Released new pacthes for MPlayer. There is no FFmpeg patch in this 
+- Released new patches for MPlayer. There is no FFmpeg patch in this 
   release because Dirac encoding and decoding using Dirac and Schroedinger
   libraries is available directly in FFmpeg.
-- Released a self-installing executable with Dirac binaries, Dirac dlls
-  and Dirac DirectShow filter to enable play back using Windows Media
-  Player.
+- DirectShow Filter released to be able to play back Dirac v2.2.0 files
+  in Windows Media Player.
 
 dirac_0.9.1
 ===========
