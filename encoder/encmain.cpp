@@ -120,8 +120,9 @@ static void display_help()
     cout << "\nno_spartition     bool    false         Do not use spatial partitioning while coding transform data";
     cout << "\nprefilter         string/int NO_PF 0    Prefilter input giving filter name (NO_PF, CWM, RECTLP, DIAGLP) and strength (0-10)";
     cout << "\nuse_vlc           bool    false         Use VLC for entropy coding of coefficients";
-    cout << "\nverbose           bool    false         verbose mode";
     cout << "\nlocal             bool    false         Write diagnostics & locally decoded video";
+    cout << "\nverbose           bool    false         Verbose mode";
+    cout << "\nh|help            bool    false         Display help message";
     cout << "\ninput             string  [ required ]  Input file name";
     cout << "\noutput            string  [ required ]  Output file name [May not be '-']";
     cout << endl;
@@ -551,19 +552,19 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
     // (end_pos set to -1 means code to the end)
 
     memset (&enc_ctx, 0, sizeof(dirac_encoder_context_t));
-    if (argc<3)//need at least 3 arguments - the program name, an input and
-               //an output
-    {
-        display_help();
-        return (EXIT_SUCCESS);
-    }
 
    //Now do the options
    // Checking for presets. Assume custom by default
     dirac_encoder_presets_t preset = VIDEO_FORMAT_CUSTOM;
     for (int i = 1; i < argc; i++)
     {
-        if ( strcmp (argv[i], "-QSIF525") == 0 )
+        if ( strcmp(argv[i], "-help") == 0  ||
+             strcmp(argv[i], "-h") == 0)
+        {
+            display_help();
+            exit(EXIT_SUCCESS);
+        }
+        else if ( strcmp (argv[i], "-QSIF525") == 0 )
         {
             preset = VIDEO_FORMAT_QSIF525;
             parsed[i] = true;
@@ -1024,12 +1025,6 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
         return false;
     }
 
-    /* check that we have been suplied with input and output files */
-    if(parsed[argc-2] || parsed[argc-1]) {
-        std::cerr<<std::endl<<"Insufficient arguments"<<std::endl;
-        return false;
-    }
-
     // check we have parsed everything
     bool all_parsed = true;
     for (int i=0 ; i<argc-2 ; ++i)
@@ -1045,6 +1040,14 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
         display_help();
         return false;
     }
+
+    /* check that we have been suplied with input and output files */
+    if(argc < 2 || parsed[argc-2] || parsed[argc-1]) {
+        display_help();
+        std::cerr<<std::endl<<"Insufficient arguments"<<std::endl;
+        return false;
+    }
+
 
     delete[] parsed;
 
