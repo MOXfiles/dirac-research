@@ -48,9 +48,9 @@ CPPUNIT_TEST_SUITE_NAMED_REGISTRATION (PicturesTest, coreSuiteName());
 
 void PicturesTest::setupPicture (Picture& picture, int start_val)
 {
-    setupPicArray(picture.Ydata(), start_val);
-    setupPicArray(picture.Udata(), start_val);
-    setupPicArray(picture.Vdata(), start_val);
+    setupPicArray(picture.Data(Y_COMP), start_val);
+    setupPicArray(picture.Data(U_COMP), start_val);
+    setupPicArray(picture.Data(V_COMP), start_val);
 }
 
 bool PicturesTest::setupPicArray (PicArray &arr, int start_val)
@@ -81,9 +81,9 @@ bool PicturesTest::setupPicArray (PicArray &arr, int start_val)
 
 void PicturesTest::zeroPicture (Picture& picture)
 {
-    zeroPicArray(picture.Ydata());
-    zeroPicArray(picture.Udata());
-    zeroPicArray(picture.Vdata());
+    zeroPicArray(picture.Data(Y_COMP));
+    zeroPicArray(picture.Data(U_COMP));
+    zeroPicArray(picture.Data(V_COMP));
 }
 
 bool PicturesTest::zeroPicArray (PicArray &arr)
@@ -168,9 +168,9 @@ bool PicturesTest::almostEqualPicArrays (const PicArray &lhs, const PicArray &rh
 bool PicturesTest::equalPictures (const Picture &lhs, const Picture &rhs)
 {
     CPPUNIT_ASSERT_EQUAL (lhs.GetPparams().CFormat(), rhs.GetPparams().CFormat() );
-    CPPUNIT_ASSERT (equalPicArrays(lhs.Ydata(), rhs.Ydata()));
-    CPPUNIT_ASSERT (equalPicArrays(lhs.Udata(), rhs.Udata()));
-    CPPUNIT_ASSERT (equalPicArrays(lhs.Vdata(), rhs.Vdata()));
+    CPPUNIT_ASSERT (equalPicArrays(lhs.Data(Y_COMP), rhs.Data(Y_COMP)));
+    CPPUNIT_ASSERT (equalPicArrays(lhs.Data(U_COMP), rhs.Data(U_COMP)));
+    CPPUNIT_ASSERT (equalPicArrays(lhs.Data(V_COMP), rhs.Data(V_COMP)));
     CPPUNIT_ASSERT_EQUAL (lhs.GetPparams().LumaDepth(), rhs.GetPparams().LumaDepth() );
     CPPUNIT_ASSERT_EQUAL (lhs.GetPparams().ChromaDepth(), rhs.GetPparams().ChromaDepth() );
 
@@ -180,9 +180,9 @@ bool PicturesTest::equalPictures (const Picture &lhs, const Picture &rhs)
 bool PicturesTest::almostEqualPictures (const Picture &lhs, const Picture &rhs, int allowedError)
 {
     CPPUNIT_ASSERT_EQUAL (lhs.GetPparams().CFormat(), rhs.GetPparams().CFormat() );
-    CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Ydata(), rhs.Ydata(), allowedError));
-    CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Udata(), rhs.Udata(), allowedError));
-    CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Vdata(), rhs.Vdata(), allowedError));
+    CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Data(Y_COMP), rhs.Data(Y_COMP), allowedError));
+    CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Data(U_COMP), rhs.Data(U_COMP), allowedError));
+    CPPUNIT_ASSERT (almostEqualPicArrays(lhs.Data(V_COMP), rhs.Data(V_COMP), allowedError));
 
     return true;
 }
@@ -208,10 +208,10 @@ void PicturesTest::testConstructor()
     PictureParams p_params(format444, 20, 30, 8, 8);
     Picture picture(p_params);
 
-    CPPUNIT_ASSERT_EQUAL (20, picture.Ydata().LengthX());
-    CPPUNIT_ASSERT_EQUAL (30, picture.Ydata().LengthY());
-    CPPUNIT_ASSERT_EQUAL (20, picture.Ydata().LastX() - picture.Ydata().FirstX() + 1);
-    CPPUNIT_ASSERT_EQUAL (30, picture.Ydata().LastY() - picture.Ydata().FirstY() + 1);
+    CPPUNIT_ASSERT_EQUAL (20, picture.Data(Y_COMP).LengthX());
+    CPPUNIT_ASSERT_EQUAL (30, picture.Data(Y_COMP).LengthY());
+    CPPUNIT_ASSERT_EQUAL (20, picture.Data(Y_COMP).LastX() - picture.Data(Y_COMP).FirstX() + 1);
+    CPPUNIT_ASSERT_EQUAL (30, picture.Data(Y_COMP).LastY() - picture.Data(Y_COMP).FirstY() + 1);
 }
 
 void PicturesTest::testDefaultPictureParams()
@@ -219,12 +219,12 @@ void PicturesTest::testDefaultPictureParams()
     PictureParams p_params;
     Picture picture(p_params);
 
-    CPPUNIT_ASSERT_EQUAL (0, picture.Ydata().LengthX());
-    CPPUNIT_ASSERT_EQUAL (0, picture.Ydata().LengthY());
-    CPPUNIT_ASSERT_EQUAL (0, picture.Ydata().FirstX());
-    CPPUNIT_ASSERT_EQUAL (0, picture.Ydata().FirstY());
-    CPPUNIT_ASSERT_EQUAL (-1, picture.Ydata().LastX());
-    CPPUNIT_ASSERT_EQUAL (-1, picture.Ydata().LastY());
+    CPPUNIT_ASSERT_EQUAL (0, picture.Data(Y_COMP).LengthX());
+    CPPUNIT_ASSERT_EQUAL (0, picture.Data(Y_COMP).LengthY());
+    CPPUNIT_ASSERT_EQUAL (0, picture.Data(Y_COMP).FirstX());
+    CPPUNIT_ASSERT_EQUAL (0, picture.Data(Y_COMP).FirstY());
+    CPPUNIT_ASSERT_EQUAL (-1, picture.Data(Y_COMP).LastX());
+    CPPUNIT_ASSERT_EQUAL (-1, picture.Data(Y_COMP).LastY());
 }
 
 void PicturesTest::testCopyConstructor()
