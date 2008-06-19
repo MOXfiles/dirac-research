@@ -47,11 +47,10 @@
 #include <streambuf>
 
 #include <libdirac_common/common.h>
-#include <libdirac_common/picture_buffer.h>
+#include <libdirac_common/picture.h>
 
 namespace dirac
 {
-    class PictureBuffer;
 
     //////////////////////////////////////////
     //--------------------------------------//
@@ -323,14 +322,6 @@ namespace dirac
             //! Read the next picture frame/field from the file
             virtual bool ReadNextPicture(Picture& mypic) = 0;
 
-            //! Read the next frame/two fields from the file
-            /*!
-                Read next frame/two fields into the frame buffer
-                \param my_buf     Picture Buffer
-                \param num        Frame/Field number
-            */
-            virtual bool ReadNextFrame(PictureBuffer &my_buf, int num) = 0;
-
             //! Get the source parameters
             SourceParams& GetSourceParams() const {return m_sparams;}
 
@@ -370,14 +361,6 @@ namespace dirac
             //! Read the next frame from the file
             virtual bool ReadNextPicture(Picture& myframe);
 
-            //! Read the next frame from the file
-            /*!
-                Read next frame/two fields into the picture buffer
-                \param my_pbuf     Picture Buffer
-                \param pnum        Picture number
-            */
-            virtual bool ReadNextFrame(PictureBuffer &my_pbuf, int pnum);
-
         private:
 
             //! Read a Frame component from the file
@@ -408,13 +391,8 @@ namespace dirac
             //! Read the next field from the file
             virtual bool ReadNextPicture(Picture& myfield);
 
-            //! Read the next frame/two fields from the file
-            /*!
-                Read next frame/two fields into the frame buffer
-                \param my_pbuf     Picture Buffer
-                \param pnum        Frame/Field number
-            */
-            virtual bool ReadNextFrame(PictureBuffer &my_pbuf, int pnum);
+            //! Read the next frame from the file
+            bool ReadNextFrame(Picture& field1, Picture& field2);
 
         protected:
             //! Read both Field components from the file
@@ -435,9 +413,9 @@ namespace dirac
             //! Constructor
             /*! Create a MemoryStreamInput object
                 \param  sparams   Source parameters
-                \param  interlace Treat input as interlaced
+                \param  field_input Treat input as fields, not frames
             */
-            MemoryStreamInput(SourceParams& sparams, bool interlace);
+            MemoryStreamInput(SourceParams& sparams, bool field_input);
 
             //! Destructor
             ~MemoryStreamInput();
