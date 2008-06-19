@@ -141,30 +141,8 @@ namespace dirac
         //! Return true if picture with the particular picture number is available else return false
         bool IsPictureAvail(const unsigned int pnum) const;
 
-        //! Get component with a given component sort and picture number (NOT with a given position in the buffer)
-        PicArray& GetComponent(const unsigned int pic_num, CompSort c);
-
-        //! Get component with a given component sort and picture number (NOT with a given position in the buffer)
-        const PicArray& GetComponent(const unsigned int pic_num, CompSort c) const;
-
-        //! Get upconverted component with a given component sort and picture number (NOT with a given position in the buffer)
-        PicArray& GetUpComponent(const unsigned int pic_num, CompSort c);
-
-        //! Get upconverted component with a given component sort and picture number (NOT with a given position in the buffer)
-        const PicArray& GetUpComponent(const unsigned int pic_num, CompSort c) const;
-
         //! Returns a list of member pictures
         std::vector<int> Members() const;
-
-        //! Put a new picture into the top of the buffer
-        /*!
-            Put a new picture into the top of the buffer. Picture parameters
-            associated with the picture will be the built-in parameters for the
-            buffer.
-
-            \param    pic_num    the number of the picture being inserted
-        */
-        void PushPicture(const unsigned int pic_num);
 
         //! Put a new picture into the top of the buffer
         /*!
@@ -172,13 +150,13 @@ namespace dirac
             associated with the picture will be as given by the picture parameter
             object.
         */
-        void PushPicture(const PictureParams& fp);
+        void PushPicture(const PictureParams& pp);
 
-        //! Put a copy of a new picture into the top of the buffer
+        //! Put a copy of a new picture into the buffer
         /*!
-            Put a copy of a new picture into the top of the buffer.
+            Put a copy of a new picture into the buffer.
         */
-        void PushPicture( const Picture& picture );
+        void CopyPicture( const Picture& picture );
 
         //! Sets the reference picture number that will be cleaned
         /*!
@@ -190,90 +168,28 @@ namespace dirac
         */
         void SetRetiredPictureNum(const int show_pnum, const int current_coded_pnum);
 
-        //! Delete all expired pictures
-        /*!
-            Delete pictures which have been output and which are no longer
-            required for reference. Expiry times are set in each picture's
-            picture parameters.
-            \param show_pnum             picture number in display order that can be output
-            \param current_coded_pnum    picture number in display order of picture currently being coded
-        */
-        void CleanAll(const int show_pnum, const int current_coded_pnum);
-
-        //! Delete retired reference pictures and expired non-ref pictures
-        /*!
-            Delete pictures which have been output and retired reference pictures.
-            Expiry times are set in each picture's picture parameters.
-            \param show_pnum             picture number in display order that can be output
-            \param current_coded_pnum    picture number in display order of picture currently being coded
-        */
-        void CleanRetired(const int show_pnum, const int current_coded_pnum);
-
         //! Delete picture
         /*!
             Delete picture.
             \param pnum             picture number in display order to be deleted from picture buffer
         */
-        void Clean(int pnum);
-
-        //! Return the default picture parameters
-        const PictureParams& GetPictureParams() const{return m_pparams;}
-
-        //! Returnthe default picture parameters
-        PictureParams& GetPictureParams() { return m_pparams; }
-
-        //! Set the picture parameters based on the picture number in display order and internal GOP parameters
-        void SetPictureParams(const unsigned int pnum);
+        void Remove(int pnum);
 
     private:
-        //! Remove a picture with a given picture number from the buffer
+        //! Clear internal data slot number pos
         /*!
-            Remove a picture with a given picture number (in display order) from
-            the buffer. Searches through the buffer and removes picture(s) with
-            that number.
+            Clear internal data slot number pos
         */
-        void Remove(const unsigned int pnum);
+        void ClearSlot(const unsigned int pos);
 
-        //! Set the picture parameters for a progressive picture based on the picture number in display order and internal GOP parameters
-        void SetProgressiveParams(const unsigned int pnum);
-
-        //! Set the picture parameters for an interlaced picture based on the picture number in display order and internal GOP parameters
-        void SetInterlacedParams(const unsigned int pnum);
-
-    private:
-
-        //! the count of the number of reference pictures in the buffer
-        int m_ref_count;
+//        //! the count of the number of reference pictures in the buffer
+//        int m_ref_count;
 
         //! the buffer storing all the values
         std::vector<Picture*> m_pic_data;
 
-        //! the flags that specifies if the picture is currently in use or not
-        std::vector<bool> m_pic_in_use;
-
         //!the map from picture numbers to position in the buffer
         std::map<unsigned int,unsigned int> m_pnum_map;
-
-        //! The picture parameters to use as a default if none are supplied with the picture
-        PictureParams m_pparams;
-
-        //! The number of L1 pictures before next I picture
-        unsigned int m_num_L1;
-
-        //! The distance, in pictures, between L1 pictures
-        unsigned int m_L1_sep;
-
-        //! The length of the group of pictures (GOP)
-        unsigned int m_gop_len;
-
-        //! Interlaced coding
-        bool m_interlace;
-
-        //! Arithmetic coding flag to code coefficients
-        bool m_using_ac;
-
-
-
 
     };
 
