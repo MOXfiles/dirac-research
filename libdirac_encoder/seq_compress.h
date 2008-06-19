@@ -49,7 +49,7 @@
 
 #include <libdirac_byteio/dirac_byte_stream.h>
 #include <libdirac_common/common.h>
-#include <libdirac_common/picture_buffer.h>
+#include <libdirac_encoder/enc_queue.h>
 #include <libdirac_common/pic_io.h>
 #include <libdirac_common/dirac_assertions.h>
 #include <libdirac_encoder/quality_monitor.h>
@@ -122,10 +122,13 @@ namespace dirac
 
             \return           pointer to the next locally decoded picture available for display
         */
-        const Picture *CompressNextPicture();
+        const EncPicture *CompressNextPicture();
+
+        //! Set up the appropriate prediction parameters for a picture
+        virtual void SetPredParams( PictureParams& pparams ) = 0;
 
         //! Return a pointer to the most recent picture encoded
-        const Picture *GetPictureEncoded();
+        const EncPicture *GetPictureEncoded();
 
         //! Return Motion estimation info related to the most recent picture encoded
         const MEData *GetMEData();
@@ -145,6 +148,9 @@ namespace dirac
 
     protected:
 
+        //! Set up the motion data arrays
+        void SetMotionArraySizes();
+
         //! Uses the GOP parameters to convert picture numbers in coded order to display order.
         /*!
              Uses the GOP parameters to convert picture numbers in coded order
@@ -157,10 +163,6 @@ namespace dirac
         //! Make a report to screen on the coding results for the whole sequence
         void MakeSequenceReport();
 
-        //! Return original un-encoded picture
-        virtual const Picture& OriginalPicture(int picture_num)
-        { return m_mebuffer->GetPicture(picture_num); }
-
         //! Remove unwanted pictures from picture buffers
         virtual void CleanBuffers();
 
@@ -168,7 +170,7 @@ namespace dirac
         virtual bool IsNewAccessUnit() = 0;
 
         //! Compress the picture using constant bit rate coding. Purely virtual. The child class will have to define it.
-        virtual void RateControlCompress(Picture& my_picture, bool is_a_cut) = 0;
+        virtual void RateControlCompress(EncPicture& my_picture, bool is_a_cut) = 0;
         //! Returns true if the encoder can encode a picture
         bool CanEncode();
 
@@ -183,25 +185,29 @@ namespace dirac
         */
         bool m_just_finished;
 
+        //! A class to hold the basic block parameters
+        OLBParams m_basic_olb_params0;
+
+        //! A class to hold the basic block parameters
+        OLBParams m_basic_olb_params1;
+
+        //! A class to hold the basic block parameters
+        OLBParams m_basic_olb_params2;
+
         //! The parameters of the input source
         SourceParams& m_srcparams;
 
         //! The parameters used for encoding.
         EncoderParams& m_encparams;
 
-        //! A class to hold the basic block parameters
-        OLBParams m_basic_olb_params0;
-        OLBParams m_basic_olb_params1;
-        OLBParams m_basic_olb_params2;
+        //! Generic picture parameters for initialising pictures
+        PictureParams m_pparams;
 
         //! Pointer pointing at the picture input.
         StreamPicInput* m_pic_in;
 
         //! A picture buffer used for local storage of pictures whilst pending re-ordering or being used for reference.
-        PictureBuffer* m_fbuffer;
-
-        //! A picture buffer for motion estimation
-        PictureBuffer* m_mebuffer;
+        EncQueue m_enc_pbuffer;
 
         //state variables for CompressNextPicture
 
@@ -234,9 +240,6 @@ namespace dirac
 
         //! Flag to check if End of Sequence has been signalled by the end user
         bool m_eos_signalled;
-
-        //! Picture number where previous GOP started
-        int m_prev_gop_start;
 
     private:
         //! Copy constructor is private and body-less
@@ -294,10 +297,14 @@ namespace dirac
                                 false - otherwise
         */
         virtual bool LoadNextFrame();
-    protected:
+        
+        //! Set up the appropriate prediction parameters for a picture
+        virtual void SetPredParams( PictureParams& pparams );
+
+protected:
         virtual int CodedToDisplay(const int pnum);
         virtual bool IsNewAccessUnit();
-        virtual void RateControlCompress(Picture& my_picture, bool is_a_cut);
+        virtual void RateControlCompress(EncPicture& my_picture, bool is_a_cut);
 
     };
 
@@ -340,15 +347,16 @@ namespace dirac
         */
         virtual bool LoadNextFrame();
 
-    protected:
-        virtual const Picture& OriginalPicture(int picture_num);
+        
+        //! Set up the appropriate prediction parameters for a picture
+        virtual void SetPredParams( PictureParams& pparams );
 
-        virtual void CleanBuffers();
+    protected:
 
         virtual int CodedToDisplay(const int pnum);
         virtual bool IsNewAccessUnit();
 
-        virtual void RateControlCompress(Picture& my_picture, bool is_a_cut);
+        virtual void RateControlCompress(EncPicture& my_picture, bool is_a_cut);
     private:
         //! Filter fields
         /*!
@@ -356,9 +364,6 @@ namespace dirac
             Estimation so that ME works better. Using a 1/4 1/2 1/4 filter
         */
         void PreMotionEstmationFilter (PicArray& comp);
-
-        //! A picture buffer for original pictures
-        PictureBuffer* m_origbuffer;
 
         // Field1 bytes
         int m_field1_bytes;
