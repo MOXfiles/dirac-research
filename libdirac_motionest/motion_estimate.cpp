@@ -36,7 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 
-#include <libdirac_common/picture_buffer.h>
+#include <libdirac_encoder/enc_queue.h>
 #include <libdirac_motionest/motion_estimate.h>
 #include <libdirac_motionest/pixel_match.h>
 #include <libdirac_motionest/me_subpel.h>
@@ -50,20 +50,20 @@ MotionEstimator::MotionEstimator( const EncoderParams& encp ):
     m_encparams( encp )
 {}
 
-void MotionEstimator::DoME(const PictureBuffer& my_buffer, int frame_num, MEData& me_data)
+void MotionEstimator::DoME(const EncQueue& my_buffer, int pic_num, MEData& me_data)
 {
 
-    const PictureParams& fparams = my_buffer.GetPicture(frame_num).GetPparams();
+    const PictureParams& fparams = my_buffer.GetPicture(pic_num).GetPparams();
 
    // Step 1. 
    //Initial search gives vectors for each reference accurate to 1 pixel
 
     PixelMatcher pix_match( m_encparams );
-    pix_match.DoSearch( my_buffer , frame_num , me_data);
+    pix_match.DoSearch( my_buffer , pic_num , me_data);
 
     float lambda;
     // Get the references
-    const std::vector<int>& refs = my_buffer.GetPicture(frame_num).GetPparams().Refs();
+    const std::vector<int>& refs = my_buffer.GetPicture(pic_num).GetPparams().Refs();
 
     const int num_refs = refs.size();
     if ( fparams.IsBPicture())
@@ -82,7 +82,7 @@ void MotionEstimator::DoME(const PictureBuffer& my_buffer, int frame_num, MEData
     if (orig_prec != MV_PRECISION_PIXEL)
     {
         SubpelRefine pelrefine( m_encparams );
-        pelrefine.DoSubpel( my_buffer , frame_num , me_data );
+        pelrefine.DoSubpel( my_buffer , pic_num , me_data );
     }
     else
     {
@@ -112,7 +112,7 @@ void MotionEstimator::DoME(const PictureBuffer& my_buffer, int frame_num, MEData
     // and which references should be used, and so on.
 
     ModeDecider my_mode_dec( m_encparams );
-    my_mode_dec.DoModeDecn( my_buffer , frame_num , me_data );
+    my_mode_dec.DoModeDecn( my_buffer , pic_num , me_data );
     
     if (orig_prec ==  MV_PRECISION_PIXEL)
     {
@@ -142,7 +142,7 @@ void MotionEstimator::DoME(const PictureBuffer& my_buffer, int frame_num, MEData
     // we have to assign DC values for chroma components for
     // blocks we're decided are intra.
 
-    SetChromaDC( my_buffer , frame_num , me_data );
+    SetChromaDC( my_buffer , pic_num , me_data );
 
 //return false;
 }
@@ -235,10 +235,10 @@ void MotionEstimator::SetChromaDC( const PicArray& pic_data , MvData& mv_data , 
     }// ymb
 }
 
-void MotionEstimator::SetChromaDC( const PictureBuffer& my_buffer , int frame_num , MvData& mv_data)
+void MotionEstimator::SetChromaDC( const EncQueue& my_buffer , int pic_num , MvData& mv_data)
 {
 
-    SetChromaDC( my_buffer.GetComponent( frame_num , U_COMP) , mv_data , U_COMP );
-    SetChromaDC( my_buffer.GetComponent( frame_num , V_COMP) , mv_data , V_COMP );
+    SetChromaDC( my_buffer.GetPicture( pic_num ).OrigData(U_COMP) , mv_data , U_COMP );
+    SetChromaDC( my_buffer.GetPicture( pic_num ).OrigData(V_COMP) , mv_data , V_COMP );
 
 }

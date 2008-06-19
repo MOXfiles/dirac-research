@@ -39,7 +39,7 @@
 #include <libdirac_motionest/pixel_match.h>
 #include <libdirac_motionest/block_match.h>
 #include <libdirac_common/motion.h>
-#include <libdirac_common/picture_buffer.h>
+#include <libdirac_encoder/enc_queue.h>
 #include <libdirac_motionest/downconvert.h>
 #include <libdirac_motionest/me_mode_decn.h>
 #include <libdirac_motionest/me_subpel.h>
@@ -56,7 +56,7 @@ PixelMatcher::PixelMatcher( const EncoderParams& encp):
 {}
 
 
-void PixelMatcher::DoSearch(const PictureBuffer& my_buffer, int frame_num, MEData& me_data)
+void PixelMatcher::DoSearch(const EncQueue& my_buffer, int pic_num, MEData& me_data)
 {
 
      //does an initial search using hierarchical matching to get guide vectors    
@@ -65,9 +65,9 @@ void PixelMatcher::DoSearch(const PictureBuffer& my_buffer, int frame_num, MEDat
     int ref1,ref2;
 
     // Use the luminance only for motion estimating
-    const PicArray& pic_data = my_buffer.GetComponent( frame_num , Y_COMP );
+    const PicArray& pic_data = my_buffer.GetPicture( pic_num ).DataForME(m_encparams.FieldCoding(), Y_COMP);
 
-    const vector<int>& refs = my_buffer.GetPicture( frame_num ).GetPparams().Refs();
+    const vector<int>& refs = my_buffer.GetPicture( pic_num ).GetPparams().Refs();
     ref1 = refs[0];
 
     if (refs.size()>1)
@@ -76,15 +76,15 @@ void PixelMatcher::DoSearch(const PictureBuffer& my_buffer, int frame_num, MEDat
         ref2 = ref1;
 
     // Record temporal distances
-    m_tdiff[0] = std::abs( ref1 - frame_num );
-    m_tdiff[1] = std::abs( ref2 - frame_num );
+    m_tdiff[0] = std::abs( ref1 - pic_num );
+    m_tdiff[1] = std::abs( ref2 - pic_num );
 
     // Obtain C++ references to the reference picture luma components
-    const PicArray& ref1_data = my_buffer.GetComponent(ref1 , Y_COMP);
-    const PicArray& ref2_data = my_buffer.GetComponent(ref2 , Y_COMP);
-
+    const PicArray& ref1_data = my_buffer.GetPicture(ref1).DataForME(m_encparams.FieldCoding(), Y_COMP);
+    const PicArray& ref2_data = my_buffer.GetPicture(ref2).DataForME(m_encparams.FieldCoding(), Y_COMP);
+ 
     // Determine the picture sort - this affects the motion estimation Lagrangian parameter
-    m_fsort = my_buffer.GetPicture(frame_num).GetPparams().PicSort();
+    m_psort = my_buffer.GetPicture(pic_num).GetPparams().PicSort();
 
 
     if ( m_encparams.FullSearch() == false )

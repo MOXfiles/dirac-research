@@ -43,7 +43,7 @@
 
 namespace dirac
 {
-    class PictureBuffer;
+    class EncQueue;
 
     //! Decides between macroblock and block prediction modes.
     /*!
@@ -88,10 +88,10 @@ namespace dirac
         /*!
             Does the mode decision
             \param    my_buffer    the buffer of all the relevant frames
-            \param    frame_num    the picture number for which motion estimation is being done
+            \param    pic_num    the picture number for which motion estimation is being done
             \param    me_data    the motion vector data into which decisions will be written
          */
-        void DoModeDecn( const PictureBuffer& my_buffer , int frame_num , MEData& me_data);
+        void DoModeDecn( const EncQueue& my_buffer , int pic_num , MEData& me_data);
 
     private:
         ModeDecider( const ModeDecider& cpy );//private, body-less copy constructor: this class should not be copied
@@ -120,7 +120,7 @@ namespace dirac
         float GetDCVar( const ValueType dc_val , const ValueType dc_pred);
 
          // Member data
-        PictureSort fsort;
+        PictureSort m_psort;
 
         //! A local reference to the encoder params
         const EncoderParams& m_encparams;

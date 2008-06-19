@@ -36,7 +36,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_motionest/me_subpel.h>
-#include <libdirac_common/picture_buffer.h>
+#include <libdirac_encoder/enc_queue.h>
 using namespace dirac;
 
 #include <iostream>
@@ -62,17 +62,17 @@ SubpelRefine::SubpelRefine(const EncoderParams& encp):
 
 }
 
-void SubpelRefine::DoSubpel(const PictureBuffer& my_buffer,int frame_num, MEData& me_data)
+void SubpelRefine::DoSubpel(const EncQueue& my_buffer,int pic_num, MEData& me_data)
 {
     //main loop for the subpel refinement
     int ref1,ref2;
 
-    const PictureSort fsort = my_buffer.GetPicture(frame_num).GetPparams().PicSort();
+    const PictureSort psort = my_buffer.GetPicture(pic_num).GetPparams().PicSort();
 
-    if (fsort.IsInter())
+    if (psort.IsInter())
     {
         // Get the references
-        const vector<int>& refs = my_buffer.GetPicture(frame_num).GetPparams().Refs();
+        const vector<int>& refs = my_buffer.GetPicture(pic_num).GetPparams().Refs();
 
         int num_refs = refs.size();
         ref1 = refs[0];
@@ -81,9 +81,9 @@ void SubpelRefine::DoSubpel(const PictureBuffer& my_buffer,int frame_num, MEData
         else    
             ref2 = ref1;
 
-        const PicArray& pic_data = my_buffer.GetComponent(frame_num , Y_COMP);
-        const PicArray& refup1_data = my_buffer.GetUpComponent( ref1 , Y_COMP);
-        const PicArray& refup2_data = my_buffer.GetUpComponent( ref2 , Y_COMP);
+        const PicArray& pic_data = my_buffer.GetPicture(pic_num).OrigData(Y_COMP);
+        const PicArray& refup1_data = my_buffer.GetPicture(ref1).UpOrigData(Y_COMP);
+        const PicArray& refup2_data = my_buffer.GetPicture(ref2).UpOrigData(Y_COMP);
 
         // Now match the pictures
         MatchPic( pic_data , refup1_data , me_data ,1 );

@@ -37,7 +37,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <libdirac_motionest/me_mode_decn.h>
-#include <libdirac_common/picture_buffer.h>
+#include <libdirac_encoder/enc_queue.h>
 using namespace dirac;
 
 #include <algorithm>
@@ -74,17 +74,17 @@ ModeDecider::ModeDecider( const EncoderParams& encp):
 
 ModeDecider::~ModeDecider()
 {
-    if (fsort.IsInter())
+    if (m_psort.IsInter())
     {
         delete m_me_data_set[0];
         delete m_me_data_set[1];
     }
 }
 
-void ModeDecider::DoModeDecn(const PictureBuffer& my_buffer, int frame_num, MEData& me_data)
+void ModeDecider::DoModeDecn(const EncQueue& my_buffer, int pic_num, MEData& me_data)
 {
 
-     // We've got 'raw' block motion vectors for up to two reference frames. Now we want
+     // We've got 'raw' block motion vectors for up to two reference pictures. Now we want
      // to make a decision as to mode. In this initial implementation, this is bottom-up
     // i.e. find mvs for MBs and sub-MBs and see whether it's worthwhile merging.    
 
@@ -93,16 +93,16 @@ void ModeDecider::DoModeDecn(const PictureBuffer& my_buffer, int frame_num, MEDa
     // Initialise // 
     ////////////////
 
-    fsort = my_buffer.GetPicture(frame_num).GetPparams().PicSort();
-    if (fsort.IsInter())
+    m_psort = my_buffer.GetPicture(pic_num).GetPparams().PicSort();
+    if (m_psort.IsInter())
     {
         // Extract the references
-        const vector<int>& refs = my_buffer.GetPicture(frame_num).GetPparams().Refs();
+        const vector<int>& refs = my_buffer.GetPicture(pic_num).GetPparams().Refs();
         num_refs = refs.size();
         ref1 = refs[0];
 
         // The picture we're doing estimation from
-        m_pic_data = &(my_buffer.GetComponent( frame_num , Y_COMP));
+        m_pic_data = &(my_buffer.GetPicture( pic_num ).OrigData(Y_COMP));
 
         // Set up the hierarchy of motion vector data objects
         m_me_data_set[0] = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB() , 
@@ -117,14 +117,13 @@ void ModeDecider::DoModeDecn(const PictureBuffer& my_buffer, int frame_num, MEDa
         m_me_data_set[1]->SetLambdaMap( 1 , me_data.LambdaMap() , 1.0/m_level_factor[1] );
 
         // Set up the reference pictures
-        m_ref1_updata = &(my_buffer.GetUpComponent( ref1 , Y_COMP));
+        m_ref1_updata = &(my_buffer.GetPicture( ref1 ).UpOrigData(Y_COMP));
 
         if (num_refs>1)
         {
             ref2 = refs[1];
-            m_ref2_updata = &(my_buffer.GetUpComponent( ref2 , Y_COMP));
+            m_ref2_updata = &(my_buffer.GetPicture( ref2).UpOrigData(Y_COMP));
             // Create an object for computing bi-directional prediction calculations            
-
             if ( m_encparams.MVPrecision()==MV_PRECISION_EIGHTH_PIXEL )
                 m_bicheckdiff = new BiBlockEighthPel( *m_ref1_updata ,
                                                       *m_ref2_updata ,

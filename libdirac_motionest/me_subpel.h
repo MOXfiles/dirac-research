@@ -44,7 +44,7 @@
 namespace dirac
 {
 
-    class PictureBuffer;
+    class EncQueue;
     class MvData;
     class PicArray;
     
@@ -73,10 +73,10 @@ namespace dirac
         /*!
             Does the actual sub-pixel refinement.
             \param    my_buffer    the buffer of pictures being used
-            \param    frame_num    the picture number on which motion estimation is being performed
+            \param    pic_num    the picture number on which motion estimation is being performed
             \param    me_data    the motion vector data, into which the results will be written
          */
-        void DoSubpel( const PictureBuffer& my_buffer , int frame_num , MEData& me_data );
+        void DoSubpel( const EncQueue& my_buffer , int pic_num , MEData& me_data );
     
     private:
         //! Private, body-less copy constructor: this class should not be copied

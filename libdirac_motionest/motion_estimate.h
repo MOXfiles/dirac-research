@@ -43,7 +43,7 @@
 namespace dirac
 {
 
-    class PictureBuffer;
+    class EncQueue;
 
 
     //! Class to handle the whole motion estimation process. 
@@ -76,7 +76,7 @@ namespace dirac
         ~MotionEstimator(){}
 
         //! Do the motion estimation
-        void DoME(const PictureBuffer& my_buffer , int frame_num , MEData& me_data);
+        void DoME(const EncQueue& my_buffer , int pic_num , MEData& me_data);
 
     private:
         //! Copy constructor: private, body-less - class should not be copied
@@ -86,7 +86,7 @@ namespace dirac
         MotionEstimator& operator=( const MotionEstimator& rhs );
 
         //! Go through all the intra blocks and extract the chroma dc values to be coded
-        void SetChromaDC(const PictureBuffer& my_buffer, int frame_num, MvData& mv_data);
+        void SetChromaDC(const EncQueue& my_buffer, int pic_num, MvData& mv_data);
 
         //! Called by previous fn for each component
         void SetChromaDC(const PicArray& pic_data, MvData& mv_data,CompSort csort);        
