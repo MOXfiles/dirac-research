@@ -37,6 +37,7 @@
 
 #include <util/instrumentation/libdirac_instrument/draw_overlay.h>
 using namespace dirac_instr;
+using namespace dirac;
 
 // constructor
 DrawOverlay::DrawOverlay(Picture & picture, DrawPictureMotionParams & draw_params)
@@ -111,10 +112,10 @@ void DrawOverlay::DrawPowerBar(int min, int max)
     for (int ypx=40; ypx<m_draw_params.PicY(); ++ypx)
     {
         // black line
-        m_picture.Ydata()[ypx][5]=0;
+        m_picture.Data(Y_COMP)[ypx][5]=0;
 
         for (int xpx=0; xpx<5; ++xpx)
-            m_picture.Ydata()[ypx][xpx]=0; // grey background
+            m_picture.Data(Y_COMP)[ypx][xpx]=0; // grey background
     }
 
     // draw colour on line by line basis
@@ -130,8 +131,8 @@ void DrawOverlay::DrawPowerBar(int min, int max)
 
         for (int xpx=0; xpx<=4/m_draw_params.ChromaFactorX(); ++xpx)
         {
-            m_picture.Udata()[ypx][xpx]=U;
-            m_picture.Vdata()[ypx][xpx]=V;
+            m_picture.Data(U_COMP)[ypx][xpx]=U;
+            m_picture.Data(V_COMP)[ypx][xpx]=V;
         }
     }
 
@@ -149,7 +150,7 @@ void DrawOverlay::DrawCharacter(const PicArray & ch, int y_offset, int x_offset)
     {
         for (int x=x_offset, x_ch=0; x<x_offset+8; ++x, ++x_ch)
         {
-            m_picture.Ydata()[y][x]=ch[y_ch][x_ch]*255-128;
+            m_picture.Data(Y_COMP)[y][x]=ch[y_ch][x_ch]*255-128;
         }// x
     }// y
 
@@ -158,8 +159,8 @@ void DrawOverlay::DrawCharacter(const PicArray & ch, int y_offset, int x_offset)
     {
         for (int xpx=x_offset/m_draw_params.ChromaFactorX(); xpx<(x_offset+8)/m_draw_params.ChromaFactorX(); ++xpx)
         {
-            m_picture.Udata()[ypx][xpx]=0;
-            m_picture.Vdata()[ypx][xpx]=0;
+            m_picture.Data(U_COMP)[ypx][xpx]=0;
+            m_picture.Data(V_COMP)[ypx][xpx]=0;
         }// xpx
     }// ypx
 }
@@ -285,20 +286,20 @@ void DrawOverlay::DrawMvBlockUV(int ymv, int xmv, int U, int V)
     for (int y=0; y<m_draw_params.MvUVBlockY(); ++y)
     {
         int y_idx = (ymv*m_draw_params.MvUVBlockY())+y;
-        if (y_idx >= m_picture.Udata().LengthY() || 
-            y_idx >= m_picture.Vdata().LengthY())
+        if (y_idx >= m_picture.Data(U_COMP).LengthY() || 
+            y_idx >= m_picture.Data(V_COMP).LengthY())
             break;
         for (int x=0; x<m_draw_params.MvUVBlockX(); ++x)
         {
             int x_idx = (xmv*m_draw_params.MvUVBlockX())+x;
-            if (x_idx >= m_picture.Udata().LengthX() || 
-                x_idx >= m_picture.Vdata().LengthX())
+            if (x_idx >= m_picture.Data(U_COMP).LengthX() || 
+                x_idx >= m_picture.Data(V_COMP).LengthX())
                 break;
               
-            //m_picture.Udata()[(ymv*m_draw_params.MvUVBlockY())+y][(xmv*m_draw_params.MvUVBlockX())+x]=U;
-            //m_picture.Vdata()[(ymv*m_draw_params.MvUVBlockY())+y][(xmv*m_draw_params.MvUVBlockX())+x]=V;
-            m_picture.Udata()[y_idx][x_idx]=U;
-            m_picture.Vdata()[y_idx][x_idx]=V;
+            //m_picture.Data(U_COMP)[(ymv*m_draw_params.MvUVBlockY())+y][(xmv*m_draw_params.MvUVBlockX())+x]=U;
+            //m_picture.Data(V_COMP)[(ymv*m_draw_params.MvUVBlockY())+y][(xmv*m_draw_params.MvUVBlockX())+x]=V;
+            m_picture.Data(U_COMP)[y_idx][x_idx]=U;
+            m_picture.Data(V_COMP)[y_idx][x_idx]=V;
         }// xpx
     }// ypx
 }
@@ -311,8 +312,8 @@ void DrawOverlay::DrawBlockUV(int ypx, int xpx, int U, int V)
     {
         for (int x=xpx; x<xpx+(8/m_draw_params.ChromaFactorX()); ++x)
         {
-            m_picture.Udata()[y][x]=U;
-            m_picture.Vdata()[y][x]=V;
+            m_picture.Data(U_COMP)[y][x]=U;
+            m_picture.Data(V_COMP)[y][x]=V;
         }// xpx
     }// ypx
 }

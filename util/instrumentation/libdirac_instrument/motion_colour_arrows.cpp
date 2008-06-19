@@ -37,6 +37,7 @@
 
 #include <util/instrumentation/libdirac_instrument/motion_colour_arrows.h>
 using namespace dirac_instr;
+using namespace dirac;
 
 // constructor
 DrawMotionColourArrows::DrawMotionColourArrows(Picture & picture, DrawPictureMotionParams & draw_params,
@@ -83,8 +84,8 @@ void DrawMotionColourArrows::DrawBlock(int j, int i)
 
     // draw arrow if this block is TL corner of arrow
     if ( (j == 0 || (j % m_blocks_per_arrow_y) == 0) && ((i == 0 || (i % m_blocks_per_arrow_x) == 0 )) &&
-        (j*m_draw_params.MvYBlockY()+offset_y+15 <= m_picture.Ydata().LengthY()) &&
-        (i*m_draw_params.MvYBlockX()+offset_x+15 <= m_picture.Ydata().LengthX()) )
+        (j*m_draw_params.MvYBlockY()+offset_y+15 <= m_picture.Data(Y_COMP).LengthY()) &&
+        (i*m_draw_params.MvYBlockX()+offset_x+15 <= m_picture.Data(Y_COMP).LengthX()) )
     {
         DrawArrow(j, i, (j*m_draw_params.MvYBlockY())+offset_y, (i*m_draw_params.MvYBlockX())+offset_x);
 

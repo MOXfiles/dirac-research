@@ -37,6 +37,7 @@
 
 #include <util/instrumentation/libdirac_instrument/pred_mode.h>
 using namespace dirac_instr;
+using namespace dirac;
 
 // constructor
 DrawPredMode::DrawPredMode(Picture & picture, DrawPictureMotionParams & draw_params, const TwoDArray<PredMode> & mode)
@@ -75,7 +76,7 @@ void DrawPredMode::DrawLegend()
     for (int ypx=m_draw_params.PicY()-65; ypx<m_draw_params.PicY(); ++ypx)
     {
         for (int xpx=7; xpx>=0; --xpx)
-            m_picture.Ydata()[ypx][xpx]=0;
+            m_picture.Data(Y_COMP)[ypx][xpx]=0;
     }
 
     int U=0, V=0;
@@ -99,14 +100,14 @@ void DrawPredMode::DrawLegend()
     // black horizontal lines
     for (int xpx=15; xpx>=0; --xpx)
     {
-        m_picture.Ydata()[m_draw_params.PicY()-65][xpx]=0;
-        m_picture.Ydata()[m_draw_params.PicY()-49][xpx]=0;
-        m_picture.Ydata()[m_draw_params.PicY()-33][xpx]=0;
+        m_picture.Data(Y_COMP)[m_draw_params.PicY()-65][xpx]=0;
+        m_picture.Data(Y_COMP)[m_draw_params.PicY()-49][xpx]=0;
+        m_picture.Data(Y_COMP)[m_draw_params.PicY()-33][xpx]=0;
     }
 
     for (int xpx=31; xpx>=0; --xpx)
     {
-        m_picture.Ydata()[m_picture.Ydata().LastY()-16][xpx]=0;
+        m_picture.Data(Y_COMP)[m_picture.Data(Y_COMP).LastY()-16][xpx]=0;
     }
 
     // draw labels
@@ -119,13 +120,13 @@ void DrawPredMode::DrawLegend()
 
     // blank background
     for (int ypx=(m_draw_params.PicY()/m_draw_params.ChromaFactorY())-1-(16/m_draw_params.ChromaFactorY());
-        ypx<=m_picture.Udata().LastY(); ++ypx)
+        ypx<=m_picture.Data(U_COMP).LastY(); ++ypx)
     {
         // no chrominance
         for (int xpx=(32/m_draw_params.MvYBlockX())-1; xpx>=(16/m_draw_params.ChromaFactorX()); --xpx)
         {
-            m_picture.Udata()[ypx][xpx]=0;
-            m_picture.Vdata()[ypx][xpx]=0;
+            m_picture.Data(U_COMP)[ypx][xpx]=0;
+            m_picture.Data(V_COMP)[ypx][xpx]=0;
         }
     }
 }

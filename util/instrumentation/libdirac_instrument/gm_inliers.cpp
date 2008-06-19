@@ -37,6 +37,7 @@
 
 #include <util/instrumentation/libdirac_instrument/gm_inliers.h>
 using namespace dirac_instr;
+using namespace dirac;
 
 // constructor
 DrawGMInliers::DrawGMInliers(Picture & picture, DrawPictureMotionParams & draw_params, const TwoDArray<int> & inliers)
@@ -68,7 +69,7 @@ void DrawGMInliers::DrawLegend()
     for (int ypx=m_draw_params.PicY()-33; ypx<m_draw_params.PicY(); ++ypx)
     {
         for (int xpx=7; xpx>=0; --xpx)
-            m_picture.Ydata()[ypx][xpx]=500; // grey
+            m_picture.Data(Y_COMP)[ypx][xpx]=500; // grey
     }
 
     int U=0, V=0;
@@ -84,8 +85,8 @@ void DrawGMInliers::DrawLegend()
     // black horizontal lines
     for (int xpx=15; xpx>=0; --xpx)
     {
-        m_picture.Ydata()[m_draw_params.PicY()-33][xpx]=0;
-        m_picture.Ydata()[m_draw_params.PicY()-17][xpx]=0;
+        m_picture.Data(Y_COMP)[m_draw_params.PicY()-33][xpx]=0;
+        m_picture.Data(Y_COMP)[m_draw_params.PicY()-17][xpx]=0;
     }
 
     // draw '1 0' label

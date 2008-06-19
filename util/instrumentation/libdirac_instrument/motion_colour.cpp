@@ -37,6 +37,7 @@
 
 #include <util/instrumentation/libdirac_instrument/motion_colour.h>
 using namespace dirac_instr;
+using namespace dirac;
 
 // constructor
 DrawMotionColour::DrawMotionColour(Picture & picture, DrawPictureMotionParams & draw_params, const MvArray & mv,
@@ -69,11 +70,11 @@ void DrawMotionColour::DrawLegend()
         // white background
         for (int xpx=1; xpx<40; ++xpx)
         {
-            m_picture.Ydata()[ypx][xpx]=0;
+            m_picture.Data(Y_COMP)[ypx][xpx]=0;
         }
 
         // crosshair vertical line
-        m_picture.Ydata()[ypx][21]=88-128;
+        m_picture.Data(Y_COMP)[ypx][21]=88-128;
     }
 
     // colour in the rectangle
@@ -83,29 +84,29 @@ void DrawMotionColour::DrawLegend()
     {
         for (int xpx=40/m_draw_params.ChromaFactorX(), x=20; xpx>=0; --xpx, x-=m_draw_params.ChromaFactorX())
         {
-            m_picture.Udata()[ypx][xpx]=(x*25)-128;
-            m_picture.Vdata()[ypx][xpx]=(y*25)-128;
+            m_picture.Data(U_COMP)[ypx][xpx]=(x*25)-128;
+            m_picture.Data(V_COMP)[ypx][xpx]=(y*25)-128;
         }
     }
 
     // crosshair horizontal linem_
     for (int xpx=0; xpx<40; ++xpx)
     {
-        m_picture.Ydata()[y_start+16][xpx]=88-128;
+        m_picture.Data(Y_COMP)[y_start+16][xpx]=88-128;
     }
 
     // vertical black line
     for (int ypx=y_start+1; ypx<=y_start+30; ++ypx)
     {
-        m_picture.Ydata()[ypx][41]=-128;
-        m_picture.Ydata()[ypx][0]=-128;
+        m_picture.Data(Y_COMP)[ypx][41]=-128;
+        m_picture.Data(Y_COMP)[ypx][0]=-128;
     }
 
     // horizontal black line
     for (int xpx=0; xpx<=41; ++xpx)
     {
-        m_picture.Ydata()[y_start][xpx]=0;
-        m_picture.Ydata()[m_picture.Ydata().LastY()][xpx]=0;
+        m_picture.Data(Y_COMP)[y_start][xpx]=0;
+        m_picture.Data(Y_COMP)[m_picture.Data(Y_COMP).LastY()][xpx]=0;
     }
 
     // display the clip value

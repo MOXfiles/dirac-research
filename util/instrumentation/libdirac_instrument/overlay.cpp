@@ -36,9 +36,10 @@
 * ***** END LICENSE BLOCK ***** */
 
 #include <util/instrumentation/libdirac_instrument/overlay.h>
+
 using namespace dirac_instr;
 
-// using namespace dirac;
+using namespace dirac;
 
 // constructor
 Overlay::Overlay (const OverlayParams & overlayparams, Picture & picture)
@@ -59,20 +60,20 @@ void Overlay::ProcessPicture()
     // if a mid-grey background is selected instead of the original luma, do that
     if (m_oparams.Background()==0)
     {
-        for (int j=0; j<=m_picture.Ydata().LastY(); ++j)
+        for (int j=0; j<=m_picture.Data(Y_COMP).LastY(); ++j)
         {
-            for (int i=0; i<=m_picture.Ydata().LastX(); ++i)
-                m_picture.Ydata()[j][i]=0;
+            for (int i=0; i<=m_picture.Data(Y_COMP).LastX(); ++i)
+                m_picture.Data(Y_COMP)[j][i]=0;
         }
     }
 
     // set chroma arrays to zero
-    for (int j=0; j<m_picture.Udata().LengthY(); ++j)
+    for (int j=0; j<m_picture.Data(U_COMP).LengthY(); ++j)
     {
-        for (int i=0; i<m_picture.Udata().LengthX(); ++i)
+        for (int i=0; i<m_picture.Data(U_COMP).LengthX(); ++i)
         {
-            m_picture.Udata()[j][i]=0;
-            m_picture.Vdata()[j][i]=0;
+            m_picture.Data(U_COMP)[j][i]=0;
+            m_picture.Data(V_COMP)[j][i]=0;
         }
     }
 
@@ -91,8 +92,8 @@ void Overlay::ProcessPicture(const MEData & me_data, const OLBParams & block_par
     m_draw_params.SetMvYBlockX(block_params.Xbsep());
     m_draw_params.SetMvUVBlockY(block_params.Ybsep()/m_draw_params.ChromaFactorY());
     m_draw_params.SetMvUVBlockX(block_params.Xbsep()/m_draw_params.ChromaFactorX());
-    m_draw_params.SetPicY(m_picture.Ydata().LengthY());
-    m_draw_params.SetPicX(m_picture.Ydata().LengthX());
+    m_draw_params.SetPicY(m_picture.Data(Y_COMP).LengthY());
+    m_draw_params.SetPicX(m_picture.Data(Y_COMP).LengthX());
 
     //std::cerr<<std::endl<<"Pic: "<<m_draw_params.PicY()<<" "<<m_draw_params.PicX();
 
@@ -101,10 +102,10 @@ void Overlay::ProcessPicture(const MEData & me_data, const OLBParams & block_par
     // if a mid-grey background is selected instead of the original luma, do that
     if (m_oparams.Background()==0)
     {
-        for (int j=0; j<=m_picture.Ydata().LastY(); ++j)
+        for (int j=0; j<=m_picture.Data(Y_COMP).LastY(); ++j)
         {
-            for (int i=0; i<=m_picture.Ydata().LastX(); ++i)
-                m_picture.Ydata()[j][i]=0;
+            for (int i=0; i<=m_picture.Data(Y_COMP).LastX(); ++i)
+                m_picture.Data(Y_COMP)[j][i]=0;
         }
     }
 
@@ -254,12 +255,12 @@ void Overlay::DoOverlay(const MEData & me_data)
     // has a single reference, remove chroma and display picture number and legend
     if (m_ref==-1 && m_oparams.Option() != pred_mode && m_oparams.Option() != split_mode)
     {
-        for (int y=0; y<m_picture.Udata().LengthY(); ++y)
+        for (int y=0; y<m_picture.Data(U_COMP).LengthY(); ++y)
         {
-            for (int x=0; x<m_picture.Udata().LengthX(); ++x)
+            for (int x=0; x<m_picture.Data(U_COMP).LengthX(); ++x)
             {
-                m_picture.Udata()[y][x] = 0;
-                m_picture.Vdata()[y][x] = 0;
+                m_picture.Data(U_COMP)[y][x] = 0;
+                m_picture.Data(V_COMP)[y][x] = 0;
             }
         }
         
@@ -324,16 +325,16 @@ void Overlay::CalculateFactors(const ChromaFormat & cformat)
 // calculate if picture requires padding due to requirement of integer number of macroblocks
 void Overlay::PadPicture(const MEData & me_data)
 {
-    int picture_x = m_picture.Ydata().LengthX();
-    int picture_y = m_picture.Ydata().LengthY();
+    int picture_x = m_picture.Data(Y_COMP).LengthX();
+    int picture_y = m_picture.Data(Y_COMP).LengthY();
 
     // copy picture components
-    PicArray Ydata(m_picture.Ydata());
-    PicArray Udata(m_picture.Udata());
-    PicArray Vdata(m_picture.Vdata());
+    PicArray Ydata(m_picture.Data(Y_COMP));
+    PicArray Udata(m_picture.Data(U_COMP));
+    PicArray Vdata(m_picture.Data(V_COMP));
 
     // if there is not an integer number of macroblocks horizontally, pad until there is
-    if (m_picture.Ydata().LengthX() % me_data.MBSplit().LengthX() != 0)
+    if (m_picture.Data(Y_COMP).LengthX() % me_data.MBSplit().LengthX() != 0)
     {
         do
         {
@@ -343,7 +344,7 @@ void Overlay::PadPicture(const MEData & me_data)
     }
 
     // if there is not an integer number of macroblocks vertically, pad until there is
-    if (m_picture.Ydata().LengthX() % me_data.MBSplit().LengthY() != 0)
+    if (m_picture.Data(Y_COMP).LengthX() % me_data.MBSplit().LengthY() != 0)
     {
         do
         {
@@ -353,29 +354,29 @@ void Overlay::PadPicture(const MEData & me_data)
     }
 
     // if padding was required in either horizontal or vertical, adjust picture size and reload component data
-    if (m_picture.Ydata().LengthX() % me_data.MBSplit().LengthX() != 0 || m_picture.Ydata().LengthY() % me_data.MBSplit().LengthY() != 0)
+    if (m_picture.Data(Y_COMP).LengthX() % me_data.MBSplit().LengthX() != 0 || m_picture.Data(Y_COMP).LengthY() % me_data.MBSplit().LengthY() != 0)
     {
-        m_picture.Ydata().Resize(picture_y, picture_x);
-        m_picture.Udata().Resize(picture_y / m_draw_params.ChromaFactorY(), picture_x / m_draw_params.ChromaFactorX());
-        m_picture.Vdata().Resize(picture_y / m_draw_params.ChromaFactorY(), picture_x / m_draw_params.ChromaFactorX());
+        m_picture.Data(Y_COMP).Resize(picture_y, picture_x);
+        m_picture.Data(U_COMP).Resize(picture_y / m_draw_params.ChromaFactorY(), picture_x / m_draw_params.ChromaFactorX());
+        m_picture.Data(V_COMP).Resize(picture_y / m_draw_params.ChromaFactorY(), picture_x / m_draw_params.ChromaFactorX());
        
         for (int j=0; j<Ydata.LengthY(); ++j)
         {
             for (int i=0; i<Ydata.LengthX(); ++i)
             {
-                m_picture.Ydata()[j][i]=Ydata[j][i];
+                m_picture.Data(Y_COMP)[j][i]=Ydata[j][i];
             }
             // pad the columns on the rhs using the edge value
-            for (int i=Ydata.LengthX(); i <  m_picture.Ydata().LengthX(); ++i)
-                m_picture.Ydata()[j][i] = m_picture.Ydata()[j][Ydata.LengthX()-1];
+            for (int i=Ydata.LengthX(); i <  m_picture.Data(Y_COMP).LengthX(); ++i)
+                m_picture.Data(Y_COMP)[j][i] = m_picture.Data(Y_COMP)[j][Ydata.LengthX()-1];
         }
         // do the padded lines using the last true line
-        for (int j=Ydata.LengthY(); j<m_picture.Ydata().LengthY(); ++j)
+        for (int j=Ydata.LengthY(); j<m_picture.Data(Y_COMP).LengthY(); ++j)
         {
             //std::cerr << "Processing row " << j  << std::endl;
-            for (int i=0; i <  m_picture.Ydata().LengthX(); ++i)
+            for (int i=0; i <  m_picture.Data(Y_COMP).LengthX(); ++i)
             {
-                m_picture.Ydata()[j][i] = m_picture.Ydata()[Ydata.LengthY()-1][i];
+                m_picture.Data(Y_COMP)[j][i] = m_picture.Data(Y_COMP)[Ydata.LengthY()-1][i];
             }
         }
         
@@ -383,24 +384,24 @@ void Overlay::PadPicture(const MEData & me_data)
         {
             for (int i=0; i<Udata.LengthX(); ++i)
             {
-                m_picture.Udata()[j][i]=Udata[j][i];
-                m_picture.Vdata()[j][i]=Vdata[j][i];
+                m_picture.Data(U_COMP)[j][i]=Udata[j][i];
+                m_picture.Data(V_COMP)[j][i]=Vdata[j][i];
             }
             // pad the columns on the rhs using the edge value
-            for (int i=Udata.LengthX(); i <  m_picture.Udata().LengthX(); ++i)
+            for (int i=Udata.LengthX(); i <  m_picture.Data(U_COMP).LengthX(); ++i)
             {
-                m_picture.Udata()[j][i] = m_picture.Udata()[j][Udata.LengthX()-1];
-                m_picture.Vdata()[j][i] = m_picture.Vdata()[j][Udata.LengthX()-1];
+                m_picture.Data(U_COMP)[j][i] = m_picture.Data(U_COMP)[j][Udata.LengthX()-1];
+                m_picture.Data(V_COMP)[j][i] = m_picture.Data(V_COMP)[j][Udata.LengthX()-1];
             }
         }
         // do the padded lines using the last true line
-        for (int j=Udata.LengthY(); j<m_picture.Udata().LengthY(); ++j)
+        for (int j=Udata.LengthY(); j<m_picture.Data(U_COMP).LengthY(); ++j)
         {
             //std::cerr << "Processing row " << j  << std::endl;
-            for (int i=0; i <  m_picture.Udata().LengthX(); ++i)
+            for (int i=0; i <  m_picture.Data(U_COMP).LengthX(); ++i)
             {
-                m_picture.Udata()[j][i] = m_picture.Udata()[Udata.LengthY()-1][i];
-                m_picture.Vdata()[j][i] = m_picture.Vdata()[Udata.LengthY()-1][i];
+                m_picture.Data(U_COMP)[j][i] = m_picture.Data(U_COMP)[Udata.LengthY()-1][i];
+                m_picture.Data(V_COMP)[j][i] = m_picture.Data(V_COMP)[Udata.LengthY()-1][i];
             }
         }
 
