@@ -811,7 +811,6 @@ void SourceParams::SetTransferFunctionIndex (unsigned int tf)
 
 
 //PictureParams functions
-
 // Default constructor
 PictureParams::PictureParams():
     m_psort(PictureSort::IntraRefPictureSort()),
@@ -864,7 +863,6 @@ PictureParams::PictureParams(const ChromaFormat& cf, const PictureSort& ps):
     SetPicSort( ps );
 }
 
-// Constructor
 PictureParams::PictureParams(const SourceParams& sparams):
     m_cformat(sparams.CFormat()),
     m_psort(PictureSort::IntraRefPictureSort()),
@@ -893,33 +891,7 @@ PictureParams::PictureParams(const SourceParams& sparams):
          );
 }
 
-// Constructor
-PictureParams::PictureParams(const SourceParams& sparams, const PictureSort& ps):
-    m_cformat(sparams.CFormat()),
-    m_output(false),
-    m_xl(sparams.Xl()),
-    m_yl(sparams.Yl()),
-    m_using_ac(true)
-{
-    SetPicSort(ps);
 
-    m_cxl = m_cyl = 0;
-    if(m_cformat == format422)
-    {
-        m_cxl = m_xl/2;
-        m_cyl = m_yl;
-    }
-    else if (m_cformat == format420)
-    {
-        m_cxl = m_xl/2;
-        m_cyl = m_yl/2;
-    }
-    else if (m_cformat==format444)
-    {
-        m_cxl = m_xl;
-        m_cyl = m_yl;
-    }
-}
 
 void PictureParams::SetXl(int xlen)
 {

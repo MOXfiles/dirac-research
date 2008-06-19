@@ -550,16 +550,10 @@ namespace dirac
         PictureParams(const ChromaFormat& cf, const PictureSort& fs);
 
         //! Constructor
-        /*
-            All data is derived from the sequence parameters
+        /*! 
+           Constructor. Parameters are derived from the source parameters 
         */
         PictureParams(const SourceParams& sparams);
-
-        //! Constructor
-        /*
-           All data is derived from the sequence parameters
-        */
-        PictureParams(const SourceParams& sparams, const PictureSort& fs);
 
         ////////////////////////////////////////////////////////////////////
         //NB: Assume default copy constructor, assignment = and destructor//
@@ -1441,7 +1435,7 @@ namespace dirac
 
         //! Set denoising value - true or false
         void SetPrefilter(const PrefilterType pf, const int str){m_prefilter=pf;
-                                                   m_prefilter_strength=str;}
+                                                                 m_prefilter_strength=str;}
 
         //! Set the output path to be used for diagnostic data
         void SetOutputPath(const char * op){ m_output_path = op; }
