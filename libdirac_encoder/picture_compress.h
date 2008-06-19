@@ -42,7 +42,7 @@
 #ifndef _PICTURE_COMPRESS_H_
 #define _PICTURE_COMPRESS_H_
 
-#include <libdirac_common/picture_buffer.h>
+#include <libdirac_encoder/enc_queue.h>
 #include <libdirac_common/common.h>
 #include <libdirac_common/motion.h>
 #include <libdirac_byteio/picture_byteio.h>
@@ -79,7 +79,7 @@ namespace dirac
             \param fnum    picture number to compress
             \return true   if a cut is detected.
         */                        
-        bool MotionEstimate( const PictureBuffer& my_fbuffer, 
+        bool MotionEstimate( const EncQueue& my_fbuffer, 
                                         int fnum); 
 
         //! Compress a specific picture within a group of pictures (GOP)
@@ -89,7 +89,7 @@ namespace dirac
             \param fnum        picture number to compress
             \return Compressed picture in Dirac bytestream format
         */
-        PictureByteIO* Compress(  PictureBuffer& my_fbuffer , 
+        PictureByteIO* Compress(  EncQueue& my_fbuffer , 
                                 int fnum );
 
         //! Returns true if the picture has been skipped rather than coded normally

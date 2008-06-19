@@ -73,7 +73,7 @@ PictureCompressor::~PictureCompressor()
         delete m_me_data;
 }
 
-bool PictureCompressor::MotionEstimate(const  PictureBuffer& my_fbuffer ,
+bool PictureCompressor::MotionEstimate(const EncQueue& my_fbuffer ,
                                                             int pnum )
 {
     m_is_a_cut = false;
@@ -107,7 +107,7 @@ bool PictureCompressor::MotionEstimate(const  PictureBuffer& my_fbuffer ,
     return m_is_a_cut;
 }
 
-PictureByteIO* PictureCompressor::Compress( PictureBuffer& my_buffer ,
+PictureByteIO* PictureCompressor::Compress( EncQueue& my_buffer ,
                                         int pnum)
 {
     Picture& my_picture = my_buffer.GetPicture( pnum );
@@ -139,6 +139,10 @@ PictureByteIO* PictureCompressor::Compress( PictureBuffer& my_buffer ,
         if (m_encparams.Verbose() )
             std::cout<<std::endl<<"Using QF: "<<m_encparams.Qf();
 
+        Picture* my_pic = &my_buffer.GetPicture(pnum);
+        std::vector<int>& my_refs = my_pic->GetPparams().Refs();
+        Picture* ref_pics[2];
+
         if (psort.IsInter() ){
              // Code the MV data
 
@@ -160,8 +164,17 @@ PictureByteIO* PictureCompressor::Compress( PictureBuffer& my_buffer ,
             }
 
              // Then motion compensate
+//            MotionCompensator::CompensatePicture( m_encparams , SUBTRACT , 
+//                                                my_buffer , pnum , *m_me_data );
+
+            ref_pics[0]=&my_buffer.GetPicture(my_refs[0]);
+            if (my_refs.size()>1)
+                ref_pics[1]=&my_buffer.GetPicture(my_refs[1]);
+            else
+                ref_pics[1]=&my_buffer.GetPicture(my_refs[0]);
+
             MotionCompensator::CompensatePicture( m_encparams , SUBTRACT , 
-                                                my_buffer , pnum , *m_me_data );
+                                                *m_me_data, my_pic, ref_pics );
  
         }//?fsort
 
@@ -187,24 +200,24 @@ PictureByteIO* PictureCompressor::Compress( PictureBuffer& my_buffer ,
 
         // Construction and definition of objects
         for (int c=0;c<3;++c){
-            comp_data[c] = &my_buffer.GetComponent( pnum , (CompSort) c );
+            comp_data[c] = &my_buffer.GetPicture( pnum ).Data((CompSort) c );
             InitCoeffData( coeff_data[c], comp_data[c]->LengthX(), comp_data[c]->LengthY() );
             est_bits[c] =  new OneDArray<unsigned int>( Range( 1, 3*depth+1 ) );
         }// c
 
         /* Do the wavelet transforms and select the component 
-     * quantisers using perceptual weighting
-     */
+         * quantisers using perceptual weighting
+         */
         for (int c=0; c<3; ++c){
             lambda[c] = GetCompLambda( pparams, (CompSort) c );
 
             if ( m_encparams.Prefilter() == RECTLP )
-            LPFilter( *comp_data[c] , m_encparams.Qf(), 
-                   m_encparams.PrefilterStrength() );
+                LPFilter( *comp_data[c] , m_encparams.Qf(), 
+                           m_encparams.PrefilterStrength() );
 
             if ( m_encparams.Prefilter() == DIAGLP )
-            DiagFilter( *comp_data[c] , m_encparams.Qf(), 
-                       m_encparams.PrefilterStrength() );
+                DiagFilter( *comp_data[c] , m_encparams.Qf(), 
+                               m_encparams.PrefilterStrength() );
 
             wtransform.Transform( FORWARD , *comp_data[c], coeff_data[c] );
             wtransform.SetBandWeights( m_encparams.CPD() , psort , 
@@ -233,9 +246,19 @@ PictureByteIO* PictureCompressor::Compress( PictureBuffer& my_buffer ,
 
         //motion compensate again if necessary
         if (psort.IsInter() ){
-            if ( psort.IsRef() || m_encparams.LocalDecode() )
+            if ( psort.IsRef() || m_encparams.LocalDecode() ){
+                ref_pics[0]=&my_buffer.GetPicture(my_refs[0]);
+                  if (my_refs.size()>1)
+                    ref_pics[1]=&my_buffer.GetPicture(my_refs[1]);
+                else
+                    ref_pics[1]=&my_buffer.GetPicture(my_refs[0]);
+
                 MotionCompensator::CompensatePicture( m_encparams , ADD , 
-                                          my_buffer , pnum , *m_me_data );   
+                                                    *m_me_data, my_pic, ref_pics );
+
+//                MotionCompensator::CompensatePicture( m_encparams , ADD , 
+//                                          my_buffer , pnum , *m_me_data );   
+            }
         }
 
          //finally clip the data to keep it in range
