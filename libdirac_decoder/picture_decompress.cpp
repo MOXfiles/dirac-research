@@ -174,11 +174,23 @@ bool PictureDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
     else
         my_picture.Fill(0);
 
-    if ( psort.IsInter() )
+    if ( psort.IsInter() ){
+        Picture* my_pic = &my_buffer.GetPicture( m_pparams.PictureNum() );
+
+        const std::vector<int>&  refs = m_pparams.Refs();
+        Picture* ref_pics[2];
+
+        ref_pics[0] = &my_buffer.GetPicture( refs[0] );
+        if (refs.size()>1)
+            ref_pics[1] = &my_buffer.GetPicture( refs[1] );
+        else
+            ref_pics[1] = ref_pics[0];
+
         //motion compensate to add the data back in if we don't have an I picture
-        MotionCompensator::CompensatePicture( m_decparams , ADD , 
-                                            my_buffer , m_pparams.PictureNum() ,
-                                            *(mv_data.get()) );
+        MotionCompensator::CompensatePicture( m_decparams , ADD , *(mv_data.get()) ,
+                                            my_pic, ref_pics );
+    }
+
     my_picture.Clip();
 
     if (m_decparams.Verbose())
@@ -207,7 +219,7 @@ void PictureDecompressor::CleanReferencePictures( PictureBuffer& my_buffer )
 
     if ( retd_pnum >= 0 && my_buffer.IsPictureAvail(retd_pnum) && my_buffer.GetPicture(retd_pnum).GetPparams().PicSort().IsRef() )
     {
-        my_buffer.Clean(retd_pnum);
+        my_buffer.Remove(retd_pnum);
         if ( m_decparams.Verbose() )
             std::cout<<retd_pnum<<" ";    
     }
@@ -219,15 +231,12 @@ void PictureDecompressor::SetMVBlocks()
     m_decparams.SetBlockSizes(olb_params, m_cformat);
 
     // Calculate the number of macro blocks
-    int xnum_mb = m_decparams.Xl()/(4 * m_decparams.LumaBParams(2).Xbsep());
+    int xnum_mb = (m_decparams.Xl()+m_decparams.LumaBParams(0).Xbsep()-1)/
+                                      m_decparams.LumaBParams(0).Xbsep();
     
-    int ynum_mb = m_decparams.Yl()/(4 * m_decparams.LumaBParams(2).Ybsep());
+    int ynum_mb = (m_decparams.Yl()+m_decparams.LumaBParams(0).Ybsep()-1)/
+                                      m_decparams.LumaBParams(0).Ybsep();
     
-    if ( 4* xnum_mb *  m_decparams.LumaBParams(2).Xbsep() < m_decparams.Xl() )
-        ++xnum_mb;
-    
-    if ( 4* ynum_mb *  m_decparams.LumaBParams(2).Ybsep() < m_decparams.Yl() )
-        ++ynum_mb;
 
     m_decparams.SetXNumMB(xnum_mb);
     m_decparams.SetYNumMB(ynum_mb);

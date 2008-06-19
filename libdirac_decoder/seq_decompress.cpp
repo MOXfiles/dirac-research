@@ -114,7 +114,7 @@ const Picture* SequenceDecompressor::DecompressNextPicture(ParseUnitByteIO* p_pa
         if ( m_pbuffer->IsPictureAvail(m_show_pnum-1) &&
             m_pbuffer->GetPicture(m_show_pnum-1).GetPparams().PicSort().IsNonRef() )
         {
-            m_pbuffer->Clean(m_show_pnum-1);
+            m_pbuffer->Remove(m_show_pnum-1);
             if ( m_decparams.Verbose() )
                 std::cout<<(m_show_pnum-1)<<" ";
         }

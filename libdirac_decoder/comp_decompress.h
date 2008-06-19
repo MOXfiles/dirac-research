@@ -70,9 +70,9 @@ namespace dirac
         /*!
             Decompress a PicArray containing a picture component (Y, U, or V).
 
-            \param  p_component_byteio Bytestream of component data
-            \param  coeff_data    contains the component data to be decompressed
-            \param  bands         the set of all subbands
+            \param p_component_byteio Bytestream of component data
+            \param coeff_data          contains the component data to be decompressed
+            \param bands               the subband metadata 
         */
         void Decompress(ComponentByteIO *p_component_byteio,
                         CoeffArray& coeff_data,

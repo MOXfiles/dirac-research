@@ -305,15 +305,15 @@ static void set_frame_data (const  DiracParser * const parser, dirac_decoder_t *
 
         if (!parser->GetDecoderParams().FieldCoding())
         {
-            set_frame_component (my_picture->Ydata(), Y_COMP, decoder);
-            set_frame_component (my_picture->Udata(), U_COMP, decoder);
-            set_frame_component (my_picture->Vdata(), V_COMP, decoder);
+            set_frame_component (my_picture->Data(Y_COMP), Y_COMP, decoder);
+            set_frame_component (my_picture->Data(U_COMP), U_COMP, decoder);
+            set_frame_component (my_picture->Data(V_COMP), V_COMP, decoder);
         }
         else
         {
-            set_field_component (my_picture->Ydata(), Y_COMP, decoder, pic_num);
-            set_field_component (my_picture->Udata(), U_COMP, decoder, pic_num);
-            set_field_component (my_picture->Vdata(), V_COMP, decoder, pic_num);
+            set_field_component (my_picture->Data(Y_COMP), Y_COMP, decoder, pic_num);
+            set_field_component (my_picture->Data(U_COMP), U_COMP, decoder, pic_num);
+            set_field_component (my_picture->Data(V_COMP), V_COMP, decoder, pic_num);
         }
     }
     return;
