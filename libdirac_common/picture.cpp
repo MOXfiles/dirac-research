@@ -51,54 +51,33 @@ using namespace dirac;
 ///////////////
 
 Picture::Picture(const PictureParams& pp): 
-    m_pparams(pp),
-    m_Y_data(0),
-    m_U_data(0),
-    m_V_data(0),
-    m_upY_data(0),
-    m_upU_data(0),
-    m_upV_data(0),
-    m_redo_upYdata(false),
-    m_redo_upUdata(false),
-    m_redo_upVdata(false)
+    m_pparams(pp)
 {
+    for (int c=0;c<3;++c){
+        m_pic_data[c] = NULL;
+	m_up_pic_data[c] = NULL;
+    }
+
     Init();
 }
 
 Picture::Picture( const Picture& cpy ): 
-    m_pparams(cpy.m_pparams),
-    m_Y_data(0),
-    m_U_data(0),
-    m_V_data(0),
-    m_upY_data(0),
-    m_upU_data(0),
-    m_upV_data(0),
-    m_redo_upYdata(cpy.m_redo_upYdata),
-    m_redo_upUdata(cpy.m_redo_upUdata),
-    m_redo_upVdata(cpy.m_redo_upVdata)
+    m_pparams(cpy.m_pparams)
 {
-    //const ChromaFormat& cformat = m_pparams.CFormat();
 
     //delete data to be overwritten
-    ClearData();
-
-    //now copy the data accross
-    m_Y_data = new PicArray( *(cpy.m_Y_data) );
-    if (cpy.m_upY_data != 0){
-        m_upY_data = new PicArray( *(cpy.m_upY_data) );
+    for (int c=0;c<3;++c){
+        m_pic_data[c] = NULL;
+	m_up_pic_data[c] = NULL;
     }
 
-    m_U_data = new PicArray( *(cpy.m_U_data) );
-    m_V_data = new PicArray( *(cpy.m_V_data) );
-
-    if ( cpy.m_upU_data != 0 )
-    {
-        m_upU_data = new PicArray( *(cpy.m_upU_data) );
+    //now copy the data across
+    for (int c=0; c<3; ++c ){
+        m_pic_data[c] = new PicArray( *(cpy.m_pic_data[c]) );
+        if (cpy.m_up_pic_data[c] != NULL)
+            m_up_pic_data[c] = new PicArray( *(cpy.m_up_pic_data[c]) );
     }
-    if ( cpy.m_upV_data != 0 )
-    {
-        m_upV_data = new PicArray( *(cpy.m_upV_data) );
-    }
+    
 }
 
 
@@ -112,54 +91,30 @@ Picture& Picture::operator=(const Picture& rhs)
     if ( &rhs != this)
     {
         m_pparams=rhs.m_pparams;
-        m_redo_upYdata = rhs.m_redo_upYdata;
-        m_redo_upUdata = rhs.m_redo_upUdata;
-        m_redo_upVdata = rhs.m_redo_upVdata;
-        //const ChromaFormat& cformat=m_pparams.CFormat();
 
         // Delete current data
         ClearData();
 
         // Copy the data across
-        m_Y_data = new PicArray( *(rhs.m_Y_data) );
+	for (int c=0; c<3; ++c ){
+	    m_pic_data[c] = new PicArray( *(rhs.m_pic_data[c]) );
         
-        if (rhs.m_upY_data != 0)
-            m_upY_data = new PicArray( *(rhs.m_upY_data) );
-
-        m_U_data = new PicArray( *(rhs.m_U_data) );
-        if ( rhs.m_upU_data != 0 )
-            m_upU_data = new PicArray( *(rhs.m_upU_data) );
-
-        m_V_data = new PicArray( *(rhs.m_V_data) );
-        if ( rhs.m_upV_data != 0 )
-            m_upV_data = new PicArray( *(rhs.m_upV_data) );
+            if (rhs.m_up_pic_data[c] != NULL)
+                m_up_pic_data[c] = new PicArray( *(rhs.m_up_pic_data[c]) );
+	}
     }
 
     return *this;
 
 }
 
-void Picture::CopyContents(Picture& out) const
-{
-    if ( &out != this)
-    {
-        out.m_redo_upYdata = true;
-        out.m_redo_upUdata = true;
-        out.m_redo_upVdata = true;
-        m_Y_data->CopyContents(*(out.m_Y_data));
-        m_U_data->CopyContents(*(out.m_U_data));
-        m_V_data->CopyContents(*(out.m_V_data));
-    }
-}
-
 void Picture::Fill(ValueType val)
 {
-    m_redo_upYdata = true;
-    m_redo_upUdata = true;
-    m_redo_upVdata = true;
-    m_Y_data->Fill(val);
-    m_U_data->Fill(val);
-    m_V_data->Fill(val);
+    for (int c=0; c<3; ++c ){
+        m_pic_data[c]->Fill(val);
+	if (m_up_pic_data[c] != NULL )
+	    delete m_up_pic_data[c];
+    }
 }
 
 //Other functions
@@ -171,198 +126,77 @@ void Picture::Init()
     //first delete data if we need to
     ClearData();
 
-     m_Y_data=new PicArray( m_pparams.Yl() , m_pparams.Xl());
-     m_Y_data->SetCSort( Y_COMP );
+    m_pic_data[0]=new PicArray( m_pparams.Yl() , m_pparams.Xl());
+    m_pic_data[0]->SetCSort( Y_COMP );
 
-     m_U_data = new PicArray( m_pparams.ChromaYl() ,
+    m_pic_data[1] = new PicArray( m_pparams.ChromaYl() ,
                               m_pparams.ChromaXl() ); 
-     m_U_data->SetCSort( U_COMP );
+    m_pic_data[1]->SetCSort( U_COMP );
 
-     m_V_data = new PicArray( m_pparams.ChromaYl() ,
+    m_pic_data[2] = new PicArray( m_pparams.ChromaYl() ,
                               m_pparams.ChromaXl() );
-     m_V_data->SetCSort( V_COMP );
-}
-
-PicArray& Picture::Data(CompSort cs)
-{//another way to access the data
-
-    if (cs == U_COMP) return *m_U_data; 
-    else if (cs == V_COMP) return *m_V_data; 
-    else return *m_Y_data;
-}    
-
-const PicArray& Picture::Data(CompSort cs) const
-{//another way to access the data
-
-    if (cs == U_COMP) return *m_U_data; 
-    else if (cs == V_COMP) return *m_V_data; 
-    else return *m_Y_data;
-}
-
-PicArray& Picture::UpYdata()
-{
-    if (m_upY_data != 0 && m_redo_upYdata == false)
-        return *m_upY_data;
-    else
-    {//we have to do the upconversion
-
-        if (m_upY_data == 0)
-            m_upY_data = new PicArray( 2*m_Y_data->LengthY(),
-                                       2*m_Y_data->LengthX() );
-        UpConverter myupconv(-(1 << (m_pparams.LumaDepth()-1)), 
-                             (1 << (m_pparams.LumaDepth()-1))-1,
-                             m_pparams.Xl(), m_pparams.Yl());
-        myupconv.DoUpConverter( *m_Y_data , *m_upY_data );
-
-        m_redo_upYdata = false;
-        return *m_upY_data;
-
-    }
-}
-
-PicArray& Picture::UpUdata()
-{
-    if (m_upU_data != 0 && m_redo_upUdata == false)
-        return *m_upU_data;
-    else
-    {//we have to do the upconversion
-
-        if (m_upU_data ==0)
-            m_upU_data = new PicArray(2*m_U_data->LengthY() ,
-                                      2*m_U_data->LengthX());
-        UpConverter myupconv(-(1 << (m_pparams.ChromaDepth()-1)), 
-                             (1 << (m_pparams.ChromaDepth()-1))-1,
-                                 m_pparams.ChromaXl(),
-                                 m_pparams.ChromaYl());
-
-        myupconv.DoUpConverter( *m_U_data , *m_upU_data );
-        m_redo_upUdata = false;
-        return *m_upU_data;
-
-    }
-}
-
-PicArray& Picture::UpVdata()
-{
-    if (m_upV_data != 0 && m_redo_upVdata == false)
-        return *m_upV_data;
-    else
-    {//we have to do the upconversion
-   
-           if (m_upV_data ==0)
-            m_upV_data = new PicArray( 2*m_V_data->LengthY(),
-                                       2*m_V_data->LengthX() );
-        UpConverter myupconv(-(1 << (m_pparams.ChromaDepth()-1)), 
-                             (1 << (m_pparams.ChromaDepth()-1))-1,
-                                 m_pparams.ChromaXl(),
-                                 m_pparams.ChromaYl());
-        myupconv.DoUpConverter( *m_V_data , *m_upV_data );
-        m_redo_upVdata = false;
-
-        return *m_upV_data;
-
-    }
+    m_pic_data[2]->SetCSort( V_COMP );
 }
 
 PicArray& Picture::UpData(CompSort cs)
 {
-    if (cs == U_COMP)
-        return UpUdata(); 
-    else if (cs == V_COMP) 
-        return UpVdata(); 
-    else 
-        return UpYdata();
-}    
+    const int c = (int) cs;
 
-const PicArray& Picture::UpYdata() const
-{
-    if (m_upY_data != 0 && m_redo_upYdata == false)
-        return *m_upY_data;
+    if (m_up_pic_data[c] != NULL )
+        return *(m_up_pic_data[c]);
     else
-    {
-        //We have to do the upconversion
-        //Although we're changing a value - the pointer to the array - it doesn't affect the state of
-        //the object as viewable from outside. So the pointers to the upconveted data have been 
-        //declared mutable.
+    {//we have to do the upconversion
+   
+        m_up_pic_data[c] = new PicArray( 2*m_pic_data[c]->LengthY(),
+                                         2*m_pic_data[c]->LengthX() );
+        UpConverter* myupconv;
+	if (c>0)
+            myupconv = new UpConverter(-(1 << (m_pparams.ChromaDepth()-1)), 
+                                      (1 << (m_pparams.ChromaDepth()-1))-1,
+                                      m_pparams.ChromaXl(), m_pparams.ChromaYl());
+        else
+            myupconv = new UpConverter(-(1 << (m_pparams.LumaDepth()-1)), 
+                                      (1 << (m_pparams.LumaDepth()-1))-1,
+                                      m_pparams.Xl(), m_pparams.Yl());
 
-        if (m_upY_data == 0)
-            m_upY_data = new PicArray( 2*m_Y_data->LengthY(),
-                                       2*m_Y_data->LengthX() );
+        myupconv->DoUpConverter( *(m_pic_data[c]) , *(m_up_pic_data[c]) );
 
-        UpConverter myupconv(-(1 << (m_pparams.LumaDepth()-1)), 
-                             (1 << (m_pparams.LumaDepth()-1))-1,
-                             m_pparams.Xl(), m_pparams.Yl());
-        myupconv.DoUpConverter( *m_Y_data , *m_upY_data );
+	delete myupconv;
 
-        m_redo_upYdata = false;
-        return *m_upY_data;
-
-    }
-}
-
-const PicArray& Picture::UpUdata() const
-{
-    if (m_upU_data != 0 && m_redo_upUdata == false)
-        return *m_upU_data;
-    else
-    {
-        //We have to do the upconversion
-        //Although we're changing a value - the pointer to the array - it doesn't affect the state of
-        //the object as viewable from outside. So the pointers to the upconveted data have been 
-        //declared mutable.
-
-        if (m_upU_data == 0)
-            m_upU_data = new PicArray( 2*m_U_data->LengthY(),
-                                       2*m_U_data->LengthX() );
-
-        UpConverter myupconv(-(1 << (m_pparams.ChromaDepth()-1)), 
-                             (1 << (m_pparams.ChromaDepth()-1))-1,
-                                 m_pparams.ChromaXl(),
-                                 m_pparams.ChromaYl());
-        myupconv.DoUpConverter( *m_U_data , *m_upU_data );
-        m_redo_upUdata = false;
-
-        return *m_upU_data;
-
-    }
-}
-
-const PicArray& Picture::UpVdata() const
-{
-    if (m_upV_data != 0 && m_redo_upVdata == false)
-        return *m_upV_data;
-    else
-    {
-        //We have to do the upconversion
-        //Although we're changing a value - the pointer to the array - it doesn't affect the state of
-        //the object as viewable from outside. So the pointers to the upconveted data have been 
-        //declared mutable.
- 
-        if (m_upV_data == 0)
-            m_upV_data = new PicArray( 2*m_V_data->LengthY() ,
-                                       2*m_V_data->LengthX() );
-
-        UpConverter myupconv(-(1 << (m_pparams.ChromaDepth()-1)), 
-                             (1 << (m_pparams.ChromaDepth()-1))-1,
-                                 m_pparams.ChromaXl(),
-                                 m_pparams.ChromaYl());
-        myupconv.DoUpConverter( *m_V_data , *m_upV_data );
-        m_redo_upVdata = false;
-
-        return *m_upV_data;
+        return *(m_up_pic_data[c]);
 
     }
 }
 
 const PicArray& Picture::UpData(CompSort cs) const
 {
-    if (cs == U_COMP) 
-        return UpUdata(); 
-    else if (cs == V_COMP)
-        return UpVdata(); 
-    else 
-        return UpYdata();
-}    
+    const int c = (int) cs;
+
+    if (m_up_pic_data[c] != NULL)
+        return *(m_up_pic_data[c]);
+    else
+    {//we have to do the upconversion
+   
+        m_up_pic_data[c] = new PicArray( 2*m_pic_data[c]->LengthY(),
+                                         2*m_pic_data[c]->LengthX() );
+        UpConverter* myupconv;
+	if (c>0)
+            myupconv = new UpConverter(-(1 << (m_pparams.ChromaDepth()-1)), 
+                                      (1 << (m_pparams.ChromaDepth()-1))-1,
+                                      m_pparams.ChromaXl(), m_pparams.ChromaYl());
+        else
+            myupconv = new UpConverter(-(1 << (m_pparams.LumaDepth()-1)), 
+                                      (1 << (m_pparams.LumaDepth()-1))-1,
+                                      m_pparams.Xl(), m_pparams.Yl());
+
+        myupconv->DoUpConverter( *(m_pic_data[c]) , *(m_up_pic_data[c]) );
+
+	delete myupconv;
+
+        return *(m_up_pic_data[c]);
+
+    }
+}
 
 void Picture::ClipComponent(PicArray& pic_data, CompSort cs) const
 {
@@ -431,64 +265,36 @@ void Picture::ClipComponent(PicArray& pic_data, CompSort cs) const
 void Picture::Clip()
 {
     //just clips the straight picture data, not the upconverted data
-
-    ClipComponent( *m_Y_data, Y_COMP );
-
-    ClipComponent( *m_U_data, U_COMP );
-    ClipComponent( *m_V_data, V_COMP );    
+    
+    for (int c=0; c<3; ++c)
+        ClipComponent( *(m_pic_data[c]), (CompSort) c);
 }
 
 void Picture::ClipUpData()
 {
     //just clips the upconverted data
 
-    if (m_upY_data)
-        ClipComponent( *m_upY_data, Y_COMP );
+    for (int c=0; c<3; ++c){
+        if (m_up_pic_data[c])
+            ClipComponent( *(m_up_pic_data[c]), (CompSort) c );
+    }
 
-    if (m_upU_data)
-        ClipComponent( *m_upU_data, U_COMP );
-    
-    if (m_upV_data)
-        ClipComponent( *m_upV_data, V_COMP );    
 }
 
 void Picture::ClearData()
 {
-    if (m_Y_data != 0)
-    {
-        delete m_Y_data;
-        m_Y_data = 0;
+    for (int c=0;c<3;++c){
+        if (m_pic_data[c] != NULL){
+            delete m_pic_data[c];
+            m_pic_data[c] = NULL;
+        }
+
+        if (m_up_pic_data[c] != NULL){
+            delete m_up_pic_data[c];
+            m_up_pic_data[c] = NULL;
+        }
     }
 
-    if (m_U_data!=0)
-    {
-        delete m_U_data;
-        m_U_data = 0;
-    }
-
-    if (m_V_data!=0)
-    {
-        delete m_V_data;
-        m_V_data = 0;
-    }
-
-    if (m_upY_data != 0)
-    {
-        delete m_upY_data;
-        m_upY_data = 0;
-    }
-
-    if (m_upU_data!=0)
-    {
-        delete m_upU_data;
-        m_upU_data = 0;
-    }
-
-    if (m_upV_data != 0)
-    {
-        delete m_upV_data;
-        m_upV_data = 0;
-    }
 }
 
 void Picture::ReconfigPicture(const PictureParams &pp )
@@ -496,7 +302,6 @@ void Picture::ReconfigPicture(const PictureParams &pp )
 
     PictureParams old_pp = m_pparams;
     m_pparams = pp;
-    m_redo_upYdata = m_redo_upUdata = m_redo_upVdata = true;
 
     // HAve picture dimensions  or Chroma format changed ?
     if (m_pparams.Xl() == old_pp.Xl() && 
@@ -507,3 +312,6 @@ void Picture::ReconfigPicture(const PictureParams &pp )
     // Picture dimensions have changed. Re-initialise
     Init();
 }
+
+
+

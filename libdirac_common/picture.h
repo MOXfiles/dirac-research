@@ -67,13 +67,6 @@ namespace dirac
         //! Assignment =. Private as not currently used [may want to implement reference counting later.]
         Picture& operator=( const Picture& rhs );
 
-        //! Picture Copy
-        /*!
-            Copy contents of picture into the output picture passed to it 
-            retaining the picture dimensions of the output picture.
-        */
-        void CopyContents(Picture& out ) const;
-
         //! Picture Fill
         /*!
             Initialise contents of picture with value provided
@@ -96,52 +89,16 @@ namespace dirac
         //! Reconfigures to the new parameters. 
         void ReconfigPicture( const PictureParams &pp );
 
-        //! Returns the luma data array
-        PicArray& Ydata() {return *m_Y_data;}
-
-        //! Returns the U component
-        PicArray& Udata() {return *m_U_data;}
-
-        //! Returns the V component 
-        PicArray& Vdata() {return *m_V_data;}
-
-        //! Returns the luma data array
-        const PicArray& Ydata() const {return *m_Y_data;}
-
-        //! Returns the U component
-        const PicArray& Udata() const {return *m_U_data;}
-
-        //! Returns the V component 
-        const PicArray& Vdata() const {return *m_V_data;}
-
         //! Returns a given component 
-        PicArray& Data(CompSort cs);
+        PicArray& Data(CompSort cs){return *m_pic_data[(int) cs];}
 
         //! Returns a given component
-        const PicArray& Data(CompSort cs) const;    
-
-        //! Returns upconverted Y data
-        PicArray& UpYdata();
-
-        //! Returns upconverted U data
-        PicArray& UpUdata();
-
-        //! Returns upconverted V data
-        PicArray& UpVdata();
+        const PicArray& Data(CompSort cs) const{return *m_pic_data[(int) cs];}    
 
         //! Returns a given upconverted component
         PicArray& UpData(CompSort cs);
 
-        //! Returns upconverted Y data
-        const PicArray& UpYdata() const;
-
-        //! Returns upconverted U data
-        const PicArray& UpUdata() const;
-
-        //! Returns upconverted V data    
-        const PicArray& UpVdata() const;
-
-        //! Returns a given upconverted component
+       //! Returns a given upconverted component
         const PicArray& UpData(CompSort cs) const;
 
         //! Clip the data to prevent overshoot
@@ -156,28 +113,22 @@ namespace dirac
          */
         void ClipUpData();
 
-    private:
+    protected:
         mutable PictureParams m_pparams;
-        PicArray* m_Y_data;//the 
-        PicArray* m_U_data;//component
-        PicArray* m_V_data;//data
-        mutable PicArray* m_upY_data;//upconverted data. Mutable because we
-        mutable PicArray* m_upU_data;//create them on the fly even in const
-        mutable PicArray* m_upV_data;//functions.
+        PicArray* m_pic_data[3];//the picture data 
+        mutable PicArray* m_up_pic_data[3];//upconverted data. Mutable because we
+                                         //create them on the fly even in const
+                                         //functions.
 
         //! Initialises the picture once the picture parameters have been set
-        void Init();
+        virtual void Init();
 
         //! Delete all the data
-        void ClearData();
+        virtual void ClearData();
 
         //! Clip an individual component
         void ClipComponent(PicArray& pic_data, CompSort cs) const;
 
-        //! Flag that upconversion needs to be re-done
-        mutable bool m_redo_upYdata;
-        mutable bool m_redo_upUdata;
-        mutable bool m_redo_upVdata;
     };
 
 } // namespace dirac
