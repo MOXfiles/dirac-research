@@ -42,10 +42,9 @@ using namespace dirac;
 
 void dirac::CWMFilter( Picture& picture, const int strength )
 {
-    CWMFilterComponent( picture.Ydata(), strength ); 
-    CWMFilterComponent( picture.Udata(), strength );
-    CWMFilterComponent( picture.Vdata(), strength );
-
+    CWMFilterComponent( picture.Data(Y_COMP), strength ); 
+    CWMFilterComponent( picture.Data(U_COMP), strength );
+    CWMFilterComponent( picture.Data(V_COMP), strength );
 }
 
 void dirac::CWMFilterComponent( PicArray& pic_data, const int strength )

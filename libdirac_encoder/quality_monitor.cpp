@@ -117,27 +117,27 @@ void QualityMonitor::WriteLog()
     std::cout<<std::endl<<"-----------------||---------------------------------------------------";
 }
 
-void QualityMonitor::UpdateModel(const Picture& ld_picture, const Picture& orig_picture )
+void QualityMonitor::UpdateModel(const EncPicture& enc_picture )
 {
-    const PictureSort& fsort = ld_picture.GetPparams().PicSort();
-    int idx = fsort.IsIntra() ? 0 : (fsort.IsRef() ? 1 : 2);
+    const PictureSort& psort = enc_picture.GetPparams().PicSort();
+    int idx = psort.IsIntra() ? 0 : (psort.IsRef() ? 1 : 2);
 
     double fqualityY, fqualityU, fqualityV;
 
-    fqualityY = QualityVal( ld_picture.Ydata() , orig_picture.Ydata(),
+    fqualityY = QualityVal( enc_picture.Data(Y_COMP) , enc_picture.OrigData(Y_COMP),
                             m_encparams.Xl(), m_encparams.Yl(),
                             Y_COMP);
     m_quality_averageY[idx] += fqualityY;
     m_totalquality_averageY += fqualityY;
 
-    fqualityU = QualityVal( ld_picture.Udata() , orig_picture.Udata(),
+    fqualityU = QualityVal( enc_picture.Data(U_COMP) , enc_picture.OrigData(U_COMP),
                             m_encparams.ChromaXl(),
                             m_encparams.ChromaYl(),
                             U_COMP);
     m_quality_averageU[idx] += fqualityU;
     m_totalquality_averageU += fqualityU;
 
-    fqualityV = QualityVal( ld_picture.Vdata() , orig_picture.Vdata(),
+    fqualityV = QualityVal( enc_picture.Data(V_COMP) , enc_picture.OrigData(V_COMP),
                             m_encparams.ChromaXl(),
                             m_encparams.ChromaYl(),
                             V_COMP);

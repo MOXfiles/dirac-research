@@ -39,7 +39,7 @@
 #define _QUALITY_MONITOR_H_
 
 #include <libdirac_common/common.h>
-#include <libdirac_common/picture.h>
+#include <libdirac_encoder/enc_picture.h>
 #include <libdirac_common/wavelet_utils.h>
 namespace dirac
 {
@@ -71,7 +71,7 @@ namespace dirac
             \param ld_picture the locally-decoded picture
             \param orig_picture the original picture
         */
-        void UpdateModel(const Picture& ld_picture, const Picture& orig_picture );
+        void UpdateModel(const EncPicture& enc_picture );
 
         //! Reset the quality factors (say if there's been a cut)
         void ResetAll();
