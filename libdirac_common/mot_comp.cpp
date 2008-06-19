@@ -62,35 +62,35 @@ using std::vector;
 // appropriate MotionCompensation sub-class.
 void MotionCompensator::CompensatePicture(const CodecParams &cp,
                                         const AddOrSub direction ,
-                                        PictureBuffer& buffer ,
-                                        const int pnum,
-                                        const MvData& mv_data )
+                                        const MvData& mv_data,
+                                        Picture* in_pic ,
+					Picture* refsptr[2])
 {
     switch (cp.MVPrecision())
     {
     case MV_PRECISION_EIGHTH_PIXEL:
     {
         MotionCompensator_EighthPixel my_comp(cp);
-        my_comp.CompensatePicture( direction , buffer , pnum , mv_data);
+        my_comp.CompensatePicture( direction , mv_data, in_pic, refsptr);
         break;
     }
     case MV_PRECISION_HALF_PIXEL:
     {
         MotionCompensator_HalfPixel my_comp(cp);
-        my_comp.CompensatePicture( direction , buffer , pnum , mv_data);
+        my_comp.CompensatePicture( direction , mv_data, in_pic, refsptr);
         break;
     }
     case MV_PRECISION_PIXEL:
     {
         MotionCompensator_Pixel my_comp(cp);
-        my_comp.CompensatePicture( direction , buffer , pnum , mv_data);
+        my_comp.CompensatePicture( direction , mv_data, in_pic, refsptr);
         break;
     }
     case MV_PRECISION_QUARTER_PIXEL:
     default:
     {
         MotionCompensator_QuarterPixel my_comp(cp);
-        my_comp.CompensatePicture( direction , buffer , pnum , mv_data);
+        my_comp.CompensatePicture( direction , mv_data, in_pic, refsptr);
         break;
     }
     }
@@ -129,69 +129,57 @@ MotionCompensator::~MotionCompensator()
 
 //Called to perform motion compensated addition/subtraction on an entire picture.
 void MotionCompensator::CompensatePicture( const AddOrSub direction ,
-                                                    PictureBuffer& my_buffer ,
-                                                    int pnum ,
-                                                    const MvData& mv_data)
+                                         const MvData& mv_data,
+                                        Picture* my_picture ,
+					Picture* refsptr[2])
 {
      m_add_or_sub = direction;
 
-     int ref1_idx,ref2_idx;
-     Picture& my_picture=my_buffer.GetPicture(pnum);
-     const PictureSort& fsort=my_picture.GetPparams().PicSort();
+     const PictureSort& psort=my_picture->GetPparams().PicSort();
 
-     m_cformat = my_picture.GetPparams().CFormat();
+     m_cformat = my_picture->GetPparams().CFormat();
 
-     if (fsort.IsInter())
+     if (psort.IsInter())
      {//we can motion compensate
 
-         const std::vector<int>& refs=my_picture.GetPparams().Refs();
-         if (refs.size()>0)
+         const std::vector<int>& refs=my_picture->GetPparams().Refs();
+
+         // Now check that references are marked correctly
+         if ( !refsptr[0]->GetPparams().PicSort().IsRef() )
          {
-             //extract the references
-             ref1_idx = refs[0];
-             if ( refs.size()>1 )
-                 ref2_idx = refs[1];
-             else
-                 ref2_idx = refs[0];
-
-             const Picture& ref1pic = my_buffer.GetPicture(ref1_idx);
-             const Picture& ref2pic = refs.size() > 0 ? my_buffer.GetPicture(ref2_idx) : ref1pic;
-
-             // Now check that references are marked correctly
-             if ( !ref1pic.GetPparams().PicSort().IsRef() )
-             {
-                 std::cout<<std::endl<<"WARNING! Reference picture (number "<<ref1_idx;
-                 std::cout<<") being used is not marked as a reference. Incorrect output is likely.";
-             }
-             if ( ref1pic.GetPparams().PictureNum() != ref1_idx)
-             {
-                 std::cout<<std::endl<<"WARNING! Reference picture (number "<<ref1_idx;
-                 std::cout<<") not available in buffer. Incorrect output is likely.";
-             }
-
-
-             if ( refs.size()>1 )
-             {
-                 if ( !ref2pic.GetPparams().PicSort().IsRef() )
-                 {
-                     std::cout<<std::endl<<"WARNING! Reference picture (number ";
-                     std::cout<<ref2_idx<<") being used is not marked as a reference. Incorrect output is likely.";
-                 }
-                 if ( ref2pic.GetPparams().PictureNum() != ref2_idx)
-                 {
-                     std::cout<<std::endl<<"WARNING! Reference picture (number "<<ref2_idx;
-                     std::cout<<") not available in buffer. Incorrect output is likely.";
-                 }
-             }
-
-             luma_or_chroma = true;
-             //now do all the components
-             CompensateComponent( my_picture , ref1pic , ref2pic , mv_data , Y_COMP);
-
-             luma_or_chroma = false;
-             CompensateComponent( my_picture , ref1pic , ref2pic , mv_data , U_COMP);
-             CompensateComponent( my_picture , ref1pic , ref2pic , mv_data , V_COMP);
+             std::cout<<std::endl<<"WARNING! Reference picture (number "<<refs[0];
+             std::cout<<") being used is not marked as a reference. Incorrect output is likely.";
          }
+         if ( refsptr[0]->GetPparams().PictureNum() != refs[0] )
+         {
+             std::cout<<std::endl<<"WARNING! Reference picture numbers ";
+             std::cout<<"do not agree. Incorrect output is likely.";
+         }
+
+
+         if ( refs.size()>1 )
+         {
+             if ( !refsptr[1]->GetPparams().PicSort().IsRef() )
+             {
+                 std::cout<<std::endl<<"WARNING! Reference picture (number ";
+                 std::cout<<refs[1]<<") being used is not marked as a reference. Incorrect output is likely.";
+             }
+             if ( refsptr[1]->GetPparams().PictureNum() != refs[1])
+             {
+                 std::cout<<std::endl<<"WARNING! Reference picture numbers ";
+                 std::cout<<"do not agree. Incorrect output is likely.";
+             }
+         }
+	 else
+	     refsptr[1] = refsptr[0];
+
+         luma_or_chroma = true;
+         //now do all the components
+         CompensateComponent( my_picture , refsptr, mv_data , Y_COMP );
+
+         luma_or_chroma = false;
+         CompensateComponent( my_picture  , refsptr, mv_data , U_COMP);
+         CompensateComponent( my_picture  , refsptr, mv_data , V_COMP);
      }
 }
 
@@ -245,19 +233,18 @@ void MotionCompensator::ReConfig()
     CalculateWeights( sb_xsep, sb_ysep , m_sub_block_weights );
 }
 
-void MotionCompensator::CompensateComponent( Picture& pic ,
-                                                        const Picture &ref1pic ,
-                                                        const Picture& ref2pic ,
-                                                        const MvData& mv_data ,
-                                                        const CompSort cs)
+void MotionCompensator::CompensateComponent( Picture* pic ,
+                                             Picture* refsptr[2] ,
+                                             const MvData& mv_data ,
+                                             const CompSort cs )
 {
     // Set up references to pictures and references
-    PicArray& pic_data_out = pic.Data( cs );
+    PicArray& pic_data_out = pic->Data( cs );
 
     // Size of picture component being motion compensated
 
-    const PicArray& ref1up = ref1pic.UpData( cs );
-    const PicArray& ref2up = ref2pic.UpData( cs );
+    const PicArray& ref1up = refsptr[0]->UpData( cs );
+    const PicArray& ref2up = refsptr[1]->UpData( cs );
 
     // Set up a row of blocks which will contain the MC data, which
     // we'll add or subtract to pic_data_out
@@ -280,11 +267,11 @@ void MotionCompensator::CompensateComponent( Picture& pic ,
         }
     }
 
-    ImageCoords pic_size(pic.GetPparams().Xl(), pic.GetPparams().Yl());
+    ImageCoords pic_size(pic->GetPparams().Xl(), pic->GetPparams().Yl());
     if ( cs != Y_COMP )
     {
-        pic_size.x = pic.GetPparams().ChromaXl();
-        pic_size.y = pic.GetPparams().ChromaYl();
+        pic_size.x = pic->GetPparams().ChromaXl();
+        pic_size.y = pic->GetPparams().ChromaYl();
     }
 
 
@@ -292,7 +279,7 @@ void MotionCompensator::CompensateComponent( Picture& pic ,
     const TwoDArray<ValueType>& dcarray = mv_data.DC( cs );
 
     // Set up references to the vectors
-    const int num_refs = pic.GetPparams().Refs().size();
+    const int num_refs = pic->GetPparams().Refs().size();
     const MvArray* mv_array1;
     const MvArray* mv_array2;
     mv_array1 = &mv_data.Vectors(1);

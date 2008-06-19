@@ -93,9 +93,9 @@ namespace dirac
          */
         static void CompensatePicture ( const CodecParams &cp, 
                                       const AddOrSub direction , 
-                                      PictureBuffer& buffer , 
-                                      const int pnum, 
-                                      const MvData& mv_data );
+                                      const MvData& mv_data, 
+                                      Picture* in_pic ,
+				      Picture* refptr[2]);
 
         //! Compensate a picture
         /*!
@@ -107,9 +107,9 @@ namespace dirac
     `       \param    mv_data    the motion vector data
          */
         void CompensatePicture( const AddOrSub direction , 
-                              PictureBuffer& my_buffer , 
-                              int pnum , 
-                              const MvData& mv_data );
+                              const MvData& mv_data,
+                              Picture* in_pic , 
+                              Picture* refsptr[2] );
 
     private:
         //private, body-less copy constructor: this class should not be copied
@@ -120,9 +120,8 @@ namespace dirac
         //functions
 
         //! Motion-compensate a component
-        void CompensateComponent( Picture& pic , 
-                                  const Picture& ref1picture , 
-                                  const Picture& ref2picture ,
+        void CompensateComponent( Picture* pic , 
+                                  Picture* refsptr[2] , 
                                   const MvData& mv_data , const CompSort cs);
 
         //! Recalculate the weight matrix and store other key block related parameters.
