@@ -128,31 +128,6 @@ bool SequenceCompressor::CanEncode()
         if (m_current_code_pnum <= m_last_picture_read)
         {
             m_current_display_pnum = m_current_code_pnum;
-            EncPicture& pbuf_picture = m_enc_pbuffer.GetPicture( m_current_display_pnum );
-            PictureParams& pbuf_pparams = pbuf_picture.GetPparams();
-
-            // If INTRA pic, no further checks necessary
-            if (pbuf_pparams.PicSort().IsIntra())
-                return true;
-
-            std::vector<int>& refs = pbuf_pparams.Refs();
-            int num_refs = 0;
-            if (m_enc_pbuffer.IsPictureAvail(refs[0]))
-                ++num_refs;
-            if (refs.size() > 1)
-            {
-                if (m_enc_pbuffer.IsPictureAvail(refs[1]))
-                {
-                    if (num_refs == 0)
-                        refs[0] = refs[1];
-                    ++num_refs;
-                }
-            }
-            refs.resize(num_refs);
-
-            if (refs.size() == 0)
-                pbuf_picture.SetPictureSort (PictureSort::IntraNonRefPictureSort());
-
             return true;
         }
     }
@@ -405,7 +380,8 @@ void FrameSequenceCompressor::SetPredParams( PictureParams& pparams )
             // .. and the previous picture
             pparams.Refs().push_back(pnum-1);
             // Refs are the next I or L1 picture ...
-            pparams.Refs().push_back(pnum+1);
+            if (m_enc_pbuffer.IsPictureAvail(pnum+1))
+                pparams.Refs().push_back(pnum+1);
 
             pparams.SetExpiryTime( 1 );
         }
@@ -415,7 +391,9 @@ void FrameSequenceCompressor::SetPredParams( PictureParams& pparams )
             // .. and the previous picture
             pparams.Refs().push_back(pnum-1);
             // Refs are the next I or L1 picture ...
-            pparams.Refs().push_back(((pnum/L1_sep)+1)*L1_sep);
+            int next_ref = ((pnum/L1_sep)+1)*L1_sep;
+            if (m_enc_pbuffer.IsPictureAvail(next_ref))
+                pparams.Refs().push_back(next_ref);
 
             pparams.SetExpiryTime( 2 );
         }
@@ -653,7 +631,8 @@ void FieldSequenceCompressor::SetPredParams( PictureParams& pparams )
             // .. and the same parity field of the previous picture
             pparams.Refs().push_back(pnum-1*2);
             // Refs are the same parity fields in the next I or L1 picture ...
-            pparams.Refs().push_back(pnum+1*2);
+            if (m_enc_pbuffer.IsPictureAvail(pnum+1*2))
+                pparams.Refs().push_back(pnum+1*2);
 
             pparams.SetExpiryTime( 1 );
         }
@@ -664,8 +643,9 @@ void FieldSequenceCompressor::SetPredParams( PictureParams& pparams )
             // .. and the same parity field of the previous picture
             pparams.Refs().push_back(pnum-1*2);
             // Refs are the same parity fields in the next I or L1 picture ...
-            pparams.Refs().push_back((((pnum/2)/L1_sep+1)*L1_sep)*2+(pnum%2));
-
+            int next_ref = (((pnum/2)/L1_sep+1)*L1_sep)*2+(pnum%2);
+            if (m_enc_pbuffer.IsPictureAvail(next_ref))
+                pparams.Refs().push_back((((pnum/2)/L1_sep+1)*L1_sep)*2+(pnum%2));
             pparams.SetExpiryTime( 4 );
         }
 
