@@ -558,6 +558,14 @@
 				>
 			</File>
 			<File
+				RelativePath="..\..\..\..\libdirac_encoder\enc_picture.cpp"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\libdirac_encoder\enc_queue.cpp"
+				>
+			</File>
+			<File
 				RelativePath="..\..\..\..\libdirac_encoder\picture_compress.cpp"
 				>
 			</File>
@@ -589,6 +597,14 @@
 			>
 			<File
 				RelativePath="..\..\..\..\libdirac_encoder\comp_compress.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\libdirac_encoder\enc_picture.h"
+				>
+			</File>
+			<File
+				RelativePath="..\..\..\..\libdirac_encoder\enc_queue.h"
 				>
 			</File>
 			<File

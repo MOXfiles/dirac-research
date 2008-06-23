@@ -375,6 +375,12 @@
 				RelativePath="..\..\..\..\libdirac_encoder\comp_compress.cpp">
 			</File>
 			<File
+				RelativePath="..\..\..\..\libdirac_encoder\enc_picture.cpp">
+			</File>
+			<File
+				RelativePath="..\..\..\..\libdirac_encoder\enc_queue.cpp">
+			</File>
+			<File
 				RelativePath="..\..\..\..\libdirac_encoder\picture_compress.cpp">
 			</File>
 			<File
@@ -399,6 +405,12 @@
 			UniqueIdentifier="{93995380-89BD-4b04-88EB-625FBE52EBFB}">
 			<File
 				RelativePath="..\..\..\..\libdirac_encoder\comp_compress.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\libdirac_encoder\enc_picture.h">
+			</File>
+			<File
+				RelativePath="..\..\..\..\libdirac_encoder\enc_queue.h">
 			</File>
 			<File
 				RelativePath="..\..\..\..\libdirac_encoder\picture_compress.h">
