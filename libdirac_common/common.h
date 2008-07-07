@@ -748,44 +748,6 @@ namespace dirac
         CompSort m_csort;
     };
 
-    //! A class for picture component data.
-    /*!
-        A class for encapsulating coefficient data, derived from TwoDArray..
-     */
-    class CoeffArray: public TwoDArray<CoeffType>
-    {
-    public:
-        //! Default constructor
-        /*!
-            Default constructor creates an empty array.
-        */
-        CoeffArray(): TwoDArray<CoeffType>(){}
-
-        //! Constructor.
-        /*!
-            Contructor creates a two-D array, with specified size and colour
-            format.
-        */
-        CoeffArray(int height, int width, CompSort cs=Y_COMP): 
-            TwoDArray<CoeffType>(height, width), m_csort(cs){}
-
-        //copy constructor and assignment= derived by inheritance
-
-        //! Destructor
-        ~CoeffArray(){}
-        
-        //! Return which component is stored
-        const CompSort& CSort() const {return m_csort;}
-        
-        //! Set the type of component being stored
-        void SetCSort(const CompSort cs){ m_csort = cs; }
-        
-        private:
-
-        CompSort m_csort;
-
-    };
-
 
     //! A structure for recording costs, particularly in quantisation.
     class CostType

@@ -39,9 +39,27 @@
 #define _ENC_PICTURE_H_
 
 #include <libdirac_common/picture.h>
+#include <libdirac_common/motion.h>
+
 
 namespace dirac
 {
+static const unsigned int DONE_ME_INIT = 0x1;
+static const unsigned int DONE_PEL_ME = 0x2;
+static const unsigned int DONE_SUBPEL_ME = 0x4;
+static const unsigned int DONE_ME_MODE_DECN = 0x8;
+static const unsigned int DONE_MV_CODING = 0x10;
+static const unsigned int DONE_MC = 0x20;
+static const unsigned int DONE_DWT = 0x40;
+static const unsigned int DONE_QUANT_SEL = 0x80;
+static const unsigned int DONE_RES_CODING = 0x100;
+static const unsigned int DONE_IDWT = 0x200;
+static const unsigned int DONE_MC_BACK = 0x400;
+static const unsigned int DONE_SET_PTYPE = 0x800;
+static const unsigned int DONE_PIC_COMPLEXITY = 0x1000;
+     
+static const unsigned int ALL_ENC = 0xFFFFFFFF;
+static const unsigned int NO_ENC = 0;
 
 class EncPicture : public Picture
 {
@@ -50,20 +68,49 @@ public:
 
     virtual ~EncPicture();
 
-    //! Initialises a copy of the data arrays into the original data
-    void SetOrigData();
+    //! Initialise the motion estimation data arrays
+    void InitMEData( const int xnum_mb, const int ynum_mb, const int num_refs);
+
+    //! Returns the motion data
+    MEData& GetMEData(){ return *m_me_data;}
+
+    //! Returns the motion data
+    const MEData& GetMEData() const { return *m_me_data;}
+
+
 
     //! Returns a given component of the original data
     const PicArray& OrigData(CompSort c) const { return *m_orig_data[(int) c];}
 
-   //! Returns a given upconverted component of the original data
+    //! Returns a given upconverted component of the original data
     const PicArray& UpOrigData(CompSort cs) const;
 
-    //! Returns a version of the data suitable for motion estimation
+    //! Initialises a copy of the data arrays into the original data
+    void SetOrigData();
+
+ 
+    //! Returns a version of the picture data suitable for motion estimation
     const PicArray& DataForME(bool field_coding, CompSort c) const;
 
-    //! Returns a version of the data suitable for subpel motion estimation
+    //! Returns a version of the picture data suitable for subpel motion estimation
     const PicArray& UpDataForME(bool field_coding, CompSort c) const;
+
+
+    void UpdateStatus( const unsigned int status ){ m_status += status; }
+
+    void SetStatus( const int status ){ m_status = status; }
+
+    unsigned int GetStatus() const{ return m_status; }
+
+
+    double GetComplexity() const {return m_complexity; }
+
+    void SetComplexity(double c){ m_complexity = c; }
+
+    double GetNormComplexity() const { return m_norm_complexity; }
+
+    void SetNormComplexity( double c ){ m_norm_complexity = c; }
+
 
 private:
 
@@ -81,10 +128,19 @@ private:
 
     void SetOrigData(const int c);
 
+private:
+
     PicArray* m_orig_data[3];
     mutable PicArray* m_orig_up_data[3];
     mutable PicArray* m_filt_data[3];
     mutable PicArray* m_filt_up_data[3];
+
+    MEData* m_me_data;
+
+    unsigned int m_status;
+
+    double m_complexity;
+    double m_norm_complexity;
 
 };
 

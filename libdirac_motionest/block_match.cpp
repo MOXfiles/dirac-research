@@ -250,9 +250,6 @@ void BlockMatcher::FindBestMatchPel(const int xpos , const int ypos ,
     //now test against the offsets in the MV list to get the lowest cost//
     //////////////////////////////////////////////////////////////////////     
 
-    // First test the first in each of the lists to choose which lists to pursue
-
-   
     float best_cost = m_cost_array[ypos][xpos].total;
 
     MVector best_mv = m_mv_array[ypos][xpos];

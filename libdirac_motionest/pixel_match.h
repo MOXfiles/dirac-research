@@ -78,9 +78,7 @@ namespace dirac
         \param  mv_data    class in which the measured motion vectors are stored, together with costs
         
         */
-        void DoSearch(const EncQueue& my_buffer, 
-                      int pic_num, 
-                      MEData& me_data);
+        void DoSearch( EncQueue& my_buffer, int pic_num ); 
 
     private:
 

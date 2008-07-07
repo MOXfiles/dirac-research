@@ -124,7 +124,8 @@ MEData::MEData(const int xnumMB , const int ynumMB ,
      m_bipred_costs( ynumblocks , xnumblocks ),
      m_MB_costs( ynumMB , xnumMB ),
      m_lambda_map( ynumblocks , xnumblocks ),
-     m_inliers( Range( 1 , num_refs ) )
+     m_inliers( Range( 1 , num_refs ) ),
+     m_intra_block_ratio(0.0)
 {
     InitMEData();
 }
@@ -136,7 +137,8 @@ MEData::MEData( const int xnumMB , const int ynumMB ,  const int num_refs ):
      m_bipred_costs( 4*ynumMB , 4*xnumMB ),
      m_MB_costs( ynumMB , xnumMB ),
      m_lambda_map( 4*ynumMB , 4*xnumMB ),
-     m_inliers( Range( 1 , num_refs ) )
+     m_inliers( Range( 1 , num_refs ) ),
+     m_intra_block_ratio( 0.0 )
 {
     InitMEData();
 

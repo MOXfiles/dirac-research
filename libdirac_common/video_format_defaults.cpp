@@ -287,7 +287,6 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetSignalRange(SIGNAL_RANGE_12BIT_VIDEO);
         sparams.SetColourSpecification(4);
         break;
-
     case VIDEO_FORMAT_UHDTV_4K60:
     case VIDEO_FORMAT_UHDTV_4K50:
         sparams.SetXl(3840);
@@ -332,7 +331,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
         sparams.SetCleanHeight(4320);
         sparams.SetColourSpecification(3);
         break;
-    default:
+   default:
         errstr << "Unsupported video format " << sparams.GetVideoFormat()
                << std::endl;
         DIRAC_THROW_EXCEPTION(

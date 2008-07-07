@@ -50,23 +50,24 @@ MotionEstimator::MotionEstimator( const EncoderParams& encp ):
     m_encparams( encp )
 {}
 
-void MotionEstimator::DoME(const EncQueue& my_buffer, int pic_num, MEData& me_data)
+void MotionEstimator::DoME( EncQueue& my_buffer, int pic_num )
 {
+    MEData& me_data = my_buffer.GetPicture( pic_num ).GetMEData();
 
-    const PictureParams& fparams = my_buffer.GetPicture(pic_num).GetPparams();
+    const PictureParams& pparams = my_buffer.GetPicture(pic_num).GetPparams();
 
    // Step 1. 
    //Initial search gives vectors for each reference accurate to 1 pixel
 
     PixelMatcher pix_match( m_encparams );
-    pix_match.DoSearch( my_buffer , pic_num , me_data);
+    pix_match.DoSearch( my_buffer , pic_num );
 
     float lambda;
     // Get the references
     const std::vector<int>& refs = my_buffer.GetPicture(pic_num).GetPparams().Refs();
 
     const int num_refs = refs.size();
-    if ( fparams.IsBPicture())
+    if ( pparams.IsBPicture())
         lambda = m_encparams.L2MELambda();
     else
         lambda = m_encparams.L1MELambda();
@@ -82,7 +83,7 @@ void MotionEstimator::DoME(const EncQueue& my_buffer, int pic_num, MEData& me_da
     if (orig_prec != MV_PRECISION_PIXEL)
     {
         SubpelRefine pelrefine( m_encparams );
-        pelrefine.DoSubpel( my_buffer , pic_num , me_data );
+        pelrefine.DoSubpel( my_buffer , pic_num );
     }
     else
     {
@@ -112,7 +113,7 @@ void MotionEstimator::DoME(const EncQueue& my_buffer, int pic_num, MEData& me_da
     // and which references should be used, and so on.
 
     ModeDecider my_mode_dec( m_encparams );
-    my_mode_dec.DoModeDecn( my_buffer , pic_num , me_data );
+    my_mode_dec.DoModeDecn( my_buffer , pic_num );
     
     if (orig_prec ==  MV_PRECISION_PIXEL)
     {
@@ -142,7 +143,7 @@ void MotionEstimator::DoME(const EncQueue& my_buffer, int pic_num, MEData& me_da
     // we have to assign DC values for chroma components for
     // blocks we're decided are intra.
 
-    SetChromaDC( my_buffer , pic_num , me_data );
+    SetChromaDC( my_buffer , pic_num );
 
 //return false;
 }
@@ -163,7 +164,7 @@ ValueType MotionEstimator::GetChromaBlockDC(const PicArray& pic_data,
     return dc;
 }
 
-void MotionEstimator::SetChromaDC( const PicArray& pic_data , MvData& mv_data , CompSort csort )
+void MotionEstimator::SetChromaDC( const PicArray& pic_data , MEData& me_data , CompSort csort )
 {
 
     // Lower limit of block coords in MB
@@ -175,7 +176,7 @@ void MotionEstimator::SetChromaDC( const PicArray& pic_data , MvData& mv_data , 
     int xsubMBtl,ysubMBtl;
     int xsubMBbr,ysubMBbr;
 
-    TwoDArray<ValueType>& dcarray = mv_data.DC( csort );
+    TwoDArray<ValueType>& dcarray = me_data.DC( csort );
 
     ValueType dc = 0;
 
@@ -188,12 +189,12 @@ void MotionEstimator::SetChromaDC( const PicArray& pic_data , MvData& mv_data , 
 
     int level;
 
-    for ( int ymb=0 ; ymb<mv_data.MBSplit().LengthY() ; ++ymb )
+    for ( int ymb=0 ; ymb<me_data.MBSplit().LengthY() ; ++ymb )
     {
-        for ( int xmb=0 ; xmb<mv_data.MBSplit().LengthX() ; ++xmb )
+        for ( int xmb=0 ; xmb<me_data.MBSplit().LengthX() ; ++xmb )
         {
 
-            level = mv_data.MBSplit()[ymb][xmb];
+            level = me_data.MBSplit()[ymb][xmb];
 
             xtl = xmb<<2;
             ytl = ymb<<2;            
@@ -219,7 +220,7 @@ void MotionEstimator::SetChromaDC( const PicArray& pic_data , MvData& mv_data , 
                      xend = xstart + ( 1<<( 2-level ) );
                      yend = ystart + ( 1<<( 2-level ) );
 
-                     if ( mv_data.Mode()[ystart][xstart] == INTRA )
+                     if ( me_data.Mode()[ystart][xstart] == INTRA )
                          // Get the DC value for the unit
                          dc = GetChromaBlockDC( pic_data , xunit , yunit , level );
 
@@ -235,10 +236,12 @@ void MotionEstimator::SetChromaDC( const PicArray& pic_data , MvData& mv_data , 
     }// ymb
 }
 
-void MotionEstimator::SetChromaDC( const EncQueue& my_buffer , int pic_num , MvData& mv_data)
+void MotionEstimator::SetChromaDC( EncQueue& my_buffer , int pic_num )
 {
-
-    SetChromaDC( my_buffer.GetPicture( pic_num ).OrigData(U_COMP) , mv_data , U_COMP );
-    SetChromaDC( my_buffer.GetPicture( pic_num ).OrigData(V_COMP) , mv_data , V_COMP );
+    MEData& me_data = my_buffer.GetPicture(pic_num).GetMEData();  
+    SetChromaDC( my_buffer.GetPicture( pic_num ).OrigData(U_COMP) , me_data , U_COMP );
+    SetChromaDC( my_buffer.GetPicture( pic_num ).OrigData(V_COMP) , me_data , V_COMP );
 
 }
+
+

@@ -130,7 +130,7 @@ inline void Interleave_mmx( const int xp ,
 }
 #endif
 
-void WaveletTransform::VHFilter::ShiftRowLeft(CoeffType *row, int length, int shift)
+void VHFilter::ShiftRowLeft(CoeffType *row, int length, int shift)
 {
     int xstop = length/4*4;
     CoeffType *shift_row = row;
@@ -144,7 +144,7 @@ void WaveletTransform::VHFilter::ShiftRowLeft(CoeffType *row, int length, int sh
     _mm_empty();
 }
 
-void WaveletTransform::VHFilter::ShiftRowRight(CoeffType *row, int length, int shift)
+void VHFilter::ShiftRowRight(CoeffType *row, int length, int shift)
 {
     CoeffType *shift_row = row;
     int round_val = 1<<(shift-1);
@@ -214,7 +214,7 @@ inline void Interleave_mmx( const int xp ,
     _mm_empty();
 }
 
-void WaveletTransform::VHFilterDD9_7::Synth(const int xp , 
+void VHFilterDD9_7::Synth(const int xp , 
                                                 const int yp , 
                                                 const int xl , 
                                                 const int yl , 
@@ -506,7 +506,7 @@ void WaveletTransform::VHFilterDD9_7::Synth(const int xp ,
     Interleave_mmx( xp , yp , xl ,yl , coeff_data );
 }
 
-void WaveletTransform::VHFilterDD13_7::Synth(const int xp ,
+void VHFilterDD13_7::Synth(const int xp ,
                                            const int yp , 
                                            const int xl ,
                                            const int yl , 
@@ -939,7 +939,7 @@ void WaveletTransform::VHFilterDD13_7::Synth(const int xp ,
 
 #if 0
 //Opts - Attempt1
-void WaveletTransform::VHFilterLEGALL5_3::Synth(const int xp ,
+void VHFilterLEGALL5_3::Synth(const int xp ,
                                           const int yp , 
                                           const int xl , 
                                           const int yl , 
@@ -1074,7 +1074,7 @@ void WaveletTransform::VHFilterLEGALL5_3::Synth(const int xp ,
 
 #if 0
 //Opts Attempt 2
-void WaveletTransform::VHFilterLEGALL5_3::Synth(const int xp ,
+void VHFilterLEGALL5_3::Synth(const int xp ,
                                           const int yp , 
                                           const int xl , 
                                           const int yl , 
@@ -1236,7 +1236,7 @@ void WaveletTransform::VHFilterLEGALL5_3::Synth(const int xp ,
 
 //Attempt 3
 
-inline void WaveletTransform::VHFilterLEGALL5_3::HorizSynth (int xp, int xl, int ystart, int yend, CoeffArray &coeff_data)
+inline void VHFilterLEGALL5_3::HorizSynth (int xp, int xl, int ystart, int yend, CoeffArray &coeff_data)
 {
     static const PredictStepShift< 2 > predict;
     static const UpdateStepShift< 1 > update;
@@ -1263,7 +1263,7 @@ inline void WaveletTransform::VHFilterLEGALL5_3::HorizSynth (int xp, int xl, int
     }
 }
 
-void WaveletTransform::VHFilterLEGALL5_3::Synth(const int xp ,
+void VHFilterLEGALL5_3::Synth(const int xp ,
                                           const int yp , 
                                           const int xl , 
                                           const int yl , 
@@ -1473,7 +1473,7 @@ void DeInterleave_mmx( const int xp ,
     _mm_empty();
 }
 
-void WaveletTransform::VHFilterLEGALL5_3::Split(const int xp , 
+void VHFilterLEGALL5_3::Split(const int xp , 
                                           const int yp , 
                                           const int xl , 
                                           const int yl , 

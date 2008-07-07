@@ -125,7 +125,7 @@ namespace dirac
         const EncPicture *CompressNextPicture();
 
         //! Set up the appropriate prediction parameters for a picture
-        virtual void SetPredParams( PictureParams& pparams ) = 0;
+        virtual void SetPicTypeAndRefs( PictureParams& pparams ) = 0;
 
         //! Return a pointer to the most recent picture encoded
         const EncPicture *GetPictureEncoded();
@@ -148,8 +148,8 @@ namespace dirac
 
     protected:
 
-        //! Set up the motion data arrays
-        void SetMotionArraySizes();
+        //! Set up the motion block parameters
+        void SetMotionParameters();
 
         //! Uses the GOP parameters to convert picture numbers in coded order to display order.
         /*!
@@ -169,8 +169,13 @@ namespace dirac
         //! Return true if we need to start a new access unit. Purely virtual. The child class will have to define it.
         virtual bool IsNewAccessUnit() = 0;
 
-        //! Compress the picture using constant bit rate coding. Purely virtual. The child class will have to define it.
-        virtual void RateControlCompress(EncPicture& my_picture, bool is_a_cut) = 0;
+        //! Update the CBR model based on the data we've compressed.
+	//Purely virtual. The child class will have to define it.
+        virtual void UpdateCBRModel(EncPicture& my_picture, const PictureByteIO* picture_byteio) = 0;
+
+        //! Update the parameters to be used in advance of coding an intra frame
+        void UpdateIntraPicCBRModel( const PictureParams& , const bool is_a_cut );
+
         //! Returns true if the encoder can encode a picture
         bool CanEncode();
 
@@ -193,6 +198,9 @@ namespace dirac
 
         //! A class to hold the basic block parameters
         OLBParams m_basic_olb_params2;
+
+        //! A class to hold block parameters to use when there are lots of intra blocks
+        OLBParams* m_intra_olbp;
 
         //! The parameters of the input source
         SourceParams& m_srcparams;
@@ -299,12 +307,12 @@ namespace dirac
         virtual bool LoadNextFrame();
         
         //! Set up the appropriate prediction parameters for a picture
-        virtual void SetPredParams( PictureParams& pparams );
+        virtual void SetPicTypeAndRefs( PictureParams& pparams );
 
 protected:
         virtual int CodedToDisplay(const int pnum);
         virtual bool IsNewAccessUnit();
-        virtual void RateControlCompress(EncPicture& my_picture, bool is_a_cut);
+        virtual void UpdateCBRModel(EncPicture& my_picture, const PictureByteIO* picture_byteio);
 
     };
 
@@ -339,7 +347,7 @@ protected:
 
         //! Load data
         /*!
-            Load oen frame i.e. two fields of data into the Sequence
+            Load one frame i.e. two fields of data into the Sequence
             Compressor. Sets m_all_done to true if no more data is available
             to be loaded.
             \return             true - if both fields load succeeded.
@@ -349,14 +357,14 @@ protected:
 
         
         //! Set up the appropriate prediction parameters for a picture
-        virtual void SetPredParams( PictureParams& pparams );
+        virtual void SetPicTypeAndRefs( PictureParams& pparams );
 
     protected:
 
         virtual int CodedToDisplay(const int pnum);
         virtual bool IsNewAccessUnit();
 
-        virtual void RateControlCompress(EncPicture& my_picture, bool is_a_cut);
+        virtual void UpdateCBRModel(EncPicture& my_picture, const PictureByteIO* picture_byteio);
     private:
         //! Filter fields
         /*!

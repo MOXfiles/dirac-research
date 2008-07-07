@@ -37,7 +37,7 @@
 * ***** END LICENSE BLOCK ***** */
 
 /**
-* Definition of class AccessUnitByteIO
+* Definition of class SequenceHeaderByteIO
 */
 #ifndef accessunit_byteio_h
 #define accessunit_byteio_h
@@ -53,7 +53,7 @@ namespace dirac
     /**
     * A random access point within a Dirac bytestream 
     */
-    class AccessUnitByteIO : public ParseUnitByteIO
+    class SequenceHeaderByteIO : public ParseUnitByteIO
     {
     public:
 
@@ -62,7 +62,7 @@ namespace dirac
         *@param src_params Source parameters for current AccessUnit
         *@param enc_params Encoder parameters for current AccessUnit
         */
-        AccessUnitByteIO( SourceParams& src_params,
+        SequenceHeaderByteIO( SourceParams& src_params,
                           EncoderParams& enc_params);
 
         /**
@@ -72,7 +72,7 @@ namespace dirac
         *@param src_params       Destination of source paramters data 
         *@param codec_params     Destination of coding paramters data 
         */
-        AccessUnitByteIO(const ParseUnitByteIO& parseunit_byteio,
+        SequenceHeaderByteIO(const ParseUnitByteIO& parseunit_byteio,
                          ParseParams& parse_params,
                          SourceParams& src_params,
                          CodecParams& codec_params);
@@ -80,7 +80,7 @@ namespace dirac
        /**
        * Destructor
        */
-        ~AccessUnitByteIO();
+        ~SequenceHeaderByteIO();
 
         /**
         * Parses data in Dirac-stream format (decoding)

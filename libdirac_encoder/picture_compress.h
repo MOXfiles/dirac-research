@@ -73,25 +73,46 @@ namespace dirac
         //! Destructor
         ~PictureCompressor( );
 
-        //! Performs motion estimation for a picture and writes the data locally
-        /*! Performs motion estimation for a picture and writes the data locally
-            \param my_fbuffer picture buffer of uncoded originals
-            \param fnum    picture number to compress
-            \return true   if a cut is detected.
-        */                        
-        bool MotionEstimate( const EncQueue& my_fbuffer, 
-                                        int fnum); 
+        //! Do pixel accurate motion estimate
+        void PixelME( EncQueue& my_buffer , int pnum );
+
+        //! Calculate the complexity of a picture
+	void CalcComplexity( EncQueue& my_buffer, int pnum , const OLBParams& olbparams );
+	void CalcComplexity2( EncQueue& my_buffer, int pnum );
+
+	//! Normalise picture complexity with respect to others in the queue
+	void NormaliseComplexity( EncQueue& my_buffer, int pnum );
+
+        //! Do subpixel accurate motion vector refinement
+        void SubPixelME( EncQueue& my_buffer , int pnum );
+
+        //! Do mode decision based on sub-pel vectors
+        void ModeDecisionME( EncQueue& my_buffer, int pnum );
+
+        //! Detect cuts in the current picture
+         bool CutDetect( EncQueue& my_buffer, int pnum );
+
+        //! Does motion compensation on picture pnum (forward or backward)
+        void MotionCompensate( EncQueue& my_buffer, int pnum, AddOrSub dirn );
+
+        //! Prefilter if required
+        void Prefilter( EncQueue& my_buffer, int pnum );
+
+        //! Do the DWT on a given picture 
+        void DoDWT( EncQueue& my_buffer , int pnum, Direction dirn );
 
         //! Compress a specific picture within a group of pictures (GOP)
         /*!
             Compresses a specified picture within a group of pictures. 
-            \param my_fbuffer  picture buffer in which the reference frames resides
-            \param fnum        picture number to compress
-            \return Compressed picture in Dirac bytestream format
+            \param my_pbuffer  picture buffer in which the reference frames resides
+            \param pnum        picture number to compress
+            \params pic_byteio compressed picture in Dirac bytestream format
         */
-        PictureByteIO* Compress(  EncQueue& my_fbuffer , 
-                                int fnum );
+        void CodeResidue(  EncQueue& my_pbuffer , int pnum , PictureByteIO* pic_byteio);
 
+        //! Compresses the motion vector data
+        void CodeMVData( EncQueue& my_buffer, int pnum, PictureByteIO* pic_byteio);
+        
         //! Returns true if the picture has been skipped rather than coded normally
         bool IsSkipped(){ return m_skipped; }
 
@@ -120,13 +141,10 @@ namespace dirac
         void InitCoeffData( CoeffArray& coeff_data, const int xl, const int yl );
 
         //! Analyses the ME data and returns true if a cut is detected, false otherwise
-        void AnalyseMEData( const MEData& );
-        
-        //! Compresses the motion vector data
-        void CompressMVData(MvDataByteIO* mv_data);
+        void AnalyseMEData( MEData& );
         
         //! Returns the value lambda according to picture and component type
-        float GetCompLambda( const PictureParams& fparams,
+        float GetCompLambda( const EncPicture& my_picture,
                              const CompSort csort );
 
         void SelectQuantisers( CoeffArray& coeff_data , 
@@ -155,9 +173,6 @@ namespace dirac
         // a local copy of the encoder params
         EncoderParams& m_encparams;
      
-        // Pointer to the motion vector data
-        MEData* m_me_data;
-
         // True if the picture has been skipped, false otherwise
         bool m_skipped;                
 
@@ -169,15 +184,19 @@ namespace dirac
         
         // Prediction mode to use if we only have global motion vectors
         PredMode m_global_pred_mode;
-        
+       
+        // A pointer to the current picture motion vector data
+	MEData* m_me_data;
+
         // True if motion estimation data is available
         bool m_medata_avail;
 
         // True if we have detected a cut
         bool m_is_a_cut;
 
-        // The proportion of intra blocks that motion estimation has found
-        double m_intra_ratio;
+        // The original MV precision type
+        MVPrecisionType m_orig_prec;
+
     };
 
 } // namespace dirac

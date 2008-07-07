@@ -39,6 +39,7 @@
 #define _PICTURE_H_
 
 #include <libdirac_common/common.h>
+#include <libdirac_common/wavelet_utils.h>
 
 namespace dirac
 {
@@ -98,8 +99,17 @@ namespace dirac
         //! Returns a given upconverted component
         PicArray& UpData(CompSort cs);
 
-       //! Returns a given upconverted component
+        //! Returns a given upconverted component
         const PicArray& UpData(CompSort cs) const;
+
+        //! Returns the wavelet coefficient data
+        const CoeffArray& WltData( CompSort c ) const { return m_wlt_data[(int) c]; }
+
+        //! Returns the wavelet coefficient data
+        CoeffArray& WltData( CompSort c ) { return m_wlt_data[(int) c]; }
+
+        //! Initialises the wavelet coefficient data arrays;
+        void InitWltData( const int transform_depth );
 
         //! Clip the data to prevent overshoot
         /*!
@@ -119,6 +129,8 @@ namespace dirac
         mutable PicArray* m_up_pic_data[3];//upconverted data. Mutable because we
                                          //create them on the fly even in const
                                          //functions.
+
+        CoeffArray m_wlt_data[3];// the wavelet coefficient data
 
         //! Initialises the picture once the picture parameters have been set
         virtual void Init();

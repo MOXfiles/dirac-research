@@ -144,6 +144,9 @@ namespace dirac
         //! Returns a list of member pictures
         std::vector<int> Members() const;
 
+	//! Returns the size of the queue
+	int Size() const { return m_pic_data.size(); }
+
         //! Put a new picture into the top of the buffer
         /*!
             Put a new picture into the top of the buffer. EncPicture parameters

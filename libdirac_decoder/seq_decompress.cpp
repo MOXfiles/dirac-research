@@ -88,10 +88,9 @@ const PictureParams* SequenceDecompressor::GetNextPictureParams() const
 
 void SequenceDecompressor::NewAccessUnit(ParseUnitByteIO& parseunit_byteio)
 {
-    // read access-unit data
-    AccessUnitByteIO accessunit_byteio(parseunit_byteio,
-                                       m_parse_params, m_srcparams, m_decparams);
-    accessunit_byteio.Input();
+    // read sequence header
+    SequenceHeaderByteIO seqheader_byteio(parseunit_byteio,m_parse_params, m_srcparams, m_decparams);
+    seqheader_byteio.Input();
 
 }
 

@@ -42,7 +42,7 @@
 using namespace dirac;
 
 // Constructor for encoding
-AccessUnitByteIO::AccessUnitByteIO( SourceParams& src_params, 
+SequenceHeaderByteIO::SequenceHeaderByteIO( SourceParams& src_params, 
                                     EncoderParams& enc_params):                  
 ParseUnitByteIO(),
 m_parseparams_byteio(*this, m_parse_params, enc_params),
@@ -61,7 +61,7 @@ m_codingparams_byteio(m_src_params,
 }
 
 // Constructor for decoding
-AccessUnitByteIO::AccessUnitByteIO(const ParseUnitByteIO& parseunit_byteio,
+SequenceHeaderByteIO::SequenceHeaderByteIO(const ParseUnitByteIO& parseunit_byteio,
                                    ParseParams& parse_params,
                                    SourceParams& src_params,
                                    CodecParams& codec_params) :
@@ -79,12 +79,12 @@ m_codingparams_byteio( m_src_params,
 {
 }
 
-AccessUnitByteIO::~AccessUnitByteIO()
+SequenceHeaderByteIO::~SequenceHeaderByteIO()
 {
 }
 
 //-----public------------------------------------------------------
-bool AccessUnitByteIO::Input() 
+bool SequenceHeaderByteIO::Input() 
 {
     //int o=mp_stream->tellg();
     InputParseParams();
@@ -111,7 +111,7 @@ bool AccessUnitByteIO::Input()
     return true;
 }
 
-void AccessUnitByteIO::Output()
+void SequenceHeaderByteIO::Output()
 {
     OutputParseParams();
 
@@ -125,7 +125,7 @@ void AccessUnitByteIO::Output()
   
 }
 
-int AccessUnitByteIO::GetSize() const
+int SequenceHeaderByteIO::GetSize() const
 {
     return ParseUnitByteIO::GetSize()+
            m_parseparams_byteio.GetSize()+
@@ -138,7 +138,7 @@ int AccessUnitByteIO::GetSize() const
 
 //-------private-------------------------------------------------------
 
-unsigned char AccessUnitByteIO::CalcParseCode() const
+unsigned char SequenceHeaderByteIO::CalcParseCode() const
 {
     unsigned char code = 0;
 
@@ -148,7 +148,7 @@ unsigned char AccessUnitByteIO::CalcParseCode() const
 }
 
 
-void AccessUnitByteIO::InputSourceParams()
+void SequenceHeaderByteIO::InputSourceParams()
 {
      // copy current input params
     m_sourceparams_byteio.SetByteParams(*this);
@@ -156,12 +156,12 @@ void AccessUnitByteIO::InputSourceParams()
     m_sourceparams_byteio.Input();
 }
 
-void AccessUnitByteIO::InputParseParams()
+void SequenceHeaderByteIO::InputParseParams()
 {
     m_parseparams_byteio.Input();
 }
 
-void AccessUnitByteIO::InputCodingParams()
+void SequenceHeaderByteIO::InputCodingParams()
 {
     // copy current input params
     m_codingparams_byteio.SetByteParams(m_sourceparams_byteio);
@@ -169,7 +169,7 @@ void AccessUnitByteIO::InputCodingParams()
     m_codingparams_byteio.Input();
 }
 
-void AccessUnitByteIO::OutputSourceParams()
+void SequenceHeaderByteIO::OutputSourceParams()
 {
     // copy current output params
     m_sourceparams_byteio.SetByteParams(*this);
@@ -177,12 +177,12 @@ void AccessUnitByteIO::OutputSourceParams()
     m_sourceparams_byteio.Output();
 }
 
-void AccessUnitByteIO::OutputParseParams()
+void SequenceHeaderByteIO::OutputParseParams()
 {
     m_parseparams_byteio.Output();
 }
 
-void AccessUnitByteIO::OutputCodingParams()
+void SequenceHeaderByteIO::OutputCodingParams()
 {
     // copy current output params
     m_codingparams_byteio.SetByteParams(m_sourceparams_byteio);

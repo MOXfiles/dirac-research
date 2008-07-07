@@ -198,6 +198,26 @@ const PicArray& Picture::UpData(CompSort cs) const
     }
 }
 
+void Picture::InitWltData( const int transform_depth )
+{
+
+    int xpad_len, ypad_len;
+    int tx_mul = 1<<transform_depth;
+
+    for (int c=0; c<3; ++c){
+        xpad_len = m_pic_data[c]->LengthX();
+        ypad_len = m_pic_data[c]->LengthY();
+
+        if ( xpad_len%tx_mul != 0 )
+            xpad_len = ( (xpad_len/tx_mul)+1 ) *tx_mul;
+        if ( ypad_len%tx_mul != 0 )
+             ypad_len = ( (ypad_len/tx_mul)+1 ) * tx_mul;
+
+        m_wlt_data[c].Resize( ypad_len, xpad_len );
+    }
+
+}
+
 void Picture::ClipComponent(PicArray& pic_data, CompSort cs) const
 {
     ValueType *pic = &(pic_data[pic_data.FirstY()][pic_data.FirstX()]);

@@ -41,7 +41,11 @@
 using namespace dirac;
 
 EncPicture::EncPicture( const PictureParams& pp):
-    Picture( pp )
+    Picture( pp ),
+    m_me_data( NULL ),
+    m_status( NO_ENC ),
+    m_complexity( 0.0 ),
+    m_norm_complexity( 1.0 )
 {
     for (int c=0; c<3; ++c ){
         m_orig_data[c] = new PicArray( m_pic_data[c]->LengthY(), m_pic_data[c]->LengthX() ); 
@@ -77,6 +81,8 @@ void EncPicture::ClearData(){
         }
     }
 
+    if ( m_me_data != NULL )
+        delete m_me_data;
 }
 
 EncPicture::~EncPicture()
@@ -94,6 +100,15 @@ void EncPicture::SetOrigData( const int c )
 {
     if ( m_pic_data[c] != NULL )
         *(m_orig_data[c]) = *(m_pic_data[c]);
+}
+
+void EncPicture::InitMEData( const int xnum_mb, const int ynum_mb , const int num_refs)
+{
+    if (m_me_data != NULL)
+        delete m_me_data;
+
+    m_me_data=new MEData( xnum_mb , ynum_mb , num_refs );
+    
 }
 
 const PicArray& EncPicture::DataForME( bool field_coding, CompSort cs ) const{
@@ -218,3 +233,5 @@ void EncPicture::AntiAliasFilter( PicArray& out_data, const PicArray& in_data ) 
                                  3*in_data[in_data.LastY()][i] + 2)>>2;
     }
 }
+
+

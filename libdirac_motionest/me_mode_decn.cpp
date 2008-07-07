@@ -81,7 +81,7 @@ ModeDecider::~ModeDecider()
     }
 }
 
-void ModeDecider::DoModeDecn(const EncQueue& my_buffer, int pic_num, MEData& me_data)
+void ModeDecider::DoModeDecn( EncQueue& my_buffer, int pic_num )
 {
 
      // We've got 'raw' block motion vectors for up to two reference pictures. Now we want
@@ -110,11 +110,11 @@ void ModeDecider::DoModeDecn(const EncQueue& my_buffer, int pic_num, MEData& me_
         m_me_data_set[1] = new MEData( m_encparams.XNumMB() , m_encparams.YNumMB() , 
                                        m_encparams.XNumBlocks()/2 , m_encparams.YNumBlocks()/2, num_refs );
 
-        m_me_data_set[2] = &me_data;
+        m_me_data_set[2] = &my_buffer.GetPicture(pic_num).GetMEData();
 
         // Set up the lambdas to use per block
-        m_me_data_set[0]->SetLambdaMap( 0 , me_data.LambdaMap() , 1.0/m_level_factor[0] );
-        m_me_data_set[1]->SetLambdaMap( 1 , me_data.LambdaMap() , 1.0/m_level_factor[1] );
+        m_me_data_set[0]->SetLambdaMap( 0 , m_me_data_set[2]->LambdaMap() , 1.0/m_level_factor[0] );
+        m_me_data_set[1]->SetLambdaMap( 1 , m_me_data_set[2]->LambdaMap() , 1.0/m_level_factor[1] );
 
         // Set up the reference pictures
         m_ref1_updata = &(my_buffer.GetPicture( ref1 ).UpOrigData(Y_COMP));
@@ -161,6 +161,14 @@ void ModeDecider::DoModeDecn(const EncQueue& my_buffer, int pic_num, MEData& me_
         if (num_refs>1)
             delete m_bicheckdiff;
     }
+    
+    // Finally, although not strictly part of motion estimation,
+    // we have to assign DC values for chroma components for
+    // blocks we're decided are intra.
+
+    SetChromaDC( my_buffer , pic_num );
+
+
 }
 
 void ModeDecider::DoMBDecn()
@@ -504,4 +512,100 @@ float ModeDecider::ModeCost(const int xindex , const int yindex)
 float ModeDecider::GetDCVar( const ValueType dc_val , const ValueType dc_pred)
 {
     return 4.0*std::abs( static_cast<float>( dc_val - dc_pred ) );
+}
+
+ValueType ModeDecider::GetChromaBlockDC(const PicArray& pic_data,
+                                            int xunit , int yunit , int split)
+{
+    BlockDiffParams dparams;
+    dparams.SetBlockLimits( m_encparams.ChromaBParams( split ) , 
+                            pic_data, xunit , yunit);
+
+    ValueType dc;
+
+    IntraBlockDiff intradiff( pic_data );
+
+    intradiff.Diff( dparams , dc );
+
+    return dc;
+}
+
+void ModeDecider::SetChromaDC( const PicArray& pic_data , MEData& me_data , CompSort csort )
+{
+
+    // Lower limit of block coords in MB
+    int xtl,ytl;
+    // Upper limit of block coords in MB
+    int xbr,ybr;
+
+    // Ditto, for subMBs    
+    int xsubMBtl,ysubMBtl;
+    int xsubMBbr,ysubMBbr;
+
+    TwoDArray<ValueType>& dcarray = me_data.DC( csort );
+
+    ValueType dc = 0;
+
+    // Coords of the prediction units (at appropriate level)
+    int xunit, yunit;
+
+    // The delimiters of the blocks contained in the prediction unit
+    int xstart, ystart;
+    int xend, yend;
+
+    int level;
+
+    for ( int ymb=0 ; ymb<me_data.MBSplit().LengthY() ; ++ymb )
+    {
+        for ( int xmb=0 ; xmb<me_data.MBSplit().LengthX() ; ++xmb )
+        {
+
+            level = me_data.MBSplit()[ymb][xmb];
+
+            xtl = xmb<<2;
+            ytl = ymb<<2;            
+            xbr = xtl+4;
+            ybr = ytl+4;
+
+            xsubMBtl = xmb<<1;
+            ysubMBtl = ymb<<1;
+            xsubMBbr = xsubMBtl+2;
+            ysubMBbr = ysubMBtl+2;
+
+
+            for (int j = 0 ; j<(1<<level) ;++j)
+            {
+                 for (int i = 0 ; i<(1<<level) ;++i)
+                 {
+                     xunit = ( xmb<<level ) + i;
+                     yunit = ( ymb<<level ) + j;
+
+                     xstart = xunit<<( 2-level );
+                     ystart = yunit<<( 2-level );
+
+                     xend = xstart + ( 1<<( 2-level ) );
+                     yend = ystart + ( 1<<( 2-level ) );
+
+                     if ( me_data.Mode()[ystart][xstart] == INTRA )
+                         // Get the DC value for the unit
+                         dc = GetChromaBlockDC( pic_data , xunit , yunit , level );
+
+                     // Copy it into the corresponding blocks
+                     for ( int q=ystart ; q< yend ; ++q )
+                         for ( int p=xstart ; p< xend ; ++p )
+                             dcarray[q][p] = dc;
+
+                 }// i
+             }// j
+
+        }// xmb
+    }// ymb
+}
+
+void ModeDecider::SetChromaDC( EncQueue& my_buffer , int pic_num )
+{
+    MEData& me_data = my_buffer.GetPicture(pic_num).GetMEData();  
+    SetChromaDC( my_buffer.GetPicture( pic_num ).OrigData(U_COMP) , me_data , U_COMP );
+    SetChromaDC( my_buffer.GetPicture( pic_num ).OrigData(V_COMP) , me_data , V_COMP );
+
 }

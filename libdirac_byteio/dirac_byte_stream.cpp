@@ -158,7 +158,7 @@ DiracByteStats DiracByteStream::GetSequenceStats() const
 
 //---------------encoding-----------------------------------------------------
 
-void DiracByteStream::AddAccessUnit(AccessUnitByteIO *p_accessunit_byteio)
+void DiracByteStream::AddSequenceHeader(SequenceHeaderByteIO *p_seqheader_byteio)
 {
     // set previous parse-unit details
     ParseUnitByteIO *mp_previous_parse_unit=mp_prev_parse_unit;
@@ -167,16 +167,16 @@ void DiracByteStream::AddAccessUnit(AccessUnitByteIO *p_accessunit_byteio)
         mp_previous_parse_unit = m_parse_unit_list.back().second;
 
     // set adjacent parse-unit
-    p_accessunit_byteio->SetAdjacentParseUnits(mp_previous_parse_unit);
+    p_seqheader_byteio->SetAdjacentParseUnits(mp_previous_parse_unit);
 
     // push onto to pending list
-    m_parse_unit_list.push(std::make_pair (PU_SEQ_HEADER, p_accessunit_byteio) );
+    m_parse_unit_list.push(std::make_pair (PU_SEQ_HEADER, p_seqheader_byteio) );
 
     // set previous parse-unit
-    mp_previous_parse_unit = p_accessunit_byteio;
+    mp_previous_parse_unit = p_seqheader_byteio;
 
     // save stats
-    p_accessunit_byteio->CollateByteStats(m_sequence_stats);
+    p_seqheader_byteio->CollateByteStats(m_sequence_stats);
 }
 
 void DiracByteStream::AddPicture(PictureByteIO *p_frame_byteio)

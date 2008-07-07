@@ -597,15 +597,14 @@ int DiracEncoder::CompressNextPicture ()
 
     const Picture *mypicture = m_seqcomp->CompressNextPicture();
 
-       m_decpnum = -1;
-    if (mypicture)
-    {
+    m_decpnum = -1;
+
+    if (mypicture){
         m_enc_picture = m_seqcomp->GetPictureEncoded();
         m_enc_medata = m_seqcomp->GetMEData();
 
         if (m_return_decoded_pictures &&
-            mypicture->GetPparams().PictureNum() != m_show_pnum)
-        {
+                mypicture->GetPparams().PictureNum() != m_show_pnum){
             int ret_val;
             m_show_pnum = mypicture->GetPparams().PictureNum();
             TEST (! (m_return_decoded_pictures && !m_dec_buf) );
@@ -623,8 +622,7 @@ int DiracEncoder::CompressNextPicture ()
             }
         }
     }
-    else
-    {
+    else{
         m_enc_picture = NULL;
         m_enc_medata = NULL;
     }
@@ -632,12 +630,11 @@ int DiracEncoder::CompressNextPicture ()
     if(!m_dirac_byte_stream.IsUnitAvailable())
         return 0;
 
-    if (mypicture)
-    {
+    if (mypicture){
          m_num_coded_pictures++;
-           TESTM (m_enc_picture != 0, "Encoder picture available");
+         TESTM (m_enc_picture != 0, "Encoder picture available");
     }
-       return 1;
+    return 1;
 }
 
 void DiracEncoder::GetPictureStats(dirac_encoder_t *encoder)

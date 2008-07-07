@@ -369,6 +369,12 @@ namespace dirac
         //! Get the MB costs
         const TwoDArray<float>& MBCosts() const { return m_MB_costs; }
 
+	//! Get the proportion of intra blocks
+	float IntraBlockRatio() const {return m_intra_block_ratio; }
+
+	//! Set the intra block ratio
+	void SetIntraBlockRatio(const float r){ m_intra_block_ratio = r; }
+
         //! Set up the lambda map by detecting motion discontinuities 
         void SetLambdaMap( const int num_refs , const float lambda );
 
@@ -414,6 +420,9 @@ namespace dirac
 
         // Global motion inliers
         OneDArray< TwoDArray<int>* > m_inliers;
+
+	// Intra block ratio
+	float m_intra_block_ratio;
 
     };
 

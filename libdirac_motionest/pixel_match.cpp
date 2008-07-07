@@ -56,7 +56,7 @@ PixelMatcher::PixelMatcher( const EncoderParams& encp):
 {}
 
 
-void PixelMatcher::DoSearch(const EncQueue& my_buffer, int pic_num, MEData& me_data)
+void PixelMatcher::DoSearch( EncQueue& my_buffer, int pic_num )
 {
 
      //does an initial search using hierarchical matching to get guide vectors    
@@ -131,6 +131,7 @@ void PixelMatcher::DoSearch(const EncQueue& my_buffer, int pic_num, MEData& me_d
 
         // Finally, do the top level, with the pictures themselves
         m_level = 0;
+	MEData& me_data = my_buffer.GetPicture(pic_num).GetMEData();
         MatchPic( pic_data , ref1_data, me_data , *(me_data_set[1]) , 1 );
         if ( ref1 != ref2 )
             MatchPic( pic_data , ref2_data , me_data , *(me_data_set[1]) , 2 );
@@ -146,6 +147,7 @@ void PixelMatcher::DoSearch(const EncQueue& my_buffer, int pic_num, MEData& me_d
     {
         m_depth = 0;
         m_level = 0;
+	MEData& me_data = my_buffer.GetPicture(pic_num).GetMEData();
         MatchPic( pic_data , ref1_data, me_data , me_data , 1 );
         if ( ref1 != ref2 )
             MatchPic( pic_data , ref2_data , me_data , me_data , 2 );

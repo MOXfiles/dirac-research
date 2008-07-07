@@ -97,10 +97,9 @@ namespace dirac
 
         /**
         * Adds a random access point to the current Dirac byte stream
-        *@param p_accessunit_byteio Access-unit stream. This class is
-        * now responsible for deleting
+        *@param p_seqheader_byteio Sequence header data. 
         */
-        void AddAccessUnit(AccessUnitByteIO *p_accessunit_byteio);
+        void AddSequenceHeader(SequenceHeaderByteIO *p_seqheader_byteio);
 
         /**
         * Adds a picture to the current Dirac byte stream

@@ -89,9 +89,8 @@ namespace dirac
             Does the mode decision
             \param    my_buffer    the buffer of all the relevant frames
             \param    pic_num    the picture number for which motion estimation is being done
-            \param    me_data    the motion vector data into which decisions will be written
          */
-        void DoModeDecn( const EncQueue& my_buffer , int pic_num , MEData& me_data);
+        void DoModeDecn( EncQueue& my_buffer , int pic_num );
 
     private:
         ModeDecider( const ModeDecider& cpy );//private, body-less copy constructor: this class should not be copied
@@ -118,6 +117,16 @@ namespace dirac
 
         //! Get a measure of DC value variance
         float GetDCVar( const ValueType dc_val , const ValueType dc_pred);
+
+        //! Go through all the intra blocks and extract the chroma dc values to be coded
+        void SetChromaDC( EncQueue& my_buffer, int pic_num);
+
+        //! Called by previous fn for each component
+        void SetChromaDC(const PicArray& pic_data, MEData& me_data,CompSort csort);        
+
+        //! Called by previous fn for each block
+        ValueType GetChromaBlockDC(const PicArray& pic_data, int xloc,int yloc,int split);
+
 
          // Member data
         PictureSort m_psort;

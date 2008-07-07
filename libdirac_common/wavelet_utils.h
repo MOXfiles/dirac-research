@@ -312,57 +312,8 @@ namespace dirac
     private:
         std::vector<Subband> bands;
     };
-
-    //! A class to do wavelet transforms
-    /*!
-        A class to do forward and backward wavelet transforms by iteratively splitting or merging the
-        lowest frequency band.
-    */
-    class WaveletTransform
-    {
-    public:
-        //! Constructor
-        WaveletTransform(int d = 4, WltFilter f = DAUB9_7);
-
-        //! Destructor
-        virtual ~WaveletTransform();
-
-        //! Transforms the data to and from the wavelet domain
-        /*!
-            Transforms the data to and from the wavelet domain.
-            \param    d    the direction of the transform
-            \param    pic_data    the data to be transformed
-            \param    coeff_data  array that holds the transform coefficient data
-        */
-        void Transform(const Direction d, PicArray& pic_data, CoeffArray& coeff_data);
-
-        //! Returns the set of subbands
-        SubbandList& BandList(){return m_band_list;}
-
-        //! Returns the set of subbands
-        const SubbandList& BandList() const {return m_band_list;}
-
-        //! Sets the subband weights
-        /*!
-            Sets perceptual weights for the subbands. Takes into account both perceptual factors
-            (weight noise less at higher spatial frequencies) and the scaling needed for the
-            wavelet transform.
-
-            \param    cpd          perceptual factor - the number of cycles per degree
-            \param    fsort        the picture sort (I, L1 or L2)
-            \param    cformat      the chroma format
-            \param    csort        the component type (Y, U or V)
-            \param    field_coding True if input is coded as fields
-        */
-        void SetBandWeights (const float cpd,
-                             const PictureSort& fsort,
-                             const ChromaFormat& cformat,
-                             const CompSort csort,
-                             const bool field_coding);
-
-    private:
-        // Classes used within wavelet transform
-        
+ 
+    class CoeffArray;   
         //! A virtual parent class to do vertical and horizontal splitting with wavelet filters
         class VHFilter
         {
@@ -378,12 +329,6 @@ namespace dirac
 
             //! Create a single band from 4 quadrant bands
             virtual void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data)=0;
-
-            //! Return a correction factor to compensate for non-unity gain of low-pass filter
-            virtual double GetLowFactor() const=0;
-
-            //! Return a correction factor to compensate for non-unity gain of high-pass filter
-            virtual double GetHighFactor() const =0;
 
             //! Return the value of the additional bitshift
             virtual int GetShift() const =0;
@@ -416,12 +361,6 @@ namespace dirac
             //! Create a single band from 4 quadrant bands
             void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
-            //! Return a correction factor to compensate for non-unity gain of low-pass filter
-            double GetLowFactor() const { return 1.149604398;}
-
-            //! Return a correction factor to compensate for non-unity gain of high-pass filter
-            double GetHighFactor() const { return 0.869864452;}
-
             //! Return the value of the additional bitshift
             int GetShift() const {return 1;}
 
@@ -440,13 +379,7 @@ namespace dirac
             //! Create a single band from 4 quadrant bands
             void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
-            //! Return a correction factor to compensate for non-unity power gain of low-pass filter
-            double GetLowFactor() const { return 1.179535649;}
-
-            //! Return a correction factor to compensate for non-unity power gain of high-pass filter
-            double GetHighFactor() const { return 0.81649658;}
-
-            //! Return the value of the additional bitshift
+           //! Return the value of the additional bitshift
             int GetShift() const {return 1;}
 
 
@@ -468,15 +401,8 @@ namespace dirac
             //! Create a single band from 4 quadrant bands
             void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
-            //! Return a correction factor to compensate for non-unity power gain of low-pass filter
-            double GetLowFactor() const { return 1.218660804;}
-
-            //! Return a correction factor to compensate for non-unity power gain of high-pass filter
-            double GetHighFactor() const { return 0.780720058;}
-
             //! Return the value of the additional bitshift
             int GetShift() const {return 1;}
-
         };
 
 
@@ -492,13 +418,7 @@ namespace dirac
             //! Create a single band from 4 quadrant bands
             void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
-            //! Return a correction factor to compensate for non-unity power gain of low-pass filter
-            double GetLowFactor() const { return 1.235705971;}
-
-            //! Return a correction factor to compensate for non-unity power gain of high-pass filter
-            double GetHighFactor() const { return 0.780719354;}
-
-            //! Return the value of the additional bitshift
+           //! Return the value of the additional bitshift
             int GetShift() const {return 1;}
 
         };
@@ -515,13 +435,7 @@ namespace dirac
             //! Create a single band from 4 quadrant bands
             void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
-            //! Return a correction factor to compensate for non-unity power gain of low-pass filter
-            double GetLowFactor() const { return 1.414213562;}
-
-            //! Return a correction factor to compensate for non-unity power gain of high-pass filter
-            double GetHighFactor() const { return 0.707106781;}
-
-            //! Return the value of the additional bitshift
+           //! Return the value of the additional bitshift
             int GetShift() const {return 0;}
 
 
@@ -539,15 +453,8 @@ namespace dirac
             //! Create a single band from 4 quadrant bands
             void Synth(const int xp, const int yp, const int xl, const int yl, CoeffArray& coeff_data);
 
-            //! Return a correction factor to compensate for non-unity power gain of low-pass filter
-            double GetLowFactor() const { return 1.414213562;}
-
-            //! Return a correction factor to compensate for non-unity power gain of high-pass filter
-            double GetHighFactor() const { return 0.707106781;}
-
-            //! Return the value of the additional bitshift
+           //! Return the value of the additional bitshift
             int GetShift() const {return 1;}
-
 
         };
 
@@ -706,14 +613,100 @@ namespace dirac
             {
                 in_val += static_cast< CoeffType >( (gain * static_cast< int >( val1 + val2 )) >>12 );
             }
-        };
+        };   
+    
+    //! A class for wavelet coefficient data.
+    /*!
+        A class for encapsulating coefficient data, derived from TwoDArray..
+     */
+    class CoeffArray: public TwoDArray<CoeffType>
+    {
+    public:
+        //! Default constructor
+        /*!
+            Default constructor creates an empty array.
+        */
+        CoeffArray(): TwoDArray<CoeffType>(){}
+
+        //! Constructor.
+        /*!
+            Contructor creates a two-D array, with specified size and colour
+            format.
+        */
+        CoeffArray(int height, int width, CompSort cs=Y_COMP): 
+            TwoDArray<CoeffType>(height, width), m_csort(cs){}
+
+        //copy constructor and assignment= derived by inheritance
+
+        //! Destructor
+        ~CoeffArray(){}
+        
+        //! Return which component is stored
+        const CompSort& CSort() const {return m_csort;}
+        
+        //! Set the type of component being stored
+        void SetCSort(const CompSort cs){ m_csort = cs; }
+ 
+        //! Returns the set of subbands
+        SubbandList& BandList(){return m_band_list;}
+
+        //! Returns the set of subbands
+        const SubbandList& BandList() const {return m_band_list;}
+
+        //! Sets the subband weights
+        /*!
+            Sets perceptual weights for the subbands. Takes into account both perceptual factors
+            (weight noise less at higher spatial frequencies) and the scaling needed for the
+            wavelet transform.
+        */
+        void SetBandWeights (const EncoderParams& encparams,
+                                 const PictureParams& pparams,
+                                 const CompSort csort);
+
+       
+        private:
+
+        CompSort m_csort;
+
+        // The subband list to be used for conventional transform apps
+        SubbandList m_band_list;
+
+        private:
+
+         //! Given x and y spatial frequencies in cycles per degree, returns a weighting value
+        float PerceptualWeight(float xf,float yf,CompSort cs);
+ 
+    };
+
+    //! A class to do wavelet transforms
+    /*!
+        A class to do forward and backward wavelet transforms by iteratively splitting or merging the
+        lowest frequency band.
+    */
+    class WaveletTransform
+    {
+    public:
+        //! Constructor
+        WaveletTransform(int d = 4, WltFilter f = DAUB9_7);
+
+        //! Destructor
+        virtual ~WaveletTransform();
+
+        //! Transforms the data to and from the wavelet domain
+        /*!
+            Transforms the data to and from the wavelet domain.
+            \param    d    the direction of the transform
+            \param    pic_data    the data to be transformed
+            \param    coeff_data  array that holds the transform coefficient data
+        */
+        void Transform(const Direction d, PicArray& pic_data, CoeffArray& coeff_data);
+
+    private:
+
 
     private:
 
         // Private variables
-
-        // The subband list to be used for conventional transform apps
-        SubbandList m_band_list;
 
         //! Depth of the transform
         int m_depth;
@@ -732,10 +725,7 @@ namespace dirac
         //! Private, bodyless copy operator=: class should not be assigned
         WaveletTransform& operator=(const WaveletTransform& rhs);
 
-        //! Given x and y spatial frequencies in cycles per degree, returns a weighting value
-        float PerceptualWeight(float xf,float yf,CompSort cs);
-    
-    };
+   };
 }// end namespace dirac
 
 #endif

@@ -152,23 +152,24 @@ bool PictureDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
         CompDecompressor my_compdecoder( m_decparams , pic.GetPparams() );
 
         PicArray* comp_data[3];
-        CoeffArray coeff_data[3];
+        CoeffArray* coeff_data[3];
 
         const int depth( m_decparams.TransformDepth() );
         WaveletTransform wtransform( depth, m_decparams.TransformFilter() );
 
+        pic.InitWltData( depth );
+
         for (int c=0; c<3; ++c){
             ComponentByteIO component_byteio((CompSort) c, transform_byteio);
             comp_data[c] = &pic.Data((CompSort) c);
+            coeff_data[c] = &pic.WltData((CompSort) c);
 
-            InitCoeffData( coeff_data[c], comp_data[c]->LengthX(), comp_data[c]->LengthY() );
+            SubbandList& bands = coeff_data[c]->BandList();
 
-            SubbandList& bands = wtransform.BandList();
+            bands.Init(depth , coeff_data[c]->LengthX() , coeff_data[c]->LengthY());
+            my_compdecoder.Decompress(&component_byteio, *(coeff_data[c]), bands );
 
-            bands.Init(depth , coeff_data[c].LengthX() , coeff_data[c].LengthY());
-            my_compdecoder.Decompress(&component_byteio, coeff_data[c], bands );
-
-            wtransform.Transform(BACKWARD,*(comp_data[c]), coeff_data[c]);
+            wtransform.Transform(BACKWARD,*(comp_data[c]), *(coeff_data[c]));
         }
     }
     else

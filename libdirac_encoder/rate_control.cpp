@@ -109,9 +109,13 @@ RateController::RateController(int trate, SourceParams& srcp, EncoderParams& enc
     {
         m_Iframe_bits = m_total_GOP_bits/10;
         m_L1frame_bits = (m_Iframe_bits*3)/m_num_L1frame;
-        m_L2frame_bits = ( m_total_GOP_bits - m_Iframe_bits - 
-                           m_L1frame_bits*m_num_L1frame )/
-                     (m_encparams.GOPLength()-1-m_num_L1frame);
+	if (m_encparams.L1Sep()>1)
+            m_L2frame_bits = ( m_total_GOP_bits - m_Iframe_bits - 
+                               m_L1frame_bits*m_num_L1frame )/
+                         (m_encparams.GOPLength()-1-m_num_L1frame);
+	else
+	    m_L2frame_bits = 0;
+
     }
 }
 
@@ -149,7 +153,7 @@ void RateController::CalcTotalBits(const SourceParams& sourceparams)
 
         std::cout<<"GOP Length = "<<GOP_length<< std::endl;
 
-        std::cout<<"Picture Rate = "<<f_rate<< std::endl;
+        std::cout<<"Frame Rate = "<<f_rate<< std::endl;
 
         std::cout<<"GOP Duration = "<<m_GOP_duration<< std::endl;
 
@@ -194,9 +198,9 @@ void RateController::CalcNextQualFactor(const PictureParams& fparams, int num_bi
     // L2 frame before the next L1 frame i.e. before the start of an L1L2L2
     // subgroup
     m_fcount--;
-
     UpdateBuffer( num_bits );
     
+    int field_factor = m_encparams.FieldCoding() ? 2 : 1;
 
     if (!m_intra_only)
     {
@@ -205,7 +209,7 @@ void RateController::CalcNextQualFactor(const PictureParams& fparams, int num_bi
 
         // First, do normal coding
 
-        if ( fparams.PictureNum() % m_encparams.GOPLength()==0 )
+        if ( (fparams.PictureNum()/field_factor) % m_encparams.GOPLength()==0 )
         {
             // We have a scheduled I frame
             target = m_Iframe_bits;
@@ -223,8 +227,7 @@ void RateController::CalcNextQualFactor(const PictureParams& fparams, int num_bi
             // the next group of L2(B) frames
             m_encparams.SetQf( m_qf );
 
-            if (fparams.PictureNum()==0 ||
-               (m_encparams.FieldCoding() && fparams.PictureNum() < 2))
+            if (fparams.PictureNum()/field_factor==0)
             {
                 // We've just coded the very first frame, which is a special
                 // case as the two L2 frames which normally follow are missing
@@ -239,7 +242,7 @@ void RateController::CalcNextQualFactor(const PictureParams& fparams, int num_bi
             // group if we can (L1 frame) or if we need to (emergency).
 
             //Update complexities
-            if ( fparams.PictureNum() % m_encparams.L1Sep() !=0 )
+            if ( (fparams.PictureNum()/field_factor) % m_encparams.L1Sep() !=0 )
             {
                 // Scheduled B/L2 picture 
                 
@@ -269,7 +272,6 @@ void RateController::CalcNextQualFactor(const PictureParams& fparams, int num_bi
 
         if ( m_fcount==0 || emergency_realloc==true)
         {
-
             if (emergency_realloc==true && m_encparams.Verbose()==true )
                 std::cout<<std::endl<<"Major undershoot of frame bit rate: re-allocating";
             
@@ -281,7 +283,7 @@ void RateController::CalcNextQualFactor(const PictureParams& fparams, int num_bi
                 m_frame_complexity.SetL2Complexity(m_L2_complexity_sum/
                                                   (m_encparams.L1Sep()-1-m_fcount));
             }
-            Allocate(fparams.PictureNum());
+            Allocate( (fparams.PictureNum()/field_factor) );
 
             /* We work out what this means for the quality factor and set it*/
 
@@ -483,7 +485,7 @@ float RateController::ClipQualityFactor( const float qfac )
 {
     // Keep the quality factor in a sensible range
     if ( !m_intra_only )
-        return std::min( std::max(qfac, 0.0f) , 16.0f );
+        return std::min( std::max(qfac, 0.0f), 16.0f);
     else
         return std::max(qfac, 0.0f);
 }

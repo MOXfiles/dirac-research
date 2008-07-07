@@ -62,7 +62,7 @@ SubpelRefine::SubpelRefine(const EncoderParams& encp):
 
 }
 
-void SubpelRefine::DoSubpel(const EncQueue& my_buffer,int pic_num, MEData& me_data)
+void SubpelRefine::DoSubpel( EncQueue& my_buffer,int pic_num )
 {
     //main loop for the subpel refinement
     int ref1,ref2;
@@ -84,6 +84,8 @@ void SubpelRefine::DoSubpel(const EncQueue& my_buffer,int pic_num, MEData& me_da
         const PicArray& pic_data = my_buffer.GetPicture(pic_num).OrigData(Y_COMP);
         const PicArray& refup1_data = my_buffer.GetPicture(ref1).UpOrigData(Y_COMP);
         const PicArray& refup2_data = my_buffer.GetPicture(ref2).UpOrigData(Y_COMP);
+
+	MEData& me_data = my_buffer.GetPicture(pic_num).GetMEData();
 
         // Now match the pictures
         MatchPic( pic_data , refup1_data , me_data ,1 );
