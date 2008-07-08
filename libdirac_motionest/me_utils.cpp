@@ -53,6 +53,7 @@
 using namespace dirac;
 
 #include <algorithm>
+#define INTRA_HAAR
 
 void BlockDiffParams::SetBlockLimits( const OLBParams& bparams ,
                                       const PicArray& m_pic_data , 
@@ -280,6 +281,61 @@ void PelBlockDiff::Diff( const BlockDiffParams& dparams,
     
 }
 
+ValueType IntraBlockDiff::CalcDC( const BlockDiffParams& dparams ){
+
+    CalcValueType int_dc( 0 );
+
+    for ( int j=dparams.Yp() ; j<dparams.Yp()+dparams.Yl() ; ++j)
+        for(int i=dparams.Xp(); i<dparams.Xp()+dparams.Xl() ; ++i )
+            int_dc += static_cast<int>( m_pic_data[j][i] );
+
+    int_dc /= ( dparams.Xl() * dparams.Yl() );
+
+    return static_cast<ValueType>( int_dc );
+}
+
+#ifdef INTRA_HAAR
+float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
+{
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        dc_val = 0;
+        return 0;
+    }
+
+    dc_val = CalcDC(dparams);
+
+    // Now compute the resulting SAD
+    ValueType dc( dc_val );
+    CalcValueType intra_cost( 0 );
+
+    for (int j=dparams.Yp(); j<dparams.Yend() ; j+=2){
+        for( int i=dparams.Xp() ; i<dparams.Xend() ;i+=2 ){
+            intra_cost += std::abs( m_pic_data[j][i]  
+	                          + m_pic_data[j][i+1]
+	                          + m_pic_data[j+1][i]
+	                          + m_pic_data[j+1][i+1]
+				  - 4*dc );
+            intra_cost += std::abs( m_pic_data[j][i]  
+	                          + m_pic_data[j][i+1]
+	                          - m_pic_data[j+1][i]
+	                          - m_pic_data[j+1][i+1] );
+            intra_cost += std::abs( m_pic_data[j][i]  
+	                          - m_pic_data[j][i+1]
+	                          + m_pic_data[j+1][i]
+	                          - m_pic_data[j+1][i+1] );
+            intra_cost += std::abs( m_pic_data[j][i]  
+	                          - m_pic_data[j][i+1]
+	                          - m_pic_data[j+1][i]
+	                          + m_pic_data[j+1][i+1] );
+        }
+    }
+   
+    return static_cast<float>( intra_cost );
+}
+
+#else
+
 float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
 {
     if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
@@ -345,7 +401,7 @@ float IntraBlockDiff::Diff( const BlockDiffParams& dparams , ValueType& dc_val )
     return static_cast<float>( intra_cost );
 #endif //HAVE_MMX
 }
-
+#endif
 
 float BlockDiffHalfPel::Diff(  const BlockDiffParams& dparams , 
                                       const MVector& mv )

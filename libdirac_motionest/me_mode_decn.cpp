@@ -165,9 +165,7 @@ void ModeDecider::DoModeDecn( EncQueue& my_buffer, int pic_num )
     // Finally, although not strictly part of motion estimation,
     // we have to assign DC values for chroma components for
     // blocks we're decided are intra.
-
     SetChromaDC( my_buffer , pic_num );
-
 
 }
 
@@ -445,7 +443,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
         me_data.IntraCosts()[ypos][xpos] *= m_level_factor[level];
         unit_cost = me_data.IntraCosts()[ypos][xpos] +  mode_cost;
 
-        if ( unit_cost<min_unit_cost && me_data.IntraCosts()[ypos][xpos]<0.9*best_SAD_value)
+        if ( unit_cost<min_unit_cost && me_data.IntraCosts()[ypos][xpos]<1.2*best_SAD_value)
         {
             me_data.Mode()[ypos][xpos] = INTRA;
             min_unit_cost = unit_cost;
@@ -457,7 +455,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
 
 ValueType ModeDecider::GetDCPred( int xblock , int yblock )
 {
-    ValueType dc_pred = 128;
+    ValueType dc_pred = 0;
 
     if ( xblock>0 && m_me_data_set[2]->Mode()[yblock][xblock-1] == INTRA )
     {
@@ -521,13 +519,9 @@ ValueType ModeDecider::GetChromaBlockDC(const PicArray& pic_data,
     dparams.SetBlockLimits( m_encparams.ChromaBParams( split ) , 
                             pic_data, xunit , yunit);
 
-    ValueType dc;
-
     IntraBlockDiff intradiff( pic_data );
 
-    intradiff.Diff( dparams , dc );
-
-    return dc;
+    return intradiff.CalcDC( dparams );
 }
 
 void ModeDecider::SetChromaDC( const PicArray& pic_data , MEData& me_data , CompSort csort )

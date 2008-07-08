@@ -205,13 +205,16 @@ namespace dirac
         */
         IntraBlockDiff( const PicArray& pic );
 
-        //! Do the difference, returning SAD
+        //! Do the difference, calculating the DC value and returning SAD
         /*!
-            Do the difference, returning SAD
+            Do the difference, calculating the DC value and returning SAD
             \param    dparams    block parameters
             \param    dc_val     DC value
         */        
         float Diff( const BlockDiffParams& dparams , ValueType& dc_val );
+
+        //! Calculate a DC value
+	ValueType CalcDC( const BlockDiffParams& dparams);
 
     private:
         //! Private, bodyless copy-constructor: class should not be copied
