@@ -1,6 +1,6 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
-* $Id$ $Name$
+* $Id: enc_picture.cpp,v 1.1 2008/06/19 10:02:02 tjdwave Exp $ $Name:  $
 *
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
@@ -45,7 +45,8 @@ EncPicture::EncPicture( const PictureParams& pp):
     m_me_data( NULL ),
     m_status( NO_ENC ),
     m_complexity( 0.0 ),
-    m_norm_complexity( 1.0 )
+    m_norm_complexity( 1.0 ),
+    m_pred_bias(0.5)
 {
     for (int c=0; c<3; ++c ){
         m_orig_data[c] = new PicArray( m_pic_data[c]->LengthY(), m_pic_data[c]->LengthX() ); 
@@ -234,4 +235,15 @@ void EncPicture::AntiAliasFilter( PicArray& out_data, const PicArray& in_data ) 
     }
 }
 
+void EncPicture::DropRef( int rindex ){
 
+    std::vector<int> refs = m_pparams.Refs();
+
+    if (rindex==1 || rindex==2 ) 
+        refs.erase( refs.begin()+rindex-1 );
+
+    // Now reconfigure the motion data
+    if ( m_me_data!=NULL )
+        m_me_data->DropRef( rindex ); 
+
+}

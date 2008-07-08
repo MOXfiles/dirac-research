@@ -1,6 +1,6 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
-* $Id$ $Name$
+* $Id: motion.h,v 1.23 2008/03/14 08:17:36 asuraparaju Exp $ $Name:  $
 *
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
@@ -285,7 +285,7 @@ namespace dirac
         //! Return the number of reference frames
         unsigned int NumRefs()const {return m_num_refs;}
 
-    private:
+    protected:
         // Initialises the arrays of data
         void InitMvData();
 
@@ -308,7 +308,7 @@ namespace dirac
         OneDArray< OneDArray<float>* > m_gm_params;
 
         // Number of reference frames
-        const unsigned int m_num_refs;
+        unsigned int m_num_refs;
     };
 
     //! Class for all the motion estimation data
@@ -344,6 +344,9 @@ namespace dirac
 
         //! Destructor
         ~MEData();
+	
+	//! drop the data relating to one reference
+	void DropRef( int ref_index );
 
         //! Get the block cost structures for each reference
         TwoDArray<MvCostData>& PredCosts(const int ref_id){ return *( m_pred_costs[ref_id] ); }
@@ -453,7 +456,7 @@ namespace dirac
     inline int Norm1(const MVector& mv){//L^1 norm of a motion vector
         return abs(mv.x)+abs(mv.y);
     }
-
+    
     //! Return the mean of a set of unsigned integer values
     unsigned int GetUMean(std::vector<unsigned int>& values);
     

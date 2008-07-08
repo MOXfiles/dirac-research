@@ -1,6 +1,6 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
-* $Id$ $Name$
+* $Id: enc_picture.h,v 1.1 2008/06/19 10:02:02 tjdwave Exp $ $Name:  $
 *
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
@@ -77,6 +77,8 @@ public:
     //! Returns the motion data
     const MEData& GetMEData() const { return *m_me_data;}
 
+    //! Drops a reference from the motion vector data
+    void DropRef( int rindex );
 
 
     //! Returns a given component of the original data
@@ -111,6 +113,10 @@ public:
 
     void SetNormComplexity( double c ){ m_norm_complexity = c; }
 
+    double GetPredBias() const { return m_pred_bias; }
+
+    void SetPredBias( double b ){ m_pred_bias = b; }
+
 
 private:
 
@@ -142,6 +148,7 @@ private:
     double m_complexity;
     double m_norm_complexity;
 
+    double m_pred_bias;
 };
 
 

@@ -1,6 +1,6 @@
 /* ***** BEGIN LICENSE BLOCK *****
 *
-* $Id$ $Name$
+* $Id: motion.cpp,v 1.22 2008/02/01 19:52:30 tjdwave Exp $ $Name:  $
 *
 * Version: MPL 1.1/GPL 2.0/LGPL 2.1
 *
@@ -372,6 +372,42 @@ MEData::~MEData()
 
      for ( int i=m_inliers.First() ; i<=m_inliers.Last() ; ++i )
         delete m_inliers[i];
+}
+
+void MEData::DropRef( const int rindex ){
+
+    if (m_num_refs>0){
+        m_num_refs--;
+
+        if (rindex==2){std::cout<<std::endl<<"Dropping reference 2";}
+	else if (rindex==1){
+std::cout<<std::endl<<"Dropping reference 1";
+           // Swap data for reference 1 and reference 2
+	   // so that reference 2 becomes the new reference 1
+
+           MvArray* ptr = m_vectors[1];
+	   m_vectors[1] = m_vectors[2];
+	   m_vectors[2] = ptr;
+
+           ptr = m_gm_vectors[1];
+	   m_gm_vectors[1] = m_gm_vectors[2];
+	   m_gm_vectors[2] = ptr;
+
+           OneDArray<float>* ptr2 = m_gm_params[1];
+	   m_gm_params[1] = m_gm_params[2];
+	   m_gm_params[2] = ptr2;
+
+           TwoDArray<MvCostData>* ptr3 = m_pred_costs[1];
+	   m_pred_costs[1] = m_pred_costs[2];
+	   m_pred_costs[2] = ptr3;
+
+           TwoDArray<int>* ptr4 = m_inliers[1];
+	   m_inliers[1] = m_inliers[2];
+	   m_inliers[2] = ptr4;
+
+	}
+
+    }
 }
 
 namespace dirac
