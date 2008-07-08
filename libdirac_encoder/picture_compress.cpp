@@ -96,17 +96,42 @@ void PictureCompressor::CalcComplexity( EncQueue& my_buffer, int pnum , const OL
 	else
 	    pcosts2 = pcosts1;
 
-        float cost;
+        float cost1, cost2, cost;
+	double total_cost1 = 0.0;
+	double total_cost2 = 0.0;
 	double total_cost = 0.0;
+
+	int count1=0;int count=0;
+
+	float cost_threshold = float(olbparams.Xblen()*olbparams.Yblen()*10);
 
 	for (int j=4; j<pcosts1->LengthY()-4; ++j){
 	    for (int i=4; i<pcosts1->LengthX()-4; ++i){
-	        cost = (*pcosts1)[j][i].SAD;
-		cost = std::min(cost, (*pcosts2)[j][i].SAD );
+	        cost1 = (*pcosts1)[j][i].SAD;
+	        cost2 = (*pcosts2)[j][i].SAD;
+		cost = std::min(cost1, cost2);
+		total_cost1 += cost1;
+		total_cost2 += cost2;
 		total_cost += cost;
+		if (me_data.NumRefs()>1 && cost<=cost_threshold){
+		    ++count;
+                    if (cost1<=cost2)
+		        ++count1;
+		}
 	    }
 
 	}
+	total_cost1 *= olbparams.Xbsep()*olbparams.Ybsep();
+	total_cost1 /= olbparams.Xblen()*olbparams.Yblen();
+
+	total_cost2 *= olbparams.Xbsep()*olbparams.Ybsep();
+	total_cost2 /= olbparams.Xblen()*olbparams.Yblen();
+
+        if (me_data.NumRefs()>1){
+	    my_picture.SetPredBias(float(count1)/float(count));
+        }
+	else
+	    my_picture.SetPredBias(0.5);
 
 	total_cost *= olbparams.Xbsep()*olbparams.Ybsep();
 	total_cost /= olbparams.Xblen()*olbparams.Yblen();
