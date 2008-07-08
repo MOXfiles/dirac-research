@@ -537,7 +537,7 @@ void PictureCompressor::AnalyseMEData( MEData& me_data )
                           static_cast<double>( modes.LengthX() * modes.LengthY() ) );
 
     if ( m_encparams.Verbose() )
-        std::cout<<std::endl<<me_data.IntraBlockRatio()<<"% of blocks are intra   ";
+        std::cout<<std::endl<<me_data.IntraBlockRatio()*100.0<<"% of blocks are intra   ";
    
     if ( me_data.IntraBlockRatio() > 0.3333 )
         m_is_a_cut = true;
