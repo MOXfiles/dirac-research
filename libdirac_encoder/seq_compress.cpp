@@ -417,8 +417,8 @@ void SequenceCompressor::CleanBuffers()
 {
     // If we're not at the beginning, clean the buffer
     if ( m_current_code_pnum != 0 )
-//        m_enc_pbuffer.CleanRetired( m_show_pnum, m_current_display_pnum );
-        m_enc_pbuffer.CleanRetired( m_show_pnum, std::max(m_current_display_pnum-10, 0 ) );
+        m_enc_pbuffer.CleanRetired( m_show_pnum, m_current_display_pnum );
+//        m_enc_pbuffer.CleanRetired( m_show_pnum, std::max(m_current_display_pnum-10, 0 ) );
 }
 
 const EncPicture *SequenceCompressor::GetPictureEncoded()
@@ -504,7 +504,7 @@ void FrameSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
                 pparams.SetPicSort( PictureSort::IntraNonRefPictureSort());
                 
             // I picture expires after we've coded the next I picture
-            pparams.SetExpiryTime( gop_len );
+            pparams.SetExpiryTime( 2*L1_sep );
         }
         else if (pnum % L1_sep == 0){
             pparams.SetPicSort( PictureSort::InterRefPictureSort());
