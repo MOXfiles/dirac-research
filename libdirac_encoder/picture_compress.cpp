@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), 
+* Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
 *                 Chris Bowley,
 *                 Anuradha Suraparaju,
@@ -140,7 +140,7 @@ void PictureCompressor::CalcComplexity( EncQueue& my_buffer, int pnum , const OL
 	my_picture.SetComplexity( total_cost*total_cost );
 
     }
-    
+
 }
 
 void PictureCompressor::CalcComplexity2( EncQueue& my_buffer, int pnum )
@@ -170,7 +170,7 @@ void PictureCompressor::CalcComplexity2( EncQueue& my_buffer, int pnum )
 	my_picture.SetComplexity( total_sq_cost - total_cost*total_cost );
 
     }
-    
+
 }
 
 
@@ -180,7 +180,7 @@ void PictureCompressor::NormaliseComplexity( EncQueue& my_buffer, int pnum )
     EncPicture& my_picture = my_buffer.GetPicture( pnum );
 
     if ( (my_picture.GetStatus()&DONE_PIC_COMPLEXITY) != 0 ){
-    
+
          std::vector<int> queue_members = my_buffer.Members();
 
 	 double mean_complexity = 0.0;
@@ -189,9 +189,9 @@ void PictureCompressor::NormaliseComplexity( EncQueue& my_buffer, int pnum )
 	     int n = queue_members[i];
 	     EncPicture& enc_pic = my_buffer.GetPicture( n );
 
-	     if ( (enc_pic.GetStatus()&DONE_PIC_COMPLEXITY) != 0 
-	           && enc_pic.GetPparams().PicSort().IsInter() 
-	           && n >= pnum - 10 
+	     if ( (enc_pic.GetStatus()&DONE_PIC_COMPLEXITY) != 0
+	           && enc_pic.GetPparams().PicSort().IsInter()
+	           && n >= pnum - 10
 		   && n <= pnum + 10){
 	         mean_complexity += enc_pic.GetComplexity();
                  count++;
@@ -199,7 +199,7 @@ void PictureCompressor::NormaliseComplexity( EncQueue& my_buffer, int pnum )
 
 	 }
          mean_complexity /= count;
-         my_picture.SetNormComplexity( my_picture.GetComplexity() / mean_complexity ); 
+         my_picture.SetNormComplexity( my_picture.GetComplexity() / mean_complexity );
 
     }
 
@@ -212,7 +212,7 @@ void PictureCompressor::SubPixelME( EncQueue& my_buffer , int pnum )
 
     PictureParams& pparams = my_buffer.GetPicture(pnum).GetPparams();
     MEData& me_data = my_buffer.GetPicture(pnum).GetMEData();
-    
+
     float lambda;
     if ( pparams.IsBPicture())
         lambda = m_encparams.L2MELambda();
@@ -226,7 +226,7 @@ void PictureCompressor::SubPixelME( EncQueue& my_buffer , int pnum )
 
     m_orig_prec = m_encparams.MVPrecision();
 
-    // Step 2. 
+    // Step 2.
     // Pixel accurate vectors are then refined to sub-pixel accuracy
 
     if (m_orig_prec != MV_PRECISION_PIXEL)
@@ -273,7 +273,7 @@ void PictureCompressor::ModeDecisionME( EncQueue& my_buffer, int pnum )
         // FIXME: HACK HACK
         // Divide the motion vectors by 2 to convert back to pixel
         // accurate motion vectors and reset MV precision to
-        // PIXEL accuracy 
+        // PIXEL accuracy
         MvArray &mv_arr1 = me_data.Vectors(1);
         for (int j = 0; j < mv_arr1.LengthY(); ++j)
         {
@@ -578,8 +578,8 @@ if (pparams.IsBPicture() )
             log_picture_lambda= std::log10( m_encparams.L1Lambda() );
 
 //*/
-        float intra_ratio = my_picture.GetMEData().IntraBlockRatio();       
- 
+        float intra_ratio = 100.0*my_picture.GetMEData().IntraBlockRatio();       
+
         lambda= std::pow(10.0, ( (1.7*intra_ratio*log_intra_lambda+
                          (100.0-2*intra_ratio)*log_picture_lambda )/100.0) );
 

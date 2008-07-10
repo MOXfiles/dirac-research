@@ -273,8 +273,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 		    }
 
 		    //6. Revise the number of references if one ref is a bad predictor
-		    if (pparams.IsBPicture()!=true &&
-		        (enc_pic.GetStatus() & DONE_PIC_COMPLEXITY)!=0 &&
+		    if ( (enc_pic.GetStatus() & DONE_PIC_COMPLEXITY)!=0 &&
 			pparams.NumRefs()!=1){
                         if (enc_pic.GetPredBias()>0.8)
 			    enc_pic.DropRef(2);
