@@ -131,7 +131,7 @@ void EntropyCorrector::Init()
 
 }
 
-void EntropyCorrector::Update(int bandnum , const PictureParams& pp , 
+void EntropyCorrector::Update(int bandnum , const PictureParams& pp ,
                        CompSort c ,int est_bits , int actual_bits){
     //updates the factors - note that the estimated bits are assumed to already include the correction factor
 
