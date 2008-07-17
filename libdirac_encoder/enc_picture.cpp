@@ -237,13 +237,13 @@ void EncPicture::AntiAliasFilter( PicArray& out_data, const PicArray& in_data ) 
 
 void EncPicture::DropRef( int rindex ){
 
-    std::vector<int> refs = m_pparams.Refs();
+    std::vector<int>& refs = m_pparams.Refs();
 
-    if (rindex==1 || rindex==2 ) 
+    if (rindex==1 || rindex==2 )
         refs.erase( refs.begin()+rindex-1 );
 
     // Now reconfigure the motion data
     if ( m_me_data!=NULL )
-        m_me_data->DropRef( rindex ); 
+        m_me_data->DropRef( rindex );
 
 }

@@ -86,10 +86,10 @@ void PictureCompressor::CalcComplexity( EncQueue& my_buffer, int pnum , const OL
 
     if ( (my_picture.GetStatus()&DONE_PEL_ME) != 0 ){
         MEData& me_data = my_picture.GetMEData();
-        
+
         TwoDArray<MvCostData>* pcosts1;
         TwoDArray<MvCostData>* pcosts2;
-	
+
 	pcosts1 = &me_data.PredCosts(1);
 	if (me_data.NumRefs()>1)
 	    pcosts2 = &me_data.PredCosts(2);
@@ -298,7 +298,7 @@ bool PictureCompressor::CutDetect( EncQueue& my_buffer, int pnum )
 {
     // If we have a cut....
     AnalyseMEData( my_buffer.GetPicture(pnum).GetMEData() );
-        
+
     // Set me data available flag
     if ( m_is_a_cut==false ){
         m_medata_avail = true;
@@ -312,7 +312,7 @@ bool PictureCompressor::CutDetect( EncQueue& my_buffer, int pnum )
     return m_is_a_cut;
 }
 
-void PictureCompressor::MotionCompensate( EncQueue& my_buffer, int pnum, 
+void PictureCompressor::MotionCompensate( EncQueue& my_buffer, int pnum,
                                           AddOrSub dirn )
 {
     EncPicture* my_pic = &my_buffer.GetPicture(pnum);
@@ -334,7 +334,7 @@ void PictureCompressor::Prefilter( EncQueue& my_buffer, int pnum )
 
     for (int c=0; c<3; ++c ){
         if ( m_encparams.Prefilter() == RECTLP )
-                LPFilter( my_picture.Data( (CompSort) c) , m_encparams.Qf(), 
+                LPFilter( my_picture.Data( (CompSort) c) , m_encparams.Qf(),
                            m_encparams.PrefilterStrength() );
 
         if ( m_encparams.Prefilter() == DIAGLP )
@@ -349,7 +349,7 @@ void PictureCompressor::DoDWT( EncQueue& my_buffer , int pnum, Direction dirn )
     Picture& my_picture = my_buffer.GetPicture( pnum );
     PictureParams& pparams = my_picture.GetPparams();
     const PictureSort& psort = pparams.PicSort();
-    
+
     // Set the wavelet filter
     if ( psort.IsIntra() ){
         m_encparams.SetTransformFilter( m_encparams.IntraTransformFilter() );

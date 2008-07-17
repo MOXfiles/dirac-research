@@ -360,7 +360,6 @@ void MEData::FindTransitions( TwoDArray<bool>& trans_map , const int ref_num )
          }// i
      }// j
 
-     
 }
 
 
@@ -379,9 +378,8 @@ void MEData::DropRef( const int rindex ){
     if (m_num_refs>0){
         m_num_refs--;
 
-        if (rindex==2){std::cout<<std::endl<<"Dropping reference 2";}
+        if (rindex==2){}
 	else if (rindex==1){
-std::cout<<std::endl<<"Dropping reference 1";
            // Swap data for reference 1 and reference 2
 	   // so that reference 2 becomes the new reference 1
 

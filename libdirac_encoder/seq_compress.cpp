@@ -84,11 +84,11 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     m_basic_olb_params1 = m_encparams.LumaBParams(1);
     m_basic_olb_params0 = m_encparams.LumaBParams(0);
 
-    m_intra_olbp = new OLBParams( 2*m_basic_olb_params2.Xbsep() , 
-                                  2*m_basic_olb_params2.Ybsep() , 
-  		                  m_basic_olb_params2.Xbsep() , 
-  		                  m_basic_olb_params2.Ybsep() );
- 
+    m_intra_olbp = new OLBParams( 2*m_basic_olb_params2.Xbsep() ,
+                                  2*m_basic_olb_params2.Ybsep() ,
+		                  m_basic_olb_params2.Xbsep() ,
+                                  m_basic_olb_params2.Ybsep() );
+
     SetMotionParameters();
 
 }
@@ -97,12 +97,12 @@ void SequenceCompressor::SetMotionParameters(){
 
     if ( m_encparams.TargetRate() != 0 ){
         OLBParams new_olb_params=m_basic_olb_params2;
-/* 
+/*
         if (m_encparams.Qf()<2.5)
             new_olb_params=m_basic_olb_params1;
         else if (m_encparams.Qf()<1.5)
             new_olb_params=m_basic_olb_params0;
-                
+
         m_encparams.SetBlockSizes( new_olb_params , m_srcparams.CFormat() );
 */
     }
@@ -115,7 +115,7 @@ void SequenceCompressor::SetMotionParameters(){
                                      m_encparams.LumaBParams(0).Xbsep() );
     m_encparams.SetYNumMB( (yl+m_encparams.LumaBParams(0).Ybsep()-1)/
                                      m_encparams.LumaBParams(0).Ybsep() );
-    
+
     m_encparams.SetXNumBlocks( 4 * m_encparams.XNumMB() );
     m_encparams.SetYNumBlocks( 4 * m_encparams.YNumMB() );
 }
@@ -171,7 +171,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
     // This creates problems at the start and at the end of the sequence which must be dealt with.
     // At the start we just keep outputting picture 0. At the end you will need to loop for longer to get all
     // the pictures out. It's up to the calling function to do something with the decoded pictures as they
-    // come out - write them to screen or to file, or whatever. 
+    // come out - write them to screen or to file, or whatever.
 
     // current_pnum is the number of the current picture being coded in display order
     // m_current_code_pnum is the number of the current picture in coding order. This function increments
@@ -212,27 +212,26 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 
         // Compress the picture//
         ///////////////////////
-	
+
         const std::vector<int> queue_members = m_enc_pbuffer.Members();
 
         EncPicture& current_pic = m_enc_pbuffer.GetPicture( m_current_display_pnum );
 	PictureParams& current_pp = current_pic.GetPparams();
 
-        // 1. Set the picture type and refs for all the pictures in the queue not already encoded 
+        // 1. Set the picture type and refs for all the pictures in the queue not already encoded
         for (size_t i=0; i<queue_members.size(); ++i){
             int pnum = queue_members[i];
-      	    EncPicture& enc_pic = m_enc_pbuffer.GetPicture(pnum);
+            EncPicture& enc_pic = m_enc_pbuffer.GetPicture(pnum);
 
             if ( (enc_pic.GetStatus() & DONE_SET_PTYPE) == 0 ){
                 PictureParams& pparams = enc_pic.GetPparams();
 
                 if (pparams.PictureNum() < m_current_display_pnum + 20 - m_encparams.L1Sep() ){
                     SetPicTypeAndRefs( pparams );
-  		    enc_pic.UpdateStatus( DONE_SET_PTYPE );
+		    enc_pic.UpdateStatus( DONE_SET_PTYPE );
 		}
 	    }
 	}
-     
 
         if ( current_pp.PicSort().IsRef() )
             m_enc_pbuffer.SetRetiredPictureNum( m_show_pnum, m_current_display_pnum );
@@ -247,7 +246,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
         // Loop over the whole queue and ...
         for (size_t i=0; i<queue_members.size(); ++i){
             int pnum = queue_members[i];
-      	    EncPicture& enc_pic = m_enc_pbuffer.GetPicture(pnum);
+            EncPicture& enc_pic = m_enc_pbuffer.GetPicture(pnum);
 
             if ( ( enc_pic.GetStatus() & DONE_SET_PTYPE) != 0 ){
                 PictureParams& pparams = enc_pic.GetPparams();
@@ -255,31 +254,31 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
                 if ( pparams.PicSort().IsInter() ){
 	            // 3.Initialise motion data
 	            if ( ( enc_pic.GetStatus() & DONE_ME_INIT) == 0 ){
-                        enc_pic.InitMEData( m_encparams.XNumMB() , m_encparams.YNumMB() , 
+                        enc_pic.InitMEData( m_encparams.XNumMB() , m_encparams.YNumMB() ,
                                                                    pparams.NumRefs() );
-  		        enc_pic.UpdateStatus( DONE_ME_INIT );				   
-  	            }
+                        enc_pic.UpdateStatus( DONE_ME_INIT );
+                    }
 
                     // 4. Do pixel-accurate motion estimation
 		    if ( ( enc_pic.GetStatus() & DONE_PEL_ME) == 0 ){
                         m_pcoder.PixelME( m_enc_pbuffer, pnum );
-  		        enc_pic.UpdateStatus( DONE_PEL_ME );				   
+                    enc_pic.UpdateStatus( DONE_PEL_ME );
 	            }
 
 		    // 5. Set picture complexity
-  		    if ( (enc_pic.GetStatus() & DONE_PIC_COMPLEXITY ) == 0 ){
+                    if ( (enc_pic.GetStatus() & DONE_PIC_COMPLEXITY ) == 0 ){
                         m_pcoder.CalcComplexity( m_enc_pbuffer, pnum, m_encparams.LumaBParams(2) );
- 		        enc_pic.UpdateStatus( DONE_PIC_COMPLEXITY );
+                    enc_pic.UpdateStatus( DONE_PIC_COMPLEXITY );
 		    }
 
 		    //6. Revise the number of references if one ref is a bad predictor
-/*		    if ( (enc_pic.GetStatus() & DONE_PIC_COMPLEXITY)!=0 &&
-			pparams.NumRefs()!=1){
+		    if ( (enc_pic.GetStatus() & DONE_PIC_COMPLEXITY)!=0 &&
+			pparams.NumRefs()==2){
                         if (enc_pic.GetPredBias()>0.8)
 			    enc_pic.DropRef(2);
 			else if(enc_pic.GetPredBias()<0.2)
 			    enc_pic.DropRef(1);
-		    }*/
+		    }
 	        }
 	    }
 
@@ -288,8 +287,8 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
             // 7. Normalise complexity for the current picture
 	    m_pcoder.NormaliseComplexity( m_enc_pbuffer, m_current_display_pnum );
 
-//	    std::cout<<std::endl<<"Complexity is : "<<current_pic.GetComplexity();
-//	    std::cout<<std::endl<<"Normalised complexity is : "<<current_pic.GetNormComplexity();
+//    std::cout<<std::endl<<"Complexity is : "<<current_pic.GetComplexity();
+//    std::cout<<std::endl<<"Normalised complexity is : "<<current_pic.GetNormComplexity();
 
 
 	    //8. Do subpel refinement
@@ -298,7 +297,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 	    //9. Do mode decision
 	    m_pcoder.ModeDecisionME( m_enc_pbuffer, m_current_display_pnum );
 
-	    //10. Do cut detection 
+	    //10. Do cut detection
 	    is_a_cut = m_pcoder.CutDetect( m_enc_pbuffer, m_current_display_pnum );
 
             //11. Motion compensate
@@ -312,26 +311,25 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
                     std::cout<<std::endl<<"Cut detected and I-picture inserted!";
             }
 	    else{
-	    
 	        MEData& me_data = current_pic.GetMEData();
 
                 if (me_data.IntraBlockRatio()>0.1)
                     m_encparams.SetBlockSizes(*m_intra_olbp, m_srcparams.CFormat() );
-                
+
 	        m_pcoder.MotionCompensate(m_enc_pbuffer, m_current_display_pnum, SUBTRACT );
 		current_pic.UpdateStatus( DONE_MC );
 	    }
-	
+
         }
 
         // 12. Now code the residual data and motion data
         if (m_encparams.TargetRate() != 0)
 	    UpdateIntraPicCBRModel( current_pp, is_a_cut );
 
-        // 13.  Write the picture header. 
+        // 13.  Write the picture header.
         PictureByteIO* p_picture_byteio = new PictureByteIO(current_pp, m_current_display_pnum );
         p_picture_byteio->Output();
-	
+
 	if ( current_pp.PicSort().IsInter() ){
 
             if (m_encparams.Verbose() ){
@@ -350,14 +348,14 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 
         // 15. Do prefiltering on the residue if necessary
 	if (m_encparams.Prefilter() != NO_PF )
-  	    m_pcoder.Prefilter( m_enc_pbuffer, m_current_display_pnum );
- 
+            m_pcoder.Prefilter( m_enc_pbuffer, m_current_display_pnum );
+
         // 16. Do the transform on the 3 components
 	m_pcoder.DoDWT( m_enc_pbuffer, m_current_display_pnum , FORWARD);
 
 	// 17. Select the quantisers
-	
-        // 18. Code the residue	
+
+        // 18. Code the residue
         m_pcoder.CodeResidue(m_enc_pbuffer , m_current_display_pnum, p_picture_byteio);
 
         const PictureSort& psort = current_pp.PicSort();
@@ -373,28 +371,28 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
         // 20. Motion compensate back if necessary
         if (psort.IsInter() && !is_a_cut )
             m_pcoder.MotionCompensate(m_enc_pbuffer, m_current_display_pnum, ADD );
-	
+
 	// Reset block sizes for next picture
         m_encparams.SetBlockSizes(m_basic_olb_params2, m_srcparams.CFormat() );
- 
+
         // 21. Clip the data to keep it in range
         current_pic.Clip();
 
         // Use the results of encoding to update the CBR model
         if (m_encparams.TargetRate() != 0 )
 	    UpdateCBRModel(current_pic, p_picture_byteio);
-         
+
         // 22. Measure the encoded picture quality
         if ( m_encparams.LocalDecode() )
             m_qmonitor.UpdateModel( current_pic );
-       
+
         // Increment our position
         m_current_code_pnum++;
 
         CleanBuffers();
 
         current_pic.SetStatus( ALL_ENC );
-	
+
     }
 
     // Return the latest picture that can be shown
@@ -466,10 +464,10 @@ void SequenceCompressor::UpdateIntraPicCBRModel( const PictureParams& pparams, c
 
     if ( pparams.PicSort().IsIntra() && m_current_display_pnum > 0 &&
              m_encparams.NumL1() != 0){
-        // Calculate the new QF for encoding the following I picture 
-        if ( is_a_cut ) 
+        // Calculate the new QF for encoding the following I picture
+        if ( is_a_cut )
             m_ratecontrol->SetCutPictureQualFactor();
-        else  
+        else
             m_ratecontrol->CalcNextIntraQualFactor();
     }
 }
@@ -501,7 +499,7 @@ void FrameSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
                 pparams.SetPicSort( PictureSort::IntraRefPictureSort());
             else // I-picture only coding
                 pparams.SetPicSort( PictureSort::IntraNonRefPictureSort());
-                
+
             // I picture expires after we've coded the next I picture
             pparams.SetExpiryTime( 2*L1_sep );
         }
@@ -646,10 +644,10 @@ bool FieldSequenceCompressor::LoadNextFrame()
     // Copy data across
     for (int j=pnum; j<=pnum+1; ++j){
         m_enc_pbuffer.GetPicture( j ).SetOrigData();
-    
+
         if ( m_encparams.Prefilter()==CWM )
             CWMFilter(m_enc_pbuffer.GetPicture( j ), m_encparams.PrefilterStrength() );
-    
+
     }
 
     if ( m_pic_in->End() ){
@@ -802,7 +800,7 @@ bool FieldSequenceCompressor::IsNewAccessUnit( )
     return ((m_current_display_pnum) % (m_encparams.GOPLength()<<1)==0);
 }
 
-void FieldSequenceCompressor::UpdateCBRModel(EncPicture& my_picture, 
+void FieldSequenceCompressor::UpdateCBRModel(EncPicture& my_picture,
                                                   const PictureByteIO* p_picture_byteio)
 {
     if (m_current_display_pnum%2 == 0)
