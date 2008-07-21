@@ -60,6 +60,7 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     m_current_display_pnum(-1),
     m_current_code_pnum(0),
     m_show_pnum(-1),m_last_picture_read(-1),
+    m_gop_start_num(0),
     m_delay(1),
     m_qmonitor( m_encparams ),
     m_pcoder( m_encparams ),
@@ -225,8 +226,8 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 
             if ( (enc_pic.GetStatus() & DONE_SET_PTYPE) == 0 ){
                 PictureParams& pparams = enc_pic.GetPparams();
-
-                if (pparams.PictureNum() < m_current_display_pnum + 20 - m_encparams.L1Sep() ){
+                // only look one subgroup ahead
+                if (pparams.PictureNum() < m_current_display_pnum + m_encparams.L1Sep() ){
                     SetPicTypeAndRefs( pparams );
 		    enc_pic.UpdateStatus( DONE_SET_PTYPE );
 		}
@@ -302,6 +303,11 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 
             //11. Motion compensate
             if ( is_a_cut ){
+                if ( current_pp.IsBPicture()==false){
+		    m_gop_start_num = current_pp.PictureNum();//restart the GOP
+std::cout<<std::endl<<"Restarting GOP at this picture ........................................";
+		    }
+
                 if ( current_pp.PicSort().IsRef() ) // Set the picture type to intra
                     current_pic.SetPictureSort (PictureSort::IntraRefPictureSort());
                 else
@@ -309,6 +315,8 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 
                 if ( m_encparams.Verbose() )
                     std::cout<<std::endl<<"Cut detected and I-picture inserted!";
+
+		
             }
 	    else{
 	        MEData& me_data = current_pic.GetMEData();
@@ -485,6 +493,7 @@ void FrameSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
     // Set the temporal prediction parameters for frame coding
 
     const int pnum = pparams.PictureNum();
+    const int rel_pnum = pnum - m_gop_start_num;
     const int gop_len = m_encparams.GOPLength();
     const int L1_sep = m_encparams.L1Sep();
     const int num_L1 = m_encparams.NumL1();
@@ -494,7 +503,7 @@ void FrameSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
 
     if ( num_L1>0 ){
 
-        if ( pnum % gop_len == 0){
+        if ( rel_pnum % gop_len == 0){
             if (gop_len > 1)
                 pparams.SetPicSort( PictureSort::IntraRefPictureSort());
             else // I-picture only coding
@@ -503,7 +512,7 @@ void FrameSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
             // I picture expires after we've coded the next I picture
             pparams.SetExpiryTime( 2*L1_sep );
         }
-        else if (pnum % L1_sep == 0){
+        else if (rel_pnum % L1_sep == 0){
             pparams.SetPicSort( PictureSort::InterRefPictureSort());
 
             // Ref the previous I or L1 picture
@@ -517,7 +526,7 @@ void FrameSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
             // Expires after the next L1 or I picture
             pparams.SetExpiryTime( 2*L1_sep );
         }
-        else if ((pnum+1) % L1_sep == 0){
+        else if ((rel_pnum+1) % L1_sep == 0){
             pparams.SetPicSort( PictureSort::InterNonRefPictureSort());
 
             // .. and the previous picture
@@ -689,6 +698,7 @@ void FieldSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
     // Set the temporal prediction parameters for field coding
 
     const int pnum = pparams.PictureNum();
+    const int rel_pnum = pparams.PictureNum()-m_gop_start_num;
     const int gop_len = m_encparams.GOPLength();
     const int L1_sep = m_encparams.L1Sep();
     const int num_L1 = m_encparams.NumL1();
@@ -698,7 +708,7 @@ void FieldSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
 
     if ( num_L1>0 ){
 
-        if ( (pnum/2) % gop_len == 0){
+        if ( (rel_pnum/2) % gop_len == 0){
             // Field 1 is Intra Field
             if (gop_len > 1){
                 pparams.SetPicSort( PictureSort::IntraRefPictureSort());
@@ -716,7 +726,7 @@ void FieldSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
                 pparams.SetExpiryTime( gop_len );
             }
         }
-        else if ((pnum/2) % L1_sep == 0){
+        else if ((rel_pnum/2) % L1_sep == 0){
             pparams.SetPicSort( PictureSort::InterRefPictureSort());
 
             if (pnum%2){
@@ -737,7 +747,7 @@ void FieldSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
             // Expires after the next L1 or I picture
             pparams.SetExpiryTime( (L1_sep+1)*2-1 );
         }
-        else if ((pnum/2+1) % L1_sep == 0){
+        else if ((rel_pnum/2+1) % L1_sep == 0){
             // Bi-directional non-reference fields.
             pparams.SetPicSort( PictureSort::InterNonRefPictureSort());
 

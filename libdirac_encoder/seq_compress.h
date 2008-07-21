@@ -231,6 +231,9 @@ namespace dirac
         //! The index, in display order, of the last picture read
         int m_last_picture_read;
 
+	//! The picture number of the last GOP start
+	int m_gop_start_num;
+
         //! A delay so that we don't display what we haven't coded
         int m_delay;
 
