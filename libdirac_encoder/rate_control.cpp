@@ -423,10 +423,10 @@ void RateController::Allocate (const int fnum)
     if ( !m_intra_only)
     {
         double correction;
-        if (buffer_occ<0.9 && ( (fnum+1) % m_encparams.GOPLength())==0 )
+        if (buffer_occ<0.9 && ( (fnum+1) % 4*m_encparams.L1Sep())==0 )
         {            
             // If we're undershooting buffer target, correct slowly
-            correction = std::min( 0.1, 0.1*(0.9 - buffer_occ )/0.9 );
+            correction = std::min( 0.25, 0.25*(0.9 - buffer_occ )/0.9 );
             m_GOP_target = ( long int)(double(m_total_GOP_bits)*( 1.0-correction) );   
         }    
         else if (buffer_occ>0.9 && ((fnum+1) % m_encparams.L1Sep())==0)
