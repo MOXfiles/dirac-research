@@ -556,10 +556,11 @@ float PictureCompressor::GetCompLambda( const EncPicture& my_picture,
     float lambda;
     
     if ( psort.IsIntra() ){
-        lambda= m_encparams.ILambda();
         if ( m_is_a_cut )
-            // The intra picture is inserted so we can lower the quality
-            lambda *= 5;
+            lambda = m_encparams.L1Lambda()/8;
+	else
+            lambda = m_encparams.ILambda();
+
     }
     else{
         double log_intra_lambda = std::log10( m_encparams.ILambda() );
