@@ -20,7 +20,7 @@
 * Portions created by the Initial Developer are Copyright (C) 2004.
 * All Rights Reserved.
 *
-* Contributor(s): Thomas Davies (Original Author), 
+* Contributor(s): Thomas Davies (Original Author),
 *                 Scott R Ladd,
 *                 Anuradha Suraparaju,
 *                 Andrew Kennedy,
@@ -59,7 +59,7 @@ using std::vector;
 using std::auto_ptr;
 
 PictureDecompressor::PictureDecompressor(DecoderParams& decp, ChromaFormat cf)
-: 
+:
 m_decparams(decp),
 m_cformat(cf)
 {
@@ -82,14 +82,14 @@ bool PictureDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
                              parseunit_byteio);
 
     picture_byteio.Input();
-    
+
     PictureSort fs;
-    
+
     if (m_pparams.GetPictureType() == INTRA_PICTURE)
         fs.SetIntra();
     else
         fs.SetInter();
-    
+
     if (m_pparams.GetReferenceType() == REFERENCE_PICTURE)
         fs.SetRef();
     else
@@ -100,7 +100,7 @@ bool PictureDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
     if (m_pparams.GetReferenceType() == REFERENCE_PICTURE)
         // Now clean the reference pictures from the buffer
         CleanReferencePictures( my_buffer );
-        
+
     // Check if the picture can be decoded
     if (m_pparams.PicSort().IsInter()){
         const std::vector<int>& refs = m_pparams.Refs();
@@ -113,32 +113,32 @@ bool PictureDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
     // decode the rest of the picture
 
     if ( m_decparams.Verbose() ){
-          std::cout<<std::endl<<"Decoding picture "<<m_pparams.PictureNum()<<" in display order";        
+          std::cout<<std::endl<<"Decoding picture "<<m_pparams.PictureNum()<<" in display order";
           if ( m_pparams.PicSort().IsInter() ){
               std::cout<<std::endl<<"References: "<<m_pparams.Refs()[0];
               if ( m_pparams.Refs().size()>1 )
                   std::cout<<" and "<<m_pparams.Refs()[1];
           }
-    }   
+    }
 
     PictureSort psort = m_pparams.PicSort();
     auto_ptr<MvData> mv_data;
 
     if ( psort.IsInter() )
-        //do all the MV stuff 
-        DecompressMVData( mv_data, picture_byteio );                
-               
+        //do all the MV stuff
+        DecompressMVData( mv_data, picture_byteio );
+
     // Read the  transform header
     TransformByteIO transform_byteio(picture_byteio, m_pparams, m_decparams);
     transform_byteio.Input();
-        
+
     if (m_pparams.PicSort().IsIntra() && m_decparams.ZeroTransform()){
         DIRAC_THROW_EXCEPTION(
             ERR_UNSUPPORTED_STREAM_DATA,
             "Intra pictures cannot have Zero-Residual",
             SEVERITY_PICTURE_ERROR);
     }
-            
+
     // Add a picture to the buffer to decode into
     PushPicture(my_buffer);
 
@@ -148,7 +148,7 @@ bool PictureDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
     if (!m_decparams.ZeroTransform()){
         //decode components
         Picture& pic = my_buffer.GetPicture( m_pparams.PictureNum() );
- 
+
         CompDecompressor my_compdecoder( m_decparams , pic.GetPparams() );
 
         PicArray* comp_data[3];
@@ -195,7 +195,7 @@ bool PictureDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
     my_picture.Clip();
 
     if (m_decparams.Verbose())
-        std::cout<<std::endl;        
+        std::cout<<std::endl;
 
 
     //exit success
@@ -222,7 +222,7 @@ void PictureDecompressor::CleanReferencePictures( PictureBuffer& my_buffer )
     {
         my_buffer.Remove(retd_pnum);
         if ( m_decparams.Verbose() )
-            std::cout<<retd_pnum<<" ";    
+            std::cout<<retd_pnum<<" ";
     }
 }
 
@@ -234,10 +234,9 @@ void PictureDecompressor::SetMVBlocks()
     // Calculate the number of macro blocks
     int xnum_mb = (m_decparams.Xl()+m_decparams.LumaBParams(0).Xbsep()-1)/
                                       m_decparams.LumaBParams(0).Xbsep();
-    
+
     int ynum_mb = (m_decparams.Yl()+m_decparams.LumaBParams(0).Ybsep()-1)/
                                       m_decparams.LumaBParams(0).Ybsep();
-    
 
     m_decparams.SetXNumMB(xnum_mb);
     m_decparams.SetYNumMB(ynum_mb);
@@ -245,10 +244,10 @@ void PictureDecompressor::SetMVBlocks()
     // Set the number of blocks
     m_decparams.SetXNumBlocks(4*xnum_mb);
     m_decparams.SetYNumBlocks(4*ynum_mb);
-    
+
     // Note that we do not have an integral number of macroblocks in a picture
     // So it is possible that part of a macro-block and some blocks can fall
-    // of the edge of the true picture. We need to take this into 
+    // of the edge of the true picture. We need to take this into
     // consideration while doing Motion Compensation
 }
 
@@ -258,14 +257,14 @@ void PictureDecompressor::PushPicture(PictureBuffer &my_buffer)
 
     m_pparams.SetXl(m_decparams.Xl());
     m_pparams.SetYl(m_decparams.Yl());
-    
+
     m_pparams.SetLumaDepth(m_decparams.LumaDepth());
     m_pparams.SetChromaDepth(m_decparams.ChromaDepth());
 
     my_buffer.PushPicture(m_pparams);
 }
 
-void PictureDecompressor::DecompressMVData( std::auto_ptr<MvData>& mv_data, 
+void PictureDecompressor::DecompressMVData( std::auto_ptr<MvData>& mv_data,
                                           PictureByteIO& picture_byteio )
 {
     MvDataByteIO mvdata_byteio (picture_byteio, m_pparams, m_decparams);
@@ -274,12 +273,12 @@ void PictureDecompressor::DecompressMVData( std::auto_ptr<MvData>& mv_data,
     mvdata_byteio.Input();
 
     SetMVBlocks();
-    mv_data.reset(new MvData( m_decparams.XNumMB() , 
+    mv_data.reset(new MvData( m_decparams.XNumMB() ,
                               m_decparams.YNumMB(), m_pparams.NumRefs() ));
 
     // decode mv data
     if (m_decparams.Verbose())
-        std::cout<<std::endl<<"Decoding motion data ...";        
+        std::cout<<std::endl<<"Decoding motion data ...";
 
     int num_bits;
 
@@ -289,45 +288,45 @@ void PictureDecompressor::DecompressMVData( std::auto_ptr<MvData>& mv_data,
     num_bits = mvdata_byteio.SplitModeData()->DataBlockSize();
     SplitModeCodec smode_decoder( mvdata_byteio.SplitModeData()->DataBlock(), TOTAL_MV_CTXS);
     smode_decoder.Decompress( *(mv_data.get()) , num_bits);
-    
+
     // Read in the prediction mode data header
     mvdata_byteio.PredModeData()->Input();
     // Read the mode data
     num_bits = mvdata_byteio.PredModeData()->DataBlockSize();
-    PredModeCodec pmode_decoder( mvdata_byteio.PredModeData()->DataBlock(), TOTAL_MV_CTXS);
+    PredModeCodec pmode_decoder( mvdata_byteio.PredModeData()->DataBlock(), TOTAL_MV_CTXS, m_pparams.NumRefs());
     pmode_decoder.Decompress( *(mv_data.get()) , num_bits);
-    
+
     // Read in the MV1 horizontal data header
     mvdata_byteio.MV1HorizData()->Input();
     // Read the MV1 horizontal data
     num_bits = mvdata_byteio.MV1HorizData()->DataBlockSize();
-    VectorElementCodec vdecoder1h( mvdata_byteio.MV1HorizData()->DataBlock(), 1, 
+    VectorElementCodec vdecoder1h( mvdata_byteio.MV1HorizData()->DataBlock(), 1,
                                    HORIZONTAL, TOTAL_MV_CTXS);
     vdecoder1h.Decompress( *(mv_data.get()) , num_bits);
-    
+
     // Read in the MV1 vertical data header
     mvdata_byteio.MV1VertData()->Input();
     // Read the MV1 data
     num_bits = mvdata_byteio.MV1VertData()->DataBlockSize();
-    VectorElementCodec vdecoder1v( mvdata_byteio.MV1VertData()->DataBlock(), 1, 
+    VectorElementCodec vdecoder1v( mvdata_byteio.MV1VertData()->DataBlock(), 1,
                                    VERTICAL, TOTAL_MV_CTXS);
     vdecoder1v.Decompress( *(mv_data.get()) , num_bits);
-    
-    if ( (mv_data.get())->NumRefs()>1 )
-    { 
+
+    if ( m_pparams.NumRefs()>1 )
+    {
         // Read in the MV2 horizontal data header
         mvdata_byteio.MV2HorizData()->Input();
         // Read the MV2 horizontal data
         num_bits = mvdata_byteio.MV2HorizData()->DataBlockSize();
-        VectorElementCodec vdecoder2h( mvdata_byteio.MV2HorizData()->DataBlock(), 2, 
+        VectorElementCodec vdecoder2h( mvdata_byteio.MV2HorizData()->DataBlock(), 2,
                                        HORIZONTAL, TOTAL_MV_CTXS);
         vdecoder2h.Decompress( *(mv_data.get()) , num_bits);
-        
+
         // Read in the MV2 vertical data header
         mvdata_byteio.MV2VertData()->Input();
         // Read the MV2 vertical data
         num_bits = mvdata_byteio.MV2VertData()->DataBlockSize();
-        VectorElementCodec vdecoder2v( mvdata_byteio.MV2VertData()->DataBlock(), 2, 
+        VectorElementCodec vdecoder2v( mvdata_byteio.MV2VertData()->DataBlock(), 2,
                                        VERTICAL, TOTAL_MV_CTXS);
         vdecoder2v.Decompress( *(mv_data.get()) , num_bits);
     }
@@ -345,7 +344,7 @@ void PictureDecompressor::DecompressMVData( std::auto_ptr<MvData>& mv_data,
     num_bits = mvdata_byteio.UDCData()->DataBlockSize();
     DCCodec udc_decoder( mvdata_byteio.YDCData()->DataBlock(), U_COMP, TOTAL_MV_CTXS);
     udc_decoder.Decompress( *(mv_data.get()) , num_bits);
-    
+
     // Read in the Y DC data header
     mvdata_byteio.YDCData()->Input();
     // Read the Y DC data
@@ -370,4 +369,4 @@ void PictureDecompressor::InitCoeffData( CoeffArray& coeff_data, const int xl, c
 
     coeff_data.Resize( ypad_len, xpad_len );
 }
- 
+

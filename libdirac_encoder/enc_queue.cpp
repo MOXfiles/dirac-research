@@ -189,7 +189,7 @@ void EncQueue::PushPicture( const PictureParams& pp )
     EncPicture* pptr = new EncPicture(pp);
     // add the picture to the buffer
     m_pic_data.push_back(pptr);
-    
+
     // put the picture number into the index table
     std::pair<unsigned int,unsigned int> temp_pair(pp.PictureNum() ,  m_pic_data.size()-1);
     m_pnum_map.insert(temp_pair);
@@ -232,17 +232,22 @@ void EncQueue::ClearSlot(const unsigned int pos)
 
 void EncQueue::SetRetiredPictureNum(const int show_pnum, const int current_coded_pnum)
 {
+std::cout<<std::endl<<"Calling SetRetiredPictureNum at coded num "<<current_coded_pnum;
+std::cout<<" and show num "<<show_pnum;
     if ( IsPictureAvail(current_coded_pnum))
     {
         PictureParams &pparams = GetPicture(current_coded_pnum).GetPparams();
         pparams.SetRetiredPictureNum(-1);
         for (size_t i=0 ; i<m_pic_data.size() ; ++i)
         {
-            if (m_pic_data[i]->GetPparams().PicSort().IsRef() ) 
+std::cout<<".";
+            if (m_pic_data[i]->GetPparams().PicSort().IsRef() )
             {
+std::cout<<std::endl<<"Checking "<<m_pic_data[i]->GetPparams().PictureNum()<<" with expiry time set to "<<m_pic_data[i]->GetPparams().ExpiryTime();
 	        if ( (m_pic_data[i]->GetPparams().PictureNum() + m_pic_data[i]->GetPparams().ExpiryTime() ) <= show_pnum)
                 {
-                    pparams.SetRetiredPictureNum(m_pic_data[i]->GetPparams().PictureNum()); 
+		std::cout<<std::endl<<"Setting retired number for picture "<<pparams.PictureNum()<<" to be "<<m_pic_data[i]->GetPparams().PictureNum();
+                    pparams.SetRetiredPictureNum(m_pic_data[i]->GetPparams().PictureNum());
                     break;
                 }
             }
@@ -272,13 +277,11 @@ void EncQueue::CleanRetired(const int show_pnum, const int current_coded_pnum)
             Remove(pparams.RetiredPictureNum());
         pparams.SetRetiredPictureNum(-1);
         // Remove non-reference frames that have expired
-        for (size_t i=0 ; i<m_pic_data.size() ; ++i)
-        {
+        for (size_t i=0 ; i<m_pic_data.size() ; ++i){
             if ( (m_pic_data[i]->GetPparams().PictureNum()+
-               m_pic_data[i]->GetPparams().ExpiryTime() )<=show_pnum 
-  	         && m_pic_data[i]->GetPparams().PicSort().IsNonRef() )
+               m_pic_data[i]->GetPparams().ExpiryTime() )<=show_pnum
+	         && m_pic_data[i]->GetPparams().PicSort().IsNonRef() )
                 ClearSlot(i);
-	    
         }//i
     }
 }

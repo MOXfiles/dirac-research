@@ -90,7 +90,7 @@ namespace dirac
         void ModeDecisionME( EncQueue& my_buffer, int pnum );
 
         //! Detect cuts in the current picture
-         bool CutDetect( EncQueue& my_buffer, int pnum );
+        void IntraModeAnalyse( EncQueue& my_buffer, int pnum );
 
         //! Does motion compensation on picture pnum (forward or backward)
         void MotionCompensate( EncQueue& my_buffer, int pnum, AddOrSub dirn );

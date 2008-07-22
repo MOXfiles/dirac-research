@@ -59,8 +59,8 @@ MvData::MvData( const int xnumMB, const int ynumMB ,
     m_modes( ynumblocks , xnumblocks ),
     m_dc( 3 ),
     m_mb_split( ynumMB , xnumMB ),
-    m_gm_params( Range(1 , num_refs) ),
-    m_num_refs(num_refs)
+    m_gm_params( Range(1 , num_refs) )//,
+//    m_num_refs(num_refs)
 {
 
     InitMvData();
@@ -72,8 +72,8 @@ MvData::MvData( const int xnumMB , const int ynumMB , const int num_refs ):
     m_modes( 4*ynumMB , 4*xnumMB ),
     m_dc( 3 ),
     m_mb_split( ynumMB , xnumMB ),
-    m_gm_params( Range(1 , num_refs) ),
-    m_num_refs(num_refs)
+    m_gm_params( Range(1 , num_refs) )//,
+//    m_num_refs(num_refs)
 {
     InitMvData();
 }
@@ -375,36 +375,30 @@ MEData::~MEData()
 
 void MEData::DropRef( const int rindex ){
 
-    if (m_num_refs>0){
-        m_num_refs--;
+    if (rindex==2){}
+    else if (rindex==1){
+       // Swap data for reference 1 and reference 2
+       // so that reference 2 becomes the new reference 1
 
-        if (rindex==2){}
-	else if (rindex==1){
-           // Swap data for reference 1 and reference 2
-	   // so that reference 2 becomes the new reference 1
+       MvArray* ptr = m_vectors[1];
+       m_vectors[1] = m_vectors[2];
+       m_vectors[2] = ptr;
 
-           MvArray* ptr = m_vectors[1];
-	   m_vectors[1] = m_vectors[2];
-	   m_vectors[2] = ptr;
+       ptr = m_gm_vectors[1];
+       m_gm_vectors[1] = m_gm_vectors[2];
+       m_gm_vectors[2] = ptr;
 
-           ptr = m_gm_vectors[1];
-	   m_gm_vectors[1] = m_gm_vectors[2];
-	   m_gm_vectors[2] = ptr;
+       OneDArray<float>* ptr2 = m_gm_params[1];
+       m_gm_params[1] = m_gm_params[2];
+       m_gm_params[2] = ptr2;
 
-           OneDArray<float>* ptr2 = m_gm_params[1];
-	   m_gm_params[1] = m_gm_params[2];
-	   m_gm_params[2] = ptr2;
+       TwoDArray<MvCostData>* ptr3 = m_pred_costs[1];
+       m_pred_costs[1] = m_pred_costs[2];
+       m_pred_costs[2] = ptr3;
 
-           TwoDArray<MvCostData>* ptr3 = m_pred_costs[1];
-	   m_pred_costs[1] = m_pred_costs[2];
-	   m_pred_costs[2] = ptr3;
-
-           TwoDArray<int>* ptr4 = m_inliers[1];
-	   m_inliers[1] = m_inliers[2];
-	   m_inliers[2] = ptr4;
-
-	}
-
+       TwoDArray<int>* ptr4 = m_inliers[1];
+       m_inliers[1] = m_inliers[2];
+       m_inliers[2] = ptr4;
     }
 }
 

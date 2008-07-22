@@ -144,8 +144,10 @@ void SplitModeCodec::DecodeVal(MvData& out_data)
 ////////////////////
 // Constructor 
 PredModeCodec::PredModeCodec(ByteIO* p_byteio,
-                         size_t number_of_contexts)
-  : ArithCodec <MvData> (p_byteio,number_of_contexts)
+                         size_t number_of_contexts,
+			 int num_refs)
+  : ArithCodec <MvData> (p_byteio,number_of_contexts),
+    m_num_refs(num_refs)
 {}        
 
 
@@ -235,8 +237,7 @@ void PredModeCodec::ResetAll()
 
 //prediction functions
 
-unsigned int PredModeCodec::Prediction(const TwoDArray < PredMode > & preddata,
-                                                     const unsigned int num_refs) const
+unsigned int PredModeCodec::Prediction(const TwoDArray < PredMode > & preddata) const
 {
     unsigned int result = (unsigned int)(INTRA);
     unsigned int num_ref1_nbrs( 0 ); 
@@ -250,7 +251,7 @@ unsigned int PredModeCodec::Prediction(const TwoDArray < PredMode > & preddata,
 
         result = num_ref1_nbrs>>1;
 
-        if ( num_refs==2)
+        if ( m_num_refs==2)
         {
             num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp] ) ) & 2; 
             num_ref2_nbrs += ((unsigned int)( preddata[m_b_yp-1][m_b_xp-1] ) ) & 2; 
@@ -260,9 +261,9 @@ unsigned int PredModeCodec::Prediction(const TwoDArray < PredMode > & preddata,
         }
     }
     else if (m_b_xp > 0 && m_b_yp == 0)
-        result = (unsigned int)( preddata[0][m_b_xp-1] ); 
+        result = (unsigned int)( preddata[0][m_b_xp-1] );
     else if (m_b_xp == 0 && m_b_yp > 0)
-        result = (unsigned int)( preddata[m_b_yp-1][0] ); 
+        result = (unsigned int)( preddata[m_b_yp-1][0] );
 
     return result;
 }
@@ -271,14 +272,14 @@ void PredModeCodec::CodeVal(const MvData& in_data)
 {
     // Xor with the prediction so we predict whether REF1 is used or REF2 is
     // used, separately
-    unsigned int residue = in_data.Mode()[m_b_yp][m_b_xp] ^ 
-                                Prediction( in_data.Mode(), in_data.NumRefs() ); 
+    unsigned int residue = in_data.Mode()[m_b_yp][m_b_xp] ^
+                                Prediction( in_data.Mode() );
 
     // Code REF1 part of the prediction residue (ie the first bit)
     EncodeSymbol( residue & 1 , PMODE_BIT0_CTX );
 
     // Code REF2 part of the prediction residue (ie the second bit)
-    if (in_data.NumRefs()==2)
+    if (m_num_refs==2)
     {
         EncodeSymbol( residue & 2 , PMODE_BIT1_CTX );
     }
@@ -293,21 +294,21 @@ void PredModeCodec::DecodeVal( MvData& out_data )
     // Xor with the prediction so we predict whether REF1 is used or REF2 is
     // used, separately
     unsigned int residue;
-    
+
     // Decode REF1 part of the prediction residue (ie the first bit)
     bool bit;
     bit = DecodeSymbol( PMODE_BIT0_CTX );
     residue = (unsigned int) bit;
 
     // Decode REF2 part of the prediction residue (ie the second bit)
-    if (out_data.NumRefs()==2)
+    if (m_num_refs==2)
     {
         bit = DecodeSymbol( PMODE_BIT1_CTX );
         residue |= ( (unsigned int) bit ) << 1;
     }
 
-    out_data.Mode()[m_b_yp][m_b_xp] = 
-        PredMode( Prediction (out_data.Mode() , out_data.NumRefs()) ^ residue ); 
+    out_data.Mode()[m_b_yp][m_b_xp] =
+        PredMode( Prediction( out_data.Mode() ) ^ residue );
 }
 
 /******************************************************************************/
@@ -315,35 +316,34 @@ void PredModeCodec::DecodeVal( MvData& out_data )
 
 //public functions//
 ////////////////////
-// Constructor 
-VectorElementCodec::VectorElementCodec(ByteIO* p_byteio, 
+// Constructor
+VectorElementCodec::VectorElementCodec(ByteIO* p_byteio,
                                        int ref_id,
-                                       MvElement horvert, 
+                                       MvElement horvert,
                                        size_t number_of_contexts)
   : ArithCodec <MvData> (p_byteio,number_of_contexts),
   m_ref(ref_id),
   m_hv(horvert)
-{}        
+{}
 
 
 
-void VectorElementCodec::InitContexts() 
-{    
-}
+void VectorElementCodec::InitContexts()
+{}
 
 // Main code function
 void VectorElementCodec::DoWorkCode( MvData& in_data )
 {
-    int step,max; 
-    int split_depth;  
-    
+    int step,max;
+    int split_depth;
+
     for (m_mb_yp = 0, m_mb_tlb_y = 0;  m_mb_yp < in_data.MBSplit().LengthY();  ++m_mb_yp, m_mb_tlb_y += 4)
     {
         for (m_mb_xp = 0,m_mb_tlb_x = 0; m_mb_xp < in_data.MBSplit().LengthX(); ++m_mb_xp,m_mb_tlb_x += 4)
         {
-            split_depth = in_data.MBSplit()[m_mb_yp][m_mb_xp]; 
+            split_depth = in_data.MBSplit()[m_mb_yp][m_mb_xp];
 
-            step = 4  >>  (split_depth); 
+            step = 4  >>  (split_depth);
             max = (1 << split_depth);
                         
             //now do all the block modes and mvs in the mb            

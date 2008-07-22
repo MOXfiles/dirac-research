@@ -83,6 +83,7 @@ void PictureCompressor::PixelME( EncQueue& my_buffer , int pnum )
 void PictureCompressor::CalcComplexity( EncQueue& my_buffer, int pnum , const OLBParams& olbparams )
 {
     EncPicture& my_picture = my_buffer.GetPicture( pnum );
+    PictureParams& pparams = my_picture.GetPparams();
 
     if ( (my_picture.GetStatus()&DONE_PEL_ME) != 0 ){
         MEData& me_data = my_picture.GetMEData();
@@ -91,7 +92,7 @@ void PictureCompressor::CalcComplexity( EncQueue& my_buffer, int pnum , const OL
         TwoDArray<MvCostData>* pcosts2;
 
 	pcosts1 = &me_data.PredCosts(1);
-	if (me_data.NumRefs()>1)
+	if (pparams.NumRefs()>1)
 	    pcosts2 = &me_data.PredCosts(2);
 	else
 	    pcosts2 = pcosts1;
@@ -113,7 +114,7 @@ void PictureCompressor::CalcComplexity( EncQueue& my_buffer, int pnum , const OL
 		total_cost1 += cost1;
 		total_cost2 += cost2;
 		total_cost += cost;
-		if (me_data.NumRefs()>1 && cost<=cost_threshold){
+		if (pparams.NumRefs()>1 && cost<=cost_threshold){
 		    ++count;
                     if (cost1<=cost2)
 		        ++count1;
@@ -127,7 +128,7 @@ void PictureCompressor::CalcComplexity( EncQueue& my_buffer, int pnum , const OL
 	total_cost2 *= olbparams.Xbsep()*olbparams.Ybsep();
 	total_cost2 /= olbparams.Xblen()*olbparams.Yblen();
 
-        if (me_data.NumRefs()>1){
+        if (pparams.NumRefs()>1){
 	    my_picture.SetPredBias(float(count1)/float(count));
         }
 	else
@@ -262,11 +263,12 @@ void PictureCompressor::SubPixelME( EncQueue& my_buffer , int pnum )
 void PictureCompressor::ModeDecisionME( EncQueue& my_buffer, int pnum )
 {
     MEData& me_data = my_buffer.GetPicture(pnum).GetMEData();
+    PictureParams& pparams = my_buffer.GetPicture(pnum).GetPparams();
 
     ModeDecider my_mode_dec( m_encparams );
     my_mode_dec.DoModeDecn( my_buffer , pnum );
 
-    const int num_refs = me_data.NumRefs();
+    const int num_refs = pparams.NumRefs();
 
     if (m_orig_prec ==  MV_PRECISION_PIXEL)
     {
@@ -294,7 +296,7 @@ void PictureCompressor::ModeDecisionME( EncQueue& my_buffer, int pnum )
 
 }
 
-bool PictureCompressor::CutDetect( EncQueue& my_buffer, int pnum )
+void PictureCompressor::IntraModeAnalyse( EncQueue& my_buffer, int pnum )
 {
     // If we have a cut....
     AnalyseMEData( my_buffer.GetPicture(pnum).GetMEData() );
@@ -309,7 +311,7 @@ bool PictureCompressor::CutDetect( EncQueue& my_buffer, int pnum )
 	m_me_data = NULL;
     }
 
-    return m_is_a_cut;
+//    return m_is_a_cut;
 }
 
 void PictureCompressor::MotionCompensate( EncQueue& my_buffer, int pnum,
@@ -338,7 +340,7 @@ void PictureCompressor::Prefilter( EncQueue& my_buffer, int pnum )
                            m_encparams.PrefilterStrength() );
 
         if ( m_encparams.Prefilter() == DIAGLP )
-                DiagFilter( my_picture.Data( (CompSort) c) , m_encparams.Qf(), 
+                DiagFilter( my_picture.Data( (CompSort) c) , m_encparams.Qf(),
                            m_encparams.PrefilterStrength() );
     }
 
@@ -384,21 +386,21 @@ void PictureCompressor::CodeResidue( EncQueue& my_buffer ,
     EncPicture& my_picture = my_buffer.GetPicture( pnum );
 
     PictureParams& pparams = my_picture.GetPparams();
-    
+
     if ( !m_skipped ){
         // If not skipped we continue with the coding ...
         if (m_encparams.Verbose() )
             std::cout<<std::endl<<"Using QF: "<<m_encparams.Qf();
 
         //Write Transform Header
-        TransformByteIO *p_transform_byteio = new TransformByteIO(pparams, 
+        TransformByteIO *p_transform_byteio = new TransformByteIO(pparams,
                                 static_cast<CodecParams&>(m_encparams));
         p_picture_byteio->SetTransformData(p_transform_byteio);
         p_transform_byteio->Output();
 
         /* Code component data */
         /////////////////////////
-        
+
         CompCompressor my_compcoder(m_encparams , pparams );
 
         const int depth=m_encparams.TransformDepth();
@@ -415,7 +417,7 @@ void PictureCompressor::CodeResidue( EncQueue& my_buffer ,
             est_bits[c] =  new OneDArray<unsigned int>( Range( 1, 3*depth+1 ) );
         }// c
 
-        /* Do the wavelet transforms and select the component 
+        /* Do the wavelet transforms and select the component
          * quantisers using perceptual weighting
          */
         for (int c=0; c<3; ++c){
@@ -425,17 +427,16 @@ void PictureCompressor::CodeResidue( EncQueue& my_buffer ,
 
             SubbandList& bands = coeff_data[c]->BandList();
             SetupCodeBlocks( bands );
-            SelectQuantisers( *(coeff_data[c]) , bands , lambda[c], 
+            SelectQuantisers( *(coeff_data[c]) , bands , lambda[c],
                  *est_bits[c] , m_encparams.GetCodeBlockMode(), pparams, (CompSort) c );
 
-            p_transform_byteio->AddComponent( my_compcoder.Compress( 
+            p_transform_byteio->AddComponent( my_compcoder.Compress(
                 *(coeff_data[c]), bands, (CompSort) c, *est_bits[c] ) );
         }
 
         // Destruction of objects
         for (int c=0; c<3; ++c)
             delete est_bits[c];
-                                          
 
     }//?m_skipped
 
@@ -470,37 +471,37 @@ void PictureCompressor::CodeMVData(EncQueue& my_buffer, int pnum, PictureByteIO*
     if ( m_use_block_mv ){
         MvDataByteIO *mv_byteio = new MvDataByteIO(pparams, static_cast<CodecParams&>(m_encparams));
         pic_byteio->SetMvData(mv_byteio);
-                
+
         SplitModeCodec smode_coder( mv_byteio->SplitModeData()->DataBlock(), TOTAL_MV_CTXS);
         smode_coder.Compress( mv_data );
         mv_byteio->SplitModeData()->Output();
-    
-        PredModeCodec pmode_coder( mv_byteio->PredModeData()->DataBlock(), TOTAL_MV_CTXS);
+
+        PredModeCodec pmode_coder( mv_byteio->PredModeData()->DataBlock(), TOTAL_MV_CTXS, pparams.NumRefs() );
         pmode_coder.Compress( mv_data );
         mv_byteio->PredModeData()->Output();
 
-        VectorElementCodec vcoder1h( mv_byteio->MV1HorizData()->DataBlock(), 1, 
+        VectorElementCodec vcoder1h( mv_byteio->MV1HorizData()->DataBlock(), 1,
                                      HORIZONTAL, TOTAL_MV_CTXS);
         vcoder1h.Compress( mv_data );
         mv_byteio->MV1HorizData()->Output();
-    
-        VectorElementCodec vcoder1v( mv_byteio->MV1VertData()->DataBlock(), 1, 
+
+        VectorElementCodec vcoder1v( mv_byteio->MV1VertData()->DataBlock(), 1,
                                      VERTICAL, TOTAL_MV_CTXS);
         vcoder1v.Compress( mv_data );
         mv_byteio->MV1VertData()->Output();
-
-        if ( mv_data.NumRefs()>1 )
+std::cout<<std::endl<<"Writing motion data. Number of refs is "<<pparams.NumRefs();
+        if ( pparams.NumRefs()>1 )
         {
-            VectorElementCodec vcoder2h( mv_byteio->MV2HorizData()->DataBlock(), 2, 
+            VectorElementCodec vcoder2h( mv_byteio->MV2HorizData()->DataBlock(), 2,
                                          HORIZONTAL, TOTAL_MV_CTXS);
             vcoder2h.Compress( mv_data );
             mv_byteio->MV2HorizData()->Output();
-        
-            VectorElementCodec vcoder2v( mv_byteio->MV2VertData()->DataBlock(), 2, 
+
+            VectorElementCodec vcoder2v( mv_byteio->MV2VertData()->DataBlock(), 2,
                                          VERTICAL, TOTAL_MV_CTXS);
             vcoder2v.Compress( mv_data );
             mv_byteio->MV2VertData()->Output();
-        }  
+        }
 
         DCCodec ydc_coder( mv_byteio->YDCData()->DataBlock(), Y_COMP, TOTAL_MV_CTXS);
         ydc_coder.Compress( mv_data );
@@ -509,7 +510,7 @@ void PictureCompressor::CodeMVData(EncQueue& my_buffer, int pnum, PictureByteIO*
         DCCodec udc_coder( mv_byteio->UDCData()->DataBlock(), U_COMP, TOTAL_MV_CTXS);
         udc_coder.Compress( mv_data );
         mv_byteio->UDCData()->Output();
-    
+
         DCCodec vdc_coder( mv_byteio->VDCData()->DataBlock(), V_COMP, TOTAL_MV_CTXS);
         vdc_coder.Compress( mv_data );
         mv_byteio->VDCData()->Output();
@@ -532,18 +533,18 @@ void PictureCompressor::AnalyseMEData( MEData& me_data )
                 count_intra++;
         }
     }// j
-    
-    me_data.SetIntraBlockRatio(static_cast<double>( count_intra ) / 
+
+    me_data.SetIntraBlockRatio(static_cast<double>( count_intra ) /
                           static_cast<double>( modes.LengthX() * modes.LengthY() ) );
 
     if ( m_encparams.Verbose() )
         std::cout<<std::endl<<me_data.IntraBlockRatio()*100.0<<"% of blocks are intra   ";
-   
+
     if ( me_data.IntraBlockRatio() > 0.3333 )
         m_is_a_cut = true;
     else
         m_is_a_cut = false;
-  
+
 }
 
 float PictureCompressor::GetCompLambda( const EncPicture& my_picture,
@@ -552,9 +553,9 @@ float PictureCompressor::GetCompLambda( const EncPicture& my_picture,
     const PictureParams& pparams = my_picture.GetPparams();
 
     const PictureSort psort = pparams.PicSort();
-    
+
     float lambda;
-    
+
     if ( psort.IsIntra() ){
         if ( m_is_a_cut )
             lambda = m_encparams.L1Lambda()/8;

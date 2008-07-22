@@ -57,7 +57,7 @@ static const unsigned int DONE_IDWT = 0x200;
 static const unsigned int DONE_MC_BACK = 0x400;
 static const unsigned int DONE_SET_PTYPE = 0x800;
 static const unsigned int DONE_PIC_COMPLEXITY = 0x1000;
-     
+
 static const unsigned int ALL_ENC = 0xFFFFFFFF;
 static const unsigned int NO_ENC = 0;
 
@@ -90,7 +90,6 @@ public:
     //! Initialises a copy of the data arrays into the original data
     void SetOrigData();
 
- 
     //! Returns a version of the picture data suitable for motion estimation
     const PicArray& DataForME(bool field_coding, CompSort c) const;
 
@@ -98,7 +97,9 @@ public:
     const PicArray& UpDataForME(bool field_coding, CompSort c) const;
 
 
-    void UpdateStatus( const unsigned int status ){ m_status += status; }
+    void UpdateStatus( const unsigned int mask ){ m_status |= mask; }
+
+    void FlipStatus( const unsigned int mask){ m_status ^= mask; }
 
     void SetStatus( const int status ){ m_status = status; }
 

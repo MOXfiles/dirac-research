@@ -208,6 +208,9 @@ namespace dirac
         //! The parameters used for encoding.
         EncoderParams& m_encparams;
 
+	//! The L1 separation currently in use
+	int m_L1_sep;
+
         //! Generic picture parameters for initialising pictures
         PictureParams m_pparams;
 

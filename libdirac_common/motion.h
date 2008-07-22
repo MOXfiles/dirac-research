@@ -269,7 +269,7 @@ namespace dirac
 
         //! Get the block prediction modes
         const TwoDArray<PredMode>& Mode() const {return m_modes;}
-     
+
         //! Get the MB split level
         TwoDArray<int>& MBSplit(){return m_mb_split;}
 
@@ -282,8 +282,8 @@ namespace dirac
         //! Get the global motion model parameters
         const OneDArray<float>& GlobalMotionParameters(const int ref_id) const { return *( m_gm_params[ref_id] ); }
 
-        //! Return the number of reference frames
-        unsigned int NumRefs()const {return m_num_refs;}
+//        //! Return the number of reference frames
+//        unsigned int NumRefs()const {return m_num_refs;}
 
     protected:
         // Initialises the arrays of data
@@ -307,8 +307,8 @@ namespace dirac
         // Global motion model parameters
         OneDArray< OneDArray<float>* > m_gm_params;
 
-        // Number of reference frames
-        unsigned int m_num_refs;
+//        // Number of reference frames
+//        unsigned int m_num_refs;
     };
 
     //! Class for all the motion estimation data
