@@ -351,7 +351,11 @@ bool Skip (std::ifstream &fdata, int start_frame, int frame_size)
     fdata.exceptions (ios::failbit | ios::badbit);
     try
     {
-        fdata.seekg(frame_size*start_frame, std::ios::cur );
+        int count = (start_frame)>>5;
+	for (int i=0; i<count; ++ i )
+            fdata.seekg(frame_size*32, std::ios::cur );
+	int residue = start_frame - (count<<5);
+        fdata.seekg(frame_size*residue, std::ios::cur );
     }
     catch (...)
     {
