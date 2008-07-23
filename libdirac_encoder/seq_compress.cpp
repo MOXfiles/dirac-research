@@ -141,18 +141,33 @@ bool SequenceCompressor::CanEncode()
 
     if (m_eos_signalled)
     {
-        if (m_last_picture_read >= m_current_display_pnum )
-            return true;
-
-        /*
-        * Encode the remaining picture in the frame buffer. We check if the
-        * reference pictures are available and modify the picture sort
-        * accordingly.
-        */
-        if (m_current_code_pnum <= m_last_picture_read)
+        if (m_encparams.NumL1() > 0)
         {
-            m_current_display_pnum = m_current_code_pnum;
-            return true;
+           /*
+            * Long-GOP sequence
+            */
+            int field_factor = m_encparams.PictureCodingMode() ? 2 : 1;
+            int last_frame_read = m_last_picture_read/field_factor;
+            int current_code_fnum = m_current_code_pnum/field_factor;
+
+            if ((last_frame_read >= (current_code_fnum +  (last_frame_read%m_encparams.L1Sep()))))
+                return true;
+        
+             /*
+              * Encode the remaining picture in the frame buffer. We check if 
+              * the reference pictures are available and modify the picture sort
+              * accordingly.
+              */
+              if (current_code_fnum <= last_frame_read)
+              {
+                  m_current_display_pnum = m_current_code_pnum;
+                  return true;
+              }
+        }
+        else
+        {
+            if (m_last_picture_read >= m_current_display_pnum)
+                return true;
         }
     }
     else
