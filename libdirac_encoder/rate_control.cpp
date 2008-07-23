@@ -191,7 +191,7 @@ double RateController::ProjectedSubgroupRate()
 
     return (double)(bits)/(1000.0*m_GOP_duration);
 }
-void RateController::CalcNextQualFactor(const PictureParams& fparams, int num_bits)
+void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bits)
 {
 
     // Decrement the subgroup frame counter. This is zero just after the last
@@ -209,25 +209,21 @@ void RateController::CalcNextQualFactor(const PictureParams& fparams, int num_bi
 
         // First, do normal coding
 
-        if ( (fparams.PictureNum()/field_factor) % m_encparams.GOPLength()==0 )
+        if ( pparams.PicSort().IsIntra() == true )
         {
-            // We have a scheduled I frame
             target = m_Iframe_bits;
 
             if (num_bits < target/2 )
-            {
                 emergency_realloc = true;
-            }
-    
             
             // Update the statistics
             m_frame_complexity.SetIComplexity( num_bits );
 
             // We've just coded an intra frame so we need to set qf for
             // the next group of L2(B) frames
-            m_encparams.SetQf( m_qf );
+            m_encparams.SetQf( std::max(m_qf, m_encparams.Qf()-1.0) );
 
-            if (fparams.PictureNum()/field_factor==0)
+            if (pparams.PictureNum()/field_factor==0)
             {
                 // We've just coded the very first frame, which is a special
                 // case as the two L2 frames which normally follow are missing
@@ -235,40 +231,32 @@ void RateController::CalcNextQualFactor(const PictureParams& fparams, int num_bi
             }
 
         }
-        else
+
+        //Update complexities
+        if ( (pparams.PictureNum()/field_factor) % m_encparams.L1Sep() !=0 )
         {
-            // We have a scheduled inter frame (we may have an inserted
-            // intra frame). We allocate bits for the next
-            // group if we can (L1 frame) or if we need to (emergency).
-
-            //Update complexities
-            if ( (fparams.PictureNum()/field_factor) % m_encparams.L1Sep() !=0 )
-            {
-                // Scheduled B/L2 picture 
+            // Scheduled B/L2 picture 
                 
-                target = m_L2frame_bits;
+            target = m_L2frame_bits;
 
-                if (num_bits < target/2 ){
-                    emergency_realloc = true;
-                }
-
-                m_L2_complexity_sum += num_bits;
-            }
-            else
-            {
-                // Scheduled P/L1 picture 
-
-                target = m_L1frame_bits;
- 
-                if (num_bits < target/2 ){
-                    emergency_realloc = true; 
-                }
-                    
-                m_frame_complexity.SetL1Complexity(num_bits);
+            if (num_bits < target/2 ){
+                emergency_realloc = true;
             }
 
+            m_L2_complexity_sum += num_bits;
         }
-        
+        else if ( pparams.PicSort().IsIntra() == false )
+        {
+            // Scheduled P/L1 picture (if inserted I picture, don't change the complexity) 
+
+            target = m_L1frame_bits;
+ 
+            if (num_bits < target/2 ){
+                emergency_realloc = true; 
+            }
+                    
+            m_frame_complexity.SetL1Complexity(num_bits);
+        }
 
         if ( m_fcount==0 || emergency_realloc==true)
         {
@@ -283,7 +271,7 @@ void RateController::CalcNextQualFactor(const PictureParams& fparams, int num_bi
                 m_frame_complexity.SetL2Complexity(m_L2_complexity_sum/
                                                   (m_encparams.L1Sep()-1-m_fcount));
             }
-            Allocate( (fparams.PictureNum()/field_factor) );
+            Allocate( (pparams.PictureNum()/field_factor) );
 
             /* We work out what this means for the quality factor and set it*/
 
@@ -295,18 +283,21 @@ void RateController::CalcNextQualFactor(const PictureParams& fparams, int num_bi
             // from measured values (complexities)
             double prate = ProjectedSubgroupRate();
 
-            if (emergency_realloc==true && m_encparams.Verbose()==true )
-            {
+//            if (emergency_realloc==true && m_encparams.Verbose()==true )
+//            {
                 std::cout<<std::endl<<"Target subgroup rate = "<<trate;
                 std::cout<<", projected subgroup rate = "<<prate;
-            }
+//            }
             // Determine K value
             double K = std::pow(prate, 2)*std::pow(10.0, ((double)2/5*(10-m_qf)))/16;
 
             // Determine a new QF
             m_qf = 10 - (double)5/2*log10(16*K/std::pow(trate, 2));
             m_qf = ReviewQualityFactor( m_qf , num_bits );
-            m_encparams.SetQf(m_qf);
+	    if (prate<3*trate)
+                m_encparams.SetQf(std::max(m_qf,m_encparams.Qf()-1.0));
+	    else
+                m_encparams.SetQf(std::max(m_qf,m_encparams.Qf()-2.0));
 
 
             /* Resetting */

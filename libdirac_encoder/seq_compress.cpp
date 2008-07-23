@@ -258,7 +258,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
                         enc_pic.UpdateStatus( DONE_PEL_ME );
 	            }
 
-		    // 5. Set picture complexity
+//		    // 5. Set picture complexity
 //                    if ( (enc_pic.GetStatus() & DONE_PIC_COMPLEXITY ) == 0 ){
 //                        m_pcoder.CalcComplexity( m_enc_pbuffer, pnum, m_encparams.LumaBParams(2) );
 //                        enc_pic.UpdateStatus( DONE_PIC_COMPLEXITY );
@@ -394,7 +394,6 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
                     std::cout<<" and "<< current_pp->Refs()[1];
             }
         }
-
 
         // 14. Code the motion vectors
         if ( current_pp->PicSort().IsInter() )
