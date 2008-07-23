@@ -548,10 +548,10 @@ if (pparams.IsBPicture() )
             log_picture_lambda= std::log10( m_encparams.L1Lambda() );
 
 //*/
-        float intra_ratio = 100.0*my_picture.GetMEData().IntraBlockRatio();       
+        float intra_ratio = my_picture.GetMEData().IntraBlockRatio();       
 
-        lambda= std::pow(10.0, ( (1.7*intra_ratio*log_intra_lambda+
-                         (100.0-2*intra_ratio)*log_picture_lambda )/100.0) );
+        lambda= std::pow(10.0,  3.0*intra_ratio*log_intra_lambda+
+                         (1.0-3.0*intra_ratio)*log_picture_lambda );
 
 //lambda /= my_picture.GetNormComplexity();
 
