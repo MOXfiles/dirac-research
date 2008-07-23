@@ -475,7 +475,7 @@ const EncPicture *SequenceCompressor::GetPictureEncoded()
 
     return 0;
 }
-
+*
 const MEData *SequenceCompressor::GetMEData()
 {
     if ( m_pcoder.IsMEDataAvail())

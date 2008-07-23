@@ -725,7 +725,7 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
         }
         encdata->size = size;
 
-        GetInstrumentationData(encoder);
+//        GetInstrumentationData(encoder);
         encoder->encoded_picture_avail = 1;
     }
     else
