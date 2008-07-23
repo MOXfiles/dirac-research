@@ -275,7 +275,7 @@ private:
     // encoder parameters
     EncoderParams m_encparams;
     // locally encoded picture in coded order
-    const Picture *m_enc_picture;
+    const EncPicture *m_enc_picture;
     // locally encoded frame ME data
     const MEData *m_enc_medata;
     // locally decoded picture number in display order
@@ -595,13 +595,16 @@ int DiracEncoder::CompressNextPicture ()
     if (!m_num_loaded_pictures)
         return 0;
 
-    const Picture *mypicture = m_seqcomp->CompressNextPicture();
+    const EncPicture *mypicture = m_seqcomp->CompressNextPicture();
 
     m_decpnum = -1;
 
     if (mypicture){
         m_enc_picture = m_seqcomp->GetPictureEncoded();
-        m_enc_medata = m_seqcomp->GetMEData();
+	if (m_enc_picture->GetPparams().PicSort().IsIntra()==false)
+            m_enc_medata = &m_enc_picture->GetMEData();
+	else
+	    m_enc_medata = NULL;
 
         if (m_return_decoded_pictures &&
                 mypicture->GetPparams().PictureNum() != m_show_pnum){
@@ -725,7 +728,7 @@ int DiracEncoder::GetEncodedData (dirac_encoder_t *encoder)
         }
         encdata->size = size;
 
-//        GetInstrumentationData(encoder);
+        GetInstrumentationData(encoder);
         encoder->encoded_picture_avail = 1;
     }
     else

@@ -130,9 +130,6 @@ namespace dirac
         //! Return a pointer to the most recent picture encoded
         const EncPicture *GetPictureEncoded();
 
-        //! Return Motion estimation info related to the most recent picture encoded
-        const MEData *GetMEData();
-
         DiracByteStats EndSequence();
 
         //! Determine if compression is complete.

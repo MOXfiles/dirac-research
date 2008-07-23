@@ -298,20 +298,24 @@ void PictureCompressor::ModeDecisionME( EncQueue& my_buffer, int pnum )
 
 void PictureCompressor::IntraModeAnalyse( EncQueue& my_buffer, int pnum )
 {
-    // If we have a cut....
-    AnalyseMEData( my_buffer.GetPicture(pnum).GetMEData() );
+    MEData& me_data = my_buffer.GetPicture(pnum).GetMEData();
 
-    // Set me data available flag
-    if ( m_is_a_cut==false ){
-        m_medata_avail = true;
-        m_me_data = &my_buffer.GetPicture(pnum).GetMEData();
-    }
-    else{
-        m_medata_avail = false;
-	m_me_data = NULL;
-    }
+    // Count the number of intra blocks
+    const TwoDArray<PredMode>& modes = me_data.Mode();
 
-//    return m_is_a_cut;
+    int count_intra = 0;
+    for ( int j=0 ; j<modes.LengthY() ; ++j )
+    {
+        for ( int i=0 ; i<modes.LengthX() ; ++i )
+        {
+            if ( modes[j][i] == INTRA )
+                count_intra++;
+        }
+    }// j
+
+    me_data.SetIntraBlockRatio(static_cast<double>( count_intra ) /
+                          static_cast<double>( modes.LengthX() * modes.LengthY() ) );
+
 }
 
 void PictureCompressor::MotionCompensate( EncQueue& my_buffer, int pnum,
@@ -442,14 +446,6 @@ void PictureCompressor::CodeResidue( EncQueue& my_buffer ,
 
 }
 
-const MEData* PictureCompressor::GetMEData() const
-{
-    TESTM (m_me_data != NULL, "m_medata allocated");
-    TESTM (m_medata_avail == true, "ME Data available");
-
-    return m_me_data;
-}
-
 void PictureCompressor::CodeMVData(EncQueue& my_buffer, int pnum, PictureByteIO* pic_byteio)
 {
 
@@ -489,7 +485,7 @@ void PictureCompressor::CodeMVData(EncQueue& my_buffer, int pnum, PictureByteIO*
                                      VERTICAL, TOTAL_MV_CTXS);
         vcoder1v.Compress( mv_data );
         mv_byteio->MV1VertData()->Output();
-std::cout<<std::endl<<"Writing motion data. Number of refs is "<<pparams.NumRefs();
+
         if ( pparams.NumRefs()>1 )
         {
             VectorElementCodec vcoder2h( mv_byteio->MV2HorizData()->DataBlock(), 2,
@@ -517,34 +513,6 @@ std::cout<<std::endl<<"Writing motion data. Number of refs is "<<pparams.NumRefs
 
         mv_byteio->Output();
     }
-}
-
-void PictureCompressor::AnalyseMEData( MEData& me_data )
-{
-    // Count the number of intra blocks
-    const TwoDArray<PredMode>& modes = me_data.Mode();
-
-    int count_intra = 0;
-    for ( int j=0 ; j<modes.LengthY() ; ++j )
-    {
-        for ( int i=0 ; i<modes.LengthX() ; ++i )
-        {
-            if ( modes[j][i] == INTRA )
-                count_intra++;
-        }
-    }// j
-
-    me_data.SetIntraBlockRatio(static_cast<double>( count_intra ) /
-                          static_cast<double>( modes.LengthX() * modes.LengthY() ) );
-
-    if ( m_encparams.Verbose() )
-        std::cout<<std::endl<<me_data.IntraBlockRatio()*100.0<<"% of blocks are intra   ";
-
-    if ( me_data.IntraBlockRatio() > 0.3333 )
-        m_is_a_cut = true;
-    else
-        m_is_a_cut = false;
-
 }
 
 float PictureCompressor::GetCompLambda( const EncPicture& my_picture,

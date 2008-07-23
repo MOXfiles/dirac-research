@@ -140,9 +140,6 @@ namespace dirac
         //! Initialise the coefficient data array for holding wavelet coefficients
         void InitCoeffData( CoeffArray& coeff_data, const int xl, const int yl );
 
-        //! Analyses the ME data and returns true if a cut is detected, false otherwise
-        void AnalyseMEData( MEData& );
-        
         //! Returns the value lambda according to picture and component type
         float GetCompLambda( const EncPicture& my_picture,
                              const CompSort csort );

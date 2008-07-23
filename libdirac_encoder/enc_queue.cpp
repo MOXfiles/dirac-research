@@ -232,21 +232,17 @@ void EncQueue::ClearSlot(const unsigned int pos)
 
 void EncQueue::SetRetiredPictureNum(const int show_pnum, const int current_coded_pnum)
 {
-std::cout<<std::endl<<"Calling SetRetiredPictureNum at coded num "<<current_coded_pnum;
-std::cout<<" and show num "<<show_pnum;
+
     if ( IsPictureAvail(current_coded_pnum))
     {
         PictureParams &pparams = GetPicture(current_coded_pnum).GetPparams();
         pparams.SetRetiredPictureNum(-1);
         for (size_t i=0 ; i<m_pic_data.size() ; ++i)
         {
-std::cout<<".";
             if (m_pic_data[i]->GetPparams().PicSort().IsRef() )
             {
-std::cout<<std::endl<<"Checking "<<m_pic_data[i]->GetPparams().PictureNum()<<" with expiry time set to "<<m_pic_data[i]->GetPparams().ExpiryTime();
 	        if ( (m_pic_data[i]->GetPparams().PictureNum() + m_pic_data[i]->GetPparams().ExpiryTime() ) <= show_pnum)
                 {
-		std::cout<<std::endl<<"Setting retired number for picture "<<pparams.PictureNum()<<" to be "<<m_pic_data[i]->GetPparams().PictureNum();
                     pparams.SetRetiredPictureNum(m_pic_data[i]->GetPparams().PictureNum());
                     break;
                 }

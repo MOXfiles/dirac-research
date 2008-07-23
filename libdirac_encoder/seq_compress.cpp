@@ -187,8 +187,6 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
     if ( m_encparams.L1Sep()!=m_L1_sep ){
         if ( (m_current_code_pnum-1) % m_encparams.L1Sep()==0 )
             m_L1_sep = m_encparams.L1Sep();
-
-	std::cout<<std::endl<<"Resetting sep to normal, at code pnum = "<<m_current_code_pnum;
     }
 
     m_current_display_pnum = CodedToDisplay( m_current_code_pnum );
@@ -279,8 +277,8 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 
 	}
         if ( current_pp->PicSort().IsInter() ){
-            // 7. Normalise complexity for the current picture
-	    m_pcoder.NormaliseComplexity( m_enc_pbuffer, m_current_display_pnum );
+//            // 7. Normalise complexity for the current picture
+//	    m_pcoder.NormaliseComplexity( m_enc_pbuffer, m_current_display_pnum );
 
             bool subgroup_reconfig;
 
@@ -299,8 +297,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
                 //11. Change the GOP structure to PPP if there are too many intras
 	        if ( m_L1_sep>1 && current_pic->GetMEData().IntraBlockRatio()>0.25
 	             && current_pp->IsBPicture()==false){
-std::cout<<std::endl<<"Too many intra blocks in picture "<<m_current_display_pnum;
-std::cout<<std::endl<<"Reconfiguring subgroup to be P-only";
+
                     subgroup_reconfig = true;
 
 		    m_L1_sep = 1;
@@ -322,12 +319,13 @@ std::cout<<std::endl<<"Reconfiguring subgroup to be P-only";
 
             }while(subgroup_reconfig==true);
 
-            //11. Motion compensate
-            if ( is_a_cut ){
-                if ( current_pp->IsBPicture()==false){
+            //11. Do cut detection and insert intra pictures
+            if ( current_pic->GetMEData().IntraBlockRatio()>0.3333 ){
+	        is_a_cut = true;
+                if ( m_encparams.L1Sep()>1 && 
+		     (m_current_display_pnum % m_encparams.L1Sep()) == 0){
 		    m_gop_start_num = current_pp->PictureNum();//restart the GOP
-std::cout<<std::endl<<"Restarting GOP at this picture ........................................";
-		    }
+		}
 
                 if ( current_pp->PicSort().IsRef() ) // Set the picture type to intra
                     current_pic->SetPictureSort (PictureSort::IntraRefPictureSort());
@@ -339,6 +337,7 @@ std::cout<<std::endl<<"Restarting GOP at this picture ..........................
 
             }
 	    else{
+	    //12. Do motion compensation if not a cut
 	        MEData& me_data = current_pic->GetMEData();
 
                 if (me_data.IntraBlockRatio()>0.1)
@@ -371,7 +370,12 @@ std::cout<<std::endl<<"Restarting GOP at this picture ..........................
                 std::cout<<std::endl<<std::endl<<"Compressing frame "<<m_current_code_pnum<<", ";
             std::cout<<m_current_display_pnum<<" in display order";
 
-            std::cout<<std::endl<<"current_pp pnum is "<<current_pp->PictureNum();
+            
+            if (is_a_cut==true || current_pp->PicSort().IsIntra()==false )
+                std::cout<<std::endl<<current_pic->GetMEData().IntraBlockRatio()*100.0<<"% of blocks are intra   ";
+	    if (is_a_cut==true)
+	        std::cout<<std::endl<<"Cut detected and intra picture inserted.";
+
 	    std::cout<<std::endl<<"Picture type is ";
 	    if (current_pp->PicSort().IsRef() )
 	        std::cout<<"REF";
@@ -465,7 +469,6 @@ void SequenceCompressor::CleanBuffers()
     // If we're not at the beginning, clean the buffer
     if ( m_current_code_pnum != 0 )
         m_enc_pbuffer.CleanRetired( m_show_pnum, m_current_display_pnum );
-//        m_enc_pbuffer.CleanRetired( m_show_pnum, std::max(m_current_display_pnum-10, 0 ) );
 }
 
 const EncPicture *SequenceCompressor::GetPictureEncoded()
@@ -475,14 +478,7 @@ const EncPicture *SequenceCompressor::GetPictureEncoded()
 
     return 0;
 }
-*
-const MEData *SequenceCompressor::GetMEData()
-{
-    if ( m_pcoder.IsMEDataAvail())
-        return m_pcoder.GetMEData();
 
-    return 0;
-}
 DiracByteStats SequenceCompressor::EndSequence()
 {
     DiracByteStats seq_stats;
@@ -555,7 +551,7 @@ void FrameSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
         }
         else if (rel_pnum % m_L1_sep == 0){
             pparams.SetPicSort( PictureSort::InterRefPictureSort());
-std::cout<<std::endl<<"Setting picture "<<pnum<<" to INTER_REF sort";
+
             // Ref the previous I or L1 picture
             pparams.Refs().push_back( pnum - m_L1_sep );
 
@@ -570,7 +566,6 @@ std::cout<<std::endl<<"Setting picture "<<pnum<<" to INTER_REF sort";
         else if ((rel_pnum+1) % m_L1_sep == 0){
             pparams.SetPicSort( PictureSort::InterNonRefPictureSort());
 
-std::cout<<std::endl<<"Setting picture "<<pnum<<" to INTER_NON_REF sort";
             // .. and the previous picture
             pparams.Refs().push_back(pnum-1);
             // Refs are the next I or L1 picture ...
@@ -582,7 +577,6 @@ std::cout<<std::endl<<"Setting picture "<<pnum<<" to INTER_NON_REF sort";
         else{
             pparams.SetPicSort( PictureSort::InterRefPictureSort());
 
-std::cout<<std::endl<<"Setting picture "<<pnum<<" to INTER_REF sort";
             // .. and the previous picture
             pparams.Refs().push_back(pnum-1);
             // Refs are the next I or L1 picture ...

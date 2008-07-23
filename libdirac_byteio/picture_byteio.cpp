@@ -122,7 +122,7 @@ bool PictureByteIO::Input()
     // input picture number
     m_frame_num = ReadUintLit(PP_PICTURE_NUM_SIZE);
     m_frame_params.SetPictureNum(m_frame_num);
-std::cout<<std::endl<<"Reading picture number "<<m_frame_num;
+
     // input reference Picture numbers
     InputReferencePictures();
     
@@ -130,7 +130,7 @@ std::cout<<std::endl<<"Reading picture number "<<m_frame_num;
     m_frame_params.SetRetiredPictureNum(-1);
     if (IsRef())
         InputRetiredPicture();
-std::cout<<std::endl<<"Retired picture number is "<<m_frame_params.RetiredPictureNum();
+
     // byte align
     ByteAlignInput();
 
@@ -188,7 +188,6 @@ void PictureByteIO::Output()
             WriteSint(0);
         else
         {
-	std::cout<<std::endl<<"Writing retired picture number as "<<m_frame_params.RetiredPictureNum()<<" for picture "<<m_frame_num<<" "<<m_frame_params.PictureNum();
             WriteSint (m_frame_params.RetiredPictureNum() - m_frame_num);
         }
     }
