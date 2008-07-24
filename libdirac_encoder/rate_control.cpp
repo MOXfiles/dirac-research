@@ -102,7 +102,7 @@ RateController::RateController(int trate, SourceParams& srcp, EncoderParams& enc
 {
     SetFrameDistribution();
     CalcTotalBits(srcp);
-    
+
     if (m_intra_only)
         m_Iframe_bits = m_total_GOP_bits;
     else
@@ -110,7 +110,7 @@ RateController::RateController(int trate, SourceParams& srcp, EncoderParams& enc
         m_Iframe_bits = m_total_GOP_bits/10;
         m_L1frame_bits = (m_Iframe_bits*3)/m_num_L1frame;
 	if (m_encparams.L1Sep()>1)
-            m_L2frame_bits = ( m_total_GOP_bits - m_Iframe_bits - 
+            m_L2frame_bits = ( m_total_GOP_bits - m_Iframe_bits -
                                m_L1frame_bits*m_num_L1frame )/
                          (m_encparams.GOPLength()-1-m_num_L1frame);
 	else
@@ -199,7 +199,10 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
     // subgroup
     m_fcount--;
     UpdateBuffer( num_bits );
-    
+
+    // filter tap for adjusting the QF
+    double tap = 0.25;
+
     int field_factor = m_encparams.FieldCoding() ? 2 : 1;
 
     if (!m_intra_only)
@@ -215,13 +218,14 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
 
             if (num_bits < target/2 )
                 emergency_realloc = true;
-            
+
             // Update the statistics
             m_frame_complexity.SetIComplexity( num_bits );
 
             // We've just coded an intra frame so we need to set qf for
             // the next group of L2(B) frames
-            m_encparams.SetQf( std::max(m_qf, m_encparams.Qf()-1.0) );
+	    m_qf = std::max(tap*m_qf+(1.0-tap)*m_encparams.Qf(), m_encparams.Qf()-1.0);
+            m_encparams.SetQf( m_qf );
 
             if (pparams.PictureNum()/field_factor==0)
             {
@@ -235,8 +239,8 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
         //Update complexities
         if ( (pparams.PictureNum()/field_factor) % m_encparams.L1Sep() !=0 )
         {
-            // Scheduled B/L2 picture 
-                
+            // Scheduled B/L2 picture
+
             target = m_L2frame_bits;
 
             if (num_bits < target/2 ){
@@ -247,14 +251,14 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
         }
         else if ( pparams.PicSort().IsIntra() == false )
         {
-            // Scheduled P/L1 picture (if inserted I picture, don't change the complexity) 
+            // Scheduled P/L1 picture (if inserted I picture, don't change the complexity)
 
             target = m_L1frame_bits;
- 
+
             if (num_bits < target/2 ){
-                emergency_realloc = true; 
+                emergency_realloc = true;
             }
-                    
+
             m_frame_complexity.SetL1Complexity(num_bits);
         }
 
@@ -262,7 +266,7 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
         {
             if (emergency_realloc==true && m_encparams.Verbose()==true )
                 std::cout<<std::endl<<"Major undershoot of frame bit rate: re-allocating";
-            
+
 
             /* We recompute allocations for the next subgroup */
 
@@ -292,12 +296,16 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
             double K = std::pow(prate, 2)*std::pow(10.0, ((double)2/5*(10-m_qf)))/16;
 
             // Determine a new QF
-            m_qf = 10 - (double)5/2*log10(16*K/std::pow(trate, 2));
+            double new_qf = 10 - (double)5/2*log10(16*K/std::pow(trate, 2));
+	    m_qf = tap*new_qf+(1.0-tap)*m_qf;
             m_qf = ReviewQualityFactor( m_qf , num_bits );
+
 	    if (prate<3*trate)
-                m_encparams.SetQf(std::max(m_qf,m_encparams.Qf()-1.0));
+                m_qf = std::max(m_qf,m_encparams.Qf()-1.0);
 	    else
-                m_encparams.SetQf(std::max(m_qf,m_encparams.Qf()-2.0));
+                m_qf = std::max(m_qf,m_encparams.Qf()-2.0);
+
+            m_encparams.SetQf(m_qf);
 
 
             /* Resetting */
