@@ -326,7 +326,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
             //11. Do cut detection and insert intra pictures
             if ( current_pic->GetMEData().IntraBlockRatio()>0.3333 ){
 	        is_a_cut = true;
-                if ( m_encparams.L1Sep()>1 && 
+                if ( m_encparams.L1Sep()>1 &&
 		     (m_current_display_pnum % m_encparams.L1Sep()) == 0){
 		    m_gop_start_num = current_pp->PictureNum();//restart the GOP
 		}
@@ -361,8 +361,13 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 	    UpdateIntraPicCBRModel( *current_pp, is_a_cut );
 
         // 13. Write a sequence header if necessary
-	if(current_pp->PicSort().IsRef()==true && current_pp->PicSort().IsIntra()==true )
+	if(current_pp->PicSort().IsRef()==true &&
+	   current_pp->PicSort().IsIntra()==true &&
+	   (m_current_display_pnum % m_encparams.L1Sep())==0)
         {
+	    if (m_encparams.Verbose())
+	        std::cout<<std::endl<<std::endl<<"GOP start: writing sequence header before picture ";
+		std::cout<<m_current_display_pnum;
             SequenceHeaderByteIO *p_seqheader_byteio = new SequenceHeaderByteIO
                                         ( m_pic_in->GetSourceParams(),
                                             m_encparams);
@@ -569,7 +574,7 @@ void FrameSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
             pparams.Refs().push_back( pnum - m_L1_sep );
 
             // if we don't have the first L1 picture ...
-            if ( ((pnum-m_L1_sep) % gop_len>0) && m_L1_sep>1)
+            if ( ((rel_pnum-m_L1_sep) % gop_len>0) && m_L1_sep>1)
                 // ... other ref is the prior I/L1 picture but one
                 pparams.Refs().push_back( pnum - 2*m_L1_sep  );
 
@@ -740,6 +745,7 @@ void FieldSequenceCompressor::PreMotionEstmationFilter(PicArray& comp)
 
 void FieldSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
 {
+// FIXME: won't work with adaptive GOP properly
     // Set the temporal prediction parameters for field coding
 
     const int pnum = pparams.PictureNum();
