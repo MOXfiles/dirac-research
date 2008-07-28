@@ -198,9 +198,11 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 
     TESTM (m_last_picture_read >= 0, "Data loaded before calling CompressNextPicture");
 
+    const int field_factor = m_encparams.FieldCoding() ? 2 : 1;
+
     // If we have a scheduled P picture, reset the P separation to normal
     if ( m_encparams.L1Sep()!=m_L1_sep ){
-        if ( (m_current_code_pnum-1) % m_encparams.L1Sep()==0 )
+        if ( (m_current_code_pnum-field_factor) % (m_encparams.L1Sep()*field_factor)==0 )
             m_L1_sep = m_encparams.L1Sep();
     }
 
@@ -300,15 +302,18 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 
                 //11. Change the GOP structure to PPP if there are too many intras
 	        if ( m_L1_sep>1 && current_pic->GetMEData().IntraBlockRatio()>0.25
-	             && current_pp->IsBPicture()==false){
+	             && (m_current_display_pnum % (m_encparams.L1Sep()*field_factor))==0){
 
                     subgroup_reconfig = true;
 
 		    m_L1_sep = 1;
-                    for (int i = m_current_display_pnum; i>m_current_display_pnum-m_encparams.L1Sep(); --i){
-                        EncPicture& enc_pic = m_enc_pbuffer.GetPicture(i);
+                    for (int i = 0; i<field_factor*m_encparams.L1Sep(); ++i){
 
+		        int pnum = m_current_display_pnum-i+(field_factor-1);
+
+                        EncPicture& enc_pic = m_enc_pbuffer.GetPicture(pnum);
                         PictureParams& pparams = enc_pic.GetPparams();
+
                         SetPicTypeAndRefs( pparams );
 	                enc_pic.UpdateStatus( DONE_SET_PTYPE );
 		    }
@@ -327,7 +332,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
             if ( current_pic->GetMEData().IntraBlockRatio()>0.3333 ){
 	        is_a_cut = true;
                 if ( m_encparams.L1Sep()>1 &&
-		     (m_current_display_pnum % m_encparams.L1Sep()) == 0){
+		     (m_current_display_pnum % field_factor*m_encparams.L1Sep()) == 0){
 		    m_gop_start_num = current_pp->PictureNum();//restart the GOP
 		}
 
@@ -751,7 +756,6 @@ void FieldSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
     const int pnum = pparams.PictureNum();
     const int rel_pnum = pparams.PictureNum()-m_gop_start_num;
     const int gop_len = m_encparams.GOPLength();
-    const int L1_sep = m_encparams.L1Sep();
     const int num_L1 = m_encparams.NumL1();
 
     pparams.SetRetiredPictureNum( -1 );
@@ -763,8 +767,9 @@ void FieldSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
             // Field 1 is Intra Field
             if (gop_len > 1){
                 pparams.SetPicSort( PictureSort::IntraRefPictureSort());
-                // I picture expires after we've coded the next I picture
+                // I picture expires after we've coded the next L1 picture
                 pparams.SetExpiryTime( gop_len * 2);
+                pparams.SetExpiryTime( 2*m_L1_sep );
                 if ( pnum%2){
                     pparams.SetPicSort( PictureSort::InterRefPictureSort());
                     // Ref the previous I field
@@ -777,7 +782,8 @@ void FieldSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
                 pparams.SetExpiryTime( gop_len );
             }
         }
-        else if ((rel_pnum/2) % L1_sep == 0){
+        else if ((rel_pnum/2) % m_L1_sep == 0){
+
             pparams.SetPicSort( PictureSort::InterRefPictureSort());
 
             if (pnum%2){
@@ -785,28 +791,29 @@ void FieldSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
                 // Ref the first field of same picture
                 pparams.Refs().push_back( pnum - 1);
                 // Ref the previous field 2 of I or L1 picture
-                pparams.Refs().push_back( pnum - L1_sep*2 );
+                pparams.Refs().push_back( pnum - m_L1_sep*2 );
             }
             else{
                 // Field 1
                 // Ref the field 1 of previous I or L1 picture
-                pparams.Refs().push_back( pnum - L1_sep*2 );
+                pparams.Refs().push_back( pnum - m_L1_sep*2 );
                 // Ref the field 2 of previous I or L1 picture
-                pparams.Refs().push_back( pnum - L1_sep*2 + 1 );
+                pparams.Refs().push_back( pnum - m_L1_sep*2 + 1 );
             }
 
             // Expires after the next L1 or I picture
-            pparams.SetExpiryTime( (L1_sep+1)*2-1 );
+            pparams.SetExpiryTime( (m_L1_sep+1)*2-1 );
         }
-        else if ((rel_pnum/2+1) % L1_sep == 0){
+        else if ((rel_pnum/2+1) % m_L1_sep == 0){
             // Bi-directional non-reference fields.
-            pparams.SetPicSort( PictureSort::InterNonRefPictureSort());
+	    if (pnum%2)
+                pparams.SetPicSort( PictureSort::InterNonRefPictureSort());
+            else
+                pparams.SetPicSort( PictureSort::InterRefPictureSort());
 
-            // .. and the same parity field of the previous picture
-            pparams.Refs().push_back(pnum-1*2);
-            // Refs are the same parity fields in the next I or L1 picture ...
-            if (m_enc_pbuffer.IsPictureAvail(pnum+1*2))
-                pparams.Refs().push_back(pnum+1*2);
+            pparams.Refs().push_back(pnum-1);
+            if (m_enc_pbuffer.IsPictureAvail(pnum+2))
+                pparams.Refs().push_back(pnum+2);
 
             pparams.SetExpiryTime( 1 );
         }
@@ -814,12 +821,10 @@ void FieldSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
             // Bi-directional reference fields.
             pparams.SetPicSort( PictureSort::InterRefPictureSort());
 
-            // .. and the same parity field of the previous picture
-            pparams.Refs().push_back(pnum-1*2);
-            // Refs are the same parity fields in the next I or L1 picture ...
-            int next_ref = (((pnum/2)/L1_sep+1)*L1_sep)*2+(pnum%2);
+            pparams.Refs().push_back(pnum-1);
+            int next_ref = (((pnum/2)/m_L1_sep+1)*m_L1_sep)*2+(pnum%2);
             if (m_enc_pbuffer.IsPictureAvail(next_ref))
-                pparams.Refs().push_back((((pnum/2)/L1_sep+1)*L1_sep)*2+(pnum%2));
+                pparams.Refs().push_back(next_ref);
             pparams.SetExpiryTime( 4 );
         }
 
@@ -838,14 +843,14 @@ int FieldSequenceCompressor::CodedToDisplay( const int pnum )
 {
      // Frame the field pnum belongs to
     int fnum = pnum>>1;
-    if (m_encparams.L1Sep()>0)
+    if (m_L1_sep>0)
     {
         // We have L1 and L2 frames
         if (fnum==0)
             return pnum;
-        else if ((fnum-1)% m_encparams.L1Sep()==0)
+        else if ((fnum-1)% m_L1_sep==0)
         {//we have L1 or subsequent I frames
-            return (pnum+(m_encparams.L1Sep()-1)*2);
+            return (pnum+(m_L1_sep-1)*2);
         }
         else//we have L2 frames
             return (pnum - 2);
