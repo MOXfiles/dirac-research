@@ -93,7 +93,7 @@ RateController::RateController(int trate, SourceParams& srcp, EncoderParams& enc
     m_I_qf (encp.Qf()),
     m_I_qf_long_term(encp.Qf()),
     m_target_rate(trate),
-    m_buffer_size(4000*trate),// for the moment, set buffer size to 4*bitrate
+    m_buffer_size(5000*trate),// for the moment, set buffer size to 5 seconds
     m_buffer_bits((m_buffer_size*9)/10),// initial occupancy of 90%
     m_encparams(encp),
     m_fcount(encp.L1Sep() ),
@@ -201,7 +201,19 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
     UpdateBuffer( num_bits );
 
     // filter tap for adjusting the QF
-    double tap = 0.25;
+    double target_ratio = 0.9;
+
+    double top_size = (1.0 - target_ratio)-0.5;
+    double bottom_size = target_ratio-0.1;
+    double actual_ratio = double(m_buffer_bits)/double(m_buffer_size);
+    double tap;
+
+    if (actual_ratio>target_ratio)
+        tap = (actual_ratio-target_ratio)/top_size;
+    else
+        tap = (target_ratio-actual_ratio)/bottom_size;
+
+    tap = std::min( 1.0, std::max(tap, 0.15 ));
 
     int field_factor = m_encparams.FieldCoding() ? 2 : 1;
 
@@ -297,13 +309,19 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
 
             // Determine a new QF
             double new_qf = 10 - (double)5/2*log10(16*K/std::pow(trate, 2));
-	    m_qf = tap*new_qf+(1.0-tap)*m_qf;
+	    if ( ( std::abs(m_qf-new_qf)<0.25 && new_qf > 4.0 ) || new_qf>8.0)
+	        m_qf = new_qf;
+	    else
+	        m_qf = tap*new_qf+(1.0-tap)*m_qf;
+
             m_qf = ReviewQualityFactor( m_qf , num_bits );
 
-	    if (prate<3*trate)
-                m_qf = std::max(m_qf,m_encparams.Qf()-1.0);
-	    else
-                m_qf = std::max(m_qf,m_encparams.Qf()-2.0);
+            if ( m_qf<8.0 ){
+                if (prate<2*trate)
+                    m_qf = std::max(m_qf,m_encparams.Qf()-1.0);
+	        else
+                    m_qf = std::max(m_qf,m_encparams.Qf()-2.0);
+            }
 
             m_encparams.SetQf(m_qf);
 
