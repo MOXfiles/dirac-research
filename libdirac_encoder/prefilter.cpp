@@ -535,12 +535,26 @@ TwoDArray<int> GetDiagLPFilter( const float bw )
 void dirac::DiagFilter( PicArray& pic_data, const float qf, const int strength ){
     // One quadrant of the filter taps
 
-    float bw = (std::min( std::max( qf+3.0f-float(strength), 2.0f ), 10.0f ))/10.0;
 
-    if ( bw>0.9 )
+    float ffactor = (9.0 - qf )/6.0 + float(strength-5)/7.5;
+    int factor = std::max(0, std::min( 256, int( ffactor*256.0 ) ) ) ;
+
+    float bw = (1.0-ffactor)*0.5+0.5;
+
+    if (bw>0.9)
         return;
 
     TwoDArray<int> filter = GetDiagLPFilter( bw );
+
+    filter[0][0] = ( factor*filter[0][0] + ( (1<<8)-factor )*(1<<16) + (1<<7) ) >> 8;
+
+    for (int i=1;i<7; ++i )
+        filter[0][i] = ( factor*filter[0][i] + (1<<7) ) >> 8;
+
+    for (int j=1;j<7; ++j )
+        for (int i=0;i<7; ++i )
+            filter[j][i] = ( factor*filter[j][i] + (1<<7) ) >> 8;
+
 
     PicArray tmp_data( pic_data.LengthY(), pic_data.LengthX(), pic_data.CSort() );
 
