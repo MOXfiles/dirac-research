@@ -469,6 +469,11 @@ void DiracEncoder::SetSourceParams (const dirac_encoder_context_t *enc_ctx)
     m_srcparams.SetXl( enc_ctx->src_params.width );
     m_srcparams.SetYl( enc_ctx->src_params.height );
 
+    m_srcparams.SetCleanWidth( m_srcparams.Xl() );
+    m_srcparams.SetCleanHeight( m_srcparams.Yl() );
+    m_srcparams.SetLeftOffset( 0 );
+    m_srcparams.SetTopOffset( 0 );
+
     m_srcparams.SetSourceSampling( enc_ctx->src_params.source_sampling );
     if (m_srcparams.FrameRate().m_num != (unsigned int)enc_ctx->src_params.frame_rate.numerator ||
         m_srcparams.FrameRate().m_denom != (unsigned int)enc_ctx->src_params.frame_rate.denominator)
