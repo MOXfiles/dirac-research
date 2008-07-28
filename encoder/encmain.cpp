@@ -359,7 +359,7 @@ bool Skip (std::ifstream &fdata, int start_frame, int frame_size)
     }
     catch (...)
     {
-        std::cerr << "Skipping of first "<< start_frame << "frames failed"
+        std::cerr << "Skipping of first "<< start_frame << " frames failed"
                   << std::endl;
         ret_stat = false;
     }

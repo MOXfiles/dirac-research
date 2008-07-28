@@ -42,9 +42,9 @@
 
 using namespace dirac;
 
-namespace dirac 
+namespace dirac
 {
-void SetDefaultCodecParameters(CodecParams &cparams, 
+void SetDefaultCodecParameters(CodecParams &cparams,
                                PictureType ptype,
                                unsigned int num_refs)
 {
@@ -114,7 +114,7 @@ void SetDefaultCodecParameters(CodecParams &cparams,
     }
 }
 
-void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams) 
+void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
 {
     std::ostringstream errstr;
     sparams.SetVideoFormat(vf);
@@ -126,7 +126,7 @@ void SetDefaultSourceParameters(const VideoFormat &vf, SourceParams& sparams)
     sparams.SetLeftOffset(0);
     sparams.SetTopOffset(0);
     sparams.SetColourSpecification(1);
-    
+
     switch (vf)
     {
     case VIDEO_FORMAT_CUSTOM:
@@ -462,16 +462,16 @@ void SetDefaultBlockParameters(OLBParams& bparams, int pidx)
     {
     case 0: // custom - so undefined values
         return;
-    case 1: 
+    case 1:
         bparams =  OLBParams(8, 8, 4, 4);
         break;
-    case 2: 
+    case 2:
         bparams =  OLBParams(12, 12, 8, 8);
         break;
-    case 3: 
+    case 3:
         bparams =  OLBParams(16, 16, 12, 12);
         break;
-    case 4: 
+    case 4:
         bparams =  OLBParams(24, 24, 16, 16);
         break;
     default:
@@ -498,7 +498,7 @@ unsigned int BlockParametersIndex (const OLBParams& bparams)
         return 3;
     else if (bparams == bparams_4)
         return 4;
-    else 
+    else
         return 0;
 }
 
