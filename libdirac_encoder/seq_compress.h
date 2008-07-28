@@ -163,9 +163,6 @@ namespace dirac
         //! Remove unwanted pictures from picture buffers
         virtual void CleanBuffers();
 
-        //! Return true if we need to start a new access unit. Purely virtual. The child class will have to define it.
-        virtual bool IsNewAccessUnit() = 0;
-
         //! Update the CBR model based on the data we've compressed.
 	//Purely virtual. The child class will have to define it.
         virtual void UpdateCBRModel(EncPicture& my_picture, const PictureByteIO* picture_byteio) = 0;
@@ -314,7 +311,6 @@ namespace dirac
 
 protected:
         virtual int CodedToDisplay(const int pnum);
-        virtual bool IsNewAccessUnit();
         virtual void UpdateCBRModel(EncPicture& my_picture, const PictureByteIO* picture_byteio);
 
     };
@@ -365,7 +361,6 @@ protected:
     protected:
 
         virtual int CodedToDisplay(const int pnum);
-        virtual bool IsNewAccessUnit();
 
         virtual void UpdateCBRModel(EncPicture& my_picture, const PictureByteIO* picture_byteio);
     private:

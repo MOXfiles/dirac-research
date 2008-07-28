@@ -154,9 +154,9 @@ bool SequenceCompressor::CanEncode()
 
             if ((last_frame_read >= (current_code_fnum +  (last_frame_read%m_encparams.L1Sep()))))
                 return true;
-        
+
              /*
-              * Encode the remaining picture in the frame buffer. We check if 
+              * Encode the remaining picture in the frame buffer. We check if
               * the reference pictures are available and modify the picture sort
               * accordingly.
               */
@@ -209,17 +209,6 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 
     if ( CanEncode() )
     {
-
-        if(IsNewAccessUnit())
-        {
-            SequenceHeaderByteIO *p_seqheader_byteio = new SequenceHeaderByteIO
-                                        ( m_pic_in->GetSourceParams(),
-                                            m_encparams);
-            p_seqheader_byteio->Output();
-
-            m_dirac_byte_stream.AddSequenceHeader(p_seqheader_byteio);
-        }
-
 
         // Compress the picture//
         ///////////////////////
@@ -364,12 +353,23 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 
         }
 
-        if ( current_pp->PicSort().IsRef() )
+        if ( current_pp->PicSort().IsRef()==true )
             m_enc_pbuffer.SetRetiredPictureNum( m_show_pnum, m_current_display_pnum );
 
         // 12. Now code the residual data and motion data
         if (m_encparams.TargetRate() != 0)
 	    UpdateIntraPicCBRModel( *current_pp, is_a_cut );
+
+        // 13. Write a sequence header if necessary
+	if(current_pp->PicSort().IsRef()==true && current_pp->PicSort().IsIntra()==true )
+        {
+            SequenceHeaderByteIO *p_seqheader_byteio = new SequenceHeaderByteIO
+                                        ( m_pic_in->GetSourceParams(),
+                                            m_encparams);
+            p_seqheader_byteio->Output();
+
+            m_dirac_byte_stream.AddSequenceHeader(p_seqheader_byteio);
+        }
 
         // 13.  Write the picture header.
         PictureByteIO* p_picture_byteio = new PictureByteIO(*current_pp, m_current_display_pnum );
@@ -385,7 +385,6 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
                 std::cout<<std::endl<<std::endl<<"Compressing frame "<<m_current_code_pnum<<", ";
             std::cout<<m_current_display_pnum<<" in display order";
 
-            
             if (is_a_cut==true || current_pp->PicSort().IsIntra()==false )
                 std::cout<<std::endl<<current_pic->GetMEData().IntraBlockRatio()*100.0<<"% of blocks are intra   ";
 	    if (is_a_cut==true)
@@ -663,11 +662,6 @@ int FrameSequenceCompressor::CodedToDisplay( const int cnum )
     }
 }
 
-bool FrameSequenceCompressor::IsNewAccessUnit()
-{
-    return (m_current_display_pnum % m_encparams.GOPLength()==0);
-}
-
 void FrameSequenceCompressor::UpdateCBRModel(EncPicture& my_frame,
                                                   const PictureByteIO* p_picture_byteio)
 {
@@ -854,11 +848,6 @@ int FieldSequenceCompressor::CodedToDisplay( const int pnum )
     {//we just have I-frames, so no re-ordering
         return (pnum);
     }
-}
-
-bool FieldSequenceCompressor::IsNewAccessUnit( )
-{
-    return ((m_current_display_pnum) % (m_encparams.GOPLength()<<1)==0);
 }
 
 void FieldSequenceCompressor::UpdateCBRModel(EncPicture& my_picture,
