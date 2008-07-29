@@ -332,7 +332,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
             if ( current_pic->GetMEData().IntraBlockRatio()>0.3333 ){
 	        is_a_cut = true;
                 if ( m_encparams.L1Sep()>1 &&
-		     (m_current_display_pnum % field_factor*m_encparams.L1Sep()) == 0){
+		     (m_current_display_pnum % (field_factor*m_encparams.L1Sep())) == 0){
 		    m_gop_start_num = current_pp->PictureNum();//restart the GOP
 		}
 
