@@ -26,7 +26,7 @@ libdirac_decoder_la_CXXFLAGS = $(AM_CXXFLAGS)
 
 libdirac_decoder_la_LIBADD = $(top_builddir)/libdirac_common/libdirac_common.la $(top_builddir)/libdirac_byteio/libdirac_byteio.la
 
-libdirac_decoder_la_LDFLAGS= -no-undefined -version-info $(GENERIC_LIBRARY_VERSION)
+libdirac_decoder_la_LDFLAGS= -no-undefined -version-info $(GENERIC_LIBRARY_VERSION) -export-symbols-regex '^dirac_'
 
 library_includedir=$(includedir)/$(GENERIC_LIBRARY_NAME)/libdirac_decoder
 library_include_HEADERS = dirac_parser.h decoder_types.h
