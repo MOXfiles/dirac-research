@@ -165,58 +165,68 @@ int main(int argc, char * argv[] ) {
 }
 
 void v_filter(unsigned char *in_array, unsigned char *out_array, const int w, const int h){
-/*
-    for (int j=0;j<(h/2);++j){
-        for (int i=0; i<w; ++i){
-	    out_array[j*w+i]=in_array[2*j*w+i];
-        }
-    }
-    */
+
     int height2 = h/2;
+
+    int val;
 
     // top line
     for (int x=0; x<w; ++x ){
-        out_array[x] = (-in_array[x]+9*in_array[x]+9*in_array[w+x]-
+        val = (-in_array[x]+9*in_array[x]+9*in_array[w+x]-
                          in_array[2*w+x]+8)>>4;
+	val = std::min( 255, std::max(0,val ) );
+	out_array[x] = static_cast<unsigned char>( val );
+
     }
     // middle lines
     for (int line_out=1,line_in=2; line_out<height2-1; line_out++,line_in+=2) {
         for (int x=0; x<w; ++x ){
-            out_array[line_out*w+x] = (-in_array[(line_in-1)*w+x]+
-                                             9*in_array[line_in*w+x]+
-                                             9*in_array[(line_in+1)*w+x]-
-                                             in_array[(line_in+2)*w+x]+8)>>4;
+            val = (-in_array[(line_in-1)*w+x]+
+                   9*in_array[line_in*w+x]+
+                   9*in_array[(line_in+1)*w+x]-
+                   in_array[(line_in+2)*w+x]+8)>>4;
+	    val = std::min( 255, std::max(0,val ) );
+	    out_array[line_out*w+x] = static_cast<unsigned char>( val );
         }
     }
 
     // bottom line
     for (int x=0; x<w; ++x ){
-        out_array[(height2-1)*w+x] = (-in_array[(h-3)*w+x]+
-                                             9*in_array[(h-2)*w+x]+
-                                             9*in_array[(h-1)*w+x]-
-                                             in_array[(h-1)*w+x]+8)>>4;
+        val = (-in_array[(h-3)*w+x]+
+               9*in_array[(h-2)*w+x]+
+               9*in_array[(h-1)*w+x]-
+               in_array[(h-1)*w+x]+8)>>4;
+	val = std::min( 255, std::max(0,val ) );
+	out_array[(height2-1)*w+x] = static_cast<unsigned char>( val );
     }
 }
 
 void h_filter(unsigned char *in_array, unsigned char *out_array, const int w, const int h){
 
     int width2 = w/2;
+    int val;
 
     for (int j=0; j<h; ++j) {
 
-        out_array[j*width2] = (-in_array[j*w]+9*in_array[j*w]+9*in_array[j*w+1]-
+        val = (-in_array[j*w]+9*in_array[j*w]+9*in_array[j*w+1]-
                          in_array[j*w+2]+8)>>4;
+	val = std::min( 255, std::max(0,val ) );
+	out_array[j*width2] = static_cast<unsigned char>( val );
 
         for (int xpos_out=1, xpos_in=2; xpos_out<width2-1; xpos_out++, xpos_in+=2 ){
-            out_array[j*width2+xpos_out] = (-in_array[j*w+xpos_in-1]+
-                                             9*in_array[j*w+xpos_in]+
-                                             9*in_array[j*w+xpos_in+1]-
-                                             in_array[j*w+xpos_in+2]+8)>>4;
+            val = (-in_array[j*w+xpos_in-1]+
+                   9*in_array[j*w+xpos_in]+
+                   9*in_array[j*w+xpos_in+1]-
+                   in_array[j*w+xpos_in+2]+8)>>4;
+	    val = std::min( 255, std::max(0,val ) );
+	    out_array[j*width2+xpos_out] = static_cast<unsigned char>( val );
         }
 
-        out_array[j*width2+width2-1]= (-in_array[j*w+w-3]+
-                                             9*in_array[j*w+w-2]+
-                                             9*in_array[j*w+w-1]-
-                                             in_array[j*w+w-1]+8)>>4;
+        val = (-in_array[j*w+w-3]+
+                9*in_array[j*w+w-2]+
+                9*in_array[j*w+w-1]-
+                in_array[j*w+w-1]+8)>>4;
+        val = std::min( 255, std::max(0,val ) );
+	out_array[j*width2+width2-1] = static_cast<unsigned char>( val );
     }
 }
