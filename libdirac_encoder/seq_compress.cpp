@@ -228,7 +228,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
             if ( (enc_pic.GetStatus() & DONE_SET_PTYPE) == 0 ){
                 PictureParams& pparams = enc_pic.GetPparams();
                 // only look one subgroup ahead
-                if (pparams.PictureNum() < m_current_display_pnum + m_encparams.L1Sep() ){
+                if ((m_encparams.NumL1() == 0) || pparams.PictureNum() < m_current_display_pnum + m_encparams.L1Sep() ){
                     SetPicTypeAndRefs( pparams );
 		    enc_pic.UpdateStatus( DONE_SET_PTYPE );
 		}
@@ -366,9 +366,9 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 	    UpdateIntraPicCBRModel( *current_pp, is_a_cut );
 
         // 13. Write a sequence header if necessary
-	if(current_pp->PicSort().IsRef()==true &&
-	   current_pp->PicSort().IsIntra()==true &&
-	   (m_current_display_pnum % m_encparams.L1Sep())==0)
+	if( (m_encparams.NumL1() > 0 && current_pp->PicSort().IsRef()==true &&
+	   current_pp->PicSort().IsIntra()==true && (m_current_display_pnum % m_encparams.L1Sep() == 0)) ||
+	   (m_encparams.NumL1() == 0 && (m_current_display_pnum % m_encparams.GOPLength())==0))
         {
 	    if (m_encparams.Verbose())
 	        std::cout<<std::endl<<std::endl<<"GOP start: writing sequence header before picture ";
