@@ -585,6 +585,8 @@ void FrameSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
 
             // Expires after the next L1 or I picture
             pparams.SetExpiryTime( 2*m_L1_sep );
+	    if (rel_pnum % m_encparams.L1Sep() == 0 )
+	        pparams.SetExpiryTime(2*m_encparams.L1Sep());
         }
         else if ((rel_pnum+1) % m_L1_sep == 0){
             pparams.SetPicSort( PictureSort::InterNonRefPictureSort());
@@ -803,6 +805,8 @@ void FieldSequenceCompressor::SetPicTypeAndRefs( PictureParams& pparams )
 
             // Expires after the next L1 or I picture
             pparams.SetExpiryTime( (m_L1_sep+1)*2-1 );
+	    if ((rel_pnum/2) % m_encparams.L1Sep() == 0 )
+	        pparams.SetExpiryTime((2*m_encparams.L1Sep())+1*2-1);
         }
         else if ((rel_pnum/2+1) % m_L1_sep == 0){
             // Bi-directional non-reference fields.

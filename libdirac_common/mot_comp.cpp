@@ -152,8 +152,9 @@ void MotionCompensator::CompensatePicture( const AddOrSub direction ,
          }
          if ( refsptr[0]->GetPparams().PictureNum() != refs[0] )
          {
-             std::cout<<std::endl<<"WARNING! Reference picture numbers ";
-             std::cout<<"do not agree. Incorrect output is likely.";
+             std::cout<<std::endl<<"WARNING! Reference picture number 0 ";
+             std::cout<<"does not agree("<<refsptr[0]->GetPparams().PictureNum()<<" and ";
+	     std::cout<<refs[0]<<"). Incorrect output is likely.";
          }
 
 
@@ -166,8 +167,9 @@ void MotionCompensator::CompensatePicture( const AddOrSub direction ,
              }
              if ( refsptr[1]->GetPparams().PictureNum() != refs[1])
              {
-                 std::cout<<std::endl<<"WARNING! Reference picture numbers ";
-                 std::cout<<"do not agree. Incorrect output is likely.";
+                 std::cout<<std::endl<<"WARNING! Reference picture number 1 ";
+                 std::cout<<"does not agree("<<refsptr[1]->GetPparams().PictureNum()<<" and ";
+	         std::cout<<refs[1]<<"). Incorrect output is likely.";
              }
          }
 	 else
