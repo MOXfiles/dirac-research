@@ -541,6 +541,8 @@ void dirac::DiagFilter( PicArray& pic_data, const float qf, const int strength )
 
     float bw = (1.0-ffactor)*0.5+0.5;
 
+std::cout<<std::endl<<"Diagonal prefiltering with bandwidth = "<<bw;
+
     if (bw>0.9)
         return;
 
