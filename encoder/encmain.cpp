@@ -338,6 +338,7 @@ bool ReadPicData (std::ifstream &fdata, unsigned char *buffer, int frame_size)
     }
     catch (...)
     {
+    std::cerr<<std::endl<<"Got here !!!!!!!!!!!!";
         ret_stat = false;
     }
     fdata.exceptions (oldExceptions);
@@ -351,11 +352,10 @@ bool Skip (std::ifstream &fdata, int start_frame, int frame_size)
     fdata.exceptions (ios::failbit | ios::badbit);
     try
     {
-        int count = (start_frame)>>5;
-	for (int i=0; i<count; ++ i )
-            fdata.seekg(frame_size*32, std::ios::cur );
-	int residue = start_frame - (count<<5);
-        fdata.seekg(frame_size*residue, std::ios::cur );
+       unsigned char* buffer = new unsigned char[frame_size];
+       for (int i=0; i<start_frame; ++i)
+       ReadPicData(fdata, buffer, frame_size);
+       delete[] buffer;
     }
     catch (...)
     {
