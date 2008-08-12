@@ -347,9 +347,9 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
             }
 	    else{
 	    //12. Do motion compensation if not a cut
-	        MEData& me_data = current_pic->GetMEData();
+//	        MEData& me_data = current_pic->GetMEData();
 
-                if (me_data.IntraBlockRatio()>0.1)
+//                if (me_data.IntraBlockRatio()>0.1)
                     m_encparams.SetBlockSizes(*m_intra_olbp, m_srcparams.CFormat() );
 
 	        m_pcoder.MotionCompensate(m_enc_pbuffer, m_current_display_pnum, SUBTRACT );
