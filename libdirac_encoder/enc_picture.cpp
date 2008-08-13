@@ -109,23 +109,23 @@ void EncPicture::InitMEData( const int xnum_mb, const int ynum_mb , const int nu
         delete m_me_data;
 
     m_me_data=new MEData( xnum_mb , ynum_mb , num_refs );
-    
+
 }
 
-const PicArray& EncPicture::DataForME( bool field_coding, CompSort cs ) const{
+const PicArray& EncPicture::DataForME( bool field_coding ) const{
 
     if (field_coding)
-        return OrigData( cs );//return FiltData( cs );
+        return OrigData( Y_COMP );//return FiltData( Y_COMP );
     else
-        return OrigData( cs );
+        return OrigData( Y_COMP );
 }
 
-const PicArray& EncPicture::UpDataForME( bool field_coding, CompSort cs ) const{
+const PicArray& EncPicture::UpDataForME( bool field_coding ) const{
 
     if (field_coding)
-        return UpOrigData( cs );// return UpFiltData( cs );
+        return UpOrigData( Y_COMP );// return UpFiltData( Y_COMP );
     else
-        return UpOrigData( cs );
+        return UpOrigData( Y_COMP );
 }
 
 
@@ -137,7 +137,7 @@ const PicArray& EncPicture::UpOrigData(CompSort cs) const
         return *m_orig_up_data[c];
     else
     {//we have to do the upconversion
-   
+
         m_orig_up_data[c] = new PicArray( 2*m_orig_data[c]->LengthY(),
                                           2*m_orig_data[c]->LengthX() );
         UpConverter* myupconv;
@@ -171,7 +171,8 @@ const PicArray& EncPicture::FiltData(CompSort cs) const
         if (m_orig_data[c] != NULL )
             m_filt_data[c] = new PicArray( m_orig_data[c]->LengthY(),
                                            m_orig_data[c]->LengthX() );
-        
+
+//	AntiAliasFilter( *(m_filt_data[c]), *(m_orig_data[c]));
 	AntiAliasFilter( *(m_filt_data[c]), *(m_orig_data[c]));
 
         return *(m_filt_data[c]);

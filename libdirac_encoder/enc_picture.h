@@ -91,10 +91,10 @@ public:
     void SetOrigData();
 
     //! Returns a version of the picture data suitable for motion estimation
-    const PicArray& DataForME(bool field_coding, CompSort c) const;
+    const PicArray& DataForME(bool field_coding) const;
 
     //! Returns a version of the picture data suitable for subpel motion estimation
-    const PicArray& UpDataForME(bool field_coding, CompSort c) const;
+    const PicArray& UpDataForME(bool field_coding) const;
 
 
     void UpdateStatus( const unsigned int mask ){ m_status |= mask; }
