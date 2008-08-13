@@ -106,7 +106,7 @@ namespace dirac
             Compresses a specified picture within a group of pictures. 
             \param my_pbuffer  picture buffer in which the reference frames resides
             \param pnum        picture number to compress
-            \params pic_byteio compressed picture in Dirac bytestream format
+            \param pic_byteio  compressed picture in Dirac bytestream format
         */
         void CodeResidue(  EncQueue& my_pbuffer , int pnum , PictureByteIO* pic_byteio);
 
