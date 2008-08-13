@@ -236,6 +236,114 @@ void EncPicture::AntiAliasFilter( PicArray& out_data, const PicArray& in_data ) 
     }
 }
 
+const PicArray& EncPicture::CombinedData() const
+{
+
+    if (m_filt_data[Y_COMP] != NULL)
+        return *m_filt_data[Y_COMP];
+    else
+    {//we have to do the combining
+
+        if (m_orig_data[Y_COMP] != NULL )
+            m_filt_data[Y_COMP] = new PicArray( m_orig_data[Y_COMP]->LengthY(),
+                                           m_orig_data[Y_COMP]->LengthX() );
+
+	Combine( *(m_filt_data[Y_COMP]), *(m_orig_data[Y_COMP]),
+	         *(m_orig_data[U_COMP]), *(m_orig_data[V_COMP])
+	);
+
+        return *(m_filt_data[Y_COMP]);
+
+    }
+}
+
+void EncPicture::Combine( PicArray& comb_data, const PicArray& y_data,
+                          const PicArray& u_data, const PicArray& v_data ) const
+{
+    int hcr = y_data.LengthX()/u_data.LengthX();
+    int vcr = y_data.LengthY()/u_data.LengthX();
+
+    float val, valc, valy;
+
+    if (vcr==1){
+        for (int j=0; j<comb_data.LengthY(); ++j) {
+            if (hcr==1){// 444 format
+                for (int i=0; i<comb_data.LengthX(); ++i ){
+                    val = float(u_data[j][i]);
+	            val *= val;
+	            valc = val;
+
+	            val = float(v_data[j][i]);
+	            val *= val;
+	            valc += val;
+
+                    valy = float(y_data[j][i]) + 128.0;
+	            valy *= valy;
+		    comb_data[j][i] = ValueType( std::sqrt(valc+valy)-128.0 );
+                }// i
+	    }
+	    else{ // 422 format
+                for (int i=0; i<comb_data.LengthX(); i+=2 ){
+
+                    val = float(u_data[j][i>>1]);
+	            val *= val;
+	            valc = val;
+
+	            val = float(v_data[j][i>>1]);
+	            val *= val;
+	            valc += val;
+
+                    valy = float(y_data[j][i]) + 128.0;
+	            valy *= valy;
+	            comb_data[j][i] = ValueType( std::sqrt(valc+valy)-128.0 );
+
+		    valy = float(y_data[j][i+1]) + 128.0;
+	            valy *= valy;
+
+		    comb_data[j][i+1] = ValueType( std::sqrt(valc+valy)-128.0 );
+
+	        }// i
+	    }
+        }// j
+    }
+    else{ // 420 format
+        for (int j=0; j<comb_data.LengthY(); j+=2 ) {
+
+            for (int i=0; i<comb_data.LengthX(); i+=2 ){
+
+                val = float(u_data[j][i>>1]);
+	        val *= val;
+	        valc = val;
+
+	        val = float(v_data[j][i>>1]);
+	        val *= val;
+	        valc += val;
+
+                valy = float(y_data[j][i]) + 128.0;
+	        valy *= valy;
+	        comb_data[j][i] = ValueType( std::sqrt(valc+valy)-128.0 );
+
+	        valy = float(y_data[j][i+1]) + 128.0;
+	        valy *= valy;
+		comb_data[j][i+1] = ValueType( std::sqrt(valc+valy)-128.0 );
+
+                valy = float(y_data[j+1][i]) + 128.0;
+	        valy *= valy;
+		comb_data[j+1][i] = ValueType( std::sqrt(valc+valy)-128.0 );
+
+	        valy = float(y_data[j+1][i+1]) + 128.0;
+	        valy *= valy;
+		comb_data[j+1][i+1] = ValueType( std::sqrt(valc+valy)-128.0 );
+
+	    }// i
+        }// j
+
+    }
+
+
+}
+
+
 void EncPicture::DropRef( int rindex ){
 
     std::vector<int>& refs = m_pparams.Refs();

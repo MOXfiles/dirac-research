@@ -51,13 +51,13 @@ ModeDecider::ModeDecider( const EncoderParams& encp):
     m_me_data_set(3)
 {
 
-    // The following factors normalise costs for sub-SBs and SBs to those of 
+    // The following factors normalise costs for sub-SBs and SBs to those of
     // blocks, so that the overlap is take into account (e.g. a sub-SB has
-    // length XBLEN+XBSEP and YBLEN+YBSEP). The SB costs for a 1x1 
+    // length XBLEN+XBSEP and YBLEN+YBSEP). The SB costs for a 1x1
     // decomposition are not directly comprable to those for other decompositions
     // because of the block overlaps. These factors remove these effects, so that
     // all SAD costs are normalised to the area corresponding to non-overlapping
-    // 16 blocks of size XBLEN*YBLEN.    
+    // 16 blocks of size XBLEN*YBLEN.
 
    m_level_factor[0] = float( 16 * m_encparams.LumaBParams(2).Xblen() * m_encparams.LumaBParams(2).Yblen() )/
        float( m_encparams.LumaBParams(0).Xblen() * m_encparams.LumaBParams(0).Yblen() );
@@ -163,9 +163,9 @@ void ModeDecider::DoModeDecn( EncQueue& my_buffer, int pic_num )
     }
 
     // Finally, although not strictly part of motion estimation,
-    // we have to assign DC values for chroma components for
+    // we have to assign DC values for
     // blocks we're decided are intra.
-    SetChromaDC( my_buffer , pic_num );
+    SetDC( my_buffer , pic_num );
 
 }
 
@@ -512,19 +512,23 @@ float ModeDecider::GetDCVar( const ValueType dc_val , const ValueType dc_pred)
     return 4.0*std::abs( static_cast<float>( dc_val - dc_pred ) );
 }
 
-ValueType ModeDecider::GetChromaBlockDC(const PicArray& pic_data,
-                                            int xunit , int yunit , int split)
+ValueType ModeDecider::GetBlockDC(const PicArray& pic_data,
+                                            int xunit , int yunit , int split, CompSort cs)
 {
     BlockDiffParams dparams;
-    dparams.SetBlockLimits( m_encparams.ChromaBParams( split ) ,
-                            pic_data, xunit , yunit);
+    if ( cs!=Y_COMP )
+        dparams.SetBlockLimits( m_encparams.ChromaBParams( split ) ,
+                                pic_data, xunit , yunit);
+    else
+        dparams.SetBlockLimits( m_encparams.LumaBParams( split ) ,
+                                pic_data, xunit , yunit);
 
     IntraBlockDiff intradiff( pic_data );
 
     return intradiff.CalcDC( dparams );
 }
 
-void ModeDecider::SetChromaDC( const PicArray& pic_data , MEData& me_data , CompSort csort )
+void ModeDecider::SetDC( const PicArray& pic_data , MEData& me_data , CompSort cs )
 {
 
     // Lower limit of block coords in SB
@@ -536,7 +540,7 @@ void ModeDecider::SetChromaDC( const PicArray& pic_data , MEData& me_data , Comp
     int xsubSBtl,ysubSBtl;
     int xsubSBbr,ysubSBbr;
 
-    TwoDArray<ValueType>& dcarray = me_data.DC( csort );
+    TwoDArray<ValueType>& dcarray = me_data.DC( cs );
 
     ValueType dc = 0;
 
@@ -582,7 +586,7 @@ void ModeDecider::SetChromaDC( const PicArray& pic_data , MEData& me_data , Comp
 
                      if ( me_data.Mode()[ystart][xstart] == INTRA )
                          // Get the DC value for the unit
-                         dc = GetChromaBlockDC( pic_data , xunit , yunit , level );
+                         dc = GetBlockDC( pic_data , xunit , yunit , level, cs );
 
                      // Copy it into the corresponding blocks
                      for ( int q=ystart ; q< yend ; ++q )
@@ -596,10 +600,11 @@ void ModeDecider::SetChromaDC( const PicArray& pic_data , MEData& me_data , Comp
     }// ymb
 }
 
-void ModeDecider::SetChromaDC( EncQueue& my_buffer , int pic_num )
+void ModeDecider::SetDC( EncQueue& my_buffer , int pic_num )
 {
     MEData& me_data = my_buffer.GetPicture(pic_num).GetMEData();
-    SetChromaDC( my_buffer.GetPicture( pic_num ).OrigData(U_COMP) , me_data , U_COMP );
-    SetChromaDC( my_buffer.GetPicture( pic_num ).OrigData(V_COMP) , me_data , V_COMP );
+    SetDC( my_buffer.GetPicture( pic_num ).OrigData(Y_COMP) , me_data , Y_COMP );
+    SetDC( my_buffer.GetPicture( pic_num ).OrigData(U_COMP) , me_data , U_COMP );
+    SetDC( my_buffer.GetPicture( pic_num ).OrigData(V_COMP) , me_data , V_COMP );
 
 }

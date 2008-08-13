@@ -129,6 +129,10 @@ private:
     //! Returns an anti-aliased version of the original data
     const PicArray& FiltData(CompSort c) const;
 
+    const PicArray& CombinedData() const;
+    void Combine( PicArray& comb_data, const PicArray& y_data,
+                          const PicArray& u_data, const PicArray& v_data ) const;
+
     //! Returns an upconverted anti-aliased version of the original data
     const PicArray& UpFiltData(CompSort c) const;
 

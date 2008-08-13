@@ -43,12 +43,12 @@ using namespace dirac;
 
 using std::vector;
 
-SubpelRefine::SubpelRefine(const EncoderParams& encp): 
+SubpelRefine::SubpelRefine(const EncoderParams& encp):
     m_encparams(encp),
     m_nshift(4)
 {
-    //define the relative coordinates of the four neighbours    
-    m_nshift[0].x = -1; 
+    //define the relative coordinates of the four neighbours
+    m_nshift[0].x = -1;
     m_nshift[0].y = 0;
 
     m_nshift[1].x = -1;

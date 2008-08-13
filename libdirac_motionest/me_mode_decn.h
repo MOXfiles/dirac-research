@@ -108,7 +108,6 @@ namespace dirac
         //! Do motion estimation for a prediction unit at a given level
         void DoME( const int xpos , const int ypos , const int level );
 
-     
         //! Return a measure of the cost of coding a given mode
         float ModeCost( const int xindex , const int yindex );
 
@@ -119,13 +118,13 @@ namespace dirac
         float GetDCVar( const ValueType dc_val , const ValueType dc_pred);
 
         //! Go through all the intra blocks and extract the chroma dc values to be coded
-        void SetChromaDC( EncQueue& my_buffer, int pic_num);
+        void SetDC( EncQueue& my_buffer, int pic_num);
 
         //! Called by previous fn for each component
-        void SetChromaDC(const PicArray& pic_data, MEData& me_data,CompSort csort);        
+        void SetDC(const PicArray& pic_data, MEData& me_data,CompSort cs);
 
         //! Called by previous fn for each block
-        ValueType GetChromaBlockDC(const PicArray& pic_data, int xloc,int yloc,int split);
+        ValueType GetBlockDC(const PicArray& pic_data, int xloc,int yloc,int split, CompSort cs);
 
 
          // Member data
