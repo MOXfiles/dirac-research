@@ -130,6 +130,7 @@ private:
     const PicArray& FiltData(CompSort c) const;
 
     const PicArray& CombinedData() const;
+    const PicArray& UpCombinedData() const;
     void Combine( PicArray& comb_data, const PicArray& y_data,
                           const PicArray& u_data, const PicArray& v_data ) const;
 
