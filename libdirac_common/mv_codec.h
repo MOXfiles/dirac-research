@@ -120,6 +120,7 @@ namespace dirac
             Creates a MvDataCodec object to encode MV data, based on parameters
             \param    p_byteio   Input/output for the encoded bits
             \param    number_of_contexts the number of contexts used
+            \param    num_refs   Number of references
          */
         PredModeCodec(ByteIO* p_byteio, size_t number_of_contexts, const int num_refs);
 

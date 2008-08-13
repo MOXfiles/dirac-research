@@ -87,9 +87,9 @@ namespace dirac
             appropriate MotionCompensation sub-class.
             \param    cp        Encoder/decoder parameters
             \param    direction whether we're subtracting or adding
-            \param    buffer    the PictureBuffer object containing the picture and the reference pictures
-            \param    pnum    number of picture in the picture buffer to be compensated
-    `       \param    mv_data    the motion vector data
+            \param    mv_data    the motion vector data
+            \param    in_pic     Pointer to picture being motion compensated
+            \param    refptr     Array of pointers to reference pictures.
          */
         static void CompensatePicture ( const CodecParams &cp, 
                                       const AddOrSub direction , 
@@ -102,9 +102,9 @@ namespace dirac
             Perform motion compensated addition/subtraction on a picture using 
             parameters
             \param    direction whether we're subtracting or adding
-            \param    pnum    number of picture in the picture buffer to be compensated
-            \param    my_buffer    the PictureBuffer object containing the picture and the reference pictures
     `       \param    mv_data    the motion vector data
+            \param    in_pic     Pointer to picture being motion compensated
+            \param    refsptr    Array of pointers to reference pictures.
          */
         void CompensatePicture( const AddOrSub direction , 
                               const MvData& mv_data,

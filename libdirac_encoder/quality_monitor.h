@@ -68,8 +68,7 @@ namespace dirac
         //! Update the mse factors, returning true if we need to recode
         /*!
             Update the mse factors, returning true if we need to recode
-            \param ld_picture the locally-decoded picture
-            \param orig_picture the original picture
+            \param enc_picture the picture being encoded
         */
         void UpdateModel(const EncPicture& enc_picture );
 
