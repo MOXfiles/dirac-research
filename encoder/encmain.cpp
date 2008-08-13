@@ -338,7 +338,6 @@ bool ReadPicData (std::ifstream &fdata, unsigned char *buffer, int frame_size)
     }
     catch (...)
     {
-    std::cerr<<std::endl<<"Got here !!!!!!!!!!!!";
         ret_stat = false;
     }
     fdata.exceptions (oldExceptions);
