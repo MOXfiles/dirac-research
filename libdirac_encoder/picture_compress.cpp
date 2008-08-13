@@ -344,6 +344,7 @@ void PictureCompressor::Prefilter( EncQueue& my_buffer, int pnum )
                            m_encparams.PrefilterStrength() );
 
         if ( m_encparams.Prefilter() == DIAGLP )
+//	    DiagFilter( my_picture.Data( (CompSort) c), 3.0, 5 );
                 DiagFilter( my_picture.Data( (CompSort) c) , m_encparams.Qf(),
                            m_encparams.PrefilterStrength() );
     }
