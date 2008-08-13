@@ -112,14 +112,14 @@ void SequenceCompressor::SetMotionParameters(){
     int xl = m_encparams.Xl();
     int yl = m_encparams.Yl();
 
-    // Make sure we have enough macroblocks to cover the pictures
-    m_encparams.SetXNumMB( (xl+m_encparams.LumaBParams(0).Xbsep()-1)/
+    // Make sure we have enough superblocks to cover the pictures
+    m_encparams.SetXNumSB( (xl+m_encparams.LumaBParams(0).Xbsep()-1)/
                                      m_encparams.LumaBParams(0).Xbsep() );
-    m_encparams.SetYNumMB( (yl+m_encparams.LumaBParams(0).Ybsep()-1)/
+    m_encparams.SetYNumSB( (yl+m_encparams.LumaBParams(0).Ybsep()-1)/
                                      m_encparams.LumaBParams(0).Ybsep() );
 
-    m_encparams.SetXNumBlocks( 4 * m_encparams.XNumMB() );
-    m_encparams.SetYNumBlocks( 4 * m_encparams.YNumMB() );
+    m_encparams.SetXNumBlocks( 4 * m_encparams.XNumSB() );
+    m_encparams.SetYNumBlocks( 4 * m_encparams.YNumSB() );
 }
 
 
@@ -253,7 +253,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
                 if ( pparams.PicSort().IsInter() ){
 	            // 3.Initialise motion data
 	            if ( ( enc_pic.GetStatus() & DONE_ME_INIT) == 0 ){
-                        enc_pic.InitMEData( m_encparams.XNumMB() , m_encparams.YNumMB() ,
+                        enc_pic.InitMEData( m_encparams.XNumSB() , m_encparams.YNumSB() ,
                                                                    pparams.NumRefs() );
                         enc_pic.UpdateStatus( DONE_ME_INIT );
                     }

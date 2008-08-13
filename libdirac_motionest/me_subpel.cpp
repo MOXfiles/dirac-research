@@ -78,12 +78,12 @@ void SubpelRefine::DoSubpel( EncQueue& my_buffer,int pic_num )
         ref1 = refs[0];
         if (num_refs>1)
             ref2 = refs[1];
-        else    
+        else
             ref2 = ref1;
 
-        const PicArray& pic_data = my_buffer.GetPicture(pic_num).OrigData(Y_COMP);
-        const PicArray& refup1_data = my_buffer.GetPicture(ref1).UpOrigData(Y_COMP);
-        const PicArray& refup2_data = my_buffer.GetPicture(ref2).UpOrigData(Y_COMP);
+        const PicArray& pic_data = my_buffer.GetPicture(pic_num).DataForME(m_encparams.FieldCoding());
+        const PicArray& refup1_data = my_buffer.GetPicture(ref1).UpDataForME(m_encparams.FieldCoding());
+        const PicArray& refup2_data = my_buffer.GetPicture(ref2).UpDataForME(m_encparams.FieldCoding());
 
 	MEData& me_data = my_buffer.GetPicture(pic_num).GetMEData();
 
@@ -92,7 +92,7 @@ void SubpelRefine::DoSubpel( EncQueue& my_buffer,int pic_num )
 
         if (ref1 != ref2 )
             MatchPic( pic_data , refup2_data , me_data ,2 );
-    
+
     }
 }
 
@@ -121,14 +121,14 @@ void SubpelRefine::MatchPic(const PicArray& pic_data , const PicArray& refup_dat
     for (int yblock=0 ; yblock<m_encparams.YNumBlocks() ; ++yblock)
     {
         for (int xblock=0 ; xblock<m_encparams.XNumBlocks() ; ++xblock)
-        {    
+        {
             DoBlock(xblock , yblock , my_bmatch , me_data , ref_id );
-        }// xblock        
+        }// xblock
     }// yblock
 
 }
 
-void SubpelRefine::DoBlock(const int xblock , const int yblock , 
+void SubpelRefine::DoBlock(const int xblock , const int yblock ,
                            BlockMatcher& my_bmatch, MEData& me_data , const int ref_id )
 {
     // For each block, home into the sub-pixel vector
@@ -159,7 +159,7 @@ MVector SubpelRefine::GetPred(int xblock,int yblock,const MvArray& mvarray)
 
         }// i
     }
-    else 
+    else
     {
         for (int i=0 ; i<m_nshift.Length(); ++i )
         {

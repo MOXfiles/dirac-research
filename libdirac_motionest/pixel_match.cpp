@@ -59,20 +59,20 @@ PixelMatcher::PixelMatcher( const EncoderParams& encp):
 void PixelMatcher::DoSearch( EncQueue& my_buffer, int pic_num )
 {
 
-     //does an initial search using hierarchical matching to get guide vectors    
+    //does an initial search using hierarchical matching to get guide vectors
 
     // Picture numbers of references
     int ref1,ref2;
 
     // Use the luminance only for motion estimating
-    const PicArray& pic_data = my_buffer.GetPicture( pic_num ).DataForME(m_encparams.FieldCoding(), Y_COMP);
+    const PicArray& pic_data = my_buffer.GetPicture( pic_num ).DataForME(m_encparams.FieldCoding());
 
     const vector<int>& refs = my_buffer.GetPicture( pic_num ).GetPparams().Refs();
     ref1 = refs[0];
 
     if (refs.size()>1)
         ref2 = refs[1];
-    else    
+    else
         ref2 = ref1;
 
     // Record temporal distances
@@ -80,9 +80,9 @@ void PixelMatcher::DoSearch( EncQueue& my_buffer, int pic_num )
     m_tdiff[1] = std::abs( ref2 - pic_num );
 
     // Obtain C++ references to the reference picture luma components
-    const PicArray& ref1_data = my_buffer.GetPicture(ref1).DataForME(m_encparams.FieldCoding(), Y_COMP);
-    const PicArray& ref2_data = my_buffer.GetPicture(ref2).DataForME(m_encparams.FieldCoding(), Y_COMP);
- 
+    const PicArray& ref1_data = my_buffer.GetPicture(ref1).DataForME(m_encparams.FieldCoding());
+    const PicArray& ref2_data = my_buffer.GetPicture(ref2).DataForME(m_encparams.FieldCoding());
+
     // Determine the picture sort - this affects the motion estimation Lagrangian parameter
     m_psort = my_buffer.GetPicture(pic_num).GetPparams().PicSort();
 
@@ -114,19 +114,19 @@ void PixelMatcher::DoSearch( EncQueue& my_buffer, int pic_num )
         m_level = m_depth;
 
         MatchPic( *(pic_down[m_depth]) , *(ref1_down[m_depth]) , *(me_data_set[m_depth]) ,
-                                     *(me_data_set[m_depth]) , 1 );    
+                                     *(me_data_set[m_depth]) , 1 );
         if ( ref1 != ref2 )
-            MatchPic( *(pic_down[m_depth]) , *(ref2_down[m_depth]) , *(me_data_set[m_depth]) , 
+            MatchPic( *(pic_down[m_depth]) , *(ref2_down[m_depth]) , *(me_data_set[m_depth]) ,
                                              *(me_data_set[m_depth]) , 2 );
 
          // Do the intervening levels - here we can have a genuine set of guide vectors
         for ( m_level=m_depth-1 ; m_level>=1 ; --m_level )
         {
-            MatchPic( *(pic_down[m_level]) , *(ref1_down[m_level]) , *(me_data_set[m_level]) , 
+            MatchPic( *(pic_down[m_level]) , *(ref1_down[m_level]) , *(me_data_set[m_level]) ,
                                          *(me_data_set[m_level+1]) , 1 );
             if (ref1!=ref2)
-                MatchPic( *(pic_down[m_level]) , *(ref2_down[m_level]) , *(me_data_set[m_level]) , 
-                                                 *(me_data_set[m_level+1]) , 2 );    
+                MatchPic( *(pic_down[m_level]) , *(ref2_down[m_level]) , *(me_data_set[m_level]) ,
+                                                 *(me_data_set[m_level+1]) , 2 );
         }// level
 
         // Finally, do the top level, with the pictures themselves
@@ -188,7 +188,7 @@ void PixelMatcher::MakeMEDataHierarchy(const OneDArray< PicArray*>& down_data,
     int xnumblocks , ynumblocks;
     const OLBParams bparams = m_encparams.LumaBParams(2);
 
-    // We might not have an integral number of Macroblocks and blocks in 
+    // We might not have an integral number of Macroblocks and blocks in
     // a picture. So we go start of with the number of macroblocks in the
     // full size picture and calculate the number of in the downsized pics
     // from this.
@@ -233,7 +233,7 @@ void PixelMatcher::TidyMEData( OneDArray< MEData*>& me_data_set )
 
 void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data , MEData& me_data ,
                             const MvData& guide_data, const int ref_id)
-{    
+{
 
     // Initialisation //
     ////////////////////
@@ -246,7 +246,7 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
     {
         m_cost_mean = 0.0;
         m_cost_mean_sq = 0.0;
-        
+
         m_xr = std::min( m_level+1, 5);
         m_yr = std::min( m_level+1, 5);
     }
@@ -257,11 +257,11 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
     }
 
     // Provide aliases for the appropriate motion vector data components
-    
+
     MvArray& mv_array = me_data.Vectors( ref_id );
     const MvArray& guide_array = guide_data.Vectors( ref_id );
     TwoDArray<MvCostData>& pred_costs = me_data.PredCosts( ref_id );
-    
+
     // Initialise the arrays
     for (int y=0; y<mv_array.LengthY(); ++y)
     {
@@ -270,34 +270,34 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
             mv_array[y][x].x = 0;
             mv_array[y][x].y = 0;
             pred_costs[y][x].total = 10000000.0f;
-        }// x 
-    }// y 
+        }// x
+    }// y
 
     // Provide a block matching object to do the work
-    BlockMatcher my_bmatch( pic_data , ref_data , 
+    BlockMatcher my_bmatch( pic_data , ref_data ,
                             m_encparams.LumaBParams(2) , m_encparams.MVPrecision() ,
                             mv_array , pred_costs );
 
     // Do the work - loop over all the blocks, finding the best match //
     ////////////////////////////////////////////////////////////////////
 
-    /*    
-    The idea is for each block construct a list of candidate vectors,which will 
+    /*
+    The idea is for each block construct a list of candidate vectors,which will
     be tested. This list is actually a list of lists, implemented as a C++
     vector of C++ vectors. This is so that FindBestMatch can shorten the
-    search process by looking at the beginning of each sublist and 
+    search process by looking at the beginning of each sublist and
     discarding that sub-list if it's too far off.
     */
 
     // Make a zero-based list that is always used
     m_cand_list.clear();
-    MVector zero_mv( 0 , 0 );    
+    MVector zero_mv( 0 , 0 );
 
     AddNewVlist( m_cand_list , zero_mv , m_xr , m_yr);
 
-    // Now loop over the blocks and find the best matches. 
+    // Now loop over the blocks and find the best matches.
     // The loop is unrolled because predictions are different at picture edges.
-    // The purpose of the loop is to create appropriate candidate lists, and then 
+    // The purpose of the loop is to create appropriate candidate lists, and then
     // call the DoBlock() function which does the actual work.
 
     // First do TL corner
@@ -314,7 +314,7 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
         DoBlock(xpos, 0 , guide_array , my_bmatch);
     }// xpos
 
-    // All the remaining rows except the last 
+    // All the remaining rows except the last
     for ( int ypos=1 ; ypos<mv_array.LengthY() ; ++ypos )
     {
 
@@ -365,7 +365,7 @@ void PixelMatcher::DoBlock(const int xpos, const int ypos ,
     /////////////////////////////////
 
     block_match.FindBestMatchPel( xpos , ypos , m_cand_list, m_mv_prediction, 0 );
-    
+
     // Reset the lists ready for the next block (don't erase the first sublist as
     // this is a neighbourhood of zero, which we always look at)
     m_cand_list.erase( m_cand_list.begin()+1 , m_cand_list.end() );

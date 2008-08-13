@@ -204,7 +204,7 @@ void MotionCompensator::ReConfig()
 
     // Total shift = shift assuming equal picture weights +
     //               picture weights precision
-    int blocks_per_mb_row = m_cparams.XNumBlocks()/m_cparams.XNumMB();
+    int blocks_per_mb_row = m_cparams.XNumBlocks()/m_cparams.XNumSB();
     int blocks_per_sb_row = blocks_per_mb_row>>1;
     int mb_xlen = m_bparams.Xblen()*blocks_per_mb_row - (m_bparams.Xblen()-m_bparams.Xbsep())*(blocks_per_mb_row-1);
     int mb_ylen = m_bparams.Yblen();
@@ -310,7 +310,7 @@ void MotionCompensator::CompensateComponent( Picture* pic ,
     const int x_end_data = pic_data_out.FirstX() + std::min(pic_data_out.LengthX(), pic_size.x );
     const int y_end_data = pic_data_out.FirstY() + std::min(pic_data_out.LengthY(), pic_size.y );
 
-    const int blocks_per_mb_row = m_cparams.XNumBlocks()/m_cparams.XNumMB();
+    const int blocks_per_mb_row = m_cparams.XNumBlocks()/m_cparams.XNumSB();
     const int blocks_per_sb_row = blocks_per_mb_row>>1;
 
     // The picture does not contain integral number of blocks. So not all
@@ -330,7 +330,7 @@ void MotionCompensator::CompensateComponent( Picture* pic ,
         //loop over all the blocks in a row
         for(int xblock = 0 ; xblock < x_num_blocks; xblock+=xb_incr)
         {
-            int split_mode =  mv_data.MBSplit()[yblock/blocks_per_mb_row][xblock/blocks_per_mb_row];
+            int split_mode =  mv_data.SBSplit()[yblock/blocks_per_mb_row][xblock/blocks_per_mb_row];
 
             int blk_x, blk_y = 1;
 

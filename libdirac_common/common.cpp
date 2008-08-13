@@ -207,8 +207,8 @@ std::istream & operator>> (std::istream & stream, OLBParams & params)
 // Codec params functions
 
 CodecParams::CodecParams(const VideoFormat &vd, PictureType ftype, unsigned int num_refs, bool set_defaults):
-    m_x_num_mb(0),
-    m_y_num_mb(0),
+    m_x_num_sb(0),
+    m_y_num_sb(0),
     m_x_num_blocks(0),
     m_y_num_blocks(0),
     m_lbparams(3),
@@ -223,8 +223,8 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
 {
     //given the raw overlapped block parameters, set the modified internal parameters to
     //take account of the chroma sampling format and overlapping requirements, as well
-    //as the equivalent parameters for sub-MBs and MBs.
-    //Does NOT set the number of blocks or macroblocks, as padding may be required.
+    //as the equivalent parameters for sub-SBs and SBs.
+    //Does NOT set the number of blocks or superblocks, as padding may be required.
 
     OLBParams tmp_olbparams = olbparams;
     // Factors for scaling chroma blocks

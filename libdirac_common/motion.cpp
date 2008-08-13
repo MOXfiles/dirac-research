@@ -52,13 +52,13 @@ using namespace std;
 //Motion vector and Motion Estimation structures//
 //////////////////////////////////////////////////
 
-MvData::MvData( const int xnumMB, const int ynumMB , 
+MvData::MvData( const int xnumSB, const int ynumSB , 
                 const int xnumblocks, const int ynumblocks , const int num_refs ):
     m_vectors( Range(1 , num_refs) ),
     m_gm_vectors( Range(1 , num_refs) ),
     m_modes( ynumblocks , xnumblocks ),
     m_dc( 3 ),
-    m_mb_split( ynumMB , xnumMB ),
+    m_sb_split( ynumSB , xnumSB ),
     m_gm_params( Range(1 , num_refs) )//,
 //    m_num_refs(num_refs)
 {
@@ -66,12 +66,12 @@ MvData::MvData( const int xnumMB, const int ynumMB ,
     InitMvData();
 }
 
-MvData::MvData( const int xnumMB , const int ynumMB , const int num_refs ):
+MvData::MvData( const int xnumSB , const int ynumSB , const int num_refs ):
     m_vectors( Range(1 , num_refs) ),
     m_gm_vectors( Range(1 , num_refs) ),
-    m_modes( 4*ynumMB , 4*xnumMB ),
+    m_modes( 4*ynumSB , 4*xnumSB ),
     m_dc( 3 ),
-    m_mb_split( ynumMB , xnumMB ),
+    m_sb_split( ynumSB , xnumSB ),
     m_gm_params( Range(1 , num_refs) )//,
 //    m_num_refs(num_refs)
 {
@@ -116,13 +116,13 @@ MvData::~MvData()
 
 
 
-MEData::MEData(const int xnumMB , const int ynumMB ,
+MEData::MEData(const int xnumSB , const int ynumSB ,
                 const int xnumblocks , const int ynumblocks , const int num_refs ):
-     MvData( xnumMB , ynumMB , xnumblocks , ynumblocks , num_refs ),
+     MvData( xnumSB , ynumSB , xnumblocks , ynumblocks , num_refs ),
      m_pred_costs( Range( 1 , num_refs ) ),
      m_intra_costs( ynumblocks , xnumblocks, 0 ),
      m_bipred_costs( ynumblocks , xnumblocks ),
-     m_MB_costs( ynumMB , xnumMB ),
+     m_SB_costs( ynumSB , xnumSB ),
      m_lambda_map( ynumblocks , xnumblocks ),
      m_inliers( Range( 1 , num_refs ) ),
      m_intra_block_ratio(0.0)
@@ -130,13 +130,13 @@ MEData::MEData(const int xnumMB , const int ynumMB ,
     InitMEData();
 }
 
-MEData::MEData( const int xnumMB , const int ynumMB ,  const int num_refs ):
-     MvData( xnumMB , ynumMB , num_refs ),
+MEData::MEData( const int xnumSB , const int ynumSB ,  const int num_refs ):
+     MvData( xnumSB , ynumSB , num_refs ),
      m_pred_costs( Range( 1 , num_refs ) ),
-     m_intra_costs( 4*ynumMB , 4*xnumMB, 0 ),
-     m_bipred_costs( 4*ynumMB , 4*xnumMB ),
-     m_MB_costs( ynumMB , xnumMB ),
-     m_lambda_map( 4*ynumMB , 4*xnumMB ),
+     m_intra_costs( 4*ynumSB , 4*xnumSB, 0 ),
+     m_bipred_costs( 4*ynumSB , 4*xnumSB ),
+     m_SB_costs( ynumSB , xnumSB ),
+     m_lambda_map( 4*ynumSB , 4*xnumSB ),
      m_inliers( Range( 1 , num_refs ) ),
      m_intra_block_ratio( 0.0 )
 {
@@ -446,8 +446,8 @@ istream &operator>> (istream & stream, MEData & me_data)
     stream.ignore(1000, '\n');
     
     // input reference-independent information
-    stream >> me_data.MBSplit();
-    stream >> me_data.MBCosts();
+    stream >> me_data.SBSplit();
+    stream >> me_data.SBCosts();
     stream >> me_data.Mode();
     stream >> me_data.IntraCosts();
 
@@ -482,8 +482,8 @@ istream &operator>> (istream & stream, MEData & me_data)
 ostream &operator<< (ostream & stream, MEData & me_data)
 {
     // output reference-independent information
-    stream << endl << endl << me_data.MBSplit();
-    stream << endl << me_data.MBCosts();
+    stream << endl << endl << me_data.SBSplit();
+    stream << endl << me_data.SBCosts();
     stream << endl << me_data.Mode();
     stream << endl << me_data.IntraCosts() << endl;
 

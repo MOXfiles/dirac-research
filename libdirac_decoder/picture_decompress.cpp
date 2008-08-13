@@ -232,21 +232,21 @@ void PictureDecompressor::SetMVBlocks()
     m_decparams.SetBlockSizes(olb_params, m_cformat);
 
     // Calculate the number of macro blocks
-    int xnum_mb = (m_decparams.Xl()+m_decparams.LumaBParams(0).Xbsep()-1)/
+    int xnum_sb = (m_decparams.Xl()+m_decparams.LumaBParams(0).Xbsep()-1)/
                                       m_decparams.LumaBParams(0).Xbsep();
 
-    int ynum_mb = (m_decparams.Yl()+m_decparams.LumaBParams(0).Ybsep()-1)/
+    int ynum_sb = (m_decparams.Yl()+m_decparams.LumaBParams(0).Ybsep()-1)/
                                       m_decparams.LumaBParams(0).Ybsep();
 
-    m_decparams.SetXNumMB(xnum_mb);
-    m_decparams.SetYNumMB(ynum_mb);
+    m_decparams.SetXNumSB(xnum_sb);
+    m_decparams.SetYNumSB(ynum_sb);
 
     // Set the number of blocks
-    m_decparams.SetXNumBlocks(4*xnum_mb);
-    m_decparams.SetYNumBlocks(4*ynum_mb);
+    m_decparams.SetXNumBlocks(4*xnum_sb);
+    m_decparams.SetYNumBlocks(4*ynum_sb);
 
-    // Note that we do not have an integral number of macroblocks in a picture
-    // So it is possible that part of a macro-block and some blocks can fall
+    // Note that we do not have an integral number of superblocks in a picture
+    // So it is possible that part of a superblock and some blocks can fall
     // of the edge of the true picture. We need to take this into
     // consideration while doing Motion Compensation
 }
@@ -273,8 +273,8 @@ void PictureDecompressor::DecompressMVData( std::auto_ptr<MvData>& mv_data,
     mvdata_byteio.Input();
 
     SetMVBlocks();
-    mv_data.reset(new MvData( m_decparams.XNumMB() ,
-                              m_decparams.YNumMB(), m_pparams.NumRefs() ));
+    mv_data.reset(new MvData( m_decparams.XNumSB() ,
+                              m_decparams.YNumSB(), m_pparams.NumRefs() ));
 
     // decode mv data
     if (m_decparams.Verbose())

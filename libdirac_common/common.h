@@ -160,10 +160,10 @@ namespace dirac
 
         // Macroblock contexts
 
-        MB_SPLIT_BIN1_CTX,  // bin 1, MB split mode vals
-        MB_SPLIT_BIN2_CTX,  // bin 2, MB split mode vals. Bin 3 not required
+        SB_SPLIT_BIN1_CTX,  // bin 1, SB split mode vals
+        SB_SPLIT_BIN2_CTX,  // bin 2, SB split mode vals. Bin 3 not required
 
-        MB_SPLIT_INFO_CTX,  // info context for MB split mode
+        SB_SPLIT_INFO_CTX,  // info context for SB split mode
 
         TOTAL_MV_CTXS       // The total number of motion vector contexts
     };
@@ -982,11 +982,11 @@ namespace dirac
 
         // Gets ...
 
-        //! Return the number of macroblocks horizontally
-        int XNumMB() const {return m_x_num_mb;}
+        //! Return the number of superblocks horizontally
+        int XNumSB() const {return m_x_num_sb;}
 
-        //! Return the number of macroblocks vertically
-        int YNumMB() const {return m_y_num_mb;}
+        //! Return the number of superblocks vertically
+        int YNumSB() const {return m_y_num_sb;}
 
         //! Return the number of blocks horizontally
         int XNumBlocks() const {return m_x_num_blocks;}
@@ -1025,10 +1025,10 @@ namespace dirac
         //! Returns the chroma depth
         unsigned int ChromaDepth() const { return m_chroma_depth; }
 
-        //! Return the Luma block parameters for each macroblock splitting level
+        //! Return the Luma block parameters for each superblock splitting level
         const OLBParams& LumaBParams(int n) const {return m_lbparams[n];}
 
-        //! Return the Chroma block parameters for each macroblock splitting level
+        //! Return the Chroma block parameters for each superblock splitting level
         const OLBParams& ChromaBParams(int n) const {return m_cbparams[n];}
 
         //! Return the number of accuracy bits used for motion vectors
@@ -1074,11 +1074,11 @@ namespace dirac
                     m_ref2_weight != 1);
         }
         // ... and Sets
-        //! Set how many MBs there are horizontally
-        void SetXNumMB(const int xn){m_x_num_mb=xn;}
+        //! Set how many SBs there are horizontally
+        void SetXNumSB(const int xn){m_x_num_sb=xn;}
 
-        //! Set how many MBs there are vertically
-        void SetYNumMB(const int yn){m_y_num_mb=yn;}
+        //! Set how many SBs there are vertically
+        void SetYNumSB(const int yn){m_y_num_sb=yn;}
 
         //! Set how many blocks there are horizontally
         void SetXNumBlocks(const int xn){m_x_num_blocks=xn;}
@@ -1110,7 +1110,7 @@ namespace dirac
         //! Set Chroma Depth
         void SetChromaDepth(unsigned int chroma_depth) { m_chroma_depth = chroma_depth; }
 
-        //! Set the block sizes for all MB splitting levels given these prototype block sizes for level=2
+        //! Set the block sizes for all SB splitting levels given these prototype block sizes for level=2
         void SetBlockSizes(const OLBParams& olbparams , const ChromaFormat cformat);
         //! Set block level luma params
         void SetLumaBlockParams(const OLBParams& olbparams) {m_lbparams[2] = olbparams;}
@@ -1195,11 +1195,11 @@ namespace dirac
         //! chroma depth - number of bits required for luma
         unsigned int m_chroma_depth;
 
-        //! The number of macroblocks horizontally
-        int m_x_num_mb;
+        //! The number of superblocks horizontally
+        int m_x_num_sb;
 
-        //! The number of macroblocks verticaly
-        int m_y_num_mb;
+        //! The number of superblocks verticaly
+        int m_y_num_sb;
 
         //! The number of blocks horizontally
         int m_x_num_blocks;

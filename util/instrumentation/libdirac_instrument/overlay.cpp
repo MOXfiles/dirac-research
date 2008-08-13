@@ -181,7 +181,7 @@ void Overlay::DoOverlay(const MEData & me_data)
             break;
 
         case split_mode :
-            draw_overlay_ptr = new DrawSplitMode(m_picture, m_draw_params, me_data.MBSplit());
+            draw_overlay_ptr = new DrawSplitMode(m_picture, m_draw_params, me_data.SBSplit());
             break;
 
         case pred_mode :
@@ -322,7 +322,7 @@ void Overlay::CalculateFactors(const ChromaFormat & cformat)
     }
 }
 
-// calculate if picture requires padding due to requirement of integer number of macroblocks
+// calculate if picture requires padding due to requirement of integer number of superblocks
 void Overlay::PadPicture(const MEData & me_data)
 {
     int picture_x = m_picture.Data(Y_COMP).LengthX();
@@ -333,28 +333,28 @@ void Overlay::PadPicture(const MEData & me_data)
     PicArray Udata(m_picture.Data(U_COMP));
     PicArray Vdata(m_picture.Data(V_COMP));
 
-    // if there is not an integer number of macroblocks horizontally, pad until there is
-    if (m_picture.Data(Y_COMP).LengthX() % me_data.MBSplit().LengthX() != 0)
+    // if there is not an integer number of superblocks horizontally, pad until there is
+    if (m_picture.Data(Y_COMP).LengthX() % me_data.SBSplit().LengthX() != 0)
     {
         do
         {
             ++picture_x;
         }
-        while (picture_x % me_data.MBSplit().LengthX() != 0);       
+        while (picture_x % me_data.SBSplit().LengthX() != 0);       
     }
 
-    // if there is not an integer number of macroblocks vertically, pad until there is
-    if (m_picture.Data(Y_COMP).LengthX() % me_data.MBSplit().LengthY() != 0)
+    // if there is not an integer number of superblocks vertically, pad until there is
+    if (m_picture.Data(Y_COMP).LengthX() % me_data.SBSplit().LengthY() != 0)
     {
         do
         {
             ++picture_y;
         }
-        while (picture_y % me_data.MBSplit().LengthY() != 0);
+        while (picture_y % me_data.SBSplit().LengthY() != 0);
     }
 
     // if padding was required in either horizontal or vertical, adjust picture size and reload component data
-    if (m_picture.Data(Y_COMP).LengthX() % me_data.MBSplit().LengthX() != 0 || m_picture.Data(Y_COMP).LengthY() % me_data.MBSplit().LengthY() != 0)
+    if (m_picture.Data(Y_COMP).LengthX() % me_data.SBSplit().LengthX() != 0 || m_picture.Data(Y_COMP).LengthY() % me_data.SBSplit().LengthY() != 0)
     {
         m_picture.Data(Y_COMP).Resize(picture_y, picture_x);
         m_picture.Data(U_COMP).Resize(picture_y / m_draw_params.ChromaFactorY(), picture_x / m_draw_params.ChromaFactorX());
