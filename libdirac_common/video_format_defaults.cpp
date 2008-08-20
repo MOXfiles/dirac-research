@@ -106,7 +106,7 @@ void SetDefaultCodecParameters(CodecParams &cparams,
         SetDefaultBlockParameters(bparams, cparams.GetVideoFormat());
         cparams.SetLumaBlockParams(bparams);
         cparams.SetPictureCodingMode(0);
-        cparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
+        cparams.SetMVPrecision(MV_PRECISION_HALF_PIXEL);
         // NOTE: FIXME - need to add global motion params here
         cparams.SetPictureWeightsPrecision(1);
         cparams.SetRef1Weight(1);
