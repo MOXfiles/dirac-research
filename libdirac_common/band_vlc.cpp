@@ -343,12 +343,24 @@ void IntraDCBandVLC::DoWorkDecode(CoeffArray& out_data)
 {
     const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
 
+    // coeff blocks can be skipped only if SpatialPartitioning is
+    // enabled i.e. more than one code-block per subband
+    bool decode_skip= (block_list.LengthX() > 1 || block_list.LengthY() > 1);
+
     // Now loop over the blocks and decode
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
         for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
         {
-            DecodeCoeffBlock( block_list[j][i] , out_data );
+            if (decode_skip)
+                block_list[j][i].SetSkip( m_byteio->ReadBoolB() );
+
+            if ( !block_list[j][i].Skipped() )
+                DecodeCoeffBlock( block_list[j][i] , out_data );
+            else
+                ClearBlock( block_list[j][i] , out_data);
+
+            DCPrediction( block_list[j][i], out_data);
         }// i
     }// j
 }
@@ -379,6 +391,21 @@ void IntraDCBandVLC::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray&
         for ( int xpos=xbeg ; xpos<xend ; ++xpos)
         {
             DecodeVal( out_data , xpos , ypos );
+        }//xpos
+    }//ypos
+}
+
+void IntraDCBandVLC::DCPrediction( const CodeBlock& code_block , CoeffArray& out_data)
+{
+    const int xbeg = code_block.Xstart();
+    const int ybeg = code_block.Ystart();
+    const int xend = code_block.Xend();
+    const int yend = code_block.Yend();
+    
+    for ( int ypos=ybeg ; ypos<yend ; ++ypos)
+    {
+        for ( int xpos=xbeg ; xpos<xend ; ++xpos)
+        {
             out_data[ypos][xpos] += GetPrediction( out_data , xpos , ypos );
         }//xpos
     }//ypos

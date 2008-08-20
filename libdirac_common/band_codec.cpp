@@ -626,7 +626,7 @@ void LFBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray& ou
 
     if ( m_node.UsingMultiQuants() )
     {
-        qf_idx += m_last_qf_idx+DecodeQuantIndexOffset(); 
+        qf_idx = m_last_qf_idx+DecodeQuantIndexOffset(); 
         m_last_qf_idx = qf_idx;
     }
 
@@ -752,11 +752,23 @@ void IntraDCBandCodec::DoWorkDecode(CoeffArray& out_data)
     const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
 
     // Now loop over the blocks and decode
+    bool decode_skip= (block_list.LengthX() > 1 || block_list.LengthY() > 1);
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
     {
         for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
         {
-            DecodeCoeffBlock( block_list[j][i] , out_data );
+            if (decode_skip)
+                block_list[j][i].SetSkip( DecodeSymbol( BLOCK_SKIP_CTX ) );
+            if ( !block_list[j][i].Skipped() )
+            {
+                DecodeCoeffBlock( block_list[j][i] , out_data );
+            }
+            else
+            {
+                ClearBlock (block_list[j][i] , out_data);
+                ClearBlock (block_list[j][i] , m_dc_pred_res);
+            }
+            DCPrediction (block_list[j][i] , out_data);
         }// i
     }// j
 }
@@ -798,12 +810,25 @@ void IntraDCBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArra
 
              DecodeVal( out_data , xpos , ypos );
              m_dc_pred_res[ypos][xpos] = out_data[ypos][xpos];
-             out_data[ypos][xpos] += GetPrediction( out_data , xpos , ypos );
-
         }//xpos
     }//ypos
 }
 
+void IntraDCBandCodec::DCPrediction(const CodeBlock& code_block , CoeffArray& out_data)
+{
+    const int xbeg = code_block.Xstart();
+    const int ybeg = code_block.Ystart();
+    const int xend = code_block.Xend();
+    const int yend = code_block.Yend();
+    
+    for ( int ypos=ybeg ; ypos<yend ; ++ypos)
+    {
+        for ( int xpos=xbeg ; xpos<xend ; ++xpos)
+        {
+             out_data[ypos][xpos] += GetPrediction( out_data , xpos , ypos );
+        }
+    }
+}
 
 CoeffType IntraDCBandCodec::GetPrediction( const CoeffArray& data , const int xpos , const int ypos ) const
 {

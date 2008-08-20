@@ -230,6 +230,7 @@ namespace dirac
 
         void CodeCoeffBlock(const CodeBlock& code_block , CoeffArray& in_data);
         void DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data);
+        void DCPrediction(const CodeBlock& code_block , CoeffArray& out_data);
 
         //! Private, bodyless copy constructor: class should not be copied
         IntraDCBandCodec(const IntraDCBandCodec& cpy); 
