@@ -43,8 +43,8 @@ using namespace dirac;
 
 using std::vector;
 
-SubpelRefine::SubpelRefine(const EncoderParams& encp): 
-    m_predparams(encp.GetPicPredParams()),
+SubpelRefine::SubpelRefine(const PicturePredParams& ppp): 
+    m_predparams(ppp),
     m_nshift(4)
 {
     //define the relative coordinates of the four neighbours    

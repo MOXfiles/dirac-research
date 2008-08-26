@@ -52,13 +52,13 @@ using std::vector;
 using std::log;
 
 PixelMatcher::PixelMatcher( const EncoderParams& encp):
-    m_encparams(encp),
-    m_predparams(encp.GetPicPredParams())
+    m_encparams(encp)
 {}
 
 
 void PixelMatcher::DoSearch( EncQueue& my_buffer, int pic_num )
 {
+    m_predparams = &(my_buffer.GetPicture(pic_num).GetMEData().GetPicPredParams() );
 
      //does an initial search using hierarchical matching to get guide vectors    
 
@@ -187,16 +187,16 @@ void PixelMatcher::MakeMEDataHierarchy(const OneDArray< PicArray*>& down_data,
 {
 
     int xnumblocks , ynumblocks;
-    const OLBParams bparams = m_predparams.LumaBParams(2);
+    const OLBParams bparams = m_predparams->LumaBParams(2);
 
     // We might not have an integral number of Macroblocks and blocks in 
     // a picture. So we go start of with the number of macroblocks in the
     // full size picture and calculate the number of in the downsized pics
     // from this.
-    xnumblocks = m_predparams.XNumBlocks();
-    ynumblocks = m_predparams.YNumBlocks();
+    xnumblocks = m_predparams->XNumBlocks();
+    ynumblocks = m_predparams->YNumBlocks();
 
-    PicturePredParams predparams = m_predparams;
+    PicturePredParams predparams = *m_predparams;
     predparams.SetXNumMB(0);
     predparams.SetYNumMB(0);
     for (int i=1 ; i<=m_depth;++i)
@@ -283,7 +283,7 @@ void PixelMatcher::MatchPic(const PicArray& pic_data , const PicArray& ref_data 
 
     // Provide a block matching object to do the work
     BlockMatcher my_bmatch( pic_data , ref_data , 
-                            m_predparams.LumaBParams(2) , m_predparams.MVPrecision() ,
+                            m_predparams->LumaBParams(2) , m_predparams->MVPrecision() ,
                             mv_array , pred_costs );
 
     // Do the work - loop over all the blocks, finding the best match //

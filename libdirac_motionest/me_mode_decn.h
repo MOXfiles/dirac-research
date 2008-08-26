@@ -76,7 +76,7 @@ namespace dirac
             at splitting levels 0 and 1, as motion
             estimation must be performed for these levels.
          */
-        ModeDecider(const EncoderParams& encp );    
+        ModeDecider(const PicturePredParams& ppp );    
 
         //! Destructor
         /*!

@@ -44,8 +44,8 @@ using namespace dirac;
 
 using std::vector;
 
-ModeDecider::ModeDecider( const EncoderParams& encp):
-    m_predparams( encp.GetPicPredParams() ),
+ModeDecider::ModeDecider( const PicturePredParams& ppp):
+    m_predparams( ppp ),
     m_level_factor(3),
     m_mode_factor(3),
     m_me_data_set(3)

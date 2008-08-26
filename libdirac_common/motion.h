@@ -229,6 +229,12 @@ namespace dirac
         //! Destructor
         ~MvData();
 
+         //! Return a reference to the local picture prediction params
+        PicturePredParams& GetPicPredParams(){return m_predparams;}
+
+        //! Return a reference to the local picture prediction params
+        const PicturePredParams& GetPicPredParams() const{return m_predparams;}
+
         //! Get the MVs for a reference
         MvArray& Vectors(const int ref_id){return *( m_vectors[ref_id] );}
 
@@ -267,9 +273,6 @@ namespace dirac
 
         //! Get the global motion model parameters
         const OneDArray<float>& GlobalMotionParameters(const int ref_id) const { return *( m_gm_params[ref_id] ); }
-
-//        //! Return the number of reference frames
-//        unsigned int NumRefs()const {return m_num_refs;}
 
     protected:
         // A local copy of the picture prediction parameters

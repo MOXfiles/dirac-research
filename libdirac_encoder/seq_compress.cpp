@@ -100,14 +100,14 @@ void SequenceCompressor::SetMotionParameters(){
 
     if ( m_encparams.TargetRate() != 0 ){
         OLBParams new_olb_params=m_basic_olb_params2;
-/*
+
         if (m_encparams.Qf()<2.5)
             new_olb_params=m_basic_olb_params1;
         else if (m_encparams.Qf()<1.5)
             new_olb_params=m_basic_olb_params0;
 
         m_predparams.SetBlockSizes( new_olb_params , m_srcparams.CFormat() );
-*/
+
     }
 
     int xl = m_encparams.Xl();
@@ -240,8 +240,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
         bool is_a_cut( false );
 
         //2. Set up block sizes etc
-        SetMotionParameters();// FIXME can't change block sizes now - block params need
-	                      // to be part of the EncPicture class
+        SetMotionParameters();
 
         // Loop over the whole queue and ...
         for (size_t i=0; i<queue_members.size(); ++i){
@@ -347,10 +346,10 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
             }
 	    else{
 	    //12. Do motion compensation if not a cut
-	        MEData& me_data = current_pic->GetMEData();
-
-                if (me_data.IntraBlockRatio()>0.1)
-                    m_predparams.SetBlockSizes(*m_intra_olbp, m_srcparams.CFormat() );
+//	        MEData& me_data = current_pic->GetMEData();
+//
+//                if (me_data.IntraBlockRatio()>0.1)//FIXME: this is broken with adaptive block sizes
+//                    m_predparams.SetBlockSizes(*m_intra_olbp, m_srcparams.CFormat() );
 
 	        m_pcoder.MotionCompensate(m_enc_pbuffer, m_current_display_pnum, SUBTRACT );
 		current_pic->UpdateStatus( DONE_MC );

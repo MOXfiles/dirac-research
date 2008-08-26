@@ -212,8 +212,8 @@ void PictureCompressor::SubPixelME( EncQueue& my_buffer , int pnum )
     const int num_refs = refs.size();
 
     PictureParams& pparams = my_buffer.GetPicture(pnum).GetPparams();
-    PicturePredParams& predparams = m_encparams.GetPicPredParams();
     MEData& me_data = my_buffer.GetPicture(pnum).GetMEData();
+    PicturePredParams& predparams = me_data.GetPicPredParams();
 
     float lambda;
     if ( pparams.IsBPicture())
@@ -233,7 +233,7 @@ void PictureCompressor::SubPixelME( EncQueue& my_buffer , int pnum )
 
     if (m_orig_prec != MV_PRECISION_PIXEL)
     {
-        SubpelRefine pelrefine( m_encparams );
+        SubpelRefine pelrefine( predparams );
         pelrefine.DoSubpel( my_buffer , pnum );
     }
     else
@@ -265,9 +265,9 @@ void PictureCompressor::ModeDecisionME( EncQueue& my_buffer, int pnum )
 {
     MEData& me_data = my_buffer.GetPicture(pnum).GetMEData();
     PictureParams& pparams = my_buffer.GetPicture(pnum).GetPparams();
-    PicturePredParams& predparams = m_encparams.GetPicPredParams();
+    PicturePredParams& predparams = me_data.GetPicPredParams();
 
-    ModeDecider my_mode_dec( m_encparams );
+    ModeDecider my_mode_dec( predparams );
     my_mode_dec.DoModeDecn( my_buffer , pnum );
 
     const int num_refs = pparams.NumRefs();
@@ -333,7 +333,8 @@ void PictureCompressor::MotionCompensate( EncQueue& my_buffer, int pnum,
     else
         ref_pics[1]=&my_buffer.GetPicture(my_refs[0]);
 
-    MotionCompensator::CompensatePicture( m_encparams.GetPicPredParams() , dirn ,
+    PicturePredParams& predparams = my_pic->GetMEData().GetPicPredParams();
+    MotionCompensator::CompensatePicture( predparams , dirn ,
                                           my_pic->GetMEData() , my_pic, ref_pics );
 }
 

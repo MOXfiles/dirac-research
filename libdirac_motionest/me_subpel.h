@@ -62,9 +62,9 @@ namespace dirac
         //! Constructor
         /*!
             The constructor initialises the encoder parameters.
-            \param    cp    the parameters used for controlling encoding
+            \param    ppp   the parameters used for controlling ME/MC
          */
-        SubpelRefine(const EncoderParams& cp);
+        SubpelRefine(const PicturePredParams& ppp);
     
         //! Destructor
         ~SubpelRefine(){}
