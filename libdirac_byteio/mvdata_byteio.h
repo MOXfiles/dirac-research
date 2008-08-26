@@ -53,7 +53,6 @@
 
 namespace dirac
 {
-             
     /**
     * Represents compressed sequence-parameter data used in an AccessUnit
     */
@@ -63,20 +62,20 @@ namespace dirac
 
         /**
         * Constructor
-        *@param fparams    Picture Params
+        *@param pparams    Picture Params
         *@param c_params   Codec parameters
         */
-        MvDataByteIO(PictureParams& fparams,
-                        CodecParams& c_params);
+        MvDataByteIO(PictureParams& pparams,
+                        PicturePredParams& picpredparams);
 
         /**
         * Constructor
         *@param byte_io    Input/Output Byte stream
-        *@param fparams    Picture Params
+        *@param pparams    Picture Params
         *@param c_params   Codec parameters
         */
-        MvDataByteIO(ByteIO &byte_io, PictureParams& fparams,
-                        CodecParams& c_params);
+        MvDataByteIO(ByteIO &byte_io, PictureParams& pparams,
+                        PicturePredParams& picpredparams);
 
         /**
         * Destructor
@@ -109,7 +108,7 @@ namespace dirac
         * Return pointer to the superblock splitting modes ByteIO stream
         */
         MvDataElementByteIO*  SplitModeData() { return &m_splitmode_data; };
-        
+
         /**
         * Return pointer to the superblock splitting modes ByteIO stream
         */
@@ -119,7 +118,7 @@ namespace dirac
         * Return pointer to the block MVs reference 1 ByteIO stream
         */
         MvDataElementByteIO*  MV1HorizData() { return &m_mv1hblock_data; };
-        
+
         /**
         * Return pointer to the block MVs reference 1 ByteIO stream
         */
@@ -129,34 +128,34 @@ namespace dirac
         * Return pointer to the block MV reference 2 ByteIO stream
         */
         MvDataElementByteIO*  MV2HorizData() { return &m_mv2hblock_data; };
-                
+
         /**
         * Return pointer to the block MV reference 2 ByteIO stream
         */
         MvDataElementByteIO*  MV2VertData() { return &m_mv2vblock_data; };
-        
+
         /**
         * Return pointer to the block Y DC values ByteIO stream
         */
-        MvDataElementByteIO*  YDCData() { return &m_ydcblock_data; }; 
-        
+        MvDataElementByteIO*  YDCData() { return &m_ydcblock_data; };
+
         /**
         * Return pointer to the block U DC values ByteIO stream
         */
-        MvDataElementByteIO*  UDCData() { return &m_udcblock_data; }; 
-        
+        MvDataElementByteIO*  UDCData() { return &m_udcblock_data; };
+
         /**
         * Return pointer to the block V DC values ByteIO stream
         */
-        MvDataElementByteIO*  VDCData() { return &m_vdcblock_data; }; 
+        MvDataElementByteIO*  VDCData() { return &m_vdcblock_data; };
 
         /**
-        * Return the size 
+        * Return the size
         */
         int GetSize() const;
 
     protected:
-    
+
 
     private:
         /**
@@ -212,58 +211,53 @@ namespace dirac
         /**
         * Sequence paramters for intput/output
         */
-        PictureParams&   m_fparams;
+        PictureParams&   m_pparams;
 
         /**
         * Codec params - EncParams for Output and DecParams for input
         */
-        CodecParams& m_cparams;
-        
-        /**
-        * Default Codec params - EncParams for Output and DecParams for input
-        */
-        const CodecParams m_default_cparams;
+        PicturePredParams& m_picpredparams;
 
         /**
         * block data containing split modes
         */
         MvDataElementByteIO m_splitmode_data;
-        
+
         /**
         * block data containing prediction modes
         */
         MvDataElementByteIO m_predmode_data;
-        
+
         /**
         * block data containing horizontal MV components for reference 1
         */
         MvDataElementByteIO m_mv1hblock_data;
-        
+
         /**
         * block data containing vertical MV components for reference 1
         */
         MvDataElementByteIO m_mv1vblock_data;
-        
+
         /**
         * block data containing horizontal MV components for reference 2
         */
         MvDataElementByteIO m_mv2hblock_data;
-        
+
         /**
         * block data containing vertical MV components for reference 2
         */
         MvDataElementByteIO m_mv2vblock_data;
-                
+
         /**
         * block data containing Y DC data
         */
         MvDataElementByteIO m_ydcblock_data;
-        
+
         /**
         * block data containing U DC data
         */
         MvDataElementByteIO m_udcblock_data;
-        
+
         /**
         * block data containing V DC data
         */

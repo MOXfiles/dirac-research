@@ -188,7 +188,7 @@ bool PictureDecompressor::Decompress(ParseUnitByteIO& parseunit_byteio,
             ref_pics[1] = ref_pics[0];
 
         //motion compensate to add the data back in if we don't have an I picture
-        MotionCompensator::CompensatePicture( m_decparams , ADD , *(mv_data.get()) ,
+        MotionCompensator::CompensatePicture( m_decparams.GetPicPredParams() , ADD , *(mv_data.get()) ,
                                             my_pic, ref_pics );
     }
 
@@ -228,22 +228,23 @@ void PictureDecompressor::CleanReferencePictures( PictureBuffer& my_buffer )
 
 void PictureDecompressor::SetMVBlocks()
 {
-    OLBParams olb_params = m_decparams.LumaBParams(2);
-    m_decparams.SetBlockSizes(olb_params, m_cformat);
+    PicturePredParams& predparams = m_decparams.GetPicPredParams();
+    OLBParams olb_params = predparams.LumaBParams(2);
+    predparams.SetBlockSizes(olb_params, m_cformat);
 
     // Calculate the number of macro blocks
-    int xnum_mb = (m_decparams.Xl()+m_decparams.LumaBParams(0).Xbsep()-1)/
-                                      m_decparams.LumaBParams(0).Xbsep();
+    int xnum_mb = (m_decparams.Xl()+predparams.LumaBParams(0).Xbsep()-1)/
+                                      predparams.LumaBParams(0).Xbsep();
 
-    int ynum_mb = (m_decparams.Yl()+m_decparams.LumaBParams(0).Ybsep()-1)/
-                                      m_decparams.LumaBParams(0).Ybsep();
+    int ynum_mb = (m_decparams.Yl()+predparams.LumaBParams(0).Ybsep()-1)/
+                                      predparams.LumaBParams(0).Ybsep();
 
-    m_decparams.SetXNumMB(xnum_mb);
-    m_decparams.SetYNumMB(ynum_mb);
+    predparams.SetXNumMB(xnum_mb);
+    predparams.SetYNumMB(ynum_mb);
 
     // Set the number of blocks
-    m_decparams.SetXNumBlocks(4*xnum_mb);
-    m_decparams.SetYNumBlocks(4*ynum_mb);
+    predparams.SetXNumBlocks(4*xnum_mb);
+    predparams.SetYNumBlocks(4*ynum_mb);
 
     // Note that we do not have an integral number of macroblocks in a picture
     // So it is possible that part of a macro-block and some blocks can fall
@@ -267,14 +268,15 @@ void PictureDecompressor::PushPicture(PictureBuffer &my_buffer)
 void PictureDecompressor::DecompressMVData( std::auto_ptr<MvData>& mv_data,
                                           PictureByteIO& picture_byteio )
 {
-    MvDataByteIO mvdata_byteio (picture_byteio, m_pparams, m_decparams);
+    PicturePredParams& predparams = m_decparams.GetPicPredParams();
+    MvDataByteIO mvdata_byteio (picture_byteio, m_pparams, predparams);
 
     // Read in the picture prediction parameters
     mvdata_byteio.Input();
 
     SetMVBlocks();
-    mv_data.reset(new MvData( m_decparams.XNumMB() ,
-                              m_decparams.YNumMB(), m_pparams.NumRefs() ));
+    mv_data.reset(new MvData( predparams.XNumMB() ,
+                              predparams.YNumMB(), m_pparams.NumRefs() ));
 
     // decode mv data
     if (m_decparams.Verbose())

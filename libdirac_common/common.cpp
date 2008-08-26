@@ -204,22 +204,7 @@ std::istream & operator>> (std::istream & stream, OLBParams & params)
 
 }
 
-// Codec params functions
-
-CodecParams::CodecParams(const VideoFormat &vd, PictureType ftype, unsigned int num_refs, bool set_defaults):
-    m_x_num_mb(0),
-    m_y_num_mb(0),
-    m_x_num_blocks(0),
-    m_y_num_blocks(0),
-    m_lbparams(3),
-    m_cbparams(3),
-    m_video_format(vd)
-{
-    if (set_defaults)
-        SetDefaultCodecParameters(*this, ftype, num_refs);
-}
-
-void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat cformat)
+void PicturePredParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat cformat)
 {
     //given the raw overlapped block parameters, set the modified internal parameters to
     //take account of the chroma sampling format and overlapping requirements, as well
@@ -342,6 +327,16 @@ void CodecParams::SetBlockSizes(const OLBParams& olbparams , const ChromaFormat 
         std::cout<<" xbsep="<<m_lbparams[2].Xbsep();
         std::cout<<" ybsep="<<m_lbparams[2].Ybsep() << std::endl;
     }
+}
+
+
+// Codec params functions
+
+CodecParams::CodecParams(const VideoFormat &vd, PictureType ftype, unsigned int num_refs, bool set_defaults):
+   m_video_format(vd)
+{
+    if (set_defaults)
+        SetDefaultCodecParameters(*this, ftype, num_refs);
 }
 
 WltFilter CodecParams::TransformFilter (unsigned int wf_idx)

@@ -58,38 +58,38 @@ using std::vector;
 
 // Convenience function to perform motion compensation on a picture
 // Static function that motion compensates a picture. It uses the
-// MV precision value in the CodecParams to instantiate the
+// MV precision value in the PicturePredParams to instantiate the
 // appropriate MotionCompensation sub-class.
-void MotionCompensator::CompensatePicture(const CodecParams &cp,
+void MotionCompensator::CompensatePicture(const PicturePredParams &ppp,
                                         const AddOrSub direction ,
                                         const MvData& mv_data,
                                         Picture* in_pic ,
 					Picture* refsptr[2])
 {
-    switch (cp.MVPrecision())
+    switch (ppp.MVPrecision())
     {
     case MV_PRECISION_EIGHTH_PIXEL:
     {
-        MotionCompensator_EighthPixel my_comp(cp);
+        MotionCompensator_EighthPixel my_comp(ppp);
         my_comp.CompensatePicture( direction , mv_data, in_pic, refsptr);
         break;
     }
     case MV_PRECISION_HALF_PIXEL:
     {
-        MotionCompensator_HalfPixel my_comp(cp);
+        MotionCompensator_HalfPixel my_comp(ppp);
         my_comp.CompensatePicture( direction , mv_data, in_pic, refsptr);
         break;
     }
     case MV_PRECISION_PIXEL:
     {
-        MotionCompensator_Pixel my_comp(cp);
+        MotionCompensator_Pixel my_comp(ppp);
         my_comp.CompensatePicture( direction , mv_data, in_pic, refsptr);
         break;
     }
     case MV_PRECISION_QUARTER_PIXEL:
     default:
     {
-        MotionCompensator_QuarterPixel my_comp(cp);
+        MotionCompensator_QuarterPixel my_comp(ppp);
         my_comp.CompensatePicture( direction , mv_data, in_pic, refsptr);
         break;
     }
@@ -102,9 +102,9 @@ void MotionCompensator::CompensatePicture(const CodecParams &cp,
 // Initialises the lookup tables that is needed for motion
 // motion compensation. Creates the necessary arithmetic objects and
 // calls ReConfig to create weighting blocks to fit the values within
-// m_cparams.
-MotionCompensator::MotionCompensator( const CodecParams &cp ):
-    m_cparams(cp),
+// m_predparams.
+MotionCompensator::MotionCompensator( const PicturePredParams &ppp ):
+    m_predparams(ppp),
     luma_or_chroma(true)
 {
     // Allocate for block weights
@@ -195,16 +195,16 @@ void MotionCompensator::CompensatePicture( const AddOrSub direction ,
 void MotionCompensator::ReConfig()
 {
     if (luma_or_chroma)
-        m_bparams = m_cparams.LumaBParams(2);
+        m_bparams = m_predparams.LumaBParams(2);
     else
-        m_bparams = m_cparams.ChromaBParams(2);
+        m_bparams = m_predparams.ChromaBParams(2);
 
     // Calculate the shift required in horizontal and vertical direction for
     // OBMC and the weighting bits for each reference picture.
 
     // Total shift = shift assuming equal picture weights +
     //               picture weights precision
-    int blocks_per_mb_row = m_cparams.XNumBlocks()/m_cparams.XNumMB();
+    int blocks_per_mb_row = m_predparams.XNumBlocks()/m_predparams.XNumMB();
     int blocks_per_sb_row = blocks_per_mb_row>>1;
     int mb_xlen = m_bparams.Xblen()*blocks_per_mb_row - (m_bparams.Xblen()-m_bparams.Xbsep())*(blocks_per_mb_row-1);
     int mb_ylen = m_bparams.Yblen();
@@ -310,16 +310,16 @@ void MotionCompensator::CompensateComponent( Picture* pic ,
     const int x_end_data = pic_data_out.FirstX() + std::min(pic_data_out.LengthX(), pic_size.x );
     const int y_end_data = pic_data_out.FirstY() + std::min(pic_data_out.LengthY(), pic_size.y );
 
-    const int blocks_per_mb_row = m_cparams.XNumBlocks()/m_cparams.XNumMB();
+    const int blocks_per_mb_row = m_predparams.XNumBlocks()/m_predparams.XNumMB();
     const int blocks_per_sb_row = blocks_per_mb_row>>1;
 
     // The picture does not contain integral number of blocks. So not all
     // blocks need to be processed. Compute the relevant blocks to be
     // processed 
     int y_num_blocks = std::min((NUM_USED_BLKS(pic_size.y,m_bparams.Ybsep(),m_bparams.Yblen())), 
-                       m_cparams.YNumBlocks());
+                       m_predparams.YNumBlocks());
     int x_num_blocks = std::min((NUM_USED_BLKS(pic_size.x,m_bparams.Xbsep(),m_bparams.Xblen())),  
-                       m_cparams.XNumBlocks());
+                       m_predparams.XNumBlocks());
 
     //Loop over all the block rows
     pos.y = -m_bparams.Yoffset();
@@ -617,10 +617,10 @@ void MotionCompensator::AdjustBlockByRefWeights (
     if (block_mode == INTRA)
         return;
 
-    if (m_cparams.CustomRefWeights())
+    if (m_predparams.CustomRefWeights())
     {
         int ref_wt_prec_bias = 1;
-        for (int i = m_cparams.PictureWeightsBits()-1; i > 0; --i)
+        for (int i = m_predparams.PictureWeightsBits()-1; i > 0; --i)
         {
             ref_wt_prec_bias <<= 1;
         }
@@ -630,8 +630,8 @@ void MotionCompensator::AdjustBlockByRefWeights (
             {
                 for (int x = 0; x < val1_block.LengthX(); ++x)
                 {
-                    val1_block[y][x] *= (m_cparams.Ref1Weight() + 
-                                   m_cparams.Ref2Weight());
+                    val1_block[y][x] *= (m_predparams.Ref1Weight() +
+                                   m_predparams.Ref2Weight());
                 }
             }
         }
@@ -641,8 +641,8 @@ void MotionCompensator::AdjustBlockByRefWeights (
             {
                 for (int x = 0; x < val1_block.LengthX(); ++x)
                 {
-                    val1_block[y][x] *= m_cparams.Ref1Weight();
-                    val2_block[y][x] *= m_cparams.Ref2Weight();
+                    val1_block[y][x] *= m_predparams.Ref1Weight();
+                    val2_block[y][x] *= m_predparams.Ref2Weight();
                     val1_block[y][x] += val2_block[y][x];
                 }
             }
@@ -651,7 +651,7 @@ void MotionCompensator::AdjustBlockByRefWeights (
         {
             for (int x = 0; x < val1_block.LengthX(); ++x)
             {
-                val1_block[y][x] = (val1_block[y][x] + ref_wt_prec_bias) >> m_cparams.PictureWeightsBits();
+                val1_block[y][x] = (val1_block[y][x] + ref_wt_prec_bias) >> m_predparams.PictureWeightsBits();
             }
         }
     }
@@ -830,8 +830,8 @@ void MotionCompensator::FlipY( const TwoDArray<ValueType>& Original ,
 
 // Motion Compesation class that provides pixel precision compensation
 
-MotionCompensator_Pixel::MotionCompensator_Pixel( const CodecParams &cp ) :
-    MotionCompensator( cp )
+MotionCompensator_Pixel::MotionCompensator_Pixel( const PicturePredParams &ppp ) :
+    MotionCompensator( ppp )
 {}
 
 void MotionCompensator_Pixel::BlockPixelPred(
@@ -898,12 +898,12 @@ void MotionCompensator_Pixel::BlockPixelPred(
 
 
 // Motion Compesation class that provides half-pixel precision compensation
-MotionCompensator_HalfPixel::MotionCompensator_HalfPixel( const CodecParams &cp ) :
-    MotionCompensator( cp )
+MotionCompensator_HalfPixel::MotionCompensator_HalfPixel( const PicturePredParams &ppp ) :
+    MotionCompensator( ppp )
 {}
 
 #if !defined (HAVE_MMX)
-void MotionCompensator_HalfPixel::BlockPixelPred( 
+void MotionCompensator_HalfPixel::BlockPixelPred(
                                   TwoDArray<ValueType> &block_data ,
                                   const ImageCoords& pos ,
                                   const ImageCoords& pic_size ,
@@ -914,7 +914,7 @@ void MotionCompensator_HalfPixel::BlockPixelPred(
     const ImageCoords start_pos( std::max(pos.x,0) , std::max(pos.y,0) );
     const ImageCoords ref_start( ( start_pos.x<<1 ) + mv.x ,( start_pos.y<<1 ) + mv.y );
 
-    //An additional stage to make sure the block to be copied does not fall 
+    //An additional stage to make sure the block to be copied does not fall
     //outsidethe reference image.
     const int refXlen = refup_data.LengthX();
     //const int refYlen = refup_data.LengthY();
@@ -957,7 +957,7 @@ void MotionCompensator_HalfPixel::BlockPixelPred(
              y<block_data.LengthY(); ++y, ry+=2 , by=BChk(ry,trueRefYlen))
         {
              for( int x=0 , rx=ref_start.x , bx=BChk(rx,trueRefXlen);
-                  x<block_data.LengthX() ; 
+                  x<block_data.LengthX() ;
                   ++x, ++block_curr, rx+=2 , bx=BChk(rx,trueRefXlen))
              {
                  *block_curr =  refup_data[by][bx];
@@ -968,8 +968,8 @@ void MotionCompensator_HalfPixel::BlockPixelPred(
 #endif
 
 // Motion Compesation class that provides quarter-pixel precision compensation
-MotionCompensator_QuarterPixel::MotionCompensator_QuarterPixel( const CodecParams &cp ) :
-    MotionCompensator( cp )
+MotionCompensator_QuarterPixel::MotionCompensator_QuarterPixel( const PicturePredParams &ppp ) :
+    MotionCompensator( ppp )
 {}
 
 #if !defined (HAVE_MMX)
@@ -1092,8 +1092,8 @@ void MotionCompensator_QuarterPixel::BlockPixelPred(
 
 // Motion Compesation class that provides one eighth-pixel precision
 // compensation
-MotionCompensator_EighthPixel::MotionCompensator_EighthPixel( const CodecParams &cp ) :
-    MotionCompensator( cp )
+MotionCompensator_EighthPixel::MotionCompensator_EighthPixel( const PicturePredParams &ppp ) :
+    MotionCompensator( ppp )
 {}
 
 void MotionCompensator_EighthPixel::BlockPixelPred(

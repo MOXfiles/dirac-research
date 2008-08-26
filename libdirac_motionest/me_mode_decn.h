@@ -131,8 +131,8 @@ namespace dirac
          // Member data
         PictureSort m_psort;
 
-        //! A local reference to the encoder params
-        const EncoderParams& m_encparams;
+        //! A local reference to the picture prediction params
+        const PicturePredParams& m_predparams;
 
         //! The Lagrangian parameter for motion estimation
         float m_lambda;

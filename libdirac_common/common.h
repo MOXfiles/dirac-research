@@ -962,6 +962,135 @@ namespace dirac
         //! Number of Vertical code blocks
         unsigned int m_vblocks;
     };
+
+    //! Structure to hold motion parameters when motion comp is used
+    class PicturePredParams
+    {
+    public:
+        PicturePredParams():
+	m_lbparams(3),
+        m_cbparams(3) {}
+
+        //! Return the global motion flag used for encoding/decoding
+        bool UsingGlobalMotion() const { return m_use_global_motion; }
+
+        //! Return the number of picture weight precision bits
+        unsigned int PictureWeightsBits() const { return m_picture_weights_bits; }
+
+        //! Return the Ref1 weight
+        int Ref1Weight() const { return m_ref1_weight; }
+
+        //! Return the Ref2 weight
+        int Ref2Weight() const { return m_ref2_weight; }
+
+        bool CustomRefWeights()
+        {
+            return (m_picture_weights_bits != 1 ||
+                    m_ref1_weight != 1 ||
+                    m_ref2_weight != 1);
+        }
+
+        //! Return the number of macroblocks horizontally
+        int XNumMB() const {return m_x_num_mb;}
+
+        //! Return the number of macroblocks vertically
+        int YNumMB() const {return m_y_num_mb;}
+
+        //! Return the number of blocks horizontally
+        int XNumBlocks() const {return m_x_num_blocks;}
+
+        //! Returns the number of blocks vertically
+        int YNumBlocks() const {return m_y_num_blocks;}
+
+        //! Return the Luma block parameters for each macroblock splitting level
+        const OLBParams& LumaBParams(int n) const {return m_lbparams[n];}
+
+        //! Return the Chroma block parameters for each macroblock splitting level
+        const OLBParams& ChromaBParams(int n) const {return m_cbparams[n];}
+
+        //! Return the number of accuracy bits used for motion vectors
+        MVPrecisionType MVPrecision() const { return m_mv_precision; }
+
+        //! Set how many MBs there are horizontally
+        void SetXNumMB(const int xn){m_x_num_mb=xn;}
+
+        //! Set how many MBs there are vertically
+        void SetYNumMB(const int yn){m_y_num_mb=yn;}
+
+        //! Set how many blocks there are horizontally
+        void SetXNumBlocks(const int xn){m_x_num_blocks=xn;}
+
+        //! Set how many blocks there are vertically
+        void SetYNumBlocks(const int yn){m_y_num_blocks=yn;}
+
+        //! Set the block sizes for all MB splitting levels given these prototype block sizes for level=2
+        void SetBlockSizes(const OLBParams& olbparams , const ChromaFormat cformat);
+
+        //! Set block level luma params
+        void SetLumaBlockParams(const OLBParams& olbparams) {m_lbparams[2] = olbparams;}
+
+        //! Set the number of accuracy bits for motion vectors
+        void SetMVPrecision(const MVPrecisionType p)
+        {
+            // Assert in debug mode. Maybe we should throw an exception???
+            TESTM((p >=0 && p <=3), "Motion precision value in range 0..3");
+            m_mv_precision = p;
+        }
+
+        void SetMVPrecision(const MVPrecisionType p) const
+        {
+            // Assert in debug mode. Maybe we should throw an exception???
+            TESTM((p >=0 && p <=3), "Motion precision value in range 0..3");
+            m_mv_precision = p;
+        }
+
+        //! Set the wavelet filter used for picture (de)coding
+        void SetUsingGlobalMotion(bool gm) { m_use_global_motion=gm; }
+
+        //! Set the picture weight precision bits used for (de)coding
+        void SetPictureWeightsPrecision(unsigned int wt_prec) { m_picture_weights_bits=wt_prec; }
+
+        //! Set the ref 1 picture weight
+        void SetRef1Weight(int wt) { m_ref1_weight=wt; }
+
+        //! Set the ref 2 picture weight
+        void SetRef2Weight(int wt) { m_ref2_weight=wt; }
+
+    private:
+
+        //! The number of macroblocks horizontally
+        int m_x_num_mb;
+
+        //! The number of macroblocks verticaly
+        int m_y_num_mb;
+
+        //! The number of blocks horizontally
+        int m_x_num_blocks;
+
+        //! The number of blocks vertically
+        int m_y_num_blocks;
+
+        OneDArray<OLBParams> m_lbparams;
+
+        OneDArray<OLBParams> m_cbparams;
+
+        //! The precision of motion vectors (number of accuracy bits eg 1=half-pel accuracy)
+        mutable MVPrecisionType m_mv_precision;
+
+        //! picture predicion parameters - precision
+        unsigned int m_picture_weights_bits;
+
+        //! picture predicion parameters - reference picture 1 weight
+        int m_ref1_weight;
+
+        //! picture predicion parameters - reference picture 2 weight
+        int m_ref2_weight;
+
+        //! Global motion fields
+        bool m_use_global_motion;
+
+    };
+
     //! Parameters common to coder and decoder operation
     /*!
         Parameters used throughout both the encoder and the decoder
@@ -982,17 +1111,6 @@ namespace dirac
 
         // Gets ...
 
-        //! Return the number of macroblocks horizontally
-        int XNumMB() const {return m_x_num_mb;}
-
-        //! Return the number of macroblocks vertically
-        int YNumMB() const {return m_y_num_mb;}
-
-        //! Return the number of blocks horizontally
-        int XNumBlocks() const {return m_x_num_blocks;}
-
-        //! Returns the number of blocks vertically
-        int YNumBlocks() const {return m_y_num_blocks;}
 
         //! Returns the picture coding mode (independent of source format)
         /*! Returns the picture coding mode (independent of source format)
@@ -1002,7 +1120,7 @@ namespace dirac
         int PictureCodingMode() const {return m_pic_coding_mode;}
 
         //! Returns true if the pictures are being coded as fields (mode 1 or 3)
-        bool FieldCoding() const { return  (m_pic_coding_mode==1); } 
+        bool FieldCoding() const { return  (m_pic_coding_mode==1); }
 
         //! Returns true if the topmost field comes first in time when coding
         bool TopFieldFirst() const {return m_topfieldfirst;}
@@ -1025,15 +1143,6 @@ namespace dirac
         //! Returns the chroma depth
         unsigned int ChromaDepth() const { return m_chroma_depth; }
 
-        //! Return the Luma block parameters for each macroblock splitting level
-        const OLBParams& LumaBParams(int n) const {return m_lbparams[n];}
-
-        //! Return the Chroma block parameters for each macroblock splitting level
-        const OLBParams& ChromaBParams(int n) const {return m_cbparams[n];}
-
-        //! Return the number of accuracy bits used for motion vectors
-        MVPrecisionType MVPrecision() const { return m_mv_precision; }
-
         //! Return zero transform flag being used for picture (de)coding
         bool ZeroTransform() const { return m_zero_transform; }
 
@@ -1055,37 +1164,13 @@ namespace dirac
         //! Return the video format currently being used for picture (de)coding
         VideoFormat GetVideoFormat() const { return m_video_format; }
 
-        //! Return the global motion flag used for encoding/decoding
-        bool UsingGlobalMotion() const { return m_use_global_motion; }
+	//! Return the picture prediction params
+	PicturePredParams& GetPicPredParams(){return m_picpredparams;}
 
-        //! Return the number of picture weight precision bits
-        unsigned int PictureWeightsBits() const { return m_picture_weights_bits; }
+        //! Return the picture prediction params
+	const PicturePredParams& GetPicPredParams() const {return m_picpredparams;}
 
-        //! Return the Ref1 weight
-        int Ref1Weight() const { return m_ref1_weight; }
-
-        //! Return the Ref2 weight
-        int Ref2Weight() const { return m_ref2_weight; }
-
-        bool CustomRefWeights()
-        {
-            return (m_picture_weights_bits != 1 ||
-                    m_ref1_weight != 1 ||
-                    m_ref2_weight != 1);
-        }
-        // ... and Sets
-        //! Set how many MBs there are horizontally
-        void SetXNumMB(const int xn){m_x_num_mb=xn;}
-
-        //! Set how many MBs there are vertically
-        void SetYNumMB(const int yn){m_y_num_mb=yn;}
-
-        //! Set how many blocks there are horizontally
-        void SetXNumBlocks(const int xn){m_x_num_blocks=xn;}
-
-        //! Set how many blocks there are vertically
-        void SetYNumBlocks(const int yn){m_y_num_blocks=yn;}
-
+       // ... and Sets
         //! Sets whether input is coded as fields or quincunxially
         void SetPictureCodingMode(int pic_coding){m_pic_coding_mode=pic_coding;}
 
@@ -1110,27 +1195,7 @@ namespace dirac
         //! Set Chroma Depth
         void SetChromaDepth(unsigned int chroma_depth) { m_chroma_depth = chroma_depth; }
 
-        //! Set the block sizes for all MB splitting levels given these prototype block sizes for level=2
-        void SetBlockSizes(const OLBParams& olbparams , const ChromaFormat cformat);
-        //! Set block level luma params
-        void SetLumaBlockParams(const OLBParams& olbparams) {m_lbparams[2] = olbparams;}
-
-        //! Set the number of accuracy bits for motion vectors
-        void SetMVPrecision(const MVPrecisionType p)
-        {
-            // Assert in debug mode. Maybe we should throw an exception???
-            TESTM((p >=0 && p <=3), "Motion precision value in range 0..3");
-            m_mv_precision = p;
-        }
-
-        void SetMVPrecision(const MVPrecisionType p) const
-        {
-            // Assert in debug mode. Maybe we should throw an exception???
-            TESTM((p >=0 && p <=3), "Motion precision value in range 0..3");
-            m_mv_precision = p;
-        }
-
-        //! Set the zero transform flag being used for picture (de)coding
+       //! Set the zero transform flag being used for picture (de)coding
         void SetZeroTransform(bool zero_transform)  { m_zero_transform = zero_transform; }
 
         //! Set the wavelet filter used for picture (de)coding
@@ -1154,22 +1219,13 @@ namespace dirac
         //! Set the video format used for picture (de)coding
         void SetVideoFormat(const VideoFormat vd) { m_video_format=vd; }
 
-        //! Set the wavelet filter used for picture (de)coding
-        void SetUsingGlobalMotion(bool gm) { m_use_global_motion=gm; }
-
-        //! Set the picture weight precision bits used for (de)coding
-        void SetPictureWeightsPrecision(unsigned int wt_prec) { m_picture_weights_bits=wt_prec; }
-
-        //! Set the ref 1 picture weight
-        void SetRef1Weight(int wt) { m_ref1_weight=wt; }
-
-        //! Set the ref 2 picture weight
-        void SetRef2Weight(int wt) { m_ref2_weight=wt; }
-
-    protected:
+   protected:
         //! Return the Wavelet filter associated with the wavelet index
         WltFilter TransformFilter (unsigned int wf_idx);
     private:
+
+        //! The picture prediction parameters
+	PicturePredParams m_picpredparams;
 
         //! The picture coding mode
         int m_pic_coding_mode;
@@ -1195,41 +1251,10 @@ namespace dirac
         //! chroma depth - number of bits required for luma
         unsigned int m_chroma_depth;
 
-        //! The number of macroblocks horizontally
-        int m_x_num_mb;
-
-        //! The number of macroblocks verticaly
-        int m_y_num_mb;
-
-        //! The number of blocks horizontally
-        int m_x_num_blocks;
-
-        //! The number of blocks vertically
-        int m_y_num_blocks;
-
-        OneDArray<OLBParams> m_lbparams;
-
-        OneDArray<OLBParams> m_cbparams;
-
-        //! The precision of motion vectors (number of accuracy bits eg 1=half-pel accuracy)
-        mutable MVPrecisionType m_mv_precision;
-
-        //! The video format being used
+       //! The video format being used
         VideoFormat m_video_format;
 
-        //! Global motion fields
-        bool m_use_global_motion;
-
-        //! picture predicion parameters - precision
-        unsigned int m_picture_weights_bits;
-
-        //! picture predicion parameters - reference picture 1 weight
-        int m_ref1_weight;
-
-        //! picture predicion parameters - reference picture 2 weight
-        int m_ref2_weight;
-
-        //! Zero transform flag
+       //! Zero transform flag
         bool m_zero_transform;
 
         //! The wavelet filter being used

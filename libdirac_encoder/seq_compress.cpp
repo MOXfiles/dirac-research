@@ -51,6 +51,7 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
     m_just_finished(true),
     m_srcparams(pin->GetSourceParams()),
     m_encparams(encp),
+    m_predparams(encp.GetPicPredParams()),
     m_L1_sep(encp.L1Sep()),
     m_pparams(m_srcparams.CFormat(),
               m_encparams.Xl(),
@@ -82,9 +83,9 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
                                            m_pic_in->GetSourceParams(), encp);
 
     // Copy in the block parameters in case we want to change them dynamically
-    m_basic_olb_params2 = m_encparams.LumaBParams(2);
-    m_basic_olb_params1 = m_encparams.LumaBParams(1);
-    m_basic_olb_params0 = m_encparams.LumaBParams(0);
+    m_basic_olb_params2 = m_predparams.LumaBParams(2);
+    m_basic_olb_params1 = m_predparams.LumaBParams(1);
+    m_basic_olb_params0 = m_predparams.LumaBParams(0);
 
     m_intra_olbp = new OLBParams( 2*m_basic_olb_params2.Xbsep() ,
                                   2*m_basic_olb_params2.Ybsep() ,
@@ -105,7 +106,7 @@ void SequenceCompressor::SetMotionParameters(){
         else if (m_encparams.Qf()<1.5)
             new_olb_params=m_basic_olb_params0;
 
-        m_encparams.SetBlockSizes( new_olb_params , m_srcparams.CFormat() );
+        m_predparams.SetBlockSizes( new_olb_params , m_srcparams.CFormat() );
 */
     }
 
@@ -113,13 +114,13 @@ void SequenceCompressor::SetMotionParameters(){
     int yl = m_encparams.Yl();
 
     // Make sure we have enough macroblocks to cover the pictures
-    m_encparams.SetXNumMB( (xl+m_encparams.LumaBParams(0).Xbsep()-1)/
-                                     m_encparams.LumaBParams(0).Xbsep() );
-    m_encparams.SetYNumMB( (yl+m_encparams.LumaBParams(0).Ybsep()-1)/
-                                     m_encparams.LumaBParams(0).Ybsep() );
+    m_predparams.SetXNumMB( (xl+m_predparams.LumaBParams(0).Xbsep()-1)/
+                                     m_predparams.LumaBParams(0).Xbsep() );
+    m_predparams.SetYNumMB( (yl+m_predparams.LumaBParams(0).Ybsep()-1)/
+                                     m_predparams.LumaBParams(0).Ybsep() );
 
-    m_encparams.SetXNumBlocks( 4 * m_encparams.XNumMB() );
-    m_encparams.SetYNumBlocks( 4 * m_encparams.YNumMB() );
+    m_predparams.SetXNumBlocks( 4 * m_predparams.XNumMB() );
+    m_predparams.SetYNumBlocks( 4 * m_predparams.YNumMB() );
 }
 
 
@@ -253,7 +254,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
                 if ( pparams.PicSort().IsInter() ){
 	            // 3.Initialise motion data
 	            if ( ( enc_pic.GetStatus() & DONE_ME_INIT) == 0 ){
-                        enc_pic.InitMEData( m_encparams.XNumMB() , m_encparams.YNumMB() ,
+                        enc_pic.InitMEData( m_predparams.XNumMB() , m_predparams.YNumMB() ,
                                                                    pparams.NumRefs() );
                         enc_pic.UpdateStatus( DONE_ME_INIT );
                     }
@@ -266,7 +267,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 
 //		    // 5. Set picture complexity
 //                    if ( (enc_pic.GetStatus() & DONE_PIC_COMPLEXITY ) == 0 ){
-//                        m_pcoder.CalcComplexity( m_enc_pbuffer, pnum, m_encparams.LumaBParams(2) );
+//                        m_pcoder.CalcComplexity( m_enc_pbuffer, pnum, m_predparams.LumaBParams(2) );
 //                        enc_pic.UpdateStatus( DONE_PIC_COMPLEXITY );
 //		    }
 
@@ -350,7 +351,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
 	        MEData& me_data = current_pic->GetMEData();
 
                 if (me_data.IntraBlockRatio()>0.1)
-                    m_encparams.SetBlockSizes(*m_intra_olbp, m_srcparams.CFormat() );
+                    m_predparams.SetBlockSizes(*m_intra_olbp, m_srcparams.CFormat() );
 
 	        m_pcoder.MotionCompensate(m_enc_pbuffer, m_current_display_pnum, SUBTRACT );
 		current_pic->UpdateStatus( DONE_MC );
@@ -450,7 +451,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
             m_pcoder.MotionCompensate(m_enc_pbuffer, m_current_display_pnum, ADD );
 
 	// Reset block sizes for next picture
-        m_encparams.SetBlockSizes(m_basic_olb_params2, m_srcparams.CFormat() );
+        m_predparams.SetBlockSizes(m_basic_olb_params2, m_srcparams.CFormat() );
 
         // 21. Clip the data to keep it in range
         current_pic->Clip();

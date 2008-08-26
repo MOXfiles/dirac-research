@@ -44,7 +44,7 @@ using namespace dirac;
 using std::vector;
 
 SubpelRefine::SubpelRefine(const EncoderParams& encp): 
-    m_encparams(encp),
+    m_predparams(encp.GetPicPredParams()),
     m_nshift(4)
 {
     //define the relative coordinates of the four neighbours    
@@ -110,17 +110,17 @@ void SubpelRefine::MatchPic(const PicArray& pic_data , const PicArray& refup_dat
     TwoDArray<MvCostData>& pred_costs = me_data.PredCosts( ref_id );
 
     // Provide a block matching object to do the work
-    BlockMatcher my_bmatch( pic_data , refup_data , m_encparams.LumaBParams(2) ,
-                            m_encparams.MVPrecision() , mv_array , pred_costs );
+    BlockMatcher my_bmatch( pic_data , refup_data , m_predparams.LumaBParams(2) ,
+                            m_predparams.MVPrecision() , mv_array , pred_costs );
 
     // Do the work //
     /////////////////
 
     // Loop over all the blocks, doing the work
 
-    for (int yblock=0 ; yblock<m_encparams.YNumBlocks() ; ++yblock)
+    for (int yblock=0 ; yblock<m_predparams.YNumBlocks() ; ++yblock)
     {
-        for (int xblock=0 ; xblock<m_encparams.XNumBlocks() ; ++xblock)
+        for (int xblock=0 ; xblock<m_predparams.XNumBlocks() ; ++xblock)
         {    
             DoBlock(xblock , yblock , my_bmatch , me_data , ref_id );
         }// xblock        

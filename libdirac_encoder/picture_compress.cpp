@@ -212,6 +212,7 @@ void PictureCompressor::SubPixelME( EncQueue& my_buffer , int pnum )
     const int num_refs = refs.size();
 
     PictureParams& pparams = my_buffer.GetPicture(pnum).GetPparams();
+    PicturePredParams& predparams = m_encparams.GetPicPredParams();
     MEData& me_data = my_buffer.GetPicture(pnum).GetMEData();
 
     float lambda;
@@ -225,7 +226,7 @@ void PictureCompressor::SubPixelME( EncQueue& my_buffer , int pnum )
     // Set up the lambda to be used
     me_data.SetLambdaMap( num_refs , lambda );
 
-    m_orig_prec = m_encparams.MVPrecision();
+    m_orig_prec = predparams.MVPrecision();
 
     // Step 2.
     // Pixel accurate vectors are then refined to sub-pixel accuracy
@@ -255,7 +256,7 @@ void PictureCompressor::SubPixelME( EncQueue& my_buffer , int pnum )
                     mv_arr2[j][i] = mv_arr2[j][i] << 1;
             }
         }
-        m_encparams.SetMVPrecision(MV_PRECISION_HALF_PIXEL);
+        predparams.SetMVPrecision(MV_PRECISION_HALF_PIXEL);
     }
 
 }
@@ -264,6 +265,7 @@ void PictureCompressor::ModeDecisionME( EncQueue& my_buffer, int pnum )
 {
     MEData& me_data = my_buffer.GetPicture(pnum).GetMEData();
     PictureParams& pparams = my_buffer.GetPicture(pnum).GetPparams();
+    PicturePredParams& predparams = m_encparams.GetPicPredParams();
 
     ModeDecider my_mode_dec( m_encparams );
     my_mode_dec.DoModeDecn( my_buffer , pnum );
@@ -291,7 +293,7 @@ void PictureCompressor::ModeDecisionME( EncQueue& my_buffer, int pnum )
                     mv_arr2[j][i] = mv_arr2[j][i]>>1;
             }
         }
-        m_encparams.SetMVPrecision(MV_PRECISION_PIXEL);
+        predparams.SetMVPrecision(MV_PRECISION_PIXEL);
     }
 
 }
@@ -331,7 +333,8 @@ void PictureCompressor::MotionCompensate( EncQueue& my_buffer, int pnum,
     else
         ref_pics[1]=&my_buffer.GetPicture(my_refs[0]);
 
-    MotionCompensator::CompensatePicture( m_encparams , dirn , my_pic->GetMEData() , my_pic, ref_pics );
+    MotionCompensator::CompensatePicture( m_encparams.GetPicPredParams() , dirn ,
+                                          my_pic->GetMEData() , my_pic, ref_pics );
 }
 
 void PictureCompressor::Prefilter( EncQueue& my_buffer, int pnum )
@@ -466,7 +469,7 @@ void PictureCompressor::CodeMVData(EncQueue& my_buffer, int pnum, PictureByteIO*
 
     // If we're using block motion vectors, code them
     if ( m_use_block_mv ){
-        MvDataByteIO *mv_byteio = new MvDataByteIO(pparams, static_cast<CodecParams&>(m_encparams));
+        MvDataByteIO *mv_byteio = new MvDataByteIO(pparams, m_encparams.GetPicPredParams());
         pic_byteio->SetMvData(mv_byteio);
 
         SplitModeCodec smode_coder( mv_byteio->SplitModeData()->DataBlock(), TOTAL_MV_CTXS);

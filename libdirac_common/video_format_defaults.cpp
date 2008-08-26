@@ -102,15 +102,16 @@ void SetDefaultCodecParameters(CodecParams &cparams,
     {
         ASSERTM (num_refs > 0 && num_refs < 3, "Number of reference frames should be 1 or 2 fo INTER frames" );
         OLBParams bparams;
-        cparams.SetUsingGlobalMotion(false);
+	PicturePredParams& predparams = cparams.GetPicPredParams();
+        predparams.SetUsingGlobalMotion(false);
         SetDefaultBlockParameters(bparams, cparams.GetVideoFormat());
-        cparams.SetLumaBlockParams(bparams);
-        cparams.SetPictureCodingMode(0);
-        cparams.SetMVPrecision(MV_PRECISION_HALF_PIXEL);
+        predparams.SetLumaBlockParams(bparams);
+        predparams.SetMVPrecision(MV_PRECISION_HALF_PIXEL);
         // NOTE: FIXME - need to add global motion params here
-        cparams.SetPictureWeightsPrecision(1);
-        cparams.SetRef1Weight(1);
-        cparams.SetRef2Weight(1);
+        predparams.SetPictureWeightsPrecision(1);
+        predparams.SetRef1Weight(1);
+        predparams.SetRef2Weight(1);
+        cparams.SetPictureCodingMode(0);
     }
 }
 
@@ -346,7 +347,7 @@ void SetDefaultEncoderParameters(EncoderParams& encparams)
 {
     encparams.SetLossless(false);
     encparams.SetQf(5.5f);
-    encparams.SetMVPrecision(MV_PRECISION_QUARTER_PIXEL);
+    encparams.GetPicPredParams().SetMVPrecision(MV_PRECISION_HALF_PIXEL);
     encparams.SetUsingAC(true);
 
     switch (encparams.GetVideoFormat())

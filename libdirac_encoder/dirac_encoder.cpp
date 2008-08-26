@@ -366,8 +366,8 @@ void DiracEncoder::GetInstrumentationData (dirac_encoder_t *encoder)
         instr->refs[i] = pparams.Refs()[i];
 
     // Block separation params
-    instr->ybsep = m_encparams.LumaBParams(2).Ybsep();
-    instr->xbsep = m_encparams.LumaBParams(2).Xbsep();
+    instr->ybsep = m_encparams.GetPicPredParams().LumaBParams(2).Ybsep();
+    instr->xbsep = m_encparams.GetPicPredParams().LumaBParams(2).Xbsep();
 
     // Num macroblocks
     instr->mb_ylen = m_enc_medata->MBSplit().LengthY();
@@ -547,7 +547,7 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
                              enc_ctx->enc_params.prefilter_strength);
     m_encparams.SetUFactor(1.5f);
     m_encparams.SetVFactor(0.75f);
-    m_encparams.SetMVPrecision(enc_ctx->enc_params.mv_precision);
+    m_encparams.GetPicPredParams().SetMVPrecision(enc_ctx->enc_params.mv_precision);
     m_encparams.SetUsingAC(enc_ctx->enc_params.using_ac);
     bparams.SetYblen( enc_ctx->enc_params.yblen );
     bparams.SetXblen( enc_ctx->enc_params.xblen );
@@ -566,7 +566,7 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
         //have I-frame only coding
         m_encparams.SetL1Sep(0);
     }
-    m_encparams.SetBlockSizes( bparams , enc_ctx->src_params.chroma );
+    m_encparams.GetPicPredParams().SetBlockSizes( bparams , enc_ctx->src_params.chroma );
 
     // Set transforms parameters
     m_encparams.SetIntraTransformFilter(enc_ctx->enc_params.intra_wlt_filter);
@@ -982,7 +982,7 @@ static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
     encparams.ybsep = default_block_params.Ybsep();
 
     // set default MV parameters
-    encparams.mv_precision = default_enc_params.MVPrecision();
+    encparams.mv_precision = default_enc_params.GetPicPredParams().MVPrecision();
 
     // by default, use hierarchical, not full search
     encparams.full_search = 0;

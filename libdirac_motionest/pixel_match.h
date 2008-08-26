@@ -84,8 +84,11 @@ namespace dirac
 
         // Member variables
 
-        //! Local reference to the encoder 
+        //! Local reference to the encoder params 
         const EncoderParams& m_encparams;
+
+        //! Local reference to the picture pred params 
+        const PicturePredParams& m_predparams;
 
         // the depth of the hierarchical match 
         int m_depth;

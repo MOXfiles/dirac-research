@@ -98,7 +98,7 @@ namespace dirac
         //member variables
     
         //! A local reference to the encoder params
-        const EncoderParams& m_encparams;
+        const PicturePredParams& m_predparams;
     
         //! The list of candidate vectors being tested
         CandidateList m_cand_list;
