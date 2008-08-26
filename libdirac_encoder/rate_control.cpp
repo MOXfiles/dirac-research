@@ -203,19 +203,24 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
     // filter tap for adjusting the QF
     double target_ratio = 0.9;
 
+    int field_factor = m_encparams.FieldCoding() ? 2 : 1;
+
     double top_size = (1.0 - target_ratio)-0.5;
     double bottom_size = target_ratio-0.1;
     double actual_ratio = double(m_buffer_bits)/double(m_buffer_size);
     double tap;
 
-    if (actual_ratio>target_ratio)
-        tap = (actual_ratio-target_ratio)/top_size;
-    else
-        tap = (target_ratio-actual_ratio)/bottom_size;
+    if ((pparams.PictureNum()/field_factor)<=3*m_encparams.L1Sep() )
+        tap = 1.0;
+    else{
+        if (actual_ratio>target_ratio)
+            tap = (actual_ratio-target_ratio)/top_size;
+        else
+            tap = (target_ratio-actual_ratio)/bottom_size;
 
-    tap = std::min( 1.0, std::max(tap, 0.15 ));
+        tap = std::min( 1.0, std::max(tap, 0.25 ));
+    }
 
-    int field_factor = m_encparams.FieldCoding() ? 2 : 1;
 
     if (!m_intra_only)
     {
