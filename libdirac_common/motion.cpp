@@ -52,26 +52,13 @@ using namespace std;
 //Motion vector and Motion Estimation structures//
 //////////////////////////////////////////////////
 
-MvData::MvData( const int xnumMB, const int ynumMB , 
-                const int xnumblocks, const int ynumblocks , const int num_refs ):
+MvData::MvData( const PicturePredParams& predparams , const int num_refs ):
+    m_predparams( predparams ),
     m_vectors( Range(1 , num_refs) ),
     m_gm_vectors( Range(1 , num_refs) ),
-    m_modes( ynumblocks , xnumblocks ),
+    m_modes( predparams.YNumBlocks() , predparams.XNumBlocks() ),
     m_dc( 3 ),
-    m_mb_split( ynumMB , xnumMB ),
-    m_gm_params( Range(1 , num_refs) )//,
-//    m_num_refs(num_refs)
-{
-
-    InitMvData();
-}
-
-MvData::MvData( const int xnumMB , const int ynumMB , const int num_refs ):
-    m_vectors( Range(1 , num_refs) ),
-    m_gm_vectors( Range(1 , num_refs) ),
-    m_modes( 4*ynumMB , 4*xnumMB ),
-    m_dc( 3 ),
-    m_mb_split( ynumMB , xnumMB ),
+    m_mb_split( predparams.YNumMB() , predparams.XNumMB() ),
     m_gm_params( Range(1 , num_refs) )//,
 //    m_num_refs(num_refs)
 {
@@ -116,32 +103,17 @@ MvData::~MvData()
 
 
 
-MEData::MEData(const int xnumMB , const int ynumMB ,
-                const int xnumblocks , const int ynumblocks , const int num_refs ):
-     MvData( xnumMB , ynumMB , xnumblocks , ynumblocks , num_refs ),
+MEData::MEData(const PicturePredParams& predparams , const int num_refs ):
+     MvData( predparams , num_refs ),
      m_pred_costs( Range( 1 , num_refs ) ),
-     m_intra_costs( ynumblocks , xnumblocks, 0 ),
-     m_bipred_costs( ynumblocks , xnumblocks ),
-     m_MB_costs( ynumMB , xnumMB ),
-     m_lambda_map( ynumblocks , xnumblocks ),
+     m_intra_costs( predparams.YNumBlocks() , predparams.XNumBlocks(), 0 ),
+     m_bipred_costs( predparams.YNumBlocks() , predparams.XNumBlocks() ),
+     m_MB_costs( predparams.YNumMB() , predparams.XNumMB() ),
+     m_lambda_map( predparams.YNumBlocks() , predparams.XNumBlocks() ),
      m_inliers( Range( 1 , num_refs ) ),
      m_intra_block_ratio(0.0)
 {
     InitMEData();
-}
-
-MEData::MEData( const int xnumMB , const int ynumMB ,  const int num_refs ):
-     MvData( xnumMB , ynumMB , num_refs ),
-     m_pred_costs( Range( 1 , num_refs ) ),
-     m_intra_costs( 4*ynumMB , 4*xnumMB, 0 ),
-     m_bipred_costs( 4*ynumMB , 4*xnumMB ),
-     m_MB_costs( ynumMB , xnumMB ),
-     m_lambda_map( 4*ynumMB , 4*xnumMB ),
-     m_inliers( Range( 1 , num_refs ) ),
-     m_intra_block_ratio( 0.0 )
-{
-    InitMEData();
-
 }
 
 void MEData::InitMEData()

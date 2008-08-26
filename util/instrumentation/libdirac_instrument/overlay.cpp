@@ -79,7 +79,12 @@ void Overlay::ProcessPicture()
 
     // in order to draw picture number and 'I' label, create a dummy DrawPredMode object
     // and call appropriate functions. Not the most elegant!
-    MEData me_data(1,1,1,1);
+    PicturePredParams predparams;
+    predparams.SetXNumBlocks(1);
+    predparams.SetYNumBlocks(1);
+    predparams.SetXNumMB(1);
+    predparams.SetYNumMB(1);
+    MEData me_data(predparams);
     DrawPredMode dummy(m_picture, m_draw_params, me_data.Mode());
     dummy.DrawPictureNumber(m_picture.GetPparams().PictureNum());
     dummy.DrawCharacter(dummy.Symbols().LetterI(), 16, 0);

@@ -69,7 +69,7 @@ public:
     virtual ~EncPicture();
 
     //! Initialise the motion estimation data arrays
-    void InitMEData( const int xnum_mb, const int ynum_mb, const int num_refs);
+    void InitMEData( const PicturePredParams& predparams, const int num_refs);
 
     //! Returns the motion data
     MEData& GetMEData(){ return *m_me_data;}

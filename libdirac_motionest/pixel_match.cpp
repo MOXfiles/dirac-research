@@ -195,6 +195,10 @@ void PixelMatcher::MakeMEDataHierarchy(const OneDArray< PicArray*>& down_data,
     // from this.
     xnumblocks = m_predparams.XNumBlocks();
     ynumblocks = m_predparams.YNumBlocks();
+
+    PicturePredParams predparams = m_predparams;
+    predparams.SetXNumMB(0);
+    predparams.SetYNumMB(0);
     for (int i=1 ; i<=m_depth;++i)
     {
 
@@ -207,7 +211,10 @@ void PixelMatcher::MakeMEDataHierarchy(const OneDArray< PicArray*>& down_data,
         if (( down_data[i]->LengthY() )%bparams.Ybsep() != 0)
             ynumblocks++;
 
-        me_data_set[i] = new MEData( 0 , 0 , xnumblocks , ynumblocks, 2 );
+	predparams.SetXNumBlocks( xnumblocks );
+	predparams.SetYNumBlocks( ynumblocks );
+
+        me_data_set[i] = new MEData( predparams, 2 );
     }// i
 
 }

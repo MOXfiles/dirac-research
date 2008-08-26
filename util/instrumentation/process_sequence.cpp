@@ -184,8 +184,14 @@ void ProcessSequence::AddPictureEntry()
         m_data_in >> mv_ynum; // motion vector array dimensions
         m_data_in >> mv_xnum;
 
+        PicturePredParams predparams;
+	predparams.SetXNumBlocks(mv_xnum);
+	predparams.SetYNumBlocks(mv_ynum);
+	predparams.SetXNumMB(mb_xnum);
+	predparams.SetYNumMB(mb_ynum);
+
         // create motion data object
-        m_data_array[new_index].me_data = new MEData(mb_xnum, mb_ynum, mv_xnum, mv_ynum , total_refs );
+        m_data_array[new_index].me_data = new MEData(predparams , total_refs );
         if (m_verbose)
             std::cout << std::endl << "Allocating " << new_index << " MEData object";
 

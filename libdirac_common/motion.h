@@ -222,23 +222,9 @@ namespace dirac
         //! Constructor
         /*! 
             Constructor takes:
-            \param  xnumMB  the number of MBs horizontally
-            \param  ynumMB  the number of MBs vertically
-            \param  xnumblocks  the number of blocks horizontally
-            \param  ynumblocks  the number of blocks vertically
             \param  num_refs  the number of references being used for the picture
         */
-        MvData( const int xnumMB, const int ynumMB , 
-                const int xnumblocks, const int ynumblocks ,  const int num_refs);
-
-        //! Constructor
-        /*! 
-            Constructor. Numbers of blocks derived from the number of MBs
-            \param  xnumMB  the number of MBs horizontally
-            \param  ynumMB  the number of MBs vertically
-            \param  num_refs  the number of references being used for the picture
-        */
-        MvData( const int xnumMB, const int ynumMB ,  const int num_refs);
+        MvData( const PicturePredParams& predparams ,  const int num_refs);
 
         //! Destructor
         ~MvData();
@@ -286,6 +272,9 @@ namespace dirac
 //        unsigned int NumRefs()const {return m_num_refs;}
 
     protected:
+        // A local copy of the picture prediction parameters
+	PicturePredParams m_predparams;
+
         // Initialises the arrays of data
         void InitMvData();
 
@@ -324,23 +313,10 @@ namespace dirac
         //! Constructor
         /*! 
             Constructor takes:
-            \param  xnumMB  the number of MBs horizontally
-            \param  ynumMB  the number of MBs vertically
-            \param  xnumblocks  the number of blocks horizontally
-            \param  ynumblocks  the number of blocks vertically
+	    \params predparams the picture prediction parameters
             \param  num_refs  the number of references being used for the picture
         */
-        MEData( const int xnumMB, const int ynumMB , 
-                const int xnumblocks, const int ynumblocks , const int num_refs = 2);
-
-        //! Constructor
-        /*! 
-            Constructor. Numbers of blocks derived from the number of MBs
-            \param  xnumMB  the number of MBs horizontally
-            \param  ynumMB  the number of MBs vertically
-            \param  num_refs  the number of references being used for the picture
-        */
-        MEData( const int xnumMB, const int ynumMB , const int num_refs = 2);
+        MEData( const PicturePredParams& predparams , const int num_refs = 2);
 
         //! Destructor
         ~MEData();

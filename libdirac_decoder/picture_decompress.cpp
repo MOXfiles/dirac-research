@@ -275,8 +275,7 @@ void PictureDecompressor::DecompressMVData( std::auto_ptr<MvData>& mv_data,
     mvdata_byteio.Input();
 
     SetMVBlocks();
-    mv_data.reset(new MvData( predparams.XNumMB() ,
-                              predparams.YNumMB(), m_pparams.NumRefs() ));
+    mv_data.reset(new MvData( predparams, m_pparams.NumRefs() ));
 
     // decode mv data
     if (m_decparams.Verbose())

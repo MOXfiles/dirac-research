@@ -254,8 +254,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
                 if ( pparams.PicSort().IsInter() ){
 	            // 3.Initialise motion data
 	            if ( ( enc_pic.GetStatus() & DONE_ME_INIT) == 0 ){
-                        enc_pic.InitMEData( m_predparams.XNumMB() , m_predparams.YNumMB() ,
-                                                                   pparams.NumRefs() );
+                        enc_pic.InitMEData( m_predparams , pparams.NumRefs() );
                         enc_pic.UpdateStatus( DONE_ME_INIT );
                     }
 

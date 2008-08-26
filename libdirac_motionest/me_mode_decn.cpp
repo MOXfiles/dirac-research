@@ -105,10 +105,16 @@ void ModeDecider::DoModeDecn( EncQueue& my_buffer, int pic_num )
         m_pic_data = &(my_buffer.GetPicture( pic_num ).OrigData(Y_COMP));
 
         // Set up the hierarchy of motion vector data objects
-        m_me_data_set[0] = new MEData( m_predparams.XNumMB() , m_predparams.YNumMB() , 
-                                       m_predparams.XNumBlocks()/4 , m_predparams.YNumBlocks()/4, num_refs );
-        m_me_data_set[1] = new MEData( m_predparams.XNumMB() , m_predparams.YNumMB() , 
-                                       m_predparams.XNumBlocks()/2 , m_predparams.YNumBlocks()/2, num_refs );
+	PicturePredParams predparams0 = m_predparams;
+	predparams0.SetXNumBlocks( m_predparams.XNumBlocks()/4 );
+	predparams0.SetYNumBlocks( m_predparams.YNumBlocks()/4 );
+	
+	PicturePredParams predparams1 = m_predparams;
+	predparams1.SetXNumBlocks( m_predparams.XNumBlocks()/2 );
+	predparams1.SetYNumBlocks( m_predparams.YNumBlocks()/2 );
+
+        m_me_data_set[0] = new MEData( predparams0, num_refs );
+        m_me_data_set[1] = new MEData( predparams1, num_refs );
 
         m_me_data_set[2] = &my_buffer.GetPicture(pic_num).GetMEData();
 

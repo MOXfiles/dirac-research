@@ -103,13 +103,13 @@ void EncPicture::SetOrigData( const int c )
         *(m_orig_data[c]) = *(m_pic_data[c]);
 }
 
-void EncPicture::InitMEData( const int xnum_mb, const int ynum_mb , const int num_refs)
+void EncPicture::InitMEData( const PicturePredParams& predparams , const int num_refs)
 {
     if (m_me_data != NULL)
         delete m_me_data;
 
-    m_me_data=new MEData( xnum_mb , ynum_mb , num_refs );
-    
+    m_me_data=new MEData( predparams, num_refs );
+
 }
 
 const PicArray& EncPicture::DataForME( bool field_coding, CompSort cs ) const{
