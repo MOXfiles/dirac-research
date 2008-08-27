@@ -470,7 +470,7 @@ void PictureCompressor::CodeMVData(EncQueue& my_buffer, int pnum, PictureByteIO*
 
     // If we're using block motion vectors, code them
     if ( m_use_block_mv ){
-        MvDataByteIO *mv_byteio = new MvDataByteIO(pparams, m_encparams.GetPicPredParams());
+        MvDataByteIO *mv_byteio = new MvDataByteIO(pparams, mv_data.GetPicPredParams());
         pic_byteio->SetMvData(mv_byteio);
 
         SplitModeCodec smode_coder( mv_byteio->SplitModeData()->DataBlock(), TOTAL_MV_CTXS);
