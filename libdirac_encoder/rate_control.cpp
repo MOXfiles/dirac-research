@@ -219,7 +219,7 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
             tap = (target_ratio-actual_ratio)/bottom_size;
 
         tap = std::min( 1.0, std::max(tap, 0.25 ));
-    }
+    
 
 
     if (!m_intra_only)
