@@ -396,9 +396,6 @@
 				RelativePath="..\..\..\libdirac_motionest\me_utils_mmx.cpp">
 			</File>
 			<File
-				RelativePath="..\..\..\libdirac_motionest\motion_estimate.cpp">
-			</File>
-			<File
 				RelativePath="..\..\..\libdirac_motionest\pixel_match.cpp">
 			</File>
 		</Filter>
@@ -423,9 +420,6 @@
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_motionest\me_utils_mmx.h">
-			</File>
-			<File
-				RelativePath="..\..\..\libdirac_motionest\motion_estimate.h">
 			</File>
 			<File
 				RelativePath="..\..\..\libdirac_motionest\pixel_match.h">
