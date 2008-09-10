@@ -222,7 +222,8 @@ namespace dirac
         //! Constructor
         /*! 
             Constructor takes:
-            \param  num_refs  the number of references being used for the picture
+            \param  predparams   Picture prediction parameters
+            \param  num_refs     the number of references being used for the picture
         */
         MvData( const PicturePredParams& predparams ,  const int num_refs);
 
@@ -316,7 +317,7 @@ namespace dirac
         //! Constructor
         /*! 
             Constructor takes:
-	    \params predparams the picture prediction parameters
+	        \param predparams the picture prediction parameters
             \param  num_refs  the number of references being used for the picture
         */
         MEData( const PicturePredParams& predparams , const int num_refs = 2);

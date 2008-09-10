@@ -62,17 +62,17 @@ namespace dirac
 
         /**
         * Constructor
-        *@param pparams    Picture Params
-        *@param c_params   Codec parameters
+        *@param pparams         Picture Params
+        *@param picpredparams   Picture prediction parameters
         */
         MvDataByteIO(PictureParams& pparams,
                         PicturePredParams& picpredparams);
 
         /**
         * Constructor
-        *@param byte_io    Input/Output Byte stream
-        *@param pparams    Picture Params
-        *@param c_params   Codec parameters
+        *@param byte_io         Input/Output Byte stream
+        *@param pparams         Picture Params
+        *@param picpredparams   Picture prediction parameters
         */
         MvDataByteIO(ByteIO &byte_io, PictureParams& pparams,
                         PicturePredParams& picpredparams);
