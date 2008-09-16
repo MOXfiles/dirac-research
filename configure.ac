@@ -11,8 +11,8 @@ dnl -----------------------------------------------
 GENERIC_LIBRARY_NAME=dirac
 
 #release versioning
-GENERIC_MAJOR_VERSION=0
-GENERIC_MINOR_VERSION=10
+GENERIC_MAJOR_VERSION=1
+GENERIC_MINOR_VERSION=0
 GENERIC_MICRO_VERSION=0
 
 #shared library versioning
