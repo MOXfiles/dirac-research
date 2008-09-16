@@ -1,3 +1,18 @@
+dirac-1.0.0
+===========
+This a a major release complying with the latest Dirac Bytestream Specification
+Dirac 2.2.2.
+
+- Adaptive GOP structure.
+- Improved constant bit-rate coding.
+- Improved motion estimation.
+- Improved pre-filtering.
+- Major code refactor of encoder classes.
+- Added conversion utility for horizontal 3/4 filtering.
+- DirectShow Filter released to be able to play back Dirac v2.2.2 files
+  in Windows Media Player.
+- For more info on Dirac go to http://diracvideo.org
+
 dirac_0.10.0
 ============
 This is a Beta release complying with the latest Dirac Bytestream Specification
