@@ -23,6 +23,8 @@ if HAVE_CPPUNIT
 CPPUNITTESTS_DIR = unit_tests
 endif
 
+EXTRA_DIST = bootstrap
+
 pkgconfigdir = $(libdir)/pkgconfig
 pkgconfig_DATA = dirac.pc
 
