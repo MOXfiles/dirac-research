@@ -47,7 +47,6 @@
 #include <libdirac_encoder/comp_compress.h>
 #include <libdirac_encoder/prefilter.h>
 #include <libdirac_common/mot_comp.h>
-#include <libdirac_motionest/motion_estimate.h>
 #include <libdirac_motionest/pixel_match.h>
 #include <libdirac_motionest/me_subpel.h>
 #include <libdirac_motionest/me_mode_decn.h>
