@@ -34,7 +34,8 @@ and picture quality are 'reasonable'.
 4.    Code
 
 There is no need to inspect the code in detail as this should have been done as 
-part of the review process prior to being placed on the Sourceforge CVS.
+part of the review process prior to being placed on the diracvideo Git
+repository.
 
 4.1    Run dos2unix on all test files to remove dos line-breaks.
 
@@ -59,17 +60,17 @@ to be released has been appropriately licensed.
 
 5.7 Update NEWS with features added/bugs fixed in the release
 
-Any changes resulting from these checks should be checked into the Sourceforge
-CVS.
+Any changes resulting from these checks should be checked into the diracvideo
+GIT repository.
 
 6.   Creating and testing the Release
 
      Once all the above checks have been successful, it is time to create the
      release.
 
-6.1 Ensure that all files are committed into the Sourceforge CVS.
+6.1 Ensure that all files are committed into the diracvideo GIT repsitory.
 
-6.2 Check out the latest code from the Sourceforge CVS repository into 
+6.2 Check out the latest code from the diracvideo GIT repository into 
 a new directory. This is to ensure that all modified/new files have been
 checked in.
 
@@ -92,20 +93,18 @@ that the release distribution has all the necessary files.
 
 6.10 Repeat Steps 6.2 thru 6.6
 
-6.11 Upload the distribution to Dirac project page on Sourceforge.
+6.11 Ensure that all mirror sites (e.g. Sourceforge.net/projects/dirac) are 
+     updated.
 
-6.12 Recreate the MPlayer patch if required and upload it to Dirac project
-     page on Sourceforge
+6.11 Upload the distribution to Dirac downloads page on diracvideo.org and 
+     Dirac project page on Sourceforge.
 
-6.13 Recreate the ffmpeg patch if required and upload it to Dirac project
-     page on Sourceforge
-
-6.14 Recreate the Dirac Directshow filter if required and upload it to Dirac 
-     project page on Sourceforge
+6.12 Recreate the Dirac Directshow filter if required and upload it to Dirac 
+     downloads page on diracvideo.org and Dirac project page on Sourceforge
 
 6.15 Announce the new release by sending an email to the Dirac announce mailing 
     list dirac-announce@lists.sourceforge.net
 
-6.16 Update News on the Dirac project page on Sourceforge.
+6.16 Update News on the diracvideo.org and Dirac project page on Sourceforge.
 
 6.17 Update project page on www.freshmeat.net

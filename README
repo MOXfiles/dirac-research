@@ -29,9 +29,8 @@ software structure. It is not intended as a demonstration or reference coder.
 2. Documentation
 ~~~~~~~~~~~~~~~~
 
-A user guide and a guide to the software is in progress. More details on
-running the codec can be found at http://dirac.sourceforge.net/
-
+Documentation can be found at 
+http://diracvideo.org/wiki/index.php/Main_Page#Documentation
 
 3. Building and installing
 ~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -442,7 +441,7 @@ less) suitable for your application. Setting cpd equal zero turns off
 perceptual weighting altogether.
 
 For more information, see the algorithm documentation on the website:
-http://dirac.sourceforge.net
+http://diracvideo.org/wiki/index.php/Dirac_Algorithm
 
 Other options. The encoder also supports some other options, which are
 
