@@ -18,6 +18,8 @@ EXTRA_DIST = dirac.sln \
     ./ConversionUtils/YUV411toRGB/YUV411toRGB.vcproj \
     ./ConversionUtils/RGBtoUYVY/RGBtoUYVY.vcproj \
     ./ConversionUtils/BMPtoRGB/BMPtoRGB.vcproj \
+    ./ConversionUtils/YUV420Down2x2/YUV420Down2x2.vcproj \
+    ./ConversionUtils/YUV420pt75filter/YUV420pt75filter.vcproj \
     ./ConversionUtils/YUV420toRGB/YUV420toRGB.vcproj \
 	./ConversionUtils/YUV420toYUV422/YUV420toYUV422.vcproj \
     ./ConversionUtils/YUV422toRGB/YUV422toRGB.vcproj \
