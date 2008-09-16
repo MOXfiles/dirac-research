@@ -1,3 +1,767 @@
+2008-09-16 14:33  asuraparaju
+
+	* NEWS: Include Dirac 1.0.0 release notes.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-09-16 14:31  asuraparaju
+
+	* configure.ac: Update release id to 1.0.0
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-09-16 14:27  asuraparaju
+
+	* README, README.release: Update the README files.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-09-16 14:23  asuraparaju
+
+	* Makefile.am: Add bootstrap to distribution.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-09-16 14:02  asuraparaju
+
+	* doc/Makefile.am: Change directory name where doxygen generated
+	  documentations is installed.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-09-16 14:02  asuraparaju
+
+	* win32/VisualStudio/Makefile.am: Add YUV420Down2x2.vcproj and
+	  YUV420pt75filter.vcproj to distribution list.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-09-16 14:02  asuraparaju
+
+	* libdirac_encoder/picture_compress.cpp: motion_estimate.h is no
+	  longer in use.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-09-15 16:34  asuraparaju
+
+	* win32/VS2003/DecodeDirac/DecodeDirac.vcproj: Fix target directory
+	  name.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-09-12 12:51  asuraparaju
+
+	* doc/documentation/code/programmers_guide/: decoder_api.htm,
+	  decoder_api_overview.htm, encoder_api_overview.htm,
+	  encoder_data_structs.htm, index.htm, intro.htm, overview.htm,
+	  software.htm, toc.htm: Update documentation for 1.0 release.
+
+2008-09-10 22:32  asuraparaju
+
+	* doc/: dirac_api.doxygen, dirac_api.doxygen.in,
+	  dirac_api_foot.html, dirac_api_head.html: Sync with git
+	  repository doc directory structure.
+
+2008-09-10 22:28  asuraparaju
+
+	* libdirac_byteio/mvdata_byteio.h, libdirac_common/motion.h: Fix
+	  doxygen warnings.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-09-10 16:37  asuraparaju
+
+	* win32/VisualStudio/: dirac.sln,
+	  ConversionUtils/YUV420Down2x2/YUV420Down2x2.vcproj,
+	  ConversionUtils/YUV420pt75filter/YUV420pt75filter.vcproj: Add
+	  conversion utiliies YUV420Down2x2 and YUV420pt75filter to build
+	  targets list.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-09-10 12:10  asuraparaju
+
+	* configure.ac, doc/Makefile.am: Sync with git repository changes.
+
+2008-09-09 21:42  asuraparaju
+
+	* win32/: VS2003/libdirac_motionest/libdirac_motionest.vcproj,
+	  VisualStudio/libdirac_motionest/libdirac_motionest.vcproj: Remove
+	  motion_estimat.cpp and motion_estimate.h from the sources list as
+	  they are no longer used.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-09-03 10:33  asuraparaju
+
+	* libdirac_encoder/rate_control.cpp: Revert "Typo fix."
+
+	  This reverts commit a5161a15d0e4f4b0dd9506dc00e52ffe368e6b81.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-09-02 10:51  asuraparaju
+
+	* libdirac_encoder/rate_control.cpp: Typo fix.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-28 09:59  asuraparaju
+
+	* libdirac_encoder/picture_compress.cpp: Use the picture's
+	  prediction parameters and not the global prediction parameters
+	  when writing motion vector data header info to the bitstream.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-08-27 11:06  asuraparaju
+
+	* unit_tests/motion_comp_test.cpp: Changes related to the commit
+	  where picture parameters were separated into a different class
+	  from the Codec Parameters class.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-08-27 10:22  asuraparaju
+
+	* libdirac_encoder/rate_control.cpp: Modified so as to adapt faster
+	  at the beginning.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-27 10:20  asuraparaju
+
+	* libdirac_common/motion.h, libdirac_encoder/picture_compress.cpp,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.cpp, libdirac_motionest/me_subpel.h,
+	  libdirac_motionest/pixel_match.cpp,
+	  libdirac_motionest/pixel_match.h: Re-enabled adaptive block
+	  sizes, now a subgroup or so in arrears.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-27 10:18  asuraparaju
+
+	* libdirac_common/motion.cpp, libdirac_common/motion.h,
+	  libdirac_decoder/picture_decompress.cpp,
+	  libdirac_encoder/enc_picture.cpp, libdirac_encoder/enc_picture.h,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/pixel_match.cpp,
+	  util/instrumentation/libdirac_instrument/overlay.cpp,
+	  util/instrumentation/process_sequence.cpp: Placed a local copy of
+	  picture pred params in MvData class.
+
+	  This will allow motion parameters to be changed picture by
+	  picture.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-27 10:17  asuraparaju
+
+	* libdirac_byteio/mvdata_byteio.cpp,
+	  libdirac_byteio/mvdata_byteio.h, libdirac_common/common.cpp,
+	  libdirac_common/common.h, libdirac_common/mot_comp.cpp,
+	  libdirac_common/mot_comp.h,
+	  libdirac_common/video_format_defaults.cpp,
+	  libdirac_decoder/picture_decompress.cpp,
+	  libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/picture_compress.cpp,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h, libdirac_motionest/Makefile.am,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.cpp, libdirac_motionest/me_subpel.h,
+	  libdirac_motionest/pixel_match.cpp,
+	  libdirac_motionest/pixel_match.h: Separated off picture
+	  prediction parameters.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-25 13:15  asuraparaju
+
+	* libdirac_common/video_format_defaults.cpp,
+	  libdirac_encoder/seq_compress.cpp: Set default MV precision back
+	  to 1/2. Also turned off 100% overlap.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-20 22:03  asuraparaju
+
+	* libdirac_byteio/byteio.h, libdirac_common/band_codec.cpp,
+	  libdirac_common/band_codec.h, libdirac_common/band_vlc.cpp,
+	  libdirac_common/band_vlc.h: Fix bug in handling skipped code
+	  blocks in DC bands when decoding. Also fix bug in calculating the
+	  quantiser index in multiple quantiser mode for DC sub-bands in
+	  Intra pictures.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-08-14 12:35  asuraparaju
+
+	* util/conversion/: Makefile.am, YUV420pt75filter.cpp: Added filter
+	  for horizontal 3/4 filtering
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:31  asuraparaju
+
+	* encoder/encmain.cpp: Removed error message.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:30  asuraparaju
+
+	* libdirac_common/mot_comp.h, libdirac_common/mv_codec.h,
+	  libdirac_encoder/enc_queue.h,
+	  libdirac_encoder/picture_compress.h,
+	  libdirac_encoder/quality_monitor.h: Fix doxygen warnings
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-08-14 12:29  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: MC now done with 100% overlap
+	  to improve blockiness at low rates.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:28  asuraparaju
+
+	* libdirac_encoder/: picture_compress.cpp, prefilter.cpp: Refined
+	  diagonal prefiltering for 1080 coding.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:27  asuraparaju
+
+	* encoder/encmain.cpp: Frame skipping now works on pipes, if a bit
+	  inefficient.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:25  asuraparaju
+
+	* libdirac_encoder/: picture_compress.cpp, prefilter.cpp: Temp fix
+	  of diagonal bandwidth to 50%.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:23  asuraparaju
+
+	* libdirac_common/mot_comp.cpp, libdirac_encoder/seq_compress.cpp:
+	  Fixed bug with reference being retired too early.
+
+	  A P/L1 picture was being retired too early when a BBBBBP subgroup
+	  followed a PPPPPP subgroup.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:22  asuraparaju
+
+	* util/conversion/YUV420Down2x2.cpp: Added clipping to prevent
+	  overshoots.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:21  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: Fix bug which causes the
+	  encoder to crash when encoding Intra-only sequences.	For intra
+	  sequences we need to insert a sequence header every
+	  pre-determined number of frames (we use 10). Also all pictures in
+	  an Intra-only sequence should be Non-ref Intra pictures.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-08-14 12:18  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: Fixed bug with GOP being
+	  incorrectly restarted.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:18  asuraparaju
+
+	* libdirac_decoder/Makefile.am: Export symbols to a file.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-08-14 12:17  asuraparaju
+
+	* util/conversion/: Makefile.am, YUV420Down2x2.cpp: Added 2x2
+	  downconversion routine.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:15  asuraparaju
+
+	* encoder/encmain.cpp, libdirac_common/video_format_defaults.cpp:
+	  Whitespace fix.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:14  asuraparaju
+
+	* libdirac_encoder/prefilter.cpp: Adjusted diagonal prefiltering to
+	  be more benign.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:14  asuraparaju
+
+	* libdirac_encoder/rate_control.cpp: Rate of adaption of qf made
+	  dependent on buffer state.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:13  asuraparaju
+
+	* libdirac_encoder/dirac_encoder.cpp: Clean dimensions set to be
+	  the full picture.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:11  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: Adaptive GOP coding now works
+	  for field coding.
+
+	  This is a bit hacky. It would be better to remove the need to
+	  code fields together and just double the L1 picture separation.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:08  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: Fixed long-dependency chain
+	  bug.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:06  asuraparaju
+
+	* libdirac_encoder/: seq_compress.cpp, seq_compress.h: Fixed bug
+	  with sequence headers being written in the wrong place.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:03  asuraparaju
+
+	* libdirac_encoder/rate_control.cpp: Reduced rate of change of qf
+	  to improve worst areas.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 12:00  asuraparaju
+
+	* libdirac_encoder/: rate_control.cpp, seq_compress.cpp: Rate
+	  control now works better with adaptive GOP.
+
+	  GOP restarts were not being handled correctly.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:59  asuraparaju
+
+	* libdirac_encoder/picture_compress.cpp: Increase quality of
+	  pictures with more intra blocks.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:58  asuraparaju
+
+	* libdirac_byteio/picture_byteio.cpp,
+	  libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/enc_queue.cpp,
+	  libdirac_encoder/picture_compress.cpp,
+	  libdirac_encoder/picture_compress.h,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h: Fixed bug with instrumentation.
+	  Intra insertion added back in.
+
+	  GOP will restart if a scheduled P picture is Intra.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:56  asuraparaju
+
+	* encoder/encmain.cpp: Fixed so that the encoder can now skip large
+	  numbers of frames.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:55  asuraparaju
+
+	* libdirac_encoder/: dirac_encoder.cpp, seq_compress.cpp:
+	  Temporarily disabled instrumentation as it's now buggy.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:49  asuraparaju
+
+	* libdirac_byteio/picture_byteio.cpp, libdirac_common/motion.cpp,
+	  libdirac_common/motion.h, libdirac_common/mv_codec.cpp,
+	  libdirac_common/mv_codec.h,
+	  libdirac_decoder/picture_decompress.cpp,
+	  libdirac_encoder/enc_picture.h, libdirac_encoder/enc_queue.cpp,
+	  libdirac_encoder/picture_compress.cpp,
+	  libdirac_encoder/picture_compress.h,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h: Subgroups will now switch to PPP
+	  coding for difficult sequences.
+
+	  The ratio of intra blocks is used to determine whether a P
+	  picture contains large or poorly matched motions. If so the
+	  subgroup terminated by that P is switched to all pictures.
+
+	  This mod is still buggy.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:47  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: Fixed bug in CanEncode member
+	  function for LongGOP sequences which caused frames to be encoded
+	  twice or skipped.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
+
+2008-08-14 11:45  asuraparaju
+
+	* libdirac_encoder/: seq_compress.cpp, seq_compress.h: Restart GOP
+	  whenever a P picture becomes an I picture.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:44  asuraparaju
+
+	* libdirac_encoder/picture_compress.cpp: Increased quality of
+	  inserted intra pictures.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:44  asuraparaju
+
+	* libdirac_encoder/rate_control.cpp: More aggressive rate
+	  correction if overshooting.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:43  asuraparaju
+
+	* libdirac_encoder/prefilter.cpp: Set BW range for diagonal
+	  prefiltering.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:41  asuraparaju
+
+	* libdirac_common/motion.cpp, libdirac_encoder/enc_picture.cpp,
+	  libdirac_encoder/picture_compress.cpp,
+	  libdirac_encoder/seq_compress.cpp: Fixed bug with dropping
+	  references not being properly recorded.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:39  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: Temporarily disabled reference
+	  dropping as it causes decoder crashes.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:38  asuraparaju
+
+	* libdirac_encoder/prefilter.cpp: Diagonal prefilter now has
+	  variable bandwidth.
+
+	  Author: Thomas Davies <thomasd@.(none)>
+
+2008-08-14 11:04  asuraparaju
+
+	* libdirac_common/common.cpp, libdirac_encoder/quality_monitor.cpp,
+	  libdirac_encoder/quality_monitor.h: Now calculating PSNR
+	  properly.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:03  asuraparaju
+
+	* libdirac_encoder/: picture_compress.cpp, seq_compress.cpp: Fixed
+	  bug with changing lambda value. Reference pruning extended to all
+	  inter pics.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:02  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: Fixed bug where encoder queue
+	  was not being pruned.
+
+	  Also now retire I pictures after 2 L1 pictures, due to changed
+	  GOP structure.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:01  asuraparaju
+
+	* libdirac_encoder/picture_compress.cpp: Report intra block
+	  proportions correctly.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 11:00  asuraparaju
+
+	* libdirac_encoder/: picture_compress.cpp, seq_compress.cpp:
+	  Encoder will now drop a reference if not useful.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 10:58  asuraparaju
+
+	* libdirac_motionest/: me_mode_decn.cpp, me_utils.cpp, me_utils.h:
+	  Modified intra selection to use a Haar transform.
+
+	  A Haar transform is applied to the difference array after
+	  subtracting the DC value. This penalises blocks where there is a
+	  lot of structure, but not blocks which are close to the DC value.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 10:56  asuraparaju
+
+	* libdirac_common/motion.cpp, libdirac_common/motion.h,
+	  libdirac_encoder/enc_picture.cpp, libdirac_encoder/enc_picture.h:
+	  Added support for being able to drop a reference from an inter
+	  picture.
+
+	  If it's determined that a reference is unlike the current
+	  picture, any matches might be accidental and could reduce
+	  quality. So being able to drop references could be useful.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-08-14 10:51  asuraparaju
+
+	* libdirac_byteio/accessunit_byteio.cpp,
+	  libdirac_byteio/accessunit_byteio.h,
+	  libdirac_byteio/dirac_byte_stream.cpp,
+	  libdirac_byteio/dirac_byte_stream.h, libdirac_common/common.h,
+	  libdirac_common/motion.cpp, libdirac_common/motion.h,
+	  libdirac_common/picture.cpp, libdirac_common/picture.h,
+	  libdirac_common/video_format_defaults.cpp,
+	  libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h,
+	  libdirac_common/wavelet_utils_mmx.cpp,
+	  libdirac_decoder/picture_decompress.cpp,
+	  libdirac_decoder/seq_decompress.cpp,
+	  libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/enc_picture.cpp, libdirac_encoder/enc_picture.h,
+	  libdirac_encoder/enc_queue.h,
+	  libdirac_encoder/picture_compress.cpp,
+	  libdirac_encoder/picture_compress.h,
+	  libdirac_encoder/rate_control.cpp,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h,
+	  libdirac_motionest/block_match.cpp,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.cpp, libdirac_motionest/me_subpel.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/motion_estimate.h,
+	  libdirac_motionest/pixel_match.cpp,
+	  libdirac_motionest/pixel_match.h: New encoder stucture to model
+	  rate-control approaches.
+
+	  Fixed bug with P-only coding.  Added support for switching block
+	  sizes for pics with lots of intra blocks.  Added another
+	  complexity metric based on variance of prediction residue.  Added
+	  intra block ratio to MEData class.  Defined a complexity measure
+	  based on pel ME SAD values.  Pixel accurate motion estimation
+	  done using look ahead.  Encoder now preloads a queue of frames.
+	  Split up motion estimation into tasks within the sequence
+	  compressor engine.  Separated out prefiltering.  Incorporated
+	  wavelet coefficient data into Picture class.	Moved subband
+	  metadata into CoeffArray class.  Further splitting of picture
+	  coding into subtasks.  Reorganised picture coding into subtasks
+	  called by sequence compressor.  Fixed bug on updating CBR model
+	  for field coding.  Changed AccessUnitByteIO to
+	  SequenceHeaderByteIO for spec consistency.  Fixed bug with motion
+	  data being incorrectly coded.  Added ME data to the EncPicture
+	  class.  Fixed unit test for motion compensation.  Renamed
+	  EncBuffer class as EncQueue class to make Andrea happy.  Fixed
+	  buffers to be mere wrappers around vectors of pointers. Partially
+	  fixed unit tests.  Change frame to picture names.  Fixed for
+	  compatibility with buffer interfaces.  Simplified buffer memory
+	  management.  Simplified buffer operation for decoder.  Changed
+	  default qf to 5.5 Synched with cvs for libdirac_decoder Updated
+	  against current cvs in libdirac_{byteio,common} Changed GOP L1
+	  refs to reduce "breakthrough" Refactored to use encoder picture
+	  and encoder buffer classes.  Added classes for encoder pictures
+	  and specialist buffer.  Simplified picture class.  Refactor to
+	  make subclassing easier.  Fixed interlace IO errors.	Refactored
+	  so as to remove encoder-specific methods from picture buffer.
+	  Modified picbuffer so that decoder solely manages picture params
+	  and GOP.  Modified makefile for encoder picture class.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-06-26 20:30  tjdwave
+
+	* doc/latex_spec/: bs-spec.tex, idwt.tex, layout-fullsize.tex,
+	  quant-matrix.tex, spec-structure.tex: Fixed typos in wavelet
+	  lifting spec and changed Debuc to Dubuc.
+
+	  Also incremented version ready for release.
+
+2008-06-23 20:48  asuraparaju
+
+	* win32/:
+	  VS2003/DiracEncoder/libdirac_encoder/libdirac_encoder.vcproj,
+	  VisualStudio/DiracEncoder/libdirac_encoder/libdirac_encoder.vcproj:
+	  Add enc_picture.cpp{.h} and enc_queue.cpp{.h} to the sources
+	  list.
+
+2008-06-20 20:03  asuraparaju
+
+	* libdirac_encoder/seq_compress.cpp: Check that future pictures
+	  exist in the picture buffer before using them as references for
+	  the current picture.
+
+2008-06-19 20:39  tjdwave
+
+	* util/instrumentation/libdirac_instrument/: draw_overlay.cpp,
+	  gm_inliers.cpp, motion_arrows.cpp, motion_colour.cpp,
+	  motion_colour_arrows.cpp, overlay.cpp, pred_mode.cpp, sad.cpp,
+	  split_mode.cpp: Fixed instrumentation to comply with new class
+	  methods.
+
+2008-06-19 20:36  tjdwave
+
+	* unit_tests/: frames_test.cpp, motion_comp_test.cpp: Fixed test to
+	  conform to class changes.
+
+2008-06-19 20:35  tjdwave
+
+	* libdirac_motionest/: me_mode_decn.cpp, me_mode_decn.h,
+	  me_subpel.cpp, me_subpel.h, motion_estimate.cpp,
+	  motion_estimate.h, pixel_match.cpp, pixel_match.h: Fixes due to
+	  use of EncQueue/EncPicture class. Changed "frame" to "picture"
+	  terminology.
+
+2008-06-19 20:33  tjdwave
+
+	* libdirac_decoder/: comp_decompress.h, dirac_parser.cpp,
+	  picture_decompress.cpp, seq_decompress.cpp: Fixes due to changes
+	  in PictureBuffer and Picture classes.
+
+2008-06-19 20:28  tjdwave
+
+	* libdirac_encoder/: prefilter.cpp, quality_monitor.cpp,
+	  quality_monitor.h: Mods due to EncQueue/EncPicture class changes.
+
+2008-06-19 20:25  tjdwave
+
+	* libdirac_encoder/: picture_compress.cpp, picture_compress.h:
+	  Modified for change to EncQueue/EncPicture classes.
+
+2008-06-19 20:22  tjdwave
+
+	* libdirac_encoder/: seq_compress.cpp, seq_compress.h: Moved GOP
+	  structure determination into this class.
+
+	  Also, changed the class so that it used the EncQueue/EncPicture
+	  classes.
+
+2008-06-19 20:17  tjdwave
+
+	* libdirac_common/: pic_io.cpp, pic_io.h: Refactored to comply with
+	  changes to Picture class.
+
+2008-06-19 20:14  tjdwave
+
+	* libdirac_common/: common.h, common.cpp: Removed unnecessary
+	  constructor.
+
+2008-06-19 20:12  tjdwave
+
+	* libdirac_common/: mot_comp.cpp, mot_comp.h: Changed interface.
+
+	  Interface changes because EncQueue class is not a subclass of
+	  PictureBuffer.
+
+2008-06-19 20:10  tjdwave
+
+	* libdirac_common/: picture.cpp, picture.h: Minor refactor to
+	  remove "redo" metadata.
+
+	  The picture buffer deletes and reallocates data now, so we don't
+	  need to reconfigure/reinitialise a picture. So we can lose the
+	  tracking metadata.
+
+2008-06-19 20:07  tjdwave
+
+	* libdirac_common/: picture_buffer.cpp, picture_buffer.h:
+	  Refactored so that the class is a simple wrapper around a vector
+	  of pointers.
+
+	  Removed all the GOP functionality so that it is done in the
+	  sequence compressor class.
+
+2008-06-19 20:05  tjdwave
+
+	* libdirac_encoder/Makefile.am: Added new files.
+
+2008-06-19 20:02  tjdwave
+
+	* libdirac_encoder/: enc_picture.cpp, enc_picture.h, enc_queue.cpp,
+	  enc_queue.h: Added classes for encoder picture and encoder
+	  picture queue.
+
+	  The encoder picture subclasses a basic picture and adds original
+	  data as well as coded data. An encoder queue is a queue of
+	  encoder pictures, so separate queues/buffers for original and
+	  motion estimation data are not needed.
+
+2008-06-18 16:00  asuraparaju
+
+	* extras/dirac_dshow/src/diracsplitter/: DiracSplitter.cpp,
+	  DiracSplitterFile.cpp, DiracSplitterFile.h: Modified the code so
+	  that the Dirac decoder module of the the filter can connect to
+	  splitters (e.g. AVI splitter) other than the Dirac splitter. We
+	  can now play back AVI files containing Dirac muxed with audio.
+
+2008-06-18 11:16  asuraparaju
+
+	* encoder/encmain.cpp: Add command line argument -h or -help to
+	  display usage info.
+
+2008-06-04 15:39  asuraparaju
+
+	* ChangeLog: [no log message]
+
 2008-06-04 15:33  asuraparaju
 
 	* NEWS: Updated 0.10.0 release notes
