@@ -7,7 +7,7 @@ EXTRA_DIST = dirac_api.doxygen dirac_api_foot.html dirac_api_head.html
 
 CLEANFILES = html/*
 
-htmldir = $(datadir)/doc/$(GENERIC_LIBRARY_NAME)/documentation/code/api/api_html
+htmldir = $(datadir)/doc/$(GENERIC_LIBRARY_NAME)/code/api_html
 
 html_DATA = html/index.html
 
