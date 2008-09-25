@@ -125,7 +125,8 @@ ComponentByteIO* CompCompressor::Compress( CoeffArray& coeff_data ,
                 delete bcoder;
             }
              // Update the entropy correction factors
-            m_encparams.EntropyFactors().Update(b , m_pparams , csort , estimated_bits[b] , 8*num_band_bytes);
+             m_encparams.EntropyFactors().Update(b , m_pparams , csort ,
+		                                    estimated_bits[b] , 8*num_band_bytes);
         }
         else
         {   // ... skipped

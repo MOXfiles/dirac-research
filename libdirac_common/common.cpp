@@ -453,8 +453,15 @@ void EncoderParams::CalcLambdas(const float qf)
     if (!m_lossless )
     {
         m_I_lambda = std::pow( 10.0 , (10.0-qf )/2.5 )/16.0;
-        m_L1_lambda = m_I_lambda*8.0;
-        m_L2_lambda = m_I_lambda*64.0;
+
+	if (IntraTransformFilter()==DD13_7){
+            m_L1_lambda = m_I_lambda*4.0;
+            m_L2_lambda = m_I_lambda*32.0;
+	}
+	else{
+            m_L1_lambda = m_I_lambda*8.0;
+            m_L2_lambda = m_I_lambda*64.0;
+	}
 
         // Set the lambdas for motion estimation
         const double me_ratio = 2.0;
@@ -522,9 +529,9 @@ void EncoderParams::SetUsualCodeBlocks ( const PictureType &ftype)
     case VIDEO_FORMAT_DIGI_CINEMA_4K24:
         if (ftype == INTRA_PICTURE){
             int depth = TransformDepth();
-            for (int i=depth; i>=std::max(1,depth-1); --i)
+            for (int i=depth; i>=std::max(1,depth-3); --i)
                 SetCodeBlocks(i, Xl()/(24*2^(depth-i)), Yl()/(24*2^(depth-i)));
-            for (int i = 0; i<std::max(1,depth-1); ++i)
+            for (int i = 0; i<std::max(1,depth-3); ++i)
                 SetCodeBlocks(i, 1, 1);
         }
         else{

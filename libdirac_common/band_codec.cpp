@@ -563,7 +563,7 @@ void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , CoeffArray& in_d
     }
 
     m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    
+
     if (m_is_intra)
         m_offset =  dirac_quantiser_lists.IntraQuantOffset4( qf_idx );
     else

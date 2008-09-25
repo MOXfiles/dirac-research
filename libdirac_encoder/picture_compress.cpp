@@ -617,19 +617,10 @@ void PictureCompressor::SelectQuantisers( CoeffArray& coeff_data ,
 
     // Select all the quantizers
     if ( !m_encparams.Lossless() ){
-        // Set the DC band quantiser to be 1
-        bands( bands.Length() ).SetQuantIndex( 0 );
-        bands( bands.Length() ).SetSkip( false );
-        bands( bands.Length() ).SetUsingMultiQuants( false );
-        est_bits[ bands.Length()] = 0;
-        TwoDArray<CodeBlock>& blocks = bands( bands.Length() ).GetCodeBlocks();
-        for (int j=0; j<blocks.LengthY(); ++j)
-            for (int i=0 ; i<blocks.LengthX(); ++i )
-                blocks[j][i].SetQuantIndex( 0 );
 
         // Now do the rest of the bands.
-        for ( int b=bands.Length()-1 ; b>=1 ; --b )
-            est_bits[b] = SelectMultiQuants( coeff_data , bands , b, lambda, 
+        for ( int b=bands.Length() ; b>=1 ; --b )
+            est_bits[b] = SelectMultiQuants( coeff_data , bands , b, lambda,
                                       pp, csort );
     }
     else{
