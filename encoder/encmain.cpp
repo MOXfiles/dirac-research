@@ -672,7 +672,7 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
     // initialise the encoder context
     dirac_encoder_context_init (&enc_ctx, preset);
 
-    //now go over again and override presets with other values
+    //now go over again and override video format presets with other values
     for(int i=1; i < argc; )
     {
         if ( strcmp(argv[i], "-width") == 0 )
@@ -781,7 +781,19 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
                 parsed[i] = false;
             }
         }
-        else if ( strcmp(argv[i], "-field_coding") == 0 )
+	i++;
+    }
+
+    // finally, set the encoding paramters
+    
+    // For small pictures, initialise the MV precision to 1/4. otherwise it's 1/2
+    if (enc_ctx.src_params.width*enc_ctx.src_params.height<(702*480*2)/3)
+        enc_ctx.enc_params.mv_precision = MV_PRECISION_QUARTER_PIXEL;
+    else
+        enc_ctx.enc_params.mv_precision = MV_PRECISION_HALF_PIXEL;
+
+    for (int i=0; i<argc; ){
+        if ( strcmp(argv[i], "-field_coding") == 0 )
         {
             parsed[i] = true;
             enc_ctx.enc_params.picture_coding_mode =  1;
