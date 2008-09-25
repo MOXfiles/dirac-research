@@ -187,8 +187,8 @@ void ProcessSequence::AddPictureEntry()
         PicturePredParams predparams;
 	predparams.SetXNumBlocks(mv_xnum);
 	predparams.SetYNumBlocks(mv_ynum);
-	predparams.SetXNumMB(mb_xnum);
-	predparams.SetYNumMB(mb_ynum);
+	predparams.SetXNumSB(mb_xnum);
+	predparams.SetYNumSB(mb_ynum);
 
         // create motion data object
         m_data_array[new_index].me_data = new MEData(predparams , total_refs );

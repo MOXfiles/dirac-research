@@ -109,7 +109,7 @@ void MotionEstimator::DoME( EncQueue& my_buffer, int pic_num )
     }
 
     // Step3.
-    // We now have to decide how each macroblock should be split 
+    // We now have to decide how each superblock should be split 
     // and which references should be used, and so on.
 
     ModeDecider my_mode_dec( m_encparams );
@@ -167,14 +167,14 @@ ValueType MotionEstimator::GetChromaBlockDC(const PicArray& pic_data,
 void MotionEstimator::SetChromaDC( const PicArray& pic_data , MEData& me_data , CompSort csort )
 {
 
-    // Lower limit of block coords in MB
+    // Lower limit of block coords in SB
     int xtl,ytl;
-    // Upper limit of block coords in MB
+    // Upper limit of block coords in SB
     int xbr,ybr;
 
-    // Ditto, for subMBs    
-    int xsubMBtl,ysubMBtl;
-    int xsubMBbr,ysubMBbr;
+    // Ditto, for subSBs    
+    int xsubSBtl,ysubSBtl;
+    int xsubSBbr,ysubSBbr;
 
     TwoDArray<ValueType>& dcarray = me_data.DC( csort );
 
@@ -189,30 +189,30 @@ void MotionEstimator::SetChromaDC( const PicArray& pic_data , MEData& me_data , 
 
     int level;
 
-    for ( int ymb=0 ; ymb<me_data.MBSplit().LengthY() ; ++ymb )
+    for ( int ysb=0 ; ysb<me_data.SBSplit().LengthY() ; ++ysb )
     {
-        for ( int xmb=0 ; xmb<me_data.MBSplit().LengthX() ; ++xmb )
+        for ( int xsb=0 ; xsb<me_data.SBSplit().LengthX() ; ++xsb )
         {
 
-            level = me_data.MBSplit()[ymb][xmb];
+            level = me_data.SBSplit()[ysb][xsb];
 
-            xtl = xmb<<2;
-            ytl = ymb<<2;            
+            xtl = xsb<<2;
+            ytl = ysb<<2;            
             xbr = xtl+4;
             ybr = ytl+4;
 
-            xsubMBtl = xmb<<1;
-            ysubMBtl = ymb<<1;
-            xsubMBbr = xsubMBtl+2;
-            ysubMBbr = ysubMBtl+2;
+            xsubSBtl = xsb<<1;
+            ysubSBtl = ysb<<1;
+            xsubSBbr = xsubSBtl+2;
+            ysubSBbr = ysubSBtl+2;
 
 
             for (int j = 0 ; j<(1<<level) ;++j)
             {
                  for (int i = 0 ; i<(1<<level) ;++i)
                  {
-                     xunit = ( xmb<<level ) + i;
-                     yunit = ( ymb<<level ) + j;
+                     xunit = ( xsb<<level ) + i;
+                     yunit = ( ysb<<level ) + j;
 
                      xstart = xunit<<( 2-level );
                      ystart = yunit<<( 2-level );
@@ -232,8 +232,8 @@ void MotionEstimator::SetChromaDC( const PicArray& pic_data , MEData& me_data , 
                  }// i
              }// j
 
-        }// xmb
-    }// ymb
+        }// xsb
+    }// ysb
 }
 
 void MotionEstimator::SetChromaDC( EncQueue& my_buffer , int pic_num )

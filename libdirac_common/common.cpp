@@ -208,8 +208,8 @@ void PicturePredParams::SetBlockSizes(const OLBParams& olbparams , const ChromaF
 {
     //given the raw overlapped block parameters, set the modified internal parameters to
     //take account of the chroma sampling format and overlapping requirements, as well
-    //as the equivalent parameters for sub-MBs and MBs.
-    //Does NOT set the number of blocks or macroblocks, as padding may be required.
+    //as the equivalent parameters for sub-SBs and SBs.
+    //Does NOT set the number of blocks or superblocks, as padding may be required.
 
     OLBParams tmp_olbparams = olbparams;
     // Factors for scaling chroma blocks

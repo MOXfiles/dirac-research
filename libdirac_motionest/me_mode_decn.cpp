@@ -51,9 +51,9 @@ ModeDecider::ModeDecider( const PicturePredParams& ppp):
     m_me_data_set(3)
 {
 
-    // The following factors normalise costs for sub-MBs and MBs to those of
-    // blocks, so that the overlap is take into account (e.g. a sub-MB has
-    // length XBLEN+XBSEP and YBLEN+YBSEP). The MB costs for a 1x1
+    // The following factors normalise costs for sub-SBs and SBs to those of
+    // blocks, so that the overlap is take into account (e.g. a sub-SB has
+    // length XBLEN+XBSEP and YBLEN+YBSEP). The SB costs for a 1x1
     // decomposition are not directly comprable to those for other decompositions
     // because of the block overlaps. These factors remove these effects, so that
     // all SAD costs are normalised to the area corresponding to non-overlapping
@@ -86,11 +86,11 @@ void ModeDecider::DoModeDecn( EncQueue& my_buffer, int pic_num )
 
      // We've got 'raw' block motion vectors for up to two reference pictures. Now we want
      // to make a decision as to mode. In this initial implementation, this is bottom-up
-    // i.e. find mvs for MBs and sub-MBs and see whether it's worthwhile merging.    
+    // i.e. find mvs for SBs and sub-SBs and see whether it's worthwhile merging.
 
     int ref1,ref2;
 
-    // Initialise // 
+    // Initialise //
     ////////////////
 
     m_psort = my_buffer.GetPicture(pic_num).GetPparams().PicSort();
@@ -102,13 +102,13 @@ void ModeDecider::DoModeDecn( EncQueue& my_buffer, int pic_num )
         ref1 = refs[0];
 
         // The picture we're doing estimation from
-        m_pic_data = &(my_buffer.GetPicture( pic_num ).OrigData(Y_COMP));
+        m_pic_data = &(my_buffer.GetPicture( pic_num ).DataForME() );
 
         // Set up the hierarchy of motion vector data objects
 	PicturePredParams predparams0 = m_predparams;
 	predparams0.SetXNumBlocks( m_predparams.XNumBlocks()/4 );
 	predparams0.SetYNumBlocks( m_predparams.YNumBlocks()/4 );
-	
+
 	PicturePredParams predparams1 = m_predparams;
 	predparams1.SetXNumBlocks( m_predparams.XNumBlocks()/2 );
 	predparams1.SetYNumBlocks( m_predparams.YNumBlocks()/2 );
@@ -123,13 +123,13 @@ void ModeDecider::DoModeDecn( EncQueue& my_buffer, int pic_num )
         m_me_data_set[1]->SetLambdaMap( 1 , m_me_data_set[2]->LambdaMap() , 1.0/m_level_factor[1] );
 
         // Set up the reference pictures
-        m_ref1_updata = &(my_buffer.GetPicture( ref1 ).UpOrigData(Y_COMP));
+        m_ref1_updata = &(my_buffer.GetPicture( ref1 ).UpDataForME() );
 
         if (num_refs>1)
         {
             ref2 = refs[1];
-            m_ref2_updata = &(my_buffer.GetPicture( ref2).UpOrigData(Y_COMP));
-            // Create an object for computing bi-directional prediction calculations            
+            m_ref2_updata = &(my_buffer.GetPicture( ref2).UpDataForME() );
+            // Create an object for computing bi-directional prediction calculations
             if ( m_predparams.MVPrecision()==MV_PRECISION_EIGHTH_PIXEL )
                 m_bicheckdiff = new BiBlockEighthPel( *m_ref1_updata ,
                                                       *m_ref2_updata ,
@@ -144,7 +144,7 @@ void ModeDecider::DoModeDecn( EncQueue& my_buffer, int pic_num )
                                                     *m_pic_data );
         }
         else
-        {    
+        {
             ref2 = ref1;
         }
 
@@ -152,44 +152,42 @@ void ModeDecider::DoModeDecn( EncQueue& my_buffer, int pic_num )
         // Create an object for doing intra calculations
         m_intradiff = new IntraBlockDiff( *m_pic_data );
 
-        // Loop over all the macroblocks, doing the work //
+        // Loop over all the superblocks, doing the work //
         ///////////////////////////////////////////////////
 
-        for (m_ymb_loc=0 ; m_ymb_loc<m_predparams.YNumMB() ; ++m_ymb_loc )
-        {
-            for (m_xmb_loc=0 ; m_xmb_loc<m_predparams.XNumMB(); ++m_xmb_loc )
-            {
-                DoMBDecn();
-            }//m_xmb_loc        
-        }//m_ymb_loc
+        for (m_ysb_loc=0 ; m_ysb_loc<m_predparams.YNumSB() ; ++m_ysb_loc ){
+            for (m_xsb_loc=0 ; m_xsb_loc<m_predparams.XNumSB(); ++m_xsb_loc ){
+                DoSBDecn();
+            }//m_xsb_loc
+        }//m_ysb_loc
 
         delete m_intradiff;
         if (num_refs>1)
             delete m_bicheckdiff;
     }
-    
+
     // Finally, although not strictly part of motion estimation,
-    // we have to assign DC values for chroma components for
+    // we have to assign DC values for
     // blocks we're decided are intra.
-    SetChromaDC( my_buffer , pic_num );
+    SetDC( my_buffer , pic_num );
 
 }
 
-void ModeDecider::DoMBDecn()
+void ModeDecider::DoSBDecn()
 {
-      // Does the mode decision for the given MB, in three stages
+      // Does the mode decision for the given SB, in three stages
 
     // Start with 4x4 modes
     DoLevelDecn(2);
-    float old_best_MB_cost = m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc];
+    float old_best_SB_cost = m_me_data_set[2]->SBCosts()[m_ysb_loc][m_xsb_loc];
 
     // Next do 2x2 modes
     DoLevelDecn(1);
 
     // Do 1x1 mode if merging worked before
-    if ( m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] <= old_best_MB_cost)
+    if ( m_me_data_set[2]->SBCosts()[m_ysb_loc][m_xsb_loc] <= old_best_SB_cost)
     {
-        old_best_MB_cost = m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc];        
+        old_best_SB_cost = m_me_data_set[2]->SBCosts()[m_ysb_loc][m_xsb_loc];
         DoLevelDecn(0);
     }
 
@@ -201,43 +199,43 @@ void ModeDecider::DoLevelDecn( int level )
     // stick to a decomposition at this level
 
     // Looks at two cases: the prediction mode is
-    // constant across the MB; and the pred mode
+    // constant across the SB; and the pred mode
     // for each constituent is different.
 
     // The limits of the prediction units
-    const int xstart = m_xmb_loc <<level;
-    const int ystart = m_ymb_loc <<level;
+    const int xstart = m_xsb_loc <<level;
+    const int ystart = m_ysb_loc <<level;
 
     const int xend = xstart + (1<<level);
     const int yend = ystart + (1<<level);
 
     //    Case 1: prediction modes are all different
 
-    float MB_cost = 0.0;    
+    float SB_cost = 0.0;
     for ( int j=ystart ; j<yend ; ++j)
     {
         for (int i=xstart ; i<xend ; ++i)
        {
            if ( level<2 )
                DoME( i , j , level);
-            MB_cost += DoUnitDecn( i , j ,level );
+            SB_cost += DoUnitDecn( i , j ,level );
 
         }// i
     }// j
 
-    // if we've improved on the best cost, we should propagate data in 
+    // if we've improved on the best cost, we should propagate data in
     // the base level motion vector set
     if (level == 2)
     {
-        m_me_data_set[2]->MBSplit()[m_ymb_loc][m_xmb_loc] = 2;
-        m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] = MB_cost;
+        m_me_data_set[2]->SBSplit()[m_ysb_loc][m_xsb_loc] = 2;
+        m_me_data_set[2]->SBCosts()[m_ysb_loc][m_xsb_loc] = SB_cost;
     }
 
-    if ( level<2 && MB_cost <= m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] )
+    if ( level<2 && SB_cost <= m_me_data_set[2]->SBCosts()[m_ysb_loc][m_xsb_loc] )
     {
-        m_me_data_set[2]->MBCosts()[m_ymb_loc][m_xmb_loc] = MB_cost;
-        m_me_data_set[2]->MBSplit()[m_ymb_loc][m_xmb_loc] = level;
-        
+        m_me_data_set[2]->SBCosts()[m_ysb_loc][m_xsb_loc] = SB_cost;
+        m_me_data_set[2]->SBSplit()[m_ysb_loc][m_xsb_loc] = level;
+
         // Parameters of the base-level blocks corresponding to each
         // prediction unit
         int xblock_start;
@@ -277,18 +275,18 @@ void ModeDecider::DoLevelDecn( int level )
 
 void ModeDecider::DoME(const int xpos , const int ypos , const int level)
 {
-    // Do motion estimation for a prediction unit using the 
+    // Do motion estimation for a prediction unit using the
     // four vectors derived from the next level as a guide
 
     MEData& me_data = *(m_me_data_set[level]);
     const MEData& guide_data = *(m_me_data_set[level+1]);
 
     // The corresponding location of the guide data
-    const int guide_xpos = xpos<<1; 
+    const int guide_xpos = xpos<<1;
     const int guide_ypos = ypos<<1;
 
     // The location of the lowest level vectors
-    const int xblock = xpos << ( 2 - level); 
+    const int xblock = xpos << ( 2 - level);
     const int yblock = ypos << ( 2 - level);
 
     // The list of potential candidate vectors
@@ -319,8 +317,8 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
         mv_pred.y = 0;
     }
 
-    BlockMatcher my_bmatch1( *m_pic_data , 
-                             *m_ref1_updata , 
+    BlockMatcher my_bmatch1( *m_pic_data ,
+                             *m_ref1_updata ,
                               m_predparams.LumaBParams(level) ,
                               m_predparams.MVPrecision(),
                               me_data.Vectors(1) , me_data.PredCosts(1) );
@@ -330,7 +328,7 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
     if (num_refs>1)
     {//do the same for the other reference
 
-        cand_list.clear();                
+        cand_list.clear();
 
         for ( int j=0 ; j<2 ; ++j )
             for (int i=0 ; i<2 ; ++i )
@@ -351,8 +349,8 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
              mv_pred.y = 0;
         }
 
-        BlockMatcher my_bmatch2( *m_pic_data , 
-                                 *m_ref2_updata , 
+        BlockMatcher my_bmatch2( *m_pic_data ,
+                                 *m_ref2_updata ,
                                  m_predparams.LumaBParams(level) ,
                                  m_predparams.MVPrecision(),
                                  me_data.Vectors(2) , me_data.PredCosts(2) );
@@ -366,7 +364,7 @@ void ModeDecider::DoME(const int xpos , const int ypos , const int level)
 
 float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level )
 {
-    // For a given prediction unit (MB, subMB or block) find the best
+    // For a given prediction unit (SB, subSB or block) find the best
     // mode, given that the REF1 and REF2 motion estimation has
     // already been done.
 
@@ -382,7 +380,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
     float mode_cost(0.0);
     float min_unit_cost;
     float best_SAD_value;
- 
+
     BlockDiffParams dparams;
 
     dparams.SetBlockLimits( m_predparams.LumaBParams( level ) , *m_pic_data, xpos , ypos);
@@ -419,8 +417,8 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
                                        me_data.PredCosts(1)[ypos][xpos].mvcost+
                                        me_data.PredCosts(2)[ypos][xpos].mvcost;
 
-        me_data.BiPredCosts()[ypos][xpos].SAD = m_bicheckdiff->Diff(dparams , 
-                                                  me_data.Vectors(1)[ypos][xpos] , 
+        me_data.BiPredCosts()[ypos][xpos].SAD = m_bicheckdiff->Diff(dparams ,
+                                                  me_data.Vectors(1)[ypos][xpos] ,
                                                   me_data.Vectors(2)[ypos][xpos] );
 
         me_data.BiPredCosts()[ypos][xpos].SetTotal( loc_lambda );
@@ -472,7 +470,7 @@ ValueType ModeDecider::GetDCPred( int xblock , int yblock )
             dc_pred >>= 1;
         }
     }
-     
+
     return dc_pred;
 }
 
@@ -483,29 +481,29 @@ float ModeDecider::ModeCost(const int xindex , const int yindex)
 
     unsigned int mode_predictor = (unsigned int)(REF1_ONLY);
     const TwoDArray<PredMode>& preddata( m_me_data_set[2]->Mode() );
-    
-    unsigned int num_ref1_nbrs( 0 ); 
+
+    unsigned int num_ref1_nbrs( 0 );
     unsigned int num_ref2_nbrs( 0 );
-    
+
     if (xindex > 0 && yindex > 0)
     {
-        num_ref1_nbrs += ((unsigned int)( preddata[yindex-1][xindex] ) ) & 1; 
-        num_ref1_nbrs += ((unsigned int)( preddata[yindex-1][xindex-1] ) ) & 1; 
+        num_ref1_nbrs += ((unsigned int)( preddata[yindex-1][xindex] ) ) & 1;
+        num_ref1_nbrs += ((unsigned int)( preddata[yindex-1][xindex-1] ) ) & 1;
         num_ref1_nbrs += ((unsigned int)( preddata[yindex][xindex-1] ) ) & 1;
 
         mode_predictor = num_ref1_nbrs>>1;
 
-        num_ref2_nbrs += ((unsigned int)( preddata[yindex-1][xindex] ) ) & 2; 
-        num_ref2_nbrs += ((unsigned int)( preddata[yindex-1][xindex-1] ) ) & 2; 
-        num_ref2_nbrs += ((unsigned int)( preddata[yindex][xindex-1] ) ) & 2; 
+        num_ref2_nbrs += ((unsigned int)( preddata[yindex-1][xindex] ) ) & 2;
+        num_ref2_nbrs += ((unsigned int)( preddata[yindex-1][xindex-1] ) ) & 2;
+        num_ref2_nbrs += ((unsigned int)( preddata[yindex][xindex-1] ) ) & 2;
         num_ref2_nbrs >>= 1;
 
         mode_predictor ^= ( (num_ref2_nbrs>>1)<<1 );
     }
     else if (xindex > 0 && yindex == 0)
-        mode_predictor = (unsigned int)( preddata[0][xindex-1] ); 
+        mode_predictor = (unsigned int)( preddata[0][xindex-1] );
     else if (xindex == 0 && yindex > 0)
-        mode_predictor = (unsigned int)( preddata[yindex-1][0] ); 
+        mode_predictor = (unsigned int)( preddata[yindex-1][0] );
 
     unsigned int var = (mode_predictor & 1)+((mode_predictor>>1) &1);
 
@@ -518,31 +516,36 @@ float ModeDecider::GetDCVar( const ValueType dc_val , const ValueType dc_pred)
     return 4.0*std::abs( static_cast<float>( dc_val - dc_pred ) );
 }
 
-ValueType ModeDecider::GetChromaBlockDC(const PicArray& pic_data,
-                                            int xunit , int yunit , int split)
+ValueType ModeDecider::GetBlockDC(const PicArray& pic_data,
+                                            int xunit , int yunit , int split, CompSort cs)
 {
     BlockDiffParams dparams;
-    dparams.SetBlockLimits( m_predparams.ChromaBParams( split ) , 
-                            pic_data, xunit , yunit);
+
+    if ( cs!=Y_COMP )
+        dparams.SetBlockLimits( m_predparams.ChromaBParams( split ) ,
+                                pic_data, xunit , yunit);
+    else
+        dparams.SetBlockLimits( m_predparams.LumaBParams( split ) ,
+                                pic_data, xunit , yunit);
 
     IntraBlockDiff intradiff( pic_data );
 
     return intradiff.CalcDC( dparams );
 }
 
-void ModeDecider::SetChromaDC( const PicArray& pic_data , MEData& me_data , CompSort csort )
+void ModeDecider::SetDC( const PicArray& pic_data , MEData& me_data , CompSort cs )
 {
 
-    // Lower limit of block coords in MB
+    // Lower limit of block coords in SB
     int xtl,ytl;
-    // Upper limit of block coords in MB
+    // Upper limit of block coords in SB
     int xbr,ybr;
 
-    // Ditto, for subMBs    
-    int xsubMBtl,ysubMBtl;
-    int xsubMBbr,ysubMBbr;
+    // Ditto, for subSBs
+    int xsubSBtl,ysubSBtl;
+    int xsubSBbr,ysubSBbr;
 
-    TwoDArray<ValueType>& dcarray = me_data.DC( csort );
+    TwoDArray<ValueType>& dcarray = me_data.DC( cs );
 
     ValueType dc = 0;
 
@@ -555,22 +558,22 @@ void ModeDecider::SetChromaDC( const PicArray& pic_data , MEData& me_data , Comp
 
     int level;
 
-    for ( int ymb=0 ; ymb<me_data.MBSplit().LengthY() ; ++ymb )
+    for ( int ymb=0 ; ymb<me_data.SBSplit().LengthY() ; ++ymb )
     {
-        for ( int xmb=0 ; xmb<me_data.MBSplit().LengthX() ; ++xmb )
+        for ( int xmb=0 ; xmb<me_data.SBSplit().LengthX() ; ++xmb )
         {
 
-            level = me_data.MBSplit()[ymb][xmb];
+            level = me_data.SBSplit()[ymb][xmb];
 
             xtl = xmb<<2;
-            ytl = ymb<<2;            
+            ytl = ymb<<2;
             xbr = xtl+4;
             ybr = ytl+4;
 
-            xsubMBtl = xmb<<1;
-            ysubMBtl = ymb<<1;
-            xsubMBbr = xsubMBtl+2;
-            ysubMBbr = ysubMBtl+2;
+            xsubSBtl = xmb<<1;
+            ysubSBtl = ymb<<1;
+            xsubSBbr = xsubSBtl+2;
+            ysubSBbr = ysubSBtl+2;
 
 
             for (int j = 0 ; j<(1<<level) ;++j)
@@ -588,7 +591,7 @@ void ModeDecider::SetChromaDC( const PicArray& pic_data , MEData& me_data , Comp
 
                      if ( me_data.Mode()[ystart][xstart] == INTRA )
                          // Get the DC value for the unit
-                         dc = GetChromaBlockDC( pic_data , xunit , yunit , level );
+                         dc = GetBlockDC( pic_data , xunit , yunit , level, cs );
 
                      // Copy it into the corresponding blocks
                      for ( int q=ystart ; q< yend ; ++q )
@@ -602,10 +605,11 @@ void ModeDecider::SetChromaDC( const PicArray& pic_data , MEData& me_data , Comp
     }// ymb
 }
 
-void ModeDecider::SetChromaDC( EncQueue& my_buffer , int pic_num )
+void ModeDecider::SetDC( EncQueue& my_buffer , int pic_num )
 {
-    MEData& me_data = my_buffer.GetPicture(pic_num).GetMEData();  
-    SetChromaDC( my_buffer.GetPicture( pic_num ).OrigData(U_COMP) , me_data , U_COMP );
-    SetChromaDC( my_buffer.GetPicture( pic_num ).OrigData(V_COMP) , me_data , V_COMP );
+    MEData& me_data = my_buffer.GetPicture(pic_num).GetMEData();
+    SetDC( my_buffer.GetPicture( pic_num ).OrigData(Y_COMP) , me_data , Y_COMP );
+    SetDC( my_buffer.GetPicture( pic_num ).OrigData(U_COMP) , me_data , U_COMP );
+    SetDC( my_buffer.GetPicture( pic_num ).OrigData(V_COMP) , me_data , V_COMP );
 
 }

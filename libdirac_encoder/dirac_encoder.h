@@ -333,17 +333,17 @@ typedef struct
     /*! Block separation in Y direction */
     int ybsep;
     /*! MacroBlock length in X direction */
-    int mb_xlen;
+    int sb_xlen;
     /*! MacroBlock length in Y direction */
-    int mb_ylen;
+    int sb_ylen;
     /*! Motion Vector array length in X direction */
     int mv_xlen;
     /*! Motion Vector array length in Y direction */
     int mv_ylen;
-    /*! Macro-block split mode array - mb_ylen*mb_xlen*/
-    int *mb_split_mode;
-    /*! Macro-block costs array - mb_ylen*mb_xlen*/
-    float *mb_costs;
+    /*! Macro-block split mode array - sb_ylen*sb_xlen*/
+    int *sb_split_mode;
+    /*! Macro-block costs array - sb_ylen*sb_xlen*/
+    float *sb_costs;
     /*! Block prediction mode - mv_xlen*mv_ylen */
     int *pred_mode;
     /*! Block intrac costs - mv_xlen*mv_ylen */

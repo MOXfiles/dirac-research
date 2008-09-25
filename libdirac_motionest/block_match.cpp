@@ -313,7 +313,7 @@ void BlockMatcher::FindBestMatchSubp( const int xpos, const int ypos,
                                                lambda,
                                                best_costs ,
                                                best_mv);
-        }// 
+        }//
     }// list_num
 
 
@@ -321,7 +321,7 @@ void BlockMatcher::FindBestMatchSubp( const int xpos, const int ypos,
     /////////////////////////////////////
 
      m_mv_array[ypos][xpos] = best_mv;
-     m_cost_array[ypos][xpos] = best_costs;   
+     m_cost_array[ypos][xpos] = best_costs;
 
 }
 void BlockMatcher::RefineMatchSubp(const int xpos, const int ypos,
@@ -332,7 +332,7 @@ void BlockMatcher::RefineMatchSubp(const int xpos, const int ypos,
     BlockDiffParams dparams;
     dparams.SetBlockLimits( m_bparams , m_pic_data , xpos , ypos);
 
-    m_cost_array[ypos][xpos].mvcost = GetVarUp( mv_prediction, 
+    m_cost_array[ypos][xpos].mvcost = GetVarUp( mv_prediction,
                                                 m_mv_array[ypos][xpos]<<m_precision );
     m_cost_array[ypos][xpos].SetTotal( lambda );
 
@@ -353,16 +353,16 @@ void BlockMatcher::RefineMatchSubp(const int xpos, const int ypos,
     pred_costs.mvcost = 0;
     pred_costs.SAD = m_subpeldiff[m_precision-1]->Diff( dparams, mv_prediction);
     pred_costs.total = pred_costs.SAD;
-    
+
     if (pred_costs.SAD<2*dparams.Xl()*dparams.Yl() )
     {
         m_mv_array[ypos][xpos] = mv_prediction;
         m_cost_array[ypos][xpos] = pred_costs;
-        return;   
+        return;
     }
 
-    // Now, let's see if we can do better than this 
- 
+    // Now, let's see if we can do better than this
+
     MvCostData cand_costs;
     MVector cand_mv, old_best_mv;
 

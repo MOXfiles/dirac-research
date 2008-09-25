@@ -109,23 +109,16 @@ void EncPicture::InitMEData( const PicturePredParams& predparams , const int num
         delete m_me_data;
 
     m_me_data=new MEData( predparams, num_refs );
-
 }
 
-const PicArray& EncPicture::DataForME( bool field_coding, CompSort cs ) const{
+const PicArray& EncPicture::DataForME() const{
 
-    if (field_coding)
-        return OrigData( cs );//return FiltData( cs );
-    else
-        return OrigData( cs );
+    return CombinedData();//OrigData( Y_COMP );
 }
 
-const PicArray& EncPicture::UpDataForME( bool field_coding, CompSort cs ) const{
+const PicArray& EncPicture::UpDataForME() const{
 
-    if (field_coding)
-        return UpOrigData( cs );// return UpFiltData( cs );
-    else
-        return UpOrigData( cs );
+    return UpCombinedData();//UpOrigData( Y_COMP );
 }
 
 
@@ -137,7 +130,7 @@ const PicArray& EncPicture::UpOrigData(CompSort cs) const
         return *m_orig_up_data[c];
     else
     {//we have to do the upconversion
-   
+
         m_orig_up_data[c] = new PicArray( 2*m_orig_data[c]->LengthY(),
                                           2*m_orig_data[c]->LengthX() );
         UpConverter* myupconv;
@@ -171,7 +164,8 @@ const PicArray& EncPicture::FiltData(CompSort cs) const
         if (m_orig_data[c] != NULL )
             m_filt_data[c] = new PicArray( m_orig_data[c]->LengthY(),
                                            m_orig_data[c]->LengthX() );
-        
+
+//	AntiAliasFilter( *(m_filt_data[c]), *(m_orig_data[c]));
 	AntiAliasFilter( *(m_filt_data[c]), *(m_orig_data[c]));
 
         return *(m_filt_data[c]);
@@ -189,16 +183,16 @@ const PicArray& EncPicture::UpFiltData(CompSort cs) const
     {//we have to do the upconversion
 
         const PicArray& filt_data = FiltData( cs );
-   
-        m_filt_up_data[c] = new PicArray( filt_data.LengthY(),
-                                          filt_data.LengthX() );
+
+        m_filt_up_data[c] = new PicArray( 2*filt_data.LengthY(),
+                                          2*filt_data.LengthX() );
         UpConverter* myupconv;
 	if (c>0)
-            myupconv = new UpConverter(-(1 << (m_pparams.ChromaDepth()-1)), 
+            myupconv = new UpConverter(-(1 << (m_pparams.ChromaDepth()-1)),
                                       (1 << (m_pparams.ChromaDepth()-1))-1,
                                       m_pparams.ChromaXl(), m_pparams.ChromaYl());
         else
-            myupconv = new UpConverter(-(1 << (m_pparams.LumaDepth()-1)), 
+            myupconv = new UpConverter(-(1 << (m_pparams.LumaDepth()-1)),
                                       (1 << (m_pparams.LumaDepth()-1))-1,
                                       m_pparams.Xl(), m_pparams.Yl());
 
@@ -234,6 +228,141 @@ void EncPicture::AntiAliasFilter( PicArray& out_data, const PicArray& in_data ) 
                                  3*in_data[in_data.LastY()][i] + 2)>>2;
     }
 }
+
+const PicArray& EncPicture::CombinedData() const
+{
+
+    if (m_filt_data[Y_COMP] != NULL)
+        return *m_filt_data[Y_COMP];
+    else
+    {//we have to do the combining
+
+        if (m_orig_data[Y_COMP] != NULL )
+            m_filt_data[Y_COMP] = new PicArray( m_orig_data[Y_COMP]->LengthY(),
+                                           m_orig_data[Y_COMP]->LengthX() );
+
+	Combine( *(m_filt_data[Y_COMP]), *(m_orig_data[Y_COMP]),
+	         *(m_orig_data[U_COMP]), *(m_orig_data[V_COMP])
+	);
+
+        return *(m_filt_data[Y_COMP]);
+
+    }
+}
+
+const PicArray& EncPicture::UpCombinedData() const
+{
+    if (m_filt_up_data[Y_COMP] != NULL)
+        return *m_filt_up_data[Y_COMP];
+    else
+    {//we have to do the upconversion
+
+        const PicArray& filt_data = CombinedData();
+
+        m_filt_up_data[Y_COMP] = new PicArray( 2*filt_data.LengthY(),
+                                          2*filt_data.LengthX() );
+        UpConverter* myupconv;
+        myupconv = new UpConverter(-(1 << (m_pparams.LumaDepth()-1)),
+                                      (1 << (m_pparams.LumaDepth()-1))-1,
+                                      m_pparams.Xl(), m_pparams.Yl());
+
+        myupconv->DoUpConverter( filt_data , *(m_filt_up_data[Y_COMP]) );
+
+	delete myupconv;
+
+        return *(m_filt_up_data[Y_COMP]);
+
+    }
+}
+
+
+
+void EncPicture::Combine( PicArray& comb_data, const PicArray& y_data,
+                          const PicArray& u_data, const PicArray& v_data ) const
+{
+    int hcr = y_data.LengthX()/u_data.LengthX();
+    int vcr = y_data.LengthY()/u_data.LengthY();
+
+    float val, valc, valy;
+
+    if (vcr==1){
+        for (int j=0; j<comb_data.LengthY(); ++j) {
+            if (hcr==1){// 444 format
+                for (int i=0; i<comb_data.LengthX(); ++i ){
+                    val = float(u_data[j][i]);
+	            val *= val;
+	            valc = val;
+
+	            val = float(v_data[j][i]);
+	            val *= val;
+	            valc += val;
+
+                    valy = float(y_data[j][i]) + 128.0;
+	            valy *= valy;
+		    comb_data[j][i] = ValueType( std::sqrt(valc+valy)-128.0 );
+                }// i
+	    }
+	    else{ // 422 format
+                for (int i=0; i<comb_data.LengthX(); i+=2 ){
+
+                    val = float(u_data[j][i>>1]);
+	            val *= val;
+	            valc = val;
+
+	            val = float(v_data[j][i>>1]);
+	            val *= val;
+	            valc += val;
+
+                    valy = float(y_data[j][i]) + 128.0;
+	            valy *= valy;
+	            comb_data[j][i] = ValueType( std::sqrt(valc+valy)-128.0 );
+
+		    valy = float(y_data[j][i+1]) + 128.0;
+	            valy *= valy;
+
+		    comb_data[j][i+1] = ValueType( std::sqrt(valc+valy)-128.0 );
+
+	        }// i
+	    }
+        }// j
+    }
+    else{ // 420 format
+        for (int j=0; j<comb_data.LengthY(); j+=2 ) {
+
+            for (int i=0; i<comb_data.LengthX(); i+=2 ){
+
+                val = float(u_data[j>>1][i>>1]);
+	        val *= val;
+	        valc = val;
+
+	        val = float(v_data[j>>1][i>>1]);
+	        val *= val;
+	        valc += val;
+
+                valy = float(y_data[j][i]) + 128.0;
+	        valy *= valy;
+	        comb_data[j][i] = ValueType( std::sqrt(valc+valy)-128.0 );
+
+	        valy = float(y_data[j][i+1]) + 128.0;
+	        valy *= valy;
+		comb_data[j][i+1] = ValueType( std::sqrt(valc+valy)-128.0 );
+
+                valy = float(y_data[j+1][i]) + 128.0;
+	        valy *= valy;
+		comb_data[j+1][i] = ValueType( std::sqrt(valc+valy)-128.0 );
+
+	        valy = float(y_data[j+1][i+1]) + 128.0;
+	        valy *= valy;
+		comb_data[j+1][i+1] = ValueType( std::sqrt(valc+valy)-128.0 );
+
+	    }// i
+        }// j
+
+    }
+
+
+}
+
 
 void EncPicture::DropRef( int rindex ){
 

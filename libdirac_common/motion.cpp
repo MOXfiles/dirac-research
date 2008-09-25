@@ -58,7 +58,7 @@ MvData::MvData( const PicturePredParams& predparams , const int num_refs ):
     m_gm_vectors( Range(1 , num_refs) ),
     m_modes( predparams.YNumBlocks() , predparams.XNumBlocks() ),
     m_dc( 3 ),
-    m_mb_split( predparams.YNumMB() , predparams.XNumMB() ),
+    m_sb_split( predparams.YNumSB() , predparams.XNumSB() ),
     m_gm_params( Range(1 , num_refs) )//,
 //    m_num_refs(num_refs)
 {
@@ -101,14 +101,12 @@ MvData::~MvData()
          delete m_dc[i];
 }
 
-
-
 MEData::MEData(const PicturePredParams& predparams , const int num_refs ):
      MvData( predparams , num_refs ),
      m_pred_costs( Range( 1 , num_refs ) ),
      m_intra_costs( predparams.YNumBlocks() , predparams.XNumBlocks(), 0 ),
      m_bipred_costs( predparams.YNumBlocks() , predparams.XNumBlocks() ),
-     m_MB_costs( predparams.YNumMB() , predparams.XNumMB() ),
+     m_SB_costs( predparams.YNumSB() , predparams.XNumSB() ),
      m_lambda_map( predparams.YNumBlocks() , predparams.XNumBlocks() ),
      m_inliers( Range( 1 , num_refs ) ),
      m_intra_block_ratio(0.0)
@@ -418,8 +416,8 @@ istream &operator>> (istream & stream, MEData & me_data)
     stream.ignore(1000, '\n');
     
     // input reference-independent information
-    stream >> me_data.MBSplit();
-    stream >> me_data.MBCosts();
+    stream >> me_data.SBSplit();
+    stream >> me_data.SBCosts();
     stream >> me_data.Mode();
     stream >> me_data.IntraCosts();
 
@@ -454,8 +452,8 @@ istream &operator>> (istream & stream, MEData & me_data)
 ostream &operator<< (ostream & stream, MEData & me_data)
 {
     // output reference-independent information
-    stream << endl << endl << me_data.MBSplit();
-    stream << endl << me_data.MBCosts();
+    stream << endl << endl << me_data.SBSplit();
+    stream << endl << me_data.SBCosts();
     stream << endl << me_data.Mode();
     stream << endl << me_data.IntraCosts() << endl;
 

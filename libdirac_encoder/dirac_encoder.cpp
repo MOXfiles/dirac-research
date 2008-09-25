@@ -128,11 +128,11 @@ void copy_mv_cost (const TwoDArray<MvCostData> &pc, dirac_mv_cost_t *dpc)
 */
 void alloc_instr_data(dirac_instr_t *instr)
 {
-    instr->mb_split_mode = new int [instr->mb_ylen*instr->mb_xlen];
-    memset (instr->mb_split_mode, 0, sizeof(int)*instr->mb_ylen*instr->mb_xlen);
+    instr->sb_split_mode = new int [instr->sb_ylen*instr->sb_xlen];
+    memset (instr->sb_split_mode, 0, sizeof(int)*instr->sb_ylen*instr->sb_xlen);
 
-    instr->mb_costs = new float [instr->mb_ylen*instr->mb_xlen];
-    memset (instr->mb_costs, 0, sizeof(float)*instr->mb_ylen*instr->mb_xlen);
+    instr->sb_costs = new float [instr->sb_ylen*instr->sb_xlen];
+    memset (instr->sb_costs, 0, sizeof(float)*instr->sb_ylen*instr->sb_xlen);
 
     instr->pred_mode = new int [instr->mv_ylen * instr->mv_xlen];
     memset (instr->pred_mode, 0, sizeof(int)*instr->mv_ylen*instr->mv_xlen);
@@ -172,11 +172,11 @@ void alloc_instr_data(dirac_instr_t *instr)
 */
 void dealloc_instr_data(dirac_instr_t *instr)
 {
-    if (instr->mb_split_mode)
-        delete [] instr->mb_split_mode;
+    if (instr->sb_split_mode)
+        delete [] instr->sb_split_mode;
 
-    if (instr->mb_costs)
-        delete [] instr->mb_costs;
+    if (instr->sb_costs)
+        delete [] instr->sb_costs;
 
     if (instr->pred_mode)
         delete [] instr->pred_mode;
@@ -369,16 +369,16 @@ void DiracEncoder::GetInstrumentationData (dirac_encoder_t *encoder)
     instr->ybsep = m_encparams.GetPicPredParams().LumaBParams(2).Ybsep();
     instr->xbsep = m_encparams.GetPicPredParams().LumaBParams(2).Xbsep();
 
-    // Num macroblocks
-    instr->mb_ylen = m_enc_medata->MBSplit().LengthY();
-    instr->mb_xlen = m_enc_medata->MBSplit().LengthX();
+    // Num superblocks
+    instr->sb_ylen = m_enc_medata->SBSplit().LengthY();
+    instr->sb_xlen = m_enc_medata->SBSplit().LengthX();
 
     // Motion vector array dimensions
     instr->mv_ylen = m_enc_medata->Vectors(1).LengthY();
     instr->mv_xlen = m_enc_medata->Vectors(1).LengthX();
 
-    if (old_instr.mb_ylen != instr->mb_ylen ||
-        old_instr.mb_xlen != instr->mb_xlen ||
+    if (old_instr.sb_ylen != instr->sb_ylen ||
+        old_instr.sb_xlen != instr->sb_xlen ||
         old_instr.mv_ylen != instr->mv_ylen ||
         old_instr.mv_xlen != instr->mv_xlen)
     {
@@ -386,8 +386,8 @@ void DiracEncoder::GetInstrumentationData (dirac_encoder_t *encoder)
         alloc_instr_data(instr);
     }
 
-    copy_2dArray (m_enc_medata->MBSplit(), instr->mb_split_mode);
-    copy_2dArray (m_enc_medata->MBCosts(), instr->mb_costs);
+    copy_2dArray (m_enc_medata->SBSplit(), instr->sb_split_mode);
+    copy_2dArray (m_enc_medata->SBCosts(), instr->sb_costs);
     copy_2dArray (m_enc_medata->Mode(), instr->pred_mode);
     copy_2dArray (m_enc_medata->IntraCosts(), instr->intra_costs);
 

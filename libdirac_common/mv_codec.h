@@ -76,8 +76,8 @@ namespace dirac
     
     private:
 
-        // Position of current MB
-        int m_mb_xp, m_mb_yp;
+        // Position of current SB
+        int m_sb_xp, m_sb_yp;
 
     private:
 
@@ -88,11 +88,11 @@ namespace dirac
         SplitModeCodec& operator=(const SplitModeCodec& rhs);
 
         // coding functions   
-        // Code the MB splitting mode
+        // Code the SB splitting mode
         void CodeVal(const MvData& in_data);
 
         // decoding functions
-        // Decode the MB splitting mode
+        // Decode the SB splitting mode
         void DecodeVal( MvData& out_data);
 
         void DoWorkCode( MvData& in_data );
@@ -131,10 +131,10 @@ namespace dirac
 
         // Position of current block
         int m_b_xp, m_b_yp;
-        // Position of current MB
-        int m_mb_xp, m_mb_yp;
-        // Position of top-left block of current MB
-        int m_mb_tlb_x, m_mb_tlb_y;
+        // Position of current SB
+        int m_sb_xp, m_sb_yp;
+        // Position of top-left block of current SB
+        int m_sb_tlb_x, m_sb_tlb_y;
         // Number of reference pictures
 	int m_num_refs;
 
@@ -195,11 +195,11 @@ namespace dirac
         // Position of current block
         int m_b_xp, m_b_yp;
 
-        // Position of current MB
-        int m_mb_xp, m_mb_yp;
+        // Position of current SB
+        int m_sb_xp, m_sb_yp;
 
-        // Position of top-left block of current MB
-        int m_mb_tlb_x, m_mb_tlb_y;
+        // Position of top-left block of current SB
+        int m_sb_tlb_x, m_sb_tlb_y;
         
         // The identity of the reference (1 or 2)
         const int m_ref;
@@ -262,10 +262,10 @@ namespace dirac
         const CompSort m_csort;
         // Position of current block
         int m_b_xp, m_b_yp;
-        // Position of current MB
-        int m_mb_xp, m_mb_yp;
-        // Position of top-left block of current MB
-        int m_mb_tlb_x, m_mb_tlb_y;
+        // Position of current SB
+        int m_sb_xp, m_sb_yp;
+        // Position of top-left block of current SB
+        int m_sb_tlb_x, m_sb_tlb_y;
 
     private:
 

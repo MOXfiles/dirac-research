@@ -91,10 +91,10 @@ public:
     void SetOrigData();
 
     //! Returns a version of the picture data suitable for motion estimation
-    const PicArray& DataForME(bool field_coding, CompSort c) const;
+    const PicArray& DataForME() const;
 
     //! Returns a version of the picture data suitable for subpel motion estimation
-    const PicArray& UpDataForME(bool field_coding, CompSort c) const;
+    const PicArray& UpDataForME() const;
 
 
     void UpdateStatus( const unsigned int mask ){ m_status |= mask; }
@@ -128,6 +128,11 @@ private:
 
     //! Returns an anti-aliased version of the original data
     const PicArray& FiltData(CompSort c) const;
+
+    const PicArray& CombinedData() const;
+    const PicArray& UpCombinedData() const;
+    void Combine( PicArray& comb_data, const PicArray& y_data,
+                          const PicArray& u_data, const PicArray& v_data ) const;
 
     //! Returns an upconverted anti-aliased version of the original data
     const PicArray& UpFiltData(CompSort c) const;

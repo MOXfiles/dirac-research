@@ -115,12 +115,12 @@ void MotionCompTest::testZeroMotionComp(MVPrecisionType precision)
 
     ppp.SetMVPrecision(precision);
     ppp.SetBlockSizes(bparams, format420 );
-    ppp.SetXNumMB( X_SIZE / ppp.LumaBParams(0).Xbsep() );
-    ppp.SetYNumMB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
-    ppp.SetYNumMB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
+    ppp.SetXNumSB( X_SIZE / ppp.LumaBParams(0).Xbsep() );
+    ppp.SetYNumSB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
+    ppp.SetYNumSB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
 
-    ppp.SetXNumBlocks( 4*ppp.XNumMB() );
-    ppp.SetYNumBlocks( 4*ppp.YNumMB() );
+    ppp.SetXNumBlocks( 4*ppp.XNumSB() );
+    ppp.SetYNumBlocks( 4*ppp.YNumSB() );
 
     // MotionCompensator mc( cp );
     
@@ -175,11 +175,11 @@ void MotionCompTest::testAddandSubMotionComp(MVPrecisionType precision)
     OLBParams bparams(12, 12, 8, 8);
     ppp.SetMVPrecision(precision);
     ppp.SetBlockSizes(bparams, format420 );
-    ppp.SetXNumMB( X_SIZE / ppp.LumaBParams(0).Xbsep() );
-    ppp.SetYNumMB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
+    ppp.SetXNumSB( X_SIZE / ppp.LumaBParams(0).Xbsep() );
+    ppp.SetYNumSB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
 
-    ppp.SetXNumBlocks( 4*ppp.XNumMB() );
-    ppp.SetYNumBlocks( 4*ppp.YNumMB() );
+    ppp.SetXNumBlocks( 4*ppp.XNumSB() );
+    ppp.SetYNumBlocks( 4*ppp.YNumSB() );
 
     
     MvData* mv_data = setupMV1Data(ppp, 5, 5, REF1_ONLY);
@@ -231,11 +231,11 @@ void MotionCompTest::testL2_picture(MVPrecisionType precision)
     OLBParams bparams(12, 12, 8, 8);
     ppp.SetMVPrecision(precision);
     ppp.SetBlockSizes(bparams, format420 );
-    ppp.SetXNumMB( X_SIZE / ppp.LumaBParams(0).Xbsep() );
-    ppp.SetYNumMB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
+    ppp.SetXNumSB( X_SIZE / ppp.LumaBParams(0).Xbsep() );
+    ppp.SetYNumSB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
 
-    ppp.SetXNumBlocks( 4*ppp.XNumMB() );
-    ppp.SetYNumBlocks( 4*ppp.YNumMB() );
+    ppp.SetXNumBlocks( 4*ppp.XNumSB() );
+    ppp.SetYNumBlocks( 4*ppp.YNumSB() );
 
     
     MvData* mv_data = setupMV1Data(ppp, 5, 5, REF1_ONLY);
@@ -279,11 +279,11 @@ void MotionCompTest::testI_picture()
     PicturePredParams &ppp = cp.GetPicPredParams();
     OLBParams bparams(12, 12, 8, 8);
     ppp.SetBlockSizes(bparams, format420 );
-    ppp.SetXNumMB( X_SIZE / ppp.LumaBParams(0).Xbsep() );
-    ppp.SetYNumMB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
+    ppp.SetXNumSB( X_SIZE / ppp.LumaBParams(0).Xbsep() );
+    ppp.SetYNumSB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
 
-    ppp.SetXNumBlocks( 4*ppp.XNumMB() );
-    ppp.SetYNumBlocks( 4*ppp.YNumMB() );
+    ppp.SetXNumBlocks( 4*ppp.XNumSB() );
+    ppp.SetYNumBlocks( 4*ppp.YNumSB() );
 
 
     
@@ -329,11 +329,11 @@ void MotionCompTest::testRef2(MVPrecisionType precision)
     OLBParams bparams(12, 12, 8, 8);
     ppp.SetMVPrecision(precision);
     ppp.SetBlockSizes(bparams, format420 );
-    ppp.SetXNumMB( X_SIZE / ppp.LumaBParams(0).Xbsep() );
-    ppp.SetYNumMB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
+    ppp.SetXNumSB( X_SIZE / ppp.LumaBParams(0).Xbsep() );
+    ppp.SetYNumSB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
 
-    ppp.SetXNumBlocks( 4*ppp.XNumMB() );
-    ppp.SetYNumBlocks( 4*ppp.YNumMB() );
+    ppp.SetXNumBlocks( 4*ppp.XNumSB() );
+    ppp.SetYNumBlocks( 4*ppp.YNumSB() );
 
 
     
@@ -391,11 +391,11 @@ void MotionCompTest::testRef1and2(MVPrecisionType precision)
     OLBParams bparams(12, 12, 8, 8);
     ppp.SetMVPrecision(precision);
     ppp.SetBlockSizes(bparams, format420 );
-    ppp.SetXNumMB( X_SIZE / ppp.LumaBParams(0).Xbsep() );
-    ppp.SetYNumMB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
+    ppp.SetXNumSB( X_SIZE / ppp.LumaBParams(0).Xbsep() );
+    ppp.SetYNumSB( Y_SIZE / ppp.LumaBParams(0).Ybsep() );
 
-    ppp.SetXNumBlocks( 4*ppp.XNumMB() );
-    ppp.SetYNumBlocks( 4*ppp.YNumMB() );
+    ppp.SetXNumBlocks( 4*ppp.XNumSB() );
+    ppp.SetYNumBlocks( 4*ppp.YNumSB() );
     
     MvData* mv_data = setupMV1Data(ppp, 5, 5, REF1_ONLY);
     setupMV2Data(mv_data, 5, 5);

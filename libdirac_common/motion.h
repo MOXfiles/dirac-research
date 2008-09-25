@@ -263,11 +263,11 @@ namespace dirac
         //! Get the block prediction modes
         const TwoDArray<PredMode>& Mode() const {return m_modes;}
 
-        //! Get the MB split level
-        TwoDArray<int>& MBSplit(){return m_mb_split;}
+        //! Get the SB split level
+        TwoDArray<int>& SBSplit(){return m_sb_split;}
 
-        //! Get the MB split level
-        const TwoDArray<int>& MBSplit() const{return m_mb_split;}
+        //! Get the SB split level
+        const TwoDArray<int>& SBSplit() const{return m_sb_split;}
 
         //! Get the global motion model parameters
         OneDArray<float>& GlobalMotionParameters(const int ref_id) { return *( m_gm_params[ref_id] ); }
@@ -294,8 +294,8 @@ namespace dirac
         // The DC values
         OneDArray< TwoDArray<ValueType>* > m_dc;
 
-        // The MB split levels
-        TwoDArray<int> m_mb_split;
+        // The SB split levels
+        TwoDArray<int> m_sb_split;
 
         // Global motion model parameters
         OneDArray< OneDArray<float>* > m_gm_params;
@@ -346,11 +346,11 @@ namespace dirac
         //! Get the bipred costs
         const TwoDArray<MvCostData>& BiPredCosts() const { return m_bipred_costs; }
 
-        //! Get the MB costs
-        TwoDArray<float>& MBCosts(){ return m_MB_costs; }
+        //! Get the SB costs
+        TwoDArray<float>& SBCosts(){ return m_SB_costs; }
 
-        //! Get the MB costs
-        const TwoDArray<float>& MBCosts() const { return m_MB_costs; }
+        //! Get the SB costs
+        const TwoDArray<float>& SBCosts() const { return m_SB_costs; }
 
 	//! Get the proportion of intra blocks
 	float IntraBlockRatio() const {return m_intra_block_ratio; }
@@ -396,7 +396,7 @@ namespace dirac
         TwoDArray<MvCostData> m_bipred_costs;
 
         // The costs for each macroblock as a whole
-        TwoDArray<float> m_MB_costs;
+        TwoDArray<float> m_SB_costs;
 
         // A map of the lambda values to use
         TwoDArray<float> m_lambda_map;

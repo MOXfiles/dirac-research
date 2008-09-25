@@ -114,13 +114,13 @@ void SequenceCompressor::SetMotionParameters(){
     int yl = m_encparams.Yl();
 
     // Make sure we have enough macroblocks to cover the pictures
-    m_predparams.SetXNumMB( (xl+m_predparams.LumaBParams(0).Xbsep()-1)/
+    m_predparams.SetXNumSB( (xl+m_predparams.LumaBParams(0).Xbsep()-1)/
                                      m_predparams.LumaBParams(0).Xbsep() );
-    m_predparams.SetYNumMB( (yl+m_predparams.LumaBParams(0).Ybsep()-1)/
+    m_predparams.SetYNumSB( (yl+m_predparams.LumaBParams(0).Ybsep()-1)/
                                      m_predparams.LumaBParams(0).Ybsep() );
 
-    m_predparams.SetXNumBlocks( 4 * m_predparams.XNumMB() );
-    m_predparams.SetYNumBlocks( 4 * m_predparams.YNumMB() );
+    m_predparams.SetXNumBlocks( 4 * m_predparams.XNumSB() );
+    m_predparams.SetYNumBlocks( 4 * m_predparams.YNumSB() );
 }
 
 
