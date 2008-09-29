@@ -72,16 +72,16 @@ namespace dirac
     public:
         //! Constructor
         /*!
-            The constructor creates arrays for handling the motion vector data 
+            The constructor creates arrays for handling the motion vector data
             at splitting levels 0 and 1, as motion
             estimation must be performed for these levels.
          */
-        ModeDecider(const PicturePredParams& ppp );    
+        ModeDecider(const EncoderParams& encp );
 
         //! Destructor
         /*!
             The destructor destroys the classes created in the constructor
-         */    
+         */
         ~ModeDecider();
 
         //! Does the actual mode decision
@@ -130,8 +130,11 @@ namespace dirac
          // Member data
         PictureSort m_psort;
 
-        //! A local reference to the picture prediction params
-        const PicturePredParams& m_predparams;
+        //! A local reference to the encoder parameters
+	const EncoderParams& m_encparams;
+
+        //! A local pointer to the picture prediction params
+        const PicturePredParams* m_predparams;
 
         //! The Lagrangian parameter for motion estimation
         float m_lambda;

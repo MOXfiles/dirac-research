@@ -93,6 +93,7 @@ static void display_help()
     cout << "\nDC2K24            bool    false         Use DIGITAL CINEMA 2K compression presets";
     cout << "\nDC4K24           bool    false          Use DIGITAL CINEMA 4K compression presets";
     cout << "\nfull_search     ulong ulong  0UL 0UL         Use full search motion estimation";
+    cout << "\ncombined_me       bool    false         Use a combination of all 3 components to do ME";
     cout << "\nwidth             ulong   Preset        Width of frame";
     cout << "\nheight            ulong   Preset        Length of frame";
     cout << "\nheight            ulong   Preset        Length of frame";
@@ -825,6 +826,11 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             parsed[i] = true;
 
         }
+	else if ( strcmp(argv[i], "-combined_me") == 0 )
+	{
+            parsed[i] = true;
+	    enc_ctx.enc_params.combined_me = 1;
+	}
         else if ( strcmp(argv[i], "-targetrate") == 0 )
         {
             parsed[i] = true;

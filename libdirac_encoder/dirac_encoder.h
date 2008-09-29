@@ -181,6 +181,8 @@ typedef struct
     float qf;
     /*! Full-search motion estimation */
     int full_search;
+    /*! Combined component motion estimation */
+    int combined_me;
     /*! x-range for full search ME */
     int x_range_me;
     /*! y-range for full search ME */

@@ -43,8 +43,8 @@ using namespace dirac;
 
 using std::vector;
 
-SubpelRefine::SubpelRefine(const PicturePredParams& ppp):
-    m_predparams(ppp),
+SubpelRefine::SubpelRefine(const EncoderParams& encp):
+    m_encparams(encp),
     m_nshift(4)
 {
     //define the relative coordinates of the four neighbours
@@ -64,6 +64,8 @@ SubpelRefine::SubpelRefine(const PicturePredParams& ppp):
 
 void SubpelRefine::DoSubpel( EncQueue& my_buffer,int pic_num )
 {
+    m_predparams = &(my_buffer.GetPicture(pic_num).GetMEData().GetPicPredParams() );
+
     //main loop for the subpel refinement
     int ref1,ref2;
 
@@ -81,9 +83,9 @@ void SubpelRefine::DoSubpel( EncQueue& my_buffer,int pic_num )
         else
             ref2 = ref1;
 
-        const PicArray& pic_data = my_buffer.GetPicture(pic_num).DataForME();
-        const PicArray& refup1_data = my_buffer.GetPicture(ref1).UpDataForME();
-        const PicArray& refup2_data = my_buffer.GetPicture(ref2).UpDataForME();
+        const PicArray& pic_data = my_buffer.GetPicture(pic_num).DataForME(m_encparams.CombinedME());
+        const PicArray& refup1_data = my_buffer.GetPicture(ref1).UpDataForME(m_encparams.CombinedME());
+        const PicArray& refup2_data = my_buffer.GetPicture(ref2).UpDataForME(m_encparams.CombinedME());
 
 	MEData& me_data = my_buffer.GetPicture(pic_num).GetMEData();
 
@@ -110,16 +112,16 @@ void SubpelRefine::MatchPic(const PicArray& pic_data , const PicArray& refup_dat
     TwoDArray<MvCostData>& pred_costs = me_data.PredCosts( ref_id );
 
     // Provide a block matching object to do the work
-    BlockMatcher my_bmatch( pic_data , refup_data , m_predparams.LumaBParams(2) ,
-                            m_predparams.MVPrecision() , mv_array , pred_costs );
+    BlockMatcher my_bmatch( pic_data , refup_data , m_predparams->LumaBParams(2) ,
+                            m_predparams->MVPrecision() , mv_array , pred_costs );
 
     // Do the work //
     /////////////////
 
     // Loop over all the blocks, doing the work
 
-    for (int yblock=0 ; yblock<m_predparams.YNumBlocks() ; ++yblock){
-        for (int xblock=0 ; xblock<m_predparams.XNumBlocks() ; ++xblock){
+    for (int yblock=0 ; yblock<m_predparams->YNumBlocks() ; ++yblock){
+        for (int xblock=0 ; xblock<m_predparams->XNumBlocks() ; ++xblock){
             DoBlock(xblock , yblock , my_bmatch , me_data , ref_id );
         }// xblock
     }// yblock

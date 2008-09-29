@@ -66,7 +66,7 @@ void PixelMatcher::DoSearch( EncQueue& my_buffer, int pic_num )
     int ref1,ref2;
 
     // Use the luminance only for motion estimating
-    const PicArray& pic_data = my_buffer.GetPicture( pic_num ).DataForME();
+    const PicArray& pic_data = my_buffer.GetPicture( pic_num ).DataForME(m_encparams.CombinedME());
 
     const vector<int>& refs = my_buffer.GetPicture( pic_num ).GetPparams().Refs();
     ref1 = refs[0];
@@ -81,8 +81,8 @@ void PixelMatcher::DoSearch( EncQueue& my_buffer, int pic_num )
     m_tdiff[1] = std::abs( ref2 - pic_num );
 
     // Obtain C++ references to the reference picture luma components
-    const PicArray& ref1_data = my_buffer.GetPicture(ref1).DataForME();
-    const PicArray& ref2_data = my_buffer.GetPicture(ref2).DataForME();
+    const PicArray& ref1_data = my_buffer.GetPicture(ref1).DataForME(m_encparams.CombinedME());
+    const PicArray& ref2_data = my_buffer.GetPicture(ref2).DataForME(m_encparams.CombinedME());
 
     // Determine the picture sort - this affects the motion estimation Lagrangian parameter
     m_psort = my_buffer.GetPicture(pic_num).GetPparams().PicSort();

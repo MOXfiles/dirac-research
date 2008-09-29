@@ -49,7 +49,7 @@ EncPicture::EncPicture( const PictureParams& pp):
     m_pred_bias(0.5)
 {
     for (int c=0; c<3; ++c ){
-        m_orig_data[c] = new PicArray( m_pic_data[c]->LengthY(), m_pic_data[c]->LengthX() ); 
+        m_orig_data[c] = new PicArray( m_pic_data[c]->LengthY(), m_pic_data[c]->LengthX() );
         m_orig_up_data[c] = NULL;
 	m_filt_data[c] = NULL;
 	m_filt_up_data[c] = NULL;
@@ -111,14 +111,20 @@ void EncPicture::InitMEData( const PicturePredParams& predparams , const int num
     m_me_data=new MEData( predparams, num_refs );
 }
 
-const PicArray& EncPicture::DataForME() const{
+const PicArray& EncPicture::DataForME( bool combined_me ) const{
 
-    return CombinedData();//OrigData( Y_COMP );
+    if (combined_me)
+        return CombinedData();
+    else
+        return OrigData( Y_COMP );
 }
 
-const PicArray& EncPicture::UpDataForME() const{
+const PicArray& EncPicture::UpDataForME( bool combined_me ) const{
 
-    return UpCombinedData();//UpOrigData( Y_COMP );
+    if (combined_me)
+        return UpCombinedData();
+    else
+        return UpOrigData( Y_COMP );
 }
 
 
@@ -165,7 +171,6 @@ const PicArray& EncPicture::FiltData(CompSort cs) const
             m_filt_data[c] = new PicArray( m_orig_data[c]->LengthY(),
                                            m_orig_data[c]->LengthX() );
 
-//	AntiAliasFilter( *(m_filt_data[c]), *(m_orig_data[c]));
 	AntiAliasFilter( *(m_filt_data[c]), *(m_orig_data[c]));
 
         return *(m_filt_data[c]);

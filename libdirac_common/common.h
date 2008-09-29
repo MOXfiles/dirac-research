@@ -1313,6 +1313,9 @@ namespace dirac
         //! Get the vertical search range for full-search motion estimation
         int YRangeME() const {return m_y_range_me;}
 
+        //! Get whether we're doing combined component motion estimation
+        bool CombinedME() const {return m_combined_me; }
+
         //! Get the quality factor
         float Qf() const {return m_qf;}
 
@@ -1395,6 +1398,9 @@ namespace dirac
         //! Set whether we're doing full-search motion estimation
         void SetFullSearch(const bool fs){m_full_search = fs;}
 
+        //! Set whether we're doing combined component motion estimation
+        void SetCombinedME(const bool cme){m_combined_me = cme;}
+
         //! Set the horizontal search range for full-search motion estimation
         void SetXRangeME(const int xr){m_x_range_me = xr;}
 
@@ -1466,6 +1472,9 @@ namespace dirac
 
         //! A flag indicating whether we're doing full-search block matching
         bool m_full_search;
+
+        //! A flag indicating whether we're doing combined component motion estimation
+        bool m_combined_me;
 
         //! The horizontal range for full-search block matching
         int m_x_range_me;

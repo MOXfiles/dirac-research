@@ -232,7 +232,7 @@ void PictureCompressor::SubPixelME( EncQueue& my_buffer , int pnum )
 
     if (m_orig_prec != MV_PRECISION_PIXEL)
     {
-        SubpelRefine pelrefine( predparams );
+        SubpelRefine pelrefine( m_encparams );
         pelrefine.DoSubpel( my_buffer , pnum );
     }
     else
@@ -266,7 +266,7 @@ void PictureCompressor::ModeDecisionME( EncQueue& my_buffer, int pnum )
     PictureParams& pparams = my_buffer.GetPicture(pnum).GetPparams();
     PicturePredParams& predparams = me_data.GetPicPredParams();
 
-    ModeDecider my_mode_dec( predparams );
+    ModeDecider my_mode_dec( m_encparams );
     my_mode_dec.DoModeDecn( my_buffer , pnum );
 
     const int num_refs = pparams.NumRefs();

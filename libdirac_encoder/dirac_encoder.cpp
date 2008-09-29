@@ -535,6 +535,7 @@ void DiracEncoder::SetEncoderParams (const dirac_encoder_context_t *enc_ctx)
     m_encparams.SetChromaDepth(chroma_depth);
 
     m_encparams.SetFullSearch(enc_ctx->enc_params.full_search);
+    m_encparams.SetCombinedME(enc_ctx->enc_params.combined_me);
     m_encparams.SetXRangeME(enc_ctx->enc_params.x_range_me);
     m_encparams.SetYRangeME(enc_ctx->enc_params.y_range_me);
     m_encparams.SetCPD(enc_ctx->enc_params.cpd);
@@ -988,6 +989,9 @@ static void SetEncoderParameters(dirac_encoder_context_t *enc_ctx,
     encparams.full_search = 0;
     encparams.x_range_me = 32;
     encparams.y_range_me = 32;
+
+    // by default, don't use combined component motion estimation
+    encparams.combined_me = 0;
 
     // set default transform parameters
     WltFilter wf;
