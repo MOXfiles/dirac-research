@@ -400,17 +400,10 @@ void SetDefaultBlockParameters(OLBParams& bparams,
     switch (video_format)
     {
     case VIDEO_FORMAT_QCIF:
-
     case VIDEO_FORMAT_QSIF525:
     case VIDEO_FORMAT_CUSTOM:
     case VIDEO_FORMAT_SIF525:
     case VIDEO_FORMAT_CIF:
-        bparams.SetXblen(16);
-        bparams.SetYblen(16);
-        bparams.SetXbsep(8);
-        bparams.SetYbsep(8);
-        break;
-
     case VIDEO_FORMAT_4SIF525:
     case VIDEO_FORMAT_4CIF:
     case VIDEO_FORMAT_SD_480I60:
