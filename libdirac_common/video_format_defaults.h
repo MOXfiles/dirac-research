@@ -92,9 +92,11 @@ namespace dirac
     /**
     * Sets the default Transform filter depending on picture type
     *@param ptype    Picture type i.e. intra or inter
+    *@param video_format The video format
     *@param wf       WltFilter object for getting the default wavelet filter
     */
-    void SetDefaultTransformFilter( PictureType ptype, WltFilter &wf);
+    void SetDefaultTransformFilter( const PictureType ptype, const VideoFormat video_format,
+                                    WltFilter &wf);
 } // namespace dirac
 
 #endif

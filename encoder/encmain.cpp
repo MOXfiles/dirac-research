@@ -786,9 +786,13 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
 
     // finally, set the encoding paramters
 
-    // For small pictures, initialise the MV precision to 1/4. otherwise it's 1/2
+    // For small pictures, set better (more expensive) parameters
     if (enc_ctx.src_params.width*enc_ctx.src_params.height<(702*480*2)/3){
         enc_ctx.enc_params.mv_precision = MV_PRECISION_QUARTER_PIXEL;
+	enc_ctx.enc_params.xblen = 16;
+	enc_ctx.enc_params.yblen = 16;
+	enc_ctx.enc_params.xbsep = 8;
+	enc_ctx.enc_params.ybsep = 8;
         enc_ctx.enc_params.intra_wlt_filter = DD13_7;
         enc_ctx.enc_params.inter_wlt_filter = DD13_7;
     }

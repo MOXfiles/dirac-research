@@ -53,7 +53,7 @@ void SetDefaultCodecParameters(CodecParams &cparams,
     cparams.SetZeroTransform(false);
     cparams.SetTransformDepth(4);
     WltFilter wf;
-    SetDefaultTransformFilter(ptype, wf);
+    SetDefaultTransformFilter(ptype, cparams.GetVideoFormat(), wf);
     cparams.SetTransformFilter(wf);
     cparams.SetCodeBlockMode(QUANT_SINGLE);
     cparams.SetSpatialPartition(false);
@@ -400,16 +400,17 @@ void SetDefaultBlockParameters(OLBParams& bparams,
     switch (video_format)
     {
     case VIDEO_FORMAT_QCIF:
-    case VIDEO_FORMAT_QSIF525:
-        bparams.SetXblen(8);
-        bparams.SetYblen(8);
-        bparams.SetXbsep(4);
-        bparams.SetYbsep(4);
-        break;
 
+    case VIDEO_FORMAT_QSIF525:
     case VIDEO_FORMAT_CUSTOM:
     case VIDEO_FORMAT_SIF525:
     case VIDEO_FORMAT_CIF:
+        bparams.SetXblen(16);
+        bparams.SetYblen(16);
+        bparams.SetXbsep(8);
+        bparams.SetYbsep(8);
+        break;
+
     case VIDEO_FORMAT_4SIF525:
     case VIDEO_FORMAT_4CIF:
     case VIDEO_FORMAT_SD_480I60:
@@ -503,11 +504,40 @@ unsigned int BlockParametersIndex (const OLBParams& bparams)
         return 0;
 }
 
-void SetDefaultTransformFilter(PictureType ptype, WltFilter &wf)
+void SetDefaultTransformFilter(const PictureType ptype, const VideoFormat video_format,
+                               WltFilter &wf)
 {
-    if (ptype == INTRA_PICTURE)
-        wf = DD9_7;
-    else
-        wf = LEGALL5_3;
+    switch (video_format)
+    {
+    case VIDEO_FORMAT_QCIF:
+    case VIDEO_FORMAT_QSIF525:
+    case VIDEO_FORMAT_CUSTOM:
+    case VIDEO_FORMAT_SIF525:
+    case VIDEO_FORMAT_CIF:
+        wf = DD13_7;
+        break;
+    case VIDEO_FORMAT_4SIF525:
+    case VIDEO_FORMAT_4CIF:
+    case VIDEO_FORMAT_SD_480I60:
+    case VIDEO_FORMAT_SD_576I50:
+    case VIDEO_FORMAT_HD_720P60:
+    case VIDEO_FORMAT_HD_720P50:
+    case VIDEO_FORMAT_HD_1080I60:
+    case VIDEO_FORMAT_HD_1080I50:
+    case VIDEO_FORMAT_HD_1080P60:
+    case VIDEO_FORMAT_HD_1080P50:
+    case VIDEO_FORMAT_DIGI_CINEMA_2K24:
+    case VIDEO_FORMAT_DIGI_CINEMA_4K24:
+    case VIDEO_FORMAT_UHDTV_4K60:
+    case VIDEO_FORMAT_UHDTV_4K50:
+    case VIDEO_FORMAT_UHDTV_8K60:
+    case VIDEO_FORMAT_UHDTV_8K50:
+    default:
+        if (ptype == INTRA_PICTURE)
+            wf = DD9_7;
+        else
+            wf = LEGALL5_3;
+        break;
+    }
 }
 }
