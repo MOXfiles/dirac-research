@@ -64,6 +64,7 @@ instrumentation:
 
 .PHONY: conversion
 conversion:
+	for dir in "libdirac_common" "libdirac_encoder" ; do (cd $$dir && $(MAKE) $(AM_MAKEFLAGS)) ; done
 	cd util/conversion && $(MAKE) $(AM_MAKEFLAGS)
 
 .PHONY: unit_tests

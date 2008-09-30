@@ -383,11 +383,6 @@ dnl Generates Makefile's, configuration files and scripts
 dnl -----------------------------------------------
 
 AC_OUTPUT(Makefile dirac.pc \
-          util/Makefile \
-          util/conversion/Makefile \
-          util/conversion/common/Makefile \
-	  util/instrumentation/Makefile \
-	  util/instrumentation/libdirac_instrument/Makefile \
           doc/Makefile \
           libdirac_byteio/Makefile \
           libdirac_common/Makefile \
@@ -397,5 +392,10 @@ AC_OUTPUT(Makefile dirac.pc \
           encoder/Makefile \
           decoder/Makefile \
           unit_tests/Makefile \
+	  util/Makefile \
+          util/conversion/Makefile \
+          util/conversion/common/Makefile \
+	  util/instrumentation/Makefile \
+	  util/instrumentation/libdirac_instrument/Makefile \
           win32/Makefile \
           win32/VisualStudio/Makefile )

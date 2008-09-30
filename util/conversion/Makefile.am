@@ -31,7 +31,8 @@ YUV420Down2x2_SOURCES=YUV420Down2x2.cpp
 
 YUV420pt75filter_SOURCES=YUV420pt75filter.cpp
 
-LDADD = common/libconv_common.a
+LDADD = common/libconv_common.a \
+        $(top_builddir)/libdirac_common/libdirac_common.la
 
 if USE_MSVC
 CLEANFILES = *.pdb *.ilk

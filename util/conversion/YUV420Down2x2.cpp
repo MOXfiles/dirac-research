@@ -46,7 +46,8 @@ output on stdout.
 
 Original author: Thomas Davies (based on filters by Tim Borer)
 ****************************************************************/
-
+#include <libdirac_common/arrays.h>
+#include <cmath>
 #include <stdlib.h> //Contains EXIT_SUCCESS, EXIT_FAILURE
 #include <iostream> //For cin, cout, cerr
 #include <algorithm> //For fill_n
@@ -58,8 +59,164 @@ using std::endl;
 using std::ios_base;
 using std::fill_n;
 
-#include "setstdiomode.h"
+#include <setstdiomode.h>
 using namespace dirac_vu;
+using namespace dirac;
+
+void VFilter( const TwoDArray<unsigned char>& pic_data, TwoDArray<unsigned char>& out_data, const OneDArray<int>& filter, const int bits );
+void HFilter( const TwoDArray<unsigned char>& pic_data, TwoDArray<unsigned char>& out_data, const OneDArray<int>& filter, const int bits );
+
+double sinxoverx( const double val )
+{
+    if ( 0.0f == val )
+        return 1.0;
+    else
+        return sin(val)/val;
+
+}
+
+OneDArray<int> MakeLPRectFilter( const float bw, const int bits )
+{
+    const int tl = 8;
+    const float pi = 3.1415926535;
+
+    OneDArray<double> double_filter( Range( -tl, tl ) );
+    OneDArray<int> int_filter( Range( -tl, tl) );
+
+    // Use the Hanning window
+    for (int i=double_filter.First(); i<=double_filter.Last(); ++i)
+    {
+        double_filter[i] = cos( (pi*i)/
+                                   (double_filter.Length()+1) );
+    }
+
+    // Apply sinc function
+    for (int i=double_filter.First(); i<=double_filter.Last(); ++i)
+    {
+        double_filter[i] *= sinxoverx( pi*1.0*bw*i );
+    }
+
+    // Get DC gain = 1<<bits
+    double sum = 0.0;
+    for (int i=double_filter.First(); i<=double_filter.Last(); ++i)
+        sum += double_filter[i];
+
+    for (int i=double_filter.First(); i<=double_filter.Last(); ++i)
+    {
+        double_filter[i] *= double(1<<(bits+4));
+        double_filter[i] /= sum;
+    }
+
+    // Turn the float filter into an integer filter
+    for (int i=double_filter.First(); i<=double_filter.Last(); ++i)
+    {
+        int_filter[i] = double_filter[i]>0 ? int( double_filter[i]+0.5 ) : -int( -double_filter[i]+0.5 );
+        int_filter[i] = (int_filter[i]+8)>>4;
+    }
+
+    return int_filter;
+}
+
+void HFilter( const TwoDArray<unsigned char>& pic_data, TwoDArray<unsigned char>& out_data, const OneDArray<int>& filter, const int bits )
+{
+    unsigned char* line_data;
+    const int offset = (1<<(bits-1));
+
+    int sum;
+    int i, iout;
+
+    for (int j=0; j<pic_data.LengthY(); ++j)
+    {
+        line_data = out_data[j];
+        // Do the first bit
+        for (i=0, iout=0; i<filter.Last(); i+=2, iout++)
+        {
+            sum = offset;
+            for (int k=filter.Last(); k>=filter.First(); --k)
+                sum += filter[k]*static_cast<int>(pic_data[j][std::max(i-k,0)]);
+            sum >>= bits;
+            sum = std::min( 255, std::max( 0, sum) );
+            line_data[iout] = static_cast<unsigned char>( sum );
+        }// i
+        // Do the middle bit
+        for (; i<=pic_data.LastX()+filter.First(); i+=2, iout++)
+        {
+            sum = offset;
+            for (int k=filter.Last(); k>=filter.First(); --k)
+                sum += filter[k]*static_cast<int>( pic_data[j][i-k] );
+            sum >>= bits;
+            sum = std::min( 255, std::max( 0, sum) );
+            line_data[iout] = static_cast<unsigned char>( sum );
+        }// i
+        // Do the last bit
+	for (; i<pic_data.LengthX(); i+=2, iout++)
+	{
+            sum = offset;
+            for (int k=filter.Last(); k>=filter.First(); --k)
+                sum += filter[k]*static_cast<int>( pic_data[j][std::min(i-k,pic_data.LastX())] );
+            sum >>= bits;
+            sum = std::min( 255, std::max( 0, sum) );
+            line_data[iout] = static_cast<unsigned char>( sum );
+        }// i
+    }// j
+
+}
+
+void VFilter( const TwoDArray<unsigned char>& pic_data, TwoDArray<unsigned char>& out_data, const OneDArray<int>& filter, const int bits )
+{
+    const int offset = (1<<(bits-1));
+
+    int sum, j, jout;
+
+    // Do the first bit
+    for (j=0, jout=0; j<filter.Last(); j+=2, jout++)
+    {
+
+        for (int i=0; i<pic_data.LengthX(); ++i)
+        {
+            sum = offset;
+            for (int k=filter.Last(); k>=filter.First(); --k)
+                sum += filter[k]*static_cast<int>( pic_data[std::max(j-k,0)][i] );
+            sum >>= bits;
+            sum = std::min( 255, std::max( 0, sum) );
+            out_data[jout][i] = static_cast<unsigned char>( sum );
+        }// i
+
+    }// j
+
+    // Do the middle bit
+    for (; j<=pic_data.LastY()+filter.First(); j+=2, jout++)
+    {
+
+        for (int i=0; i<pic_data.LengthX(); ++i)
+        {
+            sum = offset;
+            for (int k=filter.Last(); k>=filter.First(); --k)
+                sum += filter[k]*static_cast<int>( pic_data[j-k][i] );
+            sum >>= bits;
+            sum = std::min( 255, std::max( 0, sum) );
+            out_data[jout][i] = static_cast<unsigned char>( sum );
+        }// i
+
+    }// j
+
+    // Do the last bit
+    for (; j<pic_data.LengthY(); j+=2, jout++)
+    {
+
+        for (int i=0; i<pic_data.LengthX(); ++i)
+        {
+            sum = offset;
+            for (int k=filter.Last(); k>=filter.First(); --k)
+                sum += filter[k]*static_cast<int>( pic_data[std::min(j-k,pic_data.LastY())][i] );
+            sum >>= bits;
+            sum = std::min( 255, std::max( 0, sum) );
+            out_data[jout][i] = static_cast<unsigned char>( sum );
+        }// i
+
+    }// j
+}
+
 
 void h_filter(unsigned char *in_array, unsigned char *out_array, const int w, const int h);
 
@@ -91,27 +248,28 @@ int main(int argc, char * argv[] ) {
         return EXIT_FAILURE; }
 
     //Allocate memory for input and output buffers.
-    const int YBufferSizeIn = height*width;
-    unsigned char *YBufferIn = new unsigned char[YBufferSizeIn];
-    const int UVBufferSizeIn = height*width/4;
-    unsigned char *UBufferIn = new unsigned char[UVBufferSizeIn];
-    unsigned char *VBufferIn = new unsigned char[UVBufferSizeIn];
+    const int ybuffersizein = height*width;
+    TwoDArray<unsigned char> ybufferin( height, width );
+    const int uvbuffersizein = height*width/4;
+    TwoDArray<unsigned char> ubufferin ( height/2, width/2);
+    TwoDArray<unsigned char> vbufferin ( height/2, width/2);
 
     int width2 = width/2;
     int height2 = height/2;
 
-    const int YBufferSizeOut = height2*width2;
-    unsigned char *YBufferOut = new unsigned char[YBufferSizeOut];
-    const int UVBufferSizeOut = height2*width2/4;
-    unsigned char *UBufferOut = new unsigned char[UVBufferSizeOut];
-    unsigned char *VBufferOut = new unsigned char[UVBufferSizeOut];
+    // Output buffers
+    const int ybuffersizeout = height2*width2;
+    TwoDArray<unsigned char> ybufferout( height2, width2);
+    const int uvbuffersizeout = height2*width2/4;
+    TwoDArray<unsigned char> ubufferout(height2/2, width2/2);
+    TwoDArray<unsigned char> vbufferout(height2/2, width2/2);
 
-    const int YBufferSizeTemp = height*width/2;
-    unsigned char *YBufferTemp = new unsigned char[YBufferSizeTemp];
-    const int UVBufferSizeTemp = height*width/8;
-    unsigned char *UBufferTemp = new unsigned char[UVBufferSizeTemp];
-    unsigned char *VBufferTemp = new unsigned char[UVBufferSizeTemp];
+    // Temporary buffers
+    TwoDArray<unsigned char> ybuffertemp( height, width2);
+    TwoDArray<unsigned char> uvbuffertemp(height/2, width2/2);
 
+    // filter with 14-bit accuracy
+    OneDArray<int> filter=MakeLPRectFilter(0.5, 16);
 
     //Create references for input and output stream buffers.
     //IO is via stream buffers for efficiency
@@ -123,43 +281,36 @@ int main(int argc, char * argv[] ) {
         clog << "Processing frame " << (frame+1) << "\r";
 
         //Read frames of Y then U then V components
-        if ( inbuf.sgetn(reinterpret_cast<char*>(YBufferIn), YBufferSizeIn) < YBufferSizeIn ) {
+        if ( inbuf.sgetn(reinterpret_cast<char*>(&ybufferin[0][0]), ybuffersizein) < ybuffersizein ) {
             cerr << "Error: failed to read Y component of frame " << frame << endl;
             return EXIT_FAILURE; }
-        if ( inbuf.sgetn(reinterpret_cast<char*>(UBufferIn), UVBufferSizeIn) < UVBufferSizeIn ) {
+        if ( inbuf.sgetn(reinterpret_cast<char*>(&ubufferin[0][0]), uvbuffersizein) < uvbuffersizein ) {
             cerr << "Error: failed to read U component of frame " << frame << endl;
             return EXIT_FAILURE; }
-        if ( inbuf.sgetn(reinterpret_cast<char*>(VBufferIn), UVBufferSizeIn) < UVBufferSizeIn ) {
+        if ( inbuf.sgetn(reinterpret_cast<char*>(&vbufferin[0][0]), uvbuffersizein) < uvbuffersizein ) {
             cerr << "Error: failed to read V component of frame " << frame << endl;
             return EXIT_FAILURE; }
 
-        h_filter( YBufferIn, YBufferTemp, width, height );
-        v_filter( YBufferTemp, YBufferOut, width/2, height );
+        HFilter( ybufferin, ybuffertemp, filter, 16 );
+        VFilter( ybuffertemp, ybufferout, filter, 16 );
 
-        h_filter( UBufferIn, UBufferTemp, width2, height2 );
-        v_filter( UBufferTemp, UBufferOut, width2/2, height2 );
+        HFilter( ubufferin, uvbuffertemp, filter, 16 );
+        VFilter( uvbuffertemp, ubufferout, filter, 16 );
 
-        h_filter( VBufferIn, VBufferTemp, width2, height2 );
-        v_filter( VBufferTemp, VBufferOut, width2/2, height2 );
+        HFilter( vbufferin, uvbuffertemp, filter, 16 );
+        VFilter( uvbuffertemp, vbufferout, filter, 16 );
 
         //Write frames of YUV
-        if ( outbuf.sputn(reinterpret_cast<char*>(YBufferOut), YBufferSizeOut) < YBufferSizeOut ) {
+        if ( outbuf.sputn(reinterpret_cast<char*>(&ybufferout[0][0]), ybuffersizeout) < ybuffersizeout ) {
             cerr << "Error: failed to write frame " << frame << endl;
             return EXIT_FAILURE; }
-        if ( outbuf.sputn(reinterpret_cast<char*>(UBufferOut), UVBufferSizeOut) < UVBufferSizeOut ) {
+        if ( outbuf.sputn(reinterpret_cast<char*>(&ubufferout[0][0]), uvbuffersizeout) < uvbuffersizeout ) {
             cerr << "Error: failed to write frame " << frame << endl;
             return EXIT_FAILURE; }
-        if ( outbuf.sputn(reinterpret_cast<char*>(VBufferOut), UVBufferSizeOut) < UVBufferSizeOut ) {
+        if ( outbuf.sputn(reinterpret_cast<char*>(&vbufferout[0][0]), uvbuffersizeout) < uvbuffersizeout ) {
             cerr << "Error: failed to write frame " << frame << endl;
             return EXIT_FAILURE; }
     }
-
-    delete [] YBufferIn;
-    delete [] UBufferIn;
-    delete [] VBufferIn;
-    delete [] YBufferOut;
-    delete [] UBufferOut;
-    delete [] VBufferOut;
 
     return EXIT_SUCCESS;
 }
