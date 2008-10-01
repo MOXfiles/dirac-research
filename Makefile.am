@@ -15,10 +15,6 @@ else
 DOC_DIR =
 endif
 
-if HAVE_LATEX
-DOC_DIR = doc
-endif
-
 if HAVE_CPPUNIT
 CPPUNITTESTS_DIR = unit_tests
 endif
