@@ -441,7 +441,8 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
     // Calculate the cost if we were to code the block as intra //
     /************************************************************/
 
-    if (best_SAD_value> 4.0*m_predparams->LumaBParams( level ).Xblen()*m_predparams->LumaBParams( level ).Yblen() )
+    if ( level==2 && best_SAD_value> 4.0*m_predparams->LumaBParams( level ).Xblen()*
+                                         m_predparams->LumaBParams( level ).Yblen() )
     {
 //        mode_cost = ModeCost( xblock , yblock ) * m_mode_factor[level];
         me_data.IntraCosts()[ypos][xpos] = m_intradiff->Diff( dparams , me_data.DC( Y_COMP )[ypos][xpos] );
@@ -450,7 +451,7 @@ float ModeDecider::DoUnitDecn(const int xpos , const int ypos , const int level 
         me_data.IntraCosts()[ypos][xpos] *= m_level_factor[level];
         unit_cost = me_data.IntraCosts()[ypos][xpos] +  mode_cost;
 
-        if ( unit_cost<min_unit_cost && me_data.IntraCosts()[ypos][xpos]<1.2*best_SAD_value)
+        if ( unit_cost<min_unit_cost && me_data.IntraCosts()[ypos][xpos]<0.85*best_SAD_value)
         {
             me_data.Mode()[ypos][xpos] = INTRA;
             min_unit_cost = unit_cost;
@@ -539,73 +540,27 @@ ValueType ModeDecider::GetBlockDC(const PicArray& pic_data,
 void ModeDecider::SetDC( const PicArray& pic_data , MEData& me_data , CompSort cs )
 {
 
-    // Lower limit of block coords in SB
-    int xtl,ytl;
-    // Upper limit of block coords in SB
-    int xbr,ybr;
-
-    // Ditto, for subSBs
-    int xsubSBtl,ysubSBtl;
-    int xsubSBbr,ysubSBbr;
-
     TwoDArray<ValueType>& dcarray = me_data.DC( cs );
+    TwoDArray<ValueType> temp_dcarray (dcarray.LengthY(), dcarray.LengthX() );
 
-    ValueType dc = 0;
+    for ( int y=0 ; y<dcarray.LengthY() ; ++y ){
+        for ( int x=0 ; x<dcarray.LengthX() ; ++x ){
+            temp_dcarray[y][x] = GetBlockDC( pic_data , x , y , 2, cs );
+        }
+    }
 
-    // Coords of the prediction units (at appropriate level)
-    int xunit, yunit;
-
-    // The delimiters of the blocks contained in the prediction unit
-    int xstart, ystart;
-    int xend, yend;
-
-    int level;
-
-    for ( int ymb=0 ; ymb<me_data.SBSplit().LengthY() ; ++ymb )
-    {
-        for ( int xmb=0 ; xmb<me_data.SBSplit().LengthX() ; ++xmb )
-        {
-
-            level = me_data.SBSplit()[ymb][xmb];
-
-            xtl = xmb<<2;
-            ytl = ymb<<2;
-            xbr = xtl+4;
-            ybr = ytl+4;
-
-            xsubSBtl = xmb<<1;
-            ysubSBtl = ymb<<1;
-            xsubSBbr = xsubSBtl+2;
-            ysubSBbr = ysubSBtl+2;
-
-
-            for (int j = 0 ; j<(1<<level) ;++j)
-            {
-                 for (int i = 0 ; i<(1<<level) ;++i)
-                 {
-                     xunit = ( xmb<<level ) + i;
-                     yunit = ( ymb<<level ) + j;
-
-                     xstart = xunit<<( 2-level );
-                     ystart = yunit<<( 2-level );
-
-                     xend = xstart + ( 1<<( 2-level ) );
-                     yend = ystart + ( 1<<( 2-level ) );
-
-                     if ( me_data.Mode()[ystart][xstart] == INTRA )
-                         // Get the DC value for the unit
-                         dc = GetBlockDC( pic_data , xunit , yunit , level, cs );
-
-                     // Copy it into the corresponding blocks
-                     for ( int q=ystart ; q< yend ; ++q )
-                         for ( int p=xstart ; p< xend ; ++p )
-                             dcarray[q][p] = dc;
-
-                 }// i
-             }// j
-
-        }// xmb
-    }// ymb
+    for ( int x=0 ; x<dcarray.LengthX() ; ++x ){
+        dcarray[0][x] = temp_dcarray[0][x];
+    }
+    for ( int y=1 ; y<dcarray.LengthY()-1 ; ++y ){
+        dcarray[y][0] = temp_dcarray[y][0];
+        for ( int x=1 ; x<dcarray.LengthX()-1 ; ++x ){
+            dcarray[y][x] = (temp_dcarray[y-1][x-1]+3*temp_dcarray[y-1][x]+temp_dcarray[y-1][x+1]+
+                             3*temp_dcarray[y][x-1]+                      3*temp_dcarray[y][x+1]+
+                             temp_dcarray[y+1][x-1]+3*temp_dcarray[y+1][x]+temp_dcarray[y+1][x+1]+8 )>>4;
+	}
+        dcarray[y][dcarray.LastX()] = temp_dcarray[y][dcarray.LastX()];
+    }
 }
 
 void ModeDecider::SetDC( EncQueue& my_buffer , int pic_num )

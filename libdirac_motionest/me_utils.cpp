@@ -53,7 +53,7 @@
 using namespace dirac;
 
 #include <algorithm>
-#define INTRA_HAAR
+//#define INTRA_HAAR
 
 void BlockDiffParams::SetBlockLimits( const OLBParams& bparams ,
                                       const PicArray& m_pic_data , 

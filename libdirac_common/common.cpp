@@ -452,7 +452,7 @@ void EncoderParams::CalcLambdas(const float qf)
 {
     if (!m_lossless )
     {
-        m_I_lambda = std::pow( 10.0 , (10.0-qf )/2.5 )/16.0;
+        m_I_lambda = std::pow( 10.0 , (12.0-qf )/2.5 )/16.0;
 
 	if (IntraTransformFilter()==DD13_7){
             m_L1_lambda = m_I_lambda*4.0;

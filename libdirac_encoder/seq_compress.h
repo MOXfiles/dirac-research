@@ -185,13 +185,13 @@ namespace dirac
         bool m_just_finished;
 
         //! A class to hold the basic block parameters
-        OLBParams m_basic_olb_params0;
+        OLBParams* m_basic_olb_params0;
 
         //! A class to hold the basic block parameters
-        OLBParams m_basic_olb_params1;
+        OLBParams* m_basic_olb_params1;
 
         //! A class to hold the basic block parameters
-        OLBParams m_basic_olb_params2;
+        const OLBParams* m_basic_olb_params2;
 
         //! A class to hold block parameters to use when there are lots of intra blocks
         OLBParams* m_intra_olbp;

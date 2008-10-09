@@ -83,14 +83,22 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
                                            m_pic_in->GetSourceParams(), encp);
 
     // Copy in the block parameters in case we want to change them dynamically
-    m_basic_olb_params2 = m_predparams.LumaBParams(2);
-    m_basic_olb_params1 = m_predparams.LumaBParams(1);
-    m_basic_olb_params0 = m_predparams.LumaBParams(0);
+    m_basic_olb_params2 = &m_predparams.LumaBParams(2);
+    m_basic_olb_params1 = new OLBParams( 2*m_predparams.LumaBParams(2).Xblen(),
+                                         2*m_predparams.LumaBParams(2).Yblen(),
+                                         2*m_predparams.LumaBParams(2).Xbsep(),
+                                         2*m_predparams.LumaBParams(2).Ybsep() );
 
-    m_intra_olbp = new OLBParams( 2*m_basic_olb_params2.Xbsep() ,
-                                  2*m_basic_olb_params2.Ybsep() ,
-		                  m_basic_olb_params2.Xbsep() ,
-                                  m_basic_olb_params2.Ybsep() );
+    m_basic_olb_params0 = new OLBParams( 4*m_predparams.LumaBParams(2).Xblen(),
+                                         4*m_predparams.LumaBParams(2).Yblen(),
+                                         4*m_predparams.LumaBParams(2).Xbsep(),
+                                         4*m_predparams.LumaBParams(2).Ybsep() );
+
+
+    m_intra_olbp = new OLBParams( 2*m_basic_olb_params2->Xbsep() ,
+                                  2*m_basic_olb_params2->Ybsep() ,
+		                  m_basic_olb_params2->Xbsep() ,
+                                  m_basic_olb_params2->Ybsep() );
 
     SetMotionParameters();
 
@@ -99,12 +107,12 @@ SequenceCompressor::SequenceCompressor( StreamPicInput* pin ,
 void SequenceCompressor::SetMotionParameters(){
 
     if ( m_encparams.TargetRate() != 0 ){
-        OLBParams new_olb_params=m_basic_olb_params2;
+        OLBParams new_olb_params = *m_basic_olb_params2;
 
         if (m_encparams.Qf()<2.5)
-            new_olb_params=m_basic_olb_params1;
+            new_olb_params = *m_basic_olb_params1;
         else if (m_encparams.Qf()<1.5)
-            new_olb_params=m_basic_olb_params0;
+            new_olb_params = *m_basic_olb_params0;
 
         m_predparams.SetBlockSizes( new_olb_params , m_srcparams.CFormat() );
 
@@ -127,6 +135,8 @@ void SequenceCompressor::SetMotionParameters(){
 SequenceCompressor::~SequenceCompressor()
 {
     delete m_intra_olbp;
+    delete m_basic_olb_params1;
+    delete m_basic_olb_params0;
 
     if ( m_encparams.Verbose())
         MakeSequenceReport();
@@ -449,7 +459,7 @@ const EncPicture* SequenceCompressor::CompressNextPicture()
             m_pcoder.MotionCompensate(m_enc_pbuffer, m_current_display_pnum, ADD );
 
 	// Reset block sizes for next picture
-        m_predparams.SetBlockSizes(m_basic_olb_params2, m_srcparams.CFormat() );
+        m_predparams.SetBlockSizes(*m_basic_olb_params2, m_srcparams.CFormat() );
 
         // 21. Clip the data to keep it in range
         current_pic->Clip();
