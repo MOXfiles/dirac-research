@@ -191,12 +191,13 @@ void SubbandList::Init(const int depth,const int xlen,const int ylen){
 
 void CoeffArray::SetBandWeights (const EncoderParams& encparams,
                                  const PictureParams& pparams,
-                                 const CompSort csort)
+                                 const CompSort csort,
+				 const float cpd_scale_factor)
 {
     const WltFilter wltfilter = encparams.TransformFilter();
     const bool field_coding = encparams.FieldCoding();
     const ChromaFormat cformat = pparams.CFormat();
-    const float cpd = encparams.CPD();
+    const float cpd = encparams.CPD()*cpd_scale_factor;
     const PictureSort psort = pparams.PicSort();
 
     int xlen, ylen, xl, yl, xp, yp;
@@ -238,11 +239,6 @@ void CoeffArray::SetBandWeights (const EncoderParams& encparams,
             xfreq = cpd * ( float(xp) + (float(xl)/2.0) ) / float(xlen);
             yfreq = cpd * ( float(yp) + (float(yl)/2.0) ) / float(ylen);
 
-            if ( psort.IsInter() )
-            {
-                xfreq /= 8.0;
-                yfreq /= 8.0;
-            }
             if(field_coding)
                 yfreq/=2.0;
 

@@ -428,10 +428,13 @@ void PictureCompressor::CodeResidue( EncQueue& my_buffer ,
         /* Do the wavelet transforms and select the component
          * quantisers using perceptual weighting
          */
+	double cpd_scale = 0.125;
+	if (pparams.PicSort().IsIntra() )
+	    cpd_scale = 1.0;
         for (int c=0; c<3; ++c){
             lambda[c] = GetCompLambda( my_picture, (CompSort) c );
 
-            coeff_data[c]->SetBandWeights( m_encparams , pparams, (CompSort) c);
+            coeff_data[c]->SetBandWeights( m_encparams , pparams, (CompSort) c, cpd_scale);
 
             SubbandList& bands = coeff_data[c]->BandList();
             SetupCodeBlocks( bands );

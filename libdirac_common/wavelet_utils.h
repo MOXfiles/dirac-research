@@ -633,20 +633,20 @@ namespace dirac
             Contructor creates a two-D array, with specified size and colour
             format.
         */
-        CoeffArray(int height, int width, CompSort cs=Y_COMP): 
+        CoeffArray(int height, int width, CompSort cs=Y_COMP):
             TwoDArray<CoeffType>(height, width), m_csort(cs){}
 
         //copy constructor and assignment= derived by inheritance
 
         //! Destructor
         ~CoeffArray(){}
-        
+
         //! Return which component is stored
         const CompSort& CSort() const {return m_csort;}
-        
+
         //! Set the type of component being stored
         void SetCSort(const CompSort cs){ m_csort = cs; }
- 
+
         //! Returns the set of subbands
         SubbandList& BandList(){return m_band_list;}
 
@@ -661,9 +661,9 @@ namespace dirac
         */
         void SetBandWeights (const EncoderParams& encparams,
                                  const PictureParams& pparams,
-                                 const CompSort csort);
+                                 const CompSort csort,
+				 const float cpd_scale_factor);
 
-       
         private:
 
         CompSort m_csort;
@@ -675,7 +675,7 @@ namespace dirac
 
          //! Given x and y spatial frequencies in cycles per degree, returns a weighting value
         float PerceptualWeight(float xf,float yf,CompSort cs);
- 
+
     };
 
     //! A class to do wavelet transforms
