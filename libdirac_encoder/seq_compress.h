@@ -143,6 +143,9 @@ namespace dirac
         //! Signal end of sequence
         void SignalEOS() { m_eos_signalled = true; }
 
+	//! The delay required for correct timestamps
+	int PTSOffset(){return m_delay;}
+
     protected:
 
         //! Set up the motion block parameters
