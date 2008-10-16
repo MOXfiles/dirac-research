@@ -507,8 +507,6 @@ void SetDefaultTransformFilter(const PictureType ptype, const VideoFormat video_
     case VIDEO_FORMAT_CUSTOM:
     case VIDEO_FORMAT_SIF525:
     case VIDEO_FORMAT_CIF:
-        wf = DD13_7;
-        break;
     case VIDEO_FORMAT_4SIF525:
     case VIDEO_FORMAT_4CIF:
     case VIDEO_FORMAT_SD_480I60:
@@ -527,9 +525,9 @@ void SetDefaultTransformFilter(const PictureType ptype, const VideoFormat video_
     case VIDEO_FORMAT_UHDTV_8K50:
     default:
         if (ptype == INTRA_PICTURE)
-            wf = DD9_7;
+            wf = DD13_7;
         else
-            wf = LEGALL5_3;
+            wf = DD13_7;
         break;
     }
 }

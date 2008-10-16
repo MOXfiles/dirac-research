@@ -113,8 +113,8 @@ static void display_help()
     cout << "\nqf                float   0.0F          Overall quality factor (>0, typically: 7=medium, 9=high)";
     cout << "\ntargetrate        ulong   0UL           Target Bit Rate in Kbps";
     cout << "\nlossless          bool    false         Lossless coding (overrides qf)";
-    cout << "\niwlt_filter       string  DD9_7         Intra frame Transform Filter (DD9_7 LEGALL5_3 DD13_7 HAAR0 HAAR1 FIDELITY DAUB9_7)";
-    cout << "\nrwlt_filter       string  LEGALL5_3     Inter frame Transform Filter (DD9_7 LEGALL5_3 DD13_7 HAAR0 HAAR1 FIDELITY DAUB9_7)";
+    cout << "\niwlt_filter       string  DD13_7         Intra frame Transform Filter (DD9_7 LEGALL5_3 DD13_7 HAAR0 HAAR1 FIDELITY DAUB9_7)";
+    cout << "\nrwlt_filter       string  DD13_7     Inter frame Transform Filter (DD9_7 LEGALL5_3 DD13_7 HAAR0 HAAR1 FIDELITY DAUB9_7)";
     cout << "\nwlt_depth         ulong   4             Transform Depth";
     cout << "\nmulti_quants      bool    false         Use multiple quantisers";
     cout << "\nmv_prec           string  false         MV Pixel Precision (1, 1/2, 1/4, 1/8)";
@@ -794,8 +794,6 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
 	enc_ctx.enc_params.yblen = 12;
 	enc_ctx.enc_params.xbsep = 8;
 	enc_ctx.enc_params.ybsep = 8;
-        enc_ctx.enc_params.intra_wlt_filter = DD13_7;
-        enc_ctx.enc_params.inter_wlt_filter = DD13_7;
     }
 
     for (int i=0; i<argc; ){

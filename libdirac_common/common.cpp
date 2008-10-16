@@ -454,14 +454,8 @@ void EncoderParams::CalcLambdas(const float qf)
     {
         m_I_lambda = std::pow( 10.0 , (12.0-qf )/2.5 )/16.0;
 
-	if (IntraTransformFilter()==DD13_7){
-            m_L1_lambda = m_I_lambda*4.0;
-            m_L2_lambda = m_I_lambda*32.0;
-	}
-	else{
-            m_L1_lambda = m_I_lambda*8.0;
-            m_L2_lambda = m_I_lambda*64.0;
-	}
+        m_L1_lambda = m_I_lambda*4.0;
+        m_L2_lambda = m_I_lambda*32.0;
 
         // Set the lambdas for motion estimation
         const double me_ratio = 2.0;
