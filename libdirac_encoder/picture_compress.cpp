@@ -428,9 +428,16 @@ void PictureCompressor::CodeResidue( EncQueue& my_buffer ,
         /* Do the wavelet transforms and select the component
          * quantisers using perceptual weighting
          */
-	double cpd_scale = 0.125;
-	if (pparams.PicSort().IsIntra() )
+	double cpd_scale;
+	if (pparams.PicSort().IsIntra() ){
 	    cpd_scale = 1.0;
+	}
+	else{
+	    float intra_ratio = my_picture.GetMEData().IntraBlockRatio();
+
+            cpd_scale = 5.0*intra_ratio*1.0 + (1.0-5.0*intra_ratio)*0.125;
+	    cpd_scale = std::max( 0.125, std::min( 1.2, cpd_scale ) );
+	}
         for (int c=0; c<3; ++c){
             lambda[c] = GetCompLambda( my_picture, (CompSort) c );
 
@@ -555,7 +562,7 @@ if (pparams.IsBPicture() )
             log_picture_lambda= std::log10( m_encparams.L1Lambda() );
 
 //*/
-        float intra_ratio = my_picture.GetMEData().IntraBlockRatio();       
+        float intra_ratio = my_picture.GetMEData().IntraBlockRatio();
 
         lambda= std::pow(10.0,  3.0*intra_ratio*log_intra_lambda+
                          (1.0-3.0*intra_ratio)*log_picture_lambda );
@@ -568,7 +575,7 @@ if (pparams.IsBPicture() )
         lambda*= m_encparams.UFactor();
     if (csort == V_COMP)
         lambda*= m_encparams.VFactor();
-        
+
     return lambda;
 }
 
