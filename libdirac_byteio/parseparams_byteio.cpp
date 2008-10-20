@@ -94,20 +94,22 @@ void ParseParamsByteIO::CheckVersion()
        (m_parse_params.MajorVersion() == def_parse_params.MajorVersion() &&
         m_parse_params.MinorVersion() > def_parse_params.MinorVersion()))
     {
-        errstr << "Cannot handle version ";
+        errstr << "WARNING: Bitstream version is ";
         errstr << m_parse_params.MajorVersion() << ".";
         errstr << m_parse_params.MinorVersion() << ".";
         errstr << " Supported version is ";
         errstr << def_parse_params.MajorVersion() << ".";
-        errstr << def_parse_params.MinorVersion() << std::endl;
+        errstr << def_parse_params.MinorVersion();
+        errstr << ". May not be able to decode bitstream correctly" << std::endl;
     }
 
     if (errstr.str().size())
     {
-        DIRAC_THROW_EXCEPTION(
+        DiracException err(
             ERR_UNSUPPORTED_STREAM_DATA,
             errstr.str(),
             SEVERITY_PICTURE_ERROR);
+        DIRAC_LOG_EXCEPTION(err);
     }
 }
 
@@ -125,8 +127,9 @@ void ParseParamsByteIO::CheckProfile()
         errstr << "Cannot handle profile "  << m_parse_params.Profile()
                << " for bitstream version " << m_parse_params.MajorVersion()
                << "." << m_parse_params.MinorVersion();
+        errstr << ". May not be able to decode bitstream correctly" << std::endl;
     }
-    else if (m_parse_params.MajorVersion() <= def_parse_params.MajorVersion() &&
+    else if (m_parse_params.MajorVersion() == def_parse_params.MajorVersion() &&
              m_parse_params.MinorVersion() == def_parse_params.MinorVersion() &&
              m_parse_params.Profile() != 1 /* Simple */          &&
              m_parse_params.Profile() != 2 /* Main (Intra) */    &&
@@ -138,14 +141,16 @@ void ParseParamsByteIO::CheckProfile()
                << ". " << m_parse_params.MinorVersion()
                << ". Supported profiles are 1 (Simple) "
                << " 2 (Main Intra) and 8 (Long GOP)";
+        errstr << ". May not be able to decode bitstream correctly" << std::endl;
     }
 
     if (errstr.str().size())
     {
-        DIRAC_THROW_EXCEPTION(
+        DiracException err(
             ERR_UNSUPPORTED_STREAM_DATA,
             errstr.str(),
             SEVERITY_PICTURE_ERROR);
+        DIRAC_LOG_EXCEPTION(err);
     }
 }
 
@@ -171,15 +176,17 @@ void ParseParamsByteIO::CheckLevel()
                    << " Profile " << m_parse_params.Profile()
                    << ". Supported levels are 1 for Profiles 0, 1, 2 "
                    << "  and 128 for Profile 8";
+            errstr << ". May not be able to decode bitstream correctly" << std::endl;
         }
     }
 
     if (errstr.str().size())
     {
-        DIRAC_THROW_EXCEPTION(
+        DiracException err(
             ERR_UNSUPPORTED_STREAM_DATA,
             errstr.str(),
             SEVERITY_PICTURE_ERROR);
+        DIRAC_LOG_EXCEPTION(err);
     }
     return;
 }
