@@ -344,7 +344,8 @@ AC_CHECK_HEADER([cppunit/TestRunner.h],[HAVE_CPPUNIT="true"], [HAVE_CPPUNIT="fal
 			CXXFLAGS="$CXXFLAGS -Wl,--fatal-warnings"
 			;;
 		esac;
-		AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <cppunit/TestResult.h> 
+		AC_RUN_IFELSE([AC_LANG_PROGRAM([[#include <string> 
+		#include <cppunit/TestResult.h> 
 		#include <cppunit/TestRunner.h>]], [[CPPUNIT_NS::TestResult controller; CPPUNIT_NS::TestRunner runner;]])],[AC_MSG_RESULT(yes)],[AC_MSG_RESULT(no); HAVE_CPPUNIT="false"])
 		LIBS=$SAVE_LIBS
 		CXXFLAGS=$SAVE_CXXFLAGS
