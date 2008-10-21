@@ -284,6 +284,10 @@ void PelBlockDiff::Diff( const BlockDiffParams& dparams,
 ValueType IntraBlockDiff::CalcDC( const BlockDiffParams& dparams ){
 
     CalcValueType int_dc( 0 );
+    if (dparams.Xl() <= 0 || dparams.Yl() <= 0)
+    {
+        return 0;
+    }
 
     for ( int j=dparams.Yp() ; j<dparams.Yp()+dparams.Yl() ; ++j)
         for(int i=dparams.Xp(); i<dparams.Xp()+dparams.Xl() ; ++i )
