@@ -54,6 +54,21 @@ extern "C" {
 * Some basic enumeration types used throughout the codec and by end user ...//
 */
 
+#define DIRAC_RESEARCH_MAJOR_VERSION 1   /* 0..255 */
+#define DIRAC_RESEARCH_MINOR_VERSION 0   /* 0..255 */
+#define DIRAC_RESEARCH_PATCH_VERSION 1   /* 0..255 */
+
+#define DIRAC_RESEARCH_VERSION(X, Y, Z)      \
+    (((X)<<16) + ((Y)<<8) + (Z))
+
+#define DIRAC_RESEARCH_CURVERSION                        \
+    DIRAC_RESEARCH_VERSION(DIRAC_RESEARCH_MAJOR_VERSION, \
+    DIRAC_RESEARCH_MINOR_VERSION,                        \
+    DIRAC_RESEARCH_PATCH_VERSION)
+
+#define DIRAC_RESEARCH_VERSION_ATLEAST(X, Y, Z) \
+    (DIRAC_RESEARCH_CURVERSION >= DIRAC_RESEARCH_VERSION(X, Y, Z))
+
 /*! Types of chroma formatting (formatNK=format not known) */
 typedef enum { format444, format422, format420, formatNK } ChromaFormat;
 
