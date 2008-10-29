@@ -109,12 +109,12 @@ RateController::RateController(int trate, SourceParams& srcp, EncoderParams& enc
     {
         m_Iframe_bits = m_total_GOP_bits/10;
         m_L1frame_bits = (m_Iframe_bits*3)/m_num_L1frame;
-	if (m_encparams.L1Sep()>1)
+        if (m_encparams.L1Sep()>1)
             m_L2frame_bits = ( m_total_GOP_bits - m_Iframe_bits -
                                m_L1frame_bits*m_num_L1frame )/
                          (m_encparams.GOPLength()-1-m_num_L1frame);
-	else
-	    m_L2frame_bits = 0;
+        else
+            m_L2frame_bits = 0;
 
     }
 }
@@ -241,7 +241,7 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
 
             // We've just coded an intra frame so we need to set qf for
             // the next group of L2(B) frames
-	    m_qf = std::max(tap*m_qf+(1.0-tap)*m_encparams.Qf(), m_encparams.Qf()-1.0);
+            m_qf = std::max(tap*m_qf+(1.0-tap)*m_encparams.Qf(), m_encparams.Qf()-1.0);
             m_encparams.SetQf( m_qf );
 
             if (pparams.PictureNum()/field_factor==0)
@@ -304,27 +304,27 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
             // from measured values (complexities)
             double prate = ProjectedSubgroupRate();
 
-//            if (emergency_realloc==true && m_encparams.Verbose()==true )
-//            {
+            if (m_encparams.Verbose()==true )
+            {
                 std::cout<<std::endl<<"Target subgroup rate = "<<trate;
                 std::cout<<", projected subgroup rate = "<<prate;
-//            }
+            }
             // Determine K value
             double K = std::pow(prate, 2)*std::pow(10.0, ((double)2/5*(10-m_qf)))/16;
 
             // Determine a new QF
             double new_qf = 10 - (double)5/2*log10(16*K/std::pow(trate, 2));
-	    if ( ( std::abs(m_qf-new_qf)<0.25 && new_qf > 4.0 ) || new_qf>8.0)
-	        m_qf = new_qf;
-	    else
-	        m_qf = tap*new_qf+(1.0-tap)*m_qf;
+            if ( ( std::abs(m_qf-new_qf)<0.25 && new_qf > 4.0 ) || new_qf>8.0)
+                m_qf = new_qf;
+            else
+                m_qf = tap*new_qf+(1.0-tap)*m_qf;
 
             m_qf = ReviewQualityFactor( m_qf , num_bits );
 
             if ( m_qf<8.0 ){
                 if (prate<2*trate)
                     m_qf = std::max(m_qf,m_encparams.Qf()-1.0);
-	        else
+                else
                     m_qf = std::max(m_qf,m_encparams.Qf()-2.0);
             }
 
@@ -446,11 +446,11 @@ void RateController::Allocate (const int fnum)
     {
         double correction;
         if (buffer_occ<0.9 && ( (fnum+1) % 4*m_encparams.L1Sep())==0 )
-        {            
+        {
             // If we're undershooting buffer target, correct slowly
             correction = std::min( 0.25, 0.25*(0.9 - buffer_occ )/0.9 );
-            m_GOP_target = ( long int)(double(m_total_GOP_bits)*( 1.0-correction) );   
-        }    
+            m_GOP_target = ( long int)(double(m_total_GOP_bits)*( 1.0-correction) );
+        }
         else if (buffer_occ>0.9 && ((fnum+1) % m_encparams.L1Sep())==0)
         {
             // If we're overshooting buffer target, correct quickly
@@ -458,7 +458,7 @@ void RateController::Allocate (const int fnum)
             m_GOP_target = ( long int)(double(m_total_GOP_bits)*( 1.0+correction) );
         }
     }
-    
+
 
     const long int min_bits = m_total_GOP_bits/(100*m_encparams.GOPLength());
 

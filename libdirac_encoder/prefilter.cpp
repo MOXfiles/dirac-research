@@ -417,7 +417,7 @@ TwoDArray<int> GetDiagLPFilter( const float bw )
         f[5][0]=260;  f[5][1]=229;   f[5][2]=153;   f[5][3]=70;   f[5][4]=15;   f[5][5]=0;    f[5][6]=0;
         f[6][0]=99;   f[6][1]=83;    f[6][2]=45;    f[6][3]=11;   f[6][4]=0;    f[6][5]=0;    f[6][6]=0;
 
-	break;
+        break;
 
     case 2:
 
@@ -518,11 +518,11 @@ TwoDArray<int> GetDiagLPFilter( const float bw )
     default:// case 10
 
         for (int j=0; j<f.LengthY(); ++j ){
-	    for (int i=0; i<f.LengthX(); ++i ){
-	        f[j][i] = 0;
-	    }
-	}
-	f[0][0] = 65536;
+            for (int i=0; i<f.LengthX(); ++i ){
+                f[j][i] = 0;
+            }
+        }
+        f[0][0] = 65536;
 
     }
 
@@ -541,7 +541,7 @@ void dirac::DiagFilter( PicArray& pic_data, const float qf, const int strength )
 
     float bw = (1.0-ffactor)*0.6+0.4;
 
-std::cout<<std::endl<<"Diagonal prefiltering with bandwidth = "<<bw;
+    //std::cout<<std::endl<<"Diagonal prefiltering with bandwidth = "<<bw;
 
     if (bw>0.9)
         return;

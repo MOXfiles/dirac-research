@@ -782,7 +782,7 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
                 parsed[i] = false;
             }
         }
-	i++;
+    i++;
     }
 
     // finally, set the encoding paramters
@@ -790,10 +790,10 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
     // For small pictures, set better (more expensive) parameters
     if (enc_ctx.src_params.width*enc_ctx.src_params.height<(702*480*2)/3){
         enc_ctx.enc_params.mv_precision = MV_PRECISION_QUARTER_PIXEL;
-	enc_ctx.enc_params.xblen = 12;
-	enc_ctx.enc_params.yblen = 12;
-	enc_ctx.enc_params.xbsep = 8;
-	enc_ctx.enc_params.ybsep = 8;
+        enc_ctx.enc_params.xblen = 12;
+        enc_ctx.enc_params.yblen = 12;
+        enc_ctx.enc_params.xbsep = 8;
+        enc_ctx.enc_params.ybsep = 8;
     }
 
     for (int i=0; i<argc; ){
@@ -824,11 +824,11 @@ bool parse_command_line(dirac_encoder_context_t& enc_ctx, int argc, char **argv)
             parsed[i] = true;
 
         }
-	else if ( strcmp(argv[i], "-combined_me") == 0 )
-	{
+        else if ( strcmp(argv[i], "-combined_me") == 0 )
+        {
             parsed[i] = true;
-	    enc_ctx.enc_params.combined_me = 1;
-	}
+            enc_ctx.enc_params.combined_me = 1;
+        }
         else if ( strcmp(argv[i], "-targetrate") == 0 )
         {
             parsed[i] = true;
@@ -1274,10 +1274,11 @@ int main (int argc, char* argv[])
                   << " bits/sec." << std::endl;
 
     if ( verbose )
+    {
         std::cout<<"Time per frame: "<<
            (double)(stop_t-start_t)/(double)(CLOCKS_PER_SEC*frames_loaded);
         std::cout<<std::endl<<std::endl;
-
+    }
    /********************************************************************/
 
      // close the encoder
