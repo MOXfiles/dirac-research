@@ -239,6 +239,14 @@ AT_CHECK([cmp ../../"rectlp5_"$encout.localdec.yuv ../../"rectlp5_"$decout])
 AT_CHECK([at_wrap dirac_encoder -prefilter DIAGLP 5 -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"diaglp5_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"diaglp5_"$encout ../../"diaglp5_"$decout], 0, [ignore])
 AT_CHECK([cmp ../../"diaglp5_"$encout.localdec.yuv ../../"diaglp5_"$decout])
+#     combined_me
+AT_CHECK([at_wrap dirac_encoder -combined_me -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"combined_me_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"combined_me_"$encout ../../"combined_me_"$decout], 0, [ignore])
+AT_CHECK([cmp ../../"combined_me_"$encout.localdec.yuv ../../"combined_me_"$decout])
+#     full search
+AT_CHECK([at_wrap dirac_encoder -full_search 32 32 -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"full_search_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"full_search_"$encout ../../"full_search_"$decout], 0, [ignore])
+AT_CHECK([cmp ../../"full_search_"$encout.localdec.yuv ../../"full_search_"$decout])
 
 # interlaced
 #      constant quality
@@ -269,5 +277,11 @@ AT_CHECK([at_wrap dirac_decoder ../../"inter_rectlp5_"$encout ../../"inter_rectl
 #     pre-filter DIAGLP
 AT_CHECK([at_wrap dirac_encoder -field_coding -prefilter DIAGLP 5 -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_diaglp5_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"inter_diaglp5_"$encout ../../"inter_diaglp5_"$decout], 0, [ignore])
+#     pre-filter DIAGLP
+AT_CHECK([at_wrap dirac_encoder -combined_me -field_coding -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_combined_me_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"inter_combined_me_"$encout ../../"inter_combined_me_"$decout], 0, [ignore])
+#     full search ME
+AT_CHECK([at_wrap dirac_encoder -full_search 32 32 -field_coding -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_full_search_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"inter_full_search_"$encout ../../"inter_full_search_"$decout], 0, [ignore])
 done
 AT_CLEANUP
