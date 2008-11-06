@@ -56,6 +56,28 @@ extern "C" {
 #endif
 
 /*
+*   Major version corresponds to major version of the software.
+*   Minor version corresponds to minor version of the software. Bump
+*   this up by one whenever there are  major feature changes to the software.
+*   Patch version corresponds to changes in the API. It should be
+*   bumped up by 1 for every committed change to the API
+*/
+#define DIRAC_RESEARCH_MAJOR_VERSION 1   /* 0..255 */
+#define DIRAC_RESEARCH_MINOR_VERSION 0   /* 0..255 */
+#define DIRAC_RESEARCH_PATCH_VERSION 1   /* 0..255 */
+
+#define DIRAC_RESEARCH_VERSION(X, Y, Z)      \
+    (((X)<<16) + ((Y)<<8) + (Z))
+
+#define DIRAC_RESEARCH_CURVERSION                        \
+    DIRAC_RESEARCH_VERSION(DIRAC_RESEARCH_MAJOR_VERSION, \
+    DIRAC_RESEARCH_MINOR_VERSION,                        \
+    DIRAC_RESEARCH_PATCH_VERSION)
+
+#define DIRAC_RESEARCH_VERSION_ATLEAST(X, Y, Z) \
+    (DIRAC_RESEARCH_CURVERSION >= DIRAC_RESEARCH_VERSION(X, Y, Z))
+
+/*
 * Some basic enumeration types used by end user encoder and decoder ...//
 */
 typedef ChromaFormat dirac_chroma_t;
