@@ -89,7 +89,7 @@ int QuantChooser::GetBestQuant( Subband& node )
 
     // If we have a DC band, then restrict the maximum quantiser
     if (node.Xp()==0 && node.Yp()==0)
-        num_quants = std::max(num_quants, 7 );
+        num_quants = std::min(num_quants, 5 );
 
     // Set the array sizes
     m_costs.Resize( num_quants );
@@ -139,13 +139,13 @@ int QuantChooser::GetBestQuant( Subband& node )
     for (int j=0 ; j<block_list.LengthY() ; ++j )
         for (int i=0 ; i<block_list.LengthX() ; ++i )
             block_list[j][i].SetQuantIndex( m_min_idx );
-        
+
     // Set the codeblock skip flags
     for (int j=0 ; j<block_list.LengthY() ; ++j )
         for (int i=0 ; i<block_list.LengthX() ; ++i )
             SetSkip( block_list[j][i], m_min_idx );
-        
-        
+
+
     return static_cast<int>( bit_sum );
 
 }
