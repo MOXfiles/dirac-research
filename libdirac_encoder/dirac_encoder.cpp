@@ -246,6 +246,9 @@ public:
     // Return the source parameters
     const SourceParams& GetSrcParams() const { return m_srcparams; }
 
+    // Return the pts offset
+    int GetPTSOffset() const { return m_seqcomp->PTSOffset(); }
+
     // Signal End of Sequence
     void SignalEOS() { m_eos_signalled = true; m_seqcomp->SignalEOS(); }
 
@@ -1040,6 +1043,26 @@ extern DllExport dirac_encoder_t *dirac_encoder_init (const dirac_encoder_contex
 
     return encoder;
 }
+
+#if DIRAC_RESEARCH_VERSION_ATLEAST(1,0,2)
+extern DllExport int dirac_encoder_pts_offset (const dirac_encoder_t *encoder)
+{
+    TEST (encoder != NULL);
+    TEST (encoder->compressor != NULL);
+    DiracEncoder *compressor = (DiracEncoder *)encoder->compressor;
+    int ret;
+    try
+    {
+        ret = compressor->GetPTSOffset();
+    }
+    catch (...)
+    {
+        ret = -1;
+    }
+
+    return ret;
+}
+#endif
 
 extern DllExport int dirac_encoder_load (dirac_encoder_t *encoder, unsigned char *uncdata, int uncdata_size)
 {

@@ -64,7 +64,7 @@ extern "C" {
 */
 #define DIRAC_RESEARCH_MAJOR_VERSION 1   /* 0..255 */
 #define DIRAC_RESEARCH_MINOR_VERSION 0   /* 0..255 */
-#define DIRAC_RESEARCH_PATCH_VERSION 1   /* 0..255 */
+#define DIRAC_RESEARCH_PATCH_VERSION 2   /* 0..255 */
 
 #define DIRAC_RESEARCH_VERSION(X, Y, Z)      \
     (((X)<<16) + ((Y)<<8) + (Z))

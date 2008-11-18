@@ -429,6 +429,17 @@ typedef struct
 */
 extern DllExport dirac_encoder_t *dirac_encoder_init (const dirac_encoder_context_t *enc_ctx, int verbose);
 
+#if DIRAC_RESEARCH_VERSION_ATLEAST(1,0,2)
+/*!
+    Query the encoder for the reordering depth.
+    \param   encoder    Encoder Handle
+    \return  encoder    The number of pictures a realtime decoder must wait
+                        before outputting the first picture in display order;
+                        or -1 for failure.
+*/
+extern DllExport int dirac_encoder_pts_offset (const dirac_encoder_t *encoder);
+#endif
+
 /*!
     Load uncompressed data into the encoder. Expects one full frame of data
     \param   encoder         Encoder Handle
