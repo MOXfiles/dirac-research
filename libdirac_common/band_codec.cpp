@@ -434,6 +434,8 @@ inline int BandCodec::ChooseFollowContext( const int bin_number ) const
 
     }
 
+    /* not reachable, but dumb compilers can't spot that */
+    return 0;
 }
 
 inline int BandCodec::ChooseInfoContext() const 
