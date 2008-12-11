@@ -78,12 +78,6 @@ namespace dirac
         virtual ~MvDataElementByteIO();
 
         /**
-        * Gathers byte stats on the motion vector data
-        *@param dirac_byte_stats Stat container
-        */
-//        void CollateByteStats(DiracByteStats& dirac_byte_stats);
-
-        /**
         * Outputs motion vector data Dirac byte-format
         */
         void Output();
