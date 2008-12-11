@@ -272,7 +272,7 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
 
             target = m_L1frame_bits;
 
-            if (num_bits < target/2 ){
+            if (num_bits < target/2 || num_bits > target*3 ){
                 emergency_realloc = true;
             }
 
@@ -282,7 +282,7 @@ void RateController::CalcNextQualFactor(const PictureParams& pparams, int num_bi
         if ( m_fcount==0 || emergency_realloc==true)
         {
             if (emergency_realloc==true && m_encparams.Verbose()==true )
-                std::cout<<std::endl<<"Major undershoot of frame bit rate: re-allocating";
+                std::cout<<std::endl<<"Major mis-prediction of frame bit rate: re-allocating";
 
 
             /* We recompute allocations for the next subgroup */
