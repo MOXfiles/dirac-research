@@ -136,12 +136,18 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , CoeffArray& in_dat
             else
                 m_parent_notzero = false;
 
-            CodeVal( in_data , xpos , ypos , in_data[ypos][xpos] );
+            CodeCoeff( in_data , xpos , ypos );
 
         }// xpos
     }// ypos    
 
 }
+
+void BandCodec::CodeCoeff( CoeffArray& in_data, const int xpos, const int ypos)
+{
+    CodeVal( in_data , xpos , ypos , in_data[ypos][xpos] );
+}
+
 
 /*
 Coefficient magnitude value and differential quantiser index magnitude are
@@ -298,7 +304,9 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray& out_
     for ( int ypos=ybeg; ypos<yend ;++ypos)
     {
     m_pypos=(( ypos-m_node.Yp() )>>1)+m_pnode.Yp();
-        CoeffType *p_out_data = out_data[m_pypos];
+        CoeffType *p_out_data = NULL;
+        if (has_parent)
+            p_out_data = out_data[m_pypos];
         CoeffType *c_out_data_1 = NULL;
         if (ypos!=m_node.Yp())
             c_out_data_1 = out_data[ypos-1];
@@ -517,145 +525,34 @@ void IntraDCBandCodec::DoWorkCode(CoeffArray& in_data)
     // Residues after prediction, quantisation and inverse quantisation
     m_dc_pred_res.Resize( m_node.Yl() , m_node.Xl() );
 
-    const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
-
-    // Now loop over the blocks and code. Note that DC blocks can't be skipped
-    for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
-    {
-        for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
-        {
-            CodeCoeffBlock( block_list[j][i] , in_data );
-        }// i
-    }// j
+    BandCodec::DoWorkCode(in_data);
 }
 
-void IntraDCBandCodec::CodeCoeffBlock( const CodeBlock& code_block , CoeffArray& in_data)
+void IntraDCBandCodec::CodeCoeff( CoeffArray& in_data, const int xpos, const int ypos)
 {
-    // Main coding function, using binarisation
-    const int xbeg = code_block.Xstart();
-    const int ybeg = code_block.Ystart();
-    const int xend = code_block.Xend();
-    const int yend = code_block.Yend();
+    m_nhood_nonzero = false;
+    if (ypos > m_node.Yp())
+        m_nhood_nonzero |= bool(m_dc_pred_res[ypos-1][xpos]);
+    if (xpos > m_node.Xp())
+        m_nhood_nonzero |= bool(m_dc_pred_res[ypos][xpos-1]);
+    if (ypos > m_node.Yp() && xpos > m_node.Xp())
+        m_nhood_nonzero |= bool(m_dc_pred_res[ypos-1][xpos-1]);
 
-    //set parent to always be zero
-    m_parent_notzero = false;
-    CoeffType val;
-    
-    CoeffType prediction;
-
-    const int qf_idx = code_block.QuantIndex();
-
-    if ( m_node.UsingMultiQuants() )
-    {
-          CodeQuantIndexOffset( qf_idx - m_last_qf_idx);
-          m_last_qf_idx = qf_idx;
-    }
-
-    m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-
-    m_offset =  dirac_quantiser_lists.IntraQuantOffset4( qf_idx );
-
-    for ( int ypos=ybeg ; ypos < yend; ++ypos )
-    {
-        for (int xpos = xbeg ; xpos < xend; ++xpos )
-        {
-            m_nhood_nonzero = false;
-            if (ypos > m_node.Yp())
-                m_nhood_nonzero |= bool(m_dc_pred_res[ypos-1][xpos]);
-            if (xpos > m_node.Xp())
-                m_nhood_nonzero |= bool(m_dc_pred_res[ypos][xpos-1]);
-            if (ypos > m_node.Yp() && xpos > m_node.Xp())
-                m_nhood_nonzero |= bool(m_dc_pred_res[ypos-1][xpos-1]);
-          
-            prediction = GetPrediction( in_data , xpos , ypos );            
-            val = in_data[ypos][xpos] - prediction;
-            CodeVal( in_data , xpos , ypos , val );            
-            m_dc_pred_res[ypos][xpos] = in_data[ypos][xpos];
-            in_data[ypos][xpos] += prediction;
-        }//xpos            
-    }//ypos    
+    ValueType prediction = GetPrediction( in_data , xpos , ypos );
+    ValueType val = in_data[ypos][xpos] - prediction;
+    CodeVal( in_data , xpos , ypos , val );
+    m_dc_pred_res[ypos][xpos] = in_data[ypos][xpos];
+    in_data[ypos][xpos] += prediction;
 }
 
 
-void IntraDCBandCodec::DoWorkDecode(CoeffArray& out_data)
+void IntraDCBandCodec::DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data)
 {
-    m_dc_pred_res.Resize( m_node.Yl() , m_node.Xl() );
-
-    const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
-
-    // Now loop over the blocks and decode
-    bool decode_skip= (block_list.LengthX() > 1 || block_list.LengthY() > 1);
-    for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
+    BandCodec::DecodeCoeffBlock(code_block, out_data);
+    /* do prediction for this block */
+    for ( int ypos=code_block.Ystart() ; ypos<code_block.Yend() ; ++ypos)
     {
-        for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
-        {
-            if (decode_skip)
-                block_list[j][i].SetSkip( DecodeSymbol( BLOCK_SKIP_CTX ) );
-            if ( !block_list[j][i].Skipped() )
-            {
-                DecodeCoeffBlock( block_list[j][i] , out_data );
-            }
-            else
-            {
-                ClearBlock (block_list[j][i] , out_data);
-                ClearBlock (block_list[j][i] , m_dc_pred_res);
-            }
-            DCPrediction (block_list[j][i] , out_data);
-        }// i
-    }// j
-}
-
-void IntraDCBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray& out_data)
-{
-    const int xbeg = code_block.Xstart();
-    const int ybeg = code_block.Ystart();
-    const int xend = code_block.Xend();
-    const int yend = code_block.Yend();
-
-    m_parent_notzero = false; //set parent to always be zero
-
-    int qf_idx = m_node.QuantIndex();
-
-    if ( m_node.UsingMultiQuants() )
-    {
-        qf_idx = DecodeQuantIndexOffset()+m_last_qf_idx;
-        m_last_qf_idx = qf_idx;
-    }
-
-    m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    
-    m_offset =  dirac_quantiser_lists.IntraQuantOffset4( qf_idx );
-
-    //Work
-    
-    for ( int ypos=ybeg ; ypos<yend ; ++ypos)
-    {
-        for ( int xpos=xbeg ; xpos<xend ; ++xpos)
-        {
-            m_nhood_nonzero = false;
-            if (ypos > m_node.Yp())
-                m_nhood_nonzero |= bool(m_dc_pred_res[ypos-1][xpos]);
-            if (xpos > m_node.Xp())
-                m_nhood_nonzero |= bool(m_dc_pred_res[ypos][xpos-1]);
-            if (ypos > m_node.Yp() && xpos > m_node.Xp())
-                m_nhood_nonzero |= bool(m_dc_pred_res[ypos-1][xpos-1]);
-
-             DecodeVal( out_data , xpos , ypos );
-             m_dc_pred_res[ypos][xpos] = out_data[ypos][xpos];
-        }//xpos
-    }//ypos
-}
-
-void IntraDCBandCodec::DCPrediction(const CodeBlock& code_block , CoeffArray& out_data)
-{
-    const int xbeg = code_block.Xstart();
-    const int ybeg = code_block.Ystart();
-    const int xend = code_block.Xend();
-    const int yend = code_block.Yend();
-    
-    for ( int ypos=ybeg ; ypos<yend ; ++ypos)
-    {
-        for ( int xpos=xbeg ; xpos<xend ; ++xpos)
+        for ( int xpos=code_block.Xstart() ; xpos<code_block.Xend() ; ++xpos)
         {
              out_data[ypos][xpos] += GetPrediction( out_data , xpos , ypos );
         }

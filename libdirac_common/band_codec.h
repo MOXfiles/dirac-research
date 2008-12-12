@@ -95,7 +95,7 @@ namespace dirac
         //! Set all block values to 0
         inline void ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data);
 
-    private:
+    protected:
         //functions
         // Overridden from the base class
         virtual void DoWorkCode(CoeffArray& in_data);
@@ -104,6 +104,8 @@ namespace dirac
 
         virtual void CodeCoeffBlock(const CodeBlock& code_block , CoeffArray& in_data);
         virtual void DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data);
+
+        virtual void CodeCoeff(CoeffArray& in_data, const int xpos, const int ypos);
 
         //! A function for choosing the context for "follow bits"
         inline int ChooseFollowContext( const int bin_number ) const;
@@ -182,12 +184,14 @@ namespace dirac
 
     
     private:
+        //! Initialize extra data required for error-feedback DC quantization
         void DoWorkCode(CoeffArray& in_data);                    //overridden from the base class
-        void DoWorkDecode(CoeffArray& out_data); //ditto
 
-        void CodeCoeffBlock(const CodeBlock& code_block , CoeffArray& in_data);
+        //! Decode codeblock of coefficients and perform DC prediction
         void DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data);
-        void DCPrediction(const CodeBlock& code_block , CoeffArray& out_data);
+
+        //! Encode a single coefficient using error-feedback DC quantization
+        void CodeCoeff(CoeffArray& in_data, const int xpos, const int ypos);
 
         //! Private, bodyless copy constructor: class should not be copied
         IntraDCBandCodec(const IntraDCBandCodec& cpy); 
