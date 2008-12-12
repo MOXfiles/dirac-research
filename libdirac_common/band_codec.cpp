@@ -99,8 +99,10 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , CoeffArray& in_dat
     const int ybeg = code_block.Ystart();
     const int xend = code_block.Xend();
     const int yend = code_block.Yend();
- 
+
     const int qf_idx = code_block.QuantIndex();
+
+    bool has_parent = m_node.Parent() != 0;
 
     if ( m_node.UsingMultiQuants() )
     {
@@ -129,7 +131,10 @@ void BandCodec::CodeCoeffBlock( const CodeBlock& code_block , CoeffArray& in_dat
             if (ypos > m_node.Yp() && xpos > m_node.Xp())
                 m_nhood_nonzero |= bool(in_data[ypos-1][xpos-1]);
 
-            m_parent_notzero = static_cast<bool> ( in_data[m_pypos][m_pxpos] );
+            if (has_parent)
+                m_parent_notzero = static_cast<bool> ( in_data[m_pypos][m_pxpos] );
+            else
+                m_parent_notzero = false;
 
             CodeVal( in_data , xpos , ypos , in_data[ypos][xpos] );
 
@@ -259,8 +264,10 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray& out_
     const int ybeg = code_block.Ystart();
     const int xend = code_block.Xend();
     const int yend = code_block.Yend();
- 
+
     int qf_idx = m_node.QuantIndex();
+
+    bool has_parent = m_node.Parent() != 0;
 
     if ( m_node.UsingMultiQuants() )
     {
@@ -310,7 +317,11 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray& out_
             if (ypos > m_node.Yp() && xpos > m_node.Xp())
                 m_nhood_nonzero |= bool(c_out_data_1[xpos-1]);
 
-            m_parent_notzero = ( p_out_data[m_pxpos] != 0 );            
+            if (has_parent)
+                m_parent_notzero = ( p_out_data[m_pxpos] != 0 );
+            else
+                m_parent_notzero = false;
+
             DecodeVal( out_data , xpos , ypos );
 
         }// xpos
@@ -496,150 +507,6 @@ void BandCodec::ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data
     }// j
 
 }
-//////////////////////////////////////////////////////////////////////////////////
-//Now for special class for LF bands (since we don't want/can't refer to parent)//
-//////////////////////////////////////////////////////////////////////////////////
-
-void LFBandCodec::DoWorkCode(CoeffArray& in_data)
-{
-    const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
-
-    // Now loop over the blocks and code
-    bool code_skip= (block_list.LengthX() > 1 || block_list.LengthY() > 1);
-    for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
-    {
-        for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
-        {
-            if (code_skip)
-                EncodeSymbol(block_list[j][i].Skipped() , BLOCK_SKIP_CTX );
-            if ( !block_list[j][i].Skipped() )
-                CodeCoeffBlock( block_list[j][i] , in_data );
-            else
-                ClearBlock (block_list[j][i] , in_data);
-        }// i
-    }// j
-}
-
-void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , CoeffArray& in_data )
-{
-    //main coding function, using binarisation
-    const int xbeg = code_block.Xstart();
-    const int ybeg = code_block.Ystart();
-    const int xend = code_block.Xend();
-    const int yend = code_block.Yend();
-
-    m_parent_notzero = false; //set parent to always be zero
-
-    const int qf_idx = code_block.QuantIndex();
-
-    if ( m_node.UsingMultiQuants() )
-    {
-        CodeQuantIndexOffset( qf_idx - m_last_qf_idx);
-        m_last_qf_idx = qf_idx;
-    }
-
-    m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-
-    if (m_is_intra)
-        m_offset =  dirac_quantiser_lists.IntraQuantOffset4( qf_idx );
-    else
-        m_offset =  dirac_quantiser_lists.InterQuantOffset4( qf_idx );
-
-    for ( int ypos=ybeg ; ypos<yend ; ++ypos )
-    {        
-        for ( int xpos=xbeg ; xpos<xend ; ++xpos )
-        {
-            m_nhood_nonzero = false;
-            if (ypos > m_node.Yp())
-                m_nhood_nonzero |= bool(in_data[ypos-1][xpos]);
-            if (xpos > m_node.Xp())
-                m_nhood_nonzero |= bool(in_data[ypos][xpos-1]);
-            if (ypos > m_node.Yp() && xpos > m_node.Xp())
-                m_nhood_nonzero |= bool(in_data[ypos-1][xpos-1]);
-            
-            CodeVal( in_data , xpos , ypos , in_data[ypos][xpos] );
-
-        }//xpos
-    }//ypos    
-}
-
-
-void LFBandCodec::DoWorkDecode(CoeffArray& out_data )
-{
-    const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
-
-    // Now loop over the blocks and decode
-    bool decode_skip= (block_list.LengthX() > 1 || block_list.LengthY() > 1);
-    for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
-    {
-        for (int i=block_list.FirstX() ; i<=block_list.LastX() ; ++i)
-        {
-            if (decode_skip)
-                block_list[j][i].SetSkip( DecodeSymbol( BLOCK_SKIP_CTX ) );
-            if ( !block_list[j][i].Skipped() )
-                DecodeCoeffBlock( block_list[j][i] , out_data );
-            else
-                ClearBlock (block_list[j][i] , out_data);
-        }// i
-    }// j
-
-}
-
-void LFBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray& out_data )
-{
-
-    const int xbeg = code_block.Xstart();
-    const int ybeg = code_block.Ystart();
-    const int xend = code_block.Xend();
-    const int yend = code_block.Yend();
-
-    m_parent_notzero = false;//set parent to always be zero    
-
-    int qf_idx = m_node.QuantIndex();
-
-    if ( m_node.UsingMultiQuants() )
-    {
-        qf_idx = m_last_qf_idx+DecodeQuantIndexOffset(); 
-        m_last_qf_idx = qf_idx;
-    }
-
-    if (qf_idx > (int)dirac_quantiser_lists.MaxQuantIndex())
-    {
-        std::ostringstream errstr;
-        errstr << "Quantiser index out of range [0.."  
-               << (int)dirac_quantiser_lists.MaxQuantIndex() << "]";
-        DIRAC_THROW_EXCEPTION(
-            ERR_UNSUPPORTED_STREAM_DATA,
-            errstr.str(),
-            SEVERITY_PICTURE_ERROR);
-    }
-
-    m_qf = dirac_quantiser_lists.QuantFactor4( qf_idx );
-    if (m_is_intra)
-        m_offset =  dirac_quantiser_lists.IntraQuantOffset4( qf_idx );
-    else
-        m_offset =  dirac_quantiser_lists.InterQuantOffset4( qf_idx );
-        
-    //Work
-    
-    for ( int ypos=ybeg ; ypos<yend ; ++ypos )
-    {
-        for ( int xpos=xbeg ; xpos<xend; ++xpos )
-        {
-            m_nhood_nonzero = false;
-            if (ypos > m_node.Yp())
-                m_nhood_nonzero |= bool(out_data[ypos-1][xpos]);
-            if (xpos > m_node.Xp())
-                m_nhood_nonzero |= bool(out_data[ypos][xpos-1]);
-            if (ypos > m_node.Yp() && xpos > m_node.Xp())
-                m_nhood_nonzero |= bool(out_data[ypos-1][xpos-1]);
-
-            DecodeVal( out_data , xpos , ypos );
-
-        }// xpos
-    }// ypos
-}
-
 
 //////////////////////////////////////////////////////////////////////////////////
 //Finally,special class incorporating prediction for the DC band of intra frames//

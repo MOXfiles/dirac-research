@@ -153,47 +153,7 @@ namespace dirac
     
     };
 
-    //! A class specially for coding the LF subbands 
-    /*!
-        A class specially for coding the LF subbands, where we don't want to/can't refer to the 
-        parent subband.
-    */
-    class LFBandCodec: public BandCodec
-    {
-    public:
-        //! Constructor
-        /*!
-            Creates a LFBandCodec object to encode subband data.
-            \param    subband_byteio input/output for the encoded bits
-            \param    number_of_contexts the number of contexts used in the encoding process
-            \param    band_list    the set of all the subbands
-            \param    band_num    the number of the subband being coded 
-            \param    is_intra    Flag indicating whether the band comes from an intra picture
-         */        
-        LFBandCodec(SubbandByteIO* subband_byteio,
-                    size_t number_of_contexts,
-                    const SubbandList& band_list,
-                    int band_num,
-                    const bool is_intra)
-                    : BandCodec(subband_byteio,number_of_contexts,band_list,
-                                band_num,is_intra){}
-
-    private:
-        // Overridden from the base class
-        void DoWorkCode(CoeffArray& in_data);
-        // Ditto
-        void DoWorkDecode(CoeffArray& out_data);
-
-        void CodeCoeffBlock(const CodeBlock& code_block , CoeffArray& in_data);
-        void DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data);
-
-        //! Private, bodyless copy constructor: class should not be copied
-        LFBandCodec(const LFBandCodec& cpy);
-        //! Private, bodyless copy operator=: class should not be assigned
-        LFBandCodec& operator=(const LFBandCodec& rhs);
-
-    };
-
+    typedef BandCodec LFBandCodec;
 
     //////////////////////////////////////////////////////////////////////////////////
     //Finally,special class incorporating prediction for the DC band of intra frames//
