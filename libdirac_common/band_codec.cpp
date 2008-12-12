@@ -73,17 +73,6 @@ void BandCodec::DoWorkCode(CoeffArray& in_data)
 
     const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
 
-    if (m_node.Parent() != 0)
-    {
-        m_pxp = m_pnode.Xp();
-        m_pyp = m_pnode.Yp();
-    }
-    else
-    {
-        m_pxp = 0;
-        m_pyp = 0;
-    }
-
     // Now loop over the blocks and code
     bool code_skip = (block_list.LengthX() > 1 || block_list.LengthY() > 1);
     for (int j=block_list.FirstY() ; j<=block_list.LastY() ; ++j)
@@ -241,17 +230,6 @@ void BandCodec::CodeQuantIndexOffset( const int offset )
 
 void BandCodec::DoWorkDecode( CoeffArray& out_data )
 {
-    if (m_node.Parent() != 0)
-    {
-        m_pxp = m_pnode.Xp();
-        m_pyp = m_pnode.Yp();
-    }
-    else
-    {
-        m_pxp = 0;
-        m_pyp = 0;
-    }
-
     const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
 
     // Now loop over the blocks and decode
@@ -524,10 +502,6 @@ void BandCodec::ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data
 
 void LFBandCodec::DoWorkCode(CoeffArray& in_data)
 {
-
-    m_pxp = 0;
-    m_pyp = 0;
-
     const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
 
     // Now loop over the blocks and code
@@ -592,9 +566,6 @@ void LFBandCodec::CodeCoeffBlock( const CodeBlock& code_block , CoeffArray& in_d
 
 void LFBandCodec::DoWorkDecode(CoeffArray& out_data )
 {
-    m_pxp = 0;
-    m_pyp = 0;
-
     const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );
 
     // Now loop over the blocks and decode
@@ -676,10 +647,6 @@ void LFBandCodec::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray& ou
 
 void IntraDCBandCodec::DoWorkCode(CoeffArray& in_data)
 {
-
-    m_pxp = 0;
-    m_pyp = 0;
-
     // Residues after prediction, quantisation and inverse quantisation
     m_dc_pred_res.Resize( m_node.Yl() , m_node.Xl() );
 
@@ -745,10 +712,6 @@ void IntraDCBandCodec::CodeCoeffBlock( const CodeBlock& code_block , CoeffArray&
 
 void IntraDCBandCodec::DoWorkDecode(CoeffArray& out_data)
 {
-
-    m_pxp = 0;
-    m_pyp = 0;
-
     m_dc_pred_res.Resize( m_node.Yl() , m_node.Xl() );
 
     const TwoDArray<CodeBlock>& block_list( m_node.GetCodeBlocks() );

@@ -145,9 +145,6 @@ namespace dirac
         //! the parent subband
         Subband m_pnode;
     
-        //! coords of the parent subband
-        int m_pxp, m_pyp, m_pxl, m_pyl;
-    
         //! position of the parent coefficient
         int m_pxpos, m_pypos;
     
