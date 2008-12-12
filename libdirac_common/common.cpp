@@ -485,7 +485,7 @@ void EncoderParams::SetInterTransformFilter(unsigned int wf_idx)
     SetInterTransformFilter(TransformFilter(wf_idx));
 }
 
-void EncoderParams::SetUsualCodeBlocks ( const PictureType &ftype)
+void EncoderParams::SetUsualCodeBlocks ( const PictureType &/*ftype*/)
 {
     // No subband splitting if  spatial partitioning if false
     // Since this function is common to encoder and decoder we allow the
@@ -495,9 +495,12 @@ void EncoderParams::SetUsualCodeBlocks ( const PictureType &ftype)
         return;
 
     SetCodeBlocks(0, 1, 1);
-    if (TransformDepth() == 0)
+    int depth = TransformDepth();
+    if (depth == 0)
         return;
 
+    int xl_pad = (Xl() + (1 << depth)-1) & ~((1 << depth)-1);
+    int yl_pad = (Yl() + (1 << depth)-1) & ~((1 << depth)-1);
     switch (GetVideoFormat())
     {
     case VIDEO_FORMAT_QSIF525:
@@ -521,20 +524,11 @@ void EncoderParams::SetUsualCodeBlocks ( const PictureType &ftype)
     case VIDEO_FORMAT_UHDTV_8K50:
     case VIDEO_FORMAT_DIGI_CINEMA_2K24:
     case VIDEO_FORMAT_DIGI_CINEMA_4K24:
-        if (ftype == INTRA_PICTURE){
-            int depth = TransformDepth();
-            for (int i=depth; i>=std::max(1,depth-3); --i)
-                SetCodeBlocks(i, Xl()/(24*2^(depth-i)), Yl()/(24*2^(depth-i)));
-            for (int i = 0; i<std::max(1,depth-3); ++i)
-                SetCodeBlocks(i, 1, 1);
-        }
-        else{
-            int depth = TransformDepth();
-            for (int i=depth; i>=std::max(1,depth-3); --i)
-                SetCodeBlocks(i, Xl()/(24*2^(depth-i)), Yl()/(24*2^(depth-i)));
-            for (int i = 0; i<std::max(1,depth-3); ++i)
-                SetCodeBlocks(i, 1, 1);
-        }
+        /* NB, could have different sizes based upon ftype == INTRA_PICTURE */
+        /* aim for 12x12 codeblocks in each subband, execpt the DC with 4x4 */
+        for (int i = 1; i <= depth; i++)
+            SetCodeBlocks(depth-i+1, (xl_pad >> i) /12, (yl_pad >> i) /12);
+        SetCodeBlocks(0, (xl_pad >> depth) /4, (yl_pad >> depth) /4);
         break;
 
     default:
