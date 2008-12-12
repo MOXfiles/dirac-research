@@ -353,13 +353,13 @@ void QuantChooser::SetSkip( CodeBlock& cblock , const int qidx)
 
 CoeffType QuantChooser::BlockAbsMax( const Subband& node )
 {
-    CoeffType val( 0 );
+    int val( 0 );
 
     for (int j=node.Yp() ; j<node.Yp()+node.Yl(); ++j)
     {
         for (int i=node.Xp() ; i<node.Xp()+node.Xl(); ++i)
         {    
-            val = std::max( val , m_coeff_data[j][i] );    
+            val = std::max( val , std::abs(m_coeff_data[j][i]) );
         }// i
     }// j
 
