@@ -524,6 +524,7 @@ void IntraDCBandCodec::DoWorkCode(CoeffArray& in_data)
 {
     // Residues after prediction, quantisation and inverse quantisation
     m_dc_pred_res.Resize( m_node.Yl() , m_node.Xl() );
+    m_dc_pred_res.Fill( 0 );
 
     BandCodec::DoWorkCode(in_data);
 }
@@ -545,6 +546,20 @@ void IntraDCBandCodec::CodeCoeff( CoeffArray& in_data, const int xpos, const int
     in_data[ypos][xpos] += prediction;
 }
 
+/* after coding a skipped DC codeblock, reconstruct in_data by predicting the values
+ * and not adding any error term (they were all skipped).  This is required to correctly
+ * predict the values in the next codeblock */
+void IntraDCBandCodec::ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data)
+{
+    for (int ypos=code_block.Ystart() ; ypos<code_block.Yend() ; ++ypos)
+    {
+        for (int xpos=code_block.Xstart() ; xpos<code_block.Xend() ; ++xpos)
+        {
+            /* NB, it is correct to overwrite the old value */
+            coeff_data[ypos][xpos] = GetPrediction( coeff_data , xpos , ypos );
+        } // i
+    } // j
+}
 
 void IntraDCBandCodec::DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data)
 {

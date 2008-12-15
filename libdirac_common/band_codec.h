@@ -93,7 +93,7 @@ namespace dirac
         inline void SetToVal( const CodeBlock& code_block , CoeffArray& coeff_data , const CoeffType val);
 
         //! Set all block values to 0
-        inline void ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data);
+        virtual void ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data);
 
     protected:
         //functions
@@ -192,6 +192,9 @@ namespace dirac
 
         //! Encode a single coefficient using error-feedback DC quantization
         void CodeCoeff(CoeffArray& in_data, const int xpos, const int ypos);
+
+        //! When coding a skipped block, propegate the predicted values for future non skipped blocks
+        void ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data);
 
         //! Private, bodyless copy constructor: class should not be copied
         IntraDCBandCodec(const IntraDCBandCodec& cpy); 
