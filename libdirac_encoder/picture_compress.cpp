@@ -631,9 +631,6 @@ void PictureCompressor::SelectQuantisers( CoeffArray& coeff_data ,
         for ( int b=bands.Length() ; b>=1 ; --b )
             est_bits[b] = SelectMultiQuants( coeff_data , bands , b, lambda,
                                       pp, csort );
-        // Force the first codeblock in the DC band to be 0 quant.
-        bands(bands.Length()).SetQuantIndex( 0 );
-        bands(bands.Length()).GetCodeBlocks()[0][0].SetQuantIndex( 0 );
     }
     else{
         for ( int b=bands.Length() ; b>=1 ; --b ){
