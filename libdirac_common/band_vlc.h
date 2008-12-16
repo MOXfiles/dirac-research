@@ -42,6 +42,7 @@
 #define _BAND_VLC_H
 
 #include <libdirac_common/wavelet_utils.h>
+#include <libdirac_common/band_codec.h>
 
 
 namespace dirac
@@ -50,12 +51,31 @@ namespace dirac
    class SubbandByteIO;
    class ByteIO;
 
+    class ArithCodecToVLCAdapter
+    {
+    public:
+        ArithCodecToVLCAdapter(SubbandByteIO* subband_byteio, size_t number_of_contexts);
+
+        void EncodeSymbol(bool val, int /*context_num*/)
+        {
+            m_byteio->WriteBit(val);
+        }
+
+        bool DecodeSymbol(int /*context_num*/)
+        {
+            return m_byteio->ReadBoolB();
+        }
+
+    protected:
+        ByteIO *m_byteio;
+    };
+
 
     //! A general class for coding and decoding wavelet subband data using variable length coding.
     /*!
         A general class for coding and decoding wavelet subband data using variable length coding,
      */
-    class BandVLC
+    class BandVLC : public GenericBandCodec<ArithCodecToVLCAdapter>
     {
     public:
 
@@ -79,62 +99,11 @@ namespace dirac
 
         virtual ~BandVLC(){}
 
-    protected:
-        //! Code an individual quantised value and perform inverse-quantisation
-        inline void CodeVal( CoeffArray& in_data , const int xpos , const int ypos , const CoeffType val);
-
-        //! Decode an individual quantised value and perform inverse-quantisation
-        inline void DecodeVal(CoeffArray& out_data , const int xpos , const int ypos );
-
-        //! Encode the offset for a code block quantiser
-        void CodeQuantIndexOffset( const int offset );
-
-        //! Decode the offset for a code block quantiser
-        int DecodeQuantIndexOffset();
-
-        //! Set a code block area to a given value
-        inline void SetToVal( const CodeBlock& code_block , CoeffArray& coeff_data , const CoeffType val);
-
-        //! Set all block values to 0
-        inline void ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data);
     private:
-        //functions
-        // Overridden from the base class
-        virtual void DoWorkCode(CoeffArray& in_data);
-        // Ditto
-        virtual void DoWorkDecode(CoeffArray& out_data);
-
-        virtual void CodeCoeffBlock(const CodeBlock& code_block , CoeffArray& in_data);
-        virtual void DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data);
-
         //! Private, bodyless copy constructor: class should not be copied
         BandVLC(const BandVLC& cpy);
         //! Private, bodyless copy operator=: class should not be assigned
         BandVLC& operator=(const BandVLC& rhs);
-
-    protected:
-              
-        //! Flag indicating whether the band comes from an intra picture
-        bool m_is_intra;
-    
-        //! variables    
-        int m_bnum;
-
-        //! the subband being coded
-        const Subband m_node;
-    
-        //! the quantisation index of the last codeblock
-        int m_last_qf_idx;
-            
-        //! quantisation value
-        int m_qf;
-    
-        //! reconstruction point
-        CoeffType m_offset;
-
-        //! Input/output stream of Dirac-format bytes
-        ByteIO *m_byteio;
-    
     };
 
     //////////////////////////////////////////////////////////////////////////////////
@@ -160,23 +129,13 @@ namespace dirac
           : BandVLC(subband_byteio,band_list,
                       band_list.Length(), true){}
 
-    
+
     private:
-        void DoWorkCode(CoeffArray& in_data);                    //overridden from the base class
-        void DoWorkDecode(CoeffArray& out_data); //ditto
-
-        void CodeCoeffBlock(const CodeBlock& code_block , CoeffArray& in_data);
-        void DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data);
-        void DCPrediction(const CodeBlock& code_block , CoeffArray& out_data);
-
         //! Private, bodyless copy constructor: class should not be copied
         IntraDCBandVLC (const IntraDCBandVLC& cpy); 
 
         //! Private, bodyless copy operator=: class should not be assigned
         IntraDCBandVLC& operator=(const IntraDCBandVLC& rhs);
-
-        //! Prediction of a DC value from its previously coded neighbours
-        CoeffType GetPrediction(const CoeffArray& data , const int xpos , const int ypos ) const;
     };
 
 

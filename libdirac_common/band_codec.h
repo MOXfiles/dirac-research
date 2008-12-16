@@ -57,7 +57,8 @@ namespace dirac
     /*!
         A general class for coding and decoding wavelet subband data, deriving from the abstract ArithCodec class.
      */
-    class BandCodec: public ArithCodec<CoeffArray>
+    template<typename EntropyCodec>
+    class GenericBandCodec: public EntropyCodec
     {
     public:
 
@@ -70,7 +71,7 @@ namespace dirac
             \param    band_num    the number of the subband being coded 
             \param    is_intra    Flag indicating whether the band comes from an intra picture
          */
-        BandCodec(SubbandByteIO* subband_byteio,
+        GenericBandCodec(SubbandByteIO* subband_byteio,
                   size_t number_of_contexts,
                   const SubbandList& band_list,
                   int band_num,
@@ -117,10 +118,11 @@ namespace dirac
         //! A function for choosing the context for sign bits
         inline int ChooseSignContext(const CoeffArray& data , const int xpos , const int ypos ) const;
 
+    private:
         //! Private, bodyless copy constructor: class should not be copied
-        BandCodec(const BandCodec& cpy);
+        GenericBandCodec(const GenericBandCodec& cpy);
         //! Private, bodyless copy operator=: class should not be assigned
-        BandCodec& operator=(const BandCodec& rhs);
+        GenericBandCodec& operator=(const GenericBandCodec& rhs);
 
     protected:
               
@@ -156,6 +158,7 @@ namespace dirac
     
     };
 
+    typedef GenericBandCodec<ArithCodec<CoeffArray> > BandCodec;
     typedef BandCodec LFBandCodec;
 
     //////////////////////////////////////////////////////////////////////////////////
@@ -215,7 +218,6 @@ namespace dirac
     private:
         CoeffArray m_dc_pred_res;
     };
-
 
 }// end namespace dirac
 #endif

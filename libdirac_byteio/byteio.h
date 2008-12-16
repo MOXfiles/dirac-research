@@ -359,12 +359,8 @@ namespace dirac
        /**
        * VLC entropy coder can see internals for getting/setting bits
        */
+       friend class ArithCodecToVLCAdapter;
        friend class BandVLC;
-
-       /**
-       * VLC entropy coder can see internals for getting/setting bits
-       */
-       friend class IntraDCBandVLC;
 
        /**
        * Char used for temporary storage of op data bits
