@@ -87,10 +87,6 @@ int QuantChooser::GetBestQuant( Subband& node )
     // The number of quantisers to be tested
     int num_quants( 4 * max_bit + 5 );
 
-    // If we have a DC band, then restrict the maximum quantiser
-    if (node.Xp()==0 && node.Yp()==0)
-        num_quants = std::min(num_quants, 5 );
-
     // Set the array sizes
     m_costs.Resize( num_quants );
     m_count0.Resize(  num_quants );
