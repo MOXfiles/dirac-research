@@ -330,10 +330,15 @@ void BandCodec::DecodeCoeffBlock( const CodeBlock& code_block , CoeffArray& out_
             else
                 m_parent_notzero = false;
 
-            DecodeVal( out_data , xpos , ypos );
+            DecodeCoeff( out_data , xpos , ypos );
 
         }// xpos
     }// ypos
+}
+
+void BandCodec::DecodeCoeff( CoeffArray& in_data, const int xpos, const int ypos)
+{
+    DecodeVal( in_data , xpos , ypos );
 }
 
 
@@ -561,6 +566,15 @@ void IntraDCBandCodec::ClearBlock( const CodeBlock& code_block , CoeffArray& coe
     } // j
 }
 
+void IntraDCBandCodec::DoWorkDecode(CoeffArray& out_data)
+{
+    // Residues after prediction, quantisation and inverse quantisation
+    m_dc_pred_res.Resize( m_node.Yl() , m_node.Xl() );
+    m_dc_pred_res.Fill( 0 );
+
+    BandCodec::DoWorkDecode(out_data);
+}
+
 void IntraDCBandCodec::DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data)
 {
     BandCodec::DecodeCoeffBlock(code_block, out_data);
@@ -572,6 +586,20 @@ void IntraDCBandCodec::DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray
              out_data[ypos][xpos] += GetPrediction( out_data , xpos , ypos );
         }
     }
+}
+
+void IntraDCBandCodec::DecodeCoeff( CoeffArray& out_data, const int xpos, const int ypos)
+{
+    m_nhood_nonzero = false;
+    if (ypos > m_node.Yp())
+        m_nhood_nonzero |= bool(m_dc_pred_res[ypos-1][xpos]);
+    if (xpos > m_node.Xp())
+        m_nhood_nonzero |= bool(m_dc_pred_res[ypos][xpos-1]);
+    if (ypos > m_node.Yp() && xpos > m_node.Xp())
+        m_nhood_nonzero |= bool(m_dc_pred_res[ypos-1][xpos-1]);
+
+    DecodeVal( out_data , xpos , ypos );
+    m_dc_pred_res[ypos][xpos] = out_data[ypos][xpos];
 }
 
 CoeffType IntraDCBandCodec::GetPrediction( const CoeffArray& data , const int xpos , const int ypos ) const

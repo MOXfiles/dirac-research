@@ -107,6 +107,7 @@ namespace dirac
 
         virtual void CodeCoeff(CoeffArray& in_data, const int xpos, const int ypos);
 
+        virtual void DecodeCoeff(CoeffArray& in_data, const int xpos, const int ypos);
         //! A function for choosing the context for "follow bits"
         inline int ChooseFollowContext( const int bin_number ) const;
 
@@ -187,11 +188,17 @@ namespace dirac
         //! Initialize extra data required for error-feedback DC quantization
         void DoWorkCode(CoeffArray& in_data);                    //overridden from the base class
 
+        //! Ditto
+        void DoWorkDecode(CoeffArray& out_data);
+
         //! Decode codeblock of coefficients and perform DC prediction
         void DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data);
 
         //! Encode a single coefficient using error-feedback DC quantization
         void CodeCoeff(CoeffArray& in_data, const int xpos, const int ypos);
+
+        //! Decode a single coefficient using error-feedback DC quantization
+        void DecodeCoeff(CoeffArray& out_data, const int xpos, const int ypos);
 
         //! When coding a skipped block, propegate the predicted values for future non skipped blocks
         void ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data);
