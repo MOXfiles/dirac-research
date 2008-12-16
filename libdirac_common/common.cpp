@@ -501,46 +501,13 @@ void EncoderParams::SetUsualCodeBlocks ( const PictureType &/*ftype*/)
 
     int xl_pad = (Xl() + (1 << depth)-1) & ~((1 << depth)-1);
     int yl_pad = (Yl() + (1 << depth)-1) & ~((1 << depth)-1);
-    switch (GetVideoFormat())
-    {
-    case VIDEO_FORMAT_QSIF525:
-    case VIDEO_FORMAT_QCIF:
-    case VIDEO_FORMAT_CUSTOM:
-    case VIDEO_FORMAT_SIF525:
-    case VIDEO_FORMAT_CIF:
-    case VIDEO_FORMAT_4CIF:
-    case VIDEO_FORMAT_4SIF525:
-    case VIDEO_FORMAT_SD_480I60:
-    case VIDEO_FORMAT_SD_576I50:
-    case VIDEO_FORMAT_HD_720P60:
-    case VIDEO_FORMAT_HD_720P50:
-    case VIDEO_FORMAT_HD_1080I60:
-    case VIDEO_FORMAT_HD_1080I50:
-    case VIDEO_FORMAT_HD_1080P60:
-    case VIDEO_FORMAT_HD_1080P50:
-    case VIDEO_FORMAT_UHDTV_4K60:
-    case VIDEO_FORMAT_UHDTV_4K50:
-    case VIDEO_FORMAT_UHDTV_8K60:
-    case VIDEO_FORMAT_UHDTV_8K50:
-    case VIDEO_FORMAT_DIGI_CINEMA_2K24:
-    case VIDEO_FORMAT_DIGI_CINEMA_4K24:
-        /* NB, could have different sizes based upon ftype == INTRA_PICTURE */
-        /* aim for 12x12 codeblocks in each subband, execpt the DC with 4x4 */
-        for (int i = 1; i <= depth; i++)
-            SetCodeBlocks(depth-i+1, (xl_pad >> i) /12, (yl_pad >> i) /12);
-        SetCodeBlocks(0, (xl_pad >> depth) /4, (yl_pad >> depth) /4);
-        break;
 
-    default:
-        DIRAC_THROW_EXCEPTION(
-            ERR_INVALID_VIDEO_FORMAT,
-            "Unsupported video format",
-            SEVERITY_PICTURE_ERROR);
-        break;
-    }
+    /* NB, could have different sizes based upon ftype == INTRA_PICTURE */
+    /* aim for 12x12 codeblocks in each subband, execpt the DC with 4x4 */
+    for (int i = 1; i <= depth; i++)
+        SetCodeBlocks(depth-i+1, std::max(1,(xl_pad >> i) /12), std::max(1, (yl_pad >> i) /12));
+    SetCodeBlocks(0, std::max(1,(xl_pad >> depth) /4), std::max(1,(yl_pad >> depth) /4));
 }
-
-
 
 int EncoderParams::GOPLength() const
 {
