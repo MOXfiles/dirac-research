@@ -59,6 +59,12 @@ GenericBandCodec<ArithCodec<CoeffArray> >::GenericBandCodec(
     int band_num,
     const bool is_intra);
 
+
+template
+GenericIntraDCBandCodec<ArithCodec<CoeffArray> >::GenericIntraDCBandCodec(
+    SubbandByteIO* subband_byteio,
+    size_t number_of_contexts,
+    const SubbandList & band_list);
 //////////////////////////////////////////////////////////////////////////////////
 //Finally,special class incorporating prediction for the DC band of intra frames//
 //////////////////////////////////////////////////////////////////////////////////
@@ -89,21 +95,6 @@ void IntraDCBandCodec::CodeCoeff( CoeffArray& in_data, const int xpos, const int
     in_data[ypos][xpos] += prediction;
 }
 
-/* after coding a skipped DC codeblock, reconstruct in_data by predicting the values
- * and not adding any error term (they were all skipped).  This is required to correctly
- * predict the values in the next codeblock */
-void IntraDCBandCodec::ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data)
-{
-    for (int ypos=code_block.Ystart() ; ypos<code_block.Yend() ; ++ypos)
-    {
-        for (int xpos=code_block.Xstart() ; xpos<code_block.Xend() ; ++xpos)
-        {
-            /* NB, it is correct to overwrite the old value */
-            coeff_data[ypos][xpos] = GetPrediction( coeff_data , xpos , ypos );
-        } // i
-    } // j
-}
-
 void IntraDCBandCodec::DoWorkDecode(CoeffArray& out_data)
 {
     // Residues after prediction, quantisation and inverse quantisation
@@ -111,19 +102,6 @@ void IntraDCBandCodec::DoWorkDecode(CoeffArray& out_data)
     m_dc_pred_res.Fill( 0 );
 
     BandCodec::DoWorkDecode(out_data);
-}
-
-void IntraDCBandCodec::DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data)
-{
-    BandCodec::DecodeCoeffBlock(code_block, out_data);
-    /* do prediction for this block */
-    for ( int ypos=code_block.Ystart() ; ypos<code_block.Yend() ; ++ypos)
-    {
-        for ( int xpos=code_block.Xstart() ; xpos<code_block.Xend() ; ++xpos)
-        {
-             out_data[ypos][xpos] += GetPrediction( out_data , xpos , ypos );
-        }
-    }
 }
 
 void IntraDCBandCodec::DecodeCoeff( CoeffArray& out_data, const int xpos, const int ypos)
@@ -138,32 +116,4 @@ void IntraDCBandCodec::DecodeCoeff( CoeffArray& out_data, const int xpos, const 
 
     DecodeVal( out_data , xpos , ypos );
     m_dc_pred_res[ypos][xpos] = out_data[ypos][xpos];
-}
-
-CoeffType IntraDCBandCodec::GetPrediction( const CoeffArray& data , const int xpos , const int ypos ) const
-{
-    /* NB, 4.5.3 integer division
-     * numbers are rounded down towards -ve infinity, differing from
-     * C's convention that rounds towards 0
-    */
-    if (ypos!=0)
-    {
-        if (xpos!=0)
-        {
-            int sum = data[ypos][xpos-1] + data[ypos-1][xpos-1] + data[ypos-1][xpos] + 3/2;
-            if (sum<0)
-                return (sum-2)/3;
-            else
-                return sum/3;
-        }
-        else
-            return data[ypos - 1][0];
-    }
-    else
-    {
-        if(xpos!=0)
-            return data[0][xpos - 1];
-        else
-            return 0;
-    }
 }

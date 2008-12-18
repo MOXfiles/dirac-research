@@ -51,23 +51,45 @@ namespace dirac
    class SubbandByteIO;
    class ByteIO;
 
+    /*! Abstract VLC entropy codec base class */
     class ArithCodecToVLCAdapter
     {
     public:
+        /*! Constructor */
         ArithCodecToVLCAdapter(SubbandByteIO* subband_byteio, size_t number_of_contexts);
+        /* Compresses the input and returns the number of bits written */
+        int Compress (CoeffArray &in_data);
 
+        /* Decompresses the bitstream */
+        void Decompress (CoeffArray& out_data, int num_bytes);
+
+        /* Encodes a symbol and writes to the output */
         void EncodeSymbol(bool val, int /*context_num*/)
         {
             m_byteio->WriteBit(val);
         }
 
+        /* Decodes a symbol */
         bool DecodeSymbol(int /*context_num*/)
         {
             return m_byteio->ReadBoolB();
         }
 
+        /*! Purely virtual function that does the actual encoding. Derived classes must define it */
+        virtual void DoWorkCode(CoeffArray &in_data) = 0;
+
+        /*! Purely virtual function that does the actual decoding. Derived classes must define it */
+        virtual void DoWorkDecode(CoeffArray &out_data) = 0;
+
     protected:
+        /*! Input/output stream for Dirac-format bytes */
         ByteIO *m_byteio;
+
+    private:
+        //! Private, bodyless copy constructor: class should not be copied
+        ArithCodecToVLCAdapter(const ArithCodecToVLCAdapter& cpy);
+        //! Private, bodyless copy operator=: class should not be assigned
+        ArithCodecToVLCAdapter& operator=(const ArithCodecToVLCAdapter& rhs);
     };
 
 
@@ -75,47 +97,18 @@ namespace dirac
     /*!
         A general class for coding and decoding wavelet subband data using variable length coding,
      */
-    class BandVLC : public GenericBandCodec<ArithCodecToVLCAdapter>
-    {
-    public:
-
-        //! Constructor 
-        /*!
-            Creates a BandVLC object to encode subband data
-            \param    subband_byteio   input/output for the encoded bits
-            \param    band_list    the set of all the subbands
-            \param    band_num    the number of the subband being coded 
-            \param    is_intra    Flag indicating whether the band comes from an intra picture
-         */
-        BandVLC(SubbandByteIO* subband_byteio,
-                  const SubbandList& band_list,
-                  int band_num,
-                  const bool is_intra);
-
-
-        void Decompress (CoeffArray& out_data, int num_bytes);
-
-        int Compress (CoeffArray &in_data);
-
-        virtual ~BandVLC(){}
-
-    private:
-        //! Private, bodyless copy constructor: class should not be copied
-        BandVLC(const BandVLC& cpy);
-        //! Private, bodyless copy operator=: class should not be assigned
-        BandVLC& operator=(const BandVLC& rhs);
-    };
+    typedef GenericBandCodec<ArithCodecToVLCAdapter> BandVLC;
 
     //////////////////////////////////////////////////////////////////////////////////
     //Finally,special class incorporating prediction for the DC band of intra frames//
     //////////////////////////////////////////////////////////////////////////////////
 
-    //! A class specially for coding the DC subband of Intra frames 
+    //! A class specially for coding the DC subband of Intra frames
     /*!
-        A class specially for coding the DC subband of Intra frames, using intra-band prediction 
+        A class specially for coding the DC subband of Intra frames, using intra-band prediction
         of coefficients.
     */
-    class IntraDCBandVLC: public BandVLC
+    class IntraDCBandVLC: public GenericIntraDCBandCodec<ArithCodecToVLCAdapter>
     {
     public:
         //! Constructor
@@ -125,14 +118,14 @@ namespace dirac
             \param    band_list    the set of all the subbands
          */
         IntraDCBandVLC(SubbandByteIO* subband_byteio,
-                         const SubbandList& band_list)
-          : BandVLC(subband_byteio,band_list,
-                      band_list.Length(), true){}
-
+                         const SubbandList& band_list);
+    private:
+        //! Encode a single coefficient using error-feedback DC quantization
+        void CodeCoeff(CoeffArray& in_data, const int xpos, const int ypos);
 
     private:
         //! Private, bodyless copy constructor: class should not be copied
-        IntraDCBandVLC (const IntraDCBandVLC& cpy); 
+        IntraDCBandVLC (const IntraDCBandVLC& cpy);
 
         //! Private, bodyless copy operator=: class should not be assigned
         IntraDCBandVLC& operator=(const IntraDCBandVLC& rhs);

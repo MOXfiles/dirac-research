@@ -53,22 +53,19 @@ namespace dirac
     //Subclasses the arithmetic codec to produce a coding/decoding tool for subbands
 
 
-    //! A general class for coding and decoding wavelet subband data.
-    /*!
-        A general class for coding and decoding wavelet subband data, deriving from the abstract ArithCodec class.
-     */
+    //! A template class for coding and decoding wavelet subband data.
     template<typename EntropyCodec>
     class GenericBandCodec: public EntropyCodec
     {
     public:
 
-        //! Constructor 
+        //! Constructor
         /*!
             Creates a BandCodec object to encode subband data
             \param    subband_byteio   input/output for the encoded bits
             \param    number_of_contexts the number of contexts used in the encoding process
             \param    band_list    the set of all the subbands
-            \param    band_num    the number of the subband being coded 
+            \param    band_num    the number of the subband being coded
             \param    is_intra    Flag indicating whether the band comes from an intra picture
          */
         GenericBandCodec(SubbandByteIO* subband_byteio,
@@ -125,39 +122,43 @@ namespace dirac
         GenericBandCodec& operator=(const GenericBandCodec& rhs);
 
     protected:
-              
+
         //! Flag indicating whether the band comes from an intra picture
         bool m_is_intra;
-    
-        //! variables    
+
+        //! variables
         int m_bnum;
 
         //! the subband being coded
         const Subband m_node;
-    
+
         //! the quantisation index of the last codeblock
         int m_last_qf_idx;
-            
+
         //! quantisation value
         int m_qf;
-    
+
         //! reconstruction point
         CoeffType m_offset;
 
         //! True if neighbours non-zero
         bool m_nhood_nonzero;
-    
+
         //! the parent subband
         Subband m_pnode;
-    
+
         //! position of the parent coefficient
         int m_pxpos, m_pypos;
-    
+
         //! True if the parent of a coeff is not zero
         bool m_parent_notzero;
-    
+
     };
 
+    //! A general class for coding and decoding wavelet subband data.
+    /*!
+        A general class for coding and decoding wavelet subband data, deriving from the abstract ArithCodec class.
+     */
     typedef GenericBandCodec<ArithCodec<CoeffArray> > BandCodec;
     typedef BandCodec LFBandCodec;
 
@@ -165,12 +166,44 @@ namespace dirac
     //Finally,special class incorporating prediction for the DC band of intra frames//
     //////////////////////////////////////////////////////////////////////////////////
 
-    //! A class specially for coding the DC subband of Intra frames 
+    //! A template class specially for coding the DC subband of Intra frames
+    template<typename EntropyCodec>
+    class GenericIntraDCBandCodec : public GenericBandCodec<EntropyCodec>
+    {
+    public:
+        //! Constructor
+        /*!
+            Creates a IntraDCBandCodec object to encode subband data
+            \param    subband_byteio   input/output for the encoded bits
+            \param    number_of_contexts the number of contexts used in the encoding process
+            \param    band_list    the set of all the subbands
+         */
+        GenericIntraDCBandCodec(SubbandByteIO* subband_byteio,
+                         size_t number_of_contexts,
+                         const SubbandList& band_list)
+          : GenericBandCodec<EntropyCodec>(subband_byteio,number_of_contexts,
+                                           band_list, band_list.Length(),
+                                           true){}
+
+    protected:
+        //! When coding a skipped block, propegate the predicted values for future non skipped blocks
+        void ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data);
+
+        //! Prediction of a DC value from its previously coded neighbours
+        CoeffType GetPrediction(const CoeffArray& data , const int xpos , const int ypos ) const;
+
+        //! Decode codeblock of coefficients and perform DC prediction
+        void DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data);
+    };
+
+
+    //! A class specially for coding the DC subband of Intra frames
     /*!
-        A class specially for coding the DC subband of Intra frames, using intra-band prediction 
-        of coefficients.
+        A class specially for coding the DC subband of Intra frames, using
+        intra-band prediction of coefficients. It uses the abstract ArithCodec
+        class
     */
-    class IntraDCBandCodec: public BandCodec
+    class IntraDCBandCodec: public GenericIntraDCBandCodec<ArithCodec<CoeffArray> >
     {
     public:
         //! Constructor
@@ -183,10 +216,11 @@ namespace dirac
         IntraDCBandCodec(SubbandByteIO* subband_byteio,
                          size_t number_of_contexts,
                          const SubbandList& band_list)
-          : BandCodec(subband_byteio,number_of_contexts,band_list,
-                      band_list.Length(), true){}
+          : GenericIntraDCBandCodec<ArithCodec<CoeffArray> >(subband_byteio,
+                                              number_of_contexts,
+                                              band_list){}
 
-    
+
     private:
         //! Initialize extra data required for error-feedback DC quantization
         void DoWorkCode(CoeffArray& in_data);                    //overridden from the base class
@@ -194,26 +228,17 @@ namespace dirac
         //! Ditto
         void DoWorkDecode(CoeffArray& out_data);
 
-        //! Decode codeblock of coefficients and perform DC prediction
-        void DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data);
-
         //! Encode a single coefficient using error-feedback DC quantization
         void CodeCoeff(CoeffArray& in_data, const int xpos, const int ypos);
 
         //! Decode a single coefficient using error-feedback DC quantization
         void DecodeCoeff(CoeffArray& out_data, const int xpos, const int ypos);
 
-        //! When coding a skipped block, propegate the predicted values for future non skipped blocks
-        void ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data);
-
         //! Private, bodyless copy constructor: class should not be copied
-        IntraDCBandCodec(const IntraDCBandCodec& cpy); 
+        IntraDCBandCodec(const IntraDCBandCodec& cpy);
 
         //! Private, bodyless copy operator=: class should not be assigned
         IntraDCBandCodec& operator=(const IntraDCBandCodec& rhs);
-
-        //! Prediction of a DC value from its previously coded neighbours
-        CoeffType GetPrediction(const CoeffArray& data , const int xpos , const int ypos ) const;
 
     private:
         CoeffArray m_dc_pred_res;

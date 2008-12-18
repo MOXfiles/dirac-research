@@ -495,3 +495,63 @@ void GenericBandCodec<EntropyCodec>::ClearBlock( const CodeBlock& code_block , C
 
 }
 
+/*  Decode a single coefficient using error-feedback DC quantization */
+template<typename EntropyCodec>
+void GenericIntraDCBandCodec<EntropyCodec>::DecodeCoeffBlock(const CodeBlock& code_block , CoeffArray& out_data)
+{
+    GenericBandCodec<EntropyCodec>::DecodeCoeffBlock(code_block, out_data);
+    /* do prediction for this block */
+    for ( int ypos=code_block.Ystart() ; ypos<code_block.Yend() ; ++ypos)
+    {
+        for ( int xpos=code_block.Xstart() ; xpos<code_block.Xend() ; ++xpos)
+        {
+             out_data[ypos][xpos] += GetPrediction( out_data , xpos , ypos );
+        }
+    }
+}
+
+/* after coding a skipped DC codeblock, reconstruct in_data by predicting the values
+ * and not adding any error term (they were all skipped).  This is required to correctly
+ * predict the values in the next codeblock */
+
+template<typename EntropyCodec>
+void GenericIntraDCBandCodec<EntropyCodec>::ClearBlock( const CodeBlock& code_block , CoeffArray& coeff_data)
+{
+    for (int ypos=code_block.Ystart() ; ypos<code_block.Yend() ; ++ypos)
+    {
+        for (int xpos=code_block.Xstart() ; xpos<code_block.Xend() ; ++xpos)
+        {
+            /* NB, it is correct to overwrite the old value */
+            coeff_data[ypos][xpos] = GetPrediction( coeff_data , xpos , ypos );
+        } // i
+    } // j
+}
+
+template<typename EntropyCodec>
+CoeffType GenericIntraDCBandCodec<EntropyCodec>::GetPrediction( const CoeffArray& data , const int xpos , const int ypos ) const
+{
+    /* NB, 4.5.3 integer division
+     * numbers are rounded down towards -ve infinity, differing from
+     * C's convention that rounds towards 0
+    */
+    if (ypos!=0)
+    {
+        if (xpos!=0)
+        {
+            int sum = data[ypos][xpos-1] + data[ypos-1][xpos-1] + data[ypos-1][xpos] + 3/2;
+            if (sum<0)
+                return (sum-2)/3;
+            else
+                return sum/3;
+        }
+        else
+            return data[ypos - 1][0];
+    }
+    else
+    {
+        if(xpos!=0)
+            return data[0][xpos - 1];
+        else
+            return 0;
+    }
+}

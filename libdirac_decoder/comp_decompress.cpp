@@ -74,7 +74,7 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
         // a. The global code_block_mode is QUANT_MULTIPLE
         //              and
         // b. More than one code block is present in the subband.
-        bands(b).SetUsingMultiQuants( 
+        bands(b).SetUsingMultiQuants(
                            m_decparams.SpatialPartition() &&
                            m_decparams.GetCodeBlockMode() == QUANT_MULTIPLE &&
                            (bands(b).GetCodeBlocks().LengthX() > 1 ||
@@ -84,15 +84,15 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
         // Read the header data first
         SubbandByteIO subband_byteio(bands(b), *p_component_byteio);
         subband_byteio.Input();
-        
+
         if ( !bands(b).Skipped() ){
             if (m_pparams.UsingAC()){
                 // A pointer to the object(s) we'll be using for coding the bands
                 BandCodec* bdecoder;
-    
+
                 if ( b>=bands.Length()-3){
                     if ( m_psort.IsIntra() && b==bands.Length() )
-                        bdecoder=new IntraDCBandCodec(&subband_byteio, 
+                        bdecoder=new IntraDCBandCodec(&subband_byteio,
                                                        TOTAL_COEFF_CTXS ,bands);
                     else
                         bdecoder=new LFBandCodec(&subband_byteio ,
@@ -109,11 +109,11 @@ void CompDecompressor::Decompress(ComponentByteIO* p_component_byteio,
             else{
                 // A pointer to the object(s) we'll be using for coding the bands
                 BandVLC* bdecoder;
-    
+
                    if ( m_psort.IsIntra() && b==bands.Length() )
                       bdecoder=new IntraDCBandVLC(&subband_byteio, bands);
                 else
-                    bdecoder=new BandVLC( &subband_byteio , bands ,
+                    bdecoder=new BandVLC( &subband_byteio , 0, bands ,
                                           b, m_psort.IsIntra());
 
                 bdecoder->Decompress(coeff_data , subband_byteio.GetBandDataLength());
@@ -151,8 +151,8 @@ void CompDecompressor::SetupCodeBlocks( SubbandList& bands )
     }// band_num
 }
 
-void CompDecompressor::SetToVal( CoeffArray& coeff_data , 
-                                 const Subband& node , 
+void CompDecompressor::SetToVal( CoeffArray& coeff_data ,
+                                 const Subband& node ,
                                  CoeffType val )
 {
 

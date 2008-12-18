@@ -52,26 +52,50 @@ ArithCodecToVLCAdapter::ArithCodecToVLCAdapter(
     m_byteio(subband_byteio)
 {}
 
-BandVLC::BandVLC(SubbandByteIO* subband_byteio,
-                 const SubbandList& band_list,
-                 int band_num,
-                 const bool is_intra):
-    GenericBandCodec<ArithCodecToVLCAdapter>(subband_byteio, 0, band_list, band_num, is_intra)
-{}
-
-
 // encoding functions
-int BandVLC::Compress(CoeffArray &in_data)
+int ArithCodecToVLCAdapter::Compress(CoeffArray &in_data)
 {
     DoWorkCode(in_data);
     return m_byteio->GetSize();
 }
 
 // decoding functions
-void BandVLC::Decompress(CoeffArray &out_data, int num_bytes)
+void ArithCodecToVLCAdapter::Decompress(CoeffArray &out_data, int num_bytes)
 {
     m_byteio->SetBitsLeft(num_bytes * 8);
     DoWorkDecode(out_data);
     m_byteio->FlushInputB();
 }
+
+template
+GenericBandCodec<ArithCodecToVLCAdapter>::GenericBandCodec(
+    SubbandByteIO* subband_byteio,
+    size_t number_of_contexts,
+    const SubbandList & band_list,
+    int band_num,
+    const bool is_intra);
+
+template
+GenericIntraDCBandCodec<ArithCodecToVLCAdapter>::GenericIntraDCBandCodec(
+    SubbandByteIO* subband_byteio,
+    size_t number_of_contexts,
+    const SubbandList & band_list);
+
+IntraDCBandVLC::IntraDCBandVLC(SubbandByteIO* subband_byteio,
+                 const SubbandList& band_list):
+    GenericIntraDCBandCodec<ArithCodecToVLCAdapter>(subband_byteio, 0, band_list)
+{}
+
+void IntraDCBandVLC::CodeCoeff( CoeffArray& in_data ,
+                                const int xpos ,
+                                const int ypos )
+{
+    CoeffType val, prediction;
+
+    prediction = GetPrediction( in_data, xpos, ypos );
+    val = in_data[ypos][xpos] - prediction;
+    CodeVal( in_data , xpos , ypos , val );
+    in_data[ypos][xpos] += prediction;
+}
+
 

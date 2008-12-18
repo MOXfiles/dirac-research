@@ -67,7 +67,7 @@ ComponentByteIO* CompCompressor::Compress( CoeffArray& coeff_data ,
                                            CompSort csort,
                                            const OneDArray<unsigned int>& estimated_bits)
 {
-    // Need to transform, select quantisers for each band, 
+    // Need to transform, select quantisers for each band,
     // and then compress each component in turn
 
     unsigned int num_band_bytes( 0 );
@@ -117,7 +117,7 @@ ComponentByteIO* CompCompressor::Compress( CoeffArray& coeff_data ,
                    if ( m_psort.IsIntra() && b == bands.Length() )
                        bcoder=new IntraDCBandVLC(&subband_byteio, bands );
                 else
-                    bcoder=new BandVLC(&subband_byteio , bands , b,
+                    bcoder=new BandVLC(&subband_byteio , 0, bands , b,
                                        m_psort.IsIntra() );
 
                 num_band_bytes = bcoder->Compress(coeff_data);
@@ -126,7 +126,7 @@ ComponentByteIO* CompCompressor::Compress( CoeffArray& coeff_data ,
             }
              // Update the entropy correction factors
              m_encparams.EntropyFactors().Update(b , m_pparams , csort ,
-		                                    estimated_bits[b] , 8*num_band_bytes);
+                                            estimated_bits[b] , 8*num_band_bytes);
         }
         else
         {   // ... skipped
