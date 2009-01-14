@@ -73,13 +73,13 @@ static void WritePicData (dirac_decoder_t *decoder, FILE *fp)
     assert(decoder->fbuf);
 
     assert(decoder->fbuf->buf[0]);
-    fwrite (decoder->fbuf->buf[0], decoder->src_params.width*decoder->src_params.height, 1, fp);
+    (void) fwrite (decoder->fbuf->buf[0], 1, decoder->src_params.width*decoder->src_params.height, fp);
 
     assert(decoder->fbuf->buf[1]);
-    fwrite (decoder->fbuf->buf[1], decoder->src_params.chroma_width*decoder->src_params.chroma_height, 1, fp);
+    (void) fwrite (decoder->fbuf->buf[1], 1, decoder->src_params.chroma_width*decoder->src_params.chroma_height, fp);
 
     assert(decoder->fbuf->buf[2]);
-    fwrite (decoder->fbuf->buf[2], decoder->src_params.chroma_width*decoder->src_params.chroma_height, 1, fp);
+    (void) fwrite (decoder->fbuf->buf[2], 1, decoder->src_params.chroma_width*decoder->src_params.chroma_height, fp);
 }
 
 
