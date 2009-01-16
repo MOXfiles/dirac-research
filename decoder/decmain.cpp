@@ -65,21 +65,24 @@ const char *chroma2string (dirac_chroma_t chroma)
     return "Unknown";
 }
 
-static void WritePicData (dirac_decoder_t *decoder, FILE *fp)
+static int WritePicData (dirac_decoder_t *decoder, FILE *fp)
 {
+    int len = 0;
     assert (decoder != NULL);
     assert (fp);
 
     assert(decoder->fbuf);
 
     assert(decoder->fbuf->buf[0]);
-    (void) fwrite (decoder->fbuf->buf[0], 1, decoder->src_params.width*decoder->src_params.height, fp);
+    len += fwrite (decoder->fbuf->buf[0], decoder->src_params.width*decoder->src_params.height, 1, fp);
 
     assert(decoder->fbuf->buf[1]);
-    (void) fwrite (decoder->fbuf->buf[1], 1, decoder->src_params.chroma_width*decoder->src_params.chroma_height, fp);
+    len += fwrite (decoder->fbuf->buf[1], decoder->src_params.chroma_width*decoder->src_params.chroma_height, 1, fp);
 
     assert(decoder->fbuf->buf[2]);
-    (void) fwrite (decoder->fbuf->buf[2], 1, decoder->src_params.chroma_width*decoder->src_params.chroma_height, fp);
+    len += fwrite (decoder->fbuf->buf[2], decoder->src_params.chroma_width*decoder->src_params.chroma_height, 1, fp);
+
+    return len == 3;
 }
 
 
@@ -211,7 +214,11 @@ static void DecodeDirac (const char *iname, const char *oname)
                     decoder->frame_num);
             }
             /* picture available for display */
-            WritePicData(decoder, fpdata);
+            if (!WritePicData(decoder, fpdata))
+            {
+                perror("Write failed");
+                goto cleanup;
+            }
             break;
 
         case STATE_INVALID:
@@ -223,6 +230,7 @@ static void DecodeDirac (const char *iname, const char *oname)
             continue;
         }
     } while (bytes > 0 && state != STATE_INVALID);
+cleanup:
     stop_t=clock();
 
     if ( verbose )
