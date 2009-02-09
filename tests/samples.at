@@ -90,8 +90,8 @@ if test $width -eq 720 || test $height -eq 576;
 then
 	preset="-SD576I50";
 	#luma block parameters
-	xblen=12;
-	xbsep=8;
+	xblen=16;
+	xbsep=12;
 	yblen=12;
 	ybsep=8;
 	bitrate="2000"
@@ -99,20 +99,20 @@ elif test $width -eq 1280 || test $height -eq 720;
 then
 	preset="-HD720P50";
 	#luma block parameters
-	xblen=16;
-	xbsep=12;
-	yblen=16
-	ybsep=12;
+	xblen=12;
+	xbsep=8;
+	yblen=24;
+	ybsep=16;
 	extras="-fr 25"; #sample data  is 25 fps 
 	bitrate="4000"
 elif test $width -eq 1920 || test $height -eq 1080;
 then
 	preset="-HD1080I50";
 	#luma block parameters
-	xblen=24;
-	xbsep=16;
-	yblen=24;
-	ybsep=16;
+	xblen=16;
+	xbsep=12;
+	yblen=12;
+	ybsep=8;
 	bitrate="8000"
 elif test $width -eq 176 || test $height -eq 144;
 then
@@ -125,8 +125,8 @@ then
 	bitrate="100"
 else
 	#luma block parameters
-	xblen=12;
-	xbsep=8;
+	xblen=24;
+	xbsep=16;
 	yblen=12;
 	ybsep=8;
 	preset="-CIF";
@@ -134,7 +134,7 @@ else
 fi
 
 #set Motion vector precision here. Possible values are 1, 1/2, 1/4 and 
-# 1/8. Default value is 1/4
+# 1/8. Default value is 1/2
 mv_prec=1/4
 #extras=`echo $extras`" -L1_sep 6 -stop 6"
 
@@ -205,7 +205,7 @@ AT_CHECK([cmp $samp ../../"lossless_inter_"$vc2_decout])
 #Long-GOP tests
 # progressive
 #      constant quality
-AT_CHECK([at_wrap dirac_encoder -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -local $preset -width $width -height $height -cformat $chroma  $extras $samp ../../$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$encout ../../$decout], 0, [ignore])
 AT_CHECK([cmp ../../$encout.localdec.yuv ../../$decout])
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mc_instr.yuv -motion_colour -clip 50], 0, [ignore])
@@ -214,43 +214,47 @@ AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_mca_inst
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_spm_instr.yuv -split_mode -clip 50], 0, [ignore])
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_sad_instr.yuv -sad -clip 50], 0, [ignore])
 AT_CHECK([at_wrap dirac_instrumentation ../../$encout ../../"$instrout"_pred_instr.yuv -pred_mode -clip 50], 0, [ignore])
+#     modified mc blocks and mv_prec
+AT_CHECK([at_wrap dirac_encoder -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"mod_block_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"mod_block_"$encout ../../"mod_block_"$decout], 0, [ignore])
+AT_CHECK([cmp ../../"mod_block_"$encout.localdec.yuv ../../"mod_block_"$decout])
 #      constant bit-rate
-AT_CHECK([at_wrap dirac_encoder -targetrate $bitrate -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../$bitrate"Kbps_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -targetrate $bitrate -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../$bitrate"Kbps_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$bitrate"Kbps_"$encout ../../$bitrate"Kbps_"$decout], 0, [ignore])
 AT_CHECK([cmp ../../$bitrate"Kbps_"$encout.localdec.yuv ../../$bitrate"Kbps_"$decout])
 #      lossless
-AT_CHECK([at_wrap dirac_encoder -lossless -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"lossless_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -lossless -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"lossless_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"lossless_"$encout ../../"lossless_"$decout], 0, [ignore])
 AT_CHECK([cmp ../../"lossless_"$encout.localdec.yuv ../../"lossless_"$decout])
 AT_CHECK([cmp $samp ../../"lossless_"$decout])
 #     modified GOP structure
-AT_CHECK([at_wrap dirac_encoder -L1_sep 6 -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"L1sep6_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -L1_sep 6 -local $preset -width $width -height $height -cformat $chroma  $extras $samp ../../"L1sep6_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"L1sep6_"$encout ../../"L1sep6_"$decout], 0, [ignore])
 AT_CHECK([cmp ../../"L1sep6_"$encout.localdec.yuv ../../"L1sep6_"$decout])
 #     pre-filter CWM
-AT_CHECK([at_wrap dirac_encoder -prefilter CWM 5 -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"cwm5_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -prefilter CWM 5 -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"cwm5_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"cwm5_"$encout ../../"cwm5_"$decout], 0, [ignore])
 AT_CHECK([cmp ../../"cwm5_"$encout.localdec.yuv ../../"cwm5_"$decout])
 #     pre-filter RECTLP
-AT_CHECK([at_wrap dirac_encoder -prefilter RECTLP 5 -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"rectlp5_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -prefilter RECTLP 5 -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"rectlp5_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"rectlp5_"$encout ../../"rectlp5_"$decout], 0, [ignore])
 AT_CHECK([cmp ../../"rectlp5_"$encout.localdec.yuv ../../"rectlp5_"$decout])
 #     pre-filter DIAGLP
-AT_CHECK([at_wrap dirac_encoder -prefilter DIAGLP 5 -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"diaglp5_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -prefilter DIAGLP 5 -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"diaglp5_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"diaglp5_"$encout ../../"diaglp5_"$decout], 0, [ignore])
 AT_CHECK([cmp ../../"diaglp5_"$encout.localdec.yuv ../../"diaglp5_"$decout])
 #     combined_me
-AT_CHECK([at_wrap dirac_encoder -combined_me -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"combined_me_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -combined_me -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"combined_me_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"combined_me_"$encout ../../"combined_me_"$decout], 0, [ignore])
 AT_CHECK([cmp ../../"combined_me_"$encout.localdec.yuv ../../"combined_me_"$decout])
 #     full search
-AT_CHECK([at_wrap dirac_encoder -full_search 32 32 -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"full_search_"$encout], 0, [ignore])
-AT_CHECK([at_wrap dirac_decoder ../../"full_search_"$encout ../../"full_search_"$decout], 0, [ignore])
-AT_CHECK([cmp ../../"full_search_"$encout.localdec.yuv ../../"full_search_"$decout])
+#AT_CHECK([at_wrap dirac_encoder -full_search 32 32 -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"full_search_"$encout], 0, [ignore])
+#AT_CHECK([at_wrap dirac_decoder ../../"full_search_"$encout ../../"full_search_"$decout], 0, [ignore])
+#AT_CHECK([cmp ../../"full_search_"$encout.localdec.yuv ../../"full_search_"$decout])
 
 # interlaced
 #      constant quality
-AT_CHECK([at_wrap dirac_encoder -field_coding -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -field_coding -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"inter_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"inter_"$encout ../../"inter_"$decout], 0, [ignore])
 AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_mc_instr.yuv -motion_colour -clip 50], 0, [ignore])
 AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_ma_instr.yuv -motion_arrows -clip 50], 0, [ignore])
@@ -258,30 +262,33 @@ AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$in
 AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_spm_instr.yuv -split_mode -clip 50], 0, [ignore])
 AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_sad_instr.yuv -sad -clip 50], 0, [ignore])
 AT_CHECK([at_wrap dirac_instrumentation ../../"inter_"$encout ../../"inter_""$instrout"_pred_instr.yuv -pred_mode -clip 50], 0, [ignore])
+#      modified mc blocks and mv_prec
+AT_CHECK([at_wrap dirac_encoder -field_coding -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_mod_block_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_decoder ../../"inter_mod_block_"$encout ../../"inter_mod_block_"$decout], 0, [ignore])
 #      constant bit-rate
-AT_CHECK([at_wrap dirac_encoder -targetrate $bitrate -field_coding -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../$bitrate"Kbps_inter_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -targetrate $bitrate -field_coding -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../$bitrate"Kbps_inter_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../$bitrate"Kbps_inter_"$encout ../../$bitrate"Kbps_inter_"$decout], 0, [ignore])
 #      lossless
-AT_CHECK([at_wrap dirac_encoder -lossless -field_coding -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"lossless_inter_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -lossless -field_coding -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"lossless_inter_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"lossless_inter_"$encout ../../"lossless_inter_"$decout], 0, [ignore])
 AT_CHECK([cmp $samp ../../"lossless_inter_"$decout])
 #     modified GOP structure
-AT_CHECK([at_wrap dirac_encoder -L1_sep 6 -field_coding -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"L1sep6_inter_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -L1_sep 6 -field_coding -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"L1sep6_inter_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"L1sep6_inter_"$encout ../../"L1sep6_inter_"$decout], 0, [ignore])
 #     pre-filter CWM
-AT_CHECK([at_wrap dirac_encoder -field_coding -prefilter CWM 5 -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_cwm5_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -field_coding -prefilter CWM 5 -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"inter_cwm5_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"inter_cwm5_"$encout ../../"inter_cwm5_"$decout], 0, [ignore])
 #     pre-filter RECTLP
-AT_CHECK([at_wrap dirac_encoder -field_coding -prefilter RECTLP 5 -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_rectlp5_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -field_coding -prefilter RECTLP 5 -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"inter_rectlp5_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"inter_rectlp5_"$encout ../../"inter_rectlp5_"$decout], 0, [ignore])
 #     pre-filter DIAGLP
-AT_CHECK([at_wrap dirac_encoder -field_coding -prefilter DIAGLP 5 -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_diaglp5_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -field_coding -prefilter DIAGLP 5 -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"inter_diaglp5_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"inter_diaglp5_"$encout ../../"inter_diaglp5_"$decout], 0, [ignore])
 #     pre-filter DIAGLP
-AT_CHECK([at_wrap dirac_encoder -combined_me -field_coding -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_combined_me_"$encout], 0, [ignore])
+AT_CHECK([at_wrap dirac_encoder -combined_me -field_coding -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"inter_combined_me_"$encout], 0, [ignore])
 AT_CHECK([at_wrap dirac_decoder ../../"inter_combined_me_"$encout ../../"inter_combined_me_"$decout], 0, [ignore])
 #     full search ME
-AT_CHECK([at_wrap dirac_encoder -full_search 32 32 -field_coding -local $preset -width $width -height $height -cformat $chroma  -xblen $xblen -xbsep $xbsep -yblen $yblen -ybsep $ybsep -mv_prec $mv_prec $extras $samp ../../"inter_full_search_"$encout], 0, [ignore])
-AT_CHECK([at_wrap dirac_decoder ../../"inter_full_search_"$encout ../../"inter_full_search_"$decout], 0, [ignore])
+#AT_CHECK([at_wrap dirac_encoder -full_search 32 32 -field_coding -local $preset -width $width -height $height -cformat $chroma $extras $samp ../../"inter_full_search_"$encout], 0, [ignore])
+#AT_CHECK([at_wrap dirac_decoder ../../"inter_full_search_"$encout ../../"inter_full_search_"$decout], 0, [ignore])
 done
 AT_CLEANUP
