@@ -57,6 +57,10 @@ namespace dirac
     public:
         /*! Constructor */
         ArithCodecToVLCAdapter(SubbandByteIO* subband_byteio, size_t number_of_contexts);
+
+        /*! Virtual Destructor */
+        virtual ~ArithCodecToVLCAdapter(){}
+
         /* Compresses the input and returns the number of bits written */
         int Compress (CoeffArray &in_data);
 
