@@ -47,7 +47,7 @@
 #include <libdirac_common/band_codec.h>
 #include <libdirac_byteio/subband_byteio.h>
 #include <libdirac_common/dirac_exception.h>
-#include <libdirac_common/band_codec_template.cpp>
+#include <libdirac_common/band_codec_template.h>
 
 using namespace dirac;
 
