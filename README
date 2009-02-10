@@ -85,9 +85,9 @@ http://diracvideo.org/wiki/index.php/Main_Page#Documentation
      PATH=/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/Common7/IDE:/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/VC/BIN:/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/Common7/Tools:/c/WINDOWS/Microsoft.NET/Framework/v3.5:/c/WINDOWS/Microsoft.NET/Framework/v2.0.50727:/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/VC/VCPackages:$PATH
 
      INCLUDE=/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/VC/INCLUDE:$INCLUDE
-	 LIB=/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/VC/LIB:$LIB
+     LIB=/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/VC/LIB:$LIB
 
-	 LIBPATH=/c/WINDOWS/Microsoft.NET/Framework/v3.5:/c/WINDOWS/Microsoft.NET/Framework/v2.0.50727:/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/VC/LIB:$LIBPATH
+     LIBPATH=/c/WINDOWS/Microsoft.NET/Framework/v3.5:/c/WINDOWS/Microsoft.NET/Framework/v2.0.50727:/c/Program\ Files/Microsoft\ Visual\ Studio\ 9.0/VC/LIB:$LIBPATH
 
     (Replace /c/Program\ Files/Microsoft\ Visual\ Studio\ 9/ with
     the location where VC++ 2008 is installed if necessary)
@@ -402,10 +402,10 @@ ybsep         : the vertical separation between blocks. Always <yblen
 cpd           : normalised viewing distance parameter, in cycles per degree.
 iwlt_filter   : transform filter to use when encoding INTRA frames, Valid
                 values are DD9_7, LEGALL5_3, DD13_7, HAAR0, HAAR1, FIDELITY,
-                DAUB97. Default value is DD9_5.
+                DAUB97. Default value is DD13_7.
 rwlt_filter   : transform filter to use when encoding INTER frames, Valid
                 values are DD9_7, LEGALL5_3, DD13_7, HAAR0, HAAR1, FIDELITY,
-                DAUB97. Default value is LEGALL5_3.
+                DAUB97. Default value is DD13_7.
 wlt_depth     : transform depth, i.e number of times the component is split 
                 while applying the wavelet transform
 no_spartition : Do not split a subband into coefficient blocks before 
@@ -417,17 +417,18 @@ prefilter     : Prefilter to apply to input video before encoding. The name of
                 the filter to be used and the filter strength have to be 
                 supplied. Valid filter names are NO_PF, CWM, RECTLP and
                 DIAGLP. Filter strenth range should be in the range 0-10.
-                (note PSNR statistics will be computed relative to the filtered 
-                video if -local is enabled)
+                (note PSNR statistics will be computed relative to the 
+                filtered video if -local is enabled)
 lossless      : Lossless coding.(overrides -qf and -targetrate)
 mv_prec       : Motion vector precision. Valid values are 1 (Pixel precision),
                 1/2 (half-pixel precision), 1/4 (quarter pixel precision which
                 is the default), 1/8 ( Eighth pixel precision).
 full_search   : Use full search motion estimation
+combined_me   : Use combination of all three components to do motion estimation
 field_coding  : Code the input video as fields instead of frames.
                 Default coding is frames.
-use_vlc       : Use VLC for entropy coding of coefficients instead of arithmetic
-                coding.
+use_vlc       : Use VLC for entropy coding of coefficients instead of 
+                arithmetic coding.
 Modifying L1_sep and num_L1 allows for new GOP structures to be used, and
 should be entirely safe. There are two non-GOP modes that can also be used for
 encoding: setting num_L1=0 gives I-frame only coding, and setting L1_sep to
