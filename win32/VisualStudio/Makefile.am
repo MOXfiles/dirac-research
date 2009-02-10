@@ -22,8 +22,10 @@ EXTRA_DIST = dirac.sln \
     ./ConversionUtils/YUV420pt75filter/YUV420pt75filter.vcproj \
     ./ConversionUtils/YUV420toRGB/YUV420toRGB.vcproj \
 	./ConversionUtils/YUV420toYUV422/YUV420toYUV422.vcproj \
+	./ConversionUtils/YUV420ItoYUV422I/YUV420ItoYUV422I.vcproj \
     ./ConversionUtils/YUV422toRGB/YUV422toRGB.vcproj \
 	./ConversionUtils/YUV422toYUV420/YUV422toYUV420.vcproj \
+	./ConversionUtils/YUV422ItoYUV420I/YUV422ItoYUV420I.vcproj \
 	./ConversionUtils/YUV422toUYVY/YUV422toUYVY.vcproj \
     ./ConversionUtils/UYVYtoRGB/UYVYtoRGB.vcproj \
 	./ConversionUtils/UYVYtoYUV422/UYVYtoYUV422.vcproj \
