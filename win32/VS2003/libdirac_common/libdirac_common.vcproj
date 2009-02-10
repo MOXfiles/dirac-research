@@ -452,6 +452,9 @@
 				RelativePath="..\..\..\libdirac_common\band_codec.h">
 			</File>
 			<File
+				RelativePath="..\..\..\libdirac_common\band_codec_template.h">
+			</File>
+			<File
 				RelativePath="..\..\..\libdirac_common\band_vlc.h">
 			</File>
 			<File
