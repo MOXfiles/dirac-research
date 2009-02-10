@@ -1,3 +1,32 @@
+2009-02-10 14:12  asuraparaju
+
+	* win32/VisualStudio/Makefile.am: Include YUV420ItoYUV422I.vcproj
+	  and YUV422ItoYUV420I.vcproj in list of distribution files.
+
+	  Author: Anuradha Suraparaju <anuradha@hoyle.rd.bbc.co.uk>
+
+2009-02-10 14:04  asuraparaju
+
+	* win32/: VS2003/libdirac_common/libdirac_common.vcproj,
+	  VisualStudio/libdirac_common/libdirac_common.vcproj: Include
+	  band_codec_template.h in list of headers.
+
+	  Author: Anuradha Suraparaju <anuradha@hoyle.rd.bbc.co.uk>
+
+2009-02-10 12:46  asuraparaju
+
+	* libdirac_common/: Makefile.am, band_codec.cpp,
+	  band_codec_template.cpp, band_codec_template.h, band_vlc.cpp:
+	  Renamed band_codec_template.cpp to band_codec_template.h
+
+	  Author: Anuradha Suraparaju <anuradha@hoyle.rd.bbc.co.uk>
+
+2009-02-10 11:32  asuraparaju
+
+	* ChangeLog: Update ChangeLog
+
+	  Author: Anuradha Suraparaju <anuradha@hoyle.rd.bbc.co.uk>
+
 2009-02-10 11:17  asuraparaju
 
 	* NEWS: Include Dirac 1.0.2 release notes.
