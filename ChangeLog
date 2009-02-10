@@ -1,3 +1,501 @@
+2009-02-10 11:17  asuraparaju
+
+	* NEWS: Include Dirac 1.0.2 release notes.
+
+	  Author: Anuradha Suraparaju <anuradha@hoyle.rd.bbc.co.uk>
+
+2009-02-10 11:17  asuraparaju
+
+	* README: Updated notes to reflect API changes. Some cosmetic
+	  changes as well.
+
+	  Author: Anuradha Suraparaju <anuradha@hoyle.rd.bbc.co.uk>
+
+2009-02-10 11:16  asuraparaju
+
+	* configure.ac: Update release id to 1.0.2.
+
+	  Author: Anuradha Suraparaju <anuradha@hoyle.rd.bbc.co.uk>
+
+2009-02-10 11:16  asuraparaju
+
+	* AUTHORS: Update contributors list.
+
+	  Author: Anuradha Suraparaju <anuradha@hoyle.rd.bbc.co.uk>
+
+2009-02-10 11:04  asuraparaju
+
+	*
+	  doc/documentation/code/programmers_guide/encoder_data_structs.htm:
+	  The default wavelet filters used have changed to DD13_7 for both
+	  intra and inter pictures.
+
+2009-02-10 10:57  asuraparaju
+
+	*
+	  doc/documentation/code/programmers_guide/encoder_data_structs.htm:
+	  Fix instrumentation structure documentation. The field names have
+	  changed in the API to be super blocks and not macro blocks.
+
+2009-02-09 20:45  asuraparaju
+
+	* tests/samples.at: Remove test for full_search option. Add test
+	  for modified block sizes.
+
+	  Author: asuraparaju@diracvideo.org <anuradha@hoyle.rd.bbc.co.uk>
+
+2009-02-09 20:44  asuraparaju
+
+	* libdirac_common/band_vlc.h: Fix GCC 4.1.2 warning.
+
+	  Author: asuraparaju@diracvideo.org <anuradha@hoyle.rd.bbc.co.uk>
+
+2009-01-21 16:23  asuraparaju
+
+	* decoder/decmain.cpp: Actually fix the issue addressed in
+	  (082d7a2) (ignored result from fwrite)
+
+	  Ubuntu forcibly enables FORTIFY_SOURCE, which warns on unused
+	  return values on fwrite.  This may either be fixed by:  #undef
+	  _FORTIFY_SOURCE  #define _FORTIFY_SOURCE 0
+
+	  Or, by causing the application to exit on a short write.
+
+	  NB, it could also be solved by doing a series of fwrites(), and
+	  checking ferror() at the end of them.  FORTIFY_SOURCE would still
+	  fail in this case.
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk>
+
+2009-01-21 16:22  asuraparaju
+
+	* decoder/decmain.cpp: fix build error with -Werror and igored
+	  return value from fwrite(3c)
+
+	  It should be noted that the return value from fwrite is mostly
+	  useless: if the arguments to fwrite do not set size=1, then there
+	  is little hope of discovering howmuch data had been written
+	  before the error. C99 states:  If an error occurs, the resulting
+	  value of the file position  indicator for the stream is
+	  indeterminate.
+
+	  Error squashed by discarding result.
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk>
+
+2009-01-21 16:22  asuraparaju
+
+	* libdirac_encoder/quant_chooser.cpp: encoder: remove limit on DC
+	  quantizer.
+
+	  Previous fixes should remove the requirement to limit qf on DC
+	  blocks to 4.
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk>
+
+2009-01-21 16:21  asuraparaju
+
+	* libdirac_common/common.cpp: encoder: Ensure that there is atleast
+	  1 codeblock per subband
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk>
+
+2009-01-21 16:20  asuraparaju
+
+	* libdirac_encoder/picture_compress.cpp: encoder: remove dc
+	  quantizer=0 hacks
+
+	  Fixes in bitstream handling and quant selection should've negated
+	  the need for these hacks.
+
+	  Author: David Flynn <davidf@woaf.net> Committer: David Flynn
+	  <davidf@rd.bbc.co.uk>
+
+2009-01-21 16:20  asuraparaju
+
+	* libdirac_encoder/picture_compress.cpp: encoder: dont quantize the
+	  first dc codeblock
+
+	  - Attempt to reduce DC errors by effectively not quantizing the
+	  first   value (predicted from zero).
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk>
+
+2009-01-21 16:19  asuraparaju
+
+	* libdirac_common/common.cpp: encoder: Fix (and increase number of
+	  ) default codeblocks
+
+	  - Fix previously incorrect codeblock calculation - Create 4x4
+	  codeblocks for DC subband and 12x12 for all others
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk>
+
+2009-01-21 16:18  asuraparaju
+
+	* libdirac_encoder/quant_chooser.cpp: encoder: fix calculation of
+	  max value in a subband for quant selection
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk>
+
+2009-01-21 16:18  asuraparaju
+
+	* libdirac_byteio/byteio.h, libdirac_common/band_codec.cpp,
+	  libdirac_common/band_codec.h,
+	  libdirac_common/band_codec_template.cpp,
+	  libdirac_common/band_vlc.cpp, libdirac_common/band_vlc.h,
+	  libdirac_decoder/comp_decompress.cpp,
+	  libdirac_encoder/comp_compress.cpp: bandcodec: IntraDCBandVLC
+	  needs to derive from GenericIntraDCBandCodec
+
+	   - modified the band codec files to add a GenericIntraDCBandCodec
+	  class
+	     that inherits from the GenericBandCodecClass.
+	     It defines the common DC specific functions like
+	  GetPrediction,
+	     ClearBlock, DecodeCoeffBlock etc.
+	   - The IntraDCBand classes inherit from the GenericBandCodecClass
+	  now.
+	   - modifed the ArithmeticCodecToVLCAdapter class to include the
+	     Compress/Decompress functions and to have pure virtual
+	     WorkCode/WorkDecode functions like the ArithCodec class.
+
+	  Author: Anuradha Suraparaju <anuradha@rd.bbc.co.uk> Committer:
+	  David Flynn <davidf@rd.bbc.co.uk>
+
+2009-01-21 16:17  asuraparaju
+
+	* libdirac_byteio/byteio.h, libdirac_common/band_codec.cpp,
+	  libdirac_common/band_codec.h,
+	  libdirac_common/band_codec_template.cpp,
+	  libdirac_common/band_vlc.cpp, libdirac_common/band_vlc.h:
+	  bandcodec: Remove code duplication in band_vlc.cpp
+
+	  BandVLC + friends is mostly a copy and paste of BandCodec +
+	  friends.   - Rename BandCodec to GenericBandCodec   - Template
+	  GenericBandCodec to take some EntropyCoder   - typedef BandCodec
+	  to be GenericBandCodec with ArithCodec   - implement a translator
+	  for ArithCodec style calls -> VLC ByteIO calls.   - derive
+	  BandVLC from GenericBandCodec and above translator.
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk>
+
+2009-01-21 16:16  asuraparaju
+
+	* libdirac_common/: band_codec.cpp, band_codec.h: bandcodec: fix DC
+	  prediction when decoding
+
+	  Author: Anuradha Suraparaju <anuradha@rd.bbc.co.uk> Committer:
+	  David Flynn <davidf@rd.bbc.co.uk>
+
+2009-01-21 16:16  asuraparaju
+
+	* libdirac_common/: band_codec.cpp, band_codec.h: bandcodec: fix
+	  handling intra dc skipped codeblocks
+
+	  - The error(residue) term for a skipped codeblock is zero   This
+	  must be recorded to correctly set nhood_zero for subsequent
+	  blocks - The values in the skipped codeblock must be predicted
+	  with no   (ie zero) error term being added.
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk> Committer: David Flynn
+	  <davidf@woaf.net>
+
+2009-01-21 16:15  asuraparaju
+
+	* libdirac_common/: band_codec.cpp, band_codec.h: bandcodec: fix
+	  IntraDC bitstream incompatability with codeblocks
+
+	   - Fixes bitstream incompatability with codeblocks
+	   - IntraDCBandCodec duplicated too much copy+paste code from
+	  BandCodec.
+	   - Implements a per pixel function call to provide
+	  specialization.
+	     This could be templated if performance really is an issue.
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk> Committer: David Flynn
+	  <davidf@woaf.net>
+
+2009-01-21 16:15  asuraparaju
+
+	* libdirac_common/: band_codec.cpp, band_codec.h: bandcodec:
+	  eliminate sepcialized lfbandcodec
+
+	  - Fixes bitstream incompatability with codeblocks -
+	  Specialization has been moved into bandcodec.    due to too much
+	  copy and paste code duplication.
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk>
+
+2009-01-21 16:14  asuraparaju
+
+	* libdirac_common/: band_codec.cpp, band_codec.h: bandcodec: remove
+	  unused variables
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk> Committer: David Flynn
+	  <davidf@woaf.net>
+
+2008-12-16 12:21  asuraparaju
+
+	* libdirac_encoder/rate_control.cpp: Added a condition to stop
+	  bit-rate overruns.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-12-16 12:19  asuraparaju
+
+	* dirac.pc.in: Include Maths library in link line if required on
+	  the platform of choice.
+
+	  Author: asuraparaju@diracvideo.org <anuradha@hoyle.(none)>
+
+2008-12-16 12:19  asuraparaju
+
+	* libdirac_byteio/mvdataelement_byteio.h: Fix doxygen warnings.
+
+	  Author: asuraparaju@diracvideo.org <anuradha@hoyle.(none)>
+
+2008-12-16 12:18  asuraparaju
+
+	* libdirac_common/band_codec.cpp: Fix problem building with -Werror
+	  and dumb compilers
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk>
+
+2008-11-20 12:05  asuraparaju
+
+	* doc/documentation/code/programmers_guide/:
+	  common_data_structs.htm, encoder_api_functions.htm,
+	  encoder_api_overview.htm, encoder_api_reference.htm,
+	  encoder_data_structs.htm, index.htm, intro.htm: Update the
+	  programmer's guide for version 1.0.2 of the release.
+
+2008-11-19 15:02  asuraparaju
+
+	* win32/VisualStudio/dirac.sln: Add new projects to the solution
+	  file.
+
+	  Author: Anuradha Suraparaju <anuradha@hoyle.(none)>
+
+2008-11-19 10:28  asuraparaju
+
+	* libdirac_byteio/: seqparams_byteio.cpp, seqparams_byteio.h:
+	  Manually delete seqparams_byteio.cpp{h} to keep in sync with GIT
+	  repository.
+
+2008-11-19 10:25  asuraparaju
+
+	* libdirac_common/dirac_types.h,
+	  libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/dirac_encoder.h: api: Add
+	  dirac_encoder_pts_offset support, bump version to 1.0.2
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk>
+
+2008-11-19 10:25  asuraparaju
+
+	* util/conversion/: Makefile.am, YUV420ItoYUV422I.cpp,
+	  YUV422ItoYUV420I.cpp: conversion: Add 422 <-> 420 converters for
+	  interlaced video
+
+	  Author: David Flynn <davidf@rd.bbc.co.uk>
+
+2008-11-19 10:19  asuraparaju
+
+	* libdirac_encoder/: picture_compress.cpp, quant_chooser.cpp: Fixed
+	  bug with DC value being quantised to nothing for plain pictures.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-11-06 15:54  asuraparaju
+
+	* tests/samples.at: Add tests for fullsearch and combined_me
+	  options.
+
+	  Author: Anuradha Suraparaju <anuradha@hoyle.(none)>
+
+2008-11-06 15:53  asuraparaju
+
+	* libdirac_common/: common_types.h, dirac_types.h: Move macros to
+	  test for the api version to dirac_types.h from common_types.h as
+	  it is the more appropriate location.
+
+	  Author: Anuradha Suraparaju <anuradha@hoyle.(none)>
+
+2008-11-06 15:51  asuraparaju
+
+	*
+	  win32/VisualStudio/ConversionUtils/YUV420Down2x2/YUV420Down2x2.vcproj:
+	  Fix include path to prevent compilation errors.
+
+	  Author: Anuradha Suraparaju <anuradha@hoyle.(none)>
+
+2008-10-29 13:46  asuraparaju
+
+	* libdirac_motionest/block_match.cpp: Cosmetics - removing trailing
+	  blanks.
+
+2008-10-29 13:42  asuraparaju
+
+	* encoder/encmain.cpp, libdirac_encoder/prefilter.cpp,
+	  libdirac_encoder/rate_control.cpp,
+	  libdirac_encoder/seq_compress.cpp: Ensure that debug info is
+	  printed to standard out only in verbose mode.  Cosmetics -
+	  changed tabs to spaces, corrected indentation.
+
+	  Author: asuraparaju@diracvideo.org <anuradha@hoyle.(none)>
+
+2008-10-29 13:41  asuraparaju
+
+	* libdirac_common/common_types.h: Add macros to test for the api
+	  version.
+
+	  Author: asuraparaju@diracvideo.org <anuradha@hoyle.(none)>
+
+2008-10-21 15:55  asuraparaju
+
+	* libdirac_motionest/me_utils.cpp: Fixed bug that caused a divide
+	  by zero error.
+
+	  Author: asuraparaju@diracvideo.org <anuradha@hoyle.(none)>
+
+2008-10-21 11:04  asuraparaju
+
+	* libdirac_byteio/parseparams_byteio.cpp: Print a warning to
+	  standard error if the bitstream version does not match the
+	  supported version and continue decoding instead of bailing out.
+
+	  Author: asuraparaju@diracvideo.org <anuradha@hoyle.(none)>
+
+2008-10-21 11:02  asuraparaju
+
+	* configure.ac: Fix test for checking availabliity of libcppunit.
+
+	  Author: asuraparaju@diracvideo.org <anuradha@hoyle.(none)>
+
+2008-10-20 15:22  asuraparaju
+
+	* libdirac_encoder/picture_compress.cpp: Modify perceptual
+	  weighting based on the proportion of intra blocks.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-10-20 15:21  asuraparaju
+
+	* encoder/encmain.cpp, libdirac_common/common.cpp,
+	  libdirac_common/video_format_defaults.cpp: Made 13_7 the default
+	  wavelet filter for all video.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-10-20 15:21  asuraparaju
+
+	* libdirac_common/wavelet_utils.cpp,
+	  libdirac_common/wavelet_utils.h,
+	  libdirac_encoder/picture_compress.cpp: Allow for adjustable CPD
+	  scaling.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-10-20 15:20  asuraparaju
+
+	* libdirac_encoder/seq_compress.h: Added method for keeping track
+	  of timestamp offset.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-10-20 15:19  asuraparaju
+
+	* libdirac_common/common.cpp, libdirac_encoder/seq_compress.cpp,
+	  libdirac_encoder/seq_compress.h,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_utils.cpp: Improvements to coding at low
+	  bit rate and resolution.
+
+	  Filter DC blocks field to reduce dc level transitions.  Use
+	  better bigger block parameters.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-10-01 15:33  asuraparaju
+
+	* Makefile.am: Set DOC_DIR only if doxygen is installed.
+
+	  Author: asuraparaju@diracvideo.org <anuradha@hoyle.(none)>
+
+2008-10-01 11:26  asuraparaju
+
+	* encoder/encmain.cpp, libdirac_common/common.cpp,
+	  libdirac_common/common.h, libdirac_common/mot_comp.cpp,
+	  libdirac_common/motion.cpp, libdirac_common/motion.h,
+	  libdirac_common/mv_codec.cpp, libdirac_common/mv_codec.h,
+	  libdirac_decoder/picture_decompress.cpp,
+	  libdirac_encoder/dirac_encoder.cpp,
+	  libdirac_encoder/dirac_encoder.h,
+	  libdirac_encoder/enc_picture.cpp, libdirac_encoder/enc_picture.h,
+	  libdirac_encoder/picture_compress.cpp,
+	  libdirac_encoder/seq_compress.cpp,
+	  libdirac_motionest/me_mode_decn.cpp,
+	  libdirac_motionest/me_mode_decn.h,
+	  libdirac_motionest/me_subpel.cpp, libdirac_motionest/me_subpel.h,
+	  libdirac_motionest/motion_estimate.cpp,
+	  libdirac_motionest/pixel_match.cpp,
+	  unit_tests/motion_comp_test.cpp,
+	  util/instrumentation/process_sequence.cpp,
+	  util/instrumentation/libdirac_instrument/overlay.cpp: Manual sync
+	  with dirac-research.git repository.  Changed way data for use in
+	  ME is accessed.  Changed terminology from macroblock to
+	  superblock.  Now (more) consistent with spec.  Changes to
+	  incorporate some chroma information into ME.	Enabled combined ME
+	  across Y, U and V Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-10-01 10:50  asuraparaju
+
+	* Makefile.am, configure.ac, util/conversion/Makefile.am,
+	  util/conversion/YUV420Down2x2.cpp: Improved 2x2 downconversion
+	  filtering.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-10-01 10:26  asuraparaju
+
+	* encoder/encmain.cpp, libdirac_common/video_format_defaults.cpp:
+	  100% overlaps help PSNR but reduce detail too much at low rates.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-10-01 10:26  asuraparaju
+
+	* encoder/encmain.cpp, libdirac_common/video_format_defaults.cpp,
+	  libdirac_common/video_format_defaults.h,
+	  libdirac_encoder/dirac_encoder.cpp: Use longer wavelet filters at
+	  low resolution.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-10-01 10:25  asuraparaju
+
+	* encoder/encmain.cpp, libdirac_common/band_codec.cpp,
+	  libdirac_common/common.cpp, libdirac_encoder/comp_compress.cpp,
+	  libdirac_encoder/picture_compress.cpp,
+	  libdirac_encoder/quant_chooser.cpp: Modifications to improve
+	  performance for small picture sizes.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-10-01 10:12  asuraparaju
+
+	* encoder/encmain.cpp: 1/4 pel is now the default on small
+	  pictures.
+
+	  Author: Thomas Davies <thomas.davies@bbc.co.uk>
+
+2008-09-16 16:49  asuraparaju
+
+	* ChangeLog: Updated ChangeLog.
+
+	  Author: asuraparaju@diracvideo.org
+	  <anuradha@hoyle.dp.rd.bbc.co.uk>
 2008-09-16 14:33  asuraparaju
 
 	* NEWS: Include Dirac 1.0.0 release notes.
