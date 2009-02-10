@@ -1,3 +1,17 @@
+dirac-1.0.2
+===========
+This a a minor release complying with the latest Dirac Bytestream 
+Specification 2.2.3.
+
+- Improved compression performance for small picture sizes.
+- Improved compression performance at low bit-rates.
+- Included macros to check the API version.
+- Improved motion estimation.
+- New 422 <-> 420 conversion utilities for interlaced video.
+- New functionality added to encoder API. The programmer's guide has
+  been modified accordingly.
+- Fixed bugs in handling DC subband.
+
 dirac-1.0.0
 ===========
 This a a major release complying with the latest Dirac Bytestream Specification
