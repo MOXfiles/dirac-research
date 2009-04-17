@@ -306,6 +306,8 @@ void MotionCompensator::CompensateComponent( Picture* pic ,
 
     int save_from_row = m_bparams.Ybsep()-m_bparams.Yoffset();
 
+    bool row_overlap = ((m_bparams.Yblen() - m_bparams.Ybsep()) > 0);
+
     // unpadded picture dimensions
     const int x_end_data = pic_data_out.FirstX() + std::min(pic_data_out.LengthX(), pic_size.x );
     const int y_end_data = pic_data_out.FirstY() + std::min(pic_data_out.LengthY(), pic_size.y );
@@ -489,12 +491,19 @@ void MotionCompensator::CompensateComponent( Picture* pic ,
         //Increment the block vertical position
         pos.y += m_bparams.Ybsep();
 
-        // Copy the rows required to motion compensate the next row of block.
-        // This is usually Yblen-Ybsep rows.
-        memmove (pic_data[0], pic_data[save_from_row], (m_bparams.Yblen() - save_from_row)*pic_data.LengthX()*sizeof(ValueType));
-        memset( pic_data[m_bparams.Yblen() - save_from_row], 0, save_from_row*pic_data.LengthX()*sizeof(ValueType) );
-        save_from_row = m_bparams.Ybsep();
-
+        if (row_overlap)
+        {
+            // Copy the rows required to motion compensate the next row of 
+            // blocks. This is usually Yblen-Ybsep rows.
+            memmove (pic_data[0], pic_data[save_from_row], (m_bparams.Yblen() - save_from_row)*pic_data.LengthX()*sizeof(ValueType));
+            memset( pic_data[m_bparams.Yblen() - save_from_row], 0, save_from_row*pic_data.LengthX()*sizeof(ValueType) );
+            save_from_row = m_bparams.Ybsep();
+        }
+        else
+        {
+            // no row overlap. So reset pic_data to 0.
+            memset( pic_data[0], 0,  m_bparams.Yblen()*pic_data.LengthX()*sizeof(ValueType) );
+        }
     }//yblock
 
     if ( m_add_or_sub == SUBTRACT)
