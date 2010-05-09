@@ -333,14 +333,14 @@ void QuantChooser::SelectBestQuant()
 void QuantChooser::SetSkip( CodeBlock& cblock , const int qidx)
 {
     const int u_threshold = dirac_quantiser_lists.QuantFactor4( qidx );
-    
+
     // Sets the skip flag for a codeblock
     bool can_skip = true;
     for (int j=cblock.Ystart(); j<cblock.Yend(); ++j )
     {
         for (int i=cblock.Xstart(); i<cblock.Xend(); ++i )
         {
-            if ( (std::abs(m_coeff_data[j][i])<<2) >= u_threshold )
+            if ( (static_cast<int>(std::abs(m_coeff_data[j][i]))<<2) >= u_threshold )
                 can_skip = false;
         }   
     }
@@ -355,7 +355,7 @@ CoeffType QuantChooser::BlockAbsMax( const Subband& node )
     {
         for (int i=node.Xp() ; i<node.Xp()+node.Xl(); ++i)
         {    
-            val = std::max( val , std::abs(m_coeff_data[j][i]) );
+            val = std::max( val , static_cast<int>(std::abs(m_coeff_data[j][i])) );
         }// i
     }// j
 
