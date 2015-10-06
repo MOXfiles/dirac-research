@@ -75,7 +75,7 @@ void MotionEstimator::DoME( EncQueue& my_buffer, int pic_num )
     // Set up the lambda to be used
     me_data.SetLambdaMap( num_refs , lambda );
 
-    MVPrecisionType orig_prec = m_encparams.MVPrecision();
+    MVPrecisionType orig_prec = m_encparams.GetPicPredParams().MVPrecision();
 
     // Step 2. 
     // Pixel accurate vectors are then refined to sub-pixel accuracy
@@ -105,7 +105,7 @@ void MotionEstimator::DoME( EncQueue& my_buffer, int pic_num )
                     mv_arr2[j][i] = mv_arr2[j][i] << 1;
             }
         }
-        m_encparams.SetMVPrecision(MV_PRECISION_HALF_PIXEL);
+        m_encparams.GetPicPredParams().SetMVPrecision(MV_PRECISION_HALF_PIXEL);
     }
 
     // Step3.
@@ -136,7 +136,7 @@ void MotionEstimator::DoME( EncQueue& my_buffer, int pic_num )
                     mv_arr2[j][i] = mv_arr2[j][i]>>1;
             }
         }
-        m_encparams.SetMVPrecision(MV_PRECISION_PIXEL);
+        m_encparams.GetPicPredParams().SetMVPrecision(MV_PRECISION_PIXEL);
     }
 
     // Finally, although not strictly part of motion estimation,
@@ -152,7 +152,7 @@ ValueType MotionEstimator::GetChromaBlockDC(const PicArray& pic_data,
                                             int xunit , int yunit , int split)
 {
     BlockDiffParams dparams;
-    dparams.SetBlockLimits( m_encparams.ChromaBParams( split ) , 
+    dparams.SetBlockLimits( m_encparams.GetPicPredParams().ChromaBParams( split ) , 
                             pic_data, xunit , yunit);
 
     ValueType dc;
